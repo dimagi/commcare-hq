@@ -3,6 +3,7 @@ from django.utils.translation import gettext as _
 from memoized import memoized
 
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.models import HQUserType
 
 from .users import EmwfUtils, ExpandedMobileWorkerFilter
 
@@ -36,7 +37,6 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     label = _("Case Owner(s)")
     slug = 'case_list_filter'
     options_url = 'case_list_options'
-    default_selections = [('project_data', _("[Project Data]"))]
     placeholder = _("Add case owners to filter this report.")
 
     @property
@@ -83,6 +83,6 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
 
     def get_default_selections(self):
         if self.request.can_access_all_locations:
-            return self.default_selections
+            return [('project_data', _("[Project Data]")), self.utils.user_type_tuple(HQUserType.WEB)]
         else:
             return self._get_assigned_locations_default()
