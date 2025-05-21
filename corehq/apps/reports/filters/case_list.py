@@ -63,8 +63,8 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
 
     @classmethod
     def selected_group_ids(cls, mobile_user_and_group_slugs):
-        return (super(CaseListFilter, cls).selected_group_ids(mobile_user_and_group_slugs) +
-                cls.selected_sharing_group_ids(mobile_user_and_group_slugs))
+        return (super(CaseListFilter, cls).selected_group_ids(mobile_user_and_group_slugs)
+                + cls.selected_sharing_group_ids(mobile_user_and_group_slugs))
 
     def _selected_group_entries(self, mobile_user_and_group_slugs):
         query_results = self._selected_groups_query(mobile_user_and_group_slugs)
