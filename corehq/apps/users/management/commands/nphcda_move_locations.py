@@ -330,15 +330,15 @@ def iter_users(domain: str, location_id: str) -> Iterator[CommCareUser]:
     """
     Yields CommCareUser instances for the given location ID.
     """
-    for hit in (
+    iter_user_ids = (
         UserES()
         .mobile_users()
         .domain(domain)
         .location(location_id)
-        .run()
-        .hits
-    ):
-        yield CommCareUser.wrap(hit)
+        .scroll_ids()
+    )
+    for user_id in iter_user_ids:
+        yield CommCareUser.get_by_user_id(user_id, domain)
 
 
 def assign_settlement(
