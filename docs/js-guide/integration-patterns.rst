@@ -206,26 +206,22 @@ for you. To check, for example, whether the ``IS_DEVELOPER`` toggle is
 enabled, use
 
 .. code:: javascript
+   import toggles from "hqwebapp/js/toggles"
 
-   COMMCAREHQ.toggleEnabled('IS_DEVELOPER')
+   if (toggles.toggleEnabled('IS_DEVELOPER')) {
+    ...
 
 and to check whether the ``'ENUM_IMAGE'`` feature preview is enabled,
 use
 
 .. code:: javascript
+   import toggles from "hqwebapp/js/toggles"
 
-   COMMCAREHQ.previewEnabled('ENUM_IMAGE')
+   if (toggles.previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+    ...
 
 and that’s pretty much it.
 
-On a page that doesn’t inherit from our main templates, you’ll also have
-to include
-
-.. code:: html
-
-   <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-   <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-   <script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
 
 Domain Privileges
 ----------------------------
