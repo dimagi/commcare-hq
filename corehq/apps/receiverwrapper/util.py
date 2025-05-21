@@ -1,6 +1,8 @@
 import json
 import re
 from collections import namedtuple
+from types import EllipsisType
+from typing import Optional, Union
 
 from django.conf import settings
 from django.http import Http404
@@ -36,11 +38,11 @@ def get_submit_url(domain, app_id=None):
 
 
 def submit_form_locally(
-    instance,
-    domain,
-    max_wait=...,
-    app_id=None,
-    build_id=None,
+    instance: str,
+    domain: str,
+    max_wait: Union[float, None, EllipsisType] = ...,
+    app_id: Optional[str] = None,
+    build_id: Optional[str] = None,
     **kwargs,
 ) -> FormProcessingResult:
     """
