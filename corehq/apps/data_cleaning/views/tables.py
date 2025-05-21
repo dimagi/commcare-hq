@@ -227,13 +227,14 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
 
     def get_queryset(self):
         return [
-            self._get_record(session)
-            for session in BulkEditSession.get_committed_sessions(self.request.user, self.domain)
+            self._get_record(session) if session.committed_on else self._get_active_record(session)
+            for session in BulkEditSession.get_all_sessions(self.request.user, self.domain)
         ]
 
     def _get_record(self, session):
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
         return {
+            "is_active": False,
             "committed_on": session.committed_on,
             "completed_on": session.completed_on,
             "case_type": session.identifier,
@@ -241,5 +242,18 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
             "percent": session.percent_complete,
             "form_ids_url": reverse('download_form_ids', args=(session.domain, session.session_id)),
             "has_form_ids": bool(len(session.form_ids)),
+            "session_url": reverse(BulkEditCasesSessionView.urlname, args=(session.domain, session.session_id)),
+        }
+
+    def _get_active_record(self, session):
+        from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
+        return {
+            "is_active": True,
+            "committed_on": "--",
+            "completed_on": "--",
+            "case_type": session.identifier,
+            "case_count": "--",
+            "percent": 0,
+            "has_form_ids": False,
             "session_url": reverse(BulkEditCasesSessionView.urlname, args=(session.domain, session.session_id)),
         }

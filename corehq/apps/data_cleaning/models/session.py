@@ -89,6 +89,10 @@ class BulkEditSession(models.Model):
     def get_committed_sessions(cls, user, domain_name):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
 
+    @classmethod
+    def get_all_sessions(cls, user, domain_name):
+        return cls.objects.filter(user=user, domain=domain_name).order_by('-created_on')
+
     def get_resumed_session(self):
         new_session = self.new_case_session(
             self.user,
