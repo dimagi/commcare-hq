@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% if record.completed_on %}
-  <span class="badge text-bg-success"> {% trans "Success" %} </span>
+  <span class="badge text-bg-success"> {% trans "Completed" %} </span>
 {% elif record.percent and record.percent < 100 %}
   <div
     class="progress"
