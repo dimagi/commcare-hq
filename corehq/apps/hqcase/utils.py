@@ -13,17 +13,14 @@ from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
-from corehq.apps.export.const import (
-    DEID_DATE_TRANSFORM,
-    DEID_ID_TRANSFORM,
-)
+from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
 from corehq.apps.export.utils import get_deid_transform_function
+from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
