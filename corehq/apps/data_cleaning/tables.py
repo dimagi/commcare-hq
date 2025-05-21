@@ -22,7 +22,7 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
     max_recorded_limit = MAX_RECORDED_LIMIT
 
     class Meta(BaseHtmxTable.Meta):
-        template_name = "data_cleaning/tables/table_with_controls.html"
+        template_name = "data_cleaning/tables/bulk_edit_session.html"
         attrs = {
             "class": "table table-striped align-middle",
         }
@@ -109,11 +109,17 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
 class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
 
     class Meta(BaseHtmxTable.Meta):
-        pass
+        template_name = "data_cleaning/tables/recent_sessions.html"
+        attrs = {
+            "class": "table table-striped align-middle",
+        }
 
     status = columns.TemplateColumn(
         template_name="data_cleaning/columns/task_status.html",
         verbose_name=gettext_lazy("Status"),
+    )
+    case_type = columns.Column(
+        verbose_name=gettext_lazy("Case Type"),
     )
     committed_on = columns.Column(
         verbose_name=gettext_lazy("Committed On"),
@@ -121,17 +127,10 @@ class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
     completed_on = columns.Column(
         verbose_name=gettext_lazy("Completed On"),
     )
-    case_type = columns.Column(
-        verbose_name=gettext_lazy("Case Type"),
-    )
     case_count = columns.Column(
-        verbose_name=gettext_lazy("# Cases Cleaned"),
+        verbose_name=gettext_lazy("# Cases Edited"),
     )
     form_ids = columns.TemplateColumn(
         template_name="data_cleaning/columns/task_form_ids.html",
         verbose_name=gettext_lazy("Form IDs"),
-    )
-    session_url = columns.TemplateColumn(
-        template_name="data_cleaning/columns/task_session_url.html",
-        verbose_name=gettext_lazy("Open Session"),
     )

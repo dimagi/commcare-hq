@@ -9,6 +9,16 @@ class BulkEditSessionType:
         (FORM, "Form"),
     )
 
+    DEFAULT_PROPERTIES = {
+        CASE: (
+            'name', 'owner_name', 'date_opened', 'opened_by_username',
+            'last_modified', '@status',
+        ),
+    }
+
+    def get_default_properties(session_type):
+        return BulkEditSessionType.DEFAULT_PROPERTIES.get(session_type)
+
 
 class PinnedFilterType:
     CASE_OWNERS = 'case_owners'
