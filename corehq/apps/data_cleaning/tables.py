@@ -109,7 +109,10 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
 class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
 
     class Meta(BaseHtmxTable.Meta):
-        pass
+        template_name = "data_cleaning/tables/recent_sessions.html"
+        attrs = {
+            "class": "table table-striped align-middle",
+        }
 
     status = columns.TemplateColumn(
         template_name="data_cleaning/columns/task_status.html",
