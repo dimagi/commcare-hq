@@ -178,7 +178,7 @@ class Command(BaseCommand):
                         new_settlement,
                     ):
                         submit_case_block.send(case_block)
-                    delete_location(domain, old_settlement.location_id)
+                    delete_settlement(domain, old_settlement.location_id)
                 else:
                     move_settlement(domain, old_settlement, new_settlement)
                     cases = iter_cases(domain, old_settlement.location_id)
@@ -285,7 +285,7 @@ def get_location_by_id(domain: Optional[str], location_id: str) -> SQLLocation:
         try:
             location_cache[location_id] = queryset.get()
         except SQLLocation.DoesNotExist as err:
-            raise LocationError from err
+            raise LocationError(f'location_id {location_id} not found') from err
     return location_cache[location_id]
 
 
@@ -312,11 +312,17 @@ def select_location(
     )
 
 
-def delete_location(domain: str, location_id: str) -> None:
+def delete_settlement(domain: str, location_id: str) -> None:
     if verbose:
-        print(f'Deleting location {location_id}')
+        print(f'Deleting settlement location {location_id}')
+    settlement_loc = SQLLocation.objects.get(domain=domain, location_id=location_id)
+    ward_loc = get_location_by_id(domain, settlement_loc.parent_location_id)
     if not dry_run:
-        SQLLocation.objects.get(domain=domain, location_id=location_id).delete()
+        settlement_loc.delete()
+        if not ward_loc.children.exists():
+            if verbose:
+                print(f'Deleting ward location {ward_loc.location_id}')
+            ward_loc.delete()
 
 
 def iter_users(domain: str, location_id: str) -> Iterator[CommCareUser]:
