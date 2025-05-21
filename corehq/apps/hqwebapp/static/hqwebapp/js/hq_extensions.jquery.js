@@ -36,6 +36,4 @@ define("hqwebapp/js/hq_extensions.jquery", ["jquery"], function ($) {
             return params;
         },
     });
-
-    return 1;   // Flag the module as loaded by hqModules.js
 });
