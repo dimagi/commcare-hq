@@ -1,7 +1,7 @@
 import json
 import re
 from collections import namedtuple
-from typing import Optional, Union
+from typing import Optional, Union, Protocol
 
 from django.conf import settings
 from django.http import Http404
@@ -26,6 +26,11 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
 
+class AuthContextProto(Protocol):
+    def is_valid(self) -> bool:
+        ...
+
+
 def get_submit_url(domain, app_id=None):
     if app_id:
         return "/a/{domain}/receiver/{app_id}/".format(domain=domain, app_id=app_id)
@@ -39,6 +44,8 @@ def submit_form_locally(
     max_wait: Union[Ellipsis, None, int] = ...,
     app_id: Optional[str] = None,
     build_id: Optional[str] = None,
+    *,
+    auth_context: Optional[AuthContextProto] = None,
     **kwargs,
 ) -> FormProcessingResult:
     """
@@ -55,6 +62,7 @@ def submit_form_locally(
     :param app_id: The ID of the application this form submission
         belongs to
     :param build_id: The ID of the build this form submission belongs to
+    :param auth_context: Authentication context for the form submission
     :param kwargs: Additional arguments to pass to SubmissionPost
     :return: FormProcessingResult object containing processing results
         and response
@@ -64,7 +72,7 @@ def submit_form_locally(
     if max_wait is not None:
         rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=max_wait)
     # intentionally leave these unauth'd for now
-    kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
+    auth_context = auth_context or DefaultAuthContext()
     if app_id is not None and build_id is None:
         app_id, build_id = get_app_and_build_ids(domain, app_id)
     result = SubmissionPost(
@@ -72,6 +80,7 @@ def submit_form_locally(
         instance=instance,
         app_id=app_id,
         build_id=build_id,
+        auth_context=auth_context,
         **kwargs
     ).run()
     if not 200 <= result.response.status_code < 300:
