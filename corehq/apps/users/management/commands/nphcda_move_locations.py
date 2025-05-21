@@ -29,6 +29,7 @@ code_to_location_id = {
     'katsina·faskari·maigora': '24fc6b0f63af4cb1b8153d00e6a3ae1a',  # Mai Gora
     'jigawa·sule tankarkar·sule tankarkar·fada': '231e8fd646c447b2a841888cde48eb62',  # Shabara Fada
     'sokoto·bodinga·bangi/dabaga': '7774758ed847495898330b137388c430',  # Bangi Dabaga
+    'sokoto·goronyo·sabon garin dole': 'b57923047b3c4537af80f320d46622a2',  # Sabon Gari Dole
 }
 location_cache: dict[str, SQLLocation] = {}
 
