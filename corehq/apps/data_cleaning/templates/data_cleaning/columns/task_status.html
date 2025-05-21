@@ -1,6 +1,14 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+<a
+  class="py-2 pe-2"
+  href="{{ record.session_url }}"
+  x-tooltip=""
+  data-bs-title="{% trans "Open Session" %}"
+>
+  <i class="fa-solid fa-arrow-up-right-from-square"></i>
+</a>
 {% if record.completed_on %}
   <span class="badge text-bg-success"> {% trans "Completed" %} </span>
 {% elif record.percent and record.percent < 100 %}
