@@ -155,6 +155,19 @@ dev = [
     'flake8>=6.0', # linting/formatting
     'isort',
     'yapf',
+    'mypy',
+    'mypy-extensions',
+    'types-bleach',
+    'types-decorator',
+    'types-html5lib',
+    'types-markdown',
+    'types-polib',
+    'types-python-dateutil',
+    'types-pytz',
+    'types-pyyaml',
+    'types-requests',
+    'types-simplejson',
+    'types-six',
     {include-group = "test"},
 ]
 docs = [
@@ -245,3 +258,24 @@ pythonpath = [
 ]
 required_plugins = 'pytest-django'
 DJANGO_SETTINGS_MODULE = 'testsettings'
+
+[tool.mypy]
+python_version = '3.9'
+
+# Check configuration
+warn_unused_configs = 'True'
+warn_redundant_casts = 'True'
+
+# Type checking
+disallow_any_generics = 'True'
+check_untyped_defs = 'True'
+warn_unused_ignores = 'True'
+warn_return_any = 'True'
+strict_equality = 'True'
+
+# Parse but don't check imported libraries
+follow_imports = 'silent'
+ignore_missing_imports = 'True'
+
+# Reporting
+pretty = 'True'

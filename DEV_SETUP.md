@@ -1084,3 +1084,18 @@ This script goes through the steps to prepare a report for test coverage of
 JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
 coverage will not be shown. A coverage summary is output to the terminal and a
 detailed html report is generated at ``coverage-js/index.html``.
+
+
+## Checking type hints
+
+If you feel that a method or function would be better understood or easier to
+use if it had type hints, add typing for all parameters and the return value.
+Then add the name of the module to `mypy_modules.txt`. Check your changes with:
+
+```sh
+mypy @mypy_modules.txt
+```
+
+In Python, typing is a form of documentation. Like all forms of code
+documentation, if it does not help to increase understanding or reduce total
+cost of ownership, it shouldn't be there.
