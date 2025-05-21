@@ -108,13 +108,14 @@ class Command(BaseCommand):
 
     def _update_cases_chunk(self, case_ids):
         cases = CommCareCase.objects.get_cases(case_ids)
-        case_updates = {}
+        case_updates = []
+        should_close_case = False
         for case in cases:
             _updates = self._case_property_updates_for_case(case)
             if _updates:
                 if not self.real_run:
                     logger.info(f"{case.case_id}: {_updates}")
-                case_updates[case.case_id] = _updates
+                case_updates.append((case.case_id, _updates, should_close_case))
         if self.real_run:
             try:
                 xform, cases = bulk_update_cases(DOMAIN, case_updates, self.__module__)
