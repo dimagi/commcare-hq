@@ -14,16 +14,15 @@ var LIMITED_FEATURES = gettext("I need more limited features");
 var MORE_FEATURES = gettext("I need additional/custom features");
 var OTHER = gettext("Other");
 
-var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, currentPlan) {
+var confirmPlanModel = function (isMonthlyUpgrade, isPaused, isAnnualPlan, isDowngrade, currentPlan) {
     var self = {};
 
-    self.isUpgrade = isUpgrade;
-    self.isSameEdition = isSameEdition;
-    self.isPaused = isPaused;
+    self.isDowngrade = isDowngrade;
     self.currentPlan = currentPlan;
 
-    // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
-    self.oUserAgreementSigned = ko.observable(!isUpgrade || isSameEdition);
+    // If the user is upgrading or subscribing to Pay Annually,
+    // don't let them continue until they agree to the minimum subscription terms
+    self.oUserAgreementSigned = ko.observable(!(isMonthlyUpgrade || isAnnualPlan));
 
     self.downgradeReasonList = [
         PROJECT_ENDED,
@@ -31,7 +30,7 @@ var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, currentPlan
         SWITCH_TOOLS,
     ];
 
-    if (!self.isPaused) {
+    if (!isPaused) {
         self.downgradeReasonList.push(CONTINUE_COMMCARE);
     }
 
@@ -73,11 +72,11 @@ var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, currentPlan
     self.form = undefined;
     self.openDowngradeModal = function (confirmPlanModel, e) {
         self.form = $(e.currentTarget).closest("form");
-        if (confirmPlanModel.isUpgrade || confirmPlanModel.isSameEdition) {
-            self.form.submit();
-        } else {
+        if (confirmPlanModel.isDowngrade) {
             var $modal = $("#modal-downgrade");
             $modal.modal('show');
+        } else {
+            self.form.submit();
         }
     };
     self.submitDowngrade = function (pricingTable, e) {
@@ -105,9 +104,10 @@ var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, currentPlan
 
 $(function () {
     var confirmPlan = confirmPlanModel(
-        initialPageData.get('is_upgrade'),
-        initialPageData.get('is_same_edition'),
+        initialPageData.get('is_monthly_upgrade'),
         initialPageData.get('is_paused'),
+        initialPageData.get('is_annual_plan'),
+        initialPageData.get('is_downgrade'),
         initialPageData.get('current_plan'),
     );
 
