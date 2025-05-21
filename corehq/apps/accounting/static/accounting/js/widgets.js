@@ -1,5 +1,5 @@
 
-hqDefine('accounting/js/widgets', [
+define('accounting/js/widgets', [
     'jquery',
     'knockout',
     'underscore',

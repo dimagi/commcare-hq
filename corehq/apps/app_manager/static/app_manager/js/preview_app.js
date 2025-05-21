@@ -1,5 +1,5 @@
 
-hqDefine('app_manager/js/preview_app', [
+define('app_manager/js/preview_app', [
     'jquery',
     'analytix/js/google',
     'analytix/js/kissmetrix',

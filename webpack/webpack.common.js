@@ -76,18 +76,6 @@ console.log("== src > " + context + " = " + request);
                         type: 'asset/resource',
                     },
 
-                    // this rule ensures that hqDefine is renamed to define AMD module
-                    // definition syntax that webpack understands
-                    {
-                        test: /\.js$/,
-                        loader: 'string-replace-loader',
-                        exclude: /node_modules/,
-                        options: {
-                            search: /\bhqDefine\b/g,
-                            replace: 'define',
-                        },
-                    },
-
                     {
                         test: /modernizr\.js$/,
                         loader: "webpack-modernizr-loader",

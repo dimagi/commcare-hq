@@ -13,7 +13,7 @@
  *
  */
 
-hqDefine('hqwebapp/js/components/bootstrap5/feedback', [
+define('hqwebapp/js/components/bootstrap5/feedback', [
     'knockout',
     'jquery',
     'underscore',
