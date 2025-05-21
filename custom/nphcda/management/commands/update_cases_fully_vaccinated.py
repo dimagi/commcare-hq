@@ -147,10 +147,11 @@ class Command(BaseCommand):
         eligible_vaccines = self._get_count_of_eligible_vaccines(age_in_days)
         return int(count_of_antigens_received) >= eligible_vaccines
 
-    def _get_count_of_eligible_vaccines(self, age_in_days):
+    @staticmethod
+    def _get_count_of_eligible_vaccines(age_in_days):
         age_in_days = int(age_in_days)
         return len(list(
-            filter(lambda x: x > age_in_days, _get_vaccines_eligibilities_days())
+            filter(lambda x: age_in_days >= x, _get_vaccines_eligibilities_days())
         ))
 
 
