@@ -4,12 +4,12 @@
   class="progress mb-2"
   role="progressbar"
   aria-label="{% trans "Task progress" %}"
-  aria-valuenow="{{ session.percent_complete }}"
+  aria-valuenow="{{ weighted_percent_complete }}"
   aria-valuemin="0"
   aria-valuemax="100"
 >
   <div
     class="progress-bar bg-success"
-    style="width: {{ session.percent_complete }}%"
+    style="width: {{ weighted_percent_complete }}%"
   ></div>
 </div>

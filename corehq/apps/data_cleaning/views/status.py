@@ -39,6 +39,22 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     def is_session_in_progress(self):
         return self.session.committed_on is not None and self.seconds_since_complete < APPLY_CHANGES_WAIT_TIME
 
+    @property
+    def weighted_percent_complete(self):
+        """
+        This gives the user the illusion of progress while we artificially buffer the completion time.
+
+        The buffer allows the change feed to catch up to the form submissions,
+        so that the user doesn't refresh and see that their data hasn't updated due to a slow change feed.
+
+        TODO: update this buffer (APPLY_CHANGES_WAIT_TIME) dynamically based on change feed status.
+        """
+        if self.is_session_in_progress:
+            return int(0.9 * self.session.percent_complete + 10 * (
+                float(self.seconds_since_complete) / float(APPLY_CHANGES_WAIT_TIME)
+            ))
+        return self.session.percent_complete or 0
+
     def get_template_names(self):
         if self.is_session_in_progress:
             return [self.template_in_progress]
@@ -71,6 +87,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
             "case_type": self.session.identifier,
             "exit_url": self.exit_url,
             "is_task_complete": self.session.percent_complete == 100,
+            "weighted_percent_complete": self.weighted_percent_complete,
         })
         return context
 
