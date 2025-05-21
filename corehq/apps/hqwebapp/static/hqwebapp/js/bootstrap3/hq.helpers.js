@@ -163,7 +163,4 @@ define("hqwebapp/js/bootstrap3/hq.helpers", [
             xhr.withCredentials = true;
         },
     });
-
-    // Return something so that hqModules understands that the module has been defined
-    return 1;
 });
