@@ -156,7 +156,7 @@ class Command(BaseCommand):
 
 @memoized
 def _get_vaccines_eligibilities_days():
-    return _get_vaccines_eligibilities().values()
+    return list(_get_vaccines_eligibilities().values())
 
 
 def _get_vaccines_eligibilities():
