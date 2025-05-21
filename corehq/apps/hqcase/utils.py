@@ -1,8 +1,10 @@
 import datetime
 import uuid
+from types import EllipsisType
 from typing import Any, Optional
 from xml.etree import cElementTree as ElementTree
 
+from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy
 
@@ -21,6 +23,7 @@ from corehq.apps.export.const import (
 from corehq.apps.export.utils import get_deid_transform_function
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.dhis2.const import XMLNS_DHIS2
@@ -48,18 +51,18 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 
 def submit_case_blocks(
-    case_blocks,
-    domain,
-    username="system",
-    user_id=None,
-    xmlns=None,
-    attachments=None,
-    form_id=None,
+    case_blocks: str | list[str],
+    domain: str,
+    username: str = "system",
+    user_id: str | None = None,
+    xmlns: str | None = None,
+    attachments: dict[str, UploadedFile] | None = None,
+    form_id: str | None = None,
     submission_extras=None,
-    case_db=None,
-    device_id=None,
-    form_name=None,
-    max_wait=...,
+    case_db: AbstractCaseDbCache | None = None,
+    device_id: str | None = None,
+    form_name: str | None = None,
+    max_wait: float | None | EllipsisType = ...,
 ) -> tuple[XFormInstance, list[CommCareCase]]:
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
