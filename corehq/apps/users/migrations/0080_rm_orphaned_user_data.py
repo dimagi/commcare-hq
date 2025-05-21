@@ -5,7 +5,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 
 
 @skip_on_fresh_install
-def remove_orphaned_user_data():
+def remove_orphaned_user_data(apps, schema_editor):
     call_command('rm_orphaned_user_data')
 
 
