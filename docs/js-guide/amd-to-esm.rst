@@ -3,9 +3,7 @@ Updating Module Syntax from AMD to ESM
 
 Most javascript files are eligible for this update.
 
-See the `Historical Background on Module Patterns
-<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/module-history.rst>`__
-for a more detailed discussion of module types. As a quick refresher, here are some definitions:
+Here are some definitions:
 
 Modified AMD (Asynchronous Module Definition)
     The legacy module type used for older JavaScript modules on HQ, identified by having an ``hqDefine``
