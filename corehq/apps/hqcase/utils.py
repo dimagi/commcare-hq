@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from typing import Any, Optional
 from xml.etree import cElementTree as ElementTree
 
 from django.template.loader import render_to_string
@@ -19,7 +20,7 @@ from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.dhis2.const import XMLNS_DHIS2
 
 CASEBLOCK_CHUNKSIZE = 100
@@ -56,7 +57,7 @@ def submit_case_blocks(
     device_id=None,
     form_name=None,
     max_wait=...,
-):
+) -> tuple[XFormInstance, list[CommCareCase]]:
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -207,7 +208,16 @@ def update_case(
     )
 
 
-def bulk_update_cases(domain, case_changes, device_id, xmlns=None):
+CaseID = str
+CaseProperties = dict[str, Any]
+
+
+def bulk_update_cases(
+    domain: str,
+    case_changes: list[tuple[CaseID, Optional[CaseProperties], bool]],
+    device_id: str,
+    xmlns: Optional[str] = None,
+) -> tuple[XFormInstance, list[CommCareCase]]:
     """
     Updates or closes a list of cases (or both) by submitting a form.
     domain - the cases' domain

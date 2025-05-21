@@ -16,7 +16,10 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.submission_post import SubmissionPost
+from corehq.form_processor.submission_post import (
+    FormProcessingResult,
+    SubmissionPost,
+)
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
@@ -29,7 +32,14 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/".format(domain=domain)
 
 
-def submit_form_locally(instance, domain, max_wait=..., app_id=None, build_id=None, **kwargs):
+def submit_form_locally(
+    instance,
+    domain,
+    max_wait=...,
+    app_id=None,
+    build_id=None,
+    **kwargs,
+) -> FormProcessingResult:
     """
     :param instance: XML instance (as a string) to submit
     :param domain: The domain to submit the form to
