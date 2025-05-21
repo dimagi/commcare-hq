@@ -86,7 +86,7 @@ class Command(BaseCommand):
         total_count_of_cases_with_updates = 0
 
         doc_ids = with_progress_bar(
-            query.scroll_ids(),
+            query.get_ids(),
             query.count()
         )
         for chunk in chunked(doc_ids, CHUNK_SIZE, list):
