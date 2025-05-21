@@ -5,7 +5,7 @@
   * It does not yet support predefined date ranges, which are not natively supported in tempus dominus.
   * It also does not yet support a default date range.
   */
-hqDefine("hqwebapp/js/tempus_dominus", [
+define("hqwebapp/js/tempus_dominus", [
     'underscore',
     'popper',
     'tempusDominus',

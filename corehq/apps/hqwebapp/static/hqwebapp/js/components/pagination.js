@@ -30,7 +30,7 @@
  *  See releases_table.html for an example.
  */
 
-hqDefine('hqwebapp/js/components/pagination', [
+define('hqwebapp/js/components/pagination', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
