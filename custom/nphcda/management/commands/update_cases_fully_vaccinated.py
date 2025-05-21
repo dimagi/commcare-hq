@@ -15,6 +15,7 @@ from custom.abt.reports.fixture_utils import fixture_data_item_to_dict
 from custom.nphcda.consts import (
     DOMAIN,
     FULLY_VACCINATED_CASE_PROPERTY,
+    HOUSEHOLD_MEMBER_CASE_TYPE,
     VACCINE_SCHEDULE_TABLE_ID,
 )
 
@@ -98,7 +99,13 @@ class Command(BaseCommand):
     @staticmethod
     def _get_es_query():
         search_string = "fully_vaccinated ='' and household_member_type_display ='Under 5'"
-        return CaseSearchES().domain(DOMAIN).set_query({"query_string": {"query": search_string}})
+        return (
+            CaseSearchES().
+            domain(DOMAIN).
+            case_type(HOUSEHOLD_MEMBER_CASE_TYPE).
+            is_closed(False).
+            set_query({"query_string": {"query": search_string}})
+        )
 
     def _update_cases_chunk(self, case_ids):
         cases = CommCareCase.objects.get_cases(case_ids)
