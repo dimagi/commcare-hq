@@ -19,7 +19,7 @@ from custom.nphcda.consts import (
     VACCINE_SCHEDULE_TABLE_ID,
 )
 
-CHUNK_SIZE = 1000
+CHUNK_SIZE = 100
 logger = logging.getLogger(__name__)
 
 
