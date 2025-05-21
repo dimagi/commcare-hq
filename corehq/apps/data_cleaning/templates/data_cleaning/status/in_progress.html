@@ -4,7 +4,7 @@
 {% block htmx-attrs %}
   hx-get="{{ request.path_info }}"
   hx-swap="outerHTML"
-  hx-trigger="every 1s from:load"
+  hx-trigger="every 0.5s from:load"
   hq-hx-action="poll_session_status"
 {% endblock htmx-attrs %}
 
