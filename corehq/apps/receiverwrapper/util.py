@@ -210,7 +210,7 @@ class BuildVersionSource(object):
     NONE = object()
 
 
-AppVersionInfo = namedtuple('AppInfo', ['build_version', 'commcare_version', 'source'])
+AppVersionInfo = namedtuple('AppVersionInfo', ['build_version', 'commcare_version', 'source'])
 
 
 def get_app_version_info(domain, build_id, xform_version, xform_metadata):
