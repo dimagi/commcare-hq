@@ -42,15 +42,23 @@ def submit_form_locally(
     **kwargs,
 ) -> FormProcessingResult:
     """
+    Submit a form XML string
+
     :param instance: XML instance (as a string) to submit
     :param domain: The domain to submit the form to
-    :param max_wait: Maximum time (in seconds) to allow the process to be delayed if
-    the project is over its submission rate limit.
-    The value None means "do not throttle".
-    The special value ... (Ellipsis) means "The caller did not pass in a value".
-    (This was chosen because of the special meaning already assumed by None.)
+    :param max_wait: Maximum time (in seconds) to allow the process to
+        be delayed if the project is over its submission rate limit.
+        The value ``None`` means "do not throttle".
+        The special value ``...`` (Ellipsis) means "The caller did not
+        pass in a value". (This was chosen because of the special
+        meaning already assumed by ``None``.)
+    :param app_id: The ID of the application this form submission
+        belongs to
+    :param build_id: The ID of the build this form submission belongs to
+    :param kwargs: Additional arguments to pass to SubmissionPost
+    :return: FormProcessingResult object containing processing results
+        and response
     """
-
     if max_wait is ...:
         max_wait = 0.1
     if max_wait is not None:
