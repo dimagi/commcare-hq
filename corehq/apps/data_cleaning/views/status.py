@@ -114,10 +114,12 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
         new_session = self.session.get_resumed_session()
 
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
+        new_session_url = reverse(
+            BulkEditCasesSessionView.urlname,
+            args=(self.domain, new_session.session_id),
+        )
+        query_string = request.META.get('QUERY_STRING', '')
         return self.render_htmx_redirect(
-            reverse(
-                BulkEditCasesSessionView.urlname,
-                args=(self.domain, new_session.session_id),
-            ),
+            f"{new_session_url}?{query_string}",
             response_message=_("Resuming Bulk Edit Session..."),
         )

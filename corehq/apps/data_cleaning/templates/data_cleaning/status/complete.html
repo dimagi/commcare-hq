@@ -1,5 +1,6 @@
 {% extends "data_cleaning/status/base_modal_body.html" %}
 {% load i18n %}
+{% load django_tables2 %}
 
 {% block modal-header %}
   {% trans "Changes Applied" %}
@@ -42,7 +43,7 @@
   <button
     type="button"
     class="btn btn-primary"
-    hx-post="{{ request.path_info }}"
+    hx-post="{{ request.path_info }}{% querystring %}"
     hq-hx-action="resume_session"
     hx-swap="none"
     hx-disabled-elt="this"
