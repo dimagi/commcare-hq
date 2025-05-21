@@ -37,7 +37,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
 
     @property
     def is_session_in_progress(self):
-        return self.seconds_since_complete < APPLY_CHANGES_WAIT_TIME
+        return self.session.committed_on is not None and self.seconds_since_complete < APPLY_CHANGES_WAIT_TIME
 
     def get_template_names(self):
         if self.is_session_in_progress:
