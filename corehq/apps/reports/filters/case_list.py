@@ -37,6 +37,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     label = _("Case Owner(s)")
     slug = 'case_list_filter'
     options_url = 'case_list_options'
+    default_selections = None   # Can be overridden by subclasses
     placeholder = _("Add case owners to filter this report.")
 
     @property
@@ -83,6 +84,8 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
 
     def get_default_selections(self):
         if self.request.can_access_all_locations:
+            if self.default_selections:
+                return self.default_selections
             return [('project_data', _("[Project Data]")), self.utils.user_type_tuple(HQUserType.WEB)]
         else:
             return self._get_assigned_locations_default()
