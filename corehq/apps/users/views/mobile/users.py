@@ -28,6 +28,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from oauth2_provider.models import AccessToken, RefreshToken
 
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
@@ -921,6 +922,14 @@ def set_personalid_link_status(request, domain, username):
     connect_link = ConnectIDUserLink.objects.get(commcare_user__username=complete_username)
     connect_link.is_active = (is_active == 'true')
     connect_link.save()
+    if not connect_link.is_active:
+        user = connect_link.commcare_user
+        tokens = list(AccessToken.objects.filter(user=user)) + list(
+            RefreshToken.objects.filter(user=user)
+        )
+        for token in tokens:
+            token.revoke()
+
     return HttpResponse(status=200)
 
 
