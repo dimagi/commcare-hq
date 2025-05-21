@@ -1,3 +1,4 @@
+import builtins
 import datetime
 import uuid
 from typing import Any, Optional, Union
@@ -58,7 +59,7 @@ def submit_case_blocks(
     case_db: Optional[AbstractCaseDbCache] = None,
     device_id: Optional[str] = None,
     form_name: Optional[str] = None,
-    max_wait: Union[Ellipsis, None, int] = ...,
+    max_wait: Union[builtins.ellipsis, None, float] = ...,
 ) -> tuple[XFormInstance, list[CommCareCase]]:
     """
     Submits casexml in a manner similar to how they would be submitted

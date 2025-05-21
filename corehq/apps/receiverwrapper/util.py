@@ -1,7 +1,8 @@
+import builtins
 import json
 import re
 from collections import namedtuple
-from typing import Optional, Union, Protocol
+from typing import Optional, Protocol, Union
 
 from django.conf import settings
 from django.http import Http404
@@ -41,7 +42,7 @@ def get_submit_url(domain, app_id=None):
 def submit_form_locally(
     instance: str,
     domain: str,
-    max_wait: Union[Ellipsis, None, int] = ...,
+    max_wait: Union[builtins.ellipsis, None, float] = ...,
     app_id: Optional[str] = None,
     build_id: Optional[str] = None,
     *,
@@ -207,7 +208,7 @@ class BuildVersionSource(object):
     NONE = object()
 
 
-AppVersionInfo = namedtuple('AppInfo', ['build_version', 'commcare_version', 'source'])
+AppVersionInfo = namedtuple('AppVersionInfo', ['build_version', 'commcare_version', 'source'])
 
 
 def get_app_version_info(domain, build_id, xform_version, xform_metadata):
