@@ -1575,7 +1575,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             messages.error(
                 request, _(
                     "You have already scheduled a downgrade to the %(software_plan_name)s Software Plan on "
-                    "%(downgrade_date)s. If this is a mistake, please reach out to %(contact_email)."
+                    "%(downgrade_date)s. If this is a mistake, please reach out to %(contact_email)s."
                 ) % {
                     'software_plan_name': software_plan_name,
                     'downgrade_date': downgrade_date,
