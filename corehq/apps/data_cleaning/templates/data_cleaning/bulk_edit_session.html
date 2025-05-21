@@ -41,10 +41,9 @@
     </div>
   </div>
   <div
-    id="primary-view-container"
     class="mx-3"
     hx-get="{{ htmx_primary_view_url }}{% querystring %}"
-    hx-trigger="load, statusRefresh"
+    hx-trigger="load"
     hx-swap="innerHTML"
   >
     <div class="htmx-indicator">

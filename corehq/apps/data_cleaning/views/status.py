@@ -86,16 +86,8 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
 
     @hq_hx_action('get')
     def poll_session_status(self, request, *args, **kwargs):
-        # we call super() to avoid the default behavior of this view
-        # which is to trigger the session status modal
-        response = super().get(request, *args, **kwargs)
-        if self.session.completed_on is not None:
-            response['HX-Trigger'] = json.dumps({
-                'statusRefresh': {
-                    'target': '#primary-view-container',
-                },
-            })
-        return response
+        # we call super() to avoid triggering "showDataCleaningModal" again
+        return super().get(request, *args, **kwargs)
 
     @hq_hx_action('post')
     def resume_session(self, request, *args, **kwargs):
