@@ -20,22 +20,19 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
     )
 elif settings.ELASTICSEARCH_MAJOR_VERSION == 6:
     import elasticsearch6 as elasticsearch
-    from elasticsearch6.exceptions import AuthorizationException
     from elasticsearch6 import (
-        ConnectionError,
         ConflictError,
+        ConnectionError,
         ConnectionTimeout,
         Elasticsearch,
         ElasticsearchException,
         NotFoundError,
+        RequestError,
         SerializationError,
         TransportError,
-        RequestError,
     )
-    from elasticsearch6.client import (
-        IndicesClient,
-        SnapshotClient,
-    )
+    from elasticsearch6.client import IndicesClient, SnapshotClient
+    from elasticsearch6.exceptions import AuthorizationException
     from elasticsearch6.helpers import BulkIndexError, bulk
 else:
     raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 5 or 6, given {}".format(
