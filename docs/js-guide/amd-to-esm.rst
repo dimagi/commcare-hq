@@ -83,7 +83,8 @@ Key Points
 Automation
 ~~~~~~~~~~
 
-As a first step, you can run the `hqdefine_to_esm <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/hqdefine_to_esm.py>`__
+As a first step, you can run the `amd_to_esm
+<https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/amd_to_esm.py>`__
 management command, which will rewrite the file in place, replacing the ``hqDefine`` call with a series of
 ``import`` statements.
 
