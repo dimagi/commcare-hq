@@ -982,10 +982,18 @@ class DataSourceRepeater(Repeater):
         """
         doc_ids = set()
         for waiting_record in self.repeat_records_ready.all():
-            # We can just fetch all repeat records, because they're all
-            # for the same data source.
-            waiting_record.cancel()  # Cancel to avoid race condition
-            waiting_record.save()
+            # We can just fetch all waiting repeat records, because
+            # they're all for the same data source. (We don't expect
+            # more than one.) Instead of possibly updating its payload
+            # while it's being sent, rather delete it, and update this
+            # payload.
+            #
+            # If the PROCESS_REPEATERS toggle is disabled, then
+            # `super().register()` will attempt to send this payload
+            # immediately; if enabled, then it will be sent when
+            # waiting_record would have been sent. Either way, this
+            # change will not delay sending the payload.
+            waiting_record.delete()
             waiting_payload = DataSourceUpdate.objects.get(pk=waiting_record.payload_id)
             doc_ids |= set(waiting_payload.doc_ids)
         if doc_ids:

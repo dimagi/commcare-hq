@@ -1357,7 +1357,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
     def test_duplicate_repeat_records(self):
         doc_id1, __ = self._create_payload()
         doc_id2, __ = self._create_payload()
-        repeat_records = self.repeater.repeat_records_ready.all()
+        repeat_records = self.repeater.repeat_records.all()
         assert len(repeat_records) == 1
         payload = json.loads(repeat_records[0].get_payload())
         assert payload['doc_id'] == ''
