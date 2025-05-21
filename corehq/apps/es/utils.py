@@ -207,13 +207,11 @@ def get_user_domain_memberships(user):
 
 def populate_user_domain_memberships():
     from corehq.apps.es.users import UserES, user_adapter
-    user_ids = UserES().get_ids()
 
-    for user in user_adapter.iter_docs(user_ids):
+    for user in UserES().scroll_ids_to_disk_and_iter_docs():
         memberships = get_user_domain_memberships(user)
-        if memberships:
-            user_adapter.update(
-                user['_id'],
-                {'user_domain_memberships': memberships},
-                refresh=True
-            )
+        user_adapter.update(
+            user['_id'],
+            {'user_domain_memberships': memberships},
+            refresh=True
+        )

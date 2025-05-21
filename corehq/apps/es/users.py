@@ -109,8 +109,7 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict.pop('password', None)
 
         memberships = get_user_domain_memberships(user_dict)
-        if memberships:
-            user_dict['user_domain_memberships'] = memberships
+        user_dict['user_domain_memberships'] = memberships
 
         if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
@@ -236,14 +235,17 @@ def role_id(role_id):
 
 
 def is_active(active=True, domain=None):
+    user_active_filter = filters.term("is_active", active)
     if not domain:
-        return filters.term("is_active", active)
+        return user_active_filter
     if active:
+        and_or = filters.AND
         domain_membership_filter = filters.NOT(filters.term("user_domain_memberships.is_active", False))
     else:
+        and_or = filters.OR
         domain_membership_filter = filters.term("user_domain_memberships.is_active", False)
-    return filters.AND(
-        web_users(),
+    return and_or(
+        user_active_filter,
         queries.nested(
             'user_domain_memberships',
             filters.AND(
