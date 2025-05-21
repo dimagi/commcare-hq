@@ -112,6 +112,8 @@ class Command(BaseCommand):
         for case in cases:
             _updates = self._case_property_updates_for_case(case)
             if _updates:
+                if not self.real_run:
+                    logger.info(f"{case.case_id}: {_updates}")
                 case_updates[case.case_id] = _updates
         if self.real_run:
             try:
