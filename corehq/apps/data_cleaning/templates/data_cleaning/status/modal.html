@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load django_tables2 %}
 
 <div
   id="session-status-modal"
@@ -13,8 +14,11 @@
     <div
       class="modal-content"
       id="session-status-modal-body"
-      hx-get="{{ htmx_session_status_view_url }}"
-      hx-trigger="{% if session.is_read_only %}load, {% endif %}dcRefreshStatusModal"
+      hx-get="{{ htmx_session_status_view_url }}{% querystring %}"
+      hx-trigger="
+        {% if session.is_read_only %}load,{% endif %}
+        dcRefreshStatusModal
+      "
       hx-swap="innerHTML"
     ></div>
   </div>
