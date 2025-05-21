@@ -2409,6 +2409,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         return web_user
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
+        # delete soft deleted user data to prevent conflict with new user data
+        SQLUserData.all_objects.filter(user_id=self.user_id, domain=domain, deleted_on__isnull=False).delete()
         if TABLEAU_USER_SYNCING.enabled(domain):
             from corehq.apps.reports.util import add_tableau_user
             add_tableau_user(domain, self.username)
@@ -2420,7 +2422,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if TABLEAU_USER_SYNCING.enabled(domain):
             from corehq.apps.reports.util import delete_tableau_user
             delete_tableau_user(domain, self.username)
-        return super().delete_domain_membership(domain, create_record=create_record)
+        record = super().delete_domain_membership(domain, create_record=create_record)
+        SQLUserData.objects.filter(user_id=self.user_id, domain=domain).update(deleted_on=datetime.now(tz.utc))
+        if domain in self._user_data_accessors.keys():
+            del self._user_data_accessors[domain]
+        return record
 
     def is_commcare_user(self):
         return False
@@ -2886,6 +2892,7 @@ class DomainRemovalRecord(DeleteRecord):
     domain_membership = SchemaProperty(DomainMembership)
 
     def undo(self):
+        SQLUserData.all_objects.filter(user_id=self.user_id, domain=self.domain).update(deleted_on=None)
         user = WebUser.get_by_user_id(self.user_id)
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
