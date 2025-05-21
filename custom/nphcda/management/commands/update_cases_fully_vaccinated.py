@@ -95,7 +95,8 @@ class Command(BaseCommand):
         logger.info(f"Total cases with updates: {total_count_of_cases_with_updates}")
 
     def _get_es_query(self):
-        search_string = "household_member_type = 'under_5' and age_in_months < 60 and fully_vaccinated =''"
+        search_string = ("household_member_type = 'under_5' and age_in_months < 60 and fully_vaccinated ='' "
+                         "and antigens_received !=''")
         query = (
             CaseSearchES().
             domain(DOMAIN).
@@ -129,17 +130,22 @@ class Command(BaseCommand):
     def _case_property_updates_for_case(self, case):
         case_property_updates = {}
         age_in_days = case.get_case_property('age_in_days')
-        count_of_selected_vaccines = case.get_case_property('count_of_selected_antigens')
-        if age_in_days and count_of_selected_vaccines:
-            if self._case_fully_vaccinated(age_in_days, count_of_selected_vaccines):
+        # space separated antigen ids
+        antigens_received = case.get_case_property('antigens_received')
+        if antigens_received:
+            count_of_antigens_received = len(antigens_received.split(' '))
+        else:
+            count_of_antigens_received = 0
+        if age_in_days and count_of_antigens_received:
+            if self._case_fully_vaccinated(age_in_days, count_of_antigens_received):
                 case_property_updates = {FULLY_VACCINATED_CASE_PROPERTY: 1}
             else:
                 case_property_updates = {FULLY_VACCINATED_CASE_PROPERTY: 0}
         return case_property_updates
 
-    def _case_fully_vaccinated(self, age_in_days, count_of_selected_vaccines):
+    def _case_fully_vaccinated(self, age_in_days, count_of_antigens_received):
         eligible_vaccines = self._get_count_of_eligible_vaccines(age_in_days)
-        return int(count_of_selected_vaccines) >= eligible_vaccines
+        return int(count_of_antigens_received) >= eligible_vaccines
 
     def _get_count_of_eligible_vaccines(self, age_in_days):
         age_in_days = int(age_in_days)
