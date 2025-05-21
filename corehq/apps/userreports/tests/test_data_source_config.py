@@ -395,8 +395,6 @@ class DataSourceConfigurationTests(TestCase):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
 
-@patch('corehq.apps.userreports.models.DataSourceBuildInformation.rebuild_failed',
-       MagicMock(return_value=None))
 class DataSourceConfigurationRebuildTests(TestCase):
 
     def setUp(self):
@@ -407,9 +405,6 @@ class DataSourceConfigurationRebuildTests(TestCase):
         )
         self.config.save()
         self.addCleanup(self.config.delete)
-
-    def test_rebuild_failed(self):
-        assert self.config.rebuild_failed is None
 
     def test_set_build_not_required(self):
         self.config.set_build_not_required()
@@ -422,26 +417,6 @@ class DataSourceConfigurationRebuildTests(TestCase):
         assert self.config.meta.build.awaiting is True
         assert self.config.meta.build.initiated is None
         assert self.config.meta.build.finished is False
-
-    def test_build_not_required(self):
-        self.config.set_build_not_required()
-        assert self.config.rebuild_awaiting_or_in_progress is None
-
-    def test_build_queued(self):
-        self.config.set_build_queued()
-        assert self.config.rebuild_awaiting_or_in_progress is True
-
-    def test_build_initiated(self):
-        self.config.meta.build.awaiting = False
-        self.config.meta.build.initiated = datetime.datetime.now()
-        self.config.meta.build.finished = False
-        assert self.config.rebuild_awaiting_or_in_progress is True
-
-    def test_build_finished(self):
-        self.config.meta.build.awaiting = False
-        self.config.meta.build.initiated = datetime.datetime.now()
-        self.config.meta.build.finished = True
-        assert self.config.rebuild_awaiting_or_in_progress is None
 
     def test_rebuild_flag_for_missing_table(self):
         assert self.config.meta.build.awaiting is False
