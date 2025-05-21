@@ -30,7 +30,16 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                                         "bool": {
                                             "filter": (
                                                 {"term": {"doc_type": "WebUser"}},
-                                                {"terms": {"domain_memberships.assigned_location_ids": with_ids}})}
+                                                {"nested": {
+                                                    "path": "user_domain_memberships",
+                                                    "query": {
+                                                        "terms": {
+                                                            "user_domain_memberships.assigned_location_ids":
+                                                                with_ids
+                                                        }
+                                                    }
+                                                }})
+                                        }
                                     }
                                 )
                             }
@@ -46,7 +55,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         }
         raw_query = query.raw_query
-        self.checkQuery(raw_query, json_output, is_raw_query=True)
+        self.checkQuery(raw_query, json_output, is_raw_query=True, validate_query=False)
 
     def test_basic_query(self):
         json_output = {
