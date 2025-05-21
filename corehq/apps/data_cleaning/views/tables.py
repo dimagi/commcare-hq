@@ -251,11 +251,7 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
     def _get_active_record(self, session):
         return {
             "is_active": True,
-            "committed_on": "--",
-            "completed_on": "--",
             "case_type": session.identifier,
-            "case_count": "--",
             "percent": 0,
-            "has_form_ids": False,
             "session_url": self._get_session_url(session),
         }
