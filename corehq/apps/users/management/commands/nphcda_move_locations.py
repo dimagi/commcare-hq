@@ -31,6 +31,9 @@ code_to_location_id = {
 }
 location_cache: dict[str, SQLLocation] = {}
 
+verbose = False
+dry_run = False
+
 
 class SheetProto(Protocol):
     """
@@ -66,6 +69,9 @@ class Settlement(NamedTuple):
     ward_name: str
     settlement_name: str
     location_id: Optional[str]  # location_id is None for new locations
+
+    def __str__(self):
+        return self.settlement_name
 
     def get_location(self, domain: str) -> SQLLocation:
         state_code = self.get_state_code()
@@ -132,9 +138,13 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('-c', '--input-csv', type=str)
         parser.add_argument('-x', '--input-xls', type=str)
+        parser.add_argument('--verbose', action='store_true')
         parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, domain, *args, **options):
+        global verbose
+        global dry_run
+
         if not only_one(
             options['input_csv'],
             options['input_xls'],
@@ -147,11 +157,14 @@ class Command(BaseCommand):
         else:
             raise CommandError('Must specify either input-csv or input-xls')
 
-        with submit_case_block_coro(domain, options['dry_run']) as submit_case_block:
+        verbose = options['verbose']
+        dry_run = options['dry_run']
+
+        with submit_case_block_coro(domain) as submit_case_block:
             for old_settlement, new_settlement in all_settlement_pairs:
                 if location_exists(domain, new_settlement):
                     for user in iter_users(domain, old_settlement.location_id):
-                        assign_settlement(domain, user, new_settlement, options['dry_run'])
+                        assign_settlement(domain, user, new_settlement)
                     cases = iter_cases(domain, old_settlement.location_id)
                     for case_block in move_cases_caseblocks(
                         domain,
@@ -160,9 +173,9 @@ class Command(BaseCommand):
                         new_settlement,
                     ):
                         submit_case_block.send(case_block)
-                    delete_location(domain, old_settlement.location_id, options['dry_run'])
+                    delete_location(domain, old_settlement.location_id)
                 else:
-                    move_settlement(domain, old_settlement, new_settlement, options['dry_run'])
+                    move_settlement(domain, old_settlement, new_settlement)
                     cases = iter_cases(domain, old_settlement.location_id)
                     for case_block in update_cases_caseblocks(
                         domain,
@@ -294,7 +307,9 @@ def select_location(
     )
 
 
-def delete_location(domain: str, location_id: str, dry_run: bool) -> None:
+def delete_location(domain: str, location_id: str) -> None:
+    if verbose:
+        print(f'Deleting location {location_id}')
     if not dry_run:
         SQLLocation.objects.get(domain=domain, location_id=location_id).delete()
 
@@ -318,11 +333,12 @@ def assign_settlement(
     domain: str,
     user: CommCareUser,
     settlement: Settlement,
-    dry_run: bool,
 ) -> None:
     """
     Add settlement to user's assigned locations.
     """
+    if verbose:
+        print(f'Assigning {user.raw_username} to {settlement}')
     location = settlement.get_location(domain)
     if not dry_run:
         user.add_to_assigned_locations(location)
@@ -334,7 +350,6 @@ def move_settlement(
     domain: str,
     old_settlement: Settlement,
     new_settlement: Settlement,
-    dry_run: bool,
 ) -> None:
     """
     Rename a settlement and/or move it to a new parent location.
@@ -342,6 +357,8 @@ def move_settlement(
     location = get_location_by_id(domain, old_settlement.location_id)
     if new_settlement.settlement_name != old_settlement.settlement_name:
         # Rename settlement
+        if verbose:
+            print(f'Renaming {old_settlement} to {new_settlement}')
         location.name = new_settlement.settlement_name
 
     if (
@@ -349,6 +366,9 @@ def move_settlement(
         or new_settlement.ward_name != old_settlement.ward_name
     ):
         # Move settlement to new parent location
+        if verbose:
+            print(f'Moving {new_settlement} to {new_settlement.lga_name}, '
+                  f'{new_settlement.ward_name}')
         state_code = new_settlement.get_state_code()
         state = get_location_by_code(domain, state_code, COUNTRY_ID)
         lga_code = new_settlement.get_lga_code()
@@ -537,7 +557,7 @@ def coro_as_context(func):
 
 
 @coro_as_context
-def submit_case_block_coro(domain: str, dry_run: bool) -> Generator[None, str, None]:
+def submit_case_block_coro(domain: str) -> Generator[None, str, None]:
     """
     Accepts case blocks and submits them in chunks of CASE_BLOCK_COUNT
     """
@@ -549,12 +569,14 @@ def submit_case_block_coro(domain: str, dry_run: bool) -> Generator[None, str, N
             if len(case_blocks) >= CASEBLOCK_CHUNKSIZE:
                 chunk = case_blocks[:CASEBLOCK_CHUNKSIZE]
                 case_blocks = case_blocks[CASEBLOCK_CHUNKSIZE:]
-                # print(f'Moving {len(chunk)} cases')
+                if verbose:
+                    print(f'Updating {len(chunk)} cases')
                 if not dry_run:
                     submit_case_blocks(chunk, domain, device_id=__name__)
     except GeneratorExit:
         if case_blocks:
-            # print(f'Moving {len(case_blocks)} cases')
+            if verbose:
+                print(f'Updating {len(case_blocks)} cases')
             if not dry_run:
                 submit_case_blocks(case_blocks, domain, device_id=__name__)
 
