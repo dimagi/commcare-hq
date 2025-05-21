@@ -51,19 +51,23 @@ def test_submit_case_block_coro():
         'corehq.apps.users.management.commands.nphcda_move_locations'
         '.submit_case_blocks'
     ) as mock_submit:
-
-        with submit_case_block_coro('test-domain', dry_run=False) as submit_case_block:
-            for i in range(CASEBLOCK_CHUNKSIZE + 1):
+        chunk_size = 10
+        with submit_case_block_coro(
+            chunk_size,
+            'test-domain',
+            username='foo@bar.baz'
+        ) as submit_case_block:
+            for i in range(chunk_size + 1):
                 submit_case_block.send(f'case_block_{i}')
 
             assert mock_submit.call_count == 1
-            assert len(mock_submit.call_args[0][0]) == CASEBLOCK_CHUNKSIZE
+            assert len(mock_submit.call_args[0][0]) == chunk_size
 
         assert mock_submit.call_count == 2
         assert mock_submit.call_args == call(
-            [f'case_block_{CASEBLOCK_CHUNKSIZE}'],
+            [f'case_block_{chunk_size}'],
             'test-domain',
-            device_id='corehq.apps.users.management.commands.nphcda_move_locations'
+            username='foo@bar.baz'
         )
 
 

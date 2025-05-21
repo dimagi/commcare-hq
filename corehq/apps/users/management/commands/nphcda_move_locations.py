@@ -17,11 +17,12 @@ import xlrd
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.es import CaseES, UserES
-from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 
+CASEBLOCK_CHUNKSIZE = 500
 COUNTRY_ID = '8a5dd963b891448f87edbe8edb8dfc69'
 
 code_to_location_id = {
@@ -160,7 +161,11 @@ class Command(BaseCommand):
         verbose = options['verbose']
         dry_run = options['dry_run']
 
-        with submit_case_block_coro(domain) as submit_case_block:
+        with submit_case_block_coro(
+            CASEBLOCK_CHUNKSIZE,
+            domain,
+            device_id=__name__
+        ) as submit_case_block:
             for old_settlement, new_settlement in all_settlement_pairs:
                 if location_exists(domain, new_settlement):
                     for user in iter_users(domain, old_settlement.location_id):
@@ -557,28 +562,28 @@ def coro_as_context(func):
 
 
 @coro_as_context
-def submit_case_block_coro(domain: str) -> Generator[None, str, None]:
+def submit_case_block_coro(chunk_size: int, *args, **kwargs) -> Generator[None, str, None]:
     """
-    Accepts case blocks and submits them in chunks of CASE_BLOCK_COUNT
+    Accepts case blocks and submits them in chunks of chunk_size
     """
     case_blocks = []
     try:
         while True:
             case_block = yield
             case_blocks.append(case_block)
-            if len(case_blocks) >= CASEBLOCK_CHUNKSIZE:
-                chunk = case_blocks[:CASEBLOCK_CHUNKSIZE]
-                case_blocks = case_blocks[CASEBLOCK_CHUNKSIZE:]
+            if len(case_blocks) >= chunk_size:
+                chunk = case_blocks[:chunk_size]
+                case_blocks = case_blocks[chunk_size:]
                 if verbose:
                     print(f'Updating {len(chunk)} cases')
                 if not dry_run:
-                    submit_case_blocks(chunk, domain, device_id=__name__)
+                    submit_case_blocks(chunk, *args, **kwargs)
     except GeneratorExit:
         if case_blocks:
             if verbose:
                 print(f'Updating {len(case_blocks)} cases')
             if not dry_run:
-                submit_case_blocks(case_blocks, domain, device_id=__name__)
+                submit_case_blocks(case_blocks, *args, **kwargs)
 
 
 def loc_str(location: SQLLocation) -> str:
