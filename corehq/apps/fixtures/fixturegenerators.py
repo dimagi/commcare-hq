@@ -178,9 +178,9 @@ class ItemListsProvider(FixtureProvider):
                 if data is None:
                     record_datadog_metric('generate', key)
                     items = self._get_global_items(global_type, domain)
-                    io_data = write_fixture_items_to_io(items)
-                    data = io_data.getvalue()
-                    cache_fixture_items_data(io_data, domain, '', key)
+                    with write_fixture_items_to_io(items) as io_data:
+                        data = io_data.getvalue()
+                        cache_fixture_items_data(io_data, domain, '', key)
 
         global_id = GLOBAL_USER_ID.encode('utf-8')
         b_user_id = user_id.encode('utf-8')

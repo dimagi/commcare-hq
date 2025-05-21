@@ -1,0 +1,16 @@
+# This file is meant to be customized for personal development environments.
+# Feel free make a copy without the .sample extension to use locally.
+# requirements/local.txt ignored by git, so you will not be prompted to
+# (nor should you) commit it.
+#
+# Run this one-liner to keep your virtualenv up to date:
+#
+#   uv sync --compile-bytecode && uv pip install -r requirements/local.txt
+#
+# Adjust dependencies below as desired.
+
+django-debug-toolbar
+pdbpp
+
+# TODO find a better way that does not remove local dependencies when
+# `uv sync` is run.

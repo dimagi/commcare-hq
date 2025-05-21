@@ -8,7 +8,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Commcare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-02 16:52+0000\n"
 "PO-Revision-Date: 2025-05-02 16:52+0000\n"
 "Last-Translator: Amit Phulera by OpenAI <devops@dimagi.com>\n"
 "Language-Team: Arabic (http://app.transifex.com/dimagi/commcare-hq/language/ara/)\n"
@@ -729,6 +728,8 @@ msgid "You have unchanged user properties settings"
 msgstr "لديك إعدادات خصائص المستخدم غير معدلة"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "Property uses unrecognized prefix <strong>"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "الخاصية تستخدم بادئة غير معروفة <strong>"
 
@@ -959,7 +960,6 @@ msgid "Question"
 msgstr "السؤال"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "الاسم"
 
@@ -2710,62 +2710,6 @@ msgstr "أدخل الأمر"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Command Bar"
 msgstr "شريط الأوامر"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Module ID"
-msgstr "معرّف الوحدة"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Description"
-msgstr "الوصف"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Time Estimate"
-msgstr "تقدير الوقت"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be an integer"
-msgstr "يجب أن يكون عددًا صحيحًا"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Estimated time to complete the module in hours."
-msgstr "الوقت المقدر لإكمال الوحدة بالساعات."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Assessment ID"
-msgstr "معرّف التقييم"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User Score"
-msgstr "نتيجة المستخدم"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the users assessment score."
-msgstr "تعبير XPath لنتيجة تقييم المستخدم."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Delivery Unit ID"
-msgstr "معرّف وحدة التسليم"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity ID"
-msgstr "معرّف الكيان"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the entity ID associated with this Delivery Unit e.g. "
-"the case ID."
-msgstr "تعبير XPath لمعرّف الكيان المرتبط بوحدة التسليم هذه مثل معرّف الحالة."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity Name"
-msgstr "اسم الكيان"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the name of the entity associated with this Delivery "
-"Unit."
-msgstr "تعبير XPath لاسم الكيان المرتبط بوحدة التسليم هذه."
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -5634,16 +5578,6 @@ msgstr "فشل في جلب المحاولات"
 msgid "Failed to fetch payload"
 msgstr "فشل في جلب الحمولة"
 
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to send"
-msgstr "فشل في الإرسال"
-
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to cancel"
-msgstr "فشل في الإلغاء"
-
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
 msgstr "اسم المستخدم"
@@ -5675,3 +5609,52 @@ msgstr "فشل! الاستجابة هي: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
+
+#~ msgid "Module ID"
+#~ msgstr "معرّف الوحدة"
+
+#~ msgid "Description"
+#~ msgstr "الوصف"
+
+#~ msgid "Time Estimate"
+#~ msgstr "تقدير الوقت"
+
+#~ msgid "Must be an integer"
+#~ msgstr "يجب أن يكون عددًا صحيحًا"
+
+#~ msgid "Estimated time to complete the module in hours."
+#~ msgstr "الوقت المقدر لإكمال الوحدة بالساعات."
+
+#~ msgid "Assessment ID"
+#~ msgstr "معرّف التقييم"
+
+#~ msgid "User Score"
+#~ msgstr "نتيجة المستخدم"
+
+#~ msgid "XPath expression for the users assessment score."
+#~ msgstr "تعبير XPath لنتيجة تقييم المستخدم."
+
+#~ msgid "Delivery Unit ID"
+#~ msgstr "معرّف وحدة التسليم"
+
+#~ msgid "Entity ID"
+#~ msgstr "معرّف الكيان"
+
+#~ msgid ""
+#~ "XPath expression for the entity ID associated with this Delivery Unit e.g. "
+#~ "the case ID."
+#~ msgstr "تعبير XPath لمعرّف الكيان المرتبط بوحدة التسليم هذه مثل معرّف الحالة."
+
+#~ msgid "Entity Name"
+#~ msgstr "اسم الكيان"
+
+#~ msgid ""
+#~ "XPath expression for the name of the entity associated with this Delivery "
+#~ "Unit."
+#~ msgstr "تعبير XPath لاسم الكيان المرتبط بوحدة التسليم هذه."
+
+#~ msgid "Failed to send"
+#~ msgstr "فشل في الإرسال"
+
+#~ msgid "Failed to cancel"
+#~ msgstr "فشل في الإلغاء"

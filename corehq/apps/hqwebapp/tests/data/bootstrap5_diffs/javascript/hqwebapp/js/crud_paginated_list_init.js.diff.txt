@@ -1,13 +1,11 @@
 --- 
 +++ 
-@@ -1,8 +1,8 @@
--hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list_init", [
-+hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list_init", [
-     "jquery",
-     "knockout",
-     "hqwebapp/js/initial_page_data",
--    "hqwebapp/js/bootstrap3/crud_paginated_list",
-+    "hqwebapp/js/bootstrap5/crud_paginated_list",
-     "commcarehq",
- ], function (
-     $,
+@@ -2,7 +2,7 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import CRUDPaginatedList from "hqwebapp/js/bootstrap3/crud_paginated_list";
++import CRUDPaginatedList from "hqwebapp/js/bootstrap5/crud_paginated_list";
+ 
+ var paginatedListModel = CRUDPaginatedList.CRUDPaginatedListModel(
+     initialPageData.get('total'),

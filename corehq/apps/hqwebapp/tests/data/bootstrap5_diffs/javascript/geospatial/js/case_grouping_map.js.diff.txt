@@ -1,20 +1,17 @@
 --- 
 +++ 
-@@ -1,13 +1,13 @@
--hqDefine("geospatial/js/bootstrap3/case_grouping_map", [
-+hqDefine("geospatial/js/bootstrap5/case_grouping_map", [
-     "jquery",
-     "knockout",
-     'underscore',
-     'hqwebapp/js/initial_page_data',
--    'hqwebapp/js/bootstrap3/alert_user',
--    'geospatial/js/bootstrap3/models',
-+    'hqwebapp/js/bootstrap5/alert_user',
-+    'geospatial/js/bootstrap5/models',
-     'geospatial/js/utils',
-     'mapbox-gl/dist/mapbox-gl',
--    'reports/js/bootstrap3/base',
-+    'reports/js/bootstrap5/base',
-     'hqwebapp/js/select2_knockout_bindings.ko',
-     'commcarehq',
- ], function (
+@@ -3,11 +3,11 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
+-import models from "geospatial/js/bootstrap3/models";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
++import models from "geospatial/js/bootstrap5/models";
+ import utils from "geospatial/js/utils";
+ import mapboxgl from "mapbox-gl/dist/mapbox-gl";
+-import "reports/js/bootstrap3/base";
++import "reports/js/bootstrap5/base";
+ import "hqwebapp/js/select2_knockout_bindings.ko";
+ 
+ 

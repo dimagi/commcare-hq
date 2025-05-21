@@ -21,8 +21,8 @@ class BaseFilterFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
     pass
 
 
-class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
-    urlname = "data_cleaning_pinned_filter_form"
+class ManagePinnedFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
+    urlname = "bulk_edit_pinned_filters"
     template_name = "data_cleaning/forms/pinned_filter_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve pinned filters, session was not found.")
 
@@ -61,17 +61,17 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         return context
 
 
-class ManageFiltersFormView(BulkEditSessionViewMixin, BaseFilterFormView):
-    urlname = "data_cleaning_manage_filters"
+class ManageFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
+    urlname = "bulk_edit_manage_filters"
     template_name = "data_cleaning/forms/manage_filters_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve filters, session was not found.")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, filter_form=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'manage-filters',
             'active_filters': self.session.filters.all(),
-            'add_filter_form': kwargs.pop('filter_form', None) or AddFilterForm(self.session),
+            'add_filter_form': filter_form or AddFilterForm(self.session),
         })
         return context
 

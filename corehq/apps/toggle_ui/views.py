@@ -54,6 +54,10 @@ class ToggleListView(BasePageView):
     page_title = "Feature Flags"
     template_name = 'toggle/flags.html'
 
+    @method_decorator(require_superuser_or_contractor)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ToggleListView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_url(self):
         return reverse(self.urlname)

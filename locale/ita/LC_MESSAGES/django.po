@@ -8,7 +8,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Commcare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-02 16:52+0000\n"
 "PO-Revision-Date: 2025-05-02 16:52+0000\n"
 "Last-Translator: Amit Phulera by OpenAI <devops@dimagi.com>\n"
 "Language-Team: Italian (http://app.transifex.com/dimagi/commcare-hq/language/ita/)\n"
@@ -972,6 +971,14 @@ msgstr[1] ""
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
 msgstr "Pagamento ricevuto - Grazie!"
+
+#: corehq/apps/accounting/tasks.py
+msgid ""
+"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+"declined"
+msgstr ""
+"Il pagamento dell'abbonamento per la fattura CommCare "
+"{context['invoice_number']} è stato rifiutato"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
@@ -2938,30 +2945,20 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
-msgid ""
-"\n"
-"      As a reminder, payments can be made via credit card, Electronic Fund\n"
-"      Transfer (EFT), or check by following these\n"
-"      <a\n"
-"        href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
-"        >instructions</a\n"
-"      >.\n"
-"    "
-msgstr ""
-"\n"
-"      Come promemoria, i pagamenti possono essere effettuati tramite carta di credito, Bonifico Bancario (EFT) o assegno seguendo queste\n"
-"      <a\n"
-"        href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
-"        >istruzioni</a\n"
-"      >.\n"
-"    "
-
-#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      You can also pre-pay for several months at any time by following\n"
+#| "      <a\n"
+#| "        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
+#| "        >these steps</a\n"
+#| "      >.\n"
+#| "    "
 msgid ""
 "\n"
 "      You can also pre-pay for several months at any time by following\n"
 "      <a\n"
-"        href=\"https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#How-to-Prepay-by-Credit-or-Debit-Card\"\n"
 "        >these steps</a\n"
 "      >.\n"
 "    "
@@ -2969,7 +2966,7 @@ msgstr ""
 "\n"
 "      Puoi anche prepagare per diversi mesi in qualsiasi momento seguendo\n"
 "      <a\n"
-"        href=\"https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
 "        >questi passaggi</a\n"
 "      >.\n"
 "    "
@@ -3424,8 +3421,8 @@ msgstr "Nascondi al cliente"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
-#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/hqadmin/reports.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/standard/deployments.py
@@ -3593,13 +3590,20 @@ msgid "Note: Continuing will change your current subscription."
 msgstr "Nota: Continuando cambierai il tuo abbonamento attuale."
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.\n"
+#| "          You should expect your first invoice on %(invoice_date)s, or you can prepay for your\n"
+#| "          subscription by following the instructions\n"
+#| "          <a href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\">here</a>.\n"
+#| "        "
 msgid ""
 "\n"
 "          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.\n"
 "          You should expect your first invoice on %(invoice_date)s, or you can prepay for your\n"
 "          subscription by following the instructions\n"
-"          <a href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\">here</a>.\n"
+"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\">here</a>.\n"
 "        "
 msgstr ""
 "\n"
@@ -4480,9 +4484,8 @@ msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' è definito dal profilo e non può essere impostato direttamente"
 
 #: corehq/apps/api/validation.py
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ", "
-msgstr ", "
+msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+msgstr "Parametro/i non valido/i: {', '.join(invalid_params)}"
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -4520,10 +4523,6 @@ msgstr ""
 #: corehq/apps/app_execution/forms.py
 msgid "Populate workflow from HAR file"
 msgstr "Popola workflow da file HAR"
-
-#: corehq/apps/app_execution/forms.py
-msgid "Workflow:"
-msgstr "Workflow:"
 
 #: corehq/apps/app_execution/forms.py
 msgid "User not found"
@@ -6365,7 +6364,6 @@ msgstr "No"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
-#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -6590,7 +6588,7 @@ msgstr "Input di testo"
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Text"
 msgstr "Testo"
@@ -6712,9 +6710,14 @@ msgid "Version 2 translations (recommended)"
 msgstr "Traduzioni versione 2 (consigliata)"
 
 #: corehq/apps/app_manager/static_strings.py
+#, fuzzy
+#| msgid ""
+#| "Version of mobile UCRs to use. Read more on the  <a target=\"_blank\" "
+#| "href=\"https://help.commcarehq.org/display/saas/Moving+to+Mobile+UCR+V2\">Help"
+#| " Site</a>"
 msgid ""
 "Version of mobile UCRs to use. Read more on the  <a target=\"_blank\" "
-"href=\"https://help.commcarehq.org/display/saas/Moving+to+Mobile+UCR+V2\">Help"
+"href=\"https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146604299/Moving+to+Mobile+UCR+V2\">Help"
 " Site</a>"
 msgstr ""
 "Versione delle UCR mobili da utilizzare. Leggi di più sul <a "
@@ -10334,12 +10337,19 @@ msgid "Case Detail Tabs"
 msgstr "Schede Dettaglio Caso"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
+#, fuzzy
+#| msgid ""
+#| "Do you have a lot of case properties? Try splitting them into tabs, which "
+#| "will appear as separate screens that mobile users can swipe through. Read "
+#| "more on the <a "
+#| "href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen'"
+#| " target='_blank'>Help Site</a>."
 msgid ""
 "Do you have a lot of case properties? Try splitting them into tabs, which "
 "will appear as separate screens that mobile users can swipe through. Read "
 "more on the <a "
-"href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen'"
-" target='_blank'>Help Site</a>."
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-"
+"Tabs-on-Case-Detail-Screen' target='_blank'>Help Site</a>."
 msgstr ""
 "Hai molte proprietà di caso? Prova a suddividerle in schede, che appariranno"
 " come schermate separate che gli utenti mobili possono scorrere. Leggi di "
@@ -10532,12 +10542,12 @@ msgid "Plain"
 msgstr "Semplice"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Integer"
 msgstr "Intero"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Decimal"
 msgstr "Decimale"
 
@@ -10616,12 +10626,21 @@ msgid "Forms Accessible from Case List"
 msgstr "Moduli accessibili dall'elenco casi"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_form_setting.html
+#, fuzzy, python-format
+#| msgid ""
+#| "Minimize duplicate registrations by requiring mobile workers to search the "
+#| "case list before registering a new case. Read more on the <a "
+#| "href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Minimize-"
+#| "Duplicates:-Registration-From-the-Case-List'>Help Site</a>."
 msgid ""
-"Use Registration Forms to minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Help Site</a>.\n"
+"Use Registration Forms to minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Minimize-Duplicates%%3A-Registration-From-the-Case-List'>Help Site</a>.\n"
 "                You can use followup forms for Parent Case button if this module uses Select Parent First workflow"
 msgstr ""
-"Usa i moduli di registrazione per ridurre le registrazioni duplicate richiedendo agli operatori mobili di cercare nell'elenco casi prima di registrare un nuovo caso. Leggi di più sul <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Sito di supporto</a>.\n"
-"                Puoi usare i moduli di follow-up per il pulsante Caso genitore se questo modulo utilizza il flusso di lavoro Seleziona prima il genitore"
+"Riduci le registrazioni duplicate richiedendo agli operatori mobili di "
+"cercare nell'elenco casi prima di registrare un nuovo caso. Leggi di più sul"
+" <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Minimize-"
+"Duplicates:-Registration-From-the-Case-List'>Sito di supporto</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_form_setting.html
 msgid "Registration Form Accessible from Case List"
@@ -11237,7 +11256,8 @@ msgid "Date Range"
 msgstr "Intervallo di date"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Barcode"
 msgstr "Codice a barre"
 
@@ -11732,11 +11752,18 @@ msgid "Additional Case List and Case Search Types"
 msgstr "Tipi aggiuntivi di Elenco Casi e Ricerca Casi"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                             Cases of these types will be displayed in Case List and Case Search screens, in addition to the Case Type inputted above.\n"
+#| "                             <a target='_blank'\n"
+#| "                             href='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim'>(More   Information)</a>\n"
+#| "                              "
 msgid ""
 "\n"
 "                             Cases of these types will be displayed in Case List and Case Search screens, in addition to the Case Type inputted above.\n"
 "                             <a target='_blank'\n"
-"                             href='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim'>(More   Information)</a>\n"
+"                             href='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2146962056/Case+Search+Configuration'>(More   Information)</a>\n"
 "                              "
 msgstr ""
 "\n"
@@ -11750,10 +11777,16 @@ msgid "Parent Menu"
 msgstr "Menu Genitore"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                               Nest this menu under another for easier application navigation.\n"
+#| "                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+#| "                               "
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
@@ -11887,7 +11920,7 @@ msgid "Preview"
 msgstr "Anteprima"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
@@ -11946,7 +11979,7 @@ msgstr "Tipo di Aggiornamento"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/reports/forms.py
+#: corehq/apps/data_cleaning/models/types.py corehq/apps/reports/forms.py
 msgid "Time"
 msgstr "Ora"
 
@@ -12856,16 +12889,16 @@ msgid "Not set"
 msgstr "Non impostato"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U​I translation"
-msgstr ""
-"Traduzione U"
-"I"
+#, fuzzy
+#| msgid "U​I translation"
+msgid "U\\u200BI translation"
+msgstr "Traduzione U\\vI"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U​I translations"
-msgstr ""
-"Traduzioni U"
-"I"
+#, fuzzy
+#| msgid "U​I translations"
+msgid "U\\u200BI translations"
+msgstr "Traduzioni U\\vI"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -13330,6 +13363,11 @@ msgstr "L'ultima versione per il profilo {} è ora {}"
 #: corehq/apps/app_manager/views/releases.py
 msgid "Latest release now available for profile {}"
 msgstr "Ultimo rilascio ora disponibile per il profilo {}"
+
+#: corehq/apps/app_manager/views/releases.py
+#, fuzzy
+msgid "Reverted to version {log.info['version']}"
+msgstr "Ripristinato alla versione {old_version}"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "Please enter either text body or xpath for custom icon"
@@ -13829,6 +13867,13 @@ msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "Esempio: La cella nella riga {row_num} contiene \"{sample}\""
 
 #: corehq/apps/case_importer/exceptions.py
+#, python-brace-format
+msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+msgstr ""
+"Le importazioni di casi possono contenere un massimo di "
+"{MAX_CASE_IMPORTER_ROWS} righe. "
+
+#: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
 msgstr "Nome proprietario non valido"
 
@@ -13969,8 +14014,21 @@ msgid "Name Too Long"
 msgstr "Nome troppo lungo"
 
 #: corehq/apps/case_importer/exceptions.py
+#, python-brace-format
+msgid ""
+"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+msgstr ""
+"Il nome del caso non può superare {STANDARD_CHARFIELD_LENGTH} caratteri"
+
+#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "ID esterno troppo lungo"
+
+#: corehq/apps/case_importer/exceptions.py
+#, python-brace-format
+msgid ""
+"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+msgstr "L'id esterno non può superare {STANDARD_CHARFIELD_LENGTH} caratteri"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -14269,11 +14327,20 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      This tool can make changes to your data that might confuse your reports or applications.\n"
+#| "      Please exercise caution and see the\n"
+#| "      <a href=\"https://help.commcarehq.org/display/commcarepublic/Importing+Cases+Using+Excel\" target=\"_blank\">\n"
+#| "        help pages for this feature.\n"
+#| "      </a>\n"
+#| "    "
 msgid ""
 "\n"
 "      This tool can make changes to your data that might confuse your reports or applications.\n"
 "      Please exercise caution and see the\n"
-"      <a href=\"https://help.commcarehq.org/display/commcarepublic/Importing+Cases+Using+Excel\" target=\"_blank\">\n"
+"      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
 "        help pages for this feature.\n"
 "      </a>\n"
 "    "
@@ -14748,6 +14815,11 @@ msgid "Profile Case Search"
 msgstr "Profilo ricerca casi"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
+#, python-brace-format
+msgid "{node.name} is not supported with ancestor-exists"
+msgstr "{node.name} non è supportato con ancestor-exists"
+
+#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -14767,6 +14839,55 @@ msgid ""
 msgstr ""
 "Il lato destro di un confronto deve essere un numero o una data. Le date "
 "devono essere racchiuse tra virgolette"
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+#, fuzzy, python-brace-format
+msgid "{value} is not a correctly formatted date or datetime."
+msgstr "{} non è una data e ora valida"
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+#, fuzzy, python-brace-format
+msgid "{value} is an invalid date."
+msgstr "{} non è una data valida"
+
+#: corehq/apps/case_search/xpath_functions/comparison.py
+#, fuzzy, python-brace-format
+msgid "{value} is an invalid datetime."
+msgstr "{} non è una data e ora valida"
+
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+#, python-brace-format
+msgid "The second argument to '{node.name}' must be valid coordinates"
+msgstr ""
+"Il secondo argomento di '{node.name}' deve essere un insieme di coordinate "
+"valide"
+
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+#, python-brace-format
+msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+msgstr ""
+"Il terzo argomento di '{node.name}' deve essere un numero, ricevuto "
+"'{distance}'"
+
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ""
+"'{unit}' is not a valid distance unit. Expected one of {', "
+"'.join(DISTANCE_UNITS)}"
+msgstr ""
+"'{unit}' non è un'unità di distanza valida. Atteso uno tra {', "
+"'.join(DISTANCE_UNITS)}"
+
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+#, fuzzy, python-brace-format
+msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+msgstr "Inserisci una data valida nel formato AAAA-MM-GG"
+
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+#, python-brace-format
+msgid "The first argument to '{node.name}' must be a valid case property name"
+msgstr ""
+"Il primo argomento di '{node.name}' deve essere un nome di proprietà del "
+"caso valido"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -14803,6 +14924,15 @@ msgstr "'{name}' si aspetta uno o due argomenti"
 msgid "'{name}' error. Index identifier must be a string"
 msgstr ""
 "Errore in '{name}'. L'identificatore dell'indice deve essere una stringa"
+
+#: corehq/apps/case_search/xpath_functions/utils.py
+#, python-brace-format
+msgid ""
+"The '{node.name}' function accepts exactly {expected} arguments, got "
+"{actual}"
+msgstr ""
+"La funzione '{node.name}' accetta esattamente {expected} argomenti, ricevuti"
+" {actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -15039,7 +15169,6 @@ msgstr "Mostra menu completo"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#: corehq/motech/repeaters/views/repeat_records.py
 msgid "Select"
 msgstr "Seleziona"
 
@@ -15114,7 +15243,6 @@ msgstr "Nessuna query recente"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_signature.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py
@@ -16090,21 +16218,35 @@ msgstr "Abbonato all'Edizione Gratuita."
 msgid "Please add case owners to filter the list of cases."
 msgstr "Aggiungi proprietari dei casi per filtrare l'elenco dei casi."
 
+#: corehq/apps/data_cleaning/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/filters/case_list.py
+msgid "[All Data]"
+msgstr "[Tutti i dati]"
+
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Select a property to clean"
+#, fuzzy
+#| msgid "Select a property to clean"
+msgid "Select a property to edit"
 msgstr "Seleziona una proprietà da pulire"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid ""
+#| "Choices are editable case properties that are currently visible in the "
+#| "table."
 msgid ""
-"Choices are editable case properties that are currently visible in the "
-"table."
+"You can only select editable case properties that are currently visible in "
+"the table as a column. System properties cannot be edited."
 msgstr ""
 "Le scelte sono proprietà dei casi modificabili attualmente visibili nella "
 "tabella."
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Data cleaning action"
-msgstr "Azione di pulizia dati"
+#, fuzzy
+#| msgid "Edit Location"
+msgid "Edit action"
+msgstr "Modifica Località"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
 msgid "Find:"
@@ -16143,8 +16285,10 @@ msgid "Select a cleaning action..."
 msgstr "Seleziona un'azione di pulizia..."
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Preview Changes"
-msgstr "Anteprima modifiche"
+#, fuzzy
+#| msgid "Preview data"
+msgid "Preview Edits"
+msgstr "Anteprima dati"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
 msgid ""
@@ -16324,28 +16468,58 @@ msgstr "Avvia una nuova sessione ed elimina quella esistente."
 msgid "Start Session"
 msgstr "Avvia sessione"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/change.py
+msgid "Unknown action"
+msgstr "Azione sconosciuta"
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "value with \"{replace_string}\"."
+msgstr "valore con \"{replace_string}\"."
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "\"{find_string}\" with \"{replace_string}\"{use_regex}."
+msgstr "\"{find_string}\" con \"{replace_string}\"{use_regex}."
+
+#: corehq/apps/data_cleaning/models/change.py
+msgid " (using regex)"
+msgstr " (utilizzando regex)"
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "from case property \"{copy_from_prop_id}\"."
+msgstr "dalla proprietà del caso \"{copy_from_prop_id}\"."
+
+#: corehq/apps/data_cleaning/models/filters.py
+#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
+msgid "unknown"
+msgstr "sconosciuto"
+
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Phone Number or Numeric ID"
 msgstr "Numero di telefono o ID numerico"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Date and Time"
 msgstr "Data e ora"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Single Option"
 msgstr "Opzione singola"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Multiple Option"
 msgstr "Opzione multipla"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "GPS"
 msgstr "GPS"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
-#: corehq/apps/email/forms.py corehq/apps/hqwebapp/forms.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
@@ -16357,197 +16531,171 @@ msgstr "GPS"
 msgid "Password"
 msgstr "Password"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Number"
 msgstr "Numero"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Multiple Choice"
 msgstr "Scelta multipla"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is empty"
 msgstr "è vuoto"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not empty"
 msgstr "non è vuoto"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is missing"
 msgstr "manca"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not missing"
 msgstr "non manca"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is exactly"
 msgstr "è esattamente"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is not"
 msgstr "non è"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "starts with"
 msgstr "inizia con"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "does not start with"
 msgstr "non inizia con"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is like"
 msgstr "è simile a"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "non è simile a"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "sounds like"
 msgstr "suona come"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
 msgstr "non suona come"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is any"
 msgstr "è uno qualsiasi"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not any"
 msgstr "non è uno qualsiasi"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is all"
 msgstr "sono tutti"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not all"
 msgstr "non sono tutti"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
 msgstr "uguale a"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "does not equal"
 msgstr "diverso da"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "less than"
 msgstr "minore di"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "less than or equal to"
 msgstr "minore o uguale a"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "greater than"
 msgstr "maggiore di"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "greater than or equal to"
 msgstr "maggiore o uguale a"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "on"
 msgstr "il"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "before"
 msgstr "prima di"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "prima o il"
 
-#: corehq/apps/data_cleaning/models.py corehq/messaging/scheduling/forms.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/messaging/scheduling/forms.py
 msgid "after"
 msgstr "dopo"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "on or after"
 msgstr "il o dopo"
 
-#: corehq/apps/data_cleaning/models.py
-#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
-msgid "unknown"
-msgstr "sconosciuto"
-
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
 msgstr "Trova e sostituisci"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Copy & Replace"
 msgstr "Copia e sostituisci"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Strip Whitespaces"
 msgstr "Rimuovi spazi bianchi"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Title Case"
 msgstr "Rendi in formato titolo"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Upper Case"
 msgstr "Rendi tutto maiuscolo"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Lower Case"
 msgstr "Rendi tutto minuscolo"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Value Empty"
 msgstr "Rendi il valore vuoto"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Value NULL"
 msgstr "Rendi il valore NULL"
 
-#: corehq/apps/data_cleaning/models.py
-#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Reset Changes"
 msgstr "Reimposta modifiche"
-
-#: corehq/apps/data_cleaning/models.py
-msgid "Unknown action"
-msgstr "Azione sconosciuta"
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "value with \"{replace_string}\"."
-msgstr "valore con \"{replace_string}\"."
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "\"{find_string}\" with \"{replace_string}\"{use_regex}."
-msgstr "\"{find_string}\" con \"{replace_string}\"{use_regex}."
-
-#: corehq/apps/data_cleaning/models.py
-msgid " (using regex)"
-msgstr " (utilizzando regex)"
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "from case property \"{copy_from_prop_id}\"."
-msgstr "dalla proprietà del caso \"{copy_from_prop_id}\"."
 
 #: corehq/apps/data_cleaning/tables.py
 msgid "Committed On"
@@ -16562,7 +16710,9 @@ msgid "# Cases Cleaned"
 msgstr "# Casi puliti"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
-msgid "Start a Cleaning Session"
+#, fuzzy
+#| msgid "Start a Cleaning Session"
+msgid "Start a Bulk Edit Session"
 msgstr "Avvia una sessione di pulizia"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
@@ -16580,6 +16730,12 @@ msgstr "valore memorizzato"
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
 msgid "changed value"
 msgstr "valore modificato"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#, fuzzy
+#| msgid "Reset Grid"
+msgid "Reset Edits"
+msgstr "Reimposta griglia"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_todo/item.html
@@ -16616,42 +16772,36 @@ msgid "NULL"
 msgstr "NULL"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Select %(num_records)s Cases\n"
+#| "  "
 msgid ""
 "\n"
-"        %(num_records)s records have been cleaned.\n"
+"        Priviewed edits on %(num_records)s cases.\n"
 "      "
 msgstr ""
 "\n"
-"        %(num_records)s record sono stati puliti.\n"
-"      "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "Le prestazioni potrebbero essere influenzate..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          Alcuni casi hanno un numero elevato di modifiche. Puoi continuare a visualizzare in anteprima nuove modifiche in blocco,\n"
-"          ma alcune pagine potrebbero richiedere più tempo per caricarsi.\n"
-"        "
+"    Seleziona %(num_records)s casi\n"
+"  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "La cronologia delle modifiche è troppo grande..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          The edit history for this session is too large to support new bulk edits.\n"
+#| "          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+#| "        "
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
 "          La cronologia delle modifiche per questa sessione è troppo grande per supportare nuove modifiche in blocco.\n"
@@ -16689,9 +16839,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    An active data cleaning session already exists for this case type.\n"
+#| "    Please decide how you would like to proceed.\n"
+#| "  "
 msgid ""
 "\n"
-"    An active data cleaning session already exists for this case type.\n"
+"    An active bulk edit session already exists for this case type.\n"
 "    Please decide how you would like to proceed.\n"
 "  "
 msgstr ""
@@ -16712,8 +16868,33 @@ msgstr "Applicare tutte le modifiche?"
 msgid "Apply All Edits"
 msgstr "Applica tutte le modifiche"
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
+msgid "You have selected cases which have been filtered out."
+msgstr "Hai selezionato casi che sono stati filtrati."
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please either apply your previewed edits, or add filters to select fewer cases.\n"
+#| "      "
+msgid ""
+"\n"
+"          \"Apply\" will apply all previewed edits in the session, regardless of filters.\n"
+"        "
+msgstr ""
+"\n"
+"        Applica le modifiche in anteprima oppure aggiungi filtri per selezionare meno casi.\n"
+"      "
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
 msgid "Clear all edits?"
+msgstr "Cancellare tutte le modifiche?"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
+#, fuzzy
+#| msgid "Clear all edits?"
+msgid "Clear All Edits"
 msgstr "Cancellare tutte le modifiche?"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
@@ -16823,8 +17004,10 @@ msgstr "Configura colonne"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/button_bar.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
-msgid "Clean Selected Cases"
-msgstr "Pulisci i casi selezionati"
+#, fuzzy
+#| msgid "Selected Cases"
+msgid "Edit Selected Cases"
+msgstr "Casi Selezionati"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
@@ -16926,14 +17109,14 @@ msgid "Edits"
 msgstr "Modifiche"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "numero di casi con una cronologia delle modifiche"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              Filters Applied: %(num_records)s Matching Records\n"
+#| "            "
 msgid ""
 "\n"
-"              Filters Applied: %(num_records)s Matching Records\n"
+"              Filters Applied: %(num_records)s Matching Cases\n"
 "            "
 msgstr ""
 "\n"
@@ -16945,9 +17128,14 @@ msgid "Clear Filters"
 msgstr "Cancella filtri"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Records Selected\n"
+#| "          "
 msgid ""
 "\n"
-"            Records Selected\n"
+"            Cases Selected\n"
 "          "
 msgstr ""
 "\n"
@@ -16956,12 +17144,13 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid ""
-"Some records are selected in the session but not currently visible. They "
-"will not be part of cleaning actions until all filters are removed."
+"You have selected cases which have been filtered out. New previewed edits "
+"will only apply to selected cases in the current filters, unless you remove "
+"filters."
 msgstr ""
-"Alcuni record sono selezionati nella sessione ma attualmente non sono "
-"visibili. Non saranno inclusi nelle azioni di pulizia finché tutti i filtri "
-"non saranno rimossi."
+"Hai selezionato casi che sono stati filtrati. Le nuove modifiche in "
+"anteprima si applicheranno solo ai casi selezionati nei filtri attuali, a "
+"meno che tu non rimuova i filtri."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Clear Selection"
@@ -17069,20 +17258,37 @@ msgid "Cannot retrieve filters, session was not found."
 msgstr "Impossibile recuperare i filtri, sessione non trovata."
 
 #: corehq/apps/data_cleaning/views/main.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
-#: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
-msgid "Clean Case Data"
-msgstr "Pulisci dati caso"
+#, fuzzy
+#| msgid "Bulk Clear Data"
+msgid "Bulk Edit Case Data"
+msgstr "Cancellazione dati in blocco"
 
 #: corehq/apps/data_cleaning/views/main.py
-msgid "Clean Case Type"
-msgstr "Pulisci tipo caso"
+#, fuzzy
+#| msgid "Default Case Type"
+msgid "Bulk Edit Case Type"
+msgstr "Tipo di caso predefinito"
 
 #: corehq/apps/data_cleaning/views/main.py
 msgid "That session does not exist. Please start a new session."
 msgstr "Questa sessione non esiste. Si prega di avviare una nuova sessione."
+
+#: corehq/apps/data_cleaning/views/main.py
+#, fuzzy
+#| msgid "That session does not exist. Please start a new session."
+msgid ""
+"You tried to access a session for \"{}\" that was already completed. Please "
+"start a new session."
+msgstr "Questa sessione non esiste. Si prega di avviare una nuova sessione."
+
+#: corehq/apps/data_cleaning/views/main.py
+msgid ""
+"You tried to access a session for \"{}\" that is currently applying changes."
+" Please wait for that task to complete, then start a new session."
+msgstr ""
+"Hai provato ad accedere a una sessione per \"{}\" che sta attualmente "
+"applicando modifiche. Attendi il completamento dell'operazione, poi avvia "
+"una nuova sessione."
 
 #: corehq/apps/data_cleaning/views/main.py
 #, python-brace-format
@@ -18265,7 +18471,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py corehq/motech/dhis2/forms.py
+#: corehq/apps/translations/forms.py
 msgid "Add"
 msgstr "Aggiungi"
 
@@ -19730,7 +19936,9 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
-msgid "Connect Messaging Channel Nmae"
+#, fuzzy
+#| msgid "Connect Messaging Channel Nmae"
+msgid "Connect Messaging Channel Name"
 msgstr "Nome Canale Connect Messaging"
 
 #: corehq/apps/domain/forms.py
@@ -19834,11 +20042,18 @@ msgid "Secure submissions"
 msgstr "Invii sicuri"
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "Secure Submissions prevents others from impersonating your mobile workers. "
+#| "This setting requires all deployed applications to be using secure "
+#| "submissions as well. <a "
+#| "href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>Read"
+#| " more about secure submissions here</a>"
 msgid ""
 "Secure Submissions prevents others from impersonating your mobile workers. "
 "This setting requires all deployed applications to be using secure "
 "submissions as well. <a "
-"href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>Read"
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2367226200/Project+Settings+Overview'>Read"
 " more about secure submissions here</a>"
 msgstr ""
 "Gli invii sicuri impediscono ad altri di impersonare i tuoi operatori "
@@ -19992,6 +20207,11 @@ msgstr "Dettagli Salesforce"
 #: corehq/apps/domain/forms.py
 msgid "Update Project Information"
 msgstr "Aggiorna informazioni sul progetto"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy, python-brace-format
+msgid "Unknown expression {expr}"
+msgstr "Errore sconosciuto"
 
 #: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
@@ -22339,6 +22559,19 @@ msgstr "Informazioni per il Pagamento tramite Bonifico"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
+#| "                receive an invoice via email with bank information and\n"
+#| "                instructions for wire payment. Please include the Invoice # in\n"
+#| "                the wire payment memo or note field.\n"
+#| "                <a\n"
+#| "                  href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+#| "                  target=\"_blank\"\n"
+#| "                  >More information...</a\n"
+#| "                >\n"
+#| "              "
 msgid ""
 "\n"
 "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
@@ -22346,7 +22579,7 @@ msgid ""
 "                instructions for wire payment. Please include the Invoice # in\n"
 "                the wire payment memo or note field.\n"
 "                <a\n"
-"                  href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+"                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
 "                  target=\"_blank\"\n"
 "                  >More information...</a\n"
 "                >\n"
@@ -22783,10 +23016,8 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      Per motivi di sicurezza, l'amministratore di CommCare 0ha richiesto che tutti gli utenti del tuo progetto configurino\n"
-"      l'autenticazione a due fattori.<br>Questa è una protezione aggiuntiva utilizzata per garantire la sicurezza del tuo account\n"
-"      oltre a nome utente e password. 0\n"
-"    "
+"      Per motivi di sicurezza, l'amministratore di CommCare      l'autenticazione a due fattori.<br>Questa è una protezione aggiuntiva utilizzata per garantire la sicurezza del tuo account\n"
+"      oltre a nome utente e password.    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
@@ -23420,6 +23651,11 @@ msgstr ""
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
 msgstr "Seleziona un progetto"
+
+#: corehq/apps/domain/views/base.py
+#, fuzzy, python-brace-format
+msgid "You have been added to the \"{invitation.domain}\" project space."
+msgstr "Sei stato aggiunto allo spazio di progetto \"{}\"."
 
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
@@ -24474,6 +24710,11 @@ msgstr "Registratori di presenza"
 #: corehq/apps/events/forms.py
 msgid "Please choose at least one Attendance Taker"
 msgstr "Seleziona almeno un registratore di presenza"
+
+#: corehq/apps/events/forms.py
+#, fuzzy, python-brace-format
+msgid "{self.title_prefix} Attendance Tracking Event"
+msgstr "Modifica Evento di Monitoraggio Presenze"
 
 #: corehq/apps/events/forms.py
 msgid "Invalid Start Date"
@@ -25828,13 +26069,26 @@ msgstr ""
 "          "
 
 #: corehq/apps/export/templates/export/download_export.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            To get started, please\n"
+#| "            <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947269/Publish+Your+Application\"\n"
+#| "               target=\"_blank\">deploy</a>\n"
+#| "            your application and submit data from a phone. You may also\n"
+#| "            <a href=\"https://help.commcarehq.org/display/commcarepublic/Web+Apps\"\n"
+#| "               target=\"_blank\">submit data via Web Apps\n"
+#| "            </a>\n"
+#| "            , depending on your project's\n"
+#| "            <a href=\"https://www.commcarehq.org/pricing/\" target=\"_blank\">plan level</a>.\n"
+#| "          "
 msgid ""
 "\n"
 "            To get started, please\n"
 "            <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947269/Publish+Your+Application\"\n"
 "               target=\"_blank\">deploy</a>\n"
 "            your application and submit data from a phone. You may also\n"
-"            <a href=\"https://help.commcarehq.org/display/commcarepublic/Web+Apps\"\n"
+"            <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955161/Web+Applications\"\n"
 "               target=\"_blank\">submit data via Web Apps\n"
 "            </a>\n"
 "            , depending on your project's\n"
@@ -27310,13 +27564,11 @@ msgstr "Includi nel Download"
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/location_types.html
-#: corehq/motech/repeaters/views/repeat_records.py
 msgid "all"
 msgstr "tutti"
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/location_types.html
-#: corehq/motech/repeaters/views/repeat_records.py
 msgid "none"
 msgstr "nessuno"
 
@@ -29438,16 +29690,8 @@ msgid "UCR rebuild restriction status"
 msgstr "Stato restrizione ricostruzione UCR"
 
 #: corehq/apps/hqadmin/reports.py
-msgid "Rebuild restriction required"
-msgstr "Restrizione di ricostruzione richiesta"
-
-#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "Ricostruzione limitata"
-
-#: corehq/apps/hqadmin/reports.py
-msgid "Rebuild restriction not required"
-msgstr "Restrizione di ricostruzione non richiesta"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -33793,8 +34037,13 @@ msgstr ""
 "foglio '{type}', all'indice '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-msgid " and try again."
-msgstr " e riprova."
+#, python-brace-format
+msgid ""
+"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+"type "
+msgstr ""
+"Impossibile eliminare il tipo di località '{deleted_type.code}'. È "
+"referenziato dal tipo "
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -33953,8 +34202,18 @@ msgstr ""
 "progetto. Maggiori informazioni sono disponibili <a href=\"{}\">qui</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
+#, python-brace-format
+msgid "Location site code: {site_code}."
+msgstr "Codice sito località: {site_code}."
+
+#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "Impossibile aggiornare: impossibile trovare la posizione con"
+
+#: corehq/apps/locations/resources/v0_6.py
+msgid "Invalid fields were included in request: {list(data.keys())}."
+msgstr ""
+"Sono stati inclusi campi non validi nella richiesta: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -34018,6 +34277,17 @@ msgid "Organization Levels"
 msgstr "Livelli dell'organizzazione"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Organization Levels allow you to configure the different types of\n"
+#| "          locations within your project (districts, facilities, front line\n"
+#| "          workers, etc.). Locations can own data and cases, view child\n"
+#| "          location's data or simply be used for aggregation. Once you've\n"
+#| "          defined your organization structure types, you'll be able to define\n"
+#| "          the organization structure for your project. Learn more about\n"
+#| "          Organizations on our <a href=\"https://help.commcarehq.org/display/commcarepublic/Organizations\">Help Site</a>.\n"
+#| "        "
 msgid ""
 "\n"
 "          Organization Levels allow you to configure the different types of\n"
@@ -34026,7 +34296,7 @@ msgid ""
 "          location's data or simply be used for aggregation. Once you've\n"
 "          defined your organization structure types, you'll be able to define\n"
 "          the organization structure for your project. Learn more about\n"
-"          Organizations on our <a href=\"https://help.commcarehq.org/display/commcarepublic/Organizations\">Help Site</a>.\n"
+"          Organizations on our <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955032/Organizations+Locations\" target=\"_blank\">Help Site</a>.\n"
 "        "
 msgstr ""
 "\n"
@@ -34369,12 +34639,20 @@ msgid "Manage Organization Structure"
 msgstr "Gestisci struttura organizzativa"
 
 #: corehq/apps/locations/templates/locations/manage/locations.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            The organization feature allows you to represent the real-world\n"
+#| "            structure of your project (districts, facilities, frontline workers, etc.).\n"
+#| "            Once this structure has been defined, you can use it for reporting and\n"
+#| "            case sharing. Learn more about Organizations on our <a href=\"https://help.commcarehq.org/display/commcarepublic/Organizations\">Help Site</a>.\n"
+#| "          "
 msgid ""
 "\n"
 "            The organization feature allows you to represent the real-world\n"
 "            structure of your project (districts, facilities, frontline workers, etc.).\n"
 "            Once this structure has been defined, you can use it for reporting and\n"
-"            case sharing. Learn more about Organizations on our <a href=\"https://help.commcarehq.org/display/commcarepublic/Organizations\">Help Site</a>.\n"
+"            case sharing. Learn more about Organizations on our <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955032/Organizations+Locations\" target=\"_blank\">Help Site</a>.\n"
 "          "
 msgstr ""
 "\n"
@@ -36093,8 +36371,9 @@ msgstr ""
 "minuto. Se il problema persiste, contatta il supporto."
 
 #: corehq/apps/registration/views.py
-msgid "seconds before requesting again."
-msgstr "secondi prima di poter effettuare una nuova richiesta."
+#, python-brace-format
+msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgstr "Attendi almeno {CONFIRMATION_RESEND_LIMIT_SECONDS} "
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -37254,10 +37533,6 @@ msgid "No Data Available"
 msgstr "Nessun dato disponibile"
 
 #: corehq/apps/reports/filters/case_list.py
-msgid "[All Data]"
-msgstr "[Tutti i dati]"
-
-#: corehq/apps/reports/filters/case_list.py
 msgid "[Project Data]"
 msgstr "[Dati del progetto]"
 
@@ -38016,14 +38291,6 @@ msgstr ""
 #: corehq/apps/reports/standard/deployments.py
 msgid "The build profile from the user's last hearbeat request."
 msgstr "Il profilo di build dall'ultima richiesta di heartbeat dell'utente."
-
-#: corehq/apps/reports/standard/deployments.py
-msgid "...See more"
-msgstr "...Vedi altro"
-
-#: corehq/apps/reports/standard/deployments.py
-msgid "...Collapse"
-msgstr "...Comprimi"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -39750,6 +40017,13 @@ msgstr "Sei sicuro di voler inviare questo report programmato?"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
+#: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
+msgid "Clean Case Data"
+msgstr "Pulisci dati caso"
+
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
 msgid ""
 "\n"
 "              This feature will only update the specified questions.\n"
@@ -39855,6 +40129,8 @@ msgstr "Intervallo di date predefinito"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Bulk Actions"
 msgstr "Azioni collettive"
 
@@ -40331,8 +40607,9 @@ msgid "Edit Scheduled Report"
 msgstr "Modifica rapporto programmato"
 
 #: corehq/apps/reports/views.py
-#, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
+#, fuzzy, python-format
+#| msgid "This scheduled report's timezone is %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
 msgstr "Il fuso orario di questo rapporto programmato è %s (UTC%s)"
 
 #: corehq/apps/reports/views.py
@@ -40416,6 +40693,11 @@ msgstr "Il modulo era già stato archiviato."
 msgid "Can't archive documents of type %s. How did you get here??"
 msgstr ""
 "Non è possibile archiviare documenti di tipo %s. Come sei arrivato qui??"
+
+#: corehq/apps/reports/views.py
+#, fuzzy, python-brace-format
+msgid "Cannot delete form {instance_id} because it is not archived."
+msgstr "Impossibile eliminare il profilo '{}' perché ha utenti assegnati."
 
 #: corehq/apps/reports/views.py
 msgid "{} (this case)"
@@ -40976,6 +41258,11 @@ msgstr "Copia questo in un luogo sicuro. Non verrà più mostrato."
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "Tutti gli indirizzi IP"
+
+#: corehq/apps/settings/views.py
+#, fuzzy
+msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+msgstr "Esiste già una regola con il nome {name}"
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -41753,7 +42040,7 @@ msgstr "Parola chiave non trovata: '{0}'"
 #: corehq/apps/sms/messages.py
 #, python-brace-format
 msgid "Usage: {0} <keyword>"
-msgstr ""
+msgstr "Utilizzo: {0} <keyword>"
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
@@ -42419,6 +42706,9 @@ msgid ""
 "      For example <code>cc_wa_template:daily_screening:en:{var1},{var2}</code> would become <code>cc_wa_template:daily_screening:en:{Hello dear user, }, {55}</code>\n"
 "    "
 msgstr ""
+"\n"
+"      Ad esempio <code>cc_wa_template:daily_screening:en:{var1},{var2}</code> diventerebbe <code>cc_wa_template:daily_screening:en:{Hello dear user, }, {55}</code>\n"
+"    "
 
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 msgid "Template Name"
@@ -44011,6 +44301,11 @@ msgid "today!"
 msgstr "oggi!"
 
 #: corehq/apps/sso/utils/context_helpers.py
+#, python-brace-format
+msgid "on {exp_date:{USER_DATE_FORMAT}}."
+msgstr "il {exp_date:{USER_DATE_FORMAT}}."
+
+#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
@@ -44018,6 +44313,11 @@ msgid ""
 msgstr ""
 "Avviso CommCare: Il certificato per il provider di identità %(idp_name)s "
 "scade il %(expires_on)s"
+
+#: corehq/apps/sso/utils/context_helpers.py
+#, python-brace-format
+msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+msgstr "Account Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -45406,6 +45706,14 @@ msgid "Missing translations for {} in uploaded sheet"
 msgstr "Traduzioni mancanti per {} nel foglio caricato"
 
 #: corehq/apps/translations/validator.py
+#, fuzzy, python-brace-format
+msgid ""
+"Could not find a module or form with ID '{module_or_form_id}' in app "
+"'{self.app.name}'"
+msgstr ""
+"Impossibile trovare il modulo con ID='{unique_id}' nell'app '{app_name}'."
+
+#: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
 msgstr "Impossibile trovare la/le colonna/e '{}'"
 
@@ -45508,6 +45816,11 @@ msgid ""
 msgstr ""
 "L'email è stata respinta per l'invito di questo utente: {}. Riprova con un "
 "nome utente diverso"
+
+#: corehq/apps/user_importer/importer.py
+#, python-brace-format
+msgid "Domain cannot be set to '{self.domain}'"
+msgstr "Il dominio non può essere impostato su '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -45806,6 +46119,16 @@ msgstr "Ricostruisci"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "Elimina"
+
+#: corehq/apps/userreports/models.py
+#, fuzzy, python-brace-format
+msgid "base_item_expression is not allowed for domain {self.domain}"
+msgstr "XForm {form_id} non appartiene al dominio {domain}"
+
+#: corehq/apps/userreports/models.py
+#, fuzzy, python-brace-format
+msgid "{expr} is not allowed for domain {self.domain}"
+msgstr "XForm {form_id} non appartiene al dominio {domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -47665,8 +47988,20 @@ msgid "UCR Expressions"
 msgstr "Espressioni UCR"
 
 #: corehq/apps/userreports/views.py
+#, fuzzy
+msgid ""
+"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+"exists."
+msgstr "Esiste già una regola con il nome {name}"
+
+#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "Modifica Espressione UCR"
+
+#: corehq/apps/users/account_confirmation.py
+#, python-brace-format
+msgid "Confirm your CommCare account for {commcare_user.domain}"
+msgstr "Conferma il tuo account CommCare per {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -49979,7 +50314,6 @@ msgstr "Non Recapitabile"
 #: corehq/apps/users/templates/users/web_users.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-#: corehq/motech/repeaters/views/repeat_records.py
 msgid "Resend"
 msgstr "Invia di nuovo"
 
@@ -50501,8 +50835,12 @@ msgid "is_active"
 msgstr "è_attivo"
 
 #: corehq/apps/users/views/mobile/users.py
-msgid "You can now login"
-msgstr "Ora puoi accedere"
+#, fuzzy, python-brace-format
+msgid ""
+"You have successfully confirmed the {user.raw_username} account. You can now"
+" login"
+msgstr ""
+"La password per {} è stata reimpostata con successo. Ora puoi accedere."
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -50657,10 +50995,6 @@ msgstr "Codice"
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Parent Location"
 msgstr "Posizione genitore"
-
-#: corehq/ex-submodules/couchforms/openrosa_response.py
-msgid "   √   "
-msgstr "      "
 
 #: corehq/ex-submodules/dimagi/utils/dates.py
 msgid "You have to specify both dates!"
@@ -53343,16 +53677,26 @@ msgstr ""
 "trimestrale valido nel formato yyyyQn (es. \"2004Q1\" per gennaio-marzo "
 "2004), oppure inserisci una colonna valida."
 
+#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
+#, fuzzy, python-brace-format
+msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+msgstr "Aggiungi impostazioni di connessione"
+
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "Report Configurabile dall'Utente"
 
 #: corehq/motech/dhis2/forms.py
+#, fuzzy
+#| msgid ""
+#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
+#| "href=\"https://github.com/dimagi/commcare-"
+#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+#| " info</a>. "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
-" info</a>. "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
 msgstr ""
 "Le DataSet Map collegano le UCR di CommCare ai DataSet DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-"
@@ -53835,7 +54179,10 @@ msgid "There is an error in your data API validations"
 msgstr "C'è un errore nelle validazioni dei dati API"
 
 #: corehq/motech/models.py
-msgid "Please select the applicable API auth settings for the "
+#, fuzzy
+msgid ""
+"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+"the applicable API auth settings for the "
 msgstr "Seleziona le impostazioni di autenticazione API applicabili per il "
 
 #: corehq/motech/openmrs/atom_feed.py
@@ -53871,17 +54218,52 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "C'è un errore di sintassi XML nel feed Atom di OpenMRS in "
 
 #: corehq/motech/openmrs/atom_feed.py
-msgid "patients added from OpenMRS Atom feed."
-msgstr "pazienti aggiunti dal feed Atom di OpenMRS."
-
-#: corehq/motech/openmrs/atom_feed.py
-msgid "patients from OpenMRS unless only one case type is specified."
+#, python-brace-format
+msgid ""
+"No users found at location \"{repeater.location_id}\" to own patients added "
+"from OpenMRS Atom feed."
 msgstr ""
-"pazienti da OpenMRS a meno che non sia specificato un solo tipo di caso."
+"Nessun utente trovato nella località \"{repeater.location_id}\" per "
+"assegnare i pazienti aggiunti dal feed OpenMRS Atom."
 
 #: corehq/motech/openmrs/atom_feed.py
-msgid "matching unique OpenMRS UUID. case external_id: "
+#, python-brace-format
+msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+msgstr ""
+"{repeater.domain}: {repeater}: Errore nelle impostazioni: impossibile "
+"aggiornare "
+
+#: corehq/motech/openmrs/atom_feed.py
+#, python-brace-format
+msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+msgstr ""
+"{repeater.domain}: {repeater}: Errore durante il recupero del Paziente "
+
+#: corehq/motech/openmrs/atom_feed.py
+#, python-brace-format
+msgid "{repeater.domain}: {repeater}: More than one case found "
+msgstr "{repeater.domain}: {repeater}: Trovato più di un caso "
+
+#: corehq/motech/openmrs/atom_feed.py
+#, python-brace-format
+msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+msgstr ""
+"{repeater.domain}: {repeater}: Errore durante il recupero dell'Incontro "
+
+#: corehq/motech/openmrs/atom_feed.py
+#, fuzzy, python-brace-format
+#| msgid "matching unique OpenMRS UUID. case external_id: "
+msgid ""
+"{repeater.domain}: {repeater}: More than one case found matching unique "
+"OpenMRS UUID. case external_id: "
 msgstr "UUID OpenMRS univoco corrispondente. external_id del caso: "
+
+#: corehq/motech/openmrs/atom_feed.py
+#, fuzzy, python-brace-format
+msgid "Unable to determine mobile worker to own new \"{case_type}\" "
+msgstr ""
+"Il livello organizzativo il cui operatore mobile sarà proprietario dei nuovi"
+" casi"
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -54312,11 +54694,6 @@ msgstr "Reinvia i record selezionati"
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-msgid "Cancel selected records"
-msgstr "Annulla i record selezionati"
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Requeue selected records"
 msgstr "Rimettere in coda i record selezionati"
 
@@ -54327,31 +54704,63 @@ msgstr "Rimettere in coda"
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Cancel selected records"
+msgstr "Annulla i record selezionati"
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You can also rename fields, which will update the headers\n"
+#| "                in the export file.\n"
+#| "              "
+msgid ""
+"\n"
+"              You must filter to a specific repeater or payload in order to take\n"
+"              an action on the entire table.\n"
+"            "
+msgstr ""
+"\n"
+"                Puoi anche rinominare i campi, il che aggiornerà le intestazioni\n"
+"                nel file di esportazione.\n"
+"              "
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #, python-format
-msgid "Select all %(total)s payloads"
-msgstr "Seleziona tutti i %(total)s payload"
+msgid ""
+"\n"
+"      All <b><span id=\"selected-page-count\"></span></b> records on this page are\n"
+"      selected.\n"
+"      <button id=\"select-table-button\" role=\"button\" class=\"btn btn-default\">\n"
+"        Select all <b>%(formatted_total)s</b> records in this table\n"
+"      </button>\n"
+"    "
+msgstr ""
+"\n"
+"      Tutti i <b><span id=\"selected-page-count\"></span></b> record in questa pagina sono\n"
+"      selezionati.\n"
+"      <button id=\"select-table-button\" role=\"button\" class=\"btn btn-default\">\n"
+"        Seleziona tutti i <b>%(formatted_total)s</b> record in questa tabella\n"
+"      </button>\n"
+"    "
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 #, python-format
-msgid "Select %(total_pending)s pending payloads"
-msgstr "Seleziona %(total_pending)s payload in attesa"
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-#, python-format
-msgid "Select %(total_cancelled)s cancelled payloads"
-msgstr "Seleziona %(total_cancelled)s payload annullati"
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-msgid "Please select at least one payload"
-msgstr "Seleziona almeno un payload"
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-msgid "This action is not allowed for some of the selected payloads"
-msgstr "Questa azione non è consentita per alcuni dei payload selezionati"
+msgid ""
+"\n"
+"      All <b>%(formatted_total)s</b> records in this table are selected.\n"
+"      <button id=\"clear-table-selection\" role=\"button\" class=\"btn btn-default\">\n"
+"        Clear selection\n"
+"      </button>\n"
+"    "
+msgstr ""
+"\n"
+"      Tutti i <b>%(formatted_total)s</b> record in questa tabella sono selezionati.\n"
+"      <button id=\"clear-table-selection\" role=\"button\" class=\"btn btn-default\">\n"
+"        Cancella selezione\n"
+"      </button>\n"
+"    "
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
@@ -54368,6 +54777,58 @@ msgstr "Sei sicuro?"
 #: corehq/motech/templates/motech/logs.html
 msgid "Payload"
 msgstr "Payload"
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#, python-format
+msgid ""
+"\n"
+"      All <b><span id=\"selected-page-count\"></span></b> records on this page are\n"
+"      selected.\n"
+"      <button\n"
+"        id=\"select-table-button\"\n"
+"        role=\"button\"\n"
+"        class=\"btn btn-outline-primary\"\n"
+"      >\n"
+"        Select all <b>%(formatted_total)s</b> records in this table\n"
+"      </button>\n"
+"    "
+msgstr ""
+"\n"
+"      Tutti i <b><span id=\"selected-page-count\"></span></b> record in questa pagina sono\n"
+"      selezionati.\n"
+"      <button\n"
+"        id=\"select-table-button\"\n"
+"        role=\"button\"\n"
+"        class=\"btn btn-outline-primary\"\n"
+"      >\n"
+"        Seleziona tutti i <b>%(formatted_total)s</b> record in questa tabella\n"
+"      </button>\n"
+"    "
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#, python-format
+msgid ""
+"\n"
+"      All <b>%(formatted_total)s</b> records in this table are selected.\n"
+"      <button\n"
+"        id=\"clear-table-selection\"\n"
+"        role=\"button\"\n"
+"        class=\"btn btn-outline-primary\"\n"
+"      >\n"
+"        Clear selection\n"
+"      </button>\n"
+"    "
+msgstr ""
+"\n"
+"      Tutti i <b>%(formatted_total)s</b> record in questa tabella sono selezionati.\n"
+"      <button\n"
+"        id=\"clear-table-selection\"\n"
+"        role=\"button\"\n"
+"        class=\"btn btn-outline-primary\"\n"
+"      >\n"
+"        Cancella selezione\n"
+"      </button>\n"
+"    "
 
 #: corehq/motech/repeaters/templates/repeaters/partials/bootstrap3/attempt_history.html
 #: corehq/motech/repeaters/templates/repeaters/partials/bootstrap5/attempt_history.html
@@ -54500,10 +54961,6 @@ msgstr "Tentativi di consegna"
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "View Responses"
 msgstr "Visualizza risposte"
-
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Cancel or Requeue"
-msgstr "Annulla o rimetti in coda"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -55900,3 +56357,151 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
+
+#~ msgid ", "
+#~ msgstr ", "
+
+#~ msgid "Workflow:"
+#~ msgstr "Workflow:"
+
+#~ msgid "Rebuild restriction required"
+#~ msgstr "Restrizione di ricostruzione richiesta"
+
+#~ msgid "Rebuild restriction not required"
+#~ msgstr "Restrizione di ricostruzione non richiesta"
+
+#~ msgid " and try again."
+#~ msgstr " e riprova."
+
+#~ msgid "seconds before requesting again."
+#~ msgstr "secondi prima di poter effettuare una nuova richiesta."
+
+#~ msgid "...See more"
+#~ msgstr "...Vedi altro"
+
+#~ msgid "...Collapse"
+#~ msgstr "...Comprimi"
+
+#~ msgid "You can now login"
+#~ msgstr "Ora puoi accedere"
+
+#, fuzzy
+#~ msgid "Please select the applicable API auth settings for the "
+#~ msgstr "Seleziona il/i giorno/i della settimana applicabile/i."
+
+#~ msgid "patients added from OpenMRS Atom feed."
+#~ msgstr "pazienti aggiunti dal feed Atom di OpenMRS."
+
+#~ msgid "patients from OpenMRS unless only one case type is specified."
+#~ msgstr ""
+#~ "pazienti da OpenMRS a meno che non sia specificato un solo tipo di caso."
+
+#~ msgid "Data cleaning action"
+#~ msgstr "Azione di pulizia dati"
+
+#~ msgid "Preview Changes"
+#~ msgstr "Anteprima modifiche"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        %(num_records)s records have been cleaned.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        %(num_records)s record sono stati puliti.\n"
+#~ "      "
+
+#~ msgid "Clean Selected Cases"
+#~ msgstr "Pulisci i casi selezionati"
+
+#~ msgid ""
+#~ "Some records are selected in the session but not currently visible. They "
+#~ "will not be part of cleaning actions until all filters are removed."
+#~ msgstr ""
+#~ "Alcuni record sono selezionati nella sessione ma attualmente non sono "
+#~ "visibili. Non saranno inclusi nelle azioni di pulizia finché tutti i filtri "
+#~ "non saranno rimossi."
+
+#~ msgid "Clean Case Type"
+#~ msgstr "Pulisci tipo caso"
+
+#~ msgid "Performance might be impacted..."
+#~ msgstr "Le prestazioni potrebbero essere influenzate..."
+
+#~ msgid ""
+#~ "\n"
+#~ "          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
+#~ "          but some pages may take longer to load.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Alcuni casi hanno un numero elevato di modifiche. Puoi continuare a visualizzare in anteprima nuove modifiche in blocco,\n"
+#~ "          ma alcune pagine potrebbero richiedere più tempo per caricarsi.\n"
+#~ "        "
+
+#~ msgid "number of cases with an edit history"
+#~ msgstr "numero di casi con una cronologia delle modifiche"
+
+#, python-format
+#~ msgid "Select all %(total)s payloads"
+#~ msgstr "Seleziona tutti i %(total)s payload"
+
+#, python-format
+#~ msgid "Select %(total_pending)s pending payloads"
+#~ msgstr "Seleziona %(total_pending)s payload in attesa"
+
+#, python-format
+#~ msgid "Select %(total_cancelled)s cancelled payloads"
+#~ msgstr "Seleziona %(total_cancelled)s payload annullati"
+
+#~ msgid "Please select at least one payload"
+#~ msgstr "Seleziona almeno un payload"
+
+#~ msgid "This action is not allowed for some of the selected payloads"
+#~ msgstr "Questa azione non è consentita per alcuni dei payload selezionati"
+
+#~ msgid "Cancel or Requeue"
+#~ msgstr "Annulla o rimetti in coda"
+
+#~ msgid ""
+#~ "\n"
+#~ "      As a reminder, payments can be made via credit card, Electronic Fund\n"
+#~ "      Transfer (EFT), or check by following these\n"
+#~ "      <a\n"
+#~ "        href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+#~ "        >instructions</a\n"
+#~ "      >.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Come promemoria, i pagamenti possono essere effettuati tramite carta di credito, Bonifico Bancario (EFT) o assegno seguendo queste\n"
+#~ "      <a\n"
+#~ "        href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+#~ "        >istruzioni</a\n"
+#~ "      >.\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "      You can also pre-pay for several months at any time by following\n"
+#~ "      <a\n"
+#~ "        href=\"https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\"\n"
+#~ "        >these steps</a\n"
+#~ "      >.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Puoi anche prepagare per diversi mesi in qualsiasi momento seguendo\n"
+#~ "      <a\n"
+#~ "        href=\"https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\"\n"
+#~ "        >questi passaggi</a\n"
+#~ "      >.\n"
+#~ "    "
+
+#~ msgid ""
+#~ "Use Registration Forms to minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Help Site</a>.\n"
+#~ "                You can use followup forms for Parent Case button if this module uses Select Parent First workflow"
+#~ msgstr ""
+#~ "Usa i moduli di registrazione per ridurre le registrazioni duplicate richiedendo agli operatori mobili di cercare nell'elenco casi prima di registrare un nuovo caso. Leggi di più sul <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Sito di supporto</a>.\n"
+#~ "                Puoi usare i moduli di follow-up per il pulsante Caso genitore se questo modulo utilizza il flusso di lavoro Seleziona prima il genitore"

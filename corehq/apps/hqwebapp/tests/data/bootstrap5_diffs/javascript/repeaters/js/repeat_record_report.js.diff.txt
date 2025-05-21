@@ -1,46 +1,99 @@
 --- 
 +++ 
-@@ -1,13 +1,13 @@
+@@ -4,8 +4,8 @@
+ import ace from "ace-builds/src-min-noconflict/ace";
+ import "ace-builds/src-min-noconflict/mode-json";
+ import "ace-builds/src-min-noconflict/mode-xml";
+-import "reports/js/bootstrap3/base";
+-import "reports/js/bootstrap3/tabular";
++import "reports/js/bootstrap5/base";
++import "reports/js/bootstrap5/tabular";
  
--hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
-+hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
-     'jquery',
-     'hqwebapp/js/initial_page_data',
-     'ace-builds/src-min-noconflict/ace',
-     'ace-builds/src-min-noconflict/mode-json',
-     'ace-builds/src-min-noconflict/mode-xml',
-     'repeaters/js/repeat_record_report_selects',
--    'reports/js/bootstrap3/base',
--    'reports/js/bootstrap3/tabular',
-+    'reports/js/bootstrap5/base',
-+    'reports/js/bootstrap5/tabular',
-     'commcarehq',
- ], function (
-     $,
-@@ -154,7 +154,7 @@
-                 action = getAction();
-             let $btn;
+ const selectAllCheckbox = document.getElementById('select-all-checkbox'),
+     selectedPageInfo = document.getElementById('selected-page-info'),
+@@ -114,17 +114,17 @@
  
--            $popUp.modal('hide');
-+            $popUp.modal('hide');  /* todo B5: plugin:modal */
-             if (action === 'resend') {
-                 $btn = $('#resend-all-button');
-                 $btn.disableButton();
-@@ -179,7 +179,7 @@
-                 // leaving as is to preserve behavior
-                 if (isActionPossibleForCheckedItems(action, checkedRecords)) {
-                     hideAllWarnings();
--                    $popUp.modal('show');
-+                    $popUp.modal('show');  /* todo B5: plugin:modal */
+     $('#resend-button').on('click', function () {
+         setAction('resend');
+-        $popUp.modal('show');
++        $popUp.modal('show');  /* todo B5: plugin:modal */
+     });
+ 
+     $('#cancel-button').on('click', function () {
+         setAction('cancel');
+-        $popUp.modal('show');
++        $popUp.modal('show');  /* todo B5: plugin:modal */
+     });
+ 
+     $('#requeue-button').on('click', function () {
+         setAction('requeue');
+-        $popUp.modal('show');
++        $popUp.modal('show');  /* todo B5: plugin:modal */
+     });
+ 
+     $('#confirm-button').on('click', function () {
+@@ -132,7 +132,7 @@
+             action = getAction();
+         let $btn;
+ 
+-        $popUp.modal('hide');
++        $popUp.modal('hide');  /* todo B5: plugin:modal */
+         if (action === 'resend') {
+             $btn = $('#resend-button');
+             $btn.disableButton();
+@@ -151,19 +151,19 @@
+     $('#select-all-checkbox').on('click', function () {
+         if (selectAllCheckbox.checked) {
+             checkAllRows();
+-            selectedPageInfo.classList.remove('hide');
++            selectedPageInfo.classList.remove('d-none');
+             const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length;
+             document.getElementById("selected-page-count").innerText = pageSize;
+             if (pageSize >= initialPageData.get('total')) {
+-                selectTableButton.classList.add('hide');
++                selectTableButton.classList.add('d-none');
+             } else {
+-                selectTableButton.classList.remove('hide');
++                selectTableButton.classList.remove('d-none');
+             }
+         } else {
+             uncheckAllRows();
+-            selectedPageInfo.classList.add('hide');
++            selectedPageInfo.classList.add('d-none');
+             // just in case
+-            selectedTableInfo.classList.add('hide');
++            selectedTableInfo.classList.add('d-none');
+             selectedEntireTable = false;
+         }
+         updateActionButtons();
+@@ -184,8 +184,8 @@
+ 
+     $("#select-table-button").click(function () {
+         selectedEntireTable = true;
+-        selectedPageInfo.classList.add('hide');
+-        selectedTableInfo.classList.remove('hide');
++        selectedPageInfo.classList.add('d-none');
++        selectedTableInfo.classList.remove('d-none');
+         updateActionButtons();
+     });
+ 
+@@ -239,7 +239,7 @@
                  } else {
-                     showWarning('not-allowed');
+                     btn.text(gettext('Failed'));
+                     btn.addClass('btn-danger');
+-                    $('#payload-error-modal').modal('show');
++                    $('#payload-error-modal').modal('show');  /* todo B5: plugin:modal */
+                     $('#payload-error-modal .error-message').text(response.failure_reason);
                  }
-@@ -252,7 +252,7 @@
-                     } else {
-                         btn.text(gettext('Failed'));
-                         btn.addClass('btn-danger');
--                        $('#payload-error-modal').modal('show');
-+                        $('#payload-error-modal').modal('show');  /* todo B5: plugin:modal */
-                         $('#payload-error-modal .error-message').text(response.failure_reason);
-                     }
-                 },
+                 resetPage();
+@@ -330,8 +330,8 @@
+     function resetTableSelections() {
+         selectedEntireTable = false;
+         selectAllCheckbox.checked = false;
+-        selectedPageInfo.classList.add('hide');
+-        selectedTableInfo.classList.add('hide');
++        selectedPageInfo.classList.add('d-none');
++        selectedTableInfo.classList.add('d-none');
+     }
+ 
+     function resetPage() {

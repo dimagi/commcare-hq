@@ -5,14 +5,11 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.data_cleaning.models import (
-    BulkEditChange,
     BulkEditRecord,
     BulkEditSession,
     BulkEditSessionType,
     DataType,
-    EditActionType,
     FilterMatchType,
-    MAX_RECORD_CHANGES,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES, user_adapter, group_adapter
@@ -26,7 +23,6 @@ from corehq.apps.es.tests.utils import (
     es_test,
 )
 from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
-from corehq.apps.reports.standard.cases.utils import all_project_data_filter
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
@@ -260,7 +256,6 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
                 self.domain_name,
                 "phonetic-match(name, 'lowkey') and num_leaves > 2 and height_cm <= 11.1"
             )
-            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
@@ -273,7 +268,6 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             .domain(self.domain_name)
             .case_type(self.case_type)
             .NOT(case_property_missing('watered_on'))
-            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
@@ -289,7 +283,6 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
                 self.domain_name,
                 "num_leaves > 2"
             )
-            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
@@ -399,43 +392,3 @@ class BulkEditSessionChangesTests(BaseBulkEditSessionTest):
 
     def _get_list_of_doc_ids(self, num):
         return [str(uuid.uuid4()) for _ in range(num)]
-
-    def test_get_change_counts(self):
-        doc_ids = self._get_list_of_doc_ids(MAX_RECORD_CHANGES)
-        selected_edited_doc_ids = self._get_list_of_doc_ids(MAX_RECORD_CHANGES)
-        records = []
-        changes = []
-        for doc_id in doc_ids + selected_edited_doc_ids:
-            record = BulkEditRecord.objects.create(
-                session=self.session,
-                doc_id=doc_id,
-                is_selected=doc_id in selected_edited_doc_ids,
-            )
-            records.append(record)
-            change = BulkEditChange.objects.create(
-                session=self.session,
-                prop_id='name',
-                action_type=EditActionType.STRIP,
-            )
-            change.records.add(record)
-            changes.append(change)
-
-        # ensure that if a record has multiple changes, those changes aren't counted
-        changes[1].records.add(records[0], records[5])
-        changes[4].records.add(records[2])
-
-        # ensure that one record is over the limit
-        for change in changes[1:MAX_RECORD_CHANGES]:
-            change.records.add(records[MAX_RECORD_CHANGES])
-
-        selected_doc_ids = self._get_list_of_doc_ids(40)
-        self.session.select_multiple_records(selected_doc_ids)
-        change_counts = self.session.get_change_counts()
-        self.assertEqual(
-            change_counts["num_records_edited"],
-            len(doc_ids) + len(selected_edited_doc_ids),
-        )
-        self.assertEqual(
-            records[MAX_RECORD_CHANGES].changes.count(), MAX_RECORD_CHANGES
-        )
-        self.assertEqual(change_counts["num_records_at_max_changes"], 1)

@@ -78,6 +78,7 @@ class CaseOwnersPinnedFilter(SessionPinnedFilterMixin, CaseListFilter):
     template = "data_cleaning/filters/pinned/multi_option.html"
     placeholder = gettext_lazy("Please add case owners to filter the list of cases.")
     filter_type = PinnedFilterType.CASE_OWNERS
+    default_selections = [('all_data', gettext_lazy("[All Data]"))]
 
     @property
     def filter_context(self):

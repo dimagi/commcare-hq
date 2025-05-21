@@ -4,15 +4,15 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2024
+# Dimagi Dev <devops@dimagi.com>, 2025
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Commcare HQ\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2024\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2025\n"
 "Language-Team: Hindi (https://app.transifex.com/dimagi/teams/9388/hi/)\n"
 "Language: hi\n"
 "MIME-Version: 1.0\n"
@@ -34,7 +34,7 @@ msgid ""
 "using CommCare"
 msgstr ""
 "मुझे अब अपने पेड प्लान की सुविधाओं की आवश्यकता नहीं है, लेकिन मैं CommCare "
-"का उपयोग जारी रखने की योजना बना रहा/रही हूँ"
+"का उपयोग जारी रखने की योजना बना रहा हूँ"
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "We are switching to a different mobile data collection tool"
@@ -46,11 +46,11 @@ msgstr "बजट कारणों से"
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "I need more limited features"
-msgstr "मुझे अधिक सीमित सुविधाएँ चाहिए"
+msgstr "मुझे अधिक सीमित सुविधाओं की आवश्यकता है"
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "I need additional/custom features"
-msgstr "मुझे अतिरिक्त/कस्टम सुविधाएँ चाहिए"
+msgstr "मुझे अतिरिक्त/कस्टम सुविधाओं की आवश्यकता है"
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
@@ -61,7 +61,7 @@ msgstr "अन्य"
 
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
-msgstr "Stripe से प्रतिक्रिया सही ढंग से पूरी नहीं हुई।"
+msgstr "Stripe से प्रतिक्रिया सही तरीके से पूरी नहीं हुई।"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Downgrading?"
@@ -69,7 +69,7 @@ msgstr "डाउनग्रेड कर रहे हैं?"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Pausing Subscription?"
-msgstr "सब्सक्रिप्शन रोकना है?"
+msgstr "सब्सक्रिप्शन रोक रहे हैं?"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
@@ -82,7 +82,7 @@ msgid ""
 msgstr ""
 "<p>सभी CommCare सब्सक्रिप्शन के लिए न्यूनतम 30 दिन की प्रतिबद्धता आवश्यक "
 "है।</p><p>आगे बढ़ने पर आप अपनी वर्तमान <%- oldPlan %> एडिशन प्लान "
-"सब्सक्रिप्शन को <strong> <%- date %> </strong> को रोकने के लिए शेड्यूल कर "
+"सब्सक्रिप्शन को <strong> <%- date %> </strong> पर रोकने के लिए शेड्यूल कर "
 "सकते हैं।</p><p>यदि आपके कोई प्रश्न हैं या आप अपनी सब्सक्रिप्शन के बारे में "
 "हमसे बात करना चाहते हैं, तो कृपया <a href='mailto: <%- invoicingContact "
 "%>'><%- invoicingContact %></a> पर संपर्क करें।</p>"
@@ -99,13 +99,13 @@ msgid ""
 "<%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
 "<p>सभी CommCare सब्सक्रिप्शन के लिए न्यूनतम 30 दिन की प्रतिबद्धता आवश्यक "
-"है।</p><p>आपकी वर्तमान <%- oldPlan %> एडिशन प्लान सब्सक्रिप्शन <strong> <%- "
-"date %> </strong> को रोकने के लिए शेड्यूल की गई है।</p><p>आगे बढ़ने पर आप "
-"अपनी वर्तमान <%- oldPlan %> एडिशन प्लान सब्सक्रिप्शन को <%- newPlan %> एडिशन"
-" प्लान में <strong> <%- date %> </strong> को डाउनग्रेड करने के लिए शेड्यूल "
-"कर सकते हैं।</p><p>यदि आपके कोई प्रश्न हैं या आप अपनी सब्सक्रिप्शन के बारे "
-"में हमसे बात करना चाहते हैं, तो कृपया <a href='mailto: <%- invoicingContact "
-"%>'><%- invoicingContact %></a> पर संपर्क करें।</p>"
+"है।</p><p>आपकी वर्तमान <%- oldPlan %> एडिशन प्लान सब्सक्रिप्शन को <strong> "
+"<%- date %> </strong> पर रोकने के लिए शेड्यूल किया गया है।</p><p>आगे बढ़ने "
+"पर आप अपनी वर्तमान <%- oldPlan %> एडिशन प्लान सब्सक्रिप्शन को <strong> <%- "
+"date %> </strong> पर <%- newPlan %> एडिशन प्लान में डाउनग्रेड करने के लिए "
+"शेड्यूल कर सकते हैं।</p><p>यदि आपके कोई प्रश्न हैं या आप अपनी सब्सक्रिप्शन "
+"के बारे में हमसे बात करना चाहते हैं, तो कृपया <a href='mailto: <%- "
+"invoicingContact %>'><%- invoicingContact %></a> पर संपर्क करें।</p>"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
@@ -120,14 +120,14 @@ msgid ""
 "invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
 "<p>सभी CommCare सब्सक्रिप्शन के लिए न्यूनतम 30 दिन की प्रतिबद्धता आवश्यक "
-"है।</p><p>आपकी वर्तमान <%- oldPlan %> एडिशन प्लान सब्सक्रिप्शन <strong> <%- "
-"date %> </strong> को <%- nextSubscription %> एडिशन प्लान में डाउनग्रेड करने "
-"के लिए शेड्यूल की गई है।</p><p>आगे बढ़ने पर आप अपनी वर्तमान <%- oldPlan %> "
-"एडिशन प्लान सब्सक्रिप्शन को <%- newPlan %> एडिशन प्लान में <strong> <%- date"
-" %> </strong> को डाउनग्रेड करने के लिए शेड्यूल कर सकते हैं।</p><p>यदि आपके "
-"कोई प्रश्न हैं या आप अपनी सब्सक्रिप्शन के बारे में हमसे बात करना चाहते हैं, "
-"तो कृपया <a href='mailto: <%- invoicingContact %>'><%- invoicingContact "
-"%></a> पर संपर्क करें।</p>"
+"है।</p><p>आपकी वर्तमान <%- oldPlan %> एडिशन प्लान सब्सक्रिप्शन को <strong> "
+"<%- date %> </strong> पर <%- nextSubscription %> एडिशन प्लान में डाउनग्रेड "
+"करने के लिए शेड्यूल किया गया है।</p><p>आगे बढ़ने पर आप अपनी वर्तमान <%- "
+"oldPlan %> एडिशन प्लान सब्सक्रिप्शन को <strong> <%- date %> </strong> पर <%-"
+" newPlan %> एडिशन प्लान में डाउनग्रेड करने के लिए शेड्यूल कर सकते "
+"हैं।</p><p>यदि आपके कोई प्रश्न हैं या आप अपनी सब्सक्रिप्शन के बारे में हमसे "
+"बात करना चाहते हैं, तो कृपया <a href='mailto: <%- invoicingContact %>'><%- "
+"invoicingContact %></a> पर संपर्क करें।</p>"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
@@ -141,11 +141,11 @@ msgid ""
 msgstr ""
 "<p>सभी CommCare सब्सक्रिप्शन के लिए न्यूनतम 30 दिन की प्रतिबद्धता आवश्यक "
 "है।</p><p>आगे बढ़ने पर आप अपनी वर्तमान <%- oldPlan %> एडिशन प्लान "
-"सब्सक्रिप्शन को <%- newPlan %> एडिशन प्लान में <strong> <%- date %> "
-"</strong> को डाउनग्रेड करने के लिए शेड्यूल कर सकते हैं।</p>यदि आपके कोई "
-"प्रश्न हैं या आप अपनी सब्सक्रिप्शन के बारे में हमसे बात करना चाहते हैं, तो "
-"कृपया <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a> "
-"पर संपर्क करें।"
+"सब्सक्रिप्शन को <strong> <%- date %> </strong> पर <%- newPlan %> एडिशन प्लान"
+" में डाउनग्रेड करने के लिए शेड्यूल कर सकते हैं।</p>यदि आपके कोई प्रश्न हैं "
+"या आप अपनी सब्सक्रिप्शन के बारे में हमसे बात करना चाहते हैं, तो कृपया <a "
+"href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a> पर संपर्क"
+" करें।"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Free edition"
@@ -194,7 +194,7 @@ msgstr "अनुरोध सबमिट करें"
 
 #: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
 msgid "Seconds"
-msgstr "सेकंड"
+msgstr "सेकंड्स"
 
 #: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
 msgid "Chart"
@@ -228,7 +228,7 @@ msgstr "पिछले संस्करण देखें"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
-msgstr "केस टाइप में केवल a-z, 0-9, '-' और '_' अक्षर ही हो सकते हैं"
+msgstr "केस टाइप्स में केवल a-z, 0-9, '-' और '_' अक्षर ही शामिल हो सकते हैं"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
@@ -236,7 +236,7 @@ msgstr "यह एक आरक्षित केस टाइप है। क
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This case type has been deprecated in the Data Dictionary."
-msgstr "यह केस टाइप डेटा डिक्शनरी में अप्रचलित कर दिया गया है।"
+msgstr "इस केस टाइप को डेटा डिक्शनरी में डिप्रिकेट कर दिया गया है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
@@ -268,7 +268,7 @@ msgid ""
 msgstr ""
 "सर्वे का उपयोग स्वतंत्र फॉर्म एकत्र करने के लिए किया जाता है जिन्हें समय के "
 "साथ ट्रैक करने की आवश्यकता नहीं होती। सामान्य उदाहरणों में संतुष्टि सर्वे या"
-" गुमनाम प्रतिक्रिया फॉर्म शामिल हैं।"
+" गुमनाम फीडबैक फॉर्म शामिल हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "What is a Case List?"
@@ -281,9 +281,9 @@ msgid ""
 "examples include maternal health, student attendance, or crop monitoring."
 msgstr ""
 "केस लिस्ट का उपयोग संबंधित डेटा (केस) को समय के साथ पंजीकृत और ट्रैक करने के"
-" लिए किया जाता है। इन डेटा का उपयोग अन्य फॉर्म और केस में किया जा सकता है। "
-"सामान्य उदाहरणों में मातृ स्वास्थ्य, छात्र उपस्थिति या फसल निगरानी शामिल "
-"हैं।"
+" लिए किया जाता है। इस डेटा का उपयोग अन्य फॉर्म और अन्य केस द्वारा किया जा "
+"सकता है। सामान्य उदाहरणों में मातृ स्वास्थ्य, छात्र उपस्थिति, या फसल निगरानी"
+" शामिल हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Select None"
@@ -308,7 +308,7 @@ msgstr "अमान्य प्रोजेक्ट चयनित"
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
 #: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
 msgid "Oops, there was a problem loading this section. Please try again."
-msgstr "ओह, इस अनुभाग को लोड करने में समस्या आई। कृपया पुनः प्रयास करें।"
+msgstr "ओह, इस सेक्शन को लोड करने में समस्या आई। कृपया पुनः प्रयास करें।"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Mobile UCR Options"
@@ -403,7 +403,7 @@ msgstr " मापना "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
 msgid "Data Tab: Custom Expression"
-msgstr "डेटा टैब: कस्टम अभिव्यक्ति"
+msgstr "डेटा टैब: कस्टम एक्सप्रेशन"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
 msgid "Data Tab: Child Cases: "
@@ -428,8 +428,8 @@ msgid ""
 "It is recommended that you leave this value blank. Future changes to your "
 "report's chart configuration will not be reflected here."
 msgstr ""
-"यह अनुशंसा की जाती है कि आप इस मान को खाली छोड़ दें। भविष्य में आपकी रिपोर्ट"
-" के चार्ट कॉन्फ़िगरेशन में किए गए परिवर्तन यहाँ परिलक्षित नहीं होंगे।"
+"अनुशंसा की जाती है कि आप इस मान को खाली छोड़ दें। भविष्य में आपकी रिपोर्ट के"
+" चार्ट कॉन्फ़िगरेशन में किए गए बदलाव यहां पर नहीं दिखेंगे।"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 #: corehq/apps/export/static/export/js/models.js
@@ -450,7 +450,7 @@ msgstr "केस टाइल्स का उपयोग न करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "Manually configure Case Tiles"
-msgstr "मैन्युअली केस टाइल्स कॉन्फ़िगर करें"
+msgstr "केस टाइल्स को मैन्युअली कॉन्फ़िगर करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "Edit Custom Variables"
@@ -482,11 +482,11 @@ msgid ""
 "Please update following properties: "
 msgstr ""
 "सर्च प्रॉपर्टीज़ और डिफ़ॉल्ट सर्च फ़िल्टर में सामान्य प्रॉपर्टीज़ नहीं हो "
-"सकतीं। कृपया निम्न प्रॉपर्टीज़ अपडेट करें: "
+"सकतीं। कृपया निम्नलिखित प्रॉपर्टीज़ अपडेट करें: "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "There are errors in your configuration."
-msgstr "आपके कॉन्फ़िगरेशन में त्रुटियाँ हैं।"
+msgstr "आपकी कॉन्फ़िगरेशन में त्रुटियां हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
 msgid "<%- name %> (Calculated Property #<%- index %>)"
@@ -528,8 +528,8 @@ msgstr "घटते क्रम में (1.3, 1.2, 1.1)"
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
-"एक अक्षर से शुरू होना चाहिए और केवल अक्षर, संख्याएँ, '-', और '_' ही शामिल "
-"होने चाहिए"
+"एक अक्षर से शुरू होना चाहिए और केवल अक्षर, संख्या, '-', और '_' शामिल होने "
+"चाहिए"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Plain"
@@ -538,11 +538,11 @@ msgstr "सादा"
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Date"
-msgstr "तारीख"
+msgstr "तिथि"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Time Since or Until Date"
-msgstr "तारीख से पहले या बाद का समय"
+msgstr "तिथि से या तक का समय"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Phone Number"
@@ -574,11 +574,11 @@ msgstr "मार्कडाउन"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Address Popup (Web Apps only)"
-msgstr "पता पॉपअप (केवल वेब ऐप्स में)"
+msgstr "पता पॉपअप (केवल वेब ऐप्स के लिए)"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Clickable Icon (Web Apps only)"
-msgstr "क्लिक करने योग्य आइकन (केवल वेब ऐप्स में)"
+msgstr "क्लिक करने योग्य आइकन (केवल वेब ऐप्स के लिए)"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Picture"
@@ -612,8 +612,8 @@ msgid ""
 "Sorry, something went wrong with the download. If you see this repeatedly "
 "please report an issue."
 msgstr ""
-"माफ़ कीजिए, डाउनलोड में कुछ गड़बड़ हो गई। यदि यह बार-बार दिखे तो कृपया एक "
-"समस्या रिपोर्ट करें।"
+"माफ़ कीजिए, डाउनलोड में कुछ गड़बड़ हो गई। यदि यह बार-बार होता है तो कृपया एक"
+" समस्या रिपोर्ट करें।"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Type required"
@@ -625,7 +625,7 @@ msgstr "केस टैग आवश्यक है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
-msgstr "केस टैग: केवल अक्षर, संख्याएँ, '-', और '_' की अनुमति है"
+msgstr "केस टैग: केवल अक्षर, संख्या, '-', और '_' की अनुमति है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag already in use"
@@ -665,7 +665,7 @@ msgstr "अपेक्षित केस प्रकार आवश्यक
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase parent reference is missing"
-msgstr "सबकेस पैरेंट संदर्भ गायब है"
+msgstr "सबकेस के लिए पैरेंट संदर्भ गायब है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Parent reference ID required for subcases: "
@@ -705,7 +705,7 @@ msgstr "स्वचालित केस चयन"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load Case From Fixture"
-msgstr "फिक्स्चर से केस लोड करें"
+msgstr "फिक्सचर से केस लोड करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Open a Case"
@@ -714,7 +714,7 @@ msgstr "केस खोलें"
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property updated by two questions"
-msgstr "प्रॉपर्टी दो प्रश्नों द्वारा अपडेट की गई है"
+msgstr "प्रॉपर्टी दो प्रश्नों द्वारा अपडेट की गई"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
 msgid "Reserved word: "
@@ -731,7 +731,7 @@ msgstr "सबकेस के लिए पैरेंट प्रॉपर�
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
 msgid "Two properties load to the same question"
-msgstr "दो प्रॉपर्टीज़ एक ही प्रश्न में लोड हो रही हैं"
+msgstr "दो प्रॉपर्टी एक ही प्रश्न में लोड हो रही हैं"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged case settings"
@@ -739,11 +739,13 @@ msgstr "आपके केस सेटिंग्स में कोई ब�
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
-msgstr "आपके यूज़र प्रॉपर्टीज़ सेटिंग्स में कोई बदलाव नहीं हुआ है"
+msgstr "आपकी यूज़र प्रॉपर्टीज़ सेटिंग्स में कोई बदलाव नहीं हुआ है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
-msgstr "प्रॉपर्टी में अपरिचित उपसर्ग <strong> का उपयोग किया गया है"
+msgstr "संपत्ति अपरिचित उपसर्ग का उपयोग करती है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -859,7 +861,7 @@ msgstr "रिलीज़"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
 msgid "You have unsaved changes to your application profiles"
-msgstr "आपकी एप्लिकेशन प्रोफाइल्स में बिना सहेजे गए परिवर्तन हैं"
+msgstr "आपके एप्लिकेशन प्रोफाइल में बिना सहेजे गए परिवर्तन हैं"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
 #: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
@@ -870,7 +872,7 @@ msgstr "सहेजने में त्रुटि हुई"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
 msgid "Select a user"
-msgstr "यूज़र चुनें"
+msgstr "एक उपयोगकर्ता चुनें"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
 msgid "(Default)"
@@ -884,14 +886,14 @@ msgstr "अज्ञात ऐप"
 msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
-"एक त्रुटि हुई। पृष्ठ को रीलोड करें और फिर से 'नई संस्करण बनाएँ' पर क्लिक "
-"करें।"
+"एक त्रुटि हुई। पृष्ठ को पुनः लोड करें और फिर से नया संस्करण बनाने के लिए "
+"क्लिक करें।"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
-"माफ़ कीजिए, यह पूरा नहीं हुआ। कृपया अपना पृष्ठ रीलोड करें और पुनः प्रयास "
-"करें"
+"माफ़ कीजिए, यह पूरा नहीं हो सका। कृपया अपना पृष्ठ पुनः लोड करें और फिर से "
+"प्रयास करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
 msgid "The versions list has changed since you loaded the page."
@@ -917,7 +919,7 @@ msgstr "CommCare %s में अपग्रेड करें!"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
 msgid "Auto-set by "
-msgstr "स्वतः सेट किया गया द्वारा "
+msgstr "स्वतः सेट किया गया "
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
 msgid ""
@@ -937,7 +939,7 @@ msgstr "सेटिंग्स"
 
 #: corehq/apps/app_manager/static/app_manager/js/source_files.js
 msgid "Please enter a version to compare"
-msgstr "कृपया तुलना के लिए एक संस्करण दर्ज करें"
+msgstr "कृपया तुलना करने के लिए एक संस्करण दर्ज करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
 msgid "Filter properties"
@@ -975,7 +977,6 @@ msgid "Question"
 msgstr "प्रश्न"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "नाम"
 
@@ -998,11 +999,11 @@ msgstr "विकल्प"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "Calculate condition"
-msgstr "गणना की शर्त"
+msgstr "गणना शर्त"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "Display condition"
-msgstr "प्रदर्शन की शर्त"
+msgstr "प्रदर्शन शर्त"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -1021,7 +1022,7 @@ msgstr "डिफ़ॉल्ट मान"
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Condition"
-msgstr "मान्यता की शर्त"
+msgstr "मान्यता शर्त"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -1046,11 +1047,11 @@ msgstr "नया मान"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "Loaded Case Properties"
-msgstr "लोडेड केस प्रॉपर्टीज़"
+msgstr "लोड की गई केस प्रॉपर्टीज़"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "Saved Case Properties"
-msgstr "सेव्ड केस प्रॉपर्टीज़"
+msgstr "सहेजी गई केस प्रॉपर्टीज़"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "load"
@@ -1058,7 +1059,7 @@ msgstr "लोड करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "save"
-msgstr "सेव करें"
+msgstr "सहेजें"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "Case Property"
@@ -1071,7 +1072,7 @@ msgstr "केस प्रकार का"
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "Latest saved"
-msgstr "नवीनतम सेव्ड"
+msgstr "नवीनतम सहेजा गया"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
 msgid "[unknown]"
@@ -1083,7 +1084,7 @@ msgstr "चेतावनी: अपरिचित भाषा"
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
 msgid "You have unsaved changes in your supported languages"
-msgstr "आपकी समर्थित भाषाओं में बिना सेव किए गए परिवर्तन हैं"
+msgstr "आपकी समर्थित भाषाओं में असहेजे गए परिवर्तन हैं"
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
 msgid "There are errors in your configuration"
@@ -1127,7 +1128,7 @@ msgstr "सभी संक्षिप्त करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Bulk Update All Questions"
-msgstr "सभी प्रश्नों को बल्क अपडेट करें"
+msgstr "सभी प्रश्नों का बल्क अपडेट करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Question"
@@ -1135,7 +1136,7 @@ msgstr "प्रश्न जोड़ें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Click {btn} to start building your form."
-msgstr "अपना फ़ॉर्म बनाना शुरू करने के लिए {btn} पर क्लिक करें।"
+msgstr "{btn} पर क्लिक करें और अपना फ़ॉर्म बनाना शुरू करें।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Question Details"
@@ -1183,7 +1184,7 @@ msgstr "{info} के लिए कोई मेल नहीं मिला!"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Multiple matches for {info} found!"
-msgstr "{info} के लिए कई मेल मिले!"
+msgstr "{info} के लिए कई मेल मिले हैं!"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
@@ -1223,8 +1224,8 @@ msgid ""
 "itself. Please remove the . from the {property} or your form will have "
 "errors."
 msgstr ""
-"किसी प्रश्न के लिए {property} को स्वयं प्रश्न का संदर्भ देना अनुमत नहीं है। "
-"कृपया {property} से . हटा दें, अन्यथा आपके फॉर्म में त्रुटियाँ होंगी।"
+"किसी प्रश्न के लिए {property} का उसी प्रश्न को संदर्भित करना अनुमति नहीं है।"
+" कृपया {property} से . हटा दें, अन्यथा आपके फॉर्म में त्रुटियाँ होंगी।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Unknown question:"
@@ -1261,7 +1262,7 @@ msgstr "अज्ञात (केवल-पढ़ने योग्य) प्
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lookup Table Data"
-msgstr "लुकअप टेबल डेटा"
+msgstr "लुकअप तालिका डेटा"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "No Translation Data"
@@ -1276,7 +1277,7 @@ msgid ""
 "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
 " pick a different Question ID."
 msgstr ""
-"आईडी '{nodeID}' फॉर्म पार्सिंग में समस्या पैदा कर सकती है। किसी अन्य प्रश्न "
+"आईडी '{nodeID}' से फॉर्म पार्सिंग में समस्या हो सकती है। किसी अन्य प्रश्न "
 "आईडी का चयन करना अनुशंसित है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -1284,12 +1285,12 @@ msgid ""
 "{nodeID} is not a valid Question ID. It must start with a letter and contain"
 " only letters, numbers, and '-' or '_' characters."
 msgstr ""
-"{nodeID} एक मान्य प्रश्न आईडी नहीं है। इसे एक अक्षर से शुरू होना चाहिए और "
-"केवल अक्षर, अंक, और '-' या '_' वर्ण होने चाहिए।"
+"{nodeID} मान्य प्रश्न आईडी नहीं है। इसे एक अक्षर से शुरू होना चाहिए और केवल "
+"अक्षर, संख्या, और '-' या '_' अक्षर ही होने चाहिए।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "'meta' is not a valid Question ID."
-msgstr "'meta' एक मान्य प्रश्न आईडी नहीं है।"
+msgstr "'meta' मान्य प्रश्न आईडी नहीं है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -1303,7 +1304,7 @@ msgid ""
 "This question has the same Question ID as another question in the same "
 "group. Please choose a unique Question ID."
 msgstr ""
-"इस प्रश्न की प्रश्न आईडी उसी समूह के किसी अन्य प्रश्न के समान है। कृपया एक "
+"इस प्रश्न का प्रश्न आईडी उसी समूह के किसी अन्य प्रश्न के समान है। कृपया एक "
 "अद्वितीय प्रश्न आईडी चुनें।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -1348,8 +1349,8 @@ msgstr "अतिरिक्त बाइंड विशेषताएँ"
 msgid ""
 "You are referencing a node in this form. This can cause errors in the form"
 msgstr ""
-"आप इस फॉर्म में एक नोड का संदर्भ दे रहे हैं। इससे फॉर्म में त्रुटियाँ हो "
-"सकती हैं"
+"आप इस फॉर्म में एक नोड का संदर्भ दे रहे हैं। इससे फॉर्म में त्रुटियाँ आ सकती"
+" हैं"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Appearance Attribute"
@@ -1385,7 +1386,7 @@ msgstr "मान्य पथ होना चाहिए"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{path} is not a valid data parent"
-msgstr "{path} एक मान्य डेटा पैरेंट नहीं है"
+msgstr "{path} मान्य डेटा पैरेंट नहीं है"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -1449,8 +1450,8 @@ msgid ""
 "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
 "megapixels</li></ul>"
 msgstr ""
-"यह फ़ॉर्म भेजने से पहले छवि का आकार बदल देगा। इस विकल्प का उपयोग कम "
-"कनेक्टिविटी वाले क्षेत्रों में छोटी छवियाँ भेजने के लिए करें।<ul><li>छोटा - "
+"यह फ़ॉर्म भेजने से पहले इमेज का आकार बदल देगा। इस विकल्प का उपयोग कम "
+"कनेक्टिविटी वाले क्षेत्रों में छोटी इमेज भेजने के लिए करें।<ul><li>छोटा - "
 "0.1 मेगापिक्सल</li><li>मध्यम - 0.2 मेगापिक्सल</li><li>बड़ा - 0.5 "
 "मेगापिक्सल</li></ul>"
 
@@ -1472,7 +1473,7 @@ msgstr "दस्तावेज़ अपलोड"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "GPS"
-msgstr "GPS"
+msgstr "जीपीएस"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Barcode Scan"
@@ -1480,7 +1481,7 @@ msgstr "बारकोड स्कैन"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Date and Time"
-msgstr "तिथि और समय"
+msgstr "तारीख और समय"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
@@ -1510,14 +1511,14 @@ msgstr "मानों में व्हाइटस्पेस की अ�
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "This choice value has been used in the same question"
-msgstr "यह विकल्प मान इसी प्रश्न में पहले ही उपयोग किया जा चुका है"
+msgstr "यह विकल्प मान इसी प्रश्न में पहले ही उपयोग किया गया है"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "Cannot change a Multiple/Single Choice question to a non-Choice question if "
 "it has Choices. Please remove all Choices and try again."
 msgstr ""
-"यदि इसमें विकल्प हैं तो मल्टीपल/सिंगल चॉइस प्रश्न को गैर-विकल्प प्रश्न में "
+"यदि इसमें विकल्प हैं, तो मल्टीपल/सिंगल चॉइस प्रश्न को नॉन-चॉइस प्रश्न में "
 "नहीं बदला जा सकता। कृपया सभी विकल्प हटाएँ और पुनः प्रयास करें।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -1595,8 +1596,8 @@ msgid ""
 "The {field} for a question is not allowed to reference the question itself. "
 "Please remove the {ref} from the {field} or your form will have errors."
 msgstr ""
-"किसी प्रश्न के लिए {field} को स्वयं प्रश्न का संदर्भित करना अनुमति नहीं है। "
-"कृपया {field} से {ref} हटा दें, अन्यथा आपके फ़ॉर्म में त्रुटियाँ होंगी।"
+"किसी प्रश्न के लिए {field} को स्वयं प्रश्न का संदर्भ देने की अनुमति नहीं है।"
+" कृपया {field} से {ref} हटा दें, अन्यथा आपके फ़ॉर्म में त्रुटियाँ होंगी।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "output value"
@@ -1616,15 +1617,15 @@ msgstr "<span class='property-name'>एक्सप्रेशन</span> (ए�
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Show Simple Mode"
-msgstr "साधारण मोड दिखाएँ"
+msgstr "सिंपल मोड दिखाएँ"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "You are currently in Advanced Mode because your logic is too complicated for"
 " Simple Mode."
 msgstr ""
-"आप वर्तमान में एडवांस्ड मोड में हैं क्योंकि आपकी लॉजिक साधारण मोड के लिए "
-"बहुत जटिल है।"
+"आप वर्तमान में एडवांस्ड मोड में हैं क्योंकि आपकी लॉजिक सिंपल मोड के लिए बहुत"
+" जटिल है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
@@ -1648,11 +1649,11 @@ msgstr "परिणाम है"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Expression"
-msgstr "व्यक्तिकरण"
+msgstr "व्यक्ति अभिव्यक्ति"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Expression"
-msgstr "व्यक्तिकरण जोड़ें"
+msgstr "अभिव्यक्ति जोड़ें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/export/static/export/js/models.js
@@ -1700,11 +1701,11 @@ msgstr "चयनित मान है"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "True when ALL of the expressions are true."
-msgstr "सभी व्यक्तिकरण सत्य होने पर ही सत्य होगा।"
+msgstr "सभी अभिव्यक्तियाँ सत्य होने पर ही सत्य।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "True when ANY of the expressions are true."
-msgstr "कोई भी व्यक्तिकरण सत्य होने पर सत्य होगा।"
+msgstr "कोई भी अभिव्यक्ति सत्य होने पर सत्य।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Error"
@@ -1727,8 +1728,8 @@ msgid ""
 "Holding the ALT key while clicking save invokes an inefficient save "
 "procedure. Do this only if a normal save fails."
 msgstr ""
-"सेव पर क्लिक करते समय ALT कुंजी दबाने से एक अप्रभावी सेव प्रक्रिया शुरू होती"
-" है। ऐसा केवल तब करें जब सामान्य सेव विफल हो जाए।"
+"ALT कुंजी दबाकर सहेजने पर एक अप्रभावी सहेजने की प्रक्रिया शुरू होती है। ऐसा "
+"केवल तभी करें जब सामान्य सहेजना विफल हो जाए।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Are you sure you want to exit? All unsaved changes will be lost!"
@@ -1785,8 +1786,8 @@ msgid ""
 " undone by editing individual questions."
 msgstr ""
 "आप इस फॉर्म के सभी मौजूदा प्रश्नों को आवश्यक बनाने जा रहे हैं। यह क्रिया इस "
-"फॉर्म की वर्तमान संरचना को अधिलेखित कर देगी और केवल व्यक्तिगत प्रश्नों को "
-"संपादित करके ही पूर्ववत की जा सकती है।"
+"फॉर्म की वर्तमान कॉन्फ़िगरेशन को अधिलेखित कर देगी और केवल व्यक्तिगत प्रश्नों"
+" को संपादित करके ही पूर्ववत की जा सकती है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Load Default Values"
@@ -1815,11 +1816,11 @@ msgstr "जारी रखें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Expand Editor"
-msgstr "संपादक को फैलाएं"
+msgstr "संपादक को बड़ा करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Shrink Editor"
-msgstr "संपादक को संकुचित करें"
+msgstr "संपादक को छोटा करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Export Form Contents"
@@ -1839,12 +1840,11 @@ msgstr "उपयोग खोजें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation failed. Form may not perform correctly on your device!"
-msgstr ""
-"मान्यता विफल रही। फॉर्म आपके डिवाइस पर सही तरह से काम नहीं कर सकता है!"
+msgstr "मान्यता विफल रही। फॉर्म आपके डिवाइस पर सही ढंग से काम नहीं कर सकता!"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Edit Form's Source XML"
-msgstr "फॉर्म का स्रोत XML संपादित करें"
+msgstr "फॉर्म के स्रोत XML को संपादित करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Update Source"
@@ -1855,9 +1855,9 @@ msgid ""
 "This is the raw XML. You can edit or paste into this box to make changes to "
 "your form. Press 'Update Source' to save changes, or 'Close' to cancel."
 msgstr ""
-"यह कच्चा XML है। आप अपने फॉर्म में बदलाव करने के लिए इसमें संपादन या पेस्ट "
-"कर सकते हैं। परिवर्तन सहेजने के लिए 'स्रोत अपडेट करें' दबाएँ, या रद्द करने "
-"के लिए 'बंद करें'।"
+"यह कच्चा XML है। आप इसमें बदलाव करने के लिए इस बॉक्स में संपादन या पेस्ट कर "
+"सकते हैं। परिवर्तन सहेजने के लिए 'स्रोत अपडेट करें' दबाएँ, या रद्द करने के "
+"लिए 'बंद करें' दबाएँ।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -1865,15 +1865,15 @@ msgid ""
 "share your form with others."
 msgstr ""
 "इस सामग्री को कॉपी करें और Excel जैसे स्प्रेडशीट प्रोग्राम में पेस्ट करें "
-"ताकि आप आसानी से अपना फॉर्म दूसरों के साथ साझा कर सकें।"
+"ताकि आप अपने फॉर्म को दूसरों के साथ आसानी से साझा कर सकें।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lost Work Warning"
-msgstr "कार्य खोने की चेतावनी"
+msgstr "काम खोने की चेतावनी"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Overwrite their work"
-msgstr "उनका कार्य अधिलेखित करें"
+msgstr "उनका काम अधिलेखित करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Show XML Differences"
@@ -1884,8 +1884,8 @@ msgid ""
 "Looks like someone else has edited this form since you loaded the page. Are "
 "you sure you want to overwrite their work?"
 msgstr ""
-"ऐसा लगता है कि किसी और ने आपके पेज लोड करने के बाद इस फॉर्म को संपादित किया "
-"है। क्या आप वाकई उनका कार्य अधिलेखित करना चाहते हैं?"
+"लगता है किसी और ने आपके पेज लोड करने के बाद इस फॉर्म को संपादित किया है। "
+"क्या आप वाकई उनका काम अधिलेखित करना चाहते हैं?"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Edit Form Properties"
@@ -1932,7 +1932,7 @@ msgstr "ठीक है"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Sorry, {err}"
-msgstr "माफ़ कीजिए, {err}"
+msgstr "माफ़ करें, {err}"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Choice"
@@ -1962,14 +1962,14 @@ msgid ""
 "you fix the XML by hand. What would you like to do?"
 msgstr ""
 "ऐसा लगता है कि आपका फ़ॉर्म मान्य XML नहीं है। यह अक्सर तब होता है जब आप अपने"
-" किसी प्रश्न में आरक्षित वर्णों का उपयोग करते हैं। जिन वर्णों से सावधान रहें"
-" वे हैं <, >, और &। आप अभी भी सहेज सकते हैं, लेकिन जब तक आप XML को स्वयं ठीक"
-" नहीं करते, तब तक आप इस फ़ॉर्म को फिर से लोड नहीं कर सकते। आप क्या करना "
-"चाहेंगे?"
+" किसी प्रश्न में आरक्षित वर्ण का उपयोग करते हैं। जिन वर्णों पर ध्यान देना "
+"चाहिए वे हैं <, >, और &। आप अभी भी सहेज सकते हैं, लेकिन जब तक आप XML को "
+"स्वयं ठीक नहीं करते, तब तक आप इस फ़ॉर्म को फिर से लोड नहीं कर सकते। आप क्या "
+"करना चाहेंगे?"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Form Validation Error"
-msgstr "फ़ॉर्म सत्यापन त्रुटि"
+msgstr "फ़ॉर्म मान्यता त्रुटि"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Fix the problem (recommended)"
@@ -1988,8 +1988,8 @@ msgid ""
 "The {displaytext} appears in the application. This text will not appear in "
 "data exports."
 msgstr ""
-"{displaytext} एप्लिकेशन में दिखाई देता है। यह पाठ डेटा निर्यात में दिखाई "
-"नहीं देगा।"
+"{displaytext} एप्लिकेशन में दिखाई देता है। यह पाठ डेटा निर्यात में नहीं "
+"दिखाई देगा।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display Text"
@@ -2005,8 +2005,8 @@ msgid ""
 "You can configure an external data source like a case list or lookup table "
 "to use as the choices for a multiple choice question."
 msgstr ""
-"आप एक बाहरी डेटा स्रोत जैसे केस सूची या लुकअप तालिका को एक बहुविकल्पी प्रश्न"
-" के विकल्पों के रूप में उपयोग करने के लिए कॉन्फ़िगर कर सकते हैं।"
+"आप एक बाहरी डेटा स्रोत जैसे केस सूची या लुकअप तालिका को कई विकल्प वाले "
+"प्रश्न के विकल्पों के रूप में उपयोग करने के लिए कॉन्फ़िगर कर सकते हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Logic"
@@ -2019,9 +2019,8 @@ msgid ""
 "the question required or ensure the answer is in a valid range."
 msgstr ""
 "यह नियंत्रित करने के लिए तर्क का उपयोग करें कि प्रश्न कब पूछे जाएं और कौन से"
-" उत्तर मान्य हैं। आप किसी पिछले उत्तर के आधार पर प्रश्न दिखाने, प्रश्न को "
-"आवश्यक बनाने या उत्तर को मान्य सीमा में सुनिश्चित करने के लिए तर्क जोड़ सकते"
-" हैं।"
+" उत्तर मान्य हैं। आप पिछले उत्तर के आधार पर प्रश्न दिखाने, प्रश्न को आवश्यक "
+"बनाने या उत्तर को मान्य सीमा में सुनिश्चित करने के लिए तर्क जोड़ सकते हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Media"
@@ -2032,8 +2031,8 @@ msgid ""
 "This will allow you to add images, audio or video media to a question, or "
 "other custom content."
 msgstr ""
-"यह आपको किसी प्रश्न में चित्र, ऑडियो या वीडियो मीडिया या अन्य कस्टम सामग्री "
-"जोड़ने की अनुमति देगा।"
+"यह आपको किसी प्रश्न में छवियाँ, ऑडियो या वीडियो मीडिया, या अन्य कस्टम "
+"सामग्री जोड़ने की अनुमति देगा।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -2078,9 +2077,9 @@ msgid ""
 "\n"
 "Built in integrations are available on the Pro plan and higher. External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
 msgstr ""
-"अब आपके पास अपने एप्लिकेशन में अंतर्निहित या बाहरी एकीकरण की पहुँच नहीं है।\n"
+"अब आपके पास अपने एप्लिकेशन में अंतर्निहित या बाहरी एकीकरण तक पहुँच नहीं है।\n"
 "\n"
-"अंतर्निहित एकीकरण प्रो प्लान और उससे ऊपर पर उपलब्ध हैं। बाहरी एकीकरण एडवांस्ड प्लान और उससे ऊपर पर उपलब्ध हैं। अपनी एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
+"अंतर्निहित एकीकरण प्रो प्लान और उससे ऊपर पर उपलब्ध हैं। बाहरी एकीकरण एडवांस्ड प्लान और उससे ऊपर पर उपलब्ध हैं। आप अपने एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -2088,14 +2087,15 @@ msgid ""
 "\n"
 "External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
 msgstr ""
-"आपकी सदस्यता में केवल अंतर्निहित एकीकरण की पहुँच है।\n"
+"आपकी सदस्यता में केवल अंतर्निहित एकीकरण तक पहुँच है।\n"
 "\n"
-"बाहरी एकीकरण एडवांस्ड प्लान और उससे ऊपर पर उपलब्ध हैं। अपनी एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
+"बाहरी एकीकरण एडवांस्ड प्लान और उससे ऊपर पर उपलब्ध हैं। आप अपने एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "Android app callouts of the same type must have different question ids."
-msgstr "एक ही प्रकार के एंड्रॉइड ऐप कॉलआउट के प्रश्न आईडी अलग-अलग होने चाहिए।"
+msgstr ""
+"एक ही प्रकार के एंड्रॉइड ऐप कॉलआउट के लिए प्रश्न आईडी अलग-अलग होनी चाहिए।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Extra"
@@ -2107,7 +2107,7 @@ msgstr "प्रतिक्रिया"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Special Intent XMLNS attribute"
-msgstr "विशेष इरादा XMLNS विशेषता"
+msgstr "विशेष इंटेंट XMLNS विशेषता"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Print"
@@ -2154,8 +2154,8 @@ msgid ""
 "You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
 "Before you can make a new version of your application, you must {link} or delete this question"
 msgstr ""
-"अब आपको अपनी एप्लिकेशन में लुकअप टेबल्स तक पहुँच नहीं है। लुकअप टेबल्स स्टैण्डर्ड प्लान और उससे ऊपर के लिए उपलब्ध हैं।\n"
-"अपनी एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
+"अब आपके एप्लिकेशन में लुकअप टेबल्स तक पहुँच नहीं है। लुकअप टेबल्स स्टैंडर्ड प्लान और उससे ऊपर के लिए उपलब्ध हैं।\n"
+"अपने एप्लिकेशन का नया संस्करण बनाने से पहले आपको {link} या इस प्रश्न को हटाना होगा।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "A data source must be selected."
@@ -2178,7 +2178,7 @@ msgid ""
 "This is an XPath expression that will filter the set of choices from the "
 "lookup table"
 msgstr ""
-"यह एक XPath अभिव्यक्ति है जो लुकअप टेबल से विकल्पों के सेट को फ़िल्टर करेगी"
+"यह एक XPath अभिव्यक्ति है जो लुकअप टेबल से विकल्पों के सेट को फ़िल्टर करेगी।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lookup Tables"
@@ -2198,7 +2198,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Can only change to a Multiple Choice Lookup Table"
-msgstr "केवल मल्टीपल चॉइस लुकअप टेबल में बदला जा सकता है"
+msgstr "केवल मल्टीपल चॉइस लुकअप टेबल में परिवर्तन किया जा सकता है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Multiple Choice Lookup Table"
@@ -2206,11 +2206,11 @@ msgstr "मल्टीपल चॉइस लुकअप टेबल"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Can only change to a Checkbox Lookup Table"
-msgstr "केवल चेकबॉक्स लुकअप टेबल में बदला जा सकता है"
+msgstr "केवल चेकबॉक्स लुकअप टेबल में परिवर्तन किया जा सकता है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{attr} was not found in the lookup table"
-msgstr "{attr} लुकअप टेबल में नहीं मिला"
+msgstr "लुकअप टेबल में {attr} नहीं मिला।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display"
@@ -2340,7 +2340,7 @@ msgstr "एक और Itext ID जोड़ें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Other Content"
-msgstr "अन्य कंटेंट जोड़ें"
+msgstr "अन्य सामग्री जोड़ें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Multimedia"
@@ -2352,7 +2352,7 @@ msgstr "सहायता मीडिया जोड़ें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Edit Bulk Translations"
-msgstr "बल्क अनुवाद संपादित करें"
+msgstr "थोक अनुवाद संपादित करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Update Translations"
@@ -2365,10 +2365,10 @@ msgid ""
 " the translations used in your form. Press 'Update Translations' to save "
 "changes, or 'Close' to cancel."
 msgstr ""
-"इन अनुवादों को किसी स्प्रेडशीट प्रोग्राम जैसे Excel में कॉपी करें। आप इन्हें"
-" वहाँ संपादित कर सकते हैं और फिर यहाँ वापस पेस्ट कर सकते हैं। इससे आपके "
-"फॉर्म में उपयोग होने वाले अनुवाद अपडेट हो जाएंगे। परिवर्तन सहेजने के लिए "
-"'अनुवाद अपडेट करें' दबाएँ, या रद्द करने के लिए 'बंद करें' दबाएँ।"
+"इन अनुवादों को Excel जैसे स्प्रेडशीट प्रोग्राम में कॉपी करें। आप इन्हें वहाँ"
+" संपादित कर सकते हैं और फिर यहाँ पेस्ट कर सकते हैं जब आप पूरा कर लें। ये "
+"आपके फॉर्म में उपयोग किए गए अनुवादों को अपडेट करेंगे। परिवर्तनों को सहेजने "
+"के लिए 'अनुवाद अपडेट करें' दबाएँ, या रद्द करने के लिए 'बंद करें' दबाएँ।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "App Properties"
@@ -2387,12 +2387,12 @@ msgid ""
 "The {questionid} is an internal identifier for a question. It does not "
 "appear on the phone. It is the name of the question in data exports."
 msgstr ""
-"{questionid} एक आंतरिक पहचानकर्ता है जो किसी प्रश्न के लिए होता है। यह फोन "
-"पर दिखाई नहीं देता। यह डेटा निर्यातों में प्रश्न का नाम होता है।"
+"{questionid} एक प्रश्न के लिए आंतरिक पहचानकर्ता है। यह फोन पर दिखाई नहीं "
+"देता। यह डेटा निर्यात में प्रश्न का नाम है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "The date and time of the action, e.g., now() or today()"
-msgstr "कार्रवाई की तिथि और समय, जैसे कि now() या today()"
+msgstr "क्रिया की तिथि और समय, जैसे कि now() या today()"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Balance ID"
@@ -2435,7 +2435,7 @@ msgstr "इस बैलेंस से संबंधित केस आई�
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Transfer must have both Source Case and Destination Case defined."
-msgstr "स्थानांतरण के लिए स्रोत केस और गंतव्य केस दोनों परिभाषित होने चाहिए।"
+msgstr "ट्रांसफर के लिए स्रोत केस और गंतव्य केस दोनों परिभाषित होने चाहिए।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Cannot change $1 to $2"
@@ -2459,11 +2459,11 @@ msgstr "लेन-देन प्राप्त करने वाले क�
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Dispense must have a Source Case."
-msgstr "डिस्पेंस के लिए एक स्रोत केस होना आवश्यक है।"
+msgstr "डिस्पेंस के लिए एक स्रोत केस होना चाहिए।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Receive must have a Destination Case."
-msgstr "रिसीव के लिए एक गंतव्य केस होना आवश्यक है।"
+msgstr "रिसीव के लिए एक गंतव्य केस होना चाहिए।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Model Iteration ID Query"
@@ -2554,7 +2554,7 @@ msgstr "केस बनाने के लिए आपको {columns} कॉ
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can only use the following properties:"
-msgstr "आप केवल निम्नलिखित प्रॉपर्टीज़ का उपयोग कर सकते हैं:"
+msgstr "आप केवल निम्न प्रॉपर्टीज़ का उपयोग कर सकते हैं:"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{props} are invalid properties"
@@ -2683,8 +2683,8 @@ msgid ""
 "These actions are available via the browser's Edit menu, and you can also "
 "use:"
 msgstr ""
-"ये क्रियाएँ ब्राउज़र के एडिट मेनू के माध्यम से उपलब्ध हैं, और आप निम्न का भी"
-" उपयोग कर सकते हैं:"
+"ये क्रियाएँ ब्राउज़र के एडिट मेनू से उपलब्ध हैं, और आप इनका उपयोग भी कर सकते"
+" हैं:"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "for copy"
@@ -2696,7 +2696,7 @@ msgstr "पेस्ट के लिए"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Copy from or Paste into this text box:"
-msgstr "इस टेक्स्ट बॉक्स से कॉपी करें या इसमें पेस्ट करें:"
+msgstr "इस टेक्स्ट बॉक्स में से कॉपी करें या इसमें पेस्ट करें:"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Insert Questions"
@@ -2726,11 +2726,11 @@ msgstr "ट्री रूट में {type} नहीं जोड़ा ज
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Cannot insert $1 into or after $2"
-msgstr "$1 को $2 में या उसके बाद नहीं जोड़ा जा सकता"
+msgstr "$2 में या उसके बाद $1 नहीं जोड़ा जा सकता"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Cannot insert $1 into $2"
-msgstr "$1 को $2 में नहीं जोड़ा जा सकता"
+msgstr "$2 में $1 नहीं जोड़ा जा सकता"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Unsupported paste format"
@@ -2752,64 +2752,6 @@ msgstr "कमांड दर्ज करें"
 msgid "Command Bar"
 msgstr "कमांड बार"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Module ID"
-msgstr "मॉड्यूल आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Description"
-msgstr "विवरण"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Time Estimate"
-msgstr "समय का अनुमान"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be an integer"
-msgstr "पूर्णांक होना चाहिए"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Estimated time to complete the module in hours."
-msgstr "मॉड्यूल पूरा करने का अनुमानित समय (घंटों में)।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Assessment ID"
-msgstr "असेसमेंट आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User Score"
-msgstr "यूज़र स्कोर"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the users assessment score."
-msgstr "यूज़र के असेसमेंट स्कोर के लिए XPath अभिव्यक्ति।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Delivery Unit ID"
-msgstr "डिलीवरी यूनिट आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity ID"
-msgstr "एंटिटी आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the entity ID associated with this Delivery Unit e.g. "
-"the case ID."
-msgstr ""
-"इस डिलीवरी यूनिट से संबंधित एंटिटी आईडी के लिए XPath अभिव्यक्ति, जैसे केस "
-"आईडी।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity Name"
-msgstr "एंटिटी नाम"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the name of the entity associated with this Delivery "
-"Unit."
-msgstr "इस डिलीवरी यूनिट से संबंधित एंटिटी के नाम के लिए XPath अभिव्यक्ति।"
-
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
 msgstr "कोई टिप्पणी नहीं"
@@ -2829,11 +2771,11 @@ msgstr "विजेट संपादित करें"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Form Data"
-msgstr "फॉर्म डेटा"
+msgstr "फ़ॉर्म डेटा"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Form XML"
-msgstr "फॉर्म XML"
+msgstr "फ़ॉर्म XML"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Evaluate XPath"
@@ -2841,7 +2783,7 @@ msgstr "XPath का मूल्यांकन करें"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Expand Data Preview"
-msgstr "डेटा पूर्वावलोकन विस्तार करें"
+msgstr "डेटा पूर्वावलोकन विस्तृत करें"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Collapse Data Preview"
@@ -2849,7 +2791,7 @@ msgstr "डेटा पूर्वावलोकन संक्षिप्�
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Error evaluating expression."
-msgstr "अभिव्यक्ति का मूल्यांकन करते समय त्रुटि हुई।"
+msgstr "व्यक्ति अभिव्यक्ति का मूल्यांकन करते समय त्रुटि हुई।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Not a valid whole number"
@@ -2894,15 +2836,15 @@ msgstr "मानचित्र लेयर कॉन्फ़िगर नह
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Could not load map. Please try again later."
-msgstr "मानचित्र लोड नहीं हो सका। कृपया बाद में पुनः प्रयास करें।"
+msgstr "मानचित्र लोड नहीं किया जा सका। कृपया बाद में पुनः प्रयास करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
 "Something unexpected went wrong on that request. If you have problems "
 "filling in the rest of your form please submit an issue. Technical Details: "
 msgstr ""
-"उस अनुरोध पर कुछ अप्रत्याशित गलत हुआ। यदि आपको अपने फॉर्म के बाकी हिस्से को "
-"भरने में समस्या हो रही है तो कृपया एक समस्या सबमिट करें। तकनीकी विवरण: "
+"उस अनुरोध पर कुछ अप्रत्याशित गलत हो गया। यदि आपको अपने फ़ॉर्म को भरने में "
+"समस्या हो रही है तो कृपया एक समस्या सबमिट करें। तकनीकी विवरण: "
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid "You have been logged out because of inactivity."
@@ -2913,16 +2855,16 @@ msgid ""
 "An unknown error occurred. If you have problems filling in the rest of your "
 "form please submit an issue. Technical Details: "
 msgstr ""
-"एक अज्ञात त्रुटि हुई। यदि आपको अपने फॉर्म के बाकी हिस्से को भरने में समस्या "
-"हो रही है तो कृपया एक समस्या सबमिट करें। तकनीकी विवरण: "
+"एक अज्ञात त्रुटि हुई। यदि आपको अपने फ़ॉर्म को भरने में समस्या हो रही है तो "
+"कृपया एक समस्या सबमिट करें। तकनीकी विवरण: "
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
 "CommCare HQ has detected a possible network connectivity problem. Please "
 "make sure you are connected to the Internet in order to submit your form."
 msgstr ""
-"CommCare HQ ने संभावित नेटवर्क कनेक्टिविटी समस्या का पता लगाया है। कृपया "
-"सुनिश्चित करें कि आप अपना फॉर्म सबमिट करने के लिए इंटरनेट से जुड़े हैं।"
+"CommCare HQ ने एक संभावित नेटवर्क कनेक्टिविटी समस्या का पता लगाया है। कृपया "
+"सुनिश्चित करें कि आप अपने फ़ॉर्म को सबमिट करने के लिए इंटरनेट से जुड़े हैं।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
@@ -2937,7 +2879,7 @@ msgid ""
 "We have detected an issue with your network. Please check your Internet "
 "connection and retry when connectivity improves."
 msgstr ""
-"हमने आपके नेटवर्क में एक समस्या का पता लगाया है। कृपया अपना इंटरनेट कनेक्शन "
+"हमने आपके नेटवर्क में समस्या का पता लगाया है। कृपया अपना इंटरनेट कनेक्शन "
 "जांचें और कनेक्टिविटी बेहतर होने पर पुनः प्रयास करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
@@ -2951,7 +2893,7 @@ msgstr "सबमिट किया जा रहा है..."
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "An answer is required"
-msgstr "एक उत्तर आवश्यक है"
+msgstr "उत्तर आवश्यक है"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
@@ -2960,7 +2902,7 @@ msgstr "यह उत्तर अनुमत सीमा के बाहर 
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "We were unable to save this answer. Please try again later."
-msgstr "हम इस उत्तर को सहेजने में असमर्थ रहे। कृपया बाद में पुनः प्रयास करें।"
+msgstr "हम इस उत्तर को सहेजने में असमर्थ हैं। कृपया बाद में पुनः प्रयास करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid ""
@@ -2968,28 +2910,28 @@ msgid ""
 "\n"
 "Please keep this window open and try again in a minute, or come back to this form in Incomplete Forms later."
 msgstr ""
-"हम अभी इस फॉर्म को सबमिट करने में असमर्थ हैं क्योंकि सिस्टम का उपयोग अधिक है। \n"
+"हम अभी इस फ़ॉर्म को सबमिट करने में असमर्थ हैं क्योंकि सिस्टम का उपयोग अधिक है। \n"
 "\n"
-"कृपया इस विंडो को खुला रखें और एक मिनट बाद पुनः प्रयास करें, या बाद में अधूरे फॉर्म्स में इस फॉर्म पर वापस आएं।"
+"कृपया इस विंडो को खुला रखें और एक मिनट बाद पुनः प्रयास करें, या बाद में अपूर्ण फ़ॉर्म में इस फ़ॉर्म पर वापस आएं।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "Form submission failed with error"
-msgstr "फॉर्म सबमिशन त्रुटि के साथ विफल हुआ"
+msgstr "फ़ॉर्म सबमिशन त्रुटि के साथ विफल हुआ"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "You have a form in progress. Are you sure you want to navigate away?"
-msgstr "आपका एक फॉर्म प्रगति पर है। क्या आप वाकई दूर जाना चाहते हैं?"
+msgstr "आपका एक फ़ॉर्म प्रगति में है। क्या आप वाकई दूर जाना चाहते हैं?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "Form successfully saved!"
-msgstr "फॉर्म सफलतापूर्वक सहेजा गया!"
+msgstr "फ़ॉर्म सफलतापूर्वक सहेजा गया!"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
-"आप अब ऑफ़लाइन हैं। वेब ऐप्स ऑफ़लाइन उपयोग के लिए अनुकूलित नहीं है। कृपया "
+"आप अब ऑफ़लाइन हैं। वेब ऐप्स ऑफ़लाइन उपयोग के लिए अनुकूलित नहीं हैं। कृपया "
 "जारी रखने से पहले इंटरनेट से पुनः कनेक्ट करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
@@ -3014,12 +2956,12 @@ msgid ""
 "An unexpected error occurred. Please report an issue if you continue to see "
 "this message."
 msgstr ""
-"एक अप्रत्याशित त्रुटि हुई। यदि यह संदेश बार-बार दिखाई दे तो कृपया एक समस्या "
-"रिपोर्ट करें।"
+"एक अप्रत्याशित त्रुटि हुई। यदि आप यह संदेश बार-बार देखते हैं तो कृपया एक "
+"समस्या रिपोर्ट करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js
 msgid "Completed: "
-msgstr "पूर्ण: "
+msgstr "पूर्ण हुआ: "
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js
 msgid "Show Full Menu"
@@ -3042,8 +2984,8 @@ msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
 msgstr ""
-"फॉर्म प्लेइंग सेवा से कनेक्ट नहीं हो सका। यदि यह संदेश बार-बार दिखाई दे तो "
-"कृपया एक समस्या रिपोर्ट करें।"
+"फ़ॉर्म प्लेइंग सेवा से कनेक्ट नहीं हो सका। यदि आप यह संदेश बार-बार देखते हैं"
+" तो कृपया एक समस्या रिपोर्ट करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
 msgid "Fetching your location..."
@@ -3066,8 +3008,8 @@ msgid ""
 "You have selected more than the maximum selection limit of <%- value %> . "
 "Please uncheck some values to continue."
 msgstr ""
-"आपने अधिकतम चयन सीमा <%- value %> से अधिक विकल्प चुने हैं। कृपया जारी रखने "
-"के लिए कुछ विकल्पों को अनचेक करें।"
+"आपने अधिकतम चयन सीमा <%- value %> से अधिक का चयन किया है। कृपया जारी रखने के"
+" लिए कुछ मान अनचेक करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Your location"
@@ -3129,7 +3071,7 @@ msgstr "<%- username %> का उपयोग करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Log in as <%- username %>?"
-msgstr "क्या <%- username %> के रूप में लॉग इन करें?"
+msgstr "<%- username %> के रूप में लॉग इन करें?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Log in"
@@ -3150,22 +3092,22 @@ msgstr "सहेजने में त्रुटि!"
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Could not sync user data. Please report an issue if this persists."
 msgstr ""
-"उपयोगकर्ता डेटा सिंक नहीं हो सका। यदि यह समस्या बनी रहती है तो कृपया एक "
-"समस्या रिपोर्ट करें।"
+"यूज़र डेटा सिंक नहीं हो सका। यदि यह समस्या बनी रहती है तो कृपया एक समस्या "
+"रिपोर्ट करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "User Data successfully synced."
-msgstr "उपयोगकर्ता डेटा सफलतापूर्वक सिंक हो गया।"
+msgstr "यूज़र डेटा सफलतापूर्वक सिंक हो गया।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Could not clear user data. Please report an issue if this persists."
 msgstr ""
-"उपयोगकर्ता डेटा साफ़ नहीं किया जा सका। यदि यह समस्या बनी रहती है तो कृपया एक"
-" समस्या रिपोर्ट करें।"
+"यूज़र डेटा साफ़ नहीं किया जा सका। यदि यह समस्या बनी रहती है तो कृपया एक "
+"समस्या रिपोर्ट करें।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "User data successfully cleared."
-msgstr "उपयोगकर्ता डेटा सफलतापूर्वक साफ़ किया गया।"
+msgstr "यूज़र डेटा सफलतापूर्वक साफ़ किया गया।"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error breaking locks. Please report an issue if this persists."
@@ -3178,13 +3120,12 @@ msgid ""
 "Sorry, there was an problem contacting the server to fetch the data. Please,"
 " try again in a little bit."
 msgstr ""
-"माफ़ कीजिए, डेटा प्राप्त करने के लिए सर्वर से संपर्क करने में समस्या हुई। "
+"माफ़ कीजिए, डेटा प्राप्त करने के लिए सर्वर से संपर्क करने में समस्या आई। "
 "कृपया थोड़ी देर बाद पुनः प्रयास करें।"
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
 msgid "Could not <%= action %> product. Please try again later."
-msgstr ""
-"उत्पाद <%= action %> नहीं किया जा सका। कृपया बाद में पुनः प्रयास करें।"
+msgstr "उत्पाद <%= action %> नहीं कर सके। कृपया बाद में पुनः प्रयास करें।"
 
 #: corehq/apps/commtrack/static/commtrack/js/sms.js
 msgid "SMS keyword is required."
@@ -3219,8 +3160,8 @@ msgid ""
 "Help colleagues upload correct data into case properties by listing the "
 "valid values here."
 msgstr ""
-"यहाँ मान्य मान सूचीबद्ध करके सहकर्मियों को केस प्रॉपर्टीज़ में सही डेटा "
-"अपलोड करने में सहायता करें।"
+"मान्य मान यहाँ सूचीबद्ध करके सहयोगियों को केस प्रॉपर्टीज़ में सही डेटा अपलोड"
+" करने में सहायता करें।"
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid "valid value"
@@ -3232,7 +3173,7 @@ msgstr "विवरण"
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid "You have unsaved changes to your data dictionary."
-msgstr "आपके डेटा शब्दकोश में असहेजे गए परिवर्तन हैं।"
+msgstr "आपके डेटा डिक्शनरी में असहेजे गए परिवर्तन हैं।"
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid ""
@@ -3297,17 +3238,17 @@ msgstr "केस पुनः असाइनमेंट (HQ के माध�
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Search for users"
-msgstr "उपयोगकर्ताओं को खोजें"
+msgstr "यूज़र्स खोजें"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Search for users or groups"
-msgstr "उपयोगकर्ता या समूह खोजें"
+msgstr "यूज़र्स या समूह खोजें"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/manage_case_groups.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/manage_case_groups.js
 msgid "Sorry, it looks like the upload failed."
-msgstr "माफ़ कीजिए, ऐसा लगता है कि अपलोड विफल हो गया।"
+msgstr "माफ़ कीजिए, लगता है अपलोड विफल हो गया।"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
 msgid "case property name"
@@ -3327,7 +3268,7 @@ msgstr "केस खोजें"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "IDs can be found in a <a href=\"<%- url %>\">case data export</a>"
-msgstr "आईडी <a href=\\\"<%- url %>\\\">केस डेटा निर्यात</a> में पाई जा सकती हैं"
+msgstr "आईडी <a href=\"<%- url %>\">केस डेटा एक्सपोर्ट</a> में पाई जा सकती हैं"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Case found!"
@@ -3335,7 +3276,7 @@ msgstr "केस मिल गया!"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Could not find case"
-msgstr "केस नहीं मिला"
+msgstr "केस नहीं मिल सका"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Find Form Submission"
@@ -3343,7 +3284,7 @@ msgstr "फॉर्म सबमिशन खोजें"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "IDs can be found in a <a href=\"<%- url %>\">form data export</a>"
-msgstr "आईडी <a href=\\\"<%- url %>\\\">फॉर्म डेटा निर्यात</a> में पाई जा सकती हैं"
+msgstr "आईडी <a href=\"<%- url %>\">फॉर्म डेटा एक्सपोर्ट</a> में पाई जा सकती हैं"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Could not find form submission"
@@ -3370,7 +3311,7 @@ msgstr "इनवॉइस अनुरोध सबमिट करें"
 #: corehq/apps/domain/static/domain/js/bootstrap3/case_search.js
 #: corehq/apps/domain/static/domain/js/bootstrap5/case_search.js
 msgid "You have unchanged settings"
-msgstr "आपकी सेटिंग्स में कोई बदलाव नहीं हुआ है"
+msgstr "आपकी सेटिंग्स में बदलाव नहीं हुए हैं"
 
 #: corehq/apps/domain/static/domain/js/bootstrap3/info_basic.js
 #: corehq/apps/domain/static/domain/js/bootstrap5/info_basic.js
@@ -3379,7 +3320,7 @@ msgstr "एक टाइमज़ोन चुनें..."
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
-msgstr "क्रेडिट खरीदें"
+msgstr "क्रेडिट्स खरीदें"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"
@@ -3395,15 +3336,15 @@ msgstr "देश खोजें..."
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Inactive Expressions"
-msgstr "निष्क्रिय एक्सप्रेशंस"
+msgstr "निष्क्रिय एक्सप्रेशन्स"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Active Expressions"
-msgstr "सक्रिय एक्सप्रेशंस"
+msgstr "सक्रिय एक्सप्रेशन्स"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Search Expressions"
-msgstr "एक्सप्रेशंस खोजें"
+msgstr "एक्सप्रेशन्स खोजें"
 
 #: corehq/apps/domain/static/domain/js/my_project_settings.js
 msgid "Reset to Default"
@@ -3424,7 +3365,7 @@ msgid ""
 "the project space as a member in order to override your timezone."
 msgstr ""
 "आप इस प्रोजेक्ट स्पेस का टाइमज़ोन ओवरराइड नहीं कर सकते क्योंकि आपको इस "
-"प्रोजेक्ट स्पेस तक केवल एक संगठन के माध्यम से ही पहुंच है। टाइमज़ोन ओवरराइड "
+"प्रोजेक्ट स्पेस तक केवल एक संगठन के माध्यम से ही पहुँच है। टाइमज़ोन ओवरराइड "
 "करने के लिए आपको प्रोजेक्ट स्पेस में सदस्य के रूप में जोड़ा जाना चाहिए।"
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
@@ -3435,8 +3376,8 @@ msgid ""
 "href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
 msgstr ""
 "commcarehq.org पर नए उपयोगकर्ताओं को साइन अप करने की अनुमति न दें। इसमें "
-"प्रभावी होने में एक घंटे तक लग सकता है। <br>यह निम्नलिखित डोमेन से ईमेल पते "
-"वाले उपयोगकर्ताओं को प्रभावित करेगा: <strong><%- domains "
+"प्रभावी होने में एक घंटे तक का समय लग सकता है। <br>यह निम्नलिखित डोमेन से "
+"ईमेल पते वाले उपयोगकर्ताओं को प्रभावित करेगा: <strong><%- domains "
 "%></strong><br>डोमेन की सूची बदलने के लिए <a href='mailto:<%- email %>'><%- "
 "email %></a> से संपर्क करें।"
 
@@ -3475,11 +3416,11 @@ msgstr ""
 
 #: corehq/apps/events/static/events/js/event_attendees.js
 msgid "Disable Mobile Worker Attendees"
-msgstr "मोबाइल वर्कर उपस्थित लोगों को अक्षम करें"
+msgstr "मोबाइल वर्कर उपस्थितियों को अक्षम करें"
 
 #: corehq/apps/events/static/events/js/event_attendees.js
 msgid "Enable Mobile Worker Attendees"
-msgstr "मोबाइल वर्कर उपस्थित लोगों को सक्षम करें"
+msgstr "मोबाइल वर्कर उपस्थितियों को सक्षम करें"
 
 #: corehq/apps/events/static/events/js/new_event.js
 msgid "Possible Attendees"
@@ -3495,15 +3436,15 @@ msgstr "उपस्थित लोग खोजें"
 
 #: corehq/apps/events/static/events/js/new_event.js
 msgid "Possible Attendance Takers"
-msgstr "संभावित उपस्थिति दर्ज करने वाले"
+msgstr "संभावित उपस्थिति लेने वाले"
 
 #: corehq/apps/events/static/events/js/new_event.js
 msgid "Selected Attendance Takers"
-msgstr "चयनित उपस्थिति दर्ज करने वाले"
+msgstr "चयनित उपस्थिति लेने वाले"
 
 #: corehq/apps/events/static/events/js/new_event.js
 msgid "Search Attendance Takers"
-msgstr "उपस्थिति दर्ज करने वाले खोजें"
+msgstr "उपस्थिति लेने वाले खोजें"
 
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "<%- count %> form submission available."
@@ -3540,7 +3481,7 @@ msgstr "डेटा फ़ाइल हटा दी गई।"
 
 #: corehq/apps/export/static/export/js/download_export.js
 msgid "Sorry, there was a problem reaching the server. Please try again."
-msgstr "माफ़ कीजिए, सर्वर तक पहुँचने में समस्या हुई। कृपया पुनः प्रयास करें।"
+msgstr "माफ़ कीजिए, सर्वर तक पहुँचने में समस्या आई। कृपया पुनः प्रयास करें।"
 
 #: corehq/apps/export/static/export/js/download_export.js
 msgid "Server maintenance in progress. Please try again later."
@@ -3548,7 +3489,7 @@ msgstr "सर्वर रखरखाव जारी है। कृपय�
 
 #: corehq/apps/export/static/export/js/download_export.js
 msgid "There was an error downloading your export."
-msgstr "आपका निर्यात डाउनलोड करने में त्रुटि हुई।"
+msgstr "आपका एक्सपोर्ट डाउनलोड करने में त्रुटि हुई।"
 
 #: corehq/apps/export/static/export/js/export_list.js
 msgid "Download Requested"
@@ -3556,7 +3497,7 @@ msgstr "डाउनलोड का अनुरोध किया गया"
 
 #: corehq/apps/export/static/export/js/export_list.js
 msgid "Invalid date format"
-msgstr "अमान्य तिथि प्रारूप"
+msgstr "अमान्य दिनांक प्रारूप"
 
 #: corehq/apps/export/static/export/js/export_list.js
 msgid "Problem saving dashboard feed filters"
@@ -3568,7 +3509,7 @@ msgstr "प्रक्रिया"
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "Processing..."
-msgstr "प्रसंस्करण हो रहा है..."
+msgstr "प्रोसेसिंग..."
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "Refresh page"
@@ -3576,7 +3517,7 @@ msgstr "पृष्ठ रीफ़्रेश करें"
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "Web Page (Excel Dashboards)"
-msgstr "वेब पेज (एक्सेल डैशबोर्ड)"
+msgstr "वेब पृष्ठ (एक्सेल डैशबोर्ड्स)"
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "CSV (Zip file)"
@@ -3619,7 +3560,7 @@ msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "The table path should end with []"
-msgstr "तालिका पथ का अंत [] से होना चाहिए"
+msgstr "टेबल पथ का अंत [] से होना चाहिए"
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "Sensitive ID"
@@ -3632,7 +3573,7 @@ msgstr "संवेदनशील तिथि"
 #: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
 msgid "Can not create table with ID '<%= tag %>'. Table IDs should be unique."
 msgstr ""
-"ID '<%= tag %>' के साथ तालिका नहीं बना सकते। तालिका ID अद्वितीय होनी चाहिए।"
+"ID '<%= tag %>' के साथ टेबल नहीं बना सकते। टेबल आईडी अद्वितीय होनी चाहिए।"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
@@ -3687,8 +3628,8 @@ msgid ""
 "Something went wrong processing <%- failedClusters %> groups. These groups "
 "will not be exported."
 msgstr ""
-"<%- failedClusters %> समूहों को संसाधित करते समय कुछ गलत हो गया। इन समूहों "
-"का निर्यात नहीं किया जाएगा।"
+"<%- failedClusters %> समूहों को प्रोसेस करते समय कुछ गलत हो गया। ये समूह "
+"निर्यात नहीं किए जाएंगे।"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
@@ -3721,7 +3662,7 @@ msgid ""
 "Oops! Something went wrong! Please check that your geospatial settings are "
 "configured correctly or contact admin if the problem persists."
 msgstr ""
-"ओह! कुछ गलत हो गया! कृपया जांचें कि आपके भू-स्थानिक सेटिंग्स सही तरीके से "
+"उफ़! कुछ गलत हो गया! कृपया जांचें कि आपके भू-स्थानिक सेटिंग्स सही से "
 "कॉन्फ़िगर की गई हैं या यदि समस्या बनी रहती है तो व्यवस्थापक से संपर्क करें।"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
@@ -3730,8 +3671,8 @@ msgid ""
 "Please ensure that the filtered area includes both cases and mobile workers "
 "before attempting to run disbursement."
 msgstr ""
-"कृपया सुनिश्चित करें कि फ़िल्टर किए गए क्षेत्र में मामले और मोबाइल "
-"कार्यकर्ता दोनों शामिल हैं, उसके बाद ही वितरण चलाने का प्रयास करें।"
+"कृपया सुनिश्चित करें कि फ़िल्टर किए गए क्षेत्र में मामले और मोबाइल वर्कर "
+"दोनों शामिल हैं, फिर वितरण चलाने का प्रयास करें।"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
@@ -3745,7 +3686,7 @@ msgstr "सभी स्थान"
 msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
-"ओह! कुछ गलत हो गया! यदि समस्या बनी रहती है तो कृपया एक समस्या रिपोर्ट करें।"
+"उफ़! कुछ गलत हो गया! यदि समस्या बनी रहती है तो कृपया एक समस्या रिपोर्ट करें।"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
@@ -3758,8 +3699,8 @@ msgid ""
 "Invalid API token. Please verify that the token matches the one on your "
 "Mapbox account and has the correct scope configured."
 msgstr ""
-"अमान्य API टोकन। कृपया सत्यापित करें कि टोकन आपके Mapbox खाते पर मौजूद टोकन "
-"से मेल खाता है और उसमें सही स्कोप कॉन्फ़िगर किया गया है।"
+"अमान्य API टोकन। कृपया सत्यापित करें कि टोकन आपके Mapbox खाते वाले टोकन से "
+"मेल खाता है और उसमें सही स्कोप कॉन्फ़िगर है।"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/gps_capture.js
@@ -3769,7 +3710,7 @@ msgstr "वर्तमान उपयोगकर्ता"
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Mobile Worker"
-msgstr "मोबाइल कार्यकर्ता"
+msgstr "मोबाइल वर्कर"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
@@ -3833,15 +3774,15 @@ msgstr "सहेजने में विफल "
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Please wait and do not navigate away..."
-msgstr "कृपया प्रतीक्षा करें और कहीं और न जाएं..."
+msgstr "कृपया प्रतीक्षा करें और कहीं और न जाएँ..."
 
 #: corehq/apps/hqmedia/static/hqmedia/js/references_main.js
 msgid ""
 "Error fetching multimedia, please try again or report an issue if the "
 "problem persists."
 msgstr ""
-"मल्टीमीडिया प्राप्त करने में त्रुटि, कृपया पुनः प्रयास करें या यदि समस्या "
-"बनी रहती है तो एक समस्या रिपोर्ट करें।"
+"मल्टीमीडिया प्राप्त करने में त्रुटि हुई, कृपया पुनः प्रयास करें या यदि "
+"समस्या बनी रहती है तो एक समस्या रिपोर्ट करें।"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
 msgid "This is Danny, one of our best developers."
@@ -3852,8 +3793,8 @@ msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."
 msgstr ""
-"डैनी को बहुत दुख है कि आपको यह समस्या झेलनी पड़ी। वे सुनिश्चित कर रहे हैं कि"
-" इसे जल्द से जल्द ठीक किया जाए।"
+"डैनी को यह देखकर दुख हुआ कि आपको यह समस्या झेलनी पड़ी। वे सुनिश्चित कर रहे "
+"हैं कि इसे जल्द से जल्द ठीक किया जाए।"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3878,32 +3819,32 @@ msgstr "2-अंकीय"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Decrement Hour"
-msgstr "घंटा घटाएं"
+msgstr "घंटा घटाएँ"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Decrement Minute"
-msgstr "मिनट घटाएं"
+msgstr "मिनट घटाएँ"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Decrement Second"
-msgstr "सेकंड घटाएं"
+msgstr "सेकंड घटाएँ"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Increment Hour"
-msgstr "घंटा बढ़ाएं"
+msgstr "घंटा बढ़ाएँ"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Increment Minute"
-msgstr "मिनट बढ़ाएं"
+msgstr "मिनट बढ़ाएँ"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Increment Second"
-msgstr "सेकंड बढ़ाएं"
+msgstr "सेकंड बढ़ाएँ"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3983,12 +3924,12 @@ msgstr "वर्ष चुनें"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Go to today"
-msgstr "आज पर जाएं"
+msgstr "आज पर जाएँ"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Toggle Meridiem"
-msgstr "मेरिडियम टॉगल करें"
+msgstr "मेरिडियन टॉगल करें"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
@@ -4008,7 +3949,7 @@ msgstr "प्रमाणीकृत नहीं कर सके, कृप�
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
 msgid "There was a problem, please refresh and try again"
-msgstr "कोई समस्या हुई, कृपया रीफ्रेश करें और पुनः प्रयास करें"
+msgstr "कोई समस्या हुई, कृपया रिफ्रेश करें और पुनः प्रयास करें"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
@@ -4030,12 +3971,12 @@ msgstr "सहेजा गया"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Try Again"
-msgstr "फिर से प्रयास करें"
+msgstr "पुनः प्रयास करें"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Deleting..."
-msgstr "हटा रहे हैं..."
+msgstr "हटाया जा रहा है..."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
@@ -4054,7 +3995,7 @@ msgstr "मान्य ईमेल नहीं है"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/validators.ko.js
 msgid "Checking..."
-msgstr "जांच हो रही है..."
+msgstr "जाँचा जा रहा है..."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 msgid "Error saving, please try again."
@@ -4067,8 +4008,8 @@ msgstr "<%- num %> प्रति पृष्ठ"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
-"<%- firstItem %> से <%- lastItem %> तक <%- maxItems %> प्रविष्टियों में दिखा"
-" रहे हैं"
+"<%- firstItem %> से <%- lastItem %> तक <%- maxItems %> प्रविष्टियाँ दिखा रहा"
+" है"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
 msgid "No File selected"
@@ -4088,11 +4029,12 @@ msgstr "साफ़ करें"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
 msgid "Gateway Timeout Error. Max retries exceeded."
-msgstr "गेटवे टाइमआउट त्रुटि। अधिकतम पुनः प्रयास सीमा पार हो गई है।"
+msgstr "गेटवे टाइमआउट त्रुटि। अधिकतम पुनः प्रयासों की सीमा पार हो गई है।"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
 msgid "Request timed out. Max retries exceeded."
-msgstr "अनुरोध का समय समाप्त हो गया। अधिकतम पुनः प्रयास सीमा पार हो गई है।"
+msgstr ""
+"अनुरोध का समय समाप्त हो गया। अधिकतम पुनः प्रयासों की सीमा पार हो गई है।"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
 msgid "Unknown Event"
@@ -4124,7 +4066,7 @@ msgstr "सभी हटाएँ"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
-msgstr "आपका पासवर्ड बहुत कमजोर है! संख्याएँ या प्रतीक जोड़ने का प्रयास करें।"
+msgstr "आपका पासवर्ड बहुत कमजोर है! कृपया संख्याएँ या प्रतीक जोड़ें।"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js
 msgid ""
@@ -4259,7 +4201,7 @@ msgstr "अपडेट करने में त्रुटि।"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
 msgid "Report successfully linked."
-msgstr "रिपोर्ट सफलतापूर्वक लिंक की गई।"
+msgstr "रिपोर्ट सफलतापूर्वक लिंक हो गई है।"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
 msgid ""
@@ -4267,7 +4209,7 @@ msgid ""
 "Please try again, or report an issue if the problem persists."
 msgstr ""
 "कुछ अप्रत्याशित हुआ।\n"
-"कृपया पुनः प्रयास करें, या यदि समस्या बनी रहती है तो एक समस्या रिपोर्ट करें।"
+"कृपया पुनः प्रयास करें, या यदि समस्या बनी रहती है तो समस्या की रिपोर्ट करें।"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
 msgid "All project spaces"
@@ -4275,7 +4217,7 @@ msgstr "सभी प्रोजेक्ट स्पेस"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
 msgid "Project spaces to push to"
-msgstr "प्रोजेक्ट स्पेस जिनमें पुश करना है"
+msgstr "जिन प्रोजेक्ट स्पेस में पुश करना है"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
 msgid "Search project spaces"
@@ -4291,7 +4233,7 @@ msgid ""
 "Please try again, or report an issue if the problem persists."
 msgstr ""
 "प्रोजेक्ट स्पेस लिंक करने में असमर्थ।\n"
-"कृपया पुनः प्रयास करें, या यदि समस्या बनी रहती है तो एक समस्या रिपोर्ट करें।"
+"कृपया पुनः प्रयास करें, या यदि समस्या बनी रहती है तो समस्या की रिपोर्ट करें।"
 
 #: corehq/apps/locations/static/locations/js/filtered_download.js
 msgid "Download <%- count %> Location"
@@ -4303,34 +4245,33 @@ msgstr "<%- count %> स्थान डाउनलोड करें"
 
 #: corehq/apps/locations/static/locations/js/filtered_download.js
 msgid "Error determining number of matching locations"
-msgstr "मिलती-जुलती लोकेशनों की संख्या निर्धारित करने में त्रुटि हुई"
+msgstr "मिलते-जुलते स्थानों की संख्या निर्धारित करने में त्रुटि"
 
 #: corehq/apps/locations/static/locations/js/location_tree.js
 msgid "You have successfully archived the location <%-name%>"
-msgstr "आपने सफलतापूर्वक लोकेशन <%-name%> को आर्काइव कर दिया है"
+msgstr "आपने <%-name%> स्थान को सफलतापूर्वक संग्रहित किया है"
 
 #: corehq/apps/locations/static/locations/js/location_tree.js
 msgid ""
 "You have successfully deleted the location <%-name%> and all of its child "
 "locations"
-msgstr ""
-"आपने सफलतापूर्वक लोकेशन <%-name%> और इसकी सभी चाइल्ड लोकेशनों को हटा दिया है"
+msgstr "आपने <%-name%> स्थान और उसके सभी उप-स्थान सफलतापूर्वक हटा दिए हैं"
 
 #: corehq/apps/locations/static/locations/js/location_tree.js
 msgid ""
 "An error occurred while deleting your location. If the problem persists, "
 "please report an issue"
 msgstr ""
-"आपकी लोकेशन हटाते समय एक त्रुटि हुई। यदि समस्या बनी रहती है, तो कृपया एक "
-"समस्या रिपोर्ट करें"
+"आपका स्थान हटाते समय एक त्रुटि हुई। यदि समस्या बनी रहती है, तो कृपया एक "
+"समस्या रिपोर्ट करें।"
 
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Select a Location"
-msgstr "एक लोकेशन चुनें"
+msgstr "एक स्थान चुनें"
 
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Choose a primary location"
-msgstr "एक प्राथमिक लोकेशन चुनें"
+msgstr "एक प्राथमिक स्थान चुनें"
 
 #: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
 #: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
@@ -4359,17 +4300,19 @@ msgid ""
 "Please copy it or create your own. It will not be shown again."
 msgstr ""
 "<i class='fa fa-warning'></i>यह पासवर्ड स्वचालित रूप से जनरेट किया गया है। "
-"कृपया इसे कॉपी करें या अपना खुद का बनाएं। यह दोबारा नहीं दिखेगा।"
+"कृपया इसे कॉपी करें या अपना खुद का बनाएं। यह फिर से नहीं दिखेगा।"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
 msgid "Your password is too weak! Try adding numbers or symbols!"
-msgstr "आपका पासवर्ड बहुत कमजोर है! नंबर या चिन्ह जोड़ने का प्रयास करें!"
+msgstr "आपका पासवर्ड बहुत कमजोर है! संख्याएँ या प्रतीक जोड़ने का प्रयास करें!"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
-msgstr "आपका पासवर्ड लगभग मजबूत है! नंबर या चिन्ह जोड़ने का प्रयास करें!"
+msgstr ""
+"आपका पासवर्ड लगभग पर्याप्त मजबूत है! संख्याएँ या प्रतीक जोड़ने का प्रयास "
+"करें!"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
@@ -4388,7 +4331,7 @@ msgstr "कृपया एक ईमेल निर्दिष्ट कर�
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Checking email..."
-msgstr "ईमेल जांच रहे हैं..."
+msgstr "ईमेल की जाँच हो रही है..."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
@@ -4414,11 +4357,11 @@ msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "Opt in successful"
-msgstr "सफलतापूर्वक ऑप्ट इन किया गया"
+msgstr "सफलतापूर्वक शामिल हुए"
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "Opt out successful"
-msgstr "सफलतापूर्वक ऑप्ट आउट किया गया"
+msgstr "सफलतापूर्वक बाहर हुए"
 
 #: corehq/apps/registry/static/registry/js/registry_logs.js
 msgid "All Project Spaces"
@@ -4506,9 +4449,9 @@ msgid ""
 "issue to CommCare HQ Support so we can look into any possible issues."
 msgstr ""
 "इस रिपोर्ट को प्रस्तुत करते समय अनुरोध का समय समाप्त हो गया। यह हमारे सर्वर "
-"या आपके इंटरनेट कनेक्शन की समस्या हो सकती है। हम आपको प्रोत्साहित करते हैं "
-"कि आप CommCare HQ Support को समस्या रिपोर्ट करें ताकि हम किसी भी संभावित "
-"समस्या की जांच कर सकें।"
+"या आपके इंटरनेट कनेक्शन की समस्या हो सकती है। हम आपसे अनुरोध करते हैं कि आप "
+"CommCare HQ Support को समस्या रिपोर्ट करें ताकि हम किसी भी संभावित समस्या की"
+" जांच कर सकें।"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
@@ -4520,11 +4463,11 @@ msgid ""
 "us about this problem so we can fix it immediately."
 msgstr ""
 "रिपोर्ट प्रस्तुत करने में समस्या। हमारे त्रुटि निगरानी उपकरणों ने इसे नोट "
-"किया है और हम इस समस्या को जल्द से जल्द हल करने के लिए तेजी से काम कर रहे "
-"हैं। यदि यह समस्या कुछ मिनटों से अधिक समय तक बनी रहती है तो हम आपको CommCare"
-" HQ Support से संपर्क करने के लिए प्रोत्साहित करते हैं। हम इस समस्या के बारे"
-" में आपको जो भी अतिरिक्त जानकारी दे सकते हैं, उसकी सराहना करेंगे ताकि हम इसे"
-" तुरंत ठीक कर सकें।"
+"किया है और हम इसे जल्द से जल्द हल करने के लिए तेजी से काम कर रहे हैं। यदि यह"
+" समस्या कुछ मिनटों से अधिक समय तक बनी रहती है तो हम आपसे अनुरोध करते हैं कि "
+"आप CommCare HQ Support से संपर्क करें। हम इस समस्या के बारे में आपको जो भी "
+"अतिरिक्त जानकारी दे सकते हैं, उसके लिए आभारी होंगे ताकि हम इसे तुरंत ठीक कर "
+"सकें।"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
@@ -4549,12 +4492,12 @@ msgstr "गेटवे टाइमआउट। कृपया CommCare HQ Sup
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
-msgstr "आपका खोज शब्द बहुत लंबा था। कृपया छोटा खोज फ़िल्टर दें"
+msgstr "आपका खोज शब्द बहुत लंबा था। कृपया एक छोटा खोज फ़िल्टर दें"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
 msgid "Loading Stopped"
-msgstr "लोडिंग रोक दी गई"
+msgstr "लोडिंग बंद हो गई"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
@@ -4566,7 +4509,7 @@ msgstr "हम रिपोर्ट लोड करने में असफ�
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/configurable_report.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/configurable_report.js
 msgid "You can email a saved version<br />of this report."
-msgstr "आप इस रिपोर्ट का सेव किया गया संस्करण<br />ईमेल कर सकते हैं।"
+msgstr "आप इस रिपोर्ट का सहेजा गया संस्करण<br />ईमेल कर सकते हैं।"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/case_details.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/case_details.js
@@ -4592,7 +4535,7 @@ msgstr "लोड हो रहा है"
 #: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid "No data available to display. Please try changing your filters."
 msgstr ""
-"प्रदर्शित करने के लिए कोई डेटा उपलब्ध नहीं है। कृपया अपने फ़िल्टर बदलकर "
+"प्रदर्शित करने के लिए कोई डेटा उपलब्ध नहीं है। कृपया अपने फ़िल्टर बदलने का "
 "प्रयास करें।"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
@@ -4616,7 +4559,8 @@ msgstr ""
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
-"आपकी खोज क्वेरी अमान्य है, कृपया स्वरूपण समायोजित करें और पुनः प्रयास करें।"
+"आपकी खोज क्वेरी अमान्य है, कृपया फॉर्मेटिंग को समायोजित करें और पुनः प्रयास "
+"करें।"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
@@ -4632,17 +4576,17 @@ msgstr "एक भाषा चुनें..."
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "Available Reports"
-msgstr "उपलब्ध रिपोर्ट्स"
+msgstr "उपलब्ध रिपोर्टें"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "Included Reports"
-msgstr "शामिल रिपोर्ट्स"
+msgstr "शामिल रिपोर्टें"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "Search Reports..."
-msgstr "रिपोर्ट्स खोजें..."
+msgstr "रिपोर्ट खोजें..."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/hq_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/hq_report.js
@@ -4701,7 +4645,7 @@ msgstr "रिपोर्ट सफलतापूर्वक ईमेल क
 #: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
 msgid "An error occurred emailing your report. Please try again."
-msgstr "आपकी रिपोर्ट ईमेल करने में त्रुटि हुई। कृपया पुनः प्रयास करें।"
+msgstr "आपकी रिपोर्ट ईमेल करते समय एक त्रुटि हुई। कृपया पुनः प्रयास करें।"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
@@ -4721,7 +4665,7 @@ msgstr "असफल"
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 msgid "Failed to re-process"
-msgstr "पुनः-प्रक्रिया करने में असफल"
+msgstr "पुनः-प्रक्रिया करने में विफल"
 
 #: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid "_MENU_ per page"
@@ -4748,30 +4692,30 @@ msgstr "मामले के प्रकार"
 
 #: corehq/apps/reports/static/reports/js/filters/case_list_explorer_knockout_bindings.js
 msgid "e.g. (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') "
-msgstr "उदा. (dob <= '2017-02-01' और initial_home_visit_completed = 'yes') "
+msgstr "उदाहरण: (dob <= '2017-02-01' और initial_home_visit_completed = 'yes')"
 
 #: corehq/apps/reports/static/reports/js/filters/phone_number.js
 msgid "That have phone numbers"
-msgstr "जिनके पास फोन नंबर हैं"
+msgstr "जिनके पास फ़ोन नंबर हैं"
 
 #: corehq/apps/reports/static/reports/js/filters/phone_number.js
 msgid "That do not have phone numbers"
-msgstr "जिनके पास फोन नंबर नहीं हैं"
+msgstr "जिनके पास फ़ोन नंबर नहीं हैं"
 
 #: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
 msgid "My Scheduled Reports"
-msgstr "मेरी अनुसूचित रिपोर्ट्स"
+msgstr "मेरी अनुसूचित रिपोर्टें"
 
 #: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
 msgid "Other Scheduled Reports"
-msgstr "अन्य अनुसूचित रिपोर्ट्स"
+msgstr "अन्य अनुसूचित रिपोर्टें"
 
 #: corehq/apps/reports/static/reports/js/tableau.js
 msgid ""
 "An error occured with the tableau server request, please ensure the server "
 "configuration is correct and try again."
 msgstr ""
-"टेबलू सर्वर अनुरोध में त्रुटि हुई, कृपया सुनिश्चित करें कि सर्वर "
+"Tableau सर्वर अनुरोध में एक त्रुटि हुई, कृपया सुनिश्चित करें कि सर्वर "
 "कॉन्फ़िगरेशन सही है और पुनः प्रयास करें।"
 
 #: corehq/apps/reports/static/reports/v2/js/bootstrap3/datagrid.js
@@ -4790,7 +4734,7 @@ msgstr "कॉलम शीर्षक"
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js
 msgid "Select <%= title %>..."
-msgstr "चुनें <%= title %>..."
+msgstr "<%= title %> चुनें..."
 
 #: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
 #: corehq/apps/reports_core/static/reports_core/js/bootstrap5/maps.js
@@ -4804,7 +4748,7 @@ msgstr "सैटेलाइट"
 
 #: corehq/apps/sms/static/sms/js/add_gateway.js
 msgid "You must have at least one phone number."
-msgstr "आपके पास कम से कम एक फोन नंबर होना चाहिए।"
+msgstr "आपके पास कम से कम एक फ़ोन नंबर होना चाहिए।"
 
 #: corehq/apps/sms/static/sms/js/chat.js
 msgid "(New Message) - "
@@ -4832,11 +4776,11 @@ msgstr "_TOTAL_ संपर्कों में से _START_ से _END_ �
 
 #: corehq/apps/sms/static/sms/js/chat_contacts.js
 msgid "(filtered from _MAX_ total contacts)"
-msgstr "(कुल _MAX_ संपर्कों में से फ़िल्टर किया गया)"
+msgstr "(_MAX_ कुल संपर्कों में से छांटे गए)"
 
 #: corehq/apps/smsbillables/static/smsbillables/js/rate_calc.js
 msgid "There was an error fetching the SMS rate."
-msgstr "एसएमएस दर प्राप्त करने में त्रुटि हुई।"
+msgstr "SMS दर प्राप्त करने में एक त्रुटि हुई।"
 
 #: corehq/apps/smsbillables/static/smsbillables/js/rate_calc.js
 msgid "Please Select a Country Code"
@@ -4845,21 +4789,21 @@ msgstr "कृपया एक देश कोड चुनें"
 #: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
 #: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
 msgid "Available Letters"
-msgstr "उपलब्ध अक्षर"
+msgstr "उपलब्ध पत्र"
 
 #: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
 #: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
 msgid "Letters Selected"
-msgstr "चयनित अक्षर"
+msgstr "चयनित पत्र"
 
 #: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
 #: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
 msgid "Search Letters..."
-msgstr "अक्षर खोजें..."
+msgstr "पत्र खोजें..."
 
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Forms"
-msgstr "फॉर्म्स"
+msgstr "फॉर्म"
 
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Cases"
@@ -4867,7 +4811,7 @@ msgstr "मामले"
 
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Reports"
-msgstr "रिपोर्ट्स"
+msgstr "रिपोर्ट"
 
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "App Builder"
@@ -4879,7 +4823,7 @@ msgstr "धन्यवाद, "
 
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Submission has been cancelled."
-msgstr "सबमिशन रद्द कर दिया गया है।"
+msgstr "प्रस्तुतिकरण रद्द कर दिया गया है।"
 
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
 msgid "Please specify a username."
@@ -4944,7 +4888,7 @@ msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "You have unsaved user interface translations."
-msgstr "आपके पास बिना सहेजे गए यूजर इंटरफेस अनुवाद हैं।"
+msgstr "आपके पास बिना सहेजे गए यूज़र इंटरफेस अनुवाद हैं।"
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "Parameters formatting problem!"
@@ -4955,38 +4899,40 @@ msgid ""
 "Autofill is not available in English (en). Please change your language using"
 " the dropdown in the top left."
 msgstr ""
-"अंग्रेज़ी (en) में ऑटोफिल उपलब्ध नहीं है। कृपया ऊपर बाईं ओर ड्रॉपडाउन का "
+"ऑटोफिल अंग्रेज़ी (en) में उपलब्ध नहीं है। कृपया ऊपर बाईं ओर ड्रॉपडाउन का "
 "उपयोग करके अपनी भाषा बदलें।"
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/base.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/base.js
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
-"वर्तमान पृष्ठ का डेटा दिखाया जा रहा है। अधिक डेटा देखने के लिए पृष्ठ बदलें।"
+"वर्तमान पृष्ठ का डेटा दिखा रहे हैं। अधिक डेटा देखने के लिए पृष्ठ बदलें।"
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js
 msgid "Linked projects"
-msgstr "लिंक किए गए प्रोजेक्ट्स"
+msgstr "लिंक किए गए प्रोजेक्ट"
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js
 msgid "Projects to copy to"
-msgstr "कॉपी करने के लिए प्रोजेक्ट्स"
+msgstr "कॉपी करने के लिए प्रोजेक्ट"
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js
 msgid "Search projects"
-msgstr "प्रोजेक्ट्स खोजें"
+msgstr "प्रोजेक्ट खोजें"
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid "Choose the property you would like to add as a filter to this report."
-msgstr "इस रिपोर्ट में फ़िल्टर के रूप में जोड़ने के लिए वह प्रॉपर्टी चुनें।"
+msgstr ""
+"वह प्रॉपर्टी चुनें जिसे आप इस रिपोर्ट में फ़िल्टर के रूप में जोड़ना चाहते "
+"हैं।"
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
@@ -4995,7 +4941,7 @@ msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
-"रिपोर्ट देखने वाले वेब उपयोगकर्ताओं को प्रॉपर्टी नाम के बजाय यह डिस्प्ले "
+"रिपोर्ट देखने वाले वेब उपयोगकर्ता को प्रॉपर्टी नाम के बजाय यह डिस्प्ले "
 "टेक्स्ट दिखाई देगा। अपने फ़िल्टर का नाम ऐसा रखें जिसे उपयोगकर्ता आसानी से "
 "समझ सकें।"
 
@@ -5044,7 +4990,7 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid "Please check above for any errors in your configuration."
-msgstr "कृपया अपनी कॉन्फ़िगरेशन में ऊपर कोई त्रुटि है या नहीं, जांचें।"
+msgstr "कृपया ऊपर अपनी कॉन्फ़िगरेशन में किसी भी त्रुटि की जांच करें।"
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "Edit a custom web report or custom web report source"
@@ -5068,7 +5014,7 @@ msgstr "अज्ञात त्रुटि"
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
-msgstr "पासवर्ड सफलतापूर्वक बदल दिया गया है।"
+msgstr "पासवर्ड सफलतापूर्वक बदल दिया गया।"
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password is not strong enough. Try making your password more complex."
@@ -5135,11 +5081,11 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Phone number should contain only digits 0-9."
-msgstr "फोन नंबर में केवल 0-9 अंक होने चाहिए।"
+msgstr "फोन नंबर में केवल 0-9 अंक ही होने चाहिए।"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Checking availability..."
-msgstr "उपलब्धता की जाँच हो रही है..."
+msgstr "उपलब्धता जांची जा रही है..."
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Issue connecting to server. Check Internet connection."
@@ -5171,27 +5117,27 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Mobile Workers"
-msgstr "मोबाइल वर्कर्स संपादित करें और देखें"
+msgstr "मोबाइल वर्कर्स को संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
-msgstr "केवल देखने के लिए मोबाइल वर्कर्स"
+msgstr "केवल देखने योग्य मोबाइल वर्कर्स"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
 "configuration for web users"
 msgstr ""
-"<strong>टेबलो कॉन्फ़िगरेशन प्रबंधित करें</strong> &mdash; वेब उपयोगकर्ताओं "
-"के लिए टेबलो कॉन्फ़िगरेशन प्रबंधित करें"
+"<strong>टेबलू कॉन्फ़िगरेशन प्रबंधित करें</strong> &mdash; वेब उपयोगकर्ताओं "
+"के लिए टेबलू कॉन्फ़िगरेशन प्रबंधित करें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View tableau configuration for web users"
-msgstr "वेब उपयोगकर्ताओं के लिए टेबलो कॉन्फ़िगरेशन संपादित करें और देखें"
+msgstr "वेब उपयोगकर्ताओं के लिए टेबलू कॉन्फ़िगरेशन संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only tableau configuration for web users"
-msgstr "केवल देखने के लिए वेब उपयोगकर्ताओं के लिए टेबलो कॉन्फ़िगरेशन"
+msgstr "केवल देखने योग्य टेबलू कॉन्फ़िगरेशन वेब उपयोगकर्ताओं के लिए"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
@@ -5207,7 +5153,7 @@ msgstr "वेब उपयोगकर्ताओं को संपादि
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Users"
-msgstr "केवल देखने के लिए वेब उपयोगकर्ता"
+msgstr "केवल देखने योग्य वेब उपयोगकर्ता"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
@@ -5219,18 +5165,18 @@ msgstr "समूह संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Groups"
-msgstr "केवल देखने के लिए वेब समूह"
+msgstr "केवल देखने योग्य वेब समूह"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing group membership (requires edit groups)."
-msgstr "समूह सदस्यता बदलने की अनुमति दें (समूह संपादित करने की आवश्यकता)।"
+msgstr "समूह सदस्यता बदलने की अनुमति दें (समूह संपादन आवश्यक)।"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Locations</strong> &mdash; manage locations in the Organization's "
 "Hierarchy"
 msgstr ""
-"<strong>स्थान</strong> &mdash; संगठन की श्रेणी में स्थान प्रबंधित करें"
+"<strong>स्थान</strong> &mdash; संगठन की संरचना में स्थान प्रबंधित करें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Locations"
@@ -5238,7 +5184,7 @@ msgstr "स्थान संपादित करें और देखे�
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Locations"
-msgstr "केवल देखने के लिए वेब स्थान"
+msgstr "केवल देखने योग्य वेब स्थान"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing workers at a location."
@@ -5258,7 +5204,7 @@ msgstr "डेटा शब्दकोश संपादित करें �
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Data Dictionary"
-msgstr "केवल देखने के लिए डेटा शब्दकोश"
+msgstr "केवल देखने योग्य डेटा शब्दकोश"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
@@ -5275,11 +5221,11 @@ msgstr "डेटा संपादित करें और देखें"
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Messaging</strong> &mdash; configure and send conditional alerts"
-msgstr "<strong>संदेश</strong> &mdash; कंडीशनल अलर्ट कॉन्फ़िगर और भेजें"
+msgstr "<strong>संदेश</strong> &mdash; सशर्त अलर्ट कॉन्फ़िगर करें और भेजें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Access Messaging"
-msgstr "संदेशों तक पहुँच"
+msgstr "संदेश तक पहुँच"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
@@ -5304,11 +5250,11 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Apps"
-msgstr "ऐप्स संपादित करें और देखें"
+msgstr "एप्लिकेशन संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Applications"
-msgstr "केवल देखने के लिए एप्लिकेशन"
+msgstr "केवल देखने योग्य एप्लिकेशन"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
@@ -5333,11 +5279,11 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & Download files from the Dropzone "
-msgstr "ड्रॉपज़ोन से फाइलें संपादित करें और डाउनलोड करें"
+msgstr "ड्रॉपज़ोन से फाइलें संपादित करें और डाउनलोड करें "
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Dropzone"
-msgstr "केवल देखने के लिए ड्रॉपज़ोन"
+msgstr "केवल देखने योग्य ड्रॉपज़ोन"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
@@ -5352,20 +5298,20 @@ msgid ""
 "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
 "events and users"
 msgstr ""
-"<strong>उपस्थिति ट्रैकिंग</strong> &mdash; उपस्थिति ट्रैकिंग इवेंट्स और "
+"<strong>उपस्थिति ट्रैकिंग</strong> &mdash; उपस्थिति ट्रैकिंग ईवेंट्स और "
 "उपयोगकर्ताओं का समन्वय करें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit Attendance Tracking Events"
-msgstr "उपस्थिति ट्रैकिंग इवेंट्स संपादित करें"
+msgstr "उपस्थिति ट्रैकिंग ईवेंट्स संपादित करें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
 "associated with this project"
 msgstr ""
-"<strong>CommCare एनालिटिक्स</strong> &mdash; इस प्रोजेक्ट से संबंधित "
-"CommCare एनालिटिक्स प्रबंधित करें"
+"<strong>CommCare एनालिटिक्स</strong> &mdash; इस प्रोजेक्ट से जुड़ी CommCare "
+"एनालिटिक्स को प्रबंधित करें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View CommCare Analytics"
@@ -5403,7 +5349,7 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Reports"
-msgstr "रिपोर्ट बनाएँ और संपादित करें"
+msgstr "रिपोर्ट बनाएं और संपादित करें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit reports in report builder."
@@ -5412,7 +5358,7 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Custom Web Reports"
-msgstr "कस्टम वेब रिपोर्ट बनाएँ और संपादित करें"
+msgstr "कस्टम वेब रिपोर्ट बनाएं और संपादित करें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit custom web reports."
@@ -5420,7 +5366,7 @@ msgstr "भूमिका को कस्टम वेब रिपोर्�
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Configurable Reports"
-msgstr "कॉन्फ़िगर करने योग्य रिपोर्ट बनाएँ और संपादित करें"
+msgstr "कॉन्फ़िगर करने योग्य रिपोर्ट बनाएं और संपादित करें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit configurable reports."
@@ -5429,22 +5375,22 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Access All CommCare Reports"
-msgstr "सभी CommCare रिपोर्ट्स तक पहुँचें"
+msgstr "सभी CommCare रिपोर्ट तक पहुँचें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Reports"
-msgstr "सभी रिपोर्ट्स तक पहुँचें"
+msgstr "सभी रिपोर्ट तक पहुँचें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "Allow role to view all CommCare reports. Excludes embedded Tableau reports"
 msgstr ""
-"भूमिका को सभी CommCare रिपोर्ट्स देखने की अनुमति दें। इसमें एम्बेडेड Tableau"
-" रिपोर्ट्स शामिल नहीं हैं"
+"भूमिका को सभी CommCare रिपोर्ट देखने की अनुमति दें। इसमें एम्बेडेड Tableau "
+"रिपोर्ट शामिल नहीं हैं"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all reports."
-msgstr "भूमिका को सभी रिपोर्ट्स तक पहुँचने की अनुमति दें।"
+msgstr "भूमिका को सभी रिपोर्ट तक पहुँचने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Download and Email Reports"
@@ -5456,11 +5402,11 @@ msgstr "भूमिका को रिपोर्ट डेटा डाउ�
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Tableau Reports"
-msgstr "सभी Tableau रिपोर्ट्स तक पहुँचें"
+msgstr "सभी Tableau रिपोर्ट तक पहुँचें"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
-msgstr "भूमिका को सभी एम्बेडेड Tableau रिपोर्ट्स तक पहुँचने की अनुमति दें।"
+msgstr "भूमिका को सभी एम्बेडेड Tableau रिपोर्ट तक पहुँचने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Manage Registries"
@@ -5484,7 +5430,7 @@ msgstr "ऑनलाइन डेटा एंट्री के लिए व�
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Select which web apps the role has access to:"
-msgstr "चुनें कि भूमिका को किन वेब ऐप्स तक पहुँच है:"
+msgstr "चुनें कि कौन से वेब ऐप्स तक भूमिका की पहुँच है:"
 
 #: corehq/apps/users/static/users/js/roles.js
 #, javascript-format
@@ -5546,8 +5492,8 @@ msgid ""
 "your organization is blocking emails from our address (<%- fromAddress %>)."
 msgstr ""
 "हमने इस उपयोगकर्ता को निमंत्रण ईमेल भेजा है लेकिन उपयोगकर्ता के ईमेल सर्वर "
-"ने इसे अस्वीकार कर दिया। आमतौर पर इसका अर्थ है कि या तो ईमेल पता गलत है या "
-"आपकी संस्था हमारे पते (<%- fromAddress %>) से ईमेल्स को ब्लॉक कर रही है।"
+"ने इसे अस्वीकार कर दिया। आमतौर पर इसका मतलब है कि या तो ईमेल पता गलत है या "
+"आपकी संस्था हमारे पते (<%- fromAddress %>) से ईमेल को ब्लॉक कर रही है।"
 
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "No users matched your search."
@@ -5567,7 +5513,7 @@ msgstr "क्या आप वाकई इस अनुसूचित सं�
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid "This rule has been restarted."
-msgstr "इस नियम को पुनः प्रारंभ किया गया है।"
+msgstr "यह नियम पुनः प्रारंभ कर दिया गया है।"
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 #, javascript-format
@@ -5575,9 +5521,8 @@ msgid ""
 "Unable to restart rule. Rules can only be started every two hours and there "
 "are %s minute(s) remaining before this rule can be started again."
 msgstr ""
-"नियम को पुनः प्रारंभ करने में असमर्थ। नियम केवल हर दो घंटे में एक बार "
-"प्रारंभ किए जा सकते हैं और इस नियम को फिर से प्रारंभ करने से पहले %s मिनट "
-"शेष हैं।"
+"नियम पुनः प्रारंभ करने में असमर्थ। नियम केवल हर दो घंटे में ही प्रारंभ किए "
+"जा सकते हैं और इस नियम को फिर से प्रारंभ करने से पहले %s मिनट शेष हैं।"
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid "Are you sure you want to remove this conditional message?"
@@ -5589,7 +5534,7 @@ msgid ""
 "progressing. You will only be able to restart this rule once every two "
 "hours. Restart this rule?"
 msgstr ""
-"किसी नियम को केवल तभी पुनः प्रारंभ करना चाहिए जब आपको लगे कि वह अटका हुआ है "
+"किसी नियम को केवल तभी पुनः प्रारंभ करना चाहिए जब आपको लगे कि यह अटका हुआ है "
 "और प्रगति नहीं कर रहा है। आप इस नियम को हर दो घंटे में केवल एक बार ही पुनः "
 "प्रारंभ कर सकते हैं। क्या आप इस नियम को पुनः प्रारंभ करना चाहते हैं?"
 
@@ -5600,7 +5545,7 @@ msgid ""
 "restarting too many times without finishing can place a burden on the "
 "system. Restart this rule?"
 msgstr ""
-"किसी नियम को केवल तभी पुनः प्रारंभ करना चाहिए जब आपको लगे कि वह अटका हुआ है "
+"किसी नियम को केवल तभी पुनः प्रारंभ करना चाहिए जब आपको लगे कि यह अटका हुआ है "
 "और प्रगति नहीं कर रहा है। आपका उपयोगकर्ता जितनी बार चाहे उतनी बार पुनः "
 "प्रारंभ कर सकता है, लेकिन बिना पूरा किए बार-बार पुनः प्रारंभ करने से सिस्टम "
 "पर बोझ पड़ सकता है। क्या आप इस नियम को पुनः प्रारंभ करना चाहते हैं?"
@@ -5611,7 +5556,7 @@ msgstr "घंटा(घंटे)"
 
 #: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "minute(s)"
-msgstr "मिनट(मिनटें)"
+msgstr "मिनट(मिनट)"
 
 #: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "last"
@@ -5651,7 +5596,7 @@ msgstr "(दिए गए तिथि सीमा में कोई त्�
 
 #: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js
 msgid "Server error. Try again..."
-msgstr "सर्वर त्रुटि। फिर से प्रयास करें..."
+msgstr "सर्वर त्रुटि। पुनः प्रयास करें..."
 
 #: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js
 msgid "Send"
@@ -5711,7 +5656,7 @@ msgstr "OpenMRS से आयात शीघ्र ही शुरू हो�
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Failed to schedule task to import from OpenMRS."
-msgstr "OpenMRS से आयात करने के लिए कार्य अनुसूचित करने में विफल।"
+msgstr "OpenMRS से आयात के लिए कार्य अनुसूचित करने में विफल।"
 
 #: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
 #: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
@@ -5723,19 +5668,9 @@ msgstr "प्रयास प्राप्त करने में वि�
 msgid "Failed to fetch payload"
 msgstr "पेलोड प्राप्त करने में विफल"
 
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to send"
-msgstr "भेजने में विफल"
-
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to cancel"
-msgstr "रद्द करने में विफल"
-
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
-msgstr "उपयोगकर्ता नाम"
+msgstr "यूज़रनेम"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
@@ -5764,3 +5699,48 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Module ID"
+#~ msgstr "मॉड्यूल आईडी"
+
+#~ msgid "Description"
+#~ msgstr "विवरण"
+
+#~ msgid "Time Estimate"
+#~ msgstr "समय का अनुमान"
+
+#~ msgid "Must be an integer"
+#~ msgstr "पूर्णांक होना चाहिए"
+
+#~ msgid "Estimated time to complete the module in hours."
+#~ msgstr "मॉड्यूल पूरा करने का अनुमानित समय (घंटों में)।"
+
+#~ msgid "Assessment ID"
+#~ msgstr "असेसमेंट आईडी"
+
+#~ msgid "User Score"
+#~ msgstr "यूज़र स्कोर"
+
+#~ msgid "XPath expression for the users assessment score."
+#~ msgstr "यूज़र्स के असेसमेंट स्कोर के लिए XPath अभिव्यक्ति।"
+
+#~ msgid "Delivery Unit ID"
+#~ msgstr "डिलीवरी यूनिट आईडी"
+
+#~ msgid "Entity ID"
+#~ msgstr "एंटिटी आईडी"
+
+#~ msgid ""
+#~ "XPath expression for the entity ID associated with this Delivery Unit e.g. "
+#~ "the case ID."
+#~ msgstr ""
+#~ "इस डिलीवरी यूनिट से संबंधित एंटिटी आईडी के लिए XPath अभिव्यक्ति, जैसे केस "
+#~ "आईडी।"
+
+#~ msgid "Entity Name"
+#~ msgstr "एंटिटी नाम"
+
+#~ msgid ""
+#~ "XPath expression for the name of the entity associated with this Delivery "
+#~ "Unit."
+#~ msgstr "इस डिलीवरी यूनिट से संबंधित एंटिटी के नाम के लिए XPath अभिव्यक्ति।"

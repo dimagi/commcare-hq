@@ -4,15 +4,15 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2021
+# Dimagi Dev <devops@dimagi.com>, 2025
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Commcare HQ\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2025\n"
 "Language-Team: Swahili (https://app.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
 "MIME-Version: 1.0\n"
@@ -38,7 +38,7 @@ msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "We are switching to a different mobile data collection tool"
-msgstr "Tunabadili kwenda kwenye zana nyingine ya ukusanyaji wa data kwa simu"
+msgstr "Tunabadili kwenda kwenye zana nyingine ya ukusanyaji wa data ya simu"
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "For budget reasons"
@@ -65,7 +65,7 @@ msgstr "Majibu kutoka Stripe hayajakamilika ipasavyo."
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Downgrading?"
-msgstr "Unapunguza kiwango?"
+msgstr "Unashusha kiwango?"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Pausing Subscription?"
@@ -80,12 +80,12 @@ msgid ""
 " about your subscription, please reach out to <a href='mailto: <%- "
 "invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
-"<p>Usajili wote wa CommCare unahitaji angalau siku 30 za ahadi ya "
-"chini.</p><p>Kuendelea mbele kutakuwezesha kupanga usajili wako wa sasa wa "
-"Mpango wa <%- oldPlan %> Edition kusimamishwa tarehe <strong> <%- date %> "
-"</strong></p><p>Kama una maswali au ungependa kuzungumza nasi kuhusu usajili"
-" wako, tafadhali wasiliana na <a href='mailto: <%- invoicingContact %>'><%- "
-"invoicingContact %></a>.</p>"
+"<p>Usajili wote wa CommCare unahitaji angalau siku 30 za "
+"kujitolea.</p><p>Kuendelea mbele kutakuwezesha kupanga usajili wako wa sasa "
+"wa Mpango wa <%- oldPlan %> Edition kusimamishwa tarehe <strong> <%- date %>"
+" </strong></p><p>Ikiwa una maswali au ungependa kuzungumza nasi kuhusu "
+"usajili wako, tafadhali wasiliana na <a href='mailto: <%- invoicingContact "
+"%>'><%- invoicingContact %></a>.</p>"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
@@ -98,12 +98,12 @@ msgid ""
 "speak to us about your subscription, please reach out to <a href='mailto: "
 "<%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
-"<p>Usajili wote wa CommCare unahitaji angalau siku 30 za ahadi ya "
-"chini.</p><p>Usajili wako wa sasa wa Mpango wa <%- oldPlan %> Edition "
+"<p>Usajili wote wa CommCare unahitaji angalau siku 30 za "
+"kujitolea.</p><p>Usajili wako wa sasa wa Mpango wa <%- oldPlan %> Edition "
 "umepangwa kusimamishwa tarehe <strong> <%- date %> </strong></p><p>Kuendelea"
 " mbele kutakuwezesha kupanga usajili wako wa sasa wa Mpango wa <%- oldPlan "
-"%> Edition kupunguzwa hadi Mpango wa <%- newPlan %> Edition tarehe <strong> "
-"<%- date %> </strong></p><p>Kama una maswali au ungependa kuzungumza nasi "
+"%> Edition kushushwa hadi Mpango wa <%- newPlan %> Edition tarehe <strong> "
+"<%- date %> </strong></p><p>Ikiwa una maswali au ungependa kuzungumza nasi "
 "kuhusu usajili wako, tafadhali wasiliana na <a href='mailto: <%- "
 "invoicingContact %>'><%- invoicingContact %></a>.</p>"
 
@@ -119,15 +119,15 @@ msgid ""
 "about your subscription, please reach out to <a href='mailto: <%- "
 "invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
-"<p>Usajili wote wa CommCare unahitaji angalau siku 30 za ahadi ya "
-"chini.</p><p>Usajili wako wa sasa wa Mpango wa <%- oldPlan %> Edition "
-"umepangwa kupunguzwa hadi Mpango wa <%- nextSubscription %> Edition tarehe "
+"<p>Usajili wote wa CommCare unahitaji angalau siku 30 za "
+"kujitolea.</p><p>Usajili wako wa sasa wa Mpango wa <%- oldPlan %> Edition "
+"umepangwa kushushwa hadi Mpango wa <%- nextSubscription %> Edition tarehe "
 "<strong> <%- date %> </strong></p><p>Kuendelea mbele kutakuwezesha kupanga "
-"usajili wako wa sasa wa Mpango wa <%- oldPlan %> Edition kupunguzwa hadi "
+"usajili wako wa sasa wa Mpango wa <%- oldPlan %> Edition kushushwa hadi "
 "Mpango wa <%- newPlan %> Edition tarehe <strong> <%- date %> "
-"</strong></p><p>Kama una maswali au ungependa kuzungumza nasi kuhusu usajili"
-" wako, tafadhali wasiliana na <a href='mailto: <%- invoicingContact %>'><%- "
-"invoicingContact %></a>.</p>"
+"</strong></p><p>Ikiwa una maswali au ungependa kuzungumza nasi kuhusu "
+"usajili wako, tafadhali wasiliana na <a href='mailto: <%- invoicingContact "
+"%>'><%- invoicingContact %></a>.</p>"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
@@ -139,12 +139,12 @@ msgid ""
 "out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact "
 "%></a>."
 msgstr ""
-"<p>Usajili wote wa CommCare unahitaji angalau siku 30 za ahadi ya "
-"chini.</p><p>Kuendelea mbele kutakuwezesha kupanga usajili wako wa sasa wa "
-"Mpango wa <%- oldPlan %> Edition kupunguzwa hadi Mpango wa <%- newPlan %> "
-"Edition tarehe <strong> <%- date %> </strong></p>Kama una maswali au "
-"ungependa kuzungumza nasi kuhusu usajili wako, tafadhali wasiliana na <a "
-"href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+"<p>Usajili wote wa CommCare unahitaji angalau siku 30 za "
+"kujitolea.</p><p>Kuendelea mbele kutakuwezesha kupanga usajili wako wa sasa "
+"wa Mpango wa <%- oldPlan %> Edition kushushwa hadi Mpango wa <%- newPlan %> "
+"Edition tarehe <strong> <%- date %> </strong></p>If you have questions or if"
+" you would like to speak to us about your subscription, please reach out to "
+"<a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Free edition"
@@ -152,11 +152,11 @@ msgstr "Toleo la bure"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Billed Annually"
-msgstr "Inalipiwa Kila Mwaka"
+msgstr "Inalipiwa kila mwaka"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Billed Monthly"
-msgstr "Inalipiwa Kila Mwezi"
+msgstr "Inalipiwa kila mwezi"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
 #: corehq/apps/domain/static/domain/js/pro-bono.js
@@ -185,7 +185,7 @@ msgstr "Tafadhali ingiza anwani yako ya barua pepe."
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "We are sorry, but something unexpected has occurred."
-msgstr "Samahani, kuna tatizo lisilotarajiwa limetokea."
+msgstr "Pole, kuna tatizo lisilotarajiwa limetokea."
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
 msgid "Submit Request"
@@ -266,7 +266,8 @@ msgid ""
 "feedback forms."
 msgstr ""
 "Utafiti hutumika kukusanya fomu huru ambazo hazihitaji kufuatiliwa kwa muda."
-" Mifano ya kawaida ni tafiti za kuridhika au fomu za maoni zisizojulikana."
+" Mifano ya kawaida ni pamoja na tafiti za kuridhika au fomu za maoni "
+"zisizojulikana."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "What is a Case List?"
@@ -278,10 +279,10 @@ msgid ""
 "This data can be referenced in other forms and by other cases. Common "
 "examples include maternal health, student attendance, or crop monitoring."
 msgstr ""
-"Orodha za Kesi hutumika kusajili na kufuatilia data zinazohusiana (kesi) kwa"
-" muda. Data hii inaweza kurejelewa kwenye fomu nyingine na na kesi nyingine."
-" Mifano ya kawaida ni afya ya mama, mahudhurio ya wanafunzi, au ufuatiliaji "
-"wa mazao."
+"Orodha za Kesi hutumika kusajili na kufuatilia data inayohusiana (kesi) kwa "
+"muda. Data hii inaweza kurejelewa kwenye fomu nyingine na na kesi nyingine. "
+"Mifano ya kawaida ni pamoja na afya ya uzazi, mahudhurio ya wanafunzi, au "
+"ufuatiliaji wa mazao."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Select None"
@@ -323,29 +324,29 @@ msgstr "Chagua Ripoti..."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Lookup Table Options"
-msgstr "Chaguzi za Jedwali la Lookup"
+msgstr "Chaguzi za Jedwali la Utafutaji"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lookup Table"
-msgstr "Jedwali la Lookup"
+msgstr "Jedwali la Utafutaji"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Select a Lookup Table..."
-msgstr "Chagua Jedwali la Lookup..."
+msgstr "Chagua Jedwali la Utafutaji..."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Cache"
-msgstr "Kasha"
+msgstr "Kumbukumbu"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Lazy Load"
-msgstr "Upakiaji wa Polepole"
+msgstr "Upakiaji Polepole"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Cache & Lazy Load"
-msgstr "Kasha & Upakiaji wa Polepole"
+msgstr "Kumbukumbu & Upakiaji Polepole"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Tab Name"
@@ -362,7 +363,7 @@ msgstr "Okt 31, "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid " Format "
-msgstr " Umbizo "
+msgstr " Muundo "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid " Days late "
@@ -428,7 +429,7 @@ msgid ""
 "report's chart configuration will not be reflected here."
 msgstr ""
 "Inashauriwa uache thamani hii ikiwa tupu. Mabadiliko yajayo kwenye usanidi "
-"wa chati ya ripoti yako hayataonekana hapa."
+"wa chati ya ripoti yako hayatadhihirika hapa."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 #: corehq/apps/export/static/export/js/models.js
@@ -461,15 +462,15 @@ msgstr "Una usanidi wa skrini ya maelezo ambao haujahifadhiwa."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "There is an error in your tab: "
-msgstr "Kuna kosa kwenye tab yako: "
+msgstr "Kuna hitilafu kwenye tab yako: "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "There is an error in your property name: "
-msgstr "Kuna kosa kwenye jina la sifa yako: "
+msgstr "Kuna hitilafu kwenye jina la sifa yako: "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You can only have one property with the 'Image' format"
-msgstr "Unaweza kuwa na sifa moja tu yenye umbizo la 'Picha'"
+msgstr "Unaweza kuwa na sifa moja tu yenye muundo wa 'Picha'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "All properties must be below a tab."
@@ -480,7 +481,7 @@ msgid ""
 "Search Properties and Default Search Filters can't have common properties. "
 "Please update following properties: "
 msgstr ""
-"Sifa za Utafutaji na Vichujio Chaguomsingi vya Utafutaji haziwezi kuwa na "
+"Sifa za Utafutaji na Vichujio Chaguo-msingi vya Utafutaji haziwezi kuwa na "
 "sifa zinazofanana. Tafadhali sasisha sifa zifuatazo: "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
@@ -530,7 +531,7 @@ msgstr "Lazima ianze na herufi na iwe na herufi, nambari, '-', na '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Plain"
-msgstr "Rahisi"
+msgstr "Nyororo"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -547,7 +548,7 @@ msgstr "Nambari ya Simu"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "ID Mapping"
-msgstr "Ulinganifu wa Vitambulisho"
+msgstr "Ulinganifu wa Kitambulisho"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Late Flag"
@@ -571,11 +572,11 @@ msgstr "Markdown"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Address Popup (Web Apps only)"
-msgstr "Dirisha la Anwani (Kwa Programu za Wavuti pekee)"
+msgstr "Dirisha la Anwani (Programu za Wavuti pekee)"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Clickable Icon (Web Apps only)"
-msgstr "Aikoni Inayoweza Kubonyezwa (Kwa Programu za Wavuti pekee)"
+msgstr "Aikoni Inayoweza Kubonyezwa (Programu za Wavuti pekee)"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Picture"
@@ -592,7 +593,7 @@ msgstr "Aikoni"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Conditional ID Mapping"
-msgstr "Ulinganifu wa Vitambulisho kwa Masharti Fulani"
+msgstr "Ulinganifu wa Kitambulisho kwa Masharti"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Translatable Text"
@@ -638,7 +639,7 @@ msgstr "hali ya kuchagua kiotomatiki: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid " (from fixture)"
-msgstr " (kutoka kwenye fixture)"
+msgstr " (kutoka kwa fixture)"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Autoselect mode required"
@@ -662,15 +663,15 @@ msgstr "Aina ya kesi inayotarajiwa inahitajika"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase parent reference is missing"
-msgstr "Rejeleo la mzazi wa kesi ndogo halipo"
+msgstr "Marejeleo ya mzazi wa kesi ndogo hayapo"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Parent reference ID required for subcases: "
-msgstr "Kitambulisho cha rejeleo la mzazi kinahitajika kwa kesi ndogo: "
+msgstr "Kitambulisho cha marejeleo ya mzazi kinahitajika kwa kesi ndogo: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase must be in same repeat context as parent \""
-msgstr "Kesi ndogo lazima iwe kwenye muktadha sawa wa kurudia kama mzazi \""
+msgstr "Kesi ndogo lazima iwe katika muktadha sawa wa kurudia kama mzazi \""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Select parent"
@@ -678,7 +679,7 @@ msgstr "Chagua mzazi"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
-msgstr "Asili"
+msgstr "Raw"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Data"
@@ -702,7 +703,7 @@ msgstr "Uteuzi wa Kesi Kiotomatiki"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load Case From Fixture"
-msgstr "Pakia Kesi Kutoka kwenye Fixture"
+msgstr "Pakia Kesi Kutoka kwa Fixture"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Open a Case"
@@ -720,7 +721,7 @@ msgstr "Neno lililohifadhiwa: "
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Inside the wrong repeat!"
-msgstr "Ndani ya kurudia isiyo sahihi!"
+msgstr "Uko ndani ya kurudia isiyo sahihi!"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
 msgid "Parent property references not allowed for subcases"
@@ -732,15 +733,17 @@ msgstr "Vipengele viwili vinapakia kwenye swali moja"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged case settings"
-msgstr "Una mipangilio ya kesi ambayo haijabadilika"
+msgstr "Una mipangilio ya kesi ambayo haijabadilishwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "Una mipangilio ya mali za mtumiaji ambayo haijabadilishwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
-msgstr "Mali inatumia kiambishi kisichotambulika <strong>"
+msgstr "Mali inatumia kiambishi kisichotambulika"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -783,11 +786,11 @@ msgstr "Thamani isiyotambulika"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "Manual Linking Datums"
-msgstr "Kuunganisha Data kwa Mkono"
+msgstr "Kuunganisha Datums Kwa Mkono"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "Set datums required to navigate to the selected form or menu"
-msgstr "Weka data zinazohitajika ili kufikia fomu au menyu uliyochagua"
+msgstr "Weka datums zinazohitajika ili kufikia fomu au menyu iliyochaguliwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "Datum ID"
@@ -796,7 +799,7 @@ msgstr "Kitambulisho cha Datum"
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath Expression"
-msgstr "Msururu wa XPath"
+msgstr "Usemi wa XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
 msgid "Active"
@@ -853,7 +856,7 @@ msgstr "Nambari hii inatumika katika sehemu nyingi."
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
 msgid "Releases"
-msgstr "Toleo"
+msgstr "Matoleo"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
 msgid "You have unsaved changes to your application profiles"
@@ -900,7 +903,7 @@ msgstr "Hakuna mabadiliko mapya!"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
 msgid "You have unsaved changes to your prompt setting"
-msgstr "Una mabadiliko ambayo hujahifadhi kwenye mipangilio ya arifa yako"
+msgstr "Una mabadiliko ambayo hujahifadhi kwenye mipangilio ya kidokezo chako"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
 #, javascript-format
@@ -922,7 +925,7 @@ msgid ""
 "saved, it will no longer be inherited."
 msgstr ""
 "Thamani hii kwa sasa imerithiwa kutoka kwenye programu kuu. Ukihifadhi "
-"ukurasa huu, haitarithishwa tena."
+"ukurasa huu, haitarithiwa tena."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
 msgid "You have unsaved settings."
@@ -972,7 +975,6 @@ msgid "Question"
 msgstr "Swali"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "Jina"
 
@@ -1004,7 +1006,7 @@ msgstr "Hali ya Kuonyesha"
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Required"
-msgstr "Lazima"
+msgstr "Inahitajika"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "Question Comment"
@@ -1047,7 +1049,7 @@ msgstr "Sifa za Kesi Zilizopakiwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "Saved Case Properties"
-msgstr "Sifa za Kesi Zilizoifadhiwa"
+msgstr "Sifa za Kesi Zilizohifadhiwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 msgid "load"
@@ -1080,7 +1082,8 @@ msgstr "Onyo: lugha haijatambulika"
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
 msgid "You have unsaved changes in your supported languages"
-msgstr "Una mabadiliko ambayo hujahifadhi katika lugha zako zinazoungwa mkono"
+msgstr ""
+"Una mabadiliko ambayo hayajahifadhiwa katika lugha zako zinazoungwa mkono"
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
 msgid "There are errors in your configuration"
@@ -1104,7 +1107,7 @@ msgstr "Lugha inaonekana mara mbili"
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
 msgid "This conflicts with a current language"
-msgstr "Hii inakinzana na lugha iliyopo"
+msgstr "Hii inakinzana na lugha iliyopo sasa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Questions"
@@ -1116,11 +1119,11 @@ msgstr "Nakili"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Expand All"
-msgstr "Panua Yote"
+msgstr "Panua Zote"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Collapse All"
-msgstr "Fupisha Yote"
+msgstr "Fupisha Zote"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Bulk Update All Questions"
@@ -1140,7 +1143,7 @@ msgstr "Maelezo ya Swali"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Expression Editor"
-msgstr "Kihariri cha Usemi"
+msgstr "Kihariri wa Usemi"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Cannot Change Question Type"
@@ -1176,11 +1179,11 @@ msgstr "Tafuta..."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "No match for {info} found!"
-msgstr "Hakuna mechi kwa {info} iliyopatikana!"
+msgstr "Hakuna inayolingana na {info} imepatikana!"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Multiple matches for {info} found!"
-msgstr "Mechi nyingi kwa {info} zimepatikana!"
+msgstr "Mecano nyingi zinazolingana na {info} zimepatikana!"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
@@ -1204,7 +1207,7 @@ msgstr "onyesha kwenye orodha ya maswali"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Date Format Options"
-msgstr "Chaguzi za Muundo wa Tarehe"
+msgstr "Chaguo za Muundo wa Tarehe"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "No Formatting"
@@ -1221,7 +1224,7 @@ msgid ""
 "errors."
 msgstr ""
 "{property} ya swali hairuhusiwi kurejelea swali lenyewe. Tafadhali ondoa . "
-"kutoka kwenye {property} au fomu yako itakuwa na makosa."
+"kwenye {property} au fomu yako itakuwa na makosa."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Unknown question:"
@@ -1238,7 +1241,7 @@ msgstr "hakuna muundo"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
 msgid "Custom"
-msgstr "Maalum"
+msgstr "Imebinafsishwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{question} is required."
@@ -1250,7 +1253,7 @@ msgstr "{question} hairuhusiwi."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{question} validation failed"
-msgstr "Uthibitishaji wa {question} umeshindwa"
+msgstr "Uhakiki wa {question} umeshindwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Unknown (read-only) question type"
@@ -1273,7 +1276,7 @@ msgid ""
 "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
 " pick a different Question ID."
 msgstr ""
-"Kitambulisho '{nodeID}' kinaweza kusababisha matatizo katika uchambuzi wa "
+"Kitambulisho '{nodeID}' kinaweza kusababisha matatizo wakati wa kuchanganua "
 "fomu. Inashauriwa kuchagua Kitambulisho cha Swali tofauti."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -1281,28 +1284,28 @@ msgid ""
 "{nodeID} is not a valid Question ID. It must start with a letter and contain"
 " only letters, numbers, and '-' or '_' characters."
 msgstr ""
-"{nodeID} si Kitambulisho cha Swali sahihi. Lazima kianze na herufi na kiwe "
-"na herufi, nambari, na wahusika '-' au '_'."
+"{nodeID} si Kitambulisho halali cha Swali. Lazima kianze na herufi na kiwe "
+"na herufi, nambari, na alama '-' au '_'."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "'meta' is not a valid Question ID."
-msgstr "'meta' si Kitambulisho cha Swali sahihi."
+msgstr "'meta' si Kitambulisho halali cha Swali."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "Making this change will create a new Question ID (and a new column in "
 "exports)."
 msgstr ""
-"Kubadilisha hili kutaunda Kitambulisho kipya cha Swali (na safu mpya kwenye "
-"mauzo ya nje)."
+"Kubadilisha hii kutaongeza Kitambulisho kipya cha Swali (na safu mpya kwenye"
+" mauzo ya nje)."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "This question has the same Question ID as another question in the same "
 "group. Please choose a unique Question ID."
 msgstr ""
-"Swali hili lina Kitambulisho sawa cha Swali kama swali lingine kwenye kundi "
-"hili hili. Tafadhali chagua Kitambulisho cha Swali la kipekee."
+"Swali hili lina Kitambulisho sawa cha Swali na swali lingine kwenye kundi "
+"moja. Tafadhali chagua Kitambulisho cha Swali la kipekee."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Default Data Value"
@@ -1318,18 +1321,16 @@ msgstr "Sifa za Ziada za Data"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Calculate Condition"
-msgstr "Hali ya Kuhesabu"
+msgstr "Hali ya Kukokotoa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "You cannot have a Validation Error Message with no Validation Condition!"
-msgstr ""
-"Huwezi kuwa na Ujumbe wa Hitilafu ya Uthibitishaji bila Hali ya "
-"Uthibitishaji!"
+msgstr "Huwezi kuwa na Ujumbe wa Hitilafu ya Uhakiki bila Hali ya Uhakiki!"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Error Message"
-msgstr "Ujumbe wa Hitilafu ya Uthibitishaji"
+msgstr "Ujumbe wa Hitilafu ya Uhakiki"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Required Condition"
@@ -1337,7 +1338,7 @@ msgstr "Hali Inayohitajika"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "The condition will be ignored unless you mark the question required."
-msgstr "Hali hii itapuuzwa isipokuwa utachagua swali hili kuwa lazima."
+msgstr "Hali hii itapuuzwa isipokuwa uweke swali hili kuwa lazima."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Extra Bind Attributes"
@@ -1363,7 +1364,7 @@ msgstr "Maandishi Chaguomsingi ya Kuonyesha yanahitajika"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Hint Display Text"
-msgstr "Maandishi ya Kidokezo cha Kuonyesha"
+msgstr "Maandishi ya Dokezo la Kuonyesha"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Extra Control Attributes"
@@ -1379,11 +1380,11 @@ msgstr "Mzazi wa Data"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Must be valid path"
-msgstr "Lazima iwe njia sahihi"
+msgstr "Lazima iwe njia halali"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{path} is not a valid data parent"
-msgstr "{path} si mzazi wa data sahihi"
+msgstr "{path} si mzazi halali wa data"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -1402,7 +1403,7 @@ msgstr "Maandishi"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Phone Number or Numeric ID"
-msgstr "Nambari ya Simu au Kitambulisho cha Nambari"
+msgstr "Nambari ya Simu au Kitambulisho cha Kihesabu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/motech/static/motech/js/connection_settings_detail.js
@@ -1463,11 +1464,11 @@ msgstr "Kurekodi Video"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Signature Capture"
-msgstr "Kuchukua Saini"
+msgstr "Kuchukua Sahihi"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Document Upload"
-msgstr "Pakia Hati"
+msgstr "Kupakia Hati"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "GPS"
@@ -1516,8 +1517,8 @@ msgid ""
 "Cannot change a Multiple/Single Choice question to a non-Choice question if "
 "it has Choices. Please remove all Choices and try again."
 msgstr ""
-"Haiwezi kubadilisha swali la Chaguo Moja/Chaguo Nyingi kuwa swali lisilo la "
-"Chaguo ikiwa lina Machaguo. Tafadhali ondoa Machaguo yote na ujaribu tena."
+"Haiwezi kubadilisha swali la Chaguo Nyingi/Moja kuwa swali lisilo la Chaguo "
+"ikiwa lina Machaguo. Tafadhali ondoa Machaguo yote na ujaribu tena."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Checkbox"
@@ -1557,7 +1558,7 @@ msgstr "Umefuta swali."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Undo"
-msgstr "Tendua"
+msgstr "Tengua"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Warning: {errs} is still referenced by other questions."
@@ -1603,7 +1604,7 @@ msgstr "thamani ya matokeo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Failed"
-msgstr "Uthibitishaji Umekosa"
+msgstr "Uhakiki Umekosa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Please fix the error before leaving this page:"
@@ -1611,19 +1612,19 @@ msgstr "Tafadhali rekebisha kosa kabla ya kuondoka kwenye ukurasa huu:"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
-msgstr "Hariri <span class='property-name'>Kielezo</span> (Cha Juu)"
+msgstr "Hariri <span class='property-name'>Mlinganyo</span> (Kitaalamu)"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Show Simple Mode"
-msgstr "Onyesha Hali Rahisi"
+msgstr "Onyesha Njia Rahisi"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "You are currently in Advanced Mode because your logic is too complicated for"
 " Simple Mode."
 msgstr ""
-"Kwa sasa uko kwenye Hali ya Juu kwa sababu mantiki yako ni ngumu sana kwa "
-"Hali Rahisi."
+"Kwa sasa uko kwenye Njia ya Kitaalamu kwa sababu mantiki yako ni ngumu sana "
+"kwa Njia Rahisi."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
@@ -1635,7 +1636,7 @@ msgstr "Mwongozo wa Mantiki na Mahesabu ya Kawaida"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Edit <span class='property-name'>Expression</span>"
-msgstr "Hariri <span class='property-name'>Kielezo</span>"
+msgstr "Hariri <span class='property-name'>Mlinganyo</span>"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Show Advanced Mode"
@@ -1695,15 +1696,15 @@ msgstr "ni zaidi au sawa na"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "has selected value"
-msgstr "imechagua thamani"
+msgstr "ina thamani iliyochaguliwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "True when ALL of the expressions are true."
-msgstr "Kweli ikiwa MAELEZO yote ni kweli."
+msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "True when ANY of the expressions are true."
-msgstr "Kweli ikiwa ANGALAU MOJA ya maelezo ni kweli."
+msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Error"
@@ -1727,7 +1728,7 @@ msgid ""
 "procedure. Do this only if a normal save fails."
 msgstr ""
 "Kushikilia kitufe cha ALT wakati wa kubofya hifadhi kunatumia utaratibu wa "
-"kuhifadhi usiofanisi. Fanya hivi tu ikiwa kuhifadhi kawaida kumeharibika."
+"kuhifadhi usiofanisi. Fanya hivi tu ikiwa kuhifadhi kawaida kunashindwa."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Are you sure you want to exit? All unsaved changes will be lost!"
@@ -1749,15 +1750,15 @@ msgstr "Hitilafu kwenye Fomu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Form has reference errors."
-msgstr "Fomu ina hitilafu za marejeleo."
+msgstr "Fomu ina makosa ya marejeleo."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Look for questions marked with $1 and fix the errors."
-msgstr "Tafuta maswali yaliyowekwa alama na $1 na rekebisha hitilafu."
+msgstr "Tafuta maswali yaliyowekwa alama na $1 na rekebisha makosa."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Form has validation errors."
-msgstr "Fomu ina hitilafu za uthibitishaji."
+msgstr "Fomu ina makosa ya uthibitishaji."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Multimedia Capture"
@@ -1777,7 +1778,7 @@ msgstr "Juu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Make Required"
-msgstr "Fanya Lazima"
+msgstr "Fanya Liwe la Lazima"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -1786,12 +1787,12 @@ msgid ""
 " undone by editing individual questions."
 msgstr ""
 "Unakaribia kufanya maswali yote yaliyopo kwenye fomu hii kuwa ya lazima. "
-"Hatua hii itafuta usanidi wa sasa wa fomu hii na inaweza kutenduliwa tu kwa "
-"kuhariri maswali mmoja mmoja."
+"Hatua hii itabadilisha mpangilio wa sasa wa fomu hii na inaweza kubatilishwa"
+" tu kwa kuhariri maswali mmoja mmoja."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Load Default Values"
-msgstr "Pakia Thamani Chaguomsingi"
+msgstr "Pakia Thamani Chaguo-msingi"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -1800,10 +1801,10 @@ msgid ""
 "all questions with matching case properties and can only be undone by "
 "editing individual questions."
 msgstr ""
-"Unakaribia kuweka sifa za kesi zinazolingana kama Thamani Chaguomsingi kwa "
-"maswali yote yaliyopo. Hatua hii itafuta Thamani Chaguomsingi zilizopo kwa "
-"maswali yote yenye sifa zinazolingana na inaweza kutenduliwa tu kwa kuhariri"
-" maswali mmoja mmoja."
+"Unakaribia kuweka sifa za kesi zinazolingana kama Thamani Chaguo-msingi kwa "
+"maswali yote yaliyopo. Hatua hii itabadilisha Thamani Chaguo-msingi zilizopo"
+" kwa maswali yote yenye sifa za kesi zinazolingana na inaweza kubatilishwa "
+"tu kwa kuhariri maswali mmoja mmoja."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Are you sure you want to perform this action?"
@@ -1857,7 +1858,7 @@ msgid ""
 "This is the raw XML. You can edit or paste into this box to make changes to "
 "your form. Press 'Update Source' to save changes, or 'Close' to cancel."
 msgstr ""
-"Hii ni XML ghafi. Unaweza kuhariri au kubandika kwenye kisanduku hiki "
+"Hii ni XML ghafi. Unaweza kuhariri au kubandika kwenye kisanduku hiki ili "
 "kufanya mabadiliko kwenye fomu yako. Bonyeza 'Sasisha Chanzo' kuhifadhi "
 "mabadiliko, au 'Funga' kughairi."
 
@@ -1867,7 +1868,7 @@ msgid ""
 "share your form with others."
 msgstr ""
 "Nakili na ubandike maudhui haya kwenye programu ya lahajedwali kama Excel "
-"ili kushirikisha fomu yako kwa urahisi na wengine."
+"ili kushiriki fomu yako kwa urahisi na wengine."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lost Work Warning"
@@ -1920,8 +1921,8 @@ msgid ""
 "You have UNSAVED changes in the Expression Editor. Please save changes "
 "before continuing."
 msgstr ""
-"Una mabadiliko AMBAYO HAYAJAHIFADHIWA kwenye Kihariri cha Misemo. Tafadhali "
-"hifadhi mabadiliko kabla ya kuendelea."
+"Una mabadiliko AMBAYO HAYAJAHIFADHIWA kwenye Kihariri cha Maelezo. Tafadhali"
+" hifadhi mabadiliko kabla ya kuendelea."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Parsing Error. Please check that your form is valid XML."
@@ -1963,14 +1964,14 @@ msgid ""
 " <, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
 "you fix the XML by hand. What would you like to do?"
 msgstr ""
-"Inaonekana fomu yako si XML halali. Hili linaweza kutokea ukitumia herufi "
-"iliyohifadhiwa kwenye moja ya maswali yako. Herufi za kuangalia ni <, >, na "
-"&. Bado unaweza kuhifadhi, lakini HUWEZI KUPAKIA FOMU HII tena hadi "
-"utengeneze XML kwa mkono. Ungependa kufanya nini?"
+"Inaonekana fomu yako si XML halali. Hili linaweza kutokea mara nyingi "
+"ukitumia herufi zilizohifadhiwa kwenye mojawapo ya maswali yako. Herufi za "
+"kuangalia ni <, >, na &. Unaweza bado kuhifadhi, lakini HUWEZI KUFUNGUA FOMU"
+" HII tena hadi utengeneze XML kwa mkono. Ungependa kufanya nini?"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Form Validation Error"
-msgstr "Hitilafu ya Uhakiki wa Fomu"
+msgstr "Hitilafu ya Uthibitishaji wa Fomu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Fix the problem (recommended)"
@@ -1990,11 +1991,11 @@ msgid ""
 "data exports."
 msgstr ""
 "{displaytext} inaonekana kwenye programu. Maandishi haya hayatakuwepo kwenye"
-" mauzo ya data."
+" uhamishaji wa data."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display Text"
-msgstr "Maandishi ya Kuonesha"
+msgstr "Maandishi ya Kuonyesha"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
@@ -2020,8 +2021,8 @@ msgid ""
 "the question required or ensure the answer is in a valid range."
 msgstr ""
 "Tumia mantiki kudhibiti lini maswali yanaulizwa na majibu gani ni halali. "
-"Unaweza kuongeza mantiki kuonesha swali kulingana na jibu la awali, kufanya "
-"swali liwe la lazima au kuhakikisha jibu liko kwenye kiwango halali."
+"Unaweza kuongeza mantiki ili kuonyesha swali kulingana na jibu la awali, "
+"kufanya swali liwe la lazima au kuhakikisha jibu liko kwenye kiwango halali."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Media"
@@ -2077,9 +2078,9 @@ msgid ""
 "\n"
 "Built in integrations are available on the Pro plan and higher. External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
 msgstr ""
-"Huna tena ufikiaji wa ujumuishaji wa ndani au wa nje kwenye programu yako.\n"
+"Huna tena ufikiaji wa muunganiko wa ndani au wa nje kwenye programu yako.\n"
 "\n"
-"Ujumuishaji wa ndani unapatikana kwenye mpango wa Pro na juu zaidi. Ujumuishaji wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au ufute swali hili."
+"Muunganiko wa ndani unapatikana kwenye mpango wa Pro na juu zaidi. Muunganiko wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au uondoe swali hili."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -2087,9 +2088,9 @@ msgid ""
 "\n"
 "External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
 msgstr ""
-"Usajili wako unaruhusu tu ujumuishaji wa ndani.\n"
+"Usajili wako unaruhusu tu muunganiko wa ndani.\n"
 "\n"
-"Ujumuishaji wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au ufute swali hili."
+"Muunganiko wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au uondoe swali hili."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -2100,15 +2101,15 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Extra"
-msgstr "Zaidi"
+msgstr "Ziada"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Response"
-msgstr "Jibu"
+msgstr "Majibu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Special Intent XMLNS attribute"
-msgstr "Sifa Maalum ya XMLNS ya Kusudi"
+msgstr "Sifa Maalum ya XMLNS ya Intent"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Print"
@@ -2124,19 +2125,19 @@ msgstr "Hariri Chanzo cha Data"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Query Expression"
-msgstr "Usemi wa Utafutaji"
+msgstr "Maelezo ya Hoja"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Optional Instance Properties"
-msgstr "Sifa za Hiari za Mfano"
+msgstr "Sifa za Hiari za Nakala"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Instance ID"
-msgstr "Kitambulisho cha Mfano"
+msgstr "Kitambulisho cha Nakala"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Instance URI"
-msgstr "URI ya Mfano"
+msgstr "URI ya Nakala"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lookup table was not found in the project"
@@ -2195,7 +2196,7 @@ msgid ""
 "Cannot change to Multiple/Single Choice question if it has Choices. Please "
 "remove all Choices and try again."
 msgstr ""
-"Haiwezi kubadilishwa kuwa swali la Chaguo Nyingi/Moja ikiwa lina Chaguo. "
+"Haiwezi kubadilisha kuwa swali la Chaguo Nyingi/Moja ikiwa lina Chaguo. "
 "Tafadhali ondoa Chaguo zote na ujaribu tena."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2229,8 +2230,8 @@ msgid ""
 "use bulleted lists, and <a target='_blank' "
 "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
 msgstr ""
-"Tumia uundaji wa maandishi kufanya maneno kuwa <strong>nene</strong> na "
-"<em>ya italiki</em>, tumia orodha za risasi, na <a target='_blank' "
+"Tumia uundaji wa maandishi kuweka maneno <strong>nene</strong> na <em>kuweka"
+" italiki</em>, tumia orodha za risasi, na <a target='_blank' "
 "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>zaidi</a>"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2260,8 +2261,8 @@ msgid ""
 "save unless you add it to the \"Languages\" page:"
 msgstr ""
 "Una lugha kwenye fomu yako ambazo hazijaainishwa kwenye ukurasa wa \"Lugha\""
-" wa mjenzi wa programu. Lugha ifuatayo itafutwa unapohifadhi isipokuwa "
-"uiongeze kwenye ukurasa wa \"Lugha\":"
+" wa mtengenezaji wa programu. Lugha ifuatayo itafutwa unapohifadhi isipokuwa"
+" uiongeze kwenye ukurasa wa \"Lugha\":"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{name} (or multimedia) is required."
@@ -2273,7 +2274,7 @@ msgstr "{name} (au multimedia) inahitajika kwa lugha zote."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{name} Itext ID is required."
-msgstr "Kitambulisho cha Itext cha {name} kinahitajika."
+msgstr "Itext ID ya {name} inahitajika."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{name} is not a valid ID."
@@ -2295,12 +2296,12 @@ msgstr "Ujumbe wa Uthibitishaji"
 msgid ""
 "Can't have a Validation Message Itext ID without a Validation Condition"
 msgstr ""
-"Huwezi kuwa na Kitambulisho cha Itext cha Ujumbe wa Uthibitishaji bila "
-"Masharti ya Uthibitishaji"
+"Huwezi kuwa na Itext ID ya Ujumbe wa Uthibitishaji bila Masharti ya "
+"Uthibitishaji"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Message Itext ID"
-msgstr "Kitambulisho cha Itext cha Ujumbe wa Uthibitishaji"
+msgstr "Itext ID ya Ujumbe wa Uthibitishaji"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Validation Media"
@@ -2308,7 +2309,7 @@ msgstr "Ongeza Vyombo vya Habari vya Uthibitishaji"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display Text Itext ID"
-msgstr "Kitambulisho cha Itext cha Maandishi ya Kuonyesha"
+msgstr "Itext ID ya Maandishi ya Kuonyesha"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Hint Message"
@@ -2316,7 +2317,7 @@ msgstr "Ujumbe wa Dokezo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Hint Itext ID"
-msgstr "Kitambulisho cha Itext cha Dokezo"
+msgstr "Itext ID ya Dokezo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Help Message"
@@ -2324,7 +2325,7 @@ msgstr "Ujumbe wa Msaada"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Help Itext ID"
-msgstr "Kitambulisho cha Itext cha Msaada"
+msgstr "Itext ID ya Msaada"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add New Item Button Text"
@@ -2332,7 +2333,7 @@ msgstr "Maandishi ya Kitufe cha Ongeza Kipengee Kipya"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add New Itext ID"
-msgstr "Ongeza Kitambulisho cha Itext Kipya"
+msgstr "Ongeza Itext ID Mpya"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Another Item Button Text"
@@ -2340,7 +2341,7 @@ msgstr "Maandishi ya Kitufe cha Ongeza Kipengee Kingine"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Another Itext ID"
-msgstr "Ongeza Kitambulisho cha Itext Kingine"
+msgstr "Ongeza Itext ID Nyingine"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Other Content"
@@ -2392,11 +2393,11 @@ msgid ""
 "appear on the phone. It is the name of the question in data exports."
 msgstr ""
 "{questionid} ni kitambulisho cha ndani cha swali. Hakiwezi kuonekana kwenye "
-"simu. Ni jina la swali katika uhamishaji wa data."
+"simu. Ni jina la swali katika usafirishaji wa data."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "The date and time of the action, e.g., now() or today()"
-msgstr "Tarehe na saa ya kitendo, mfano, now() au today()"
+msgstr "Tarehe na saa ya tukio, mfano, now() au today()"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Balance ID"
@@ -2408,7 +2409,7 @@ msgid ""
 "which does not appear on the phone."
 msgstr ""
 "Jina la mizania unayofuatilia. Hiki ni kitambulisho cha ndani ambacho "
-"hakiwezi kuonekana kwenye simu."
+"hakionekani kwenye simu."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Product"
@@ -2417,7 +2418,7 @@ msgstr "Bidhaa"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
 msgstr ""
-"Rejeleo kwa kitambulisho cha bidhaa, mfano, "
+"Rejeleo la kitambulisho cha bidhaa, mfano, "
 "\"/data/products/current_product\""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2426,7 +2427,7 @@ msgstr "Kiasi"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "A reference to an integer question in this form."
-msgstr "Rejeleo kwa swali la nambari kamili katika fomu hii."
+msgstr "Rejeleo la swali la nambari kamili katika fomu hii."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
@@ -2438,7 +2439,7 @@ msgstr "Kesi"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath expression for the case ID associated with this balance."
 msgstr ""
-"Maelezo ya XPath kwa kitambulisho cha kesi kinachohusishwa na mizania hii."
+"Msururu wa XPath kwa kitambulisho cha kesi kinachohusishwa na mizania hii."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Transfer must have both Source Case and Destination Case defined."
@@ -2455,7 +2456,7 @@ msgstr "Kesi Chanzo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath expression for the case ID issuing the transaction."
-msgstr "Maelezo ya XPath kwa kitambulisho cha kesi kinachotoa muamala."
+msgstr "Msururu wa XPath kwa kitambulisho cha kesi kinachotoa muamala."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Destination Case"
@@ -2463,7 +2464,7 @@ msgstr "Kesi Lengwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath expression for the case ID receiving the transaction."
-msgstr "Maelezo ya XPath kwa kitambulisho cha kesi kinayopokea muamala."
+msgstr "Msururu wa XPath kwa kitambulisho cha kesi kinayopokea muamala."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Dispense must have a Source Case."
@@ -2471,11 +2472,11 @@ msgstr "Ugawaji lazima uwe na Kesi Chanzo."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Receive must have a Destination Case."
-msgstr "Kupokea lazima kuwe na Kesi Lengwa."
+msgstr "Upokeaji lazima uwe na Kesi Lengwa."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Model Iteration ID Query"
-msgstr "Utafutaji wa Kitambulisho cha Iteresheni ya Mfano"
+msgstr "Hojaji ya Kitambulisho cha Iteration ya Mfano"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Property Name"
@@ -2497,7 +2498,7 @@ msgstr "Kitambulisho cha Uhusiano (mfano mzazi au mwenyeji)"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Referenced Case ID"
-msgstr "Kitambulisho cha Kesi Kinachorejelewa"
+msgstr "Kitambulisho cha Kesi Inayorejelewa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Referenced Case Type"
@@ -2558,11 +2559,11 @@ msgstr "Sifa za Kuunda"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You must include {columns} columns to create a case"
-msgstr "Lazima ujumuisha safu wima {columns} ili kuunda kesi"
+msgstr "Lazima ujumuisha safu wima za {columns} ili kuunda kesi"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can only use the following properties:"
-msgstr "Unaweza kutumia sifa zifuatazo pekee:"
+msgstr "Unaweza kutumia tu sifa zifuatazo:"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "{props} are invalid properties"
@@ -2610,7 +2611,7 @@ msgstr "Sifa ya from lazima iwe mojawapo ya: local, remote, au inline"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Inlined attachments must have an attachment name"
-msgstr "Viambatisho vilivyo ndani lazima viwe na jina la kiambatisho"
+msgstr "Viambatisho vilivyowekwa ndani lazima viwe na jina la kiambatisho"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/export/static/export/js/models.js
@@ -2623,7 +2624,7 @@ msgstr "Sasisha"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Index"
-msgstr "Faharasa"
+msgstr "Orodha"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Attachments"
@@ -2632,7 +2633,7 @@ msgstr "Viambatisho"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "An error occurred when parsing bind node [{path}]. Please fix this."
 msgstr ""
-"Hitilafu imetokea wakati wa kuchambua nodi ya bind [{path}]. Tafadhali "
+"Hitilafu imetokea wakati wa kuchanganua nodi ya bind [{path}]. Tafadhali "
 "rekebisha hili."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2649,7 +2650,7 @@ msgstr "Chagua Faili"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Current"
-msgstr "Iliyopo"
+msgstr "Iliyo Sasa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Begin Upload"
@@ -2677,7 +2678,7 @@ msgstr "Video"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Inline Video"
-msgstr "Video Ndani"
+msgstr "Video Iliyounganishwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "HTML"
@@ -2742,15 +2743,15 @@ msgstr "Haiwezi kuweka $1 ndani ya $2"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Unsupported paste format"
-msgstr "Muundo wa kubandika haukubaliki"
+msgstr "Muundo wa kubandika hauungwa mkono"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Unsupported paste format:"
-msgstr "Muundo wa kubandika haukubaliki:"
+msgstr "Muundo wa kubandika hauungwa mkono:"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Unknown question type:"
-msgstr "Aina ya swali haijulikani:"
+msgstr "Aina isiyojulikana ya swali:"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Enter command"
@@ -2759,66 +2760,6 @@ msgstr "Weka amri"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Command Bar"
 msgstr "Upau wa Amri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Module ID"
-msgstr "Kitambulisho cha Moduli"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Description"
-msgstr "Maelezo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Time Estimate"
-msgstr "Makadirio ya Muda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be an integer"
-msgstr "Lazima iwe nambari kamili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Estimated time to complete the module in hours."
-msgstr "Muda unaokadiriwa kukamilisha moduli kwa saa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Assessment ID"
-msgstr "Kitambulisho cha Tathmini"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User Score"
-msgstr "Alama ya Mtumiaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the users assessment score."
-msgstr "Kielezi cha XPath kwa alama ya tathmini ya watumiaji."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Delivery Unit ID"
-msgstr "Kitambulisho cha Kitengo cha Uwasilishaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity ID"
-msgstr "Kitambulisho cha Huluki"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the entity ID associated with this Delivery Unit e.g. "
-"the case ID."
-msgstr ""
-"Kielezi cha XPath kwa kitambulisho cha huluki kinachohusishwa na Kitengo "
-"hiki cha Uwasilishaji mfano kitambulisho cha kesi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity Name"
-msgstr "Jina la Huluki"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the name of the entity associated with this Delivery "
-"Unit."
-msgstr ""
-"Usemi wa XPath kwa jina la entiti inayohusishwa na Kitengo hiki cha "
-"Uwasilishaji."
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -2851,11 +2792,11 @@ msgstr "Kadiria XPath"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Expand Data Preview"
-msgstr "Panua Hakikisho la Data"
+msgstr "Panua Muonekano wa Data"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Collapse Data Preview"
-msgstr "Fupisha Hakikisho la Data"
+msgstr "Fupisha Muonekano wa Data"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
 msgid "Error evaluating expression."
@@ -2879,7 +2820,7 @@ msgstr "Tafadhali chagua kipengee"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Not a valid choice"
-msgstr "Sio chaguo halali"
+msgstr "Chaguo sio halali"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "No file selected."
@@ -2888,16 +2829,15 @@ msgstr "Hakuna faili iliyochaguliwa."
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Invalid file type chosen. Please select a valid multimedia file."
 msgstr ""
-"Aina ya faili uliyochagua si halali. Tafadhali chagua faili halali ya "
-"multimedia."
+"Aina ya faili uliyochagua si halali. Tafadhali chagua faili halali ya media."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid ""
 "The file you selected exceeds the size limit of 4MB. Please select a file "
 "that is smaller than 4MB."
 msgstr ""
-"Faili uliyochagua inazidi kikomo cha ukubwa cha 4MB. Tafadhali chagua faili "
-"ndogo kuliko 4MB."
+"Faili uliyochagua imezidi kikomo cha ukubwa cha 4MB. Tafadhali chagua faili "
+"iliyo chini ya 4MB."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
@@ -2912,9 +2852,8 @@ msgid ""
 "Something unexpected went wrong on that request. If you have problems "
 "filling in the rest of your form please submit an issue. Technical Details: "
 msgstr ""
-"Kuna tatizo lisilotarajiwa limetokea kwenye ombi hilo. Ikiwa utapata "
-"matatizo kujaza sehemu nyingine za fomu yako tafadhali wasilisha tatizo. "
-"Maelezo ya Kiufundi: "
+"Kuna tatizo lisilotarajiwa kwenye ombi hilo. Ikiwa utapata matatizo kujaza "
+"fomu yako tafadhali wasilisha tatizo. Maelezo ya Kiufundi: "
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid "You have been logged out because of inactivity."
@@ -2925,15 +2864,15 @@ msgid ""
 "An unknown error occurred. If you have problems filling in the rest of your "
 "form please submit an issue. Technical Details: "
 msgstr ""
-"Hitilafu isiyojulikana imetokea. Ikiwa utapata matatizo kujaza sehemu "
-"nyingine za fomu yako tafadhali wasilisha tatizo. Maelezo ya Kiufundi: "
+"Hitilafu isiyojulikana imetokea. Ikiwa utapata matatizo kujaza fomu yako "
+"tafadhali wasilisha tatizo. Maelezo ya Kiufundi: "
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
 "CommCare HQ has detected a possible network connectivity problem. Please "
 "make sure you are connected to the Internet in order to submit your form."
 msgstr ""
-"CommCare HQ imetambua tatizo la muunganisho wa mtandao. Tafadhali hakikisha "
+"CommCare HQ imegundua tatizo la muunganisho wa mtandao. Tafadhali hakikisha "
 "umeunganishwa na Intaneti ili kuwasilisha fomu yako."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
@@ -2949,8 +2888,8 @@ msgid ""
 "We have detected an issue with your network. Please check your Internet "
 "connection and retry when connectivity improves."
 msgstr ""
-"Tumeona tatizo kwenye mtandao wako. Tafadhali angalia muunganisho wako wa "
-"Intaneti na ujaribu tena mtandao utakapoboreshwa."
+"Tumeona tatizo kwenye mtandao wako. Tafadhali angalia muunganisho wa "
+"Intaneti na ujaribu tena mtandao utakapoimarika."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
 msgid "Submit"
@@ -2982,7 +2921,7 @@ msgid ""
 msgstr ""
 "Hatuwezi kuwasilisha fomu hii sasa hivi kutokana na matumizi makubwa ya mfumo. \n"
 "\n"
-"Tafadhali acha dirisha hili wazi na ujaribu tena baada ya dakika moja, au rudi kwenye fomu hii katika Fomu Zisizokamilika baadaye."
+"Tafadhali acha dirisha hili wazi na ujaribu tena baada ya dakika moja, au rudi kwenye fomu hii kwenye Fomu Zisizokamilika baadaye."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "Form submission failed with error"
@@ -3001,9 +2940,8 @@ msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
-"Sasa uko nje ya mtandao. Programu za Wavuti hazijasanidiwa vizuri kwa "
-"matumizi nje ya mtandao. Tafadhali unganisha tena na Intaneti kabla ya "
-"kuendelea."
+"Sasa uko nje ya mtandao. Programu za Wavuti hazijasanidiwa kwa matumizi bila"
+" mtandao. Tafadhali unganisha tena na Intaneti kabla ya kuendelea."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "You are are back online."
@@ -3027,7 +2965,7 @@ msgid ""
 "An unexpected error occurred. Please report an issue if you continue to see "
 "this message."
 msgstr ""
-"Hitilafu isiyotarajiwa imetokea. Tafadhali ripoti tatizo ikiwa utaendelea "
+"Hitilafu isiyotegemewa imetokea. Tafadhali ripoti tatizo ikiwa utaendelea "
 "kuona ujumbe huu."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js
@@ -3047,7 +2985,7 @@ msgid ""
 "You have selected a case in a different domain. App Preview does not support"
 " this feature."
 msgstr ""
-"Umechagua kesi katika kikoa tofauti. Hakikisho la Programu halitumii "
+"Umechagua kesi katika kikoa tofauti. Muonekano wa Programu hauungi mkono "
 "kipengele hiki."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
@@ -3055,8 +2993,8 @@ msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
 msgstr ""
-"Imeshindikana kuunganisha na huduma ya kucheza fomu. Tafadhali ripoti tatizo"
-" ikiwa utaendelea kuona ujumbe huu."
+"Imeshindikana kuunganishwa na huduma ya kucheza fomu. Tafadhali ripoti "
+"tatizo ikiwa utaendelea kuona ujumbe huu."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
 msgid "Fetching your location..."
@@ -3079,7 +3017,7 @@ msgid ""
 "You have selected more than the maximum selection limit of <%- value %> . "
 "Please uncheck some values to continue."
 msgstr ""
-"Umechagua zaidi ya kikomo cha juu cha chaguo cha <%- value %>. Tafadhali "
+"Umechagua zaidi ya kikomo cha juu cha chaguo cha <%- value %> . Tafadhali "
 "ondoa baadhi ya chaguo ili kuendelea."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
@@ -3128,12 +3066,11 @@ msgstr "Hapana"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Working as <b><%- restoreAs %></b> in <b><%- domain %></b>."
-msgstr ""
-"Unafanya kazi kama <b><%- restoreAs %></b> katika <b><%- domain %></b>."
+msgstr "Unatumia kama <b><%- restoreAs %></b> katika <b><%- domain %></b>."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Working as <b><%- restoreAs %></b>."
-msgstr "Unafanya kazi kama <b><%- restoreAs %></b>."
+msgstr "Unatumia kama <b><%- restoreAs %></b>."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Use <%- username %>."
@@ -3157,7 +3094,7 @@ msgstr "Ukurasa <%- num %>"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
-msgstr "Hitilafu katika kuhifadhi!"
+msgstr "Hitilafu wakati wa kuhifadhi!"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Could not sync user data. Please report an issue if this persists."
@@ -3182,7 +3119,8 @@ msgstr "Data ya mtumiaji imefutwa kikamilifu."
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error breaking locks. Please report an issue if this persists."
 msgstr ""
-"Hitilafu katika kuvunja vizuizi. Tafadhali ripoti tatizo hili likiendelea."
+"Hitilafu wakati wa kuvunja vizuizi. Tafadhali ripoti tatizo hili "
+"likiendelea."
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
 msgid ""
@@ -3244,7 +3182,7 @@ msgstr "maelezo"
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid "You have unsaved changes to your data dictionary."
-msgstr "Una mabadiliko ambayo hujahifadhi kwenye kamusi yako ya data."
+msgstr "Una mabadiliko ambayo hujahifadhi kwenye kamusi ya data yako."
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid ""
@@ -3274,17 +3212,17 @@ msgstr "NA"
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "True when ANY of the case properties match"
-msgstr "Kweli ikiwa ANGALAU sifa MOJA ya kesi inalingana"
+msgstr "Kweli ikiwa ANGALAU moja ya sifa za kesi inalingana"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "True when ALL of the case properties match"
-msgstr "Kweli ikiwa sifa ZOTE za kesi zinalingana"
+msgstr "Kweli ikiwa SIFA ZOTE za kesi zinalingana"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Out of range of filter. Will not appear on page refresh."
-msgstr "Nje ya kiwango cha kichujio. Haitatokea ukurasa utakapopakiwa upya."
+msgstr "Nje ya wigo wa kichujio. Haitatokea ukurasa ukipakiwa upya."
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3304,7 +3242,7 @@ msgstr "Kesi zimenakiliwa"
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Case Reassignment (via HQ)"
-msgstr "Ugawaji upya wa Kesi (kupitia HQ)"
+msgstr "Uhamisho wa Kesi (kupitia HQ)"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3319,7 +3257,7 @@ msgstr "Tafuta watumiaji au vikundi"
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/manage_case_groups.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/manage_case_groups.js
 msgid "Sorry, it looks like the upload failed."
-msgstr "Samahani, inaonekana upakiaji umeshindwa."
+msgstr "Samahani, inaonekana kupakia kumeharibika."
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
 msgid "case property name"
@@ -3403,7 +3341,7 @@ msgstr "Nchi Zinazopatikana"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Active Countries"
-msgstr "Nchi Hai"
+msgstr "Nchi Zinazotumika"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Search Countries..."
@@ -3423,7 +3361,7 @@ msgstr "Tafuta Misemo"
 
 #: corehq/apps/domain/static/domain/js/my_project_settings.js
 msgid "Reset to Default"
-msgstr "Rudisha kwenye Chaguomsingi"
+msgstr "Rejesha kwenye Chaguomsingi"
 
 #: corehq/apps/domain/static/domain/js/my_project_settings.js
 msgid "This matches the global setting: "
@@ -3431,7 +3369,7 @@ msgstr "Hii inalingana na mpangilio wa kimataifa: "
 
 #: corehq/apps/domain/static/domain/js/my_project_settings.js
 msgid "This does not match global setting: "
-msgstr "Hii hailingi na mpangilio wa kimataifa: "
+msgstr "Hii hailingani na mpangilio wa kimataifa: "
 
 #: corehq/apps/domain/static/domain/js/my_project_settings.js
 msgid ""
@@ -3440,8 +3378,8 @@ msgid ""
 "the project space as a member in order to override your timezone."
 msgstr ""
 "Huwezi kubadilisha eneo la saa la mradi huu kwa sababu una ufikiaji wa mradi"
-" huu kupitia Shirika pekee. Lazima uongezwe kwenye mradi kama mshiriki ili "
-"uweze kubadilisha eneo lako la saa."
+" huu kupitia Shirika pekee. Lazima uongezwe kwenye mradi huu kama mshiriki "
+"ili uweze kubadilisha eneo lako la saa."
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
@@ -3537,7 +3475,7 @@ msgstr "Usajili wa Mtumiaji"
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
-"Kulikuwa na tatizo la kupata data. Tafadhali angalia muunganisho wako wa "
+"Kulikuwa na tatizo la kupata data. Tafadhali hakikisha umeunganishwa na "
 "intaneti."
 
 #: corehq/apps/export/static/export/js/create_export.js
@@ -3630,10 +3568,10 @@ msgid ""
 "Only</strong>: You can edit and export, other users can only export.<br/> "
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
-"<strong>Binafsi</strong>: Ni wewe pekee unayeweza kuhariri na "
-"kuhamisha.<br/> <strong>Hamisha Pekee</strong>: Unaweza kuhariri na "
-"kuhamisha, watumiaji wengine wanaweza tu kuhamisha.<br/> <strong>Hariri na "
-"Hamisha</strong>: Watumiaji wote wanaweza kuhariri na kuhamisha."
+"<strong>Binafsi</strong>: Ni wewe tu unaweza kuhariri na kuhamisha.<br/> "
+"<strong>Hamisha Pekee</strong>: Unaweza kuhariri na kuhamisha, watumiaji "
+"wengine wanaweza tu kuhamisha.<br/> <strong>Hariri na Hamisha</strong>: "
+"Watumiaji wote wanaweza kuhariri na kuhamisha."
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "The table path should end with []"
@@ -3671,7 +3609,7 @@ msgstr "Jina la Kundi"
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Group Center Coordinates"
-msgstr "Kipimo Wima na Upana cha Kituo cha Kundi"
+msgstr "Kituo cha Kundi (Koordinati)"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
@@ -3688,7 +3626,7 @@ msgstr "Jina la Mmiliki wa Kesi"
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Case Coordinates"
-msgstr "Kipimo Wima na Upana cha Kesi"
+msgstr "Koordinati za Kesi"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
@@ -3706,18 +3644,18 @@ msgid ""
 "Something went wrong processing <%- failedClusters %> groups. These groups "
 "will not be exported."
 msgstr ""
-"Kuna tatizo katika kuchakata makundi <%- failedClusters %>. Makundi haya "
-"hayatapelekwa nje."
+"Kuna tatizo lililotokea wakati wa kuchakata makundi <%- failedClusters %>. "
+"Makundi haya hayatapakiwa."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid "Max cases per user"
-msgstr "Idadi ya juu ya kesi kwa mtumiaji"
+msgstr "Kesi nyingi zaidi kwa kila mtumiaji"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid "Min cases per user"
-msgstr "Idadi ndogo ya kesi kwa mtumiaji"
+msgstr "Kesi chache zaidi kwa kila mtumiaji"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
@@ -3750,8 +3688,8 @@ msgid ""
 "Please ensure that the filtered area includes both cases and mobile workers "
 "before attempting to run disbursement."
 msgstr ""
-"Tafadhali hakikisha eneo ulilochuja linajumuisha kesi na wafanyakazi wa simu"
-" kabla ya kujaribu kufanya mgao."
+"Tafadhali hakikisha eneo lililochujwa linajumuisha kesi na wafanyakazi wa "
+"simu kabla ya kujaribu kufanya mgawanyo."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
@@ -3779,7 +3717,7 @@ msgid ""
 "Mapbox account and has the correct scope configured."
 msgstr ""
 "Token ya API si sahihi. Tafadhali hakikisha tokeni inalingana na ile kwenye "
-"akaunti yako ya Mapbox na ina upeo sahihi uliowekwa."
+"akaunti yako ya Mapbox na ina kiwango sahihi kimewekwa."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/gps_capture.js
@@ -3797,8 +3735,8 @@ msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
 msgstr ""
-"Angalizo! Hatua hii itafuta mgao wa sasa. Tafadhali thibitisha kama unataka "
-"kuendelea."
+"Angalizo! Kitendo hiki kitaondoa mgawanyo wa sasa. Tafadhali thibitisha kama"
+" unataka kuendelea."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
@@ -3860,7 +3798,7 @@ msgid ""
 "Error fetching multimedia, please try again or report an issue if the "
 "problem persists."
 msgstr ""
-"Hitilafu katika kupakua vyombo vya habari, tafadhali jaribu tena au ripoti "
+"Hitilafu katika kupakia vyombo vya habari, tafadhali jaribu tena au ripoti "
 "tatizo kama litaendelea."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
@@ -3872,7 +3810,7 @@ msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."
 msgstr ""
-"Danny amehuzunika kwamba umekutana na tatizo hili. Anahakikisha "
+"Danny amesikitika kwamba umekutana na tatizo hili. Anahakikisha "
 "linarekebishwa haraka iwezekanavyo."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
@@ -3883,7 +3821,7 @@ msgstr "Futa uteuzi"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Close the picker"
-msgstr "Funga kiondoa"
+msgstr "Funga kichagua"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3893,7 +3831,7 @@ msgstr "ndefu"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "2-digit"
-msgstr "Nambari 2"
+msgstr "tarakimu 2"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -4028,7 +3966,7 @@ msgstr "Imeshindwa kuthibitisha, tafadhali ingia na ujaribu tena"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
 msgid "There was a problem, please refresh and try again"
-msgstr "Kuna tatizo, tafadhali hakikisha upya na ujaribu tena"
+msgstr "Kumetokea tatizo, tafadhali hakikisha upya na ujaribu tena"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
@@ -4074,7 +4012,7 @@ msgstr "Si barua pepe halali"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/validators.ko.js
 msgid "Checking..."
-msgstr "Inakagua..."
+msgstr "Inakaguliwa..."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 msgid "Error saving, please try again."
@@ -4082,12 +4020,12 @@ msgstr "Hitilafu katika kuhifadhi, tafadhali jaribu tena."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js
 msgid "<%- num %> per page"
-msgstr "<%- num %> kwa kila ukurasa"
+msgstr "<%- num %> kwa ukurasa"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
-"Inaonyesha <%- firstItem %> hadi <%- lastItem %> kati ya <%- maxItems %> "
+"Inaonyesha <%- firstItem %> hadi <%- lastItem %> kati ya <%- maxItems %> ya "
 "rekodi"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
@@ -4112,7 +4050,7 @@ msgstr "Hitilafu ya Muda wa Lango. Idadi ya majaribio imezidi."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
 msgid "Request timed out. Max retries exceeded."
-msgstr "Ombi limechukua muda mrefu. Idadi ya majaribio imezidi."
+msgstr "Ombi limekwama. Idadi ya majaribio imezidi."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
 msgid "Unknown Event"
@@ -4144,7 +4082,7 @@ msgstr "Ondoa Vyote"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
-msgstr "Nenosiri lako ni dhaifu sana! Jaribu kuongeza namba au alama."
+msgstr "Nenosiri lako ni dhaifu sana! Jaribu kuongeza nambari au alama."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js
 msgid ""
@@ -4192,12 +4130,12 @@ msgstr "Ongeza Picha"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Calculation contains an invalid character."
-msgstr "Hesabu ina alama isiyokubalika."
+msgstr "Hesabu ina herufi isiyokubalika."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Add Key, Value Mapping"
-msgstr "Ongeza Ulinganishi wa Ufunguo na Thamani"
+msgstr "Ongeza Ulinganifu wa Ufunguo na Thamani"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
@@ -4212,12 +4150,12 @@ msgstr "Ufunguo huu tayari umeainishwa"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Add Key, Translation Mapping"
-msgstr "Ongeza Ulinganishi wa Ufunguo na Tafsiri"
+msgstr "Ongeza Ulinganifu wa Ufunguo na Tafsiri"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Key contains invalid characters."
-msgstr "Ufunguo una alama zisizokubalika."
+msgstr "Ufunguo una herufi zisizokubalika."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
@@ -4227,12 +4165,12 @@ msgstr "Ufunguo umesharudiwa"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Key contains an invalid character."
-msgstr "Ufunguo una alama isiyokubalika."
+msgstr "Ufunguo una herufi isiyokubalika."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Edit mapping for \"<%- property %>\""
-msgstr "Hariri ulinganishi wa \"<%- property %>\""
+msgstr "Hariri ulinganifu wa \"<%- property %>\""
 
 #: corehq/apps/integration/static/integration/js/dialer/connect-streams-min.js
 msgid "MultiSessionHangUp"
@@ -4312,7 +4250,7 @@ msgid ""
 "Please try again, or report an issue if the problem persists."
 msgstr ""
 "Imeshindikana kuunganisha nafasi za mradi.\n"
-"Tafadhali jaribu tena, au ripoti tatizo ikiwa shida itaendelea."
+"Tafadhali jaribu tena, au ripoti tatizo kama litaendelea."
 
 #: corehq/apps/locations/static/locations/js/filtered_download.js
 msgid "Download <%- count %> Location"
@@ -4359,7 +4297,7 @@ msgid ""
 "problem persists."
 msgstr ""
 "Imeshindikana kupakia data. Tafadhali jaribu tena baadaye au ripoti tatizo "
-"ikiwa shida itaendelea."
+"kama hili litaendelea."
 
 #: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
 #: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
@@ -4389,7 +4327,8 @@ msgstr "Nenosiri lako ni dhaifu sana! Jaribu kuongeza namba au alama!"
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
-msgstr "Nenosiri lako karibu linatosha! Jaribu kuongeza namba au alama!"
+msgstr ""
+"Nenosiri lako karibu lina nguvu ya kutosha! Jaribu kuongeza namba au alama!"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
@@ -4421,7 +4360,7 @@ msgstr "Tafadhali weka jina la mradi."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify."
-msgstr "Tafadhali taja."
+msgstr "Tafadhali weka maelezo."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please list your organization or company name."
@@ -4526,9 +4465,9 @@ msgid ""
 "issue to CommCare HQ Support so we can look into any possible issues."
 msgstr ""
 "Ombi limechukua muda mrefu wakati wa kuonyesha ripoti hii. Hii inaweza kuwa "
-"ni tatizo la seva zetu au muunganisho wako wa Intaneti. Tunakuhimiza uripoti"
-" tatizo kwa Msaada wa CommCare HQ ili tuweze kuchunguza matatizo yoyote "
-"yanayoweza kutokea."
+"tatizo kwenye seva zetu au muunganisho wako wa Intaneti. Tunakuhimiza "
+"uripoti tatizo kwa Msaada wa CommCare HQ ili tuweze kuchunguza matatizo "
+"yoyote yanayoweza kutokea."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
@@ -4541,14 +4480,15 @@ msgid ""
 msgstr ""
 "Tatizo la Kuonyesha Ripoti. Zana zetu za ufuatiliaji wa hitilafu zimegundua "
 "hili na tunafanya kazi haraka kulitatua. Tunakuhimiza uwasiliane na Msaada "
-"wa CommCare HQ ikiwa tatizo hili litaendelea kwa zaidi ya dakika chache. "
-"Tunathamini taarifa yoyote ya ziada utakayoweza kutupatia kuhusu tatizo hili"
-" ili tuweze kulirekebisha mara moja."
+"wa CommCare HQ kama tatizo hili litaendelea kwa zaidi ya dakika chache. "
+"Tunathamini taarifa yoyote ya ziada utakayotupa kuhusu tatizo hili ili "
+"tulitatue mara moja."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
 msgid "Bad Gateway. Please contact CommCare HQ Support."
-msgstr "Mlango Mbaya. Tafadhali wasiliana na Msaada wa CommCare HQ."
+msgstr ""
+"Mlango Mbaya wa Kuingilia. Tafadhali wasiliana na Msaada wa CommCare HQ."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
@@ -4562,14 +4502,16 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
-msgstr "Muda wa Mlango Umeisha. Tafadhali wasiliana na Msaada wa CommCare HQ."
+msgstr ""
+"Muda wa Mlango wa Kuingilia Umekwisha. Tafadhali wasiliana na Msaada wa "
+"CommCare HQ."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
-"Neno lako la utafutaji ni refu sana. Tafadhali tumia kichujio kifupi zaidi "
-"cha utafutaji"
+"Neno lako la utafutaji ni refu sana. Tafadhali tumia kichujio kifupi cha "
+"utafutaji"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
@@ -4672,8 +4614,8 @@ msgid ""
 "Your requested Excel report will be sent to the email address defined in "
 "your account settings."
 msgstr ""
-"Ripoti yako ya Excel uliyoomba itatumwa kwa anwani ya barua pepe iliyowekwa "
-"kwenye mipangilio ya akaunti yako."
+"Ripoti yako ya Excel uliyoiomba itatumwa kwa anwani ya barua pepe "
+"iliyofafanuliwa kwenye mipangilio ya akaunti yako."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/maps_utils.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
@@ -4693,13 +4635,13 @@ msgstr "Hakuna data inayopatikana kwenye jedwali"
 #: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
-msgstr "Inaonyesha _START_ hadi _END_ kati ya _TOTAL_ rekodi"
+msgstr "Inaonyesha _START_ hadi _END_ kati ya _TOTAL_ ya rekodi"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/report_config_models.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/report_config_models.js
 msgid "Some required fields are missing. Please complete them before saving."
 msgstr ""
-"Baadhi ya sehemu muhimu hazijakamilika. Tafadhali zikamilishe kabla ya "
+"Baadhi ya sehemu muhimu hazijakamilishwa. Tafadhali zikamilishe kabla ya "
 "kuhifadhi."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/report_config_models.js
@@ -4715,7 +4657,7 @@ msgstr "Lebo"
 #: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
 msgid "Question IDs"
-msgstr "Nambari za Maswali"
+msgstr "Vitambulisho vya Maswali"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
@@ -4726,7 +4668,7 @@ msgstr "Ripoti imetumwa kwa barua pepe kwa mafanikio"
 #: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
 msgid "An error occurred emailing your report. Please try again."
 msgstr ""
-"Kumetokea hitilafu wakati wa kutuma ripoti yako kwa barua pepe. Tafadhali "
+"Hitilafu imetokea wakati wa kutuma ripoti yako kwa barua pepe. Tafadhali "
 "jaribu tena."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
@@ -4797,7 +4739,7 @@ msgid ""
 "An error occured with the tableau server request, please ensure the server "
 "configuration is correct and try again."
 msgstr ""
-"Kumetokea hitilafu kwenye ombi la seva ya tableau, tafadhali hakikisha "
+"Hitilafu imetokea kwenye ombi la seva ya tableau, tafadhali hakikisha "
 "usanidi wa seva ni sahihi na ujaribu tena."
 
 #: corehq/apps/reports/static/reports/v2/js/bootstrap3/datagrid.js
@@ -4821,7 +4763,7 @@ msgstr "Chagua <%= title %>..."
 #: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
 #: corehq/apps/reports_core/static/reports_core/js/bootstrap5/maps.js
 msgid "Streets"
-msgstr "Barabara"
+msgstr "Mitaa"
 
 #: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
 #: corehq/apps/reports_core/static/reports_core/js/bootstrap5/maps.js
@@ -4838,7 +4780,7 @@ msgstr "(Ujumbe Mpya) - "
 
 #: corehq/apps/sms/static/sms/js/chat_contacts.js
 msgid "Chat"
-msgstr "Soga"
+msgstr "Gumzo"
 
 #: corehq/apps/sms/static/sms/js/chat_contacts.js
 msgid "Show "
@@ -4854,7 +4796,7 @@ msgstr "Inapakia Mawasiliano..."
 
 #: corehq/apps/sms/static/sms/js/chat_contacts.js
 msgid "Showing _START_ to _END_ of _TOTAL_ contacts"
-msgstr "Inaonyesha _START_ hadi _END_ kati ya _TOTAL_ mawasiliano"
+msgstr "Inaonyesha _START_ hadi _END_ kati ya _TOTAL_ ya mawasiliano"
 
 #: corehq/apps/sms/static/sms/js/chat_contacts.js
 msgid "(filtered from _MAX_ total contacts)"
@@ -4905,7 +4847,7 @@ msgstr "Asante, "
 
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Submission has been cancelled."
-msgstr "Uwasilishaji umeghairiwa."
+msgstr "Uwasilishaji umebatilishwa."
 
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
 msgid "Please specify a username."
@@ -4965,7 +4907,7 @@ msgid ""
 "This will pick the most common translations for your selected language. You "
 "can then edit them as needed."
 msgstr ""
-"Hii itachagua tafsiri zinazotumika zaidi kwa lugha uliyochagua. Unaweza "
+"Hii itachagua tafsiri zinazotumika sana kwa lugha uliyochagua. Unaweza "
 "kuhariri baadaye kama inavyohitajika."
 
 #: corehq/apps/translations/static/translations/js/translations.js
@@ -4988,7 +4930,7 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/base.js
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
-"Inaonyesha ukurasa wa sasa wa data. Badilisha kurasa kuona data zaidi."
+"Inaonyesha ukurasa wa sasa wa data. Badilisha kurasa ili kuona data zaidi."
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
@@ -5022,7 +4964,7 @@ msgid ""
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 "Watumiaji wa wavuti wanaotazama ripoti wataona maandishi haya badala ya jina"
-" la sifa. Peana kichujio chako jina rahisi kueleweka."
+" la sifa. Peana kichujio jina rahisi kueleweka."
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
@@ -5033,8 +4975,8 @@ msgid ""
 " the property is text or multiple choice."
 msgstr ""
 "Ni aina gani ya sifa kichujio hiki?<br/><br/><strong>Tarehe</strong>: Chagua"
-" hii ikiwa sifa ni tarehe.<br/><strong>Chaguo</strong>: Chagua hii ikiwa "
-"sifa ni maandishi au chaguo nyingi."
+" hii kama sifa ni tarehe.<br/><strong>Chaguo</strong>: Chagua hii kama sifa "
+"ni maandishi au chaguo nyingi."
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
@@ -5053,7 +4995,7 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid "What value or date range must the property be equal to?"
 msgstr ""
-"Ni thamani au kipindi gani cha tarehe ambacho sifa inapaswa kuwa sawa nacho?"
+"Ni thamani au kipindi gani cha tarehe ambacho sifa inapaswa kulingana nacho?"
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/ucr_expression.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/ucr_expression.js
@@ -5064,12 +5006,12 @@ msgstr "Mlinganyo umehifadhiwa"
 msgid ""
 "Column format selection will determine how each row's value is calculated."
 msgstr ""
-"Uchaguzi wa muundo wa safu wima utaamua jinsi thamani ya kila mstari "
+"Uteuzi wa muundo wa safu wima utaamua jinsi thamani ya kila mstari "
 "itakavyohesabiwa."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid "Please check above for any errors in your configuration."
-msgstr "Tafadhali angalia hapo juu kwa makosa yoyote katika usanidi wako."
+msgstr "Tafadhali angalia hapo juu kama kuna makosa kwenye usanidi wako."
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "Edit a custom web report or custom web report source"
@@ -5167,7 +5109,7 @@ msgstr "Nambari ya simu inapaswa kuwa na tarakimu 0-9 pekee."
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Checking availability..."
-msgstr "Inakagua upatikanaji..."
+msgstr "Inaangalia upatikanaji..."
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Issue connecting to server. Check Internet connection."
@@ -5195,7 +5137,7 @@ msgid ""
 "settings, remove membership"
 msgstr ""
 "<strong>Watumiaji wa Wavuti</strong> &mdash; alika watumiaji wapya wa "
-"wavuti, dhibiti mipangilio ya akaunti, ondoa uanachama"
+"wavuti, simamia mipangilio ya akaunti, ondoa uanachama"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Mobile Workers"
@@ -5203,14 +5145,14 @@ msgstr "Hariri & Tazama Wafanyakazi wa Simu"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
-msgstr "Wafanyakazi wa Simu wa Kutazama Pekee"
+msgstr "Tazama Tu Wafanyakazi wa Simu"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
 "configuration for web users"
 msgstr ""
-"<strong>Dhibiti Usanidi wa Tableau</strong> &mdash; dhibiti usanidi wa "
+"<strong>Simamia Usanidi wa Tableau</strong> &mdash; simamia usanidi wa "
 "tableau kwa watumiaji wa wavuti"
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -5219,14 +5161,14 @@ msgstr "Hariri & Tazama usanidi wa tableau kwa watumiaji wa wavuti"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only tableau configuration for web users"
-msgstr "Usanidi wa tableau wa Kutazama Pekee kwa watumiaji wa wavuti"
+msgstr "Tazama Tu usanidi wa tableau kwa watumiaji wa wavuti"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
 "settings, deactivate or delete mobile workers."
 msgstr ""
-"<strong>Wafanyakazi wa Simu</strong> &mdash; tengeneza akaunti mpya, dhibiti"
+"<strong>Wafanyakazi wa Simu</strong> &mdash; tengeneza akaunti mpya, simamia"
 " mipangilio ya akaunti, simamisha au futa wafanyakazi wa simu."
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -5235,12 +5177,12 @@ msgstr "Hariri & Tazama Watumiaji wa Wavuti"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Users"
-msgstr "Watumiaji wa Wavuti wa Kutazama Pekee"
+msgstr "Tazama Tu Watumiaji wa Wavuti"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
 msgstr ""
-"<strong>Makundi</strong> &mdash; dhibiti makundi ya wafanyakazi wa simu"
+"<strong>Makundi</strong> &mdash; simamia makundi ya wafanyakazi wa simu"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Groups"
@@ -5248,7 +5190,7 @@ msgstr "Hariri & Tazama Makundi"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Groups"
-msgstr "Makundi ya Wavuti ya Kutazama Pekee"
+msgstr "Tazama Tu Makundi ya Wavuti"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing group membership (requires edit groups)."
@@ -5259,7 +5201,7 @@ msgid ""
 "<strong>Locations</strong> &mdash; manage locations in the Organization's "
 "Hierarchy"
 msgstr ""
-"<strong>Maeneo</strong> &mdash; dhibiti maeneo katika Muundo wa Shirika"
+"<strong>Maeneo</strong> &mdash; simamia maeneo katika Muundo wa Shirika"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Locations"
@@ -5267,7 +5209,7 @@ msgstr "Hariri & Tazama Maeneo"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Locations"
-msgstr "Maeneo ya Wavuti ya Kutazama Pekee"
+msgstr "Tazama Tu Maeneo ya Wavuti"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing workers at a location."
@@ -5278,7 +5220,7 @@ msgid ""
 "<strong>Data Dictionary</strong> &mdash; manage case properties within "
 "CommCare HQ"
 msgstr ""
-"<strong>Kamusi ya Data</strong> &mdash; dhibiti sifa za kesi ndani ya "
+"<strong>Kamusi ya Data</strong> &mdash; simamia sifa za kesi ndani ya "
 "CommCare HQ"
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -5287,15 +5229,15 @@ msgstr "Hariri & Tazama Kamusi ya Data"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Data Dictionary"
-msgstr "Kamusi ya Data ya Kutazama Pekee"
+msgstr "Tazama Tu Kamusi ya Data"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
 msgstr ""
-"<strong>Data</strong> &mdash; tazama, hamisha nje, na hariri data ya fomu na"
-" kesi, gawanya upya kesi"
+"<strong>Data</strong> &mdash; tazama, hamisha, na hariri data ya fomu na "
+"kesi, gawanya upya kesi"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Data"
@@ -5336,7 +5278,7 @@ msgstr "Hariri & Tazama Programu"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Applications"
-msgstr "Maombi ya Kuangalia Tu"
+msgstr "Maombi ya Kuangalia Pekee"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
@@ -5361,11 +5303,11 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & Download files from the Dropzone "
-msgstr "Hariri na Pakua faili kutoka kwenye Dropzone"
+msgstr "Hariri & Pakua faili kutoka kwenye Dropzone"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Dropzone"
-msgstr "Dropzone ya Kuangalia Tu"
+msgstr "Dropzone ya Kuangalia Pekee"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
@@ -5397,11 +5339,11 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View CommCare Analytics"
-msgstr "Hariri na Angalia CommCare Analytics"
+msgstr "Hariri & Angalia CommCare Analytics"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only CommCare Analytics"
-msgstr "CommCare Analytics ya Kuangalia Tu"
+msgstr "CommCare Analytics ya Kuangalia Pekee"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Enterprise Release Management"
@@ -5506,11 +5448,11 @@ msgstr "Chagua ni data gani ya rejesta jukumu linaweza kuona:"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Use Web Apps for online data entry"
-msgstr "Tumia Programu za Wavuti kwa kuingiza data mtandaoni"
+msgstr "Tumia Programu za Wavuti kwa uingizaji data mtandaoni"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Select which web apps the role has access to:"
-msgstr "Chagua ni programu zipi za wavuti jukumu linaweza kufikia:"
+msgstr "Chagua ni programu gani za wavuti jukumu linaweza kufikia:"
 
 #: corehq/apps/users/static/users/js/roles.js
 #, javascript-format
@@ -5543,7 +5485,7 @@ msgstr "Hitilafu imetokea, tafadhali jaribu tena."
 
 #: corehq/apps/users/static/users/js/roles_and_permissions.js
 msgid "View Only"
-msgstr "Kuangalia Tu"
+msgstr "Angalia Pekee"
 
 #: corehq/apps/users/static/users/js/web_users.js
 msgid "<%- days %> days remaining"
@@ -5555,7 +5497,7 @@ msgstr "Imeshindikana kufuta mwaliko, tafadhali jaribu tena baadaye."
 
 #: corehq/apps/users/static/users/js/web_users.js
 msgid "Unable to resend invitation, please try again later."
-msgstr "Imeshindikana kutuma upya mwaliko, tafadhali jaribu tena baadaye."
+msgstr "Imeshindikana kutuma tena mwaliko, tafadhali jaribu tena baadaye."
 
 #: corehq/apps/users/static/users/js/web_users.js
 msgid "Delete request"
@@ -5563,7 +5505,7 @@ msgstr "Futa ombi"
 
 #: corehq/apps/users/static/users/js/web_users.js
 msgid "Are you sure you want to delete this request?"
-msgstr "Una uhakika unataka kufuta ombi hili?"
+msgstr "Je, una uhakika unataka kufuta ombi hili?"
 
 #: corehq/apps/users/static/users/js/web_users.js
 msgid ""
@@ -5571,9 +5513,9 @@ msgid ""
 "rejected it. This usually means either the email address is incorrect or "
 "your organization is blocking emails from our address (<%- fromAddress %>)."
 msgstr ""
-"Tumetuma barua pepe ya mwaliko kwa mtumiaji huyu lakini seva ya barua pepe "
-"ya mtumiaji imeikataa. Hii mara nyingi inamaanisha ama anwani ya barua pepe "
-"si sahihi au shirika lako linazuia barua pepe kutoka kwa anwani yetu (<%- "
+"Tumepeleka barua pepe ya mwaliko kwa mtumiaji huyu lakini seva ya barua pepe"
+" ya mtumiaji imeikataa. Hii mara nyingi inamaanisha ama anwani ya barua pepe"
+" si sahihi au shirika lako linazuia barua pepe kutoka kwa anwani yetu (<%- "
 "fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/web_users_list.js
@@ -5582,7 +5524,7 @@ msgstr "Hakuna watumiaji waliolingana na utafutaji wako."
 
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "This project has no web users."
-msgstr "Mradi huu hauna watumiaji wa wavuti."
+msgstr "Mradi huu hauna watumiaji wa tovuti."
 
 #: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
 msgid "Requeued"
@@ -5590,7 +5532,7 @@ msgstr "Imerejeshwa kwenye foleni"
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js
 msgid "Are you sure you want to delete this scheduled message?"
-msgstr "Una uhakika unataka kufuta ujumbe huu uliopangwa?"
+msgstr "Je, una uhakika unataka kufuta ujumbe huu uliopangwa?"
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid "This rule has been restarted."
@@ -5603,12 +5545,11 @@ msgid ""
 "are %s minute(s) remaining before this rule can be started again."
 msgstr ""
 "Imeshindikana kuanzisha tena sheria. Sheria zinaweza kuanzishwa kila baada "
-"ya saa mbili pekee na kuna dakika %s zimebaki kabla ya sheria hii kuanzishwa"
-" tena."
+"ya saa mbili tu na zimesalia dakika %s kabla ya sheria hii kuanzishwa tena."
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid "Are you sure you want to remove this conditional message?"
-msgstr "Una uhakika unataka kuondoa ujumbe huu wa masharti?"
+msgstr "Je, una uhakika unataka kuondoa ujumbe huu wa masharti?"
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid ""
@@ -5616,9 +5557,9 @@ msgid ""
 "progressing. You will only be able to restart this rule once every two "
 "hours. Restart this rule?"
 msgstr ""
-"Sheria inapaswa kuanzishwa tena tu pale unapohisi imekwama na haisongi "
-"mbele. Utaweza kuanzisha tena sheria hii mara moja kila baada ya saa mbili. "
-"Anzisha tena sheria hii?"
+"Sheria inapaswa kuanzishwa upya tu pale unapodhani imekwama na haisongi "
+"mbele. Utaweza kuanzisha tena sheria hii mara moja tu kila baada ya saa "
+"mbili. Anzisha tena sheria hii?"
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid ""
@@ -5627,10 +5568,10 @@ msgid ""
 "restarting too many times without finishing can place a burden on the "
 "system. Restart this rule?"
 msgstr ""
-"Sheria inapaswa kuanzishwa tena tu pale unapohisi imekwama na haisongi "
+"Sheria inapaswa kuanzishwa upya tu pale unapodhani imekwama na haisongi "
 "mbele. Mtumiaji wako anaweza kuanzisha tena mara nyingi upendavyo, lakini "
-"kuanzisha mara nyingi bila kumaliza kunaweza kulemea mfumo. Anzisha tena "
-"sheria hii?"
+"kuanzisha tena mara nyingi bila kukamilisha kunaweza kulemea mfumo. Anzisha "
+"tena sheria hii?"
 
 #: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "hour(s)"
@@ -5714,15 +5655,15 @@ msgstr "URL Imenakiliwa"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Daily"
-msgstr "Kila siku"
+msgstr "Kila Siku"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Weekly"
-msgstr "Kila wiki"
+msgstr "Kila Wiki"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Monthly"
-msgstr "Kila mwezi"
+msgstr "Kila Mwezi"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Disable logging"
@@ -5730,7 +5671,7 @@ msgstr "Zima kurekodi matukio"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Unable to save OpenMRS Importers"
-msgstr "Imeshindikana kuhifadhi Waaletaji wa OpenMRS"
+msgstr "Imeshindikana kuhifadhi Waagizaji wa OpenMRS"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Importing from OpenMRS will begin shortly."
@@ -5750,19 +5691,9 @@ msgstr "Imeshindikana kupata majaribio"
 msgid "Failed to fetch payload"
 msgstr "Imeshindikana kupata mzigo wa data"
 
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to send"
-msgstr "Imeshindikana kutuma"
-
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to cancel"
-msgstr "Imeshindikana kughairi"
-
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
-msgstr "Jina la mtumiaji"
+msgstr "Jina la Mtumiaji"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
@@ -5791,3 +5722,50 @@ msgstr "Imeshindikana! Majibu ni: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
+
+#~ msgid "Module ID"
+#~ msgstr "Kitambulisho cha Moduli"
+
+#~ msgid "Description"
+#~ msgstr "Maelezo"
+
+#~ msgid "Time Estimate"
+#~ msgstr "Makadirio ya Muda"
+
+#~ msgid "Must be an integer"
+#~ msgstr "Lazima iwe nambari kamili"
+
+#~ msgid "Estimated time to complete the module in hours."
+#~ msgstr "Muda unaokadiriwa kukamilisha moduli kwa saa."
+
+#~ msgid "Assessment ID"
+#~ msgstr "Kitambulisho cha Tathmini"
+
+#~ msgid "User Score"
+#~ msgstr "Alama ya Mtumiaji"
+
+#~ msgid "XPath expression for the users assessment score."
+#~ msgstr "Usemi wa XPath kwa alama ya tathmini ya mtumiaji."
+
+#~ msgid "Delivery Unit ID"
+#~ msgstr "Kitambulisho cha Kitengo cha Uwasilishaji"
+
+#~ msgid "Entity ID"
+#~ msgstr "Kitambulisho cha Huluki"
+
+#~ msgid ""
+#~ "XPath expression for the entity ID associated with this Delivery Unit e.g. "
+#~ "the case ID."
+#~ msgstr ""
+#~ "Usemi wa XPath kwa kitambulisho cha huluki kinachohusishwa na Kitengo hiki "
+#~ "cha Uwasilishaji mfano kitambulisho cha kesi."
+
+#~ msgid "Entity Name"
+#~ msgstr "Jina la Huluki"
+
+#~ msgid ""
+#~ "XPath expression for the name of the entity associated with this Delivery "
+#~ "Unit."
+#~ msgstr ""
+#~ "Usemi wa XPath kwa jina la shirika linalohusishwa na Kitengo hiki cha "
+#~ "Uwasilishaji."

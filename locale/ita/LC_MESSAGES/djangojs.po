@@ -8,7 +8,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Commcare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-02 16:52+0000\n"
 "PO-Revision-Date: 2025-05-02 16:52+0000\n"
 "Last-Translator: Amit Phulera by OpenAI <devops@dimagi.com>\n"
 "Language-Team: Italian (http://app.transifex.com/dimagi/commcare-hq/language/ita/)\n"
@@ -743,6 +742,8 @@ msgid "You have unchanged user properties settings"
 msgstr "Hai impostazioni delle proprietà utente non modificate"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "Property uses unrecognized prefix <strong>"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La proprietà utilizza un prefisso non riconosciuto <strong>"
 
@@ -976,7 +977,6 @@ msgid "Question"
 msgstr "Domanda"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "Nome"
 
@@ -2768,65 +2768,6 @@ msgstr "Inserisci comando"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Command Bar"
 msgstr "Barra dei comandi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Module ID"
-msgstr "ID modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Description"
-msgstr "Descrizione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Time Estimate"
-msgstr "Stima del tempo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be an integer"
-msgstr "Deve essere un numero intero"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Estimated time to complete the module in hours."
-msgstr "Tempo stimato per completare il modulo in ore."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Assessment ID"
-msgstr "ID valutazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User Score"
-msgstr "Punteggio utente"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the users assessment score."
-msgstr "Espressione XPath per il punteggio di valutazione dell'utente."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Delivery Unit ID"
-msgstr "ID unità di consegna"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity ID"
-msgstr "ID entità"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the entity ID associated with this Delivery Unit e.g. "
-"the case ID."
-msgstr ""
-"Espressione XPath per l'ID entità associato a questa Unità di Consegna, ad "
-"es. l'ID del caso."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity Name"
-msgstr "Nome entità"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the name of the entity associated with this Delivery "
-"Unit."
-msgstr ""
-"Espressione XPath per il nome dell'entità associata a questa Delivery Unit."
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -5768,16 +5709,6 @@ msgstr "Impossibile recuperare i tentativi"
 msgid "Failed to fetch payload"
 msgstr "Impossibile recuperare il payload"
 
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to send"
-msgstr "Invio non riuscito"
-
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to cancel"
-msgstr "Annullamento non riuscito"
-
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
 msgstr "Nome utente"
@@ -5809,3 +5740,55 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Module ID"
+#~ msgstr "ID modulo"
+
+#~ msgid "Description"
+#~ msgstr "Descrizione"
+
+#~ msgid "Time Estimate"
+#~ msgstr "Stima del tempo"
+
+#~ msgid "Must be an integer"
+#~ msgstr "Deve essere un numero intero"
+
+#~ msgid "Estimated time to complete the module in hours."
+#~ msgstr "Tempo stimato per completare il modulo in ore."
+
+#~ msgid "Assessment ID"
+#~ msgstr "ID valutazione"
+
+#~ msgid "User Score"
+#~ msgstr "Punteggio utente"
+
+#~ msgid "XPath expression for the users assessment score."
+#~ msgstr "Espressione XPath per il punteggio di valutazione dell'utente."
+
+#~ msgid "Delivery Unit ID"
+#~ msgstr "ID unità di consegna"
+
+#~ msgid "Entity ID"
+#~ msgstr "ID entità"
+
+#~ msgid ""
+#~ "XPath expression for the entity ID associated with this Delivery Unit e.g. "
+#~ "the case ID."
+#~ msgstr ""
+#~ "Espressione XPath per l'ID entità associato a questa Unità di Consegna, ad "
+#~ "es. l'ID del caso."
+
+#~ msgid "Entity Name"
+#~ msgstr "Nome entità"
+
+#~ msgid ""
+#~ "XPath expression for the name of the entity associated with this Delivery "
+#~ "Unit."
+#~ msgstr ""
+#~ "Espressione XPath per il nome dell'entità associata a questa Delivery Unit."
+
+#~ msgid "Failed to send"
+#~ msgstr "Invio non riuscito"
+
+#~ msgid "Failed to cancel"
+#~ msgstr "Annullamento non riuscito"

@@ -8,7 +8,7 @@ class VeryFakeReportExport(ReportExport):
     def __init__(self, data):
         self._data = data
 
-    def get_table(self):
+    def get_table(self, limit=None):
         return self._data
 
 

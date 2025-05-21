@@ -8,7 +8,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-02 16:52+0000\n"
 "PO-Revision-Date: 2025-05-02 16:52+0000\n"
 "Last-Translator: Amit Phulera via OpenAI <devops@dimagi.com>\n"
 "Language-Team: Ukrainian (http://app.transifex.com/dimagi/commcare-hq/language/ukr/)\n"
@@ -741,6 +740,8 @@ msgid "You have unchanged user properties settings"
 msgstr "У вас незмінені налаштування властивостей користувача"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "Property uses unrecognized prefix <strong>"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "Властивість використовує невідомий префікс <strong>"
 
@@ -974,7 +975,6 @@ msgid "Question"
 msgstr "Питання"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "Назва"
 
@@ -2752,65 +2752,6 @@ msgstr "Введіть команду"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Command Bar"
 msgstr "Панель команд"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Module ID"
-msgstr "ID модуля"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Description"
-msgstr "Опис"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Time Estimate"
-msgstr "Оцінка часу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be an integer"
-msgstr "Має бути цілим числом"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Estimated time to complete the module in hours."
-msgstr "Орієнтовний час завершення модуля у годинах."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Assessment ID"
-msgstr "ID оцінювання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User Score"
-msgstr "Оцінка користувача"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the users assessment score."
-msgstr "XPath-вираз для оцінки користувача."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Delivery Unit ID"
-msgstr "ID одиниці доставки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity ID"
-msgstr "ID сутності"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the entity ID associated with this Delivery Unit e.g. "
-"the case ID."
-msgstr ""
-"XPath-вираз для ID сутності, пов'язаної з цією одиницею доставки, напр. ID "
-"кейсу."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity Name"
-msgstr "Назва сутності"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the name of the entity associated with this Delivery "
-"Unit."
-msgstr ""
-"XPath-вираз для імені сутності, пов'язаної з цим підрозділом доставки."
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -5746,16 +5687,6 @@ msgstr "Не вдалося отримати спроби"
 msgid "Failed to fetch payload"
 msgstr "Не вдалося отримати дані"
 
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to send"
-msgstr "Не вдалося надіслати"
-
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to cancel"
-msgstr "Не вдалося скасувати"
-
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
 msgstr "Ім'я користувача"
@@ -5787,3 +5718,55 @@ msgstr "Помилка! Відповідь: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ не вдалося виконати запит: "
+
+#~ msgid "Module ID"
+#~ msgstr "ID модуля"
+
+#~ msgid "Description"
+#~ msgstr "Опис"
+
+#~ msgid "Time Estimate"
+#~ msgstr "Оцінка часу"
+
+#~ msgid "Must be an integer"
+#~ msgstr "Має бути цілим числом"
+
+#~ msgid "Estimated time to complete the module in hours."
+#~ msgstr "Орієнтовний час завершення модуля у годинах."
+
+#~ msgid "Assessment ID"
+#~ msgstr "ID оцінювання"
+
+#~ msgid "User Score"
+#~ msgstr "Оцінка користувача"
+
+#~ msgid "XPath expression for the users assessment score."
+#~ msgstr "XPath-вираз для оцінки користувача."
+
+#~ msgid "Delivery Unit ID"
+#~ msgstr "ID одиниці доставки"
+
+#~ msgid "Entity ID"
+#~ msgstr "ID сутності"
+
+#~ msgid ""
+#~ "XPath expression for the entity ID associated with this Delivery Unit e.g. "
+#~ "the case ID."
+#~ msgstr ""
+#~ "XPath-вираз для ID сутності, пов'язаної з цією одиницею доставки, напр. ID "
+#~ "кейсу."
+
+#~ msgid "Entity Name"
+#~ msgstr "Назва сутності"
+
+#~ msgid ""
+#~ "XPath expression for the name of the entity associated with this Delivery "
+#~ "Unit."
+#~ msgstr ""
+#~ "XPath-вираз для імені сутності, пов'язаної з цим підрозділом доставки."
+
+#~ msgid "Failed to send"
+#~ msgstr "Не вдалося надіслати"
+
+#~ msgid "Failed to cancel"
+#~ msgstr "Не вдалося скасувати"

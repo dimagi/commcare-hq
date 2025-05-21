@@ -1,17 +1,14 @@
 --- 
 +++ 
-@@ -1,11 +1,11 @@
--hqDefine('userreports/js/bootstrap3/report_config', [
-+hqDefine('userreports/js/bootstrap5/report_config', [
-     'jquery',
-     'knockout',
-     'underscore',
-     'analytix/js/kissmetrix',
--    'hqwebapp/js/bootstrap3/main',
-+    'hqwebapp/js/bootstrap5/main',
-     'reports_core/js/charts',
--    'reports_core/js/bootstrap3/maps',
-+    'reports_core/js/bootstrap5/maps',
-     'userreports/js/builder_view_models',
-     'userreports/js/constants',
-     'userreports/js/report_analytix',
+@@ -2,9 +2,9 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import kissmetrics from "analytix/js/kissmetrix";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ import charts from "reports_core/js/charts";
+-import maps from "reports_core/js/bootstrap3/maps";
++import maps from "reports_core/js/bootstrap5/maps";
+ import builderViewModels from "userreports/js/builder_view_models";
+ import constants from "userreports/js/constants";
+ import analytics from "userreports/js/report_analytix";

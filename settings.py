@@ -11,13 +11,9 @@ import settingshelper as helper
 
 DEBUG = True
 
-# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
-# this to select various versions of Vellum source on the form designer page.
-# Acceptable values:
-# None - production mode
-# "dev" - use raw vellum source (submodules/formdesigner/src)
-# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
-VELLUM_DEBUG = None
+# Clone http://github.com/dimagi/Vellum into submodules/formdesigner and set
+# this to use raw Vellum source (submodules/formdesigner/src) on the form designer page.
+VELLUM_DEBUG = False
 
 
 # For Single Sign On (SSO) Implementations
@@ -172,6 +168,7 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
+    'corehq.apps.hqwebapp.utils.bootstrap.middleware.ThreadLocalCleanupMiddleware',
     'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
@@ -410,6 +407,8 @@ HQ_APPS = (
     'custom.hmhb',
 
     'custom.ccqa',
+
+    'custom.mgh_epic',
 
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
@@ -1023,6 +1022,9 @@ LOAD_BALANCED_APPS = {}
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
+
+EPIC_PRIVATE_KEY = None
+EPIC_CLIENT_ID = None
 
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
@@ -2035,6 +2037,10 @@ DOMAIN_MODULE_MAP = {
     'co-carecoordination-uat': 'custom.bha',
 
     'ccqa': 'custom.ccqa',
+
+    'epic-integration-test': 'custom.mgh_epic',
+    'sudcare-dev': 'custom.mgh_epic',
+    'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

@@ -692,6 +692,17 @@ class CaseRepeater(Repeater):
 
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
+    def register(self, payload, fire_synchronously=False):
+        if repeat_record := (
+            self.repeat_records_ready
+            .filter(payload_id=payload.get_id)
+            .first()
+        ):
+            # There is already a repeat record for this payload waiting
+            # to be sent.
+            return repeat_record
+        return super().register(payload, fire_synchronously)
+
     @property
     def form_class_name(self):
         """
@@ -729,6 +740,11 @@ class CreateCaseRepeater(CaseRepeater):
         proxy = True
 
     friendly_name = _("Forward Cases on Creation Only")
+
+    def register(self, payload, fire_synchronously=False):
+        # `CaseRepeater.register()` skips duplicate payloads, but
+        # `CreateCaseRepeater` will never have duplicates.
+        return Repeater.register(self, payload, fire_synchronously)
 
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
@@ -1258,6 +1274,10 @@ class RepeatRecord(models.Model):
         # See also the comment in add_success_attempt about possible
         # incorrect status code interpretation resulting in Empty state.
         return self.state == State.Success or self.state == State.Empty
+
+    @property
+    def is_queued(self):
+        return self.state in RECORD_QUEUED_STATES
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Members below this line have been added to support the
