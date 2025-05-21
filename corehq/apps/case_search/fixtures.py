@@ -68,7 +68,6 @@ def _get_index(domain):
 
 class CaseSearchFixtureProvider(FixtureProvider):
     id = 'case-search-fixture'
-    ignore_skip_fixtures_flag = True
 
     def __call__(self, restore_state):
         if not CSQL_FIXTURE.enabled(restore_state.domain):

@@ -13,11 +13,11 @@ from corehq.apps.users.models import HQApiKey, WebUser
 ZapierDomainConfig = namedtuple('ZapierDomainConfig', 'domain web_user api_key')
 
 
-def bootrap_domain_for_zapier(domain_name):
+def bootstrap_domain_for_zapier(domain_name):
     domain_object = Domain.get_or_create_with_name(domain_name, is_active=True)
 
     account = BillingAccount.get_or_create_account_by_domain(domain_name, created_by="automated-test")[0]
-    plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
+    plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.PRO)
     subscription = Subscription.new_domain_subscription(account, domain_name, plan)
     subscription.is_active = True
     subscription.save()

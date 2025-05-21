@@ -132,9 +132,9 @@ def default_feature_rates(edition=SoftwarePlanEdition.STANDARD):
 
 @unit_testing_only
 def custom_plan_version(name='Custom software plan', edition=SoftwarePlanEdition.STANDARD,
-                        role_slug='standard_plan_v0', feature_rates=None):
+                        role_slug='standard_plan_v0', feature_rates=None, monthly_fee=0):
     plan = SoftwarePlan.objects.create(name=name, edition=edition)
-    product_rate = SoftwareProductRate.objects.create(name=name)
+    product_rate = SoftwareProductRate.objects.create(name=name, monthly_fee=monthly_fee)
     role = Role.objects.get(slug=role_slug)
     plan_version = SoftwarePlanVersion.objects.create(
         plan=plan,
@@ -229,10 +229,10 @@ def arbitrary_webusers_for_domain(domain, num_users, is_active=True):
 
 
 @unit_testing_only
-def create_excess_community_users(domain):
-    community_plan_version = DefaultProductPlan.get_default_plan_version()
-    num_active_users = random.randint(community_plan_version.user_limit + 1,
-                                      community_plan_version.user_limit + 4)
+def create_excess_free_users(domain):
+    free_plan_version = DefaultProductPlan.get_default_plan_version()
+    num_active_users = random.randint(free_plan_version.user_limit + 1,
+                                      free_plan_version.user_limit + 4)
     arbitrary_commcare_users_for_domain(domain.name, num_active_users)
     return num_active_users
 

@@ -130,7 +130,8 @@ class DetailContributor(SectionContributor):
                         )
                         if d:
                             elements.append(d)
-                            if self.app.supports_case_list_optimizations:
+                            if (self.app.supports_case_list_optimizations
+                                    and module.show_case_list_optimization_options):
                                 _add_detail_optimizations(module_detail=detail, detail_xml_object=d)
 
                     # add the persist case context if needed and if

@@ -16,7 +16,6 @@ from dimagi.utils.logging import notify_exception
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.es import cases as case_es
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
@@ -27,7 +26,10 @@ from corehq.apps.case_search.exceptions import (
     CaseSearchUserError,
     TooManyRelatedCasesError,
 )
-from corehq.apps.case_search.filter_dsl import build_filter_from_xpath, SearchFilterContext
+from corehq.apps.case_search.filter_dsl import (
+    SearchFilterContext,
+    build_filter_from_xpath,
+)
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -35,35 +37,32 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     extract_search_request_config,
 )
-from corehq.apps.es import case_search, filters, queries
+from corehq.apps.es import HQESQuery, case_search
+from corehq.apps.es import cases as case_es
+from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_property_date_range,
     case_property_missing,
     case_property_query,
-    case_property_date_range,
     reverse_index_case_query,
     wrap_case_search_hit,
 )
+from corehq.apps.es.profiling import ESQueryProfiler
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.util.quickcache import quickcache
-from corehq.apps.es.profiling import ESQueryProfiler
 
 
 @dataclass
 class CaseSearchProfiler(ESQueryProfiler):
+    search_class: HQESQuery = CaseSearchES
     name: str = 'Case Search'
     primary_count: int = 0
     related_count: int = 0
-
-    def __post_init__(self):
-        super().__post_init__()
-        # For some reason defining the default value in the dataclass doesn't work
-        # so we do it here
-        self.search_class = CaseSearchES
 
 
 def time_function():
@@ -157,7 +156,7 @@ class QueryHelper:
 
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
-        _CaseSearchES = self.profiler.get_search_class(slug)
+        _CaseSearchES = self.profiler.get_profiled_search_class(slug)
         # See case_search_bha.py docstring for context on index_name
         return _CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
@@ -186,7 +185,7 @@ class RegistryQueryHelper(QueryHelper):
         self._registry_helper = registry_helper
 
     def get_base_queryset(self, slug=None):
-        _CaseSearchES = self.profiler.get_search_class(slug)
+        _CaseSearchES = self.profiler.get_profiled_search_class(slug)
         return _CaseSearchES().domain(self._registry_helper.visible_domains)
 
     def wrap_case(self, es_hit, include_score=False):

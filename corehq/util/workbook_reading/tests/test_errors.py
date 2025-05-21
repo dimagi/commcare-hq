@@ -37,10 +37,9 @@ def test_empty_file(self, open_workbook, ext):
 
 
 @run_on_csv_adapter(SpreadsheetErrorsTest)
-def test_csv_file_encrypted(self, open_workbook, ext):
-    """An encrypted CSV file raises a SpreadsheetFileInvalidError error."""
+def test_broken_csv_file(self, open_workbook, ext):
     with self.assertRaises(SpreadsheetFileInvalidError):
-        with open_workbook(get_file('encrypted', ext)):
+        with open_workbook(get_file('broken-utf-8', ext)):
             pass
 
 

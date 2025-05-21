@@ -505,7 +505,7 @@ class TestSubscriptionRenewalViews(TestCase):
         self.assertEqual(response.context['is_self_renewable_plan'], True)
 
     def test_non_paid_edition_raises_404(self):
-        self._generate_subscription(SoftwarePlanEdition.COMMUNITY)
+        self._generate_subscription(SoftwarePlanEdition.FREE)
         response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
 
         self.assertEqual(404, response.status_code)

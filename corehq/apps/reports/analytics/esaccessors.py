@@ -7,6 +7,8 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.data_dictionary.util import get_data_dict_case_types, get_data_dict_deprecated_case_types
 from corehq.apps.es import (
     CaseES,
@@ -665,4 +667,22 @@ def get_case_types_for_domain(domain, include_deprecated=False):
     if not include_deprecated:
         deprecated_case_types = get_data_dict_deprecated_case_types(domain)
         all_case_types -= deprecated_case_types
+    return all_case_types
+
+
+def get_all_case_types_for_domain(domain):
+    """
+    Returns case types pulled from app configuration and any defined in the data dictionary,
+    Excludes system case types.
+    """
+    data_dict_types = get_data_dict_case_types(domain)
+    module_defined_case_types = get_case_types_from_apps(domain, include_save_to_case_updates=False)
+    all_case_types = data_dict_types | module_defined_case_types
+
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    all_case_types -= deprecated_case_types
+
+    # Exclude system case types
+    all_case_types -= {USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE}
+
     return all_case_types

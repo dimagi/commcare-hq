@@ -1931,8 +1931,9 @@ class DetailColumn(IndexedSchema):
     def invisible(self):
         return self.format == 'invisible'
 
+    @property
     def supports_optimizations(self):
-        return self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
+        return self.useXpathExpression and self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 
 
 class SortElement(IndexedSchema):
@@ -3069,6 +3070,7 @@ class AdvancedModule(ModuleBase):
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
     case_list = SchemaProperty(CaseList)
+    show_case_list_optimization_options = BooleanProperty(default=False)
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
@@ -3786,6 +3788,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     case_list = SchemaProperty(CaseList)
+    show_case_list_optimization_options = BooleanProperty(default=False)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
@@ -4562,7 +4565,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
-        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 
@@ -4571,6 +4573,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(ApplicationBase, self).save(**params)
+
+        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
 
         if response_json is not None:
             if 'update' not in response_json:

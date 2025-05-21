@@ -17,8 +17,7 @@ enforce and respect the boundaries that keep us sane by following one of
 a number of patterns.
 
 We're in the process of migrating to
-`Webpack <https://webpack.js.org/>`__. Prior to the migration to Webpack,
-we were migrating No-Bundler pages to RequireJS, which has since become deprecated.
+`Webpack <https://webpack.js.org/>`__.
 Part of this ongoing process has included developing a lighter-weight
 alternative module system called ``hqDefine``, that is based on the AMD (Asynchronous
 Module Definition) format. This ``hqDefine`` variant of AMD is relevant even for
@@ -150,7 +149,7 @@ like this:
 .. code:: javascript
 
    // file commcare-hq/corehq/apps/myapp/static/myapp/js/myModule.js
-   hqDefine('myapp/js/myModule', function () {
+   hqDefine('myapp/js/myModule', [], function () {
        // things inside here are private
        var myPrivateGreeting = "Hello";
        // unless you put them in the return object
@@ -167,29 +166,28 @@ and when you need it in another file
 
 .. code:: javascript
 
-   // some other file
-   function () {
-       var sayHi = hqImport('myapp/js/myModule').sayHi;
-       // ... use sayHi ...
-   }
+   // some other module
+   hqDefine('myapp/js/myOtherModule', ['myapp/js/myModule'], function (myModule) {
+       myModule.sayHi();
+   });
 
 If you compare it to the above example, you’ll notice that the closure
 function itself is exactly the same. It’s just being passed to
 ``hqDefine`` instead of being called directly.
 
 ``hqDefine`` is an intermediate step on the way to full support for AMD
-modules, which is supported by Webpack as well as our previous bundler RequireJS.
+modules, which is supported by Webpack.
 
 ``hqDefine`` checks whether or not it is on a page that uses AMD modules and then behaves in
 one of two ways: \* If the page has been migrated, meaning it uses AMD
 modules, ``hqDefine`` just delegates to ``define``. \* If the page has
 not been migrated, ``hqDefine`` acts as a thin wrapper around the
 Crockford module pattern. ``hqDefine`` takes a function, calls it
-immediately, and puts it in a namespaced global; ``hqImport`` then looks
-up the module in that global.
+immediately, and puts it in a namespaced global; ``hqDefine`` then looks
+up all of its dependent modules in that global.
 
 In the first case, by handing control over to Webpack,
-``hqDefine``/``hqImport`` also act as a module *loader*. But in the
+``hqDefine`` also act as a module *loader*. But in the
 second case, they work only as a module *dereferencer*, so in order to
 use a module, it still needs to be included as a ``<script>`` on your
 html page:
@@ -205,8 +203,8 @@ Webpack to work properly. For consistency, all modules, regardless of
 whether or not they are yet compatible with Webpack, should be named
 to match their filename.
 
-``hqDefine`` and ``hqImport`` provide a consistent interface for both
+``hqDefine`` provides a consistent interface for both
 migrated and unmigrated pages, and that interface is also consistent
-with AMD Modules (supported by Webpack, and previously RequireJS),
+with AMD Modules (supported by Webpack),
 making it easy to eventually  “flip the switch” and remove them altogether
 once all code is compatible with Webpack.

@@ -12,6 +12,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_build_ids,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppValidationError,
     SavedAppBuildException,
 )
@@ -88,8 +89,8 @@ def prune_auto_generated_builds(domain, app_id):
 def refresh_data_dictionary_from_app(domain, app_id):
     try:
         app = get_app(domain, app_id)
-    except Http404:
-        # If there's no app, trhere's nothing to do
+    except (Http404, AppInDifferentDomainException):
+        # If there's no app in the domain, there's nothing to do
         return
 
     from corehq.apps.app_manager.util import actions_use_usercase

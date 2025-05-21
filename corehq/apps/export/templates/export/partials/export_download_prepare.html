@@ -5,7 +5,7 @@
 <form class="form form-horizontal" name="exportFiltersForm" data-bind="submit: prepareExport">
   <div class="position-relative">
     {% if dynamic_filters %}
-      <div class="mb-3" data-bind="allowDescendantBindings: false"> {# IMPORTANT: needed because some of the dynamic_filters have their own ko bindings #}
+      <div class="mb-3 row" data-bind="allowDescendantBindings: false"> {# IMPORTANT: needed because some of the dynamic_filters have their own ko bindings #}
         {{ dynamic_filters }}
       </div>
     {% endif %}

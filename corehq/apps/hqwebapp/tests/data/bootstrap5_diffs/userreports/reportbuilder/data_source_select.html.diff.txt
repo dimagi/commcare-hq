@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -1,15 +1,15 @@
+-{% extends "userreports/bootstrap3/base_report_builder.html" %}
++{% extends "userreports/bootstrap5/base_report_builder.html" %}
+ {% load i18n %}
+ {% load compress %}
+ {% load hq_shared_tags %}
+ {% load crispy_forms_tags %}
+ 
+-{% js_entry_b3 "userreports/js/bootstrap3/data_source_select" %}
++{% js_entry "userreports/js/bootstrap5/data_source_select" %}
+ 
+ {% block page_title %}{% trans "Step 1 of 2 - Select Data Source" %}{% endblock page_title %}
+ 
+ {% block page_content %}{{ block.super }}
+-  {% crispy form %}
++  {% crispy form %}  {# todo B5: crispy #}
+   {% initial_page_data 'sources_map' sources_map %}
+   {% initial_page_data "dropdown_map" dropdown_map %}
+ {% endblock %}

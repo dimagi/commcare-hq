@@ -1,20 +1,11 @@
 --- 
 +++ 
-@@ -2,7 +2,7 @@
-  * todo add docstring
-  */
+@@ -12,7 +12,7 @@
+ import kissmetrics from "analytix/js/kissmetrix";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import "reports/v2/js/datagrid/binding_handlers";  // for custom ko bindingHandlers
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // for modal bindings
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // for modal bindings
  
--hqDefine('reports/v2/js/bootstrap3/datagrid', [
-+hqDefine('reports/v2/js/bootstrap5/datagrid', [
-     'jquery',
-     'knockout',
-     'underscore',
-@@ -13,7 +13,7 @@
-     'analytix/js/kissmetrix',
-     'hqwebapp/js/initial_page_data',
-     'reports/v2/js/datagrid/binding_handlers',  // for custom ko bindingHandlers
--    'hqwebapp/js/bootstrap3/knockout_bindings.ko',  // for modal bindings
-+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // for modal bindings
- ], function (
-     $,
-     ko,
+ var datagridController = function (options) {
+     assertProperties.assert(options, [

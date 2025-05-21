@@ -1,5 +1,6 @@
 import datetime
 import io
+import ipaddress
 import json
 import logging
 import uuid
@@ -125,6 +126,7 @@ from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import (
+    COMMCARE_CONNECT,
     EXPORTS_APPS_USE_ELASTICSEARCH,
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
@@ -219,6 +221,92 @@ class ProjectSettingsForm(forms.Form):
         dm.override_global_tz = override
         user.save()
         return True
+
+
+class IPAccessConfigForm(forms.Form):
+    """
+    Form for updating a project's IP Access Configuration
+    """
+    country_allowlist = forms.MultipleChoiceField(
+        label=_("Allowed Countries"),
+        choices=sorted(list(COUNTRIES.items()), key=lambda x: x[1]),
+        required=False,
+    )
+
+    ip_allowlist = forms.CharField(
+        label=_("Allowed IPs"),
+        required=False,
+        help_text='IPs that will be allowed access to your project, regardless of country of origin. '
+                  'Please configure your list to be comma and space separated, '
+                  'e.g. 192.168.0.1, 192.168.1.1, 192.168.2.1',
+    )
+
+    ip_denylist = forms.CharField(
+        label=_("Denied IPs"),
+        required=False,
+        help_text='IPs that will be denied access to your project, regardless of country of origin.',
+    )
+
+    comment = forms.CharField(
+        label=_("Additional Notes"),
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.current_ip = kwargs.pop('current_ip', None)
+        self.current_country = kwargs.pop('current_country', None)
+        super(IPAccessConfigForm, self).__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.form_id = 'ip-access-config-form'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit IP Access Config"),
+                "country_allowlist",
+                "ip_allowlist",
+                "ip_denylist",
+                "comment"
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update IP Access Config"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def clean(self):
+        allow_list = self.cleaned_data['ip_allowlist'].split(", ") if self.cleaned_data['ip_allowlist'] else []
+        deny_list = self.cleaned_data['ip_denylist'].split(", ") if self.cleaned_data['ip_denylist'] else []
+
+        # Ensure an IP isn't in both lists
+        if (allow_list and deny_list) and set(allow_list).intersection(set(deny_list)):
+            self.add_error('ip_allowlist', _("There are IP addresses in both the Allowed and Denied lists. "
+                                             "Please ensure an IP address is only in one list at a time."))
+
+        # Ensure inputs are valid IPs, checks both IPv4 and IPv6
+        for ip in allow_list + deny_list:
+            try:
+                ipaddress.ip_address(ip)
+            except ValueError as e:
+                raise ValidationError(e)
+
+        self.cleaned_data['ip_allowlist'] = allow_list
+        self.cleaned_data['ip_denylist'] = deny_list
+
+        # Additional validation
+        if self.cleaned_data['country_allowlist']:
+            if not settings.MAXMIND_LICENSE_KEY:
+                self.add_error('country_allowlist', _("The Allowed Countries field cannot be saved because "
+                                                      "MaxMind is not configured for your environment"))
+            elif (self.current_country and self.current_country not in self.cleaned_data['country_allowlist']
+                  and self.current_ip not in self.cleaned_data['ip_allowlist']):
+                self.add_error('country_allowlist', _("Please add your own country or IP to the Allowed IPs field "
+                                                      "to avoid being locked out."))
+        if self.current_ip in self.cleaned_data['ip_denylist']:
+            self.add_error('ip_denylist', _("You cannot put your current IP address in the Denied IPs field"))
+        return self.cleaned_data
 
 
 class TransferDomainFormErrors(object):
@@ -493,6 +581,12 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    connect_messaging_channel_name = CharField(
+        label=gettext_lazy("Connect Messaging Channel Name"),
+        required=False,
+        help_text=gettext_lazy("Name of the channel created in connect messaging.")
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -522,6 +616,9 @@ class DomainGlobalSettingsForm(forms.Form):
 
         if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
+
+        if not COMMCARE_CONNECT.enabled(self.domain):
+            del self.fields['connect_messaging_channel_name']
 
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
@@ -575,6 +672,8 @@ class DomainGlobalSettingsForm(forms.Form):
             extra_fields.append('mobile_ucr_sync_interval')
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             extra_fields.append('exports_use_elasticsearch')
+        if COMMCARE_CONNECT.enabled(self.domain):
+            extra_fields.append('connect_messaging_channel_name')
         return extra_fields
 
     def _handle_account_confirmation_by_sms_settings(self):
@@ -778,6 +877,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
+        domain.connect_messaging_channel_name = self.cleaned_data.get('connect_messaging_channel_name')
         if self.cleaned_data.get("operator_call_limit"):
             setting_obj = OperatorCallLimitSettings.objects.get(domain=self.domain)
             setting_obj.call_limit = self.cleaned_data.get("operator_call_limit")
@@ -884,8 +984,8 @@ class PrivacySecurityForm(forms.Form):
             "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
-            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
-            "Read more about secure submissions here</a>"))
+            "<a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2367226200/"
+            "Project+Settings+Overview'>Read more about secure submissions here</a>"))
     )
     secure_sessions = BooleanField(
         label=gettext_lazy("Shorten Inactivity Timeout"),
@@ -1827,51 +1927,46 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
-                if self.current_subscription is not None:
-                    if self.is_same_edition():
-                        self.current_subscription.update_subscription(
-                            date_start=self.current_subscription.date_start,
-                            date_end=None
-                        )
-                    elif self.is_downgrade_from_paid_plan() and \
-                            self.current_subscription.is_below_minimum_subscription:
-                        self.current_subscription.update_subscription(
-                            date_start=self.current_subscription.date_start,
-                            date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
-                        )
-                        Subscription.new_domain_subscription(
-                            account=self.account,
-                            domain=self.domain,
-                            plan_version=self.plan_version,
-                            date_start=self.current_subscription.date_start + datetime.timedelta(days=30),
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                            funding_source=FundingSource.CLIENT,
-                        )
-                    else:
-                        self.current_subscription.change_plan(
-                            self.plan_version,
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                            do_not_invoice=False,
-                            no_invoice_reason='',
-                        )
-                    if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
-                        self_signup.complete_workflow(self.plan_version.plan.edition)
-                else:
+                if (
+                    self.is_downgrade_from_paid_plan()
+                    and self.current_subscription.is_below_minimum_subscription
+                ):
+                    new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
+                    new_sub_date_end = new_sub_date_start + relativedelta(years=1) if self.is_annual_plan else None
+                    self.current_subscription.update_subscription(
+                        date_start=self.current_subscription.date_start,
+                        date_end=new_sub_date_start
+                    )
                     Subscription.new_domain_subscription(
-                        self.account, self.domain, self.plan_version,
+                        account=self.account,
+                        domain=self.domain,
+                        plan_version=self.plan_version,
+                        date_start=new_sub_date_start,
+                        date_end=new_sub_date_end,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT,
                     )
-                return True
+                else:
+                    # date_start on Subscription.change_plan is always today so just set the end date
+                    new_sub_date_end = (
+                        datetime.date.today() + relativedelta(years=1) if self.is_annual_plan else None
+                    )
+                    self.current_subscription.change_plan(
+                        self.plan_version,
+                        date_end=new_sub_date_end,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.PRODUCT,
+                        pro_bono_status=ProBonoStatus.NO,
+                        do_not_invoice=False,
+                        no_invoice_reason='',
+                    )
+                if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
+                    self_signup.complete_workflow(self.plan_version.plan.edition)
+            return True
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
@@ -1879,6 +1974,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 show_stack_trace=True,
             )
             return False
+
+    @property
+    def is_annual_plan(self):
+        return self.plan_version.plan.is_annual_plan
 
     def is_same_edition(self):
         return self.current_subscription.plan_version.plan.edition == self.plan_version.plan.edition

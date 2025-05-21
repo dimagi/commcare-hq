@@ -1,30 +1,38 @@
-'use strict';
 hqDefine('app_manager/js/app_manager', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/layout',
     'hqwebapp/js/toggles',
+    'hqwebapp/js/ui_elements/ui-element-langcode-button',
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/bootstrap3/main',
     'app_manager/js/menu',
+    'app_manager/js/preview_app',
     'app_manager/js/section_changer',
+    "hqwebapp/js/components/inline_edit",   // app, menu, and form names and comments all use these
+    "select2/dist/js/select2.full.min",
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
+    hqLayout,
     toggles,
+    uiElementLangcodeButton,
     google,
     kissmetrix,
     alertUser,
-    hqMain,
-    appManagerMenu,
-    sectionChanger
+    main,
+    menu,
+    previewApp,
+    sectionChanger,
 ) {
-    var module = hqMain.eventize({});
+    var module = main.eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -96,7 +104,7 @@ hqDefine('app_manager/js/app_manager', [
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqMain.updateDOM(update);
+        main.updateDOM(update);
     };
 
     module.setupValidation = function (validationUrl) {
@@ -112,12 +120,27 @@ hqDefine('app_manager/js/app_manager', [
         }
     };
 
+    module.valueIncludeInvalidCharacters = function (valueNoSpaces) {
+        return !valueNoSpaces.match(/^[\w-]*$/g);
+    };
+
+    module.invalidCharErrorMsg = gettext("Case types can only include the characters a-z, 0-9, '-' and '_'");
+
+    module.valueIsReservedWord = function (valueNoSpaces) {
+        return valueNoSpaces === 'commcare-user' || valueNoSpaces === 'user-owner-mapping-case';
+    };
+
+    module.reservedWordErrorMsg = gettext("This is a reserved case type. Please choose another name.");
+
+    module.deprecatedCaseTypeErrorMsg = gettext("This case type has been deprecated in the Data Dictionary.");
+
     module.init = function (args) {
         _initCommcareVersion(args);
         _initSaveButtons();
         _initMenuItemSorting();
         _initResponsiveMenus();
         _initAddItemPopovers();
+        _initNewModuleOptionClicks();
     };
 
     /**
@@ -145,9 +168,9 @@ hqDefine('app_manager/js/app_manager', [
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<i></i>').addClass('fa fa-arrow-left')
+                        $('<i></i>').addClass('fa fa-arrow-left'),
                     ).append(
-                        $('<span></span>').text(' Requires CommCare ' + version)
+                        $('<span></span>').text(' Requires CommCare ' + version),
                     ).appendTo(area);
                 }
             });
@@ -167,8 +190,7 @@ hqDefine('app_manager/js/app_manager', [
             container: 'body',
             sanitize: false,
             content: function () {
-                var slug = $(this).data("slug"),
-                    template = $('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text();
+                var template = $('.js-popover-template-add-item-content[data-slug="form"]').text();
                 return _.template(template)($(this).data());
             },
             html: true,
@@ -183,7 +205,6 @@ hqDefine('app_manager/js/app_manager', [
             $('.popover-additem').on('click', function (e) {
                 $(pop).popover('hide');
                 var dataType = $(e.target).closest('button').data('type'),
-                    isForm =  $(e.target).closest('button').data('form-type') !== undefined,
                     stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                     $form;
 
@@ -191,38 +212,18 @@ hqDefine('app_manager/js/app_manager', [
                     return;
                 }
 
-                if (isForm) {
-                    var caseAction =  $(e.target).closest('button').data('case-action'),
-                        $popoverContent = $(e.target).closest(".popover-content > *"),
-                        moduleId = $popoverContent.data("module-unique-id"),
-                        $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
+                var caseAction =  $(e.target).closest('button').data('case-action'),
+                    $popoverContent = $(e.target).closest(".popover-content > *"),
+                    moduleId = $popoverContent.data("module-unique-id"),
+                    $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
 
-                    $form = $popoverContent.find("form");
-                    $form.find("input[name='case_action']").val(caseAction);
-                    $form.find("input[name='form_type']").val(dataType);
-                    if (!$form.data('clicked')) {
-                        $form.data('clicked', 'true');
-                        $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
-                        $form.submit();
-                    }
-
-                } else {
-                    $('#new-module-type').val(dataType);
-                    if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
-                        $form = $('#new-module-form');
-                        if (!$form.data('clicked')) {
-                            $form.data('clicked', 'true');
-                            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                            if (dataType === "case") {
-                                google.track.event("Added Case List Menu");
-                                kissmetrix.track.event("Added Case List Menu");
-                            } else if (dataType === "survey") {
-                                google.track.event("Added Surveys Menu");
-                                kissmetrix.track.event("Added Surveys Menu");
-                            }
-                            $form.submit();
-                        }
-                    }
+                $form = $popoverContent.find("form");
+                $form.find("input[name='case_action']").val(caseAction);
+                $form.find("input[name='form_type']").val(dataType);
+                if (!$form.data('clicked')) {
+                    $form.data('clicked', 'true');
+                    $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
+                    $form.submit();
                 }
             });
         }).on('click', function (e) {
@@ -423,7 +424,7 @@ hqDefine('app_manager/js/app_manager', [
                     alertUser.alert_user(xhr.responseJSON.error, "danger");
                 },
             });
-            appManagerMenu.setPublishStatus(true);
+            menu.setPublishStatus(true);
         }
 
     };
@@ -437,7 +438,7 @@ hqDefine('app_manager/js/app_manager', [
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqMain.initSaveButtonForm($form, {
+                button = main.initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;
@@ -458,6 +459,235 @@ hqDefine('app_manager/js/app_manager', [
             $buttonHolder.data('button', button);
             sectionChanger.attachToForm($form);
         });
+    };
+
+    $(function () {
+        const app = initialPageData.get('app_subset');
+        module.init({
+            appVersion: app.version || -1,
+            commcareVersion: String(app.commcare_minor_release),
+            latestCommcareVersion: initialPageData.get('latest_commcare_version') || null,
+        });
+
+        $('.btn-langcode-preprocessed').each(function () {
+            uiElementLangcodeButton.new($(this), $(this).text());
+            if ($(this).hasClass('langcode-input')) {
+                var $langcodeInput = $(this).parent().find("input");
+                var that = this;
+                if ($langcodeInput) {
+                    $langcodeInput.change(function () {
+                        if ($(this).val() === "") {
+                            $(that).show();
+                        } else {
+                            $(that).hide();
+                        }
+                    });
+                }
+            }
+        });
+
+        $('[data-toggle="tooltip"]').tooltip();
+
+        // https://github.com/twitter/bootstrap/issues/6122
+        // this is necessary to get popovers to be able to extend
+        // outside the borders of their containing div
+        //
+        // http://manage.dimagi.com/default.asp?183618
+        // Firefox 40 considers hovering on a select a mouseleave event and thus kills the select
+        // dropdown. The focus and blur events are to ensure that we do not trigger overflow hidden
+        // if we are in a select
+        var inSelectElement = false,
+            $tabContent = $('.tab-content');
+        $tabContent.css('overflow', 'visible');
+        $tabContent.on('mouseenter', '.collapse', function () {
+            $(this).css('overflow','visible');
+        });
+        $tabContent.on('mouseleave', '.collapse', function () {
+            if (inSelectElement) { return; }
+            $(this).css('overflow','hidden');
+        });
+        $tabContent.on('focus', '.collapse', function () {
+            inSelectElement = true;
+        });
+        $tabContent.on('blur', '.collapse', function () {
+            inSelectElement = false;
+        });
+
+        // Handling for popup displayed when accessing a deleted app
+        $('#deleted-app-modal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true,
+        }).on('hide.bs.modal', function () {
+            window.location = initialPageData.reverse('dashboard_default');
+        });
+
+        // Set up app preview
+        previewApp.initPreviewWindow();
+
+        // Hide fancy app manager loading animation
+        $('.appmanager-content').fadeIn();
+        $('.appmanager-loading').fadeOut();
+
+        hqLayout.setIsAppbuilderResizing(true);
+    });
+
+    var _initNewModuleOptionClicks = function () {
+        var self = {};
+        self.deprecatedCaseTypes = ko.observableArray();
+
+        $('.new-module-option').on('click', function () {
+            var moduleType = $(this).data('type');
+            $('#new-module-type').val(moduleType);
+            var $form = $('#new-module-form');
+
+            if (moduleType === "case") {
+                $('#add-new-module-modal').modal('hide');
+                $('#define-case-type-modal').modal('show');
+            } else {
+                if (moduleType === "survey") {
+                    google.track.event("Added Surveys Menu");
+                    kissmetrix.track.event("Added Surveys Menu");
+                }
+                $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                $('#add-new-module-modal').modal('hide');
+                $form.submit();
+            }
+        });
+
+        $('#define-case-type-modal').on('show.bs.modal', function () {
+            var $caseType = $('#new-case-type-dropdown');
+            if (!$caseType.data('select2')) {
+                $caseType.select2({
+                    tags: true,
+                    placeholder: gettext("Add a new case type or use an existing one"),
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#define-case-type-modal'),
+                    createTag: function (params) {
+                        // Replace spaces with underscore
+                        var term = params.term.replace(/ /g, '_');
+                        return {
+                            id: term,
+                            text: term,
+                        };
+                    },
+                });
+
+                // Write ajax here not in the Select2 init so that we send ajax request only once
+                $.ajax({
+                    method: 'GET',
+                    url: initialPageData.reverse('all_case_types'),
+                    success: function (data) {
+                        var existingCaseTypes = data.existing_case_types;
+                        self.deprecatedCaseTypes(data.deprecated_case_types);
+
+                        // Add existing case types as options
+                        existingCaseTypes.forEach(function (caseType) {
+                            var option = new Option(caseType, caseType, false, false);
+                            $caseType.append(option);
+                        });
+                    },
+                });
+
+                $caseType.on('change', function () {
+                    var valueNoSpaces = $(this).val();
+                    var $formGroup = $(this).closest('.form-group');
+                    var $help = $('#new-case-type-help');
+                    var $error = $('#new-case-type-error');
+                    var $createBtn = $('#case-type-create-btn');
+
+                    // Reset error states
+                    $formGroup.removeClass('has-error');
+                    $help.show();
+                    $error.hide();
+                    $createBtn.prop('disabled', false);
+
+                    if (!valueNoSpaces) {
+                        $createBtn.prop('disabled', true);
+                        return;
+                    }
+
+                    function displayError(errorMsg) {
+                        $formGroup.addClass('has-error');
+                        $error.text(errorMsg);
+                        $error.show();
+                        $help.hide();
+                        $createBtn.prop('disabled', true);
+                    }
+
+                    if (module.valueIncludeInvalidCharacters(valueNoSpaces)) {
+                        displayError(module.invalidCharErrorMsg);
+                        return;
+                    }
+
+                    if (module.valueIsReservedWord(valueNoSpaces)) {
+                        displayError(module.reservedWordErrorMsg);
+                        return;
+                    }
+
+                    if (self.deprecatedCaseTypes().includes(valueNoSpaces)) {
+                        displayError(module.deprecatedCaseTypeErrorMsg);
+                        return;
+                    }
+                });
+            }
+        });
+
+        // Handle "Create Application" button click
+        $('#case-type-create-btn').on('click', function () {
+            google.track.event("Added Case List Menu");
+            kissmetrix.track.event("Added Case List Menu");
+
+            var $caseTypeInput = $('#new-case-type-dropdown');
+            var value = $caseTypeInput.val();
+
+            var $form = $('#new-module-form');
+            // This input element lives in appnav_menu.html, so we need to update it here
+            let newCaseTypeHiddenInput = $('#new-case-type');
+            newCaseTypeHiddenInput.val(value);
+
+            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+            $('#define-case-type-modal').modal('hide');
+            $form.submit();
+        });
+
+        // Handle "Go Back" button click
+        $('#case-type-go-back-btn').on('click', function () {
+            $('#define-case-type-modal').modal('hide');
+            $('#add-new-module-modal').modal('show');
+        });
+
+        // Clear selection when modal is hidden
+        $('#define-case-type-modal').on('hidden.bs.modal', function () {
+            $('#new-case-type-dropdown').val(null).trigger('change');
+        });
+
+        var hoverHelpTexts = {
+            survey: {
+                title: gettext("What is a Survey Menu?"),
+                content: gettext("Surveys are used to collect independent forms that do not need to be tracked over time. Common examples include satisfaction surveys or anonymous feedback forms."),
+            },
+            case: {
+                title: gettext("What is a Case List?"),
+                content: gettext("Case Lists are used to register and track related data (cases) over time. This data can be referenced in other forms and by other cases. Common examples include maternal health, student attendance, or crop monitoring."),
+            },
+        };
+
+        $('.new-module-option').each(function () {
+            var type = $(this).data('type');
+            if (hoverHelpTexts[type]) {
+                $(this).popover({
+                    title: hoverHelpTexts[type].title,
+                    content: hoverHelpTexts[type].content,
+                    trigger: 'hover',
+                    placement: 'bottom',
+                    container: 'body',
+                    html: true,
+                });
+            }
+        });
+
     };
 
     return module;

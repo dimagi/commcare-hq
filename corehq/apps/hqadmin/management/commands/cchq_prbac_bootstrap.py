@@ -243,11 +243,12 @@ class Command(BaseCommand):
 
     BOOTSTRAP_PLANS = [
         Role(slug='paused_plan_v0', name='Paused Plan', description=''),
-        Role(slug='community_plan_v0', name='Community Plan', description=''),
-        Role(slug='community_plan_v1', name='Community Plan', description=''),
-        Role(slug='community_plan_v2', name='Community Plan', description=''),
+        Role(slug='community_plan_v0', name='Free Edition', description=''),
+        Role(slug='community_plan_v1', name='Free Edition', description=''),
+        Role(slug='community_plan_v2', name='Free Edition', description=''),
         Role(slug='standard_plan_v0', name='Standard Plan', description=''),
         Role(slug='standard_plan_v1', name='Standard Plan', description=''),
+        Role(slug='standard_plan_v2', name='Standard Plan', description=''),
         Role(slug='pro_plan_v0', name='Pro Plan', description=''),
         Role(slug='pro_plan_v1', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
@@ -270,6 +271,7 @@ class Command(BaseCommand):
         'community_plan_v2': features.community_v2,
         'standard_plan_v0': features.standard_v0,
         'standard_plan_v1': features.standard_v1,
+        'standard_plan_v2': features.standard_v2,
         'pro_plan_v0': features.pro_v0,
         'pro_plan_v1': features.pro_v1,
         'advanced_plan_v0': features.advanced_v0,

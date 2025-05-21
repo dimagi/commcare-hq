@@ -72,7 +72,7 @@ from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_multiselect, waf_allow
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
@@ -192,7 +192,6 @@ class EditCommCareUserView(BaseEditUserView):
         else:
             return "users/edit_commcare_user.html"
 
-    @use_multiselect
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)

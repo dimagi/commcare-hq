@@ -996,10 +996,6 @@ class MultipleSelectionForm(forms.Form):
             {% crispy users_per_location_form %}
         </form>
 
-        @use_multiselect
-        def dispatch(self, request, *args, **kwargs):
-            return super(MyView, self).dispatch(request, *args, **kwargs)
-
         # javascript
         import multiselectUtils from "hqwebapp/js/multiselect_utils";
         $(function () {

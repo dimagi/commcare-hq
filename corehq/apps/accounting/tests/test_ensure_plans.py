@@ -26,7 +26,7 @@ class TestEnsurePlans(BaseAccountingTest):
     def test_ensure_plans(self):
         self._test_plan_versions_ensured(BOOTSTRAP_CONFIG_TESTING)
         self._test_plan_versions_ensured({
-            (SoftwarePlanEdition.COMMUNITY, False, False, False): {
+            (SoftwarePlanEdition.FREE, False, False, False): {
                 'role': 'community_plan_v1',
                 'product_rate_monthly_fee': Decimal('0.00'),
                 'feature_rates': {

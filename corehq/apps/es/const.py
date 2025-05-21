@@ -22,6 +22,12 @@ INDEX_CONF_STANDARD = {
     "index.max_result_window": SIZE_LIMIT,
 }
 
+INDEX_SLOWLOG_CONF = {
+    "index.search.slowlog.threshold.query.warn": "10s",
+    "index.search.slowlog.threshold.query.info": "5s",
+    "index.search.slowlog.threshold.query.debug": "2s",
+    "index.search.slowlog.threshold.query.trace": "500ms",
+}
 
 HQ_APPS_INDEX_CANONICAL_NAME = "apps"
 HQ_APPS_INDEX_NAME = "apps-20230524"

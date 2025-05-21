@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ import baseAce from "hqwebapp/js/base_ace";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import expressionModel from "userreports/js/expression_evaluator";
+-import "hqwebapp/js/bootstrap3/widgets";
++import "hqwebapp/js/bootstrap5/widgets";
+ import "hqwebapp/js/components/select_toggle";
+ 
+ $(function () {

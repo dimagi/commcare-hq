@@ -1,0 +1,33 @@
+{% extends "data_cleaning/modals/base_confirm.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block modal_title %}
+  {% trans "Clear all edits?" %}
+{% endblock %}
+
+{% block modal_continue_attrs %}
+  hx-post="{{ request.path_info }}{% querystring %}"
+  hq-hx-action="clear_all_changes"
+  hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
+  hx-swap="outerHTML"
+  hq-hx-loading="{{ table.loading_indicator_id }}"
+  hx-disable-elt="this"
+{% endblock %}
+
+{% block modal_continue_text %}
+  <i class="fa-solid fa-close"></i>
+  {% trans "Clear All Edits" %}
+{% endblock %}
+
+{% block modal_body %}
+  <div
+    hx-trigger="updateClearSummaryMessage from:window"
+    hx-swap="innerHTML"
+    hx-post="{% url "bulk_edit_changes_summary" table.session.domain table.session.session_id %}"
+    hq-hx-action="clear_changes_summary"
+  >
+    {% include "data_cleaning/summary/clear_changes.html" %}
+    {% include "data_cleaning/partials/loading_indicator.html" %}
+  </div>
+{% endblock %}

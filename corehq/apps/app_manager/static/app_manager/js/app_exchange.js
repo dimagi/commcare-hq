@@ -1,43 +1,36 @@
-"use strict";
-hqDefine("app_manager/js/app_exchange", [
-    "jquery",
-    "knockout",
-    'analytix/js/kissmetrix',
-    "hqwebapp/js/bootstrap3/widgets",  // hqwebapp-select2 for versions
-    "commcarehq",
-], function (
-    $,
-    ko,
-    kissmetrics
-) {
-    var AppExchangeModel = function () {
-        var self = {};
+import "commcarehq";
+import $ from "jquery";
+import ko from "knockout";
+import kissmetrics from "analytix/js/kissmetrix";
+import "hqwebapp/js/bootstrap3/widgets";  // hqwebapp-select2 for versions
 
-        self.showVersions = ko.observable(false);
+var AppExchangeModel = function () {
+    var self = {};
 
-        self.versionButtonText = ko.computed(function () {
-            if (self.showVersions()) {
-                return gettext("Hide Past Versions");
-            }
-            return gettext("See Past Versions");
-        });
+    self.showVersions = ko.observable(false);
 
-        self.toggleVersions = function () {
-            self.showVersions(!self.showVersions());
-        };
+    self.versionButtonText = ko.computed(function () {
+        if (self.showVersions()) {
+            return gettext("Hide Past Versions");
+        }
+        return gettext("See Past Versions");
+    });
 
-        return self;
+    self.toggleVersions = function () {
+        self.showVersions(!self.showVersions());
     };
 
-    $(function () {
-        $("#hq-content").koApplyBindings(AppExchangeModel());
+    return self;
+};
 
-        $('.import-button').on('click', function () {
-            var $tile = $(this).closest(".well");
-            kissmetrics.track.event("COVID App Library: Imported application", {
-                app_id: $tile.find("[name='from_app_id']").val(),
-                app_name: $tile.find(".app-name").text(),
-            });
+$(function () {
+    $("#hq-content").koApplyBindings(AppExchangeModel());
+
+    $('.import-button').on('click', function () {
+        var $tile = $(this).closest(".well");
+        kissmetrics.track.event("COVID App Library: Imported application", {
+            app_id: $tile.find("[name='from_app_id']").val(),
+            app_name: $tile.find(".app-name").text(),
         });
     });
 });

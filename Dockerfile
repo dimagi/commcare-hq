@@ -3,7 +3,7 @@
 # This Dockerfile is built as the `dimagi/commcarehq_base` image, which
 # is used for running tests.
 
-FROM ghcr.io/astral-sh/uv:0.5.2-python3.9-bookworm-slim
+FROM ghcr.io/astral-sh/uv:0.7.2-python3.9-bookworm-slim
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \
@@ -11,7 +11,9 @@ ENV PYTHONUNBUFFERED=1 \
     PATH=/vendor/bin:$PATH \
     NODE_VERSION=20.11.1 \
     UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    UV_PROJECT=/vendor \
+    UV_PROJECT_ENVIRONMENT=/vendor
 # UV_COMPILE_BYTECODE: Compile bytecode during installation to improve module
 #   load performance. Also suppresses a couchdbkit syntax error that happens
 #   during bytecode compilation.
@@ -32,25 +34,23 @@ RUN apt-get update \
      git \
      google-chrome-stable \
      libmagic1 \
-     libpq-dev \
+     libpq5 \
      libxml2 \
      libxmlsec1 \
      libxmlsec1-openssl \
      make \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
-# build-essential allows uv to build uwsgi; increases image size by 240 MB
-# libpq-dev is for make-requirements-test.sh; increases image size by ~20 MB
-# libpq-dev can be replaced with libpq5 if pip-tools is replaced with uv in make-requirements-test.sh
+# build-essential allows uv to build dependencies; increases image size by 240 MB
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-COPY requirements/test-requirements.txt package.json /vendor/
+COPY pyproject.toml uv.lock package.json /vendor/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv venv --allow-existing /vendor \
-  && uv pip install --prefix=/vendor -r /vendor/test-requirements.txt
+  && uv sync --locked --group=test --no-dev --no-install-project
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'

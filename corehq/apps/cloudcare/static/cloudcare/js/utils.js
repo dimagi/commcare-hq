@@ -154,11 +154,8 @@ hqDefine('cloudcare/js/utils', [
                     const progressView = new ProgressBar({
                         progressMessage: gettext("Loading..."),
                     });
-                    if (!FormplayerFrontend.regions) {
-                        FormplayerFrontend.regions = getRegionContainer();
-                    }
                     $('#breadcrumb-region').css('z-index', '0');
-                    const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
+                    const loadingElement = FormplayerFrontend.getRegion('loadingProgress');
                     loadingElement.show(progressView);
                     let currentProgress = 10;
                     progressView.progressEl.find('.progress').css("height", "12px");
@@ -246,11 +243,11 @@ hqDefine('cloudcare/js/utils', [
             $('#breadcrumb-region').css('z-index', '');
             clearInterval(sessionStorage.progressIncrementInterval);
             import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
-                const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
+                const progressView = FormplayerFrontend.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
                     setTimeout(function () {
-                        FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                        FormplayerFrontend.getRegion('loadingProgress').empty();
                     }, 250);
                 }
             });
@@ -375,7 +372,7 @@ hqDefine('cloudcare/js/utils', [
         if (selectedDate) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
         }
-        let picker = hqTempusDominus.createDatePicker($el.get(0), options);
+        let picker = hqTempusDominus.createDatePicker($el[0].parentNode, options);
 
         $el.attr("placeholder", dateFormat);
         $el.attr("pattern", "[0-9\\-\\/]+");
@@ -406,7 +403,7 @@ hqDefine('cloudcare/js/utils', [
         if (date.isValid()) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date);
         }
-        return hqTempusDominus.createTimePicker($el.get(0), options);
+        return hqTempusDominus.createTimePicker($el[0].parentNode, options);
     };
 
     var smallScreenIsEnabled = function () {

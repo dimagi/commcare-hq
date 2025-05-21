@@ -1542,7 +1542,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def _submit_history_link(self, owner_id, value):
         """
-        returns a cell that is linked to the submit history report
+        returns a cell that is linked to the submission history report
         """
         base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
         if self.view_by_groups:

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP, const
+from corehq.apps.es import canonical_name_adapter_map, const
 from corehq.apps.es.client import manager
 from corehq.apps.es.transient_util import doc_adapter_from_cname
 
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             return
 
         inconsistent_doc_count = []
-        for index_cname in CANONICAL_NAME_ADAPTER_MAP.keys():
+        for index_cname in canonical_name_adapter_map().keys():
             if not self.is_doc_count_difference_reasonable(index_cname):
                 inconsistent_doc_count.append(index_cname)
 
@@ -107,7 +107,7 @@ class Command(BaseCommand):
         """
         missing_primary = []
         missing_secondary = []
-        for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
+        for cname in canonical_name_adapter_map().keys():
             primary_adapter, secondary_adapter = cls.get_both_adapters_for_cname(cname)
             if not manager.index_exists(primary_adapter.index_name):
                 missing_primary.append(primary_adapter.index_name)

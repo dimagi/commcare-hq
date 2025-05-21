@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ import "hqwebapp/js/base_ace";
+ 
+ $(function () {
+-    $('[data-toggle="popover"]').popover();
++    $('[data-toggle="popover"]').popover();  /* todo B5: js-popover */
+     $(".submit-dropdown-form").click(function (e) {
+         e.preventDefault();
+         var $form = $("#dropdown-form");

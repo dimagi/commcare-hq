@@ -11,7 +11,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_released_app,
 )
-from corehq.apps.app_manager.exceptions import FormNotFoundException
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException, FormNotFoundException
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
@@ -584,7 +584,7 @@ class SurveyContent(Content):
                 app = get_latest_released_app(domain, self.app_id)
             form = app.get_form(self.form_unique_id)
             module = form.get_module()
-        except (Http404, FormNotFoundException):
+        except (Http404, FormNotFoundException, AppInDifferentDomainException):
             return None, None, None, None
 
         return app, module, form, form_requires_input(form)

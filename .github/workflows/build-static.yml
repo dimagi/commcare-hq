@@ -12,7 +12,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -22,10 +22,14 @@ jobs:
           node-version: '20'
           cache: 'yarn'
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.7.2'
+
       - name: Install Python Dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements/dev-requirements.txt
+          uv sync --locked --compile-bytecode --no-progress
 
       - name: Install JavaScript Dependencies
         run: yarn install --frozen-lockfile
@@ -36,6 +40,7 @@ jobs:
 
       - name: Build Static Files
         run: |
+          source .venv/bin/activate
           echo "Starting resource_static..."
           ./manage.py resource_static
           echo "Starting collectstatic..."
@@ -44,8 +49,6 @@ jobs:
           ./manage.py fix_less_imports_collectstatic
           echo "Starting compilejsi18n..."
           ./manage.py compilejsi18n
-          echo "Starting build_requirejs..."
-          ./manage.py build_requirejs
           echo "Starting generate_webpack_settings..."
           ./manage.py generate_webpack_settings
           echo "Starting yarn build..."

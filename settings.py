@@ -11,13 +11,9 @@ import settingshelper as helper
 
 DEBUG = True
 
-# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
-# this to select various versions of Vellum source on the form designer page.
-# Acceptable values:
-# None - production mode
-# "dev" - use raw vellum source (submodules/formdesigner/src)
-# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
-VELLUM_DEBUG = None
+# Clone http://github.com/dimagi/Vellum into submodules/formdesigner and set
+# this to use raw Vellum source (submodules/formdesigner/src) on the form designer page.
+VELLUM_DEBUG = False
 
 
 # For Single Sign On (SSO) Implementations
@@ -66,12 +62,15 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
+    ('ara', 'Arabic'),
     ('en', 'English'),
     ('es', 'Spanish'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
-    ('sw', 'Swahili'),
+    ('ita', 'Italian'),
     ('por', 'Portuguese'),
+    ('sw', 'Swahili'),
+    ('ukr', 'Ukrainian'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
@@ -148,6 +147,7 @@ MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
+    'corehq.apps.ip_access.middleware.IPAccessMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -168,6 +168,7 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
+    'corehq.apps.hqwebapp.utils.bootstrap.middleware.ThreadLocalCleanupMiddleware',
     'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
@@ -235,7 +236,6 @@ DEFAULT_APPS = (
     'django_tables2',
     'two_factor',
     'two_factor.plugins.phonenumber',
-    'ws4redis',
     'statici18n',
     'django_user_agents',
     'oauth2_provider',
@@ -244,6 +244,9 @@ DEFAULT_APPS = (
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
+
+MAXMIND_ACCOUNT_ID = ''
+MAXMIND_LICENSE_KEY = ''
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
@@ -279,6 +282,7 @@ HQ_APPS = (
     'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
+    'corehq.apps.ip_access',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
@@ -403,6 +407,8 @@ HQ_APPS = (
     'custom.hmhb',
 
     'custom.ccqa',
+
+    'custom.mgh_epic',
 
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
@@ -636,12 +642,6 @@ DEFAULT_REPEATER_WORKERS = 7
 # guardrail to prevent one repeater from hogging repeat_record_queue
 # workers and to ensure that repeaters are iterated fairly.
 MAX_REPEATER_WORKERS = 79
-
-# websockets config
-WEBSOCKET_URL = '/ws/'
-WS4REDIS_PREFIX = 'ws'
-WSGI_APPLICATION = 'ws4redis.django_runserver.application'
-WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
 
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
@@ -1023,6 +1023,9 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+EPIC_PRIVATE_KEY = None
+EPIC_CLIENT_ID = None
+
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
@@ -1294,7 +1297,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
-                'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
@@ -2035,6 +2037,10 @@ DOMAIN_MODULE_MAP = {
     'co-carecoordination-uat': 'custom.bha',
 
     'ccqa': 'custom.ccqa',
+
+    'epic-integration-test': 'custom.mgh_epic',
+    'sudcare-dev': 'custom.mgh_epic',
+    'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

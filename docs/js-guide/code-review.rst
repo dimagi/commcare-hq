@@ -38,7 +38,7 @@ Security
 --------
 
 - Use ``<%- ... %>`` in Underscore templates to HTML escape values.
-- Use ``DomPurify`` to HTML escape user input that will be displayed, but not in a template.
+- Use ``DOMPurify`` to HTML escape user input that will be displayed, but not in a template.
 
 Delays and Errors
 -----------------

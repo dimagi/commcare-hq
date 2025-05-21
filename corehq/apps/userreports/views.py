@@ -60,12 +60,6 @@ from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, FormES
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_multiselect,
-)
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils.html import safe_replace
@@ -127,7 +121,6 @@ from corehq.apps.userreports.models import (
     is_data_registry_report,
     report_config_id_is_static,
 )
-from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureMapReportForm,
@@ -150,7 +143,6 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     rebuild_indicators_in_place,
-    resume_building_indicators,
 )
 from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
@@ -268,16 +260,12 @@ class BaseUserConfigReportsView(BaseDomainView):
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
-    template_name = 'userreports/configurable_reports_home.html'
+    template_name = 'userreports/bootstrap3/configurable_reports_home.html'
     page_title = gettext_lazy("Reports Home")
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
-    template_name = 'userreports/edit_report_config.html'
-
-    @use_multiselect
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+    template_name = 'userreports/bootstrap3/edit_report_config.html'
 
     @property
     def report_id(self):
@@ -348,8 +336,6 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(HqPermissions.edit_reports))
     @cls_to_view_login_and_domain
-    @use_daterangepicker
-    @use_datatables
     def dispatch(self, request, *args, **kwargs):
         return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
 
@@ -406,7 +392,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
 
 
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/pricing.html"
+    template_name = "userreports/paywall/bootstrap3/pricing.html"
     urlname = 'report_builder_paywall_pricing'
     page_title = gettext_lazy('Pricing')
 
@@ -425,7 +411,7 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
 
 
 class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/activating_subscription.html"
+    template_name = "userreports/paywall/bootstrap3/activating_subscription.html"
     urlname = 'report_builder_paywall_activating_subscription'
 
     def post(self, request, domain, *args, **kwargs):
@@ -446,7 +432,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
-    template_name = 'userreports/reportbuilder/data_source_select.html'
+    template_name = 'userreports/reportbuilder/bootstrap3/data_source_select.html'
     page_title = gettext_lazy('Create Report')
     urlname = 'report_builder_select_source'
 
@@ -520,13 +506,10 @@ class EditReportInBuilder(View):
 class ConfigureReport(ReportBuilderView):
     urlname = 'configure_report'
     page_title = gettext_lazy("Configure Report")
-    template_name = "userreports/reportbuilder/configure_report.html"
+    template_name = "userreports/reportbuilder/bootstrap3/configure_report.html"
     report_title = '{}'
     existing_report = None
 
-    @use_jquery_ui
-    @use_datatables
-    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
             self.source_type = get_source_type_from_report_config(self.existing_report)
@@ -590,7 +573,7 @@ class ConfigureReport(ReportBuilderView):
         context.update(self.main_context)
         if report_id:
             context['report_id'] = report_id
-        return render(self.request, 'userreports/report_error.html', context)
+        return render(self.request, 'userreports/bootstrap3/report_error.html', context)
 
     @property
     def page_name(self):
@@ -922,7 +905,7 @@ def undelete_report(request, domain, report_id):
 
 class ImportConfigReportView(BaseUserConfigReportsView):
     page_title = gettext_lazy("Import Report")
-    template_name = "userreports/import_report.html"
+    template_name = "userreports/bootstrap3/import_report.html"
     urlname = 'import_configurable_report'
 
     @property
@@ -965,7 +948,7 @@ def report_source_json(request, domain, report_id):
 
 class ExpressionDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
-    template_name = 'userreports/expression_debugger.html'
+    template_name = 'userreports/bootstrap3/expression_debugger.html'
     page_title = gettext_lazy("Expression Debugger")
 
     @property
@@ -978,7 +961,7 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
-    template_name = 'userreports/data_source_debugger.html'
+    template_name = 'userreports/bootstrap3/data_source_debugger.html'
     page_title = gettext_lazy("Data Source Debugger")
 
     def dispatch(self, *args, **kwargs):
@@ -1113,7 +1096,7 @@ def evaluate_data_source(request, domain):
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
     urlname = 'create_configurable_data_source_from_app'
-    template_name = "userreports/data_source_from_app.html"
+    template_name = "userreports/bootstrap3/data_source_from_app.html"
     page_title = gettext_lazy("Create Data Source from Application")
 
     @property
@@ -1152,7 +1135,7 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
 
 
 class BaseEditDataSourceView(BaseUserConfigReportsView):
-    template_name = 'userreports/edit_data_source.html'
+    template_name = 'userreports/bootstrap3/edit_data_source.html'
 
     @property
     def page_context(self):
@@ -1204,12 +1187,20 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         try:
             if self.edit_form.is_valid():
                 config = self.edit_form.save(commit=True)
-                messages.success(request, _('Data source "{}" saved!').format(
+                message_list = [_('Data source "{}" saved.').format(
                     config.display_name
-                ))
-                messages.success(request, _(
-                    'This data source will be built / rebuilt automatically by CommCare HQ.'
-                ))
+                )]
+                if config.meta.build.awaiting:
+                    message_list.append(_(
+                        'This data source will be built / rebuilt automatically by CommCare HQ.'
+                    ))
+                else:
+                    message_list.append(_(
+                        'The data source configuration will be updated but CommCare HQ will not perform a rebuild '
+                        'for the changes made. Please initiate one manually '
+                        'if needed.'
+                    ))
+                messages.success(request, ' '.join(message_list))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
@@ -1267,8 +1258,6 @@ class EditDataSourceView(BaseEditDataSourceView):
         page_context = super().page_context
         adapter = get_indicator_adapter(self.config)
         page_context['data_source_table_exists'] = adapter.table_exists
-        if not self.config.is_deactivated:
-            page_context['data_source_rebuild_resumable'] = DataSourceResumeHelper(self.config).has_resume_info()
         return page_context
 
 
@@ -1331,9 +1320,8 @@ def undelete_data_source(request, domain, config_id):
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
-    response = _redirect_response_if_build_awaiting(request, domain, config)
-    if response:
-        return response
+    if config.meta.build.awaiting:
+        return _build_awaiting_redirect_response(request, domain, config_id)
 
     if not config.asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
         number_of_records = number_of_records_to_be_processed(datasource_configuration=config)
@@ -1350,7 +1338,7 @@ def rebuild_data_source(request, domain, config_id):
 
     messages.success(
         request,
-        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+        _('Table "{}" will be rebuilt. Data should start showing up soon').format(
             config.display_name
         )
     )
@@ -1362,21 +1350,20 @@ def rebuild_data_source(request, domain, config_id):
     ))
 
 
-def _redirect_response_if_build_awaiting(request, domain, config):
-    if config.meta.build.awaiting:
-        messages.error(
-            request,
-            _('Rebuilding is not available until CommCare HQ finishes building / rebuilding.')
-        )
-        return HttpResponseRedirect(reverse(
-            EditDataSourceView.urlname, args=[domain, config.get_id]
-        ))
+def _build_awaiting_redirect_response(request, domain, config_id):
+    messages.error(
+        request,
+        _('Rebuilding is not available until CommCare HQ finishes building / rebuilding.')
+    )
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config_id]
+    ))
 
 
 def _prep_data_source_for_rebuild(data_source_config, is_static):
     save_config = False
     if not is_static:
-        data_source_config.meta.build.awaiting = True
+        data_source_config.set_build_queued(reset_init_fin=False)
         save_config = True
     if data_source_config.is_deactivated:
         data_source_config.is_deactivated = False
@@ -1458,51 +1445,17 @@ def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
-def resume_building_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    if not is_static and config.meta.build.finished:
-        messages.warning(
-            request,
-            _('Table "{}" has already finished building. Rebuild table to start over.').format(
-                config.display_name
-            )
-        )
-    elif not DataSourceResumeHelper(config).has_resume_info():
-        messages.warning(
-            request,
-            _('Table "{}" did not finish building but resume information is not available. '
-              'Unfortunately, this means you need to rebuild the table.').format(
-                config.display_name
-            )
-        )
-    else:
-        if not is_static:
-            config.meta.build.awaiting = True
-            config.save()
-        messages.success(
-            request,
-            _('Resuming rebuilding table "{}".').format(config.display_name)
-        )
-        resume_building_indicators.delay(config_id, request.user.username)
-    return HttpResponseRedirect(reverse(
-        EditDataSourceView.urlname, args=[domain, config._id]
-    ))
-
-
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@require_POST
 def build_data_source_in_place(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
-    response = _redirect_response_if_build_awaiting(request, domain, config)
-    if response:
-        return response
+    if config.meta.build.awaiting:
+        return _build_awaiting_redirect_response(request, domain, config_id)
 
     _prep_data_source_for_rebuild(config, is_static)
 
     messages.success(
         request,
-        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+        _('Table "{}" will be rebuilt. Data should start showing up soon').format(
             config.display_name
         )
     )
@@ -1535,7 +1488,7 @@ def data_source_json(request, domain, config_id):
 
 class PreviewDataSourceView(BaseUserConfigReportsView):
     urlname = 'preview_configurable_data_source'
-    template_name = "userreports/preview_data.html"
+    template_name = "userreports/bootstrap3/preview_data.html"
     page_title = gettext_lazy("Preview Data Source")
 
     @method_decorator(swallow_programming_errors)
@@ -1831,7 +1784,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 class DataSourceSummaryView(BaseUserConfigReportsView):
     urlname = 'summary_configurable_data_source'
-    template_name = "userreports/summary_data_source.html"
+    template_name = "userreports/bootstrap3/summary_data_source.html"
     page_title = gettext_lazy("Data Source Summary")
 
     @property
@@ -1927,7 +1880,7 @@ class NamedExpressionHighlighter:
 class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
     page_title = _("UCR Expressions")
     urlname = "ucr_expressions"
-    template_name = "userreports/ucr_expressions.html"
+    template_name = "userreports/bootstrap3/ucr_expressions.html"
 
     @property
     def base_query(self):
@@ -2012,7 +1965,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
 class UCRExpressionEditView(BaseProjectDataView):
     page_title = _("Edit UCR Expression")
     urlname = "edit_ucr_expression"
-    template_name = "userreports/ucr_expression.html"
+    template_name = "userreports/bootstrap3/ucr_expression.html"
 
     @property
     def expression_id(self):

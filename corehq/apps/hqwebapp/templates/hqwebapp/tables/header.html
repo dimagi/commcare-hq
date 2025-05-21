@@ -14,7 +14,7 @@
                 class="link"
                 hx-get="{{ request.path_info }}{% querystring without table.prefixed_order_by_field %}"
                 hx-replace-url="{% querystring without table.prefixed_order_by_field %}"
-                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
                 hx-swap="outerHTML"
                 {% if table.loading_indicator_id %}
                   hq-hx-loading="{{ table.loading_indicator_id }}"
@@ -31,7 +31,7 @@
                 class="link"
                 hx-get="{{ request.path_info }}{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
                 hx-replace-url="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
-                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
                 hx-swap="outerHTML"
                 {% if table.loading_indicator_id %}
                   hq-hx-loading="{{ table.loading_indicator_id }}"

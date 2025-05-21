@@ -145,7 +145,9 @@ _ADD_ONS = {
         name=_("Register from case list"),
         description=_("Minimize duplicates by making registration forms available directly from the case list "
         "on the mobile device. Availabe in menu settings."),
-        help_link="https://confluence.dimagi.com/pages/viewpage.action?pageId=30605985",
+        help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+                   "2143951603/Case+List+and+Case+Detail+Configuration"
+                   "#Minimize-Duplicates%3A-Registration-From-the-Case-List"),
         used_in_module=lambda m: m.case_list_form.form_id,
     ),
     "subcases": AddOn(

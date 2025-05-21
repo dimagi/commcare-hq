@@ -1,3 +1,6 @@
+from django.conf import settings
+from memoized import memoized
+
 from . import (  # noqa: F401
     # "utility" modules
     aggregations,
@@ -43,14 +46,22 @@ sms_adapter = sms.sms_adapter
 user_adapter = users.user_adapter
 case_search_bha_adapter = case_search_bha.case_search_bha_adapter
 
-CANONICAL_NAME_ADAPTER_MAP = {
-    app_adapter.canonical_name: app_adapter,
-    case_adapter.canonical_name: case_adapter,
-    case_search_bha_adapter.canonical_name: case_search_bha_adapter,
-    case_search_adapter.canonical_name: case_search_adapter,
-    domain_adapter.canonical_name: domain_adapter,
-    form_adapter.canonical_name: form_adapter,
-    group_adapter.canonical_name: group_adapter,
-    sms_adapter.canonical_name: sms_adapter,
-    user_adapter.canonical_name: user_adapter,
-}
+
+@memoized
+def canonical_name_adapter_map():
+    """
+    Due to custom indices created in SaaS environments, we need this to by dynamic.
+    """
+    adapter_map = {
+        app_adapter.canonical_name: app_adapter,
+        case_adapter.canonical_name: case_adapter,
+        case_search_adapter.canonical_name: case_search_adapter,
+        domain_adapter.canonical_name: domain_adapter,
+        form_adapter.canonical_name: form_adapter,
+        group_adapter.canonical_name: group_adapter,
+        sms_adapter.canonical_name: sms_adapter,
+        user_adapter.canonical_name: user_adapter,
+    }
+    if settings.IS_SAAS_ENVIRONMENT:
+        adapter_map[case_search_bha_adapter.canonical_name] = case_search_bha_adapter
+    return adapter_map

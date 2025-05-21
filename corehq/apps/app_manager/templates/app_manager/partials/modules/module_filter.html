@@ -14,7 +14,7 @@
               data-bind="xpathValidator: {
                     text: {% if ko_value %}{{ ko_value }}{% else %}xpath{% endif %},
                     allowCaseHashtags: false,
-                    errorHtml: $('#module-filter-xpath-error-html').html()
+                    errorHtml: document.getElementById('module-filter-xpath-error-html').innerHTML,
                 }"></textarea>
       <script type="text/html" id="module-filter-xpath-error-html" class="hide">
         There is something wrong with the logic in the filter.

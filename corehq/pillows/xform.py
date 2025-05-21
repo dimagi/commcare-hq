@@ -1,4 +1,4 @@
-import collections
+from collections.abc import MutableMapping
 
 from dateutil import parser
 from django.conf import settings
@@ -38,7 +38,7 @@ def flatten(d, parent_key='', delimiter='/'):
         if k in RESERVED_WORDS:
             continue
         new_key = parent_key + delimiter + k if parent_key else k
-        if isinstance(v, collections.MutableMapping):
+        if isinstance(v, MutableMapping):
             items.extend(list(flatten(v, new_key, delimiter).items()))
         elif not isinstance(v, list):
             items.append((new_key, v))

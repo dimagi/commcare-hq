@@ -8,7 +8,7 @@
      'underscore',
      'analytix/js/google',
 -    'bootstrap',  // for popover constructor override
-+    'es6!hqwebapp/js/bootstrap5_loader',
++    'bootstrap5',
      'jquery.cookie/jquery.cookie',  // $.cookie
  ], function (
      $,

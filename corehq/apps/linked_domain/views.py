@@ -30,7 +30,6 @@ from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.fixtures.models import LookupTable
-from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.const import (
@@ -270,10 +269,6 @@ class DomainLinkView(BaseProjectSettingsView):
     urlname = 'domain_links'
     page_title = gettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
-
-    @use_multiselect
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):

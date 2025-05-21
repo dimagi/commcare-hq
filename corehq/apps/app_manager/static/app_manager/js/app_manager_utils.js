@@ -1,10 +1,9 @@
-'use strict';
 hqDefine('app_manager/js/app_manager_utils', [
     'jquery',
     'underscore',
 ], function (
     $,
-    _
+    _,
 ) {
     var getBitlyToPhoneticDict = function () {
         var natoPhonetic = {

@@ -453,6 +453,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # For domains that have been migrated to a different environment
     redirect_url = StringProperty()
 
+    # name that users see for connect messaging channels tied to this domain
+    connect_messaging_channel_name = StringProperty()
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
@@ -781,10 +784,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             'domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True
         )
 
-    def delete(self, leave_tombstone=False):
-        if not leave_tombstone and not settings.UNIT_TESTING:
-            raise ValueError(
-                'Cannot delete domain without leaving a tombstone except during testing')
+    def delete(self, *, leave_tombstone):
+        # The default vaule of leave_tombstone is set to False for tests.
+        # This can be temporarily undone with @suspend(domain_tombstones_patch)
         self._pre_delete()
         if leave_tombstone:
             domain = self.get(self._id)

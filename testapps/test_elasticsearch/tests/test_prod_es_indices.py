@@ -1,12 +1,14 @@
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
+from corehq.apps.es import canonical_name_adapter_map
 from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.utils import get_all_expected_es_indices
 
 
 @es_test
+@override_settings(IS_SAAS_ENVIRONMENT=True)
 class ProdIndexManagementTest(SimpleTestCase):
 
     maxDiff = None  # show the entire diff for test failures
@@ -18,6 +20,8 @@ class ProdIndexManagementTest(SimpleTestCase):
         if not settings.PILLOWTOPS:
             # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
             settings.PILLOWTOPS = settings._PILLOWTOPS
+        canonical_name_adapter_map.reset_cache()
+        cls.addClassCleanup(canonical_name_adapter_map.reset_cache)
 
     @classmethod
     def tearDownClass(cls):

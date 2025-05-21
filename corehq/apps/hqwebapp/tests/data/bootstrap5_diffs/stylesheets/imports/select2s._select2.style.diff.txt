@@ -8,39 +8,54 @@
      margin-left: 10px;
      margin-bottom: 3px;
    }
-@@ -14,74 +15,186 @@
+@@ -14,74 +15,185 @@
  }
  
  // Static width for select2 widgets, which otherwise grow too large on form view's case management tab
 -.case-config-select2s(@width) {
 -    .select2-container {
 -        width: @width;
+-    }
 +@mixin case-config-select2s($width) {
 +  .select2-container {
 +    width: $width;
 +  }
-+
+ 
+-    // This needs a static width so that text-overflow: ellipsis will work in Firefox.
+-    // Unusually specific selector to override select2's width: auto rule.
+-    > .select2-choice > .select2-chosen {
+-        width: @width - 35px;
+-    }
 +  // This needs a static width so that text-overflow: ellipsis will work in Firefox.
 +  // Unusually specific selector to override select2's width: auto rule.
 +  > .select2-choice > .select2-chosen {
 +    width: $width - 35px;
 +  }
-+}
-+
+ }
+ 
+-.property-descriptions(@width) {
+-    width: @width;
+-    white-space: nowrap;
+-    overflow: hidden;
+-    text-overflow: ellipsis;
+-    display: inline-block;
 +@mixin property-descriptions($width) {
 +  width: $width;
 +  white-space: nowrap;
 +  overflow: hidden;
 +  text-overflow: ellipsis;
 +  display: inline-block;
-+}
-+
+ }
+ 
+-#case-config-ko, #usercase-config-ko {
+-    @select2Width: 210px;
 +#case-config-ko,
 +#usercase-config-ko {
 +  $select2Width: 210px;
-+
+ 
+-    .case-config-select2s(@select2Width);
 +  @include case-config-select2s($select2Width);
-+
+ 
 +  .property-description {
 +    @include property-descriptions($select2Width);
 +  }
@@ -48,33 +63,10 @@
 +  .wide-select2s {
 +    $wideWidth: $select2Width * 1.5;
 +    @include case-config-select2s($wideWidth);
-+    .property-description {
+     .property-description {
+-      .property-descriptions(@select2Width);
 +      @include property-descriptions($wideWidth);
      }
--
--    // This needs a static width so that text-overflow: ellipsis will work in Firefox.
--    // Unusually specific selector to override select2's width: auto rule.
--    > .select2-choice > .select2-chosen {
--        width: @width - 35px;
--    }
--}
--
--.property-descriptions(@width) {
--    width: @width;
--    white-space: nowrap;
--    overflow: hidden;
--    text-overflow: ellipsis;
--    display: inline-block;
--}
--
--#case-config-ko, #usercase-config-ko {
--    @select2Width: 210px;
--
--    .case-config-select2s(@select2Width);
--
--    .property-description {
--      .property-descriptions(@select2Width);
--    }
 -
 -    .wide-select2s {
 -      @wideWidth: @select2Width * 1.5;
@@ -93,28 +85,45 @@
 +
 +  .select2-search-field {
      width: 100% !important;
--
++  }
+ 
 -    .select2-selection.select2-selection--single {
 -        height: @input-height-base;
-+  }
-+
+-    }
 +  .select2-input {
 +    width: 100% !important;
 +  }
 +}
-+
+ 
+-    .select2-selection.select2-selection--multiple {
+-        min-height: @input-height-base;
+-    }
+-
+-    .select2-search-field {
+-        width: 100% !important;
+-    }
+-
+-    .select2-input {
+-        width: 100% !important;
+-    }
+-
+-    textarea.select2-search__field {    // Placeholder for multi-select
+-        line-height: 21px;
+-    }
 +.select2-search__field::placeholder {
 +  font-size: $font-size-base;
 +  font-family: $font-family-base;
-+}
-+
-+.select2-container.select2-container-active > .select2-choice {
+ }
+ 
+ .select2-container.select2-container-active > .select2-choice {
+-  .box-shadow(0 0 10px @cc-brand-mid);
 +  box-shadow: 0 0 10px $cc-brand-mid;
-+}
-+
-+.select2-selection__placeholder {
+ }
+ 
+ .select2-selection__placeholder {
+-  color: @gray-base !important;
 +  color: $gray-base !important;
-+}
+ }
 +
 +.select2-container--default .select2-selection--single,
 +.select2-container--default .select2-selection--multiple {
@@ -154,7 +163,7 @@
 +
 +.select2-container--default.is-invalid,
 +.select2-container--default.is-valid {
-+  .select2-selection__rendered {
++  .select2-selection--single .select2-selection__rendered {
 +    padding-right: 66px !important;
 +  }
 +  .select2-selection--single::before {
@@ -177,32 +186,7 @@
 +    .select2-selection--single,
 +    .select2-selection--multiple {
 +      outline: 0;
-     }
--
--    .select2-selection.select2-selection--multiple {
--        min-height: @input-height-base;
--    }
--
--    .select2-search-field {
--        width: 100% !important;
--    }
--
--    .select2-input {
--        width: 100% !important;
--    }
--
--    textarea.select2-search__field {    // Placeholder for multi-select
--        line-height: 21px;
--    }
--}
--
--.select2-container.select2-container-active > .select2-choice {
--  .box-shadow(0 0 10px @cc-brand-mid);
--}
--
--.select2-selection__placeholder {
--  color: @gray-base !important;
--}
++    }
 +  }
 +}
 +
@@ -249,8 +233,7 @@
 +  }
 +}
 +
-+.select2-container--default.select2-container--disabled
-+  .select2-selection--single {
++.select2-container--default.select2-container--disabled .select2-selection--single {
 +  border-color: $input-disabled-bg !important;
 +  background-color: $input-disabled-bg !important;
 +}

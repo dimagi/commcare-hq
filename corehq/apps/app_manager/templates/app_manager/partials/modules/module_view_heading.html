@@ -18,7 +18,7 @@
     {% elif module.is_surveys %}
       {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' disallow_edit=disallow_edit %}
     {% else %}
-      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' disallow_edit=disallow_edit %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-solid fa-list-check' disallow_edit=disallow_edit %}
     {% endif %}
   {% endwith %}
 </div>

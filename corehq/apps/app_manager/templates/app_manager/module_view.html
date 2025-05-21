@@ -7,6 +7,8 @@
 
 {% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Menu Settings' %}{% endblock %}
 
+{% js_entry_b3 'app_manager/js/modules/module_view' %}
+
 {% block stylesheets %}{{ block.super }}
   <style>
     /* Prevent help icons from disturbing horizontal alignment of table headers */
@@ -14,44 +16,6 @@
       position: absolute;
     }
   </style>
-{% endblock %}
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/detail_tab_nodeset.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
-  {% endcompress %}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/modules/module_view.js' %}"></script>
-    <script src="{% static 'app_manager/js/modules/case_list_setting.js' %}"></script>
-  {% endcompress %}
-  {% include "app_manager/partials/xpathValidator.html" %}
-{% endblock %}
-{% block js-inline %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'hqmedia/js/uploaders.js' %}"></script>
-    <script src="{% static 'hqmedia/js/media_reference_models.js' %}"></script>
-    <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
-    <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-    <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/case_detail_print.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/case_claim.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/case_list_callout.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/utils.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/column.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/screen.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/sort_rows.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/filter.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/parent_select.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/fixture_select.js' %}"></script>
-    <script src="{% static 'app_manager/js/details/screen_config.js' %}"></script>
-    <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
-  {% endcompress %}
-
-  {% include 'hqwebapp/partials/bootstrap3/key_value_mapping.html' %}
-  {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
-  {% include 'app_manager/partials/modules/style_configuration_modal.html' %}
 {% endblock %}
 
 {% block pre_form_content %}
@@ -65,6 +29,7 @@
   {% initial_page_data 'js_options' js_options %}
   {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
   {% initial_page_data 'case_list_form_options' case_list_form_options %}
+  {% initial_page_data 'case_search_enabled' js_options.is_search_enabled %}
   {% initial_page_data 'form_endpoint_options' form_endpoint_options %}
   {% initial_page_data 'case_list_form_not_allowed_reasons' case_list_form_not_allowed_reasons %}
   {% initial_page_data 'case_type' module.case_type %}
@@ -189,9 +154,13 @@
         {% endif %}
     </div>
   </script>
+
+  {% include 'hqwebapp/partials/bootstrap3/key_value_mapping.html' %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
+  {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
+  {% include 'app_manager/partials/modules/style_configuration_modal.html' %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
   {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}

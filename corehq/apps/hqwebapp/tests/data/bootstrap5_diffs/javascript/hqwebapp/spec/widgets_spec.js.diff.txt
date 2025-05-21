@@ -1,11 +1,8 @@
 --- 
 +++ 
-@@ -1,6 +1,6 @@
- /* eslint-env mocha */
--hqDefine("hqwebapp/spec/bootstrap3/widgets_spec", [
--    'hqwebapp/js/bootstrap3/widgets',
-+hqDefine("hqwebapp/spec/bootstrap5/widgets_spec", [
-+    'hqwebapp/js/bootstrap5/widgets',
- ], function (
-     widgets,
- ) {
+@@ -1,4 +1,4 @@
+-import widgets from "hqwebapp/js/bootstrap3/widgets";
++import widgets from "hqwebapp/js/bootstrap5/widgets";
+ 
+ describe('widgets', function () {
+     describe('parseEmail', function () {

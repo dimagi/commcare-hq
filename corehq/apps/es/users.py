@@ -53,6 +53,7 @@ class UserES(HQESQuery):
             location,
             login_as_user,
             last_logged_in,
+            last_modified,
             analytics_enabled,
             is_practice_user,
             role_id,
@@ -192,6 +193,10 @@ def last_logged_in(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('last_login', gt, gte, lt, lte)
 
 
+def last_modified(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('last_modified', gt, gte, lt, lte)
+
+
 def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
 
@@ -241,13 +246,33 @@ def login_as_user(value):
     return _user_data('login_as_user', filters.term('user_data_es.value', value))
 
 
+def _missing_user_data_property(property_name):
+    """
+    A user_data property doesn't exist.
+    """
+    return filters.NOT(queries.nested(
+        'user_data_es',
+        filters.term(field='user_data_es.key', value=property_name),
+    ))
+
+
+def _empty_user_data_property(property_name):
+    """
+    A user_data property exists but has an empty string value.
+    """
+    return _user_data(
+        property_name,
+        filters.NOT(
+            filters.wildcard(field='user_data_es.value', value='*')
+        )
+    )
+
+
 def missing_or_empty_user_data_property(property_name):
     """
     A user_data property doesn't exist, or does exist but has an empty string value.
     """
-    missing_property = filters.NOT(queries.nested(
-        'user_data_es',
-        filters.term(field='user_data_es.key', value=property_name),
-    ))
-    empty_value = _user_data(property_name, filters.term('user_data_es.value', ''))
-    return filters.OR(missing_property, empty_value)
+    return filters.OR(
+        _missing_user_data_property(property_name),
+        _empty_user_data_property(property_name),
+    )

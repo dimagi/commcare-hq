@@ -11,7 +11,7 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
-    (SoftwarePlanEdition.COMMUNITY, False, False): {
+    (SoftwarePlanEdition.FREE, False, False): {
         'role': 'community_plan_v2',
         'product_rate_monthly_fee': Decimal('0.00'),
         'feature_rates': {

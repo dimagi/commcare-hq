@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     'knockout',
     'underscore',
     'analytix/js/google',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'jquery.cookie/jquery.cookie',  // $.cookie
 ], function (
     $,

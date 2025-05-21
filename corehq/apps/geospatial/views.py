@@ -38,7 +38,6 @@ from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
@@ -231,7 +230,7 @@ class BaseConfigView(BaseGeospatialView):
 
 class GeospatialConfigPage(BaseConfigView):
     urlname = "geospatial_settings"
-    template_name = "geospatial/settings.html"
+    template_name = "geospatial/bootstrap3/settings.html"
 
     page_name = _("Configuration Settings")
 
@@ -260,7 +259,7 @@ class GeospatialConfigPage(BaseConfigView):
 
 class GPSCaptureView(BaseGeospatialView):
     urlname = 'gps_capture'
-    template_name = 'geospatial/gps_capture_view.html'
+    template_name = 'geospatial/bootstrap3/gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
     section_name = _("Data")
@@ -273,8 +272,6 @@ class GPSCaptureView(BaseGeospatialView):
         'corehq.apps.geospatial.filters.GPSDataFilter',
     ]
 
-    @use_datatables
-    @use_jquery_ui
     @method_decorator(toggles.MICROPLANNING.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(GPSCaptureView, self).dispatch(*args, **kwargs)

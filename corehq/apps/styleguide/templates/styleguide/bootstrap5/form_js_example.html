@@ -3,9 +3,6 @@
 
 {% block working_code %}
   {% crispy content.form %}
-  <script>
-    {{ content.code_js|safe }}  {# nosec: we provide what is in code_js #}
-  </script>
 {% endblock %}
 {% block readable_code %}
   {% include 'styleguide/bootstrap5/partials/readable_code_block.html' with content=content.code_js language="JS" %}

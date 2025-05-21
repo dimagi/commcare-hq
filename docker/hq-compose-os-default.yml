@@ -1,7 +1,5 @@
 # Default arch-specific configurations (x86_64 architecture).
 
-version: '2.3'
-
 services:
   postgres:
     image: docker.io/dimagi/docker-postgresql:${DOCKER_HQ_POSTGRES_VERSION}

@@ -13,6 +13,13 @@
   padding: 10px;
   color: #ffffff;
   background-color: $cc-dark-cool-accent-low;
+  a {
+    color: $cc-neutral-hi;
+  }
+  a:hover {
+    color: #ffffff;
+    text-decoration: none;
+  }
 }
 
 .label-plan-enterprise {
@@ -31,8 +38,8 @@
   background-color: $cc-att-pos-mid;
 }
 
-.label-plan-community {
-  background-color: $cc-dark-cool-accent-mid;
+.label-plan-free {
+  background-color: $gray;
 }
 
 .label-flag {
@@ -45,7 +52,6 @@
 }
 .label-flag-disabled {
   margin: 25px 0;
-
 }
 table .label-flag {
   max-width: 100px;

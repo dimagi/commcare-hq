@@ -1,0 +1,191 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block table-container-attrs %}
+  {{ block.super }}
+  x-data="{
+    numRecordsSelected: {{ table.num_visible_selected_records }},
+    totalRecords: {{ table.page.paginator.count }},
+    pageTotalRecords: {{ table.paginated_rows|length }},
+    pageNumRecordsSelected: 0,
+    updateCleaningStatus(numSelected) {
+      $store.isCleaningAllowed = numSelected > 0;
+    },
+  }"
+  x-init="
+    updateCleaningStatus(numRecordsSelected);
+    $watch('numRecordsSelected', updateCleaningStatus);
+  "
+{% endblock %}
+
+{% block no_results_table %}
+  <div class="alert alert-primary">
+    {% blocktrans %}
+      No cases were found that match the current filters. Please
+      <a
+        href="#"
+        class="fw-bold"
+        @click.prevent="$dispatch('wiggle-filters-button');"
+      >adjust your filters</a>
+      and try again.
+    {% endblocktrans %}
+  </div>
+{% endblock %}
+
+{% block before_table %}
+  <div class="d-flex align-items-center pb-2">
+
+    {% if table.has_changes %}
+      <div class="pe-2">
+        <div class="input-group">
+          <div class="input-group-text">
+            <i class="fa-solid fa-pencil me-2"></i>
+            {% trans "Edits" %}
+          </div>
+          <button
+            class="btn btn-outline-danger"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#confirm-clear-modal"
+            @click="$dispatch('updateClearSummaryMessage');"
+          >
+            <i class="fa-solid fa-close"></i>
+            {% trans "Clear" %}
+          </button>
+
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#confirm-undo-modal"
+            @click="$dispatch('updateUndoSummaryMessage');"
+          >
+            <i class="fa-solid fa-undo"></i>
+            {% trans "Undo" %}
+          </button>
+
+          <button
+            class="btn btn-success"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#confirm-apply-modal"
+            @click="$dispatch('updateApplySummaryMessage');"
+          >
+            <i class="fa-solid fa-check-double"></i>
+            {% trans "Apply" %}
+          </button>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if table.has_any_filtering %}
+      <div class="pe-2">
+        <div class="input-group">
+          <div class="input-group-text">
+            <i class="fa-solid fa-filter me-2"></i>
+            {% blocktrans with table.page.paginator.count as num_records %}
+              Filters Applied: {{ num_records }} Matching Cases
+            {% endblocktrans %}
+          </div>
+          <button
+            class="btn btn-outline-danger"
+            type="button"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="clear_filters"
+            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
+            hx-swap="outerHTML"
+            hq-hx-loading="{{ table.loading_indicator_id }}"
+            hx-disable-elt="this"
+          >
+            <i class="fa-solid fa-close"></i>
+            <span class="visually-hidden">{% trans "Clear Filters" %}</span>
+          </button>
+        </div>
+      </div>
+    {% endif %}
+
+    <div>
+      <div class="input-group">
+        <div
+          class="input-group-text"
+          :class="(numRecordsSelected > 0) || 'rounded-end'"
+        >
+          {% if table.is_read_only %}
+            <i class="fa-solid fa-circle-info me-2"></i>
+            {% trans "This session is read-only." %}
+          {% else %}
+            <i class="fa-solid fa-circle-check me-2"></i>
+            <span
+              class="me-1"
+              x-text="numRecordsSelected"
+            ></span>
+            {% blocktrans %}
+              Cases Selected
+            {% endblocktrans %}
+            {% if table.num_visible_selected_records != table.num_selected_records %}
+              <div
+                class="ms-2 ps-2 border-start inline-block text-warning"
+                data-bs-custom-class="fs-6"
+                data-bs-title="{% trans 'You have selected cases which have been filtered out. New previewed edits will only apply to selected cases in the current filters, unless you remove filters.' %}"
+                x-tooltip=""
+              >
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+        <button
+          class="btn btn-outline-danger"
+          type="button"
+          x-show="numRecordsSelected > 0"
+          :class="(numRecordsSelected > 0 && numRecordsSelected < totalRecords) || 'rounded-end'"
+          hx-post="{{ request.path_info }}{% querystring %}"
+          hq-hx-action="deselect_all"
+          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
+          hx-swap="outerHTML"
+          hq-hx-loading="{{ table.loading_indicator_id }}"
+          hx-disable-elt="this"
+        >
+          <i class="fa-solid fa-close"></i>
+          <span class="visually-hidden">{% trans "Clear Selection" %}</span>
+        </button>
+        {% if table.page.paginator.count > table.bulk_action_warning_limit %}
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#confirm-select-all-modal"
+            x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
+          >
+            {% trans "Select All" %} ({{ table.page.paginator.count }})
+          </button>
+        {% else %}
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="select_all"
+            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
+            hx-swap="outerHTML"
+            hq-hx-loading="{{ table.loading_indicator_id }}"
+            hx-disable-elt="this"
+          >
+            {% trans "Select All" %} ({{ table.page.paginator.count }})
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+{% endblock %}
+
+{% block after_table %}
+  {{ block.super }}
+  {% include "data_cleaning/modals/confirm_select_all.html" with modal_id="confirm-select-all-modal" %}
+  {% include "data_cleaning/modals/select_all_not_possible.html" with modal_id="select-all-not-possible-modal" %}
+  {% include "data_cleaning/modals/confirm_undo.html" with modal_id="confirm-undo-modal" confirm_button_class="btn-secondary" %}
+  {% include "data_cleaning/modals/confirm_clear.html" with modal_id="confirm-clear-modal" confirm_button_class="btn-danger" %}
+  {% include "data_cleaning/modals/confirm_apply.html" with modal_id="confirm-apply-modal" confirm_button_class="btn-success" %}
+{% endblock %}

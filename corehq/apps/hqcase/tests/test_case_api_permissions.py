@@ -36,7 +36,6 @@ from corehq.util.test_utils import (
 ], setup_class=True)
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
-@flag_enabled('CASE_API_V0_6')
 @flag_enabled('API_THROTTLE_WHITELIST')
 class TestCaseAPIPermissions(TestCase):
     domain = 'test-case-api-permissions'

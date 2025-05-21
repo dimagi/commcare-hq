@@ -1,10 +1,6 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
 {% load hq_shared_tags %}
 
-{% block head %}
-  <script src="{% static 'htmx.org/dist/htmx.min.js' %}"></script>
-{% endblock head %}
-
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">HTMX and Alpine</h1>
   <p class="sg-lead">
@@ -78,14 +74,7 @@
     and JavaScript Bundlers</a>. If you don't know how to proceed after that, read further.
   </p>
   <div class="alert alert-primary">
-    <strong>Important:</strong> HTMX and Alpine can only be included on pages using Webpack as the JavaScript bundler
-    due to limitations with RequireJS. See the guide for
-    <a
-        href="https://commcare-hq.readthedocs.io/js-guide/requirejs-to-webpack.html"
-        target="_blank"
-    >Migrating RequireJS to Webpack</a> if you have an older page you would like
-    to use HTMX and Alpine on. If the page is even older (no bundler), we currently do not have a solution
-    for this.
+    <strong>Important:</strong> HTMX and Alpine can only be included on pages using Webpack.
   </div>
 
   <h2 id="usage-forms" class="pt-4">

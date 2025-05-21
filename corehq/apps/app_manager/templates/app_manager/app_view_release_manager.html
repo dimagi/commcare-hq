@@ -14,14 +14,7 @@
   {% endif %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
-  {% endcompress %}
-{% endblock js %}
-
-{% block js-inline %}{{ block.super }}
-{% endblock %}
+{% js_entry_b3 "app_manager/js/releases/app_view_release_manager" %}
 
 {% block app_view_tabs %}
   {% analytics_ab_test 'kissmetrics.release_manager_ab' ab_test %}

@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'backbone',
     'backbone.marionette',
     'markdown-it/dist/markdown-it',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'analytix/js/appcues',
     'analytix/js/google',
@@ -21,6 +21,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/form_entry/web_form_session',
     'marionette.templatecache/lib/marionette.templatecache.min',    // needed for Marionette.TemplateCache
+    'cloudcare/js/gtx',
     'backbone.radio',
     'jquery.cookie/jquery.cookie',  // $.cookie
 ], function (
@@ -43,6 +44,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     UsersModels,
     WebFormSession,
     TemplateCache,
+    gtx,
 ) {
     Marionette.setRenderer(TemplateCache.render);
 
@@ -72,6 +74,13 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.getChannel = function () {
         return Backbone.Radio.channel('formplayer');
+    };
+
+    FormplayerFrontend.getRegion = function (region) {
+        if (!FormplayerFrontend.regions) {
+            FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
+        }
+        return FormplayerFrontend.regions.getRegion(region);
     };
 
     FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
@@ -224,6 +233,7 @@ hqDefine("cloudcare/js/formplayer/app", [
             domain: data.domain,
             name: data.title,
         });
+        gtx.logStartForm(data.title);
         data.onsubmit = function (resp) {
             if (resp.status === "success") {
                 var $alert;
@@ -546,6 +556,41 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.on("interval_sync-db", function (appId) {
         makeSyncRequest("interval_sync-db", {"app_id": appId});
+    });
+
+    FormplayerFrontend.on("startSyncInterval", function (delayInMilliseconds) {
+        function shouldSync() {
+            const currentTime = Date.now(),
+                lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
+                elapsedTimeSinceLastActivity = currentTime - lastUserActivityTime,
+                isInApp = FormplayerUtils.currentUrlToObject().appId !== undefined;
+            if (elapsedTimeSinceLastActivity <= delayInMilliseconds && isInApp) {
+                return true;
+            }
+        }
+
+        if (!FormplayerFrontend.syncInterval) {
+            FormplayerFrontend.syncInterval = setInterval(function () {
+                const urlObject = FormplayerUtils.currentUrlToObject(),
+                    currentApp = AppsAPI.getAppEntity(urlObject.appId);
+                let customProperties = {};
+                if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+                    customProperties = currentApp.attributes.profile.custom_properties || {};
+                }
+                const useAggressiveSyncTiming = (customProperties[Const.POST_FORM_SYNC] === "yes");
+                if (!useAggressiveSyncTiming) {
+                    FormplayerFrontend.trigger("stopSyncInterval");
+                }
+                if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
+                    FormplayerFrontend.trigger("interval_sync-db", urlObject.appId);
+                }
+            }, delayInMilliseconds);
+        }
+    });
+
+    FormplayerFrontend.on("stopSyncInterval", function () {
+        clearInterval(FormplayerFrontend.syncInterval);
+        FormplayerFrontend.syncInterval = null;
     });
 
     /**

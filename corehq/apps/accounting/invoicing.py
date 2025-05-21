@@ -3,16 +3,17 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
-import simplejson
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
+import simplejson
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
+from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -20,11 +21,10 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
 )
 from corehq.apps.accounting.models import (
-    SMALL_INVOICE_THRESHOLD,
     UNLIMITED_FEATURE_USAGE,
     BillingAccount,
-    BillingRecord,
     BillingAccountWebUserHistory,
+    BillingRecord,
     CreditLine,
     CustomerBillingRecord,
     CustomerInvoice,
@@ -50,8 +50,10 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     months_from_date,
 )
-from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
-from corehq.apps.domain.utils import get_serializable_wire_invoice_general_credit
+from corehq.apps.domain.dbaccessors import deleted_domain_exists, domain_exists
+from corehq.apps.domain.utils import (
+    get_serializable_wire_invoice_general_credit,
+)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,
@@ -212,10 +214,11 @@ class DomainInvoiceFactory(object):
 
 class DomainWireInvoiceFactory(object):
 
-    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, account=None):
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, cc_emails=None, account=None):
         self.date_start = date_start
         self.date_end = date_end
         self.contact_emails = contact_emails
+        self.cc_emails = cc_emails
         self.domain = ensure_domain_instance(domain)
         self.logged_throttle_error = False
         if self.domain is None:
@@ -282,17 +285,22 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, amount, general_credit):
+    def create_wire_credits_invoice(self, amount, credit_label, unit_cost, quantity, date_start, date_end):
 
         serializable_amount = simplejson.dumps(amount, use_decimal=True)
-        serializable_items = get_serializable_wire_invoice_general_credit(general_credit)
+        serializable_items = get_serializable_wire_invoice_general_credit(
+            amount, credit_label, unit_cost, quantity
+        )
 
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
             amount=serializable_amount,
             invoice_items=serializable_items,
-            contact_emails=self.contact_emails
+            date_start=date_start,
+            date_end=date_end,
+            contact_emails=self.contact_emails,
+            cc_emails=self.cc_emails,
         )
 
 
@@ -316,7 +324,7 @@ class CustomerAccountInvoiceFactory(object):
 
     def create_invoice(self):
         for sub in self.account.subscription_set.filter(do_not_invoice=False):
-            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.FREE
                     and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end)):
                 self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:

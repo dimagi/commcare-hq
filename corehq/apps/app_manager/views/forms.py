@@ -49,6 +49,7 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppMisconfigurationError,
     FormNotFoundException,
     ModuleNotFoundException,
@@ -89,7 +90,6 @@ from corehq.apps.app_manager.util import (
     save_xform,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
-from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import (
     CASE_TYPE_CONFLICT_MSG,
@@ -444,7 +444,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
-    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
         return JsonResponse(resp)
     else:
@@ -537,7 +536,6 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
-    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return JsonResponse(response_json)
 
 
@@ -970,7 +968,10 @@ def get_form_datums(request, domain, app_id):
 
 def _get_form_datums(domain, app_id, form_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-    app = get_app(domain, app_id)
+    try:
+        app = get_app(domain, app_id)
+    except AppInDifferentDomainException as e:
+        raise Http404(str(e))
 
     try:
         module_id, form_id = form_id.split('.')

@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from field_audit import audit_fields
 
+from corehq.project_limits.exceptions import SystemLimitIllegalScopeChange
 from corehq.util.quickcache import quickcache
 
 AVG = 'AVG'
@@ -104,6 +105,7 @@ class SystemLimit(models.Model):
         return f"{domain}{self.key}: {self.limit}"
 
     def save(self, *args, **kwargs):
+        self._prevent_changing_from_global_to_domain_scope()
         super().save(*args, **kwargs)
         SystemLimit._get_global_limit.clear(self.key)
         SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
@@ -112,6 +114,17 @@ class SystemLimit(models.Model):
         super().delete(*args, **kwargs)
         SystemLimit._get_global_limit.clear(self.key)
         SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
+
+    def _prevent_changing_from_global_to_domain_scope(self):
+        if self.domain:
+            try:
+                previous_domain = SystemLimit.objects.get(id=self.id).domain
+            except SystemLimit.DoesNotExist:
+                return
+            if not previous_domain:
+                raise SystemLimitIllegalScopeChange(
+                    "This is scoped globally. You cannot modify it to a domain scope."
+                )
 
     @classmethod
     def for_key(cls, key, domain=''):

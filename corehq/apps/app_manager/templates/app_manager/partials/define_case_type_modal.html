@@ -1,0 +1,83 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div
+  class="modal fade define-case-type-modal"
+  tabindex="-1"
+  role="dialog"
+  id="define-case-type-modal"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <!-- B5 TODO: Replace inline styles with B5 utility classes -->
+      <div class="modal-header" style="border-bottom: 1px solid lightgray;">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="{% trans 'Close' %}"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">
+          <i class="fa-solid fa-list-check"></i> {% trans "Case List" %}
+        </h4>
+      </div>
+      <div class="modal-body">
+        <p class="lead">
+          {% trans "Please define a case type for your case list." %}
+        </p>
+        <div class="form-horizontal" style="margin-top: 30px;">
+          <div class="form-group">
+            <label class="control-label col-sm-3">
+              {% trans "Case Type" %}
+              {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+                <span
+                  class="hq-help-template"
+                  data-title="{% trans "Case Type" %}"
+                  data-content="{% trans "The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” “household,” etc.). All cases you register in this case list will be this type of case. Other case lists with the same case type will use the same set of case(s)." %}"
+                ></span>
+              {% else %}
+                <span
+                  class="hq-help-template"
+                  data-title="{% trans "Case Type" %}"
+                  data-content="{% trans "The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” “household,” etc.). All cases you register in this case list will be this type of case, and only cases of this type will show in the case list. Other case lists with the same case type will use the same set of cases." %}"
+                ></span>
+              {% endif %}
+            </label>
+            <div class="col-sm-6">
+              <select
+                class="form-control"
+                id="new-case-type-dropdown"
+                name="new-case-type-dropdown"
+              >
+                <option value=""></option>
+              </select>
+              <div
+                class="help-block"
+                id="new-case-type-error"
+                style="display: none;"
+              ></div>
+              <div class="help-block" id="new-case-type-help">
+                {% trans "* You can change the Case Type later by going to the menu settings page" %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-default"
+          data-dismiss="modal"
+          id="case-type-go-back-btn"
+        >
+          {% trans "Go Back" %}
+        </button>
+        <button type="button" class="btn btn-primary" id="case-type-create-btn">
+          {% trans "Create Case List" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -75,7 +75,6 @@ from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
-    use_tempusdominus,
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
@@ -102,7 +101,6 @@ class FormplayerMain(View):
 
     @xframe_options_sameorigin
     @use_bootstrap5
-    @use_tempusdominus
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -259,7 +257,6 @@ class FormplayerMainPreview(FormplayerMain):
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
-@method_decorator(use_tempusdominus, name='dispatch')
 class PreviewAppView(TemplateView):
     template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'

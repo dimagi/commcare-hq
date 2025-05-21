@@ -50,7 +50,7 @@ locations
 ota
    Contains a number of the API endpoints used by CommCare mobile including sync / restore, case search, case claim, heartbeat and  recovery measures. This is used by both CommCare mobile and formplayer.
 reports
-   Standard, pre-canned reports to view project data: Submit History, Worker Activity Report, etc.
+   Standard, pre-canned reports to view project data: Submission History, Worker Activity Report, etc.
 reports_core
    More reporting code that resulted from an attempt to re-architect the report class structure.
 sms

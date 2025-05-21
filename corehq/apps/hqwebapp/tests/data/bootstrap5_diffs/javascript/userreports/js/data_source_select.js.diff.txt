@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ import "commcarehq";
+ import $ from "jquery";
+ import kissmetrics from "analytix/js/kissmetrix";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ import dataModel from "userreports/js/data_source_select_model";
+ import analytics from "userreports/js/report_analytix";
+ 

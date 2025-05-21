@@ -53,6 +53,10 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
+#: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
+msgid "Response from Stripe did not complete properly."
+msgstr ""
+
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Downgrading?"
 msgstr ""
@@ -104,6 +108,10 @@ msgid ""
 "Plan on <strong> <%- date %> </strong></p>If you have questions or if you "
 "would like to speak to us about your subscription, please reach out to <a "
 "href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid "Free edition"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
@@ -182,6 +190,18 @@ msgid "See Past Versions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "This is a reserved case type. Please choose another name."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "This case type has been deprecated in the Data Dictionary."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add"
@@ -195,29 +215,55 @@ msgstr ""
 msgid "You have unsaved changes"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
-msgid "Oops, there was a problem loading this section. Please try again."
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Add a new case type or use an existing one"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "What is a Survey Menu?"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"Surveys are used to collect independent forms that do not need to be tracked "
+"over time. Common examples include satisfaction surveys or anonymous "
+"feedback forms."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "What is a Case List?"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"Case Lists are used to register and track related data (cases) over time. "
+"This data can be referenced in other forms and by other cases. Common "
+"examples include maternal health, student attendance, or crop monitoring."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Select None"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Select All"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Project name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Invalid Project Selected"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
@@ -244,6 +290,18 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Select a Lookup Table..."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Lazy Load"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache & Lazy Load"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
@@ -570,11 +628,6 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to Case Properties"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr ""
 
@@ -634,10 +687,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to User Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
@@ -723,14 +772,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
 msgid "Case type is required."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
-msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
-msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
@@ -1083,22 +1124,6 @@ msgid "Multiple matches for {info} found!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Server Form"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Local Form"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XML should not be equivalent"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XML mismatch"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "key"
@@ -1124,6 +1149,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "No Formatting"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Invalid XPath expression."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -1358,6 +1387,10 @@ msgid "Signature Capture"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Document Upload"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "GPS"
 msgstr ""
 
@@ -1453,40 +1486,6 @@ msgstr[1] ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "New Form"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "PARSE ERROR!:"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"No Data block was found in the form. Please check that your form is valid!"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form does not have a Name! The default form name will be used"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Form JRM namespace attribute was not found in data block. One will be added "
-"automatically"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Form does not have a UIVersion attribute, one will be generated automatically"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Form does not have a Version attribute (in the data block), one will be "
-"added automatically"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Ambiguous bind:"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2273,7 +2272,8 @@ msgid "A reference to an integer question in this form."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 #: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
 msgid "Case"
 msgstr ""
@@ -2382,8 +2382,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Case ID"
 msgstr ""
 
@@ -2601,6 +2603,14 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 #: corehq/apps/translations/static/translations/js/app_translations.js
 msgid "Select Profile"
+msgstr ""
+
+#: corehq/apps/campaign/static/campaign/js/dashboard.js
+msgid "Add Widget"
+msgstr ""
+
+#: corehq/apps/campaign/static/campaign/js/dashboard.js
+msgid "Edit Widget"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
@@ -2936,6 +2946,10 @@ msgstr ""
 msgid "Edit Profile"
 msgstr ""
 
+#: corehq/apps/data_cleaning/static/data_cleaning/js/directives/dynamic_options_select2.js
+msgid "No available suggestions. Add more by separating words with spaces."
+msgstr ""
+
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid "No Name"
 msgstr ""
@@ -3163,6 +3177,7 @@ msgid "Last 30 Days"
 msgstr ""
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Month"
 msgstr ""
@@ -3342,140 +3357,173 @@ msgstr ""
 msgid "Can not create table with ID '<%= tag %>'. Table IDs should be unique."
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "No group"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Group ID"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Group Name"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Group Center Coordinates"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Case Name"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Case Owner Name"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Case Coordinates"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Select group"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid "Group <%- pageNumber %>-<%- groupCount %>"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
 msgid ""
 "Something went wrong processing <%- failedClusters %> groups. These groups "
 "will not be exported."
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid "Max cases per user"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid "Min cases per user"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid "Max distance to case"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid "minutes"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid "Max travel time"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid ""
 "Oops! Something went wrong! Please check that your geospatial settings are "
 "configured correctly or contact admin if the problem persists."
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid ""
 "Please ensure that the filtered area includes both cases and mobile workers "
 "before attempting to run disbursement."
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
 msgid "All locations"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/case_management.js
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
 msgid "Token successfully verified!"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
 msgid ""
 "Invalid API token. Please verify that the token matches the one on your "
 "Mapbox account and has the correct scope configured."
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/gps_capture.js
 msgid "current user"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Mobile Worker"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Refreshing Page..."
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Name of the Area"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Please enter the name for the area!"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "No user selected (unassign mode)"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Assigned User ID"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Assigned Username"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Assigned User Primary Location"
 msgstr ""
 
@@ -3513,6 +3561,141 @@ msgstr ""
 msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Clear selection"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Close the picker"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "long"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "2-digit"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Century"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Century"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Date"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Time"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Go to today"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Toggle Meridiem"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
@@ -3572,18 +3755,6 @@ msgstr ""
 msgid "There was an error deleting"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/rollout_modal.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/rollout_modal.js
-msgid ""
-"We could not turn on the new feature. You will have the opportunity to turn "
-"it on the next time you visit this page."
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/rollout_modal.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/rollout_modal.js
-msgid "We could not turn off the new feature. Please try again later."
-msgstr ""
-
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/validators.ko.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/validators.ko.js
 msgid "Not a valid email"
@@ -3629,6 +3800,14 @@ msgstr ""
 msgid "Request timed out. Max retries exceeded."
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
+msgid "Unknown Event"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
+msgid "Unknown Path"
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Items"
 msgstr ""
@@ -3660,114 +3839,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid " to "
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Clear selection"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Close the picker"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "long"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "2-digit"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Hour"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Minute"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Second"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Hour"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Minute"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Second"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Century"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Month"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Year"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Hour"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Minute"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Second"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Century"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Year"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Date"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Month"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Time"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Year"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Go to today"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Toggle Meridiem"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
@@ -4004,7 +4075,7 @@ msgid "Please enter your name."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
 #: corehq/apps/users/static/users/js/invite_web_user.js
 msgid "Please specify an email."
 msgstr ""
@@ -4014,7 +4085,7 @@ msgid "Checking email..."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
 msgid "Please specify a password."
 msgstr ""
 
@@ -4172,7 +4243,8 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/base.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/base.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configurable_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configurable_report.js
 msgid "You can email a saved version<br />of this report."
 msgstr ""
 
@@ -4441,56 +4513,78 @@ msgstr ""
 msgid "Please Select a Country Code"
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
+msgid "Available Letters"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
+msgid "Letters Selected"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
+msgid "Search Letters..."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Forms"
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Cases"
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Reports"
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "App Builder"
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Thank you, "
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
 msgid "Submission has been cancelled."
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
 msgid "Please specify a username."
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
 msgid "Username must be at least three characters long."
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
 msgid "Your password must be at least 6 characters long"
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
 msgid "Resetting form..."
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect_crispy.js
 msgid "Benched"
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect_crispy.js
 msgid "Playing"
 msgstr ""
 
-#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect_crispy.js
 msgid "Search Team..."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/paginated_table.js
+#: corehq/apps/users/static/users/js/web_users_list.js
+msgid ""
+"Could not load users. Please try again later or report an issue if this "
+"problem persists."
 msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js
@@ -4529,41 +4623,70 @@ msgid ""
 "the dropdown in the top left."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/base.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/base.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/base.js
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Linked projects"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Projects to copy to"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Search projects"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid "What value or date range must the property be equal to?"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/ucr_expression.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/ucr_expression.js
+msgid "Expression saved"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
@@ -4591,27 +4714,8 @@ msgstr ""
 msgid "deactivated"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Linked projects"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Projects to copy to"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Search projects"
-msgstr ""
-
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
 msgid "Unknown error"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
-msgid "Expression saved"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
@@ -5066,12 +5170,6 @@ msgstr ""
 msgid "This project has no web users."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users_list.js
-msgid ""
-"Could not load users. Please try again later or report an issue if this "
-"problem persists."
-msgstr ""
-
 #: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
 msgid "Requeued"
 msgstr ""
@@ -5226,16 +5324,6 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
 #: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to fetch payload"
-msgstr ""
-
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to send"
-msgstr ""
-
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to cancel"
 msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js

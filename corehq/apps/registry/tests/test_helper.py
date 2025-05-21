@@ -45,20 +45,20 @@ class TestDataRegistryHelper(SimpleTestCase):
         with patch.object(CommCareCase.objects, 'get_case', return_value=mock_case), \
              self.assertRaisesMessage(RegistryAccessException, "'other-type' not available in registry"):
             self.helper.get_case("case1", _mock_user(), "app")
-        self.log_data_access.not_called()
+        self.log_data_access.assert_not_called()
 
     def test_get_case_not_found(self):
         with self.assertRaises(CaseNotFound), \
              patch.object(CommCareCase.objects, 'get_case', side_effect=CaseNotFound):
             self.helper.get_case("case1", _mock_user(), "app")
-        self.log_data_access.not_called()
+        self.log_data_access.assert_not_called()
 
     def test_get_case_domain_not_in_registry(self):
         mock_case = _mock_case("a", "other-domain")
         with self.assertRaisesMessage(RegistryAccessException, "Data not available in registry"), \
              patch.object(CommCareCase.objects, 'get_case', return_value=mock_case):
             self.helper.get_case("case1", _mock_user(), "app")
-        self.log_data_access.not_called()
+        self.log_data_access.assert_not_called()
 
     def test_get_case_access_to_current_domain_allowed_even_if_user_has_no_permission(self):
         mock_case = _mock_case("a", "domain1")
@@ -73,7 +73,7 @@ class TestDataRegistryHelper(SimpleTestCase):
     def test_get_case_access_to_other_domain_not_allowed_if_user_has_no_permission(self):
         mock_case = _mock_case("a", "domain2")
         mock_user = _mock_user(has_permission=False)
-        with self.assertRaisesMessage(RegistryAccessException, "User not permitted to access registry data"),\
+        with self.assertRaisesMessage(RegistryAccessException, "User not permitted to access registry data"), \
              patch.object(CommCareCase.objects, 'get_case', return_value=mock_case):
             self.helper.get_case("case1", mock_user, "app")
 

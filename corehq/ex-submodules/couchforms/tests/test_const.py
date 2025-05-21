@@ -11,6 +11,7 @@ class TestCont(SimpleTestCase):
                 "jpg", "jpeg", "3gpp", "3gp", "3ga", "3g2", "mp3",
                 "wav", "amr", "mp4", "3gp2", "mpg4", "mpeg4",
                 "m4v", "mpg", "mpeg", "qcp", "ogg",
-                "png", "pdf"
+                "png", "pdf", "xlsx", "docx", "html",
+                "txt", "rtf", "msg"
             }
         )

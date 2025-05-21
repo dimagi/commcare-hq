@@ -11,13 +11,13 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/
+    https://www.commcarehq.org/a/[domain]/api/user/v1/
 
 **Single User URL**
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/[user_id]
+    https://www.commcarehq.org/a/[domain]/api/user/v1/[user_id]
 
 **Permissions Required**
     Edit Mobile Workers & Edit Access API's
@@ -100,7 +100,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/demo/api/v0.4/user/?format=xml&limit=5
+    https://www.commcarehq.org/a/demo/api/user/v1/?format=xml&limit=5
 
 **Sample JSON Output**
 

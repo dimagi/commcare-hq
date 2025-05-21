@@ -6,6 +6,7 @@ hqDefine("hqwebapp/js/bootstrap3/widgets",[
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
     'jquery-ui/ui/widgets/datepicker',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
     "commcarehq",
 ], function ($, _, MapboxGeocoder, initialPageData) {
     var init = function () {

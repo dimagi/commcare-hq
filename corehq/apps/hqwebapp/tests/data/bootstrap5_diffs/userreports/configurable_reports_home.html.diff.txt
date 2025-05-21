@@ -1,0 +1,57 @@
+--- 
++++ 
+@@ -1,35 +1,35 @@
+-{% extends "userreports/bootstrap3/userreports_base.html" %}
++{% extends "userreports/bootstrap5/userreports_base.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'userreports/js/configurable_reports_home' %}
++{% js_entry 'userreports/js/configurable_reports_home' %}
+ 
+ {% block page_content %}
+   {% if use_updated_ucr_naming %}
+     <h1>{% trans "Custom Web Reports" %}</h1>
+-    <a href="{% url 'create_configurable_report' domain %}" class="btn btn-default">
++    <a href="{% url 'create_configurable_report' domain %}" class="btn btn-outline-primary">
+       <i class="fa fa-plus"></i>
+       {% trans 'Add Custom Web Report' %}
+     </a>
+-    <a href="{% url 'import_configurable_report' domain %}" class="btn btn-default">
++    <a href="{% url 'import_configurable_report' domain %}" class="btn btn-outline-primary">
+       <i class="fa-solid fa-cloud-arrow-up"></i>
+       {% trans 'Import Custom Web Report' %}
+     </a>
+-    <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-default">
++    <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-outline-primary">
+       <i class="fa fa-plus"></i>
+       {% trans 'Add Custom Web Report Source' %}
+     </a>
+   {% else %}
+     <h1>{% trans "Configurable Reports" %}</h1>
+-    <a href="{% url 'create_configurable_report' domain %}" class="btn btn-default">
++    <a href="{% url 'create_configurable_report' domain %}" class="btn btn-outline-primary">
+       <i class="fa fa-plus"></i>
+       {% trans 'Add Report' %}
+     </a>
+-    <a href="{% url 'import_configurable_report' domain %}" class="btn btn-default">
++    <a href="{% url 'import_configurable_report' domain %}" class="btn btn-outline-primary">
+       <i class="fa-solid fa-cloud-arrow-up"></i>
+       {% trans 'Import Report' %}
+     </a>
+-    <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-default">
++    <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-outline-primary">
+       <i class="fa fa-plus"></i>
+       {% trans 'Add Data Source' %}
+     </a>
+@@ -37,8 +37,8 @@
+   <br><br><br>
+ 
+   <div class="row">
+-    <div class="col-sm-6">
+-      <select id="select2-navigation" class="form-control">
++    <div class="col-md-6">
++      <select id="select2-navigation" class="form-select">
+         <option></option>
+         {% for report in reports %}
+           <option data-label="report"

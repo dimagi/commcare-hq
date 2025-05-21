@@ -196,6 +196,7 @@ class InvoiceRenderer:
             is_customer,  # is_customer
             is_prepayment,  # is_prepayment
             "Above & Beyond",  # account_name
+            can_pay_by_wire=is_wire,  # always true for wire invoices
         )
 
     @staticmethod

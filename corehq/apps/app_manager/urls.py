@@ -89,7 +89,7 @@ from corehq.apps.app_manager.views import (
     view_module_legacy,
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
-from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
+from corehq.apps.app_manager.views.modules import ExistingCaseTypesView, AllCaseTypesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
@@ -275,6 +275,7 @@ urlpatterns = [
     url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(),
         name=AppDiffView.urlname),
     url(r'existing_case_types', ExistingCaseTypesView.as_view(), name=ExistingCaseTypesView.urlname),
+    url(r'all_case_types/', AllCaseTypesView.as_view(), name=AllCaseTypesView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
 ]

@@ -16,7 +16,7 @@ rules:
     patterns: ['corehq/apps/app_manager/suite_xml/xml_models.py']
 
   - labels: ['dependencies']
-    patterns: ['requirements/**|package.json|yarn.lock']
+    patterns: ['requirements/**|package.json|uv.lock|yarn.lock']
 
   - labels: ['Risk: High']
     patterns:

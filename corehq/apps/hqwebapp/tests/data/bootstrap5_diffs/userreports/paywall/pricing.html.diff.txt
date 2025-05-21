@@ -1,0 +1,30 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% load compress %}
+@@ -48,16 +48,16 @@
+       </p>
+     </div>
+ 
+-    <div class="row" style="margin-top: 32px">
+-      <div class="col-md-2"></div>
+-      <div class="col-md-8">
++    <div class="row" style="margin-top: 32px">  {# todo B5: inline-style #}
++      <div class="col-lg-2"></div>
++      <div class="col-lg-8">
+         <img
+           src="{% static 'userreports/images/report_builder_screenshot.png' %}"
+           alt="{% trans "Screenshot of report builder" %}"
+-          class="img-responsive"
++          class="img-fluid"
+         >
+       </div>
+-      <div class="col-md-2"></div>
++      <div class="col-lg-2"></div>
+     </div>
+ 
+   {% endblock main_column_content %}

@@ -1,4 +1,3 @@
-$form-text-indent: 23px;
 $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
 
 .form-container {
@@ -16,24 +15,6 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 
   .form-control, .form-select {
     font-size: $form-text-size;
-  }
-
-  .form-actions {
-    margin: 30px -$form-text-indent 0 -$form-text-indent;
-
-    .submit .btn {
-      font-size: 20px;
-      padding: 13px 24px;
-      transition: all .5s;
-    }
-  }
-
-  .sticky-submit {
-    position: sticky;
-    bottom: 0;
-    /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
-       which adds z-index of 2 (3 when focused) */
-    z-index: $zindex-formplayer-anchored-submit;
   }
 
   .question-container {

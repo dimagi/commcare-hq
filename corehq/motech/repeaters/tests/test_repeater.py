@@ -2,6 +2,7 @@ import json
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
+from http import HTTPStatus
 from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
@@ -38,14 +39,18 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.const import (
+from corehq.pillows.case import get_case_pillow
+from corehq.util.json import CommCareJSONEncoder
+from corehq.util.test_utils import flag_enabled
+
+from ..const import (
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
     MIN_REPEATER_RETRY_WAIT,
     MIN_RETRY_WAIT,
     State,
 )
-from corehq.motech.repeaters.models import (
+from ..models import (
     CaseRepeater,
     DataSourceRepeater,
     FormRepeater,
@@ -57,18 +62,12 @@ from corehq.motech.repeaters.models import (
     _get_retry_interval,
     format_response,
 )
-from corehq.motech.repeaters.repeater_generators import (
+from ..repeater_generators import (
     BasePayloadGenerator,
     FormRepeaterXMLPayloadGenerator,
     RegisterGenerator,
 )
-from corehq.motech.repeaters.tasks import (
-    _process_repeat_record,
-    check_repeaters,
-)
-from corehq.pillows.case import get_case_pillow
-from corehq.util.json import CommCareJSONEncoder
-from corehq.util.test_utils import flag_enabled
+from ..tasks import _process_repeat_record, check_repeaters
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
@@ -133,10 +132,6 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
         cls.addClassCleanup(cls.teardown_subscriptions)
 
-    @classmethod
-    def post_xml(cls, xml, domain_name):
-        return submit_form_locally(xml, domain_name)
-
     def repeat_records(self, domain=None):
         domain = domain or self.domain
         # Enqueued repeat records have next_check set 48 hours in the future.
@@ -173,8 +168,13 @@ class RepeaterTest(BaseRepeaterTest):
         self.log = []
 
         with patch('corehq.motech.repeaters.models.simple_request',
-                   return_value=MockResponse(status_code=500, reason="Borked")) as mock_fire:
-            self.post_xml(self.xform_xml, self.domain)
+                   # SERVICE_UNAVAILABLE is a response that is retried
+                   # See ..models.HTTP_STATUS_BACK_OFF
+                   return_value=MockResponse(
+                       status_code=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                       reason=HTTPStatus.SERVICE_UNAVAILABLE.description,
+                   )) as mock_fire:
+            submit_form_locally(self.xform_xml, self.domain)
             self.initial_fire_call_count = mock_fire.call_count
 
     def tearDown(self):
@@ -192,12 +192,19 @@ class RepeaterTest(BaseRepeaterTest):
                 self.case_block
             )
             with patch('corehq.motech.repeaters.models.simple_request',
-                       return_value=MockResponse(status_code=500, reason="Borked")):
-                self.post_xml(xform_xml, self.domain)
+                       return_value=MockResponse(
+                           status_code=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                           reason=HTTPStatus.SERVICE_UNAVAILABLE.description,
+                       )):
+                submit_form_locally(xform_xml, self.domain)
+
+    def test_initial_repeat_records(self):
+        repeat_records = self.repeat_records()
+        assert len(repeat_records) == 2
 
     def test_skip_device_logs(self):
         devicelog_xml = XFORM_XML_TEMPLATE.format(DEVICE_LOG_XMLNS, USER_ID, '1234', '')
-        self.post_xml(devicelog_xml, self.domain)
+        submit_form_locally(devicelog_xml, self.domain)
         for repeat_record in self.repeat_records():
             self.assertNotEqual(repeat_record.payload_id, '1234')
 
@@ -207,7 +214,7 @@ class RepeaterTest(BaseRepeaterTest):
         """
         self.assertEqual(len(self.repeat_records()), 2)
         # this form is already submitted during setUp so a second submission should be a duplicate
-        form = self.post_xml(self.xform_xml, self.domain).xform
+        form = submit_form_locally(self.xform_xml, self.domain).xform
         self.assertTrue(form.is_duplicate)
         self.assertEqual(len(self.repeat_records()), 2)
 
@@ -258,7 +265,10 @@ class RepeaterTest(BaseRepeaterTest):
     def test_bad_request_fail(self):
         with patch(
             'corehq.motech.repeaters.models.simple_request',
-            return_value=MockResponse(status_code=400, reason='Bad Request')
+            return_value=MockResponse(
+                status_code=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                reason=HTTPStatus.SERVICE_UNAVAILABLE.description,
+            )
         ):
             for repeat_record in self.repeat_records():
                 repeat_record.fire()
@@ -315,7 +325,7 @@ class RepeaterTest(BaseRepeaterTest):
 
         self.assertEqual(len(self.repeat_records()), 0)
 
-        self.post_xml(self.update_xform_xml, self.domain)
+        submit_form_locally(self.update_xform_xml, self.domain)
         self.assertEqual(len(self.repeat_records()), 2)
 
     def test_check_repeat_records(self):
@@ -390,7 +400,8 @@ class RepeaterTest(BaseRepeaterTest):
 
     def test_check_repeat_records_ignores_future_retries_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
-        self.assertEqual(len(self.repeat_records()), 20)
+        # 10 form submission payloads and 1 case create payload:
+        self.assertEqual(len(self.repeat_records()), 11)
 
         with patch('corehq.motech.repeaters.models.simple_request') as mock_retry, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
@@ -399,7 +410,7 @@ class RepeaterTest(BaseRepeaterTest):
 
     def test_repeat_record_status_check_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
-        self.assertEqual(len(self.repeat_records()), 20)
+        self.assertEqual(len(self.repeat_records()), 11)
 
         # Do not trigger cancelled records
         for repeat_record in self.repeat_records():
@@ -434,7 +445,7 @@ class RepeaterTest(BaseRepeaterTest):
 
     def test_check_repeaters_successfully_retries_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
-        self.assertEqual(len(self.repeat_records()), 20)
+        self.assertEqual(len(self.repeat_records()), 11)
 
         with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
@@ -449,7 +460,7 @@ class RepeaterTest(BaseRepeaterTest):
         with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
             check_repeaters()
-            self.assertEqual(mock_process.delay.call_count, 20)
+            self.assertEqual(mock_process.delay.call_count, 11)
 
 
 class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
@@ -477,7 +488,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
         super().tearDown()
 
     def test_get_payload(self):
-        self.post_xml(self.xform_xml, self.domain)
+        submit_form_locally(self.xform_xml, self.domain)
         payload_doc = XFormInstance.objects.get_form(self.instance_id, self.domain)
         payload = self.repeatergenerator.get_payload(None, payload_doc)
         self.assertXmlEqual(self.xform_xml, payload)
@@ -505,7 +516,7 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         super(FormRepeaterTest, self).tearDown()
 
     def test_payload(self):
-        self.post_xml(self.xform_xml, self.domain)
+        submit_form_locally(self.xform_xml, self.domain)
         repeat_records = self.repeat_records(self.domain).all()
         payload = repeat_records[0].get_payload().decode('utf-8')
         self.assertXMLEqual(self.xform_xml, payload)
@@ -533,7 +544,7 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         super().tearDown()
 
     def test_payload(self):
-        form = self.post_xml(self.xform_xml, self.domain).xform
+        form = submit_form_locally(self.xform_xml, self.domain).xform
         repeat_records = self.repeat_records(self.domain).all()
         payload = repeat_records[0].get_payload()
         self.assertEqual(json.loads(payload), {
@@ -565,7 +576,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
     def test_case_close_format(self):
         # create a case
-        self.post_xml(self.xform_xml, self.domain)
+        submit_form_locally(self.xform_xml, self.domain)
         repeat_records = self.repeat_records(self.domain).all()
         payload = repeat_records[0].get_payload()
         self.assertXmlHasXpath(payload, '//*[local-name()="case"]')
@@ -573,7 +584,10 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
         # close the case
         CaseFactory(self.domain).close_case(CASE_ID)
-        close_payload = self.repeat_records(self.domain).all()[1].get_payload()
+        assert self.repeat_records().count() == 1
+        # Reload the repeat record because `payload_doc()` is memoized
+        repeat_record = self.repeat_records().first()
+        close_payload = repeat_record.get_payload()
         self.assertXmlHasXpath(close_payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="close"]')
 
@@ -604,7 +618,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
         # case-creations by black-listed users shouldn't be forwarded
         black_listed_user_case = CaseBlock(
-            case_id="b_case_id",
+            case_id="aaa",
             create=True,
             case_type="planet",
             owner_id="owner",
@@ -616,13 +630,13 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '1234',
             black_listed_user_case,
         )
-        self.post_xml(xform_xml, self.domain)
+        submit_form_locally(xform_xml, self.domain)
 
         self.assertEqual(0, len(self.repeat_records(self.domain).all()))
 
         # case-creations by normal users should be forwarded
         normal_user_case = CaseBlock(
-            case_id="a_case_id",
+            case_id="bbb",
             create=True,
             case_type="planet",
             owner_id="owner",
@@ -634,13 +648,13 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '6789',
             normal_user_case,
         )
-        self.post_xml(xform_xml, self.domain)
+        submit_form_locally(xform_xml, self.domain)
 
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by black-listed users shouldn't be forwarded
         black_listed_user_case = CaseBlock(
-            case_id="b_case_id",
+            case_id="ccc",
             case_type="planet",
             owner_id="owner",
             user_id=black_list_user_id,
@@ -651,12 +665,12 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '2345',
             black_listed_user_case,
         )
-        self.post_xml(xform_xml, self.domain)
+        submit_form_locally(xform_xml, self.domain)
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by normal users should be forwarded
         normal_user_case = CaseBlock(
-            case_id="a_case_id",
+            case_id="ddd",
             case_type="planet",
             owner_id="owner",
             user_id="normal_user",
@@ -667,8 +681,43 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '3456',
             normal_user_case,
         )
-        self.post_xml(xform_xml, self.domain)
+        submit_form_locally(xform_xml, self.domain)
         self.assertEqual(2, len(self.repeat_records(self.domain).all()))
+
+    def test_register_duplicate(self):
+        factory = CaseFactory(self.domain)
+        factory.post_case_blocks([
+            CaseBlock(
+                case_id='(134340) Pluto',
+                create=True,
+                case_name='Pluto',
+                case_type='planet',
+                date_opened='1930-02-18',
+            ).as_text(),
+        ])
+        factory.post_case_blocks([
+            CaseBlock(
+                case_id='(134340) Pluto I',
+                create=True,
+                case_name='Charon',
+                case_type='moon',
+                date_opened='1978-06-22',
+            ).as_text(),
+        ])
+        factory.post_case_blocks([
+            CaseBlock(
+                case_id='(134340) Pluto',
+                update={
+                    'case_type': 'dwarf_planet'
+                },
+                date_modified='2006-08-24',
+            ).as_text(),
+        ])
+        repeat_records = self.repeater.repeat_records_ready.all()
+        assert [r.payload_id for r in repeat_records] == [
+            '(134340) Pluto',
+            '(134340) Pluto I',
+        ]
 
 
 class RepeaterFailureTest(BaseRepeaterTest):
@@ -680,7 +729,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         # Create the case before creating the repeater, so that the
         # repeater doesn't fire for the case creation. Each test
         # registers this case, and the repeater will fire then.
-        self.post_xml(self.xform_xml, self.domain)
+        submit_form_locally(self.xform_xml, self.domain)
 
         self.connx = ConnectionSettings.objects.create(
             domain=self.domain,
@@ -824,7 +873,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
 
     def setUp(self):
         super().setUp()
-        self.post_xml(self.xform_xml, self.domain)
+        submit_form_locally(self.xform_xml, self.domain)
         self.connx = ConnectionSettings.objects.create(
             domain=self.domain,
             url='case-repeater-url',
@@ -1054,13 +1103,13 @@ class TestRepeaterPause(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater = CaseRepeater(
+        self.repeater = FormRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
-            format='case_json',
+            format='form_xml',
         )
         self.repeater.save()
-        self.post_xml(self.xform_xml, self.domain)
+        submit_form_locally(self.xform_xml, self.domain)
         self.repeater = Repeater.objects.get(id=self.repeater.id)
 
     def tearDown(self):
@@ -1069,28 +1118,30 @@ class TestRepeaterPause(BaseRepeaterTest):
 
     def test_trigger_when_paused(self):
         # not paused
-        with patch.object(RepeatRecord, 'fire') as mock_fire:
-            with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
-                # calls _process_repeat_record():
-                self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
-                self.assertEqual(mock_fire.call_count, 1)
-                self.assertEqual(mock_postpone_fire.call_count, 0)
+        with (
+            patch.object(RepeatRecord, 'fire') as mock_fire,
+            patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire
+        ):
+            repeat_record = RepeatRecord.objects.get(payload_id=self.instance_id)
+            _process_repeat_record(repeat_record)
+            self.assertEqual(mock_fire.call_count, 1)
+            self.assertEqual(mock_postpone_fire.call_count, 0)
 
-                # paused
-                self.repeater.pause()
-                # re fetch repeat record
-                self.repeat_record = RepeatRecord.objects.get(id=self.repeat_record.id)
-                _process_repeat_record(self.repeat_record)
-                self.assertEqual(mock_fire.call_count, 1)
-                self.assertEqual(mock_postpone_fire.call_count, 1)
+            # paused
+            self.repeater.pause()
+            # re fetch repeat record
+            repeat_record = RepeatRecord.objects.get(payload_id=self.instance_id)
+            _process_repeat_record(repeat_record)
+            self.assertEqual(mock_fire.call_count, 1)
+            self.assertEqual(mock_postpone_fire.call_count, 1)
 
-                # resumed
-                self.repeater.resume()
-                # re fetch repeat record
-                self.repeat_record = RepeatRecord.objects.get(id=self.repeat_record.id)
-                _process_repeat_record(self.repeat_record)
-                self.assertEqual(mock_fire.call_count, 2)
-                self.assertEqual(mock_postpone_fire.call_count, 1)
+            # resumed
+            self.repeater.resume()
+            # re fetch repeat record
+            repeat_record = RepeatRecord.objects.get(payload_id=self.instance_id)
+            _process_repeat_record(repeat_record)
+            self.assertEqual(mock_fire.call_count, 2)
+            self.assertEqual(mock_postpone_fire.call_count, 1)
 
 
 class TestRepeaterDeleted(BaseRepeaterTest):
@@ -1102,13 +1153,13 @@ class TestRepeaterDeleted(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater = CaseRepeater(
+        self.repeater = FormRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
-            format='case_json',
+            format='form_xml',
         )
         self.repeater.save()
-        self.post_xml(self.xform_xml, self.domain)
+        submit_form_locally(self.xform_xml, self.domain)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
@@ -1118,8 +1169,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         self.repeater.retire()
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
-            repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
-            repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
+            repeat_record = RepeatRecord.objects.get(payload_id=self.instance_id)
             _process_repeat_record(repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(repeat_record.state, State.Cancelled)
@@ -1167,7 +1217,7 @@ class HandleResponseTests(SimpleTestCase):
 
         self.repeat_record.handle_exception.assert_not_called()
         self.repeat_record.handle_success.assert_called()
-        self.repeat_record.handle_failure.assert_not_called()
+        self.repeat_record.handle_server_failure.assert_not_called()
 
     def test_handle_true_response(self):
         response = True
@@ -1175,7 +1225,7 @@ class HandleResponseTests(SimpleTestCase):
 
         self.repeat_record.handle_exception.assert_not_called()
         self.repeat_record.handle_success.assert_called()
-        self.repeat_record.handle_failure.assert_not_called()
+        self.repeat_record.handle_server_failure.assert_not_called()
 
     def test_handle_none_response(self):
         response = None
@@ -1183,15 +1233,15 @@ class HandleResponseTests(SimpleTestCase):
 
         self.repeat_record.handle_exception.assert_not_called()
         self.repeat_record.handle_success.assert_not_called()
-        self.repeat_record.handle_failure.assert_called()
+        self.repeat_record.handle_server_failure.assert_called()
 
-    def test_handle_500_response(self):
-        response = Response(status_code=500, reason='The core is exposed')
+    def test_handle_bad_gateway_response(self):
+        response = Response(status_code=502, reason='The core is exposed')
         self.repeater.handle_response(response, self.repeat_record)
 
         self.repeat_record.handle_exception.assert_not_called()
         self.repeat_record.handle_success.assert_not_called()
-        self.repeat_record.handle_failure.assert_called()
+        self.repeat_record.handle_server_failure.assert_called()
 
     def test_handle_exception(self):
         err = Exception('The core is exposed')
@@ -1199,7 +1249,7 @@ class HandleResponseTests(SimpleTestCase):
 
         self.repeat_record.handle_exception.assert_called()
         self.repeat_record.handle_success.assert_not_called()
-        self.repeat_record.handle_failure.assert_not_called()
+        self.repeat_record.handle_server_failure.assert_not_called()
 
 
 class FormatResponseTests(SimpleTestCase):
