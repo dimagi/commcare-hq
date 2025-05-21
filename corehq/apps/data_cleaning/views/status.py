@@ -37,7 +37,23 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
 
     @property
     def is_session_in_progress(self):
-        return self.seconds_since_complete < APPLY_CHANGES_WAIT_TIME
+        return self.session.committed_on is not None and self.seconds_since_complete < APPLY_CHANGES_WAIT_TIME
+
+    @property
+    def weighted_percent_complete(self):
+        """
+        This gives the user the illusion of progress while we artificially buffer the completion time.
+
+        The buffer allows the change feed to catch up to the form submissions,
+        so that the user doesn't refresh and see that their data hasn't updated due to a slow change feed.
+
+        TODO: update this buffer (APPLY_CHANGES_WAIT_TIME) dynamically based on change feed status.
+        """
+        if self.is_session_in_progress:
+            return int(0.9 * self.session.percent_complete + 10 * (
+                float(self.seconds_since_complete) / float(APPLY_CHANGES_WAIT_TIME)
+            ))
+        return self.session.percent_complete or 0
 
     def get_template_names(self):
         if self.is_session_in_progress:
@@ -71,6 +87,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
             "case_type": self.session.identifier,
             "exit_url": self.exit_url,
             "is_task_complete": self.session.percent_complete == 100,
+            "weighted_percent_complete": self.weighted_percent_complete,
         })
         return context
 
@@ -86,16 +103,8 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
 
     @hq_hx_action('get')
     def poll_session_status(self, request, *args, **kwargs):
-        # we call super() to avoid the default behavior of this view
-        # which is to trigger the session status modal
-        response = super().get(request, *args, **kwargs)
-        if self.session.completed_on is not None:
-            response['HX-Trigger'] = json.dumps({
-                'statusRefresh': {
-                    'target': '#primary-view-container',
-                },
-            })
-        return response
+        # we call super() to avoid triggering "showDataCleaningModal" again
+        return super().get(request, *args, **kwargs)
 
     @hq_hx_action('post')
     def resume_session(self, request, *args, **kwargs):
@@ -105,10 +114,12 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
         new_session = self.session.get_resumed_session()
 
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
+        new_session_url = reverse(
+            BulkEditCasesSessionView.urlname,
+            args=(self.domain, new_session.session_id),
+        )
+        query_string = request.META.get('QUERY_STRING', '')
         return self.render_htmx_redirect(
-            reverse(
-                BulkEditCasesSessionView.urlname,
-                args=(self.domain, new_session.session_id),
-            ),
+            f"{new_session_url}?{query_string}",
             response_message=_("Resuming Bulk Edit Session..."),
         )
