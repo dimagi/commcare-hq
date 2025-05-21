@@ -82,18 +82,17 @@ def _get_es_query(domain, user_type, user_filters):
     if user_active_status is None:
         # Show all users in domain - will always be true for WEB_USER_TYPE
         query = UserES().domain(domain).remove_default_filter('active')
-    # REMOVE THIS COMMENT: This will work properly after nested field migration
     elif user_active_status:
         # Active users filtered by default
         if user_type == MOBILE_USER_TYPE:
             query = UserES().domain(domain)
         if user_type == WEB_USER_TYPE:
-            query = UserES().domain(domain).is_active_in_domain(True)
+            query = UserES().domain(domain).is_active(True, domain)
     else:
         if user_type == MOBILE_USER_TYPE:
             query = UserES().domain(domain).show_only_inactive()
         if user_type == WEB_USER_TYPE:
-            query = UserES().domain(domain).is_active_in_domain(False)
+            query = UserES().domain(domain).is_active(False, domain)
 
     if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()

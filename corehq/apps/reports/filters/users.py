@@ -390,11 +390,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
-        # REMOVE THIS COMMENT: This will work properly after nested field migration
         if HQUserType.WEB in user_types:
-            user_type_filters.append(user_es.is_active_in_domain(True))
+            user_type_filters.append(filters.AND(user_es.is_active(True, domain), user_es.web_users()))
         if HQUserType.DEACTIVATED_WEB in user_types:
-            user_type_filters.append(user_es.is_active_in_domain(False))
+            user_type_filters.append(filters.AND(user_es.is_active(False, domain), user_es.web_users()))
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 

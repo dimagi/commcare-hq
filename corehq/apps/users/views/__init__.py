@@ -861,12 +861,8 @@ def _format_enterprise_user(domain, user):
 @location_safe
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain], filter_by_accessible_locations=True)
-    show_active_users = json.loads(request.GET.get('showActiveUsers', 'true'))
     web_users_fmt = []
     for u in web_users:
-        if len(u.domain_memberships) > 1 and ((show_active_users and not u.is_active_in_domain(domain))
-                                              or (not show_active_users and u.is_active_in_domain(domain))):
-            continue
         user = {
             'eulas': u.get_eulas(),
             'email': u.get_email(),
@@ -915,7 +911,7 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
     query = request.GET.get('query')
-    active_in_domain = json.loads(request.GET.get('showActiveUsers', 'true'))
+    active_in_domain = json.loads(request.GET.get('showActiveUsers', None))
 
     user_es = (
         UserES().domains(domains).web_users().sort('username.exact')
@@ -926,10 +922,13 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
         assert len(domains) == 1
         domain = domains[0]
         user_es = filter_user_query_by_locations_accessible_to_user(user_es, domain, request.couch_user)
-    if not active_in_domain:
-        user_es = user_es.is_active_in_domain(False)
-    else:
-        user_es = user_es.is_active_in_domain(True)
+    if active_in_domain is not None:
+        assert len(domains) == 1
+        domain = domains[0]
+        if active_in_domain is False:
+            user_es = user_es.is_active(False, domain)
+        else:
+            user_es = user_es.is_active(True, domain)
     result = user_es.run()
 
     return (
