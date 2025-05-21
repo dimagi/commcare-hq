@@ -115,14 +115,14 @@ class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
         template_name="data_cleaning/columns/task_status.html",
         verbose_name=gettext_lazy("Status"),
     )
+    case_type = columns.Column(
+        verbose_name=gettext_lazy("Case Type"),
+    )
     committed_on = columns.Column(
         verbose_name=gettext_lazy("Committed On"),
     )
     completed_on = columns.Column(
         verbose_name=gettext_lazy("Completed On"),
-    )
-    case_type = columns.Column(
-        verbose_name=gettext_lazy("Case Type"),
     )
     case_count = columns.Column(
         verbose_name=gettext_lazy("# Cases Edited"),
