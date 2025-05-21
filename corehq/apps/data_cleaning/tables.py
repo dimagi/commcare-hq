@@ -125,7 +125,7 @@ class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
         verbose_name=gettext_lazy("Case Type"),
     )
     case_count = columns.Column(
-        verbose_name=gettext_lazy("# Cases Cleaned"),
+        verbose_name=gettext_lazy("# Cases Edited"),
     )
     form_ids = columns.TemplateColumn(
         template_name="data_cleaning/columns/task_form_ids.html",
