@@ -98,7 +98,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def _get_es_query():
-        search_string = "fully_vaccinated ='' and household_member_type_display ='Under 5'"
+        search_string = "household_member_type = 'under_5' and age_in_months < 60 and fully_vaccinated =''"
         return (
             CaseSearchES().
             domain(DOMAIN).
