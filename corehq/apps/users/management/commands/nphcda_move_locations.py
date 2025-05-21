@@ -391,6 +391,7 @@ def move_settlement(
     location.site_code = new_settlement.get_site_code()
     if not dry_run:
         location.save()
+        del location_cache[old_settlement.location_id]
 
 
 def iter_cases(domain: str, location_id: str) -> Iterator[CommCareCase]:
@@ -449,7 +450,7 @@ def update_cases_caseblocks(
     """
     Yields CaseBlocks as text to update location names in cases.
     """
-    location = new_settlement.get_location(domain)
+    location = get_location_by_id(domain, old_settlement.location_id)
     for case in cases:
         case_updates = get_case_updates(
             case,
