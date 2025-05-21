@@ -46,13 +46,10 @@ class TestOrphanedUserData(TestCase):
         self.assertFalse(SQLUserData.objects.filter(django_user=user, domain=self.domain).exists())
 
     def test_dry_run_works(self):
+        # no couch user exists
         user = User.objects.create(username='test', password='abc123')
-        web_user = WebUser.create(self.domain, 'testuser', 'abc123', None, None)
-        self.addCleanup(web_user.delete, None, None)
-        SQLUserData.objects.create(django_user=user, user_id=web_user._id, domain=self.domain, data={})
+        SQLUserData.objects.create(django_user=user, user_id='abc123', domain=self.domain, data={})
 
-        web_user.delete_domain_membership(self.domain)
-        web_user.save()
         remove_orphaned_user_data_for_domain(self.domain, dry_run=True)
 
         self.assertTrue(SQLUserData.objects.filter(django_user=user, domain=self.domain).exists())
