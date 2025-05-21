@@ -97,6 +97,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
@@ -993,9 +994,11 @@ class DataSourceRepeater(Repeater):
             # immediately; if enabled, then it will be sent when
             # waiting_record would have been sent. Either way, this
             # change will not delay sending the payload.
-            waiting_record.delete()
             waiting_payload = DataSourceUpdate.objects.get(pk=waiting_record.payload_id)
-            doc_ids |= set(waiting_payload.doc_ids)
+            if len(waiting_payload.doc_ids) <= CASEBLOCK_CHUNKSIZE:
+                # Don't merge more than a bulk case import
+                doc_ids |= set(waiting_payload.doc_ids)
+                waiting_record.delete()
         if doc_ids:
             payload.doc_ids = list(set(payload.doc_ids) | doc_ids)
             payload.save()
