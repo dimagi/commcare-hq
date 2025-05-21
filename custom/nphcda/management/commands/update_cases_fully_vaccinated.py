@@ -74,8 +74,6 @@ class Command(BaseCommand):
 
     def _update(self):
         query = self._get_es_query()
-        if self.limit:
-            query = query.size(self.limit)
         expected_cases_to_be_iterated = query.count()
 
         logger.info(f"Expected cases to be iterated: {expected_cases_to_be_iterated}")
@@ -96,16 +94,17 @@ class Command(BaseCommand):
 
         logger.info(f"Total cases with updates: {total_count_of_cases_with_updates}")
 
-    @staticmethod
-    def _get_es_query():
+    def _get_es_query(self):
         search_string = "household_member_type = 'under_5' and age_in_months < 60 and fully_vaccinated =''"
-        return (
+        query = (
             CaseSearchES().
             domain(DOMAIN).
             case_type(HOUSEHOLD_MEMBER_CASE_TYPE).
-            is_closed(False).
-            set_query({"query_string": {"query": search_string}})
+            is_closed(False)
         )
+        if self.limit:
+            query = query.size(self.limit)
+        return query.xpath_query(DOMAIN, search_string)
 
     def _update_cases_chunk(self, case_ids):
         cases = CommCareCase.objects.get_cases(case_ids)
