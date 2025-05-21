@@ -37,7 +37,7 @@ class Command(BaseCommand):
             ))
             set_migration_started(domain, 'fix_commcare_version')
             try:
-                res = iter_update(db, update_commcare_version, with_progress_bar(all_ids, count), max_retries=0)
+                res = iter_update(db, update_commcare_version, with_progress_bar(all_ids, count))
             except IterUpdateError:
                 print(f"Error updating commcare_version for domain {domain}")
                 print(res.error_ids)
