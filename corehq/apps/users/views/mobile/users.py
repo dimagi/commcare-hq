@@ -6,6 +6,7 @@ import time
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
+from django.db.models import F
 from django.http import (
     Http404,
     HttpResponse,
@@ -27,6 +28,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from oauth2_provider.models import AccessToken, RefreshToken
 
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
@@ -133,7 +135,9 @@ from corehq.apps.users.util import (
     format_username,
     generate_mobile_username,
     log_user_change,
-    raw_username, verify_modify_user_conditions,
+    raw_username,
+    verify_modify_user_conditions,
+    get_complete_username,
 )
 from corehq.apps.users.views import (
     BaseEditUserView,
@@ -905,6 +909,30 @@ def deactivate_commcare_user(request, domain, user_id):
     return _modify_user_status(request, domain, user_id, False)
 
 
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
+def set_personalid_link_status(request, domain, username):
+    if not toggles.COMMCARE_CONNECT.enabled(domain):
+        return HttpResponse(status=403)
+    is_active = request.POST.get('is_active')
+    if is_active is None:
+        return HttpResponse(status=400)
+    complete_username = get_complete_username(username, domain)
+    connect_link = ConnectIDUserLink.objects.get(commcare_user__username=complete_username)
+    connect_link.is_active = (is_active == 'true')
+    connect_link.save()
+    if not connect_link.is_active:
+        user = connect_link.commcare_user
+        tokens = list(AccessToken.objects.filter(user=user)) + list(
+            RefreshToken.objects.filter(user=user)
+        )
+        for token in tokens:
+            token.revoke()
+
+    return HttpResponse(status=200)
+
+
 def _modify_user_status(request, domain, user_id, is_active):
     user = CommCareUser.get_by_user_id(user_id, domain)
     try:
@@ -980,6 +1008,22 @@ def paginate_mobile_workers(request, domain):
         else:
             return _('Pending Confirmation')
 
+    def get_personalid_links_by_username(users):
+        if not toggles.COMMCARE_CONNECT.enabled(domain):
+            return {}
+        usernames = [
+            get_complete_username(u['base_username'], domain)
+            for u in users
+        ]
+        links = ConnectIDUserLink.objects.filter(
+            commcare_user__username__in=usernames,
+        ).annotate(commcare_username=F('commcare_user__username'))
+        return {
+            raw_username(link.commcare_username): link
+            for link in links
+        }
+
+    personalid_links = get_personalid_links_by_username(users)
     for user in users:
         date_registered = user.pop('created_on', '')
         if date_registered:
@@ -987,11 +1031,13 @@ def paginate_mobile_workers(request, domain):
         # make sure these are always set and default to true
         user['is_active'] = user.get('is_active', True)
         user['is_account_confirmed'] = user.get('is_account_confirmed', True)
+        personalid_link = personalid_links.get(user['base_username'])
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
             'date_registered': date_registered,
             'status': _status_string(user),
+            'is_personalid_link_active': personalid_link.is_active if personalid_link else None,
         })
 
     return JsonResponse({

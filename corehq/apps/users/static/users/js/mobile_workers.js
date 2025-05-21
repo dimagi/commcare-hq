@@ -60,6 +60,7 @@ var userModel = function (options) {
         phone_number: '',
         is_active: true,
         is_account_confirmed: true,
+        is_personalid_link_active: null,
         deactivate_after_date: '',
     });
 
@@ -93,11 +94,22 @@ var userModel = function (options) {
     self.is_active.subscribe(function (newValue) {
         var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
             $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
+        toggleActive($modal, urlName, self.user_id());
+    });
 
+    self.is_personalid_link_active.subscribe(function (newValue) {
+        const urlName = 'set_personalid_link_status';
+        const modalNamePrefix = newValue ? 'activate_personalid_link' : 'deactivate_personalid_link';
+        const $modal = $(`#${modalNamePrefix}_${self.username()}`);
+        toggleActive($modal, urlName, self.username(), { is_active: newValue });
+    });
+
+    function toggleActive($modal, urlName, userIdOrName, bodyData = {}) {
         $modal.find(".btn").addSpinnerToButton();
         $.ajax({
             method: 'POST',
-            url: initialPageData.reverse(urlName, self.user_id()),
+            url: initialPageData.reverse(urlName, userIdOrName),
+            data: bodyData,
             success: function (data) {
                 $modal.modal('hide');
                 if (data.success) {
@@ -111,7 +123,7 @@ var userModel = function (options) {
                 self.action_error(gettext("Issue communicating with server. Try again."));
             },
         });
-    });
+    }
 
     self.sendConfirmationEmail = function () {
         var urlName = 'send_confirmation_email';

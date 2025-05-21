@@ -7,7 +7,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, validate_email
-from django.template.loader import get_template
+from django.template.loader import get_template, render_to_string
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -20,6 +20,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 
+from corehq import toggles
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
 from corehq.apps.analytics.tasks import set_analytics_opt_out
@@ -41,7 +42,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.reports.models import TableauUser
+from corehq.apps.reports.models import CommCareUser, TableauUser
 from corehq.apps.reports.util import (
     TableauGroupTuple,
     get_all_tableau_groups,
@@ -65,7 +66,7 @@ from corehq.util.global_request import get_request_domain
 from ..hqwebapp.signals import clear_login_attempts
 from .audit.change_messages import UserChangeMessage
 from .dbaccessors import user_exists
-from .models import CouchUser, DeactivateMobileWorkerTrigger, UserRole
+from .models import ConnectIDUserLink, CouchUser, DeactivateMobileWorkerTrigger, UserRole
 from .util import cc_user_domain, format_username, log_user_change
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -543,6 +544,8 @@ class SetUserPasswordForm(SetPasswordForm):
         self.helper.form_method = 'POST'
         self.helper.form_tag = False
 
+        has_personalid_link = self.user_has_active_personalid_link(user_id)
+
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_action = reverse("change_password", args=[project.name, user_id])
@@ -550,31 +553,48 @@ class SetUserPasswordForm(SetPasswordForm):
             submitButton = hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     Submit('submit', _('Reset Password'),
-                           data_bind="enable: passwordSufficient(), click: submitCheck")
+                           data_bind="enable: passwordSufficient(), click: submitCheck",
+                           **({'disabled': 'disabled'} if has_personalid_link else {}))
                 )
             )
         else:
             submitButton = hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', _('Reset Password'))
+                    Submit('submit', _('Reset Password'),
+                           **({'disabled': 'disabled'} if has_personalid_link else {}))
                 )
             )
+
+        alert_message = render_to_string("users/partials/bootstrap3/personalid_password_locked_banner.html")
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Reset Password for Mobile Worker"),
+                crispy.HTML(alert_message) if has_personalid_link else None,
                 crispy.Field(
                     'new_password1',
                     data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
                     value=initial_password,
+                    **({'readonly': True} if has_personalid_link else {}),
                 ),
                 crispy.Field(
                     'new_password2',
                     value=initial_password,
+                    **({'readonly': True} if has_personalid_link else {}),
                 ),
                 submitButton,
                 css_class="check-password",
             ),
         )
+
+    def user_has_active_personalid_link(self, user_id):
+        if toggles.COMMCARE_CONNECT.enabled(self.project.name):
+            user = CommCareUser.get_by_user_id(user_id)
+            try:
+                personalid_link = ConnectIDUserLink.objects.get(commcare_user=user.get_django_user())
+                return personalid_link.is_active
+            except ConnectIDUserLink.DoesNotExist:
+                pass
+        return False
 
     def clean_new_password1(self):
         password1 = self.cleaned_data.get('new_password1')
