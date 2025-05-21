@@ -12,7 +12,8 @@ from corehq.util.dates import iso_string_to_datetime
 experiment = Experiment(
     campaign=ES_FOR_EXPORTS,
     old_args={},
-    new_args={'use_es': True}
+    new_args={'use_es': True},
+    is_equal=lambda a, b: True,
 )
 
 
