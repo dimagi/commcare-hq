@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/forms/edit_form_details", [
+define("app_manager/js/forms/edit_form_details", [
     "jquery",
     "knockout",
 ], function (

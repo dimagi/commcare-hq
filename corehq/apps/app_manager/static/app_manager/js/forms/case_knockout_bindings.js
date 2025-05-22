@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/forms/case_knockout_bindings", [
+define("app_manager/js/forms/case_knockout_bindings", [
     'jquery',
     'knockout',
     'underscore',

@@ -4,7 +4,7 @@
  *
  */
 
-hqDefine('notifications/js/bootstrap3/notifications_service', [
+define('notifications/js/bootstrap3/notifications_service', [
     'jquery',
     'knockout',
     'underscore',
