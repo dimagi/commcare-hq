@@ -1979,20 +1979,21 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
     def send_prepayment_invoice(self, date_start, date_end):
         label = f"One month of {self.plan_version.plan.name}"
         monthly_fee = self.plan_version.product_rate.monthly_fee
-        quantity = 12  # todo: pass in as kwarg and/or calculate from dates
-        amount = monthly_fee * quantity
+        duration = relativedelta(date_end, date_start)
+        num_months = getattr(duration, 'years', 0) * 12  # todo: support other subscription lengths
+        amount = monthly_fee * num_months
+        date_due = max(date_start, datetime.date.today() + datetime.timedelta(days=15))
 
         email_list = self.cleaned_data['email_list']
         contact_emails = [email_list[0]]
         cc_emails = [email for email in email_list[1:]]
-        date_due = max(date_start, datetime.date.today() + datetime.timedelta(days=15))
 
         invoice_factory = DomainWireInvoiceFactory(
             self.domain, date_start=date_start, date_end=date_end,
             contact_emails=contact_emails, cc_emails=cc_emails
         )
         invoice_factory.create_wire_credits_invoice(
-            amount, label, monthly_fee, quantity, date_due
+            amount, label, monthly_fee, num_months, date_due
         )
 
     @property
