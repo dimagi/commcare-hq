@@ -1986,9 +1986,12 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         contact_emails = [email_list[0]]
         cc_emails = [email for email in email_list[1:]]
 
-        invoice_factory = DomainWireInvoiceFactory(self.domain, contact_emails=contact_emails, cc_emails=cc_emails)
+        invoice_factory = DomainWireInvoiceFactory(
+            self.domain, date_start=date_start, date_end=date_end,
+            contact_emails=contact_emails, cc_emails=cc_emails
+        )
         invoice_factory.create_wire_credits_invoice(
-            amount, label, monthly_fee, quantity, date_start, date_end
+            amount, label, monthly_fee, quantity
         )
 
     @property
