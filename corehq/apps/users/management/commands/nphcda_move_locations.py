@@ -84,6 +84,13 @@ class Settlement(NamedTuple):
     def __str__(self):
         return self.settlement_name
 
+    def get_location_or_none(self, domain: str) -> Optional[SQLLocation]:
+        try:
+            return self.get_location(domain)
+        except LocationNotFoundError:
+            return None
+        # Fail hard on MultipleLocationsFoundError
+
     def get_location(self, domain: str) -> SQLLocation:
         state_code = self.get_state_code()
         state = get_location_by_code(domain, state_code, COUNTRY_ID)
@@ -182,18 +189,20 @@ class Command(BaseCommand):
             device_id=__name__
         ) as submit_case_block:
             for old_settlement, new_settlement in all_settlement_pairs:
-                if location_exists(domain, new_settlement):
-                    for user in iter_users(domain, old_settlement.location_id):
-                        assign_settlement(domain, user, new_settlement)
+                if new_location := new_settlement.get_location_or_none(domain):
+                    if new_location.location_id != old_settlement.location_id:
+                        for user in iter_users(domain, old_settlement.location_id):
+                            assign_location(user, new_location)
                     cases = iter_cases(domain, old_settlement.location_id)
                     for case_block in move_cases_caseblocks(
-                        domain,
                         cases,
+                        new_location,
                         old_settlement,
                         new_settlement,
                     ):
                         submit_case_block.send(case_block)
-                    delete_settlement(domain, old_settlement.location_id)
+                    if new_location.location_id != old_settlement.location_id:
+                        delete_settlement(domain, old_settlement.location_id)
                 else:
                     move_settlement(domain, old_settlement, new_settlement)
                     cases = iter_cases(domain, old_settlement.location_id)
@@ -257,14 +266,6 @@ def load_sheet(sheet: SheetProto) -> Iterator[SettlementPair]:
             yield SettlementPair(old_settlement, new_settlement)
 
 
-def location_exists(domain: str, settlement: Settlement) -> bool:
-    try:
-        settlement.get_location(domain)
-        return True
-    except LocationError:
-        return False
-
-
 def get_location_by_code(
     domain: str,
     code: str,
@@ -281,7 +282,12 @@ def get_location_by_code(
     if len(locations) == 1:
         location = locations[0]
     elif len(locations) > 1:
-        location = select_location(locations, name, parent, site_code)
+        if site_code:
+            location = select_location(locations, name, parent, site_code)
+        else:
+            raise MultipleLocationsFoundError(
+                f"Multiple locations found for '{name}' under {loc_str(parent)}"
+            )
     else:
         raise LocationNotFoundError(
             f"No location found for '{name}' under {loc_str(parent)}"
@@ -309,22 +315,9 @@ def select_location(
     locations: Iterable[SQLLocation],
     name: str,
     parent: SQLLocation,
-    site_code: Optional[str] = None,
+    site_code: str,
 ) -> SQLLocation:
-    """
-    Try to select a location with a proper site code.
-    """
-    snake_name = snake_case(name)
-    if site_code:
-        locations = [loc for loc in locations if loc.site_code == site_code]
-    else:
-        locations = [
-            loc for loc in locations
-            if (
-                loc.site_code.startswith(snake_name)
-                and loc.site_code.endswith('settlement')
-            )
-        ]
+    locations = [loc for loc in locations if loc.site_code == site_code]
     if len(locations) == 1:
         return locations[0]
     raise MultipleLocationsFoundError(
@@ -360,17 +353,9 @@ def iter_users(domain: str, location_id: str) -> Iterator[CommCareUser]:
         yield CommCareUser.get_by_user_id(user_id, domain)
 
 
-def assign_settlement(
-    domain: str,
-    user: CommCareUser,
-    settlement: Settlement,
-) -> None:
-    """
-    Add settlement to user's assigned locations.
-    """
+def assign_location(user: CommCareUser, location: SQLLocation) -> None:
     if verbose:
-        print(f'Assigning {user.raw_username} to {settlement}')
-    location = settlement.get_location(domain)
+        print(f'Assigning {user.raw_username} to {loc_str(location)}')
     if not dry_run:
         user.add_to_assigned_locations(location)
     # We don't need to unassign the user from the old settlement. That
@@ -435,8 +420,8 @@ def iter_cases(domain: str, location_id: str) -> Iterator[CommCareCase]:
 
 
 def move_cases_caseblocks(
-    domain: str,
     cases: Iterable[CommCareCase],
+    location: SQLLocation,
     old_settlement: Settlement,
     new_settlement: Settlement,
 ) -> Iterator[str]:
@@ -444,7 +429,6 @@ def move_cases_caseblocks(
     Yields CaseBlocks as text to set owner_id and update location names
     and IDs in cases.
     """
-    location = new_settlement.get_location(domain)
     for case in cases:
         case_updates = get_case_updates(
             case,
