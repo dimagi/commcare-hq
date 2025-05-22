@@ -91,7 +91,10 @@ class SuperuserManagement(UserAdministration):
         args = [self.request.POST] if self.request.POST else []
         return {
             'form': SuperuserManagementForm(*args),
-            'users': augmented_superusers(include_can_assign_superuser=True),
+            'users': augmented_superusers(
+                include_can_assign_superuser=True,
+                include_feature_flag_edit_permissions=True
+            ),
             'can_toggle_status': can_toggle_status
         }
 
@@ -198,10 +201,17 @@ def superuser_table(request):
     return response
 
 
-def augmented_superusers(users=None, include_accounting_admin=False, include_can_assign_superuser=False):
+def augmented_superusers(
+    users=None,
+    include_accounting_admin=False,
+    include_can_assign_superuser=False,
+    include_feature_flag_edit_permissions=False
+):
     if not users:
         users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)).order_by("username")
     augmented_users = _augment_users_with_two_factor_enabled(users)
+    if include_feature_flag_edit_permissions:
+        augmented_users = _augment_users_with_feature_flag_edit_permissions(augmented_users)
     if include_accounting_admin:
         return _augment_users_with_accounting_admin(augmented_users)
     if include_can_assign_superuser:
@@ -227,6 +237,12 @@ def _augment_users_with_two_factor_enabled(users):
 def _augment_users_with_accounting_admin(users):
     for user in users:
         user.is_accounting_admin = is_accounting_admin(user)
+    return users
+
+
+def _augment_users_with_feature_flag_edit_permissions(users):
+    for user in users:
+        user.tags_edit_permission = [tag.name for tag in get_editable_toggle_tags_for_user(user.username)]
     return users
 
 

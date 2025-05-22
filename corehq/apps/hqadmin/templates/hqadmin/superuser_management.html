@@ -32,6 +32,7 @@
           <th>{% translate "Superuser" %}</th>
           <th>{% translate "Can assign Superuser" %}</th>
           <th>{% translate "Two Factor Enabled" %}</th>
+          <th>{% translate "Feature Flag Edit Permissions" %}</th>
         </tr>
         {% for user in users %}
           <tr>
@@ -40,6 +41,7 @@
             <td>{% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.can_assign_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.two_factor_enabled %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>{{ user.tags_edit_permission|join:", " }}</td>
           </tr>
         {% endfor %}
       </table>
