@@ -424,6 +424,7 @@ class DomainMembership(Membership):
     assigned_location_ids = StringListProperty()
     program_id = StringProperty()
     last_accessed = DateProperty()
+    is_active = BooleanProperty(default=True)
 
     @property
     def permissions(self):
