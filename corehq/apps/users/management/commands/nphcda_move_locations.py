@@ -66,6 +66,14 @@ class LocationError(ValueError):
     pass
 
 
+class LocationNotFoundError(LocationError):
+    pass
+
+
+class MultipleLocationsFoundError(LocationError):
+    pass
+
+
 class Settlement(NamedTuple):
     state_name: str
     lga_name: str
@@ -84,7 +92,12 @@ class Settlement(NamedTuple):
         ward_code = self.get_ward_code()
         ward = get_location_by_code(domain, ward_code, lga.location_id)
         settlement_code = self.get_settlement_code()
-        return get_location_by_code(domain, settlement_code, ward.location_id)
+        return get_location_by_code(
+            domain,
+            settlement_code,
+            ward.location_id,
+            self.get_site_code(),
+        )
 
     def get_state_code(self):
         return get_code(self.state_name)
@@ -256,6 +269,7 @@ def get_location_by_code(
     domain: str,
     code: str,
     parent_location_id: str,
+    site_code: Optional[str] = None,
 ) -> SQLLocation:
     # Modifies the value of code_to_location_id, location_cache
     if code in code_to_location_id:
@@ -267,9 +281,9 @@ def get_location_by_code(
     if len(locations) == 1:
         location = locations[0]
     elif len(locations) > 1:
-        location = select_location(locations, name, parent)
+        location = select_location(locations, name, parent, site_code)
     else:
-        raise LocationError(
+        raise LocationNotFoundError(
             f"No location found for '{name}' under {loc_str(parent)}"
         )
     code_to_location_id[code] = location.location_id
@@ -287,7 +301,7 @@ def get_location_by_id(domain: Optional[str], location_id: str) -> SQLLocation:
         try:
             location_cache[location_id] = queryset.get()
         except SQLLocation.DoesNotExist as err:
-            raise LocationError(f'location_id {location_id} not found') from err
+            raise LocationNotFoundError(f'location_id {location_id} not found') from err
     return location_cache[location_id]
 
 
@@ -295,21 +309,25 @@ def select_location(
     locations: Iterable[SQLLocation],
     name: str,
     parent: SQLLocation,
+    site_code: Optional[str] = None,
 ) -> SQLLocation:
     """
     Try to select a location with a proper site code.
     """
     snake_name = snake_case(name)
-    locations = [
-        loc for loc in locations
-        if (
-            loc.site_code.startswith(snake_name)
-            and loc.site_code.endswith('settlement')
-        )
-    ]
+    if site_code:
+        locations = [loc for loc in locations if loc.site_code == site_code]
+    else:
+        locations = [
+            loc for loc in locations
+            if (
+                loc.site_code.startswith(snake_name)
+                and loc.site_code.endswith('settlement')
+            )
+        ]
     if len(locations) == 1:
         return locations[0]
-    raise LocationError(
+    raise MultipleLocationsFoundError(
         f"Multiple locations found for '{name}' under {loc_str(parent)}"
     )
 
