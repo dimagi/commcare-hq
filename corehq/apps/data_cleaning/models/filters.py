@@ -45,6 +45,17 @@ class BulkEditFilterManager(models.Manager):
             query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
         return query
 
+    def copy_to_session(self, source_session, dest_session):
+        for custom_filter in self.filter(session=source_session):
+            self.model.objects.create(
+                session=dest_session,
+                index=custom_filter.index,
+                prop_id=custom_filter.prop_id,
+                data_type=custom_filter.data_type,
+                match_type=custom_filter.match_type,
+                value=custom_filter.value,
+            )
+
 
 class BulkEditFilter(models.Model):
     session = models.ForeignKey("data_cleaning.BulkEditSession", related_name="filters", on_delete=models.CASCADE)
@@ -198,6 +209,15 @@ class BulkEditPinnedFilterManager(models.Manager):
         for pinned_filter in session.pinned_filters.all():
             query = pinned_filter.filter_query(query)
         return query
+
+    def copy_to_session(self, source_session, dest_session):
+        for pinned_filter in self.filter(session=source_session):
+            self.model.objects.create(
+                session=dest_session,
+                index=pinned_filter.index,
+                filter_type=pinned_filter.filter_type,
+                value=pinned_filter.value,
+            )
 
 
 class BulkEditPinnedFilter(models.Model):

@@ -71,6 +71,10 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
         return visible_columns
 
     @property
+    def is_read_only(self):
+        return self.session.is_read_only
+
+    @property
     @memoized
     def has_any_filtering(self):
         """
@@ -126,4 +130,8 @@ class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
     form_ids = columns.TemplateColumn(
         template_name="data_cleaning/columns/task_form_ids.html",
         verbose_name=gettext_lazy("Form IDs"),
+    )
+    session_url = columns.TemplateColumn(
+        template_name="data_cleaning/columns/task_session_url.html",
+        verbose_name=gettext_lazy("Open Session"),
     )

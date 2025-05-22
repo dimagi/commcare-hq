@@ -828,7 +828,7 @@ files from Vellum directly, do the following.
   `localsettings.py`:
 
     ```python
-    VELLUM_DEBUG = "dev"
+    VELLUM_DEBUG = True
     ```
 
 - Clone (or symlink to repo elsewhere on disk) the Vellum repostory into/at the
