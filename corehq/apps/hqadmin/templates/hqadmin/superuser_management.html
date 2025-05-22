@@ -1,6 +1,9 @@
 {% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry_b3 'hqadmin/js/superuser_management' %}
 
 {% block page_content %}
   <div class="row">

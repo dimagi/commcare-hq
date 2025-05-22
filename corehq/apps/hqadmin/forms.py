@@ -104,9 +104,15 @@ class SuperuserManagementForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'csv_email_list',
-            'privileges',
+            crispy.Div(
+                crispy.Field('privileges'),
+                css_id='privileges'
+            ),
             'can_assign_superuser',
-            'feature_flag_edit_permissions',
+            crispy.Div(
+                crispy.Field('feature_flag_edit_permissions'),
+                css_id='feature_flag_edit_permissions'
+            ),
             FormActions(
                 crispy.Submit(
                     'superuser_management',
