@@ -127,7 +127,7 @@ class TestReportNotification(TestCase):
         return user
 
 
-class TestRecipientsByLanguage(SimpleTestCase):
+class TestRecipientsByLanguage(TestCase):
     def test_existing_user_with_no_language_gets_default_language(self):
         report = self._create_report_for_emails('test@dimagi.com')
         self._establish_user_languages([{'username': 'test@user.com', 'language': None}])

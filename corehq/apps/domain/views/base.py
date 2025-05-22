@@ -68,9 +68,16 @@ def select(request, do_not_redirect=False, next_view=None):
                 or (request.user.is_superuser and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
             ):
+                redirect_last_domain = True
+                if (
+                    request.couch_user.is_web_user()
+                    and not request.couch_user.is_active_in_domain(last_visited_domain)
+                ):
+                    redirect_last_domain = False
                 try:
-                    return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
-                                                args=[last_visited_domain]))
+                    if redirect_last_domain:
+                        return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
+                                                            args=[last_visited_domain]))
                 except Http404:
                     pass
 
@@ -92,7 +99,7 @@ def accept_all_invitations(request):
 @quickcache(['couch_user.username'])
 def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
     # Returns dicts with keys 'name', 'display_name', and 'url'
-    return _domains_to_links(Domain.active_for_user(couch_user), view_name)
+    return _domains_to_links(Domain.active_for_user(couch_user), view_name, couch_user)
 
 
 # Returns domains where given user has access only by virtue of enterprise permissions
@@ -107,15 +114,18 @@ def get_enterprise_links_for_dropdown(couch_user, view_name="domain_homepage"):
             if subdomain not in domain_links_by_name:
                 subdomain_objects_by_name[subdomain] = Domain.get_by_name(subdomain)
 
-    return _domains_to_links(subdomain_objects_by_name.values(), view_name)
+    return _domains_to_links(subdomain_objects_by_name.values(), view_name, couch_user)
 
 
-def _domains_to_links(domain_objects, view_name):
+def _domains_to_links(domain_objects, view_name, user):
+    if user.is_web_user():
+        domain_objects = [o for o in domain_objects if o and user.is_active_in_domain(o.name)]
     return sorted([{
         'name': o.name,
         'display_name': o.display_name(),
         'url': reverse(view_name, args=[o.name]),
-    } for o in domain_objects if o], key=lambda link: link['display_name'].lower())
+    } for o in domain_objects if o],
+        key=lambda link: link['display_name'].lower())
 
 
 class DomainViewMixin(object):
