@@ -2,7 +2,7 @@ import csv
 import itertools
 import os
 import urllib.parse
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from io import StringIO
 
@@ -34,8 +34,6 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.apps.hqadmin.utils import unset_password
-from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -52,16 +50,24 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.hqadmin.forms import (
     DisableTwoFactorForm,
     DisableUserForm,
-    SuperuserManagementForm,
     OffboardingUserListForm,
+    SuperuserManagementForm,
 )
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_breadcrumbs
+from corehq.apps.hqadmin.utils import unset_password
+from corehq.apps.hqadmin.views.utils import (
+    BaseAdminSectionView,
+    get_breadcrumbs,
+)
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.toggles import ALL_TAGS
+from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
+from corehq.toggles.sql_models import ToggleEditPermission
 from corehq.util import reverse
 from corehq.util.bounced_email_utils import get_email_statuses
 from corehq.util.timer import TimingContext
@@ -82,68 +88,112 @@ class SuperuserManagement(UserAdministration):
 
     @property
     def page_context(self):
-        # only users with can_assign_superuser privilege can change superuser and staff status
-        can_toggle_status = WebUser.from_django_user(self.request.user).can_assign_superuser
         # render validation errors if rendered after POST
         args = [self.request.POST] if self.request.POST else []
         return {
             'form': SuperuserManagementForm(*args),
-            'users': augmented_superusers(include_can_assign_superuser=True),
-            'can_toggle_status': can_toggle_status
+            'users': augmented_superusers(
+                include_can_assign_superuser=True,
+                include_feature_flag_edit_permissions=True
+            ),
+            'can_toggle_status': self.can_toggle_status,
         }
 
+    @cached_property
+    def can_toggle_status(self):
+        # only users with can_assign_superuser privilege can change superuser and staff status
+        return WebUser.from_django_user(self.request.user).can_assign_superuser
+
     def post(self, request, *args, **kwargs):
-        can_toggle_status = WebUser.from_django_user(self.request.user).can_assign_superuser
-        if not can_toggle_status:
+        if not self.can_toggle_status:
             messages.error(request, _("You do not have permission to update superuser or staff status"))
             return self.get(request, *args, **kwargs)
         form = SuperuserManagementForm(self.request.POST)
         if form.is_valid():
             users = form.cleaned_data['csv_email_list']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
-            is_staff = 'is_staff' in form.cleaned_data['privileges']
-            can_assign_superuser = 'can_assign_superuser' in form.cleaned_data['can_assign_superuser']
-            user_changes = []
-            for user in users:
-                fields_changed = {}
-                # save user object only if needed and just once
-                if can_toggle_status and user.is_superuser is not is_superuser:
-                    user.is_superuser = is_superuser
-                    fields_changed['is_superuser'] = is_superuser
 
-                if can_toggle_status and user.is_staff is not is_staff:
-                    user.is_staff = is_staff
-                    fields_changed['is_staff'] = is_staff
+            selected_tag_slugs = form.cleaned_data['feature_flag_edit_permissions'] if is_superuser else []
+            toggle_edit_permission_changes = self._update_toggle_edit_permissions(selected_tag_slugs, users)
 
-                web_user = WebUser.from_django_user(user)
-                if can_toggle_status and web_user.can_assign_superuser is not can_assign_superuser:
-                    web_user.can_assign_superuser = can_assign_superuser
-                    web_user.save()
-                    fields_changed['can_assign_superuser'] = can_assign_superuser
-
-                if fields_changed:
-                    user.save()
-                    couch_user = CouchUser.from_django_user(user)
-                    log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
-                                    changed_by_user=self.request.couch_user,
-                                    changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
-                                    by_domain_required_for_log=False,
-                                    for_domain_required_for_log=False)
-
-                    #formatting for user_changes list
-                    fields_changed['email'] = user.username
-                    if 'is_superuser' not in fields_changed:
-                        fields_changed['same_superuser'] = user.is_superuser
-                    if 'is_staff' not in fields_changed:
-                        fields_changed['same_staff'] = user.is_staff
-                    if 'can_assign_superuser' not in fields_changed:
-                        fields_changed['same_management_privilege'] = web_user.can_assign_superuser
-                    user_changes.append(fields_changed)
+            user_changes = self._track_user_changes(users, form, is_superuser, toggle_edit_permission_changes)
             if user_changes:
                 send_email_notif(user_changes, self.request.couch_user.username)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
+
+    @staticmethod
+    def _update_toggle_edit_permissions(selected_tag_slugs, users):
+        user_changes = defaultdict(lambda: {'added': [], 'removed': []})
+        usernames = {user.username for user in users}
+
+        for tag in ALL_TAGS:
+            permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
+            should_have_access = tag.slug in selected_tag_slugs
+            if should_have_access:
+                if not permission:
+                    permission = ToggleEditPermission(tag_slug=tag.slug)
+                users_to_add = usernames - set(permission.enabled_users)
+                if users_to_add:
+                    for username in users_to_add:
+                        user_changes[username]['added'].append(tag.name)
+                    permission.add_users(list(users_to_add))
+            elif permission:
+                users_to_remove = usernames & set(permission.enabled_users)
+                if users_to_remove:
+                    for username in users_to_remove:
+                        user_changes[username]['removed'].append(tag.name)
+                    permission.remove_users(list(users_to_remove))
+
+        return dict(user_changes)
+
+    def _track_user_changes(self, users, form, is_superuser, toggle_edit_permission_changes):
+        is_staff = 'is_staff' in form.cleaned_data['privileges']
+        can_assign_superuser = 'can_assign_superuser' in form.cleaned_data['can_assign_superuser']
+
+        user_changes = []
+        for user in users:
+            fields_changed = {}
+            # save user object only if needed and just once
+            if self.can_toggle_status and user.is_superuser is not is_superuser:
+                user.is_superuser = is_superuser
+                fields_changed['is_superuser'] = is_superuser
+
+            if self.can_toggle_status and user.is_staff is not is_staff:
+                user.is_staff = is_staff
+                fields_changed['is_staff'] = is_staff
+
+            web_user = WebUser.from_django_user(user)
+            if self.can_toggle_status and web_user.can_assign_superuser is not can_assign_superuser:
+                web_user.can_assign_superuser = can_assign_superuser
+                web_user.save()
+                fields_changed['can_assign_superuser'] = can_assign_superuser
+
+            if fields_changed:
+                user.save()
+
+            if user.username in toggle_edit_permission_changes:
+                fields_changed['feature_flag_edit_permissions'] = toggle_edit_permission_changes[user.username]
+
+            if fields_changed:
+                couch_user = CouchUser.from_django_user(user)
+                log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                                changed_by_user=self.request.couch_user,
+                                changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
+                                by_domain_required_for_log=False,
+                                for_domain_required_for_log=False)
+
+                # formatting for user_changes list
+                fields_changed['email'] = user.username
+                if 'is_superuser' not in fields_changed:
+                    fields_changed['same_superuser'] = user.is_superuser
+                if 'is_staff' not in fields_changed:
+                    fields_changed['same_staff'] = user.is_staff
+                if 'can_assign_superuser' not in fields_changed:
+                    fields_changed['same_management_privilege'] = web_user.can_assign_superuser
+                user_changes.append(fields_changed)
+        return user_changes
 
 
 def send_email_notif(user_changes, changed_by_user):
@@ -174,10 +224,17 @@ def superuser_table(request):
     return response
 
 
-def augmented_superusers(users=None, include_accounting_admin=False, include_can_assign_superuser=False):
+def augmented_superusers(
+    users=None,
+    include_accounting_admin=False,
+    include_can_assign_superuser=False,
+    include_feature_flag_edit_permissions=False
+):
     if not users:
         users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)).order_by("username")
     augmented_users = _augment_users_with_two_factor_enabled(users)
+    if include_feature_flag_edit_permissions:
+        augmented_users = _augment_users_with_feature_flag_edit_permissions(augmented_users)
     if include_accounting_admin:
         return _augment_users_with_accounting_admin(augmented_users)
     if include_can_assign_superuser:
@@ -203,6 +260,12 @@ def _augment_users_with_two_factor_enabled(users):
 def _augment_users_with_accounting_admin(users):
     for user in users:
         user.is_accounting_admin = is_accounting_admin(user)
+    return users
+
+
+def _augment_users_with_feature_flag_edit_permissions(users):
+    for user in users:
+        user.tags_edit_permission = [tag.name for tag in get_editable_toggle_tags_for_user(user.username)]
     return users
 
 

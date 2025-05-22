@@ -1,18 +1,20 @@
 {% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% load hq_shared_tags %}
+{% js_entry_b3 'hqadmin/js/superuser_management' %}
 
 {% block page_content %}
   <div class="row">
     <div class="col-xs-12">
       <h2>{{ current_page.title }}</h2>
-        <p class="help-block">
-          {% if not can_toggle_status %}
-            {% translate "You do not have permission to change superuser and staff status." %}
-          {% else %}
-            {% translate "Please type comma or new-line separated email addresses of users to grant/revoke superuser privileges." %}
-          {% endif %}
-        </p>
+      <p class="help-block">
+        {% if not can_toggle_status %}
+          {% translate "You do not have permission to change superuser and staff status." %}
+        {% else %}
+          {% translate "Please type comma or new-line separated email addresses of users to grant/revoke superuser privileges." %}
+        {% endif %}
+      </p>
       {% if can_toggle_status %}
         {% crispy form %}
       {% endif %}
@@ -21,7 +23,12 @@
   <div class="row">
     <div class="col-xs-12">
       <h2>{% translate "All superusers and staff users" %}</h2>
-      <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>
+      <a
+        class="btn btn-primary"
+        href="{% url "superuser_table" %}"
+        target="_blank"
+        ><i class="fa fa-download"></i> Download</a
+      >
       <table class="table">
         <tr>
           <th>{% translate "Username" %}</th>
@@ -29,14 +36,28 @@
           <th>{% translate "Superuser" %}</th>
           <th>{% translate "Can assign Superuser" %}</th>
           <th>{% translate "Two Factor Enabled" %}</th>
+          <th>{% translate "Feature Flag Edit Permissions" %}</th>
         </tr>
         {% for user in users %}
           <tr>
             <td>{{ user.username }}</td>
-            <td>{% if user.is_staff %}<i class="fa fa-check"></i>{% endif %}</td>
-            <td>{% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
-            <td>{% if user.can_assign_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
-            <td>{% if user.two_factor_enabled %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>
+              {% if user.is_staff %}<i class="fa fa-check"></i>{% endif %}
+            </td>
+            <td>
+              {% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}
+            </td>
+            <td>
+              {% if user.can_assign_superuser %}<i
+                class="fa fa-check"
+              ></i>{% endif %}
+            </td>
+            <td>
+              {% if user.two_factor_enabled %}<i
+                class="fa fa-check"
+              ></i>{% endif %}
+            </td>
+            <td>{{ user.tags_edit_permission|join:", " }}</td>
           </tr>
         {% endfor %}
       </table>
