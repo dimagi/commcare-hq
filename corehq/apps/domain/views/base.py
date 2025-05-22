@@ -64,14 +64,20 @@ def select(request, do_not_redirect=False, next_view=None):
         if domain_obj and domain_obj.is_active:
             # mirrors logic in login_and_domain_required
             if (
-                (request.couch_user.is_member_of(domain_obj, allow_enterprise=True)
-                 and request.couch_user.is_active_in_domain(last_visited_domain))
+                request.couch_user.is_member_of(domain_obj, allow_enterprise=True)
                 or (request.user.is_superuser and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
             ):
+                redirect_last_domain = True
+                if (
+                    request.couch_user.is_web_user()
+                    and not request.couch_user.is_active_in_domain(last_visited_domain)
+                ):
+                    redirect_last_domain = False
                 try:
-                    return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
-                                                args=[last_visited_domain]))
+                    if redirect_last_domain:
+                        return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
+                                                            args=[last_visited_domain]))
                 except Http404:
                     pass
 
@@ -112,11 +118,13 @@ def get_enterprise_links_for_dropdown(couch_user, view_name="domain_homepage"):
 
 
 def _domains_to_links(domain_objects, view_name, user):
+    if user.is_web_user():
+        domain_objects = [o for o in domain_objects if o and user.is_active_in_domain(o.name)]
     return sorted([{
         'name': o.name,
         'display_name': o.display_name(),
         'url': reverse(view_name, args=[o.name]),
-    } for o in domain_objects if o and user.is_active_in_domain(o.name)],
+    } for o in domain_objects if o],
         key=lambda link: link['display_name'].lower())
 
 

@@ -30,7 +30,7 @@ export default function (options) {
         return !self.showLoadingSpinner() && !self.error() && self.users().length > 0;
     });
     self.showActiveUsers = ko.observable(true);
-    self.showActiveUsers.subscribe(function (newValue) {
+    self.showActiveUsers.subscribe(function () {
         self.goToPage(1);
     });
 
@@ -54,7 +54,7 @@ export default function (options) {
                 page: page,
                 query: self.query() || '',
                 limit: self.itemsPerPage(),
-                showActiveUsers: self.showActiveUsers()
+                showActiveUsers: self.showActiveUsers(),
             },
             success: function (data) {
                 self.showLoadingSpinner(false);
