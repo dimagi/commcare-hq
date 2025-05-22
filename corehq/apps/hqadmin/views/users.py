@@ -36,6 +36,9 @@ from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.hqadmin.utils import unset_password
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.toggles import ALL_TAGS
+from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
+from corehq.toggles.sql_models import ToggleEditPermission
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -103,6 +106,10 @@ class SuperuserManagement(UserAdministration):
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
             can_assign_superuser = 'can_assign_superuser' in form.cleaned_data['can_assign_superuser']
+
+            selected_tag_slugs = form.cleaned_data['feature_flag_edit_permissions'] if is_superuser else []
+            self._update_toggle_edit_permissions(selected_tag_slugs, users)
+
             user_changes = []
             for user in users:
                 fields_changed = {}
@@ -144,6 +151,23 @@ class SuperuserManagement(UserAdministration):
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
+
+    def _update_toggle_edit_permissions(self, selected_tag_slugs, users):
+        usernames = {user.username for user in users}
+
+        for tag in ALL_TAGS:
+            permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
+            should_have_access = tag.slug in selected_tag_slugs
+            if should_have_access:
+                if not permission:
+                    permission = ToggleEditPermission(tag_slug=tag.slug)
+                users_to_add = usernames - set(permission.enabled_users)
+                if users_to_add:
+                    permission.add_users(list(users_to_add))
+            elif permission:
+                users_to_remove = usernames & set(permission.enabled_users)
+                if users_to_remove:
+                    permission.remove_users(list(users_to_remove))
 
 
 def send_email_notif(user_changes, changed_by_user):
