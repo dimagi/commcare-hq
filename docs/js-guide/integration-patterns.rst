@@ -202,19 +202,23 @@ for you. To check, for example, whether the ``IS_DEVELOPER`` toggle is
 enabled, use
 
 .. code:: javascript
+
    import toggles from "hqwebapp/js/toggles"
 
    if (toggles.toggleEnabled('IS_DEVELOPER')) {
-    ...
+       ...
+   }
 
 and to check whether the ``'ENUM_IMAGE'`` feature preview is enabled,
 use
 
 .. code:: javascript
+
    import toggles from "hqwebapp/js/toggles"
 
    if (toggles.previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
-    ...
+      ...
+   }
 
 and that’s pretty much it.
 
