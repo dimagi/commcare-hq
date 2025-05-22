@@ -1,0 +1,16 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block no_results_table %}
+  <div class="alert alert-primary">
+    <strong>
+      {% blocktrans %}
+        No sessions exist.
+      {% endblocktrans %}
+    </strong>
+    {% blocktrans %}
+      Please start a new bulk edit session above.
+    {% endblocktrans %}
+  </div>
+{% endblock %}
