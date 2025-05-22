@@ -135,11 +135,8 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             self.session.committed_on = timezone.now()
             self.session.save()
             commit_data_cleaning.delay(self.session.session_id)
-        response = self.get(request, *args, **kwargs)
+        response = self.render_htmx_no_response(request, *args, **kwargs)
         response['HX-Trigger'] = json.dumps({
-            'showDataCleaningModal': {
-                'target': '#session-status-modal',
-            },
             'dcRefreshStatusModal': {
                 'target': '#session-status-modal-body',
             },
