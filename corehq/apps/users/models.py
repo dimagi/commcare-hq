@@ -750,7 +750,9 @@ class MultiMembershipMixin(_AuthorizableMixin):
 
     @memoized
     def is_active_in_domain(self, domain):
-        return self.get_domain_membership(domain).is_active
+        if self.get_domain_membership(domain):
+            return self.get_domain_membership(domain).is_active
+        return False
 
 
 class LowercaseStringProperty(StringProperty):
