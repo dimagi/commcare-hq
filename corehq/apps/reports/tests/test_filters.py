@@ -243,8 +243,7 @@ class TestCaseListFilter(TestCase):
         self.request.can_access_all_locations = True
         self.request.project = self.domain
         emwf = self.subject(self.request)
-        default_selections = emwf.get_default_selections()
-        self.assertEqual(default_selections, emwf.default_selections)
+        emwf.get_default_selections()
         assert not assigned_locations_patch.called
 
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')

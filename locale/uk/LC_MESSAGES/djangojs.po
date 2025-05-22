@@ -239,7 +239,6 @@ msgstr "Цей тип справи застарів у словнику дани
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add"
 msgstr "Додати"
 
@@ -329,7 +328,6 @@ msgstr "Параметри таблиці пошуку"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lookup Table"
 msgstr "Таблиця пошуку"
 
@@ -354,7 +352,6 @@ msgid "Tab Name"
 msgstr "Назва вкладки"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display Condition"
 msgstr "Умова відображення"
 
@@ -535,7 +532,6 @@ msgid "Plain"
 msgstr "Звичайний"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Date"
 msgstr "Дата"
 
@@ -584,7 +580,6 @@ msgid "Picture"
 msgstr "Зображення"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Audio"
 msgstr "Аудіо"
 
@@ -601,7 +596,6 @@ msgid "Translatable Text"
 msgstr "Текст, що підлягає перекладу"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Image"
 msgstr "Зображення"
 
@@ -797,7 +791,6 @@ msgid "Datum ID"
 msgstr "ID датуму"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath Expression"
 msgstr "XPath-вираз"
 
@@ -971,7 +964,6 @@ msgid "Form"
 msgstr "Форма"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Question"
 msgstr "Питання"
 
@@ -980,7 +972,6 @@ msgid "Name"
 msgstr "Назва"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Label"
 msgstr "Мітка"
 
@@ -1005,7 +996,6 @@ msgid "Display condition"
 msgstr "Умова відображення"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Required"
 msgstr "Обов'язково"
 
@@ -1014,17 +1004,14 @@ msgid "Question Comment"
 msgstr "Коментар до питання"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Default Value"
 msgstr "Значення за замовчуванням"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Condition"
 msgstr "Умова валідації"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Comment"
 msgstr "Коментар"
 
@@ -1109,908 +1096,87 @@ msgstr "Мова вказана двічі"
 msgid "This conflicts with a current language"
 msgstr "Це конфліктує з поточною мовою"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Questions"
-msgstr "Питання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copy"
-msgstr "Копіювати"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expand All"
-msgstr "Розгорнути все"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Collapse All"
-msgstr "Згорнути все"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Bulk Update All Questions"
-msgstr "Масове оновлення всіх питань"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Question"
-msgstr "Додати питання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Click {btn} to start building your form."
-msgstr "Натисніть {btn}, щоб почати створювати форму."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question Details"
-msgstr "Деталі питання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expression Editor"
-msgstr "Редактор виразів"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot Change Question Type"
-msgstr "Не можна змінити тип питання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Change Question Type To"
-msgstr "Змінити тип питання на"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-msgid "Delete"
-msgstr "Видалити"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show"
-msgstr "Показати"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Used By"
-msgstr "Використовується в"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "In Property"
-msgstr "У властивості"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
-msgid "Search..."
-msgstr "Пошук..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No match for {info} found!"
-msgstr "Не знайдено збігів для {info}!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple matches for {info} found!"
-msgstr "Знайдено декілька збігів для {info}!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
-msgid "key"
-msgstr "ключ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
-msgid "value"
-msgstr "значення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Key&rarr;Value Pair"
-msgstr "Додати пару Ключ&rarr;Значення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "show in question list"
-msgstr "показати у списку питань"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date Format Options"
-msgstr "Параметри формату дати"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Formatting"
-msgstr "Без форматування"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Invalid XPath expression."
-msgstr "Неправильний вираз XPath."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {property} for a question is not allowed to reference the question "
-"itself. Please remove the . from the {property} or your form will have "
-"errors."
-msgstr ""
-"{property} для питання не може посилатися на саме питання. Будь ласка, "
-"видаліть . з {property}, інакше у вашій формі будуть помилки."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown question:"
-msgstr "Невідоме питання:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown questions:"
-msgstr "Невідомі питання:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "no formatting"
-msgstr "без форматування"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
-msgid "Custom"
-msgstr "Власний"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} is required."
-msgstr "{question} є обов'язковим."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} is not allowed."
-msgstr "{question} не дозволено."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} validation failed"
-msgstr "Перевірка {question} не пройшла"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown (read-only) question type"
-msgstr "Невідомий (тільки для читання) тип питання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup Table Data"
-msgstr "Дані таблиці пошуку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Translation Data"
-msgstr "Немає даних для перекладу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question ID"
-msgstr "ID питання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The ID '{nodeID}' may cause problems with form parsing. It is recommended to "
-"pick a different Question ID."
-msgstr ""
-"ID '{nodeID}' може спричинити проблеми з обробкою форми. Рекомендується "
-"вибрати інший ID питання."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"{nodeID} is not a valid Question ID. It must start with a letter and contain "
-"only letters, numbers, and '-' or '_' characters."
-msgstr ""
-"{nodeID} не є дійсним ID питання. Він має починатися з літери та містити "
-"лише літери, цифри, а також символи '-' або '_'."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "'meta' is not a valid Question ID."
-msgstr "'meta' не є дійсним ID питання."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Making this change will create a new Question ID (and a new column in "
-"exports)."
-msgstr "Ця зміна створить новий ID питання (і нову колонку в експорті)."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This question has the same Question ID as another question in the same "
-"group. Please choose a unique Question ID."
-msgstr ""
-"Це питання має такий самий ID, як і інше питання в цій групі. Будь ласка, "
-"оберіть унікальний ID питання."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Data Value"
-msgstr "Значення даних за замовчуванням"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Special Hidden Value XMLNS attribute"
-msgstr "Спеціальний прихований атрибут XMLNS"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Data Attributes"
-msgstr "Додаткові атрибути даних"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Calculate Condition"
-msgstr "Умова обчислення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You cannot have a Validation Error Message with no Validation Condition!"
-msgstr ""
-"Не можна додати повідомлення про помилку перевірки без умови перевірки!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Error Message"
-msgstr "Повідомлення про помилку перевірки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Required Condition"
-msgstr "Умова обов'язковості"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The condition will be ignored unless you mark the question required."
-msgstr "Умова буде ігноруватися, якщо не позначити питання як обов'язкове."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Bind Attributes"
-msgstr "Додаткові атрибути зв'язування"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are referencing a node in this form. This can cause errors in the form"
-msgstr ""
-"Ви посилаєтеся на вузол у цій формі. Це може спричинити помилки у формі"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Appearance Attribute"
-msgstr "Атрибут вигляду"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Display Text"
-msgstr "Текст для відображення за замовчуванням"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Display Text is required"
-msgstr "Текст для відображення за замовчуванням є обов'язковим"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Display Text"
-msgstr "Текст підказки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Control Attributes"
-msgstr "Додаткові атрибути керування"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Raw XML"
-msgstr "Сирий XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Data Parent"
-msgstr "Батьківський елемент даних"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be valid path"
-msgstr "Має бути дійсний шлях"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} не є дійсним батьківським елементом даних"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Data parent of question in repeat group must be (in) the same repeat group"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "Create"
+msgid "createXML"
+msgstr "Створити"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "User Data"
+msgid "getData"
+msgstr "Дані користувача"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+msgid "getMugByPath"
 msgstr ""
-"Батьківський елемент питання у групі повторень має бути (у) тій самій групі "
-"повторень"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hidden Value"
-msgstr "Приховане значення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Text"
-msgstr "Текст"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Phone Number or Numeric ID"
-msgstr "Номер телефону або числовий ID"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/motech/static/motech/js/connection_settings_detail.js
-msgid "Password"
-msgstr "Пароль"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Integer"
-msgstr "Ціле число"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Audio Capture"
-msgstr "Запис аудіо"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image Capture"
-msgstr "Захоплення зображення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image Size"
-msgstr "Розмір зображення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Small"
-msgstr "Малий"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Medium"
-msgstr "Середній"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Large"
-msgstr "Великий"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Original"
-msgstr "Оригінал"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This will resize the image before sending the form. Use this option to send "
-"smaller images in areas of poor connectivity.<ul><li>Small - 0.1 megapixels</"
-"li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 megapixels</li></ul>"
-msgstr ""
-"Ця опція змінить розмір зображення перед надсиланням форми. Використовуйте "
-"цю опцію, щоб надсилати менші зображення в районах із поганим з'єднанням."
-"<ul><li>Малий — 0,1 мегапікселя</li><li>Середній — 0,2 мегапікселя</"
-"li><li>Великий — 0,5 мегапікселя</li></ul>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Micro-Image"
-msgstr "Мікро-зображення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Video Capture"
-msgstr "Запис відео"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Signature Capture"
-msgstr "Захоплення підпису"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Document Upload"
-msgstr "Завантаження документа"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "GPS"
-msgstr "GPS"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Barcode Scan"
-msgstr "Сканування штрихкоду"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date and Time"
-msgstr "Дата і час"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
-msgid "Time"
-msgstr "Час"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Long"
-msgstr "Довге"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Decimal"
-msgstr "Десяткове"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Choice"
-msgstr "Вибір"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Choice Value"
-msgstr "Значення вибору"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Whitespace in values is not allowed."
-msgstr "Пробіли у значеннях не дозволені."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "This choice value has been used in the same question"
-msgstr "Це значення вибору вже використано в цьому питанні"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Cannot change a Multiple/Single Choice question to a non-Choice question if "
-"it has Choices. Please remove all Choices and try again."
-msgstr ""
-"Не можна змінити питання з множинним/одиночним вибором на питання без "
-"вибору, якщо воно містить варіанти. Будь ласка, видаліть усі варіанти та "
-"спробуйте ще раз."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Checkbox"
-msgstr "Прапорець"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple Choice"
-msgstr "Множинний вибір"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Group"
-msgstr "Група"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question List"
-msgstr "Список питань"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Group"
-msgstr "Повторювана група"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Count"
-msgstr "Кількість повторів"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Count is required."
-msgstr "Кількість повторів є обов'язковою."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Repeat Attributes"
-msgstr "Додаткові атрибути повтору"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You have deleted a question."
-msgstr "Ви видалили питання."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Undo"
-msgstr "Скасувати"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Warning: {errs} is still referenced by other questions."
-msgid_plural "Warning: {errs} are still referenced by other questions."
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
 msgid "New Form"
 msgstr "Нова форма"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Bind Node [{path}] found but has no associated Data node. This bind node "
-"will be discarded!"
-msgstr ""
-"Вузол прив'язки [{path}] знайдено, але він не має відповідного вузла даних. "
-"Цей вузол прив'язки буде видалено!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Not Found"
-msgstr "Не знайдено"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"{type} nodes cannot be used in an output value. Please remove the output "
-"value for '{path}' or your form will have errors."
-msgstr ""
-"Вузли {type} не можна використовувати у вихідному значенні. Будь ласка, "
-"видаліть вихідне значення для '{path}', інакше у вашій формі будуть помилки."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {field} for a question is not allowed to reference the question itself. "
-"Please remove the {ref} from the {field} or your form will have errors."
-msgstr ""
-"Поле {field} для питання не може посилатися на саме питання. Будь ласка, "
-"видаліть {ref} з {field}, інакше у вашій формі будуть помилки."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "output value"
-msgstr "вихідне значення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Failed"
-msgstr "Перевірка не пройшла"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Please fix the error before leaving this page:"
-msgstr "Будь ласка, виправте помилку перед виходом із цієї сторінки:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
-msgstr "Редагувати <span class='property-name'>Вираз</span> (Розширено)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show Simple Mode"
-msgstr "Показати простий режим"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are currently in Advanced Mode because your logic is too complicated for "
-"Simple Mode."
-msgstr ""
-"Зараз ви перебуваєте в розширеному режимі, оскільки ваша логіка занадто "
-"складна для простого режиму."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You can drag a question into the box."
-msgstr "Ви можете перетягнути питання у це поле."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Guide to Common Logic and Calculations"
-msgstr "Посібник із поширеної логіки та обчислень"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit <span class='property-name'>Expression</span>"
-msgstr "Редагувати <span class='property-name'>Вираз</span>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show Advanced Mode"
-msgstr "Показати розширений режим"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Result is"
-msgstr "Результат:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expression"
-msgstr "Вираз"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Expression"
-msgstr "Додати вираз"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
-msgid "Save"
-msgstr "Зберегти"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "Cancel"
-msgstr "Скасувати"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
 msgstr "Перетягніть питання сюди"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is equal to"
 msgstr "дорівнює"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is not equal to"
 msgstr "не дорівнює"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is less than"
 msgstr "менше ніж"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is less than or equal to"
 msgstr "менше або дорівнює"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is greater than"
 msgstr "більше ніж"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is greater than or equal to"
 msgstr "більше або дорівнює"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "has selected value"
 msgstr "має вибране значення"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ALL of the expressions are true."
 msgstr "Правда, якщо ВСІ вирази істинні."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ANY of the expressions are true."
 msgstr "Правда, якщо БУДЬ-ЯКИЙ з виразів істинний."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Error"
-msgstr "Помилка"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Command Bar"
+msgstr "Панель команд"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Warning"
-msgstr "Попередження"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Warning"
-msgstr "Попередження форми"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Notification"
-msgstr "Сповіщення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Holding the ALT key while clicking save invokes an inefficient save "
-"procedure. Do this only if a normal save fails."
-msgstr ""
-"Утримання клавіші ALT під час натискання збереження викликає неефективну "
-"процедуру збереження. Робіть це лише якщо звичайне збереження не вдалося."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Are you sure you want to exit? All unsaved changes will be lost!"
-msgstr "Ви впевнені, що хочете вийти? Усі незбережені зміни буде втрачено!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Look for questions marked with $1 and check they don't reference deleted "
-"questions."
-msgstr ""
-"Знайдіть питання, позначені $1, і переконайтеся, що вони не посилаються на "
-"видалені питання."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Errors in Form"
-msgstr "Помилки у формі"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form has reference errors."
-msgstr "Форма містить помилки посилань."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Look for questions marked with $1 and fix the errors."
-msgstr "Знайдіть питання, позначені $1, і виправте помилки."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form has validation errors."
-msgstr "Форма містить помилки валідації."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
-msgstr "Захоплення мультимедіа"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Number"
-msgstr "Число"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Groups"
-msgstr "Групи"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Advanced"
-msgstr "Додатково"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Make Required"
-msgstr "Зробити обов'язковим"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are about to make all existing questions on this form required. This "
-"action will overwrite the current configuration of this form and can only be "
-"undone by editing individual questions."
-msgstr ""
-"Ви збираєтеся зробити всі існуючі питання у цій формі обов'язковими. Ця дія "
-"перезапише поточну конфігурацію форми і може бути скасована лише шляхом "
-"редагування окремих питань."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Load Default Values"
-msgstr "Завантажити типові значення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are about to set matching case properties as Default Values for all "
-"existing questions. This action will overwrite existing Default Values for "
-"all questions with matching case properties and can only be undone by "
-"editing individual questions."
-msgstr ""
-"Ви збираєтеся встановити відповідні властивості справи як типові значення "
-"для всіх існуючих питань. Ця дія перезапише існуючі типові значення для всіх "
-"питань із відповідними властивостями справи і може бути скасована лише "
-"шляхом редагування окремих питань."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Are you sure you want to perform this action?"
-msgstr "Ви впевнені, що хочете виконати цю дію?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "Продовжити"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expand Editor"
-msgstr "Розгорнути редактор"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Shrink Editor"
-msgstr "Згорнути редактор"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Export Form Contents"
-msgstr "Експортувати вміст форми"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Source XML"
-msgstr "Редагувати вихідний XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Properties"
-msgstr "Властивості форми"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Find Usages"
-msgstr "Знайти використання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation failed. Form may not perform correctly on your device!"
-msgstr ""
-"Валідація не пройдена. Форма може працювати некоректно на вашому пристрої!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Form's Source XML"
-msgstr "Редагувати вихідний XML форми"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Source"
-msgstr "Оновити джерело"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This is the raw XML. You can edit or paste into this box to make changes to "
-"your form. Press 'Update Source' to save changes, or 'Close' to cancel."
-msgstr ""
-"Це сирий XML. Ви можете редагувати або вставити у це поле, щоб внести зміни "
-"до вашої форми. Натисніть 'Оновити джерело' для збереження змін або "
-"'Закрити' для скасування."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Copy and paste this content into a spreadsheet program like Excel to easily "
-"share your form with others."
-msgstr ""
-"Скопіюйте та вставте цей вміст у програму для роботи з електронними "
-"таблицями, наприклад Excel, щоб легко поділитися вашою формою з іншими."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lost Work Warning"
-msgstr "Попередження про втрату роботи"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Overwrite their work"
-msgstr "Перезаписати їхню роботу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show XML Differences"
-msgstr "Показати відмінності у XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Looks like someone else has edited this form since you loaded the page. Are "
-"you sure you want to overwrite their work?"
-msgstr ""
-"Схоже, хтось інший відредагував цю форму після того, як ви завантажили "
-"сторінку. Ви впевнені, що хочете перезаписати їхню роботу?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Form Properties"
-msgstr "Редагувати властивості форми"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Disable Text Formatting"
-msgstr "Вимкнути форматування тексту"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Easy References"
-msgstr "Використовувати прості посилання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use of each question"
-msgstr "Використання кожного питання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
-msgid "Close"
-msgstr "Закрити"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsaved Changes in Editor"
-msgstr "Незбережені зміни в редакторі"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You have UNSAVED changes in the Expression Editor. Please save changes "
-"before continuing."
-msgstr ""
-"У вас є НЕЗБЕРЕЖЕНІ зміни у редакторі виразів. Будь ласка, збережіть зміни "
-"перед продовженням."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Parsing Error. Please check that your form is valid XML."
-msgstr "Помилка розбору. Перевірте, чи ваша форма є коректним XML."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "OK"
-msgstr "ОК"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Sorry, {err}"
-msgstr "Вибачте, {err}"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Choice"
-msgstr "Додати варіант"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "and"
-msgstr "та"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "There are errors in the form"
-msgstr "У формі є помилки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix Manually"
-msgstr "Виправити вручну"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix Automatically"
-msgstr "Виправити автоматично"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"It looks like your form is not valid XML. This can often happen if you use a "
-"reserved character in one of your questions. Characters to look out for are "
-"<, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
-"you fix the XML by hand. What would you like to do?"
-msgstr ""
-"Схоже, ваша форма не є коректним XML. Це часто трапляється, якщо у питанні "
-"використано зарезервований символ. Зверніть увагу на символи <, > та &. Ви "
-"все ще можете зберегти, але НЕ ЗМОЖЕТЕ ЗАВАНТАЖИТИ ЦЮ ФОРМУ знову, поки не "
-"виправите XML вручну. Що ви хочете зробити?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Validation Error"
-msgstr "Помилка перевірки форми"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix the problem (recommended)"
-msgstr "Виправити проблему (рекомендовано)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Save anyway"
-msgstr "Зберегти все одно"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Basic"
 msgstr "Базовий"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {displaytext} appears in the application. This text will not appear in "
-"data exports."
-msgstr ""
-"{displaytext} відображається у застосунку. Цей текст не з'явиться у "
-"експортованих даних."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text"
-msgstr "Текст для відображення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
-msgid "Data Source"
-msgstr "Джерело даних"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You can configure an external data source like a case list or lookup table "
-"to use as the choices for a multiple choice question."
-msgstr ""
-"Ви можете налаштувати зовнішнє джерело даних, наприклад, список кейсів або "
-"таблицю для вибору варіантів у питанні з кількома варіантами."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Logic"
 msgstr "Логіка"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -2020,748 +1186,6 @@ msgstr ""
 "відповіді є допустимими. Ви можете додати логіку для відображення питання на "
 "основі попередньої відповіді, зробити питання обов'язковим або переконатися, "
 "що відповідь у допустимому діапазоні."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Media"
-msgstr "Медіа"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This will allow you to add images, audio or video media to a question, or "
-"other custom content."
-msgstr ""
-"Це дозволить додати зображення, аудіо чи відео до питання або інший власний "
-"контент."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"These are advanced settings and are not needed for most applications.  "
-"Please only change these if you have a specific need!"
-msgstr ""
-"Це розширені налаштування, які не потрібні для більшості застосунків. Будь "
-"ласка, змінюйте їх лише за конкретної потреби!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This question represents advanced content that is not supported by the form "
-"builder. Please only change it if you have a specific need!"
-msgstr ""
-"Це питання містить розширений контент, який не підтримується конструктором "
-"форм. Будь ласка, змінюйте його лише за конкретної потреби!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Ignored XML"
-msgstr "Ігнорований XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Android App Callout"
-msgstr "Виклик Android-додатку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "External App"
-msgstr "Зовнішній додаток"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Insert Android Application ID"
-msgstr "Вставте ідентифікатор Android-додатку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "change your subscription"
-msgstr "змініть свою підписку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You no longer have access to built in or external integration in your "
-"application.\n"
-"\n"
-"Built in integrations are available on the Pro plan and higher. External "
-"integrations are available on the Advanced plan and higher. Before you can "
-"make a new version of your application, you must {link} or delete this "
-"question."
-msgstr ""
-"Ви більше не маєте доступу до вбудованої чи зовнішньої інтеграції у вашому "
-"застосунку.\n"
-"\n"
-"Вбудовані інтеграції доступні у тарифі Pro та вище. Зовнішні інтеграції "
-"доступні у тарифі Advanced та вище. Перш ніж створити нову версію "
-"застосунку, потрібно {link} або видалити це питання."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Your subscription only has access to built-in integration.\n"
-"\n"
-"External integrations are available on the Advanced plan and higher. Before "
-"you can make a new version of your application, you must {link} or delete "
-"this question."
-msgstr ""
-"Ваша підписка має доступ лише до вбудованої інтеграції.\n"
-"\n"
-"Зовнішні інтеграції доступні у тарифі Advanced та вище. Перш ніж створити "
-"нову версію застосунку, потрібно {link} або видалити це питання."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Android app callouts of the same type must have different question ids."
-msgstr ""
-"Виклики Android-додатків одного типу повинні мати різні ідентифікатори "
-"питань."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra"
-msgstr "Додатково"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Response"
-msgstr "Відповідь"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Special Intent XMLNS attribute"
-msgstr "Спеціальний атрибут XMLNS для Intent"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Print"
-msgstr "Друк"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Document Template"
-msgstr "Шаблон документа"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Data Source"
-msgstr "Редагувати джерело даних"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Query Expression"
-msgstr "Вираз для запиту"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Optional Instance Properties"
-msgstr "Необов'язкові властивості екземпляра"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Instance ID"
-msgstr "ID екземпляра"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Instance URI"
-msgstr "URI екземпляра"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup table was not found in the project"
-msgstr "Таблицю пошуку не знайдено в проєкті"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
-msgid "Loading..."
-msgstr "Завантаження..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You no longer have access to Lookup Tables in your application. Lookup "
-"Tables are available on the Standard plan and higher.\n"
-"Before you can make a new version of your application, you must {link} or "
-"delete this question"
-msgstr ""
-"Ви більше не маєте доступу до таблиць пошуку у вашому застосунку. Таблиці "
-"пошуку доступні у тарифному плані Standard та вище.\n"
-"Перш ніж створити нову версію вашого застосунку, потрібно {link} або "
-"видалити це питання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A data source must be selected."
-msgstr "Необхідно вибрати джерело даних."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text Field"
-msgstr "Поле для відображення тексту"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Sort Field"
-msgstr "Поле для сортування"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Filter"
-msgstr "Фільтр"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This is an XPath expression that will filter the set of choices from the "
-"lookup table"
-msgstr "Це вираз XPath, який відфільтровує набір варіантів із таблиці пошуку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup Tables"
-msgstr "Таблиці пошуку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Checkbox Lookup Table"
-msgstr "Таблиця пошуку з прапорцями"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Cannot change to Multiple/Single Choice question if it has Choices. Please "
-"remove all Choices and try again."
-msgstr ""
-"Неможливо змінити на питання з множинним/одиночним вибором, якщо вже є "
-"варіанти. Будь ласка, видаліть усі варіанти та спробуйте ще раз."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can only change to a Multiple Choice Lookup Table"
-msgstr "Можна змінити лише на таблицю пошуку з множинним вибором"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple Choice Lookup Table"
-msgstr "Таблиця пошуку з множинним вибором"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can only change to a Checkbox Lookup Table"
-msgstr "Можна змінити лише на таблицю пошуку з прапорцями"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{attr} was not found in the lookup table"
-msgstr "{attr} не знайдено в таблиці пошуку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display"
-msgstr "Відображення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "auto?"
-msgstr "авто?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
-"use bulleted lists, and <a target='_blank' href='https://help.commcarehq.org/"
-"display/commcarepublic/Text+Formatting'>more</a>"
-msgstr ""
-"Використовуйте форматування тексту для <strong>жирного</strong> та "
-"<em>курсивного</em> виділення слів, створюйте марковані списки та <a "
-"target='_blank' href='https://help.commcarehq.org/display/commcarepublic/"
-"Text+Formatting'>інші можливості</a>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Turn Off Text Formatting"
-msgstr "Вимкнути форматування тексту"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Turn On Text Formatting"
-msgstr "Увімкнути форматування тексту"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "custom..."
-msgstr "власне..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "New Content Type"
-msgstr "Новий тип контенту"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Content Type"
-msgstr "Тип контенту"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You have languages in your form that are not specified in the \"Languages\" "
-"page of the application builder. The following language will be deleted on "
-"save unless you add it to the \"Languages\" page:"
-msgstr ""
-"У вашій формі є мови, які не вказані на сторінці \"Мови\" конструктора "
-"застосунку. Наступна мова буде видалена під час збереження, якщо ви не "
-"додасте її на сторінку \"Мови\":"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} (or multimedia) is required."
-msgstr "{name} (або мультимедіа) є обов'язковим."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} (or multimedia) is required for all languages."
-msgstr "{name} (або мультимедіа) є обов'язковим для всіх мов."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} Itext ID is required."
-msgstr "Потрібен Itext ID для {name}."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} is not a valid ID."
-msgstr "{name} не є дійсним ID."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia was not copied; it must be uploaded separately."
-msgstr "Мультимедіа не було скопійовано; його потрібно завантажити окремо."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Discarded languages:"
-msgstr "Відхилені мови:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Message"
-msgstr "Повідомлення про перевірку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can't have a Validation Message Itext ID without a Validation Condition"
-msgstr "Неможливо мати Itext ID повідомлення про перевірку без умови перевірки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Message Itext ID"
-msgstr "Itext ID повідомлення про перевірку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Validation Media"
-msgstr "Додати медіа для перевірки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text Itext ID"
-msgstr "Itext ID для відображення тексту"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Message"
-msgstr "Підказка"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Itext ID"
-msgstr "Itext ID підказки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Help Message"
-msgstr "Довідкове повідомлення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Help Itext ID"
-msgstr "Itext ID довідки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add New Item Button Text"
-msgstr "Текст кнопки \"Додати новий елемент\""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add New Itext ID"
-msgstr "Додати новий Itext ID"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Another Item Button Text"
-msgstr "Текст кнопки \"Додати ще один елемент\""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Another Itext ID"
-msgstr "Додати ще один Itext ID"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Other Content"
-msgstr "Додати інший контент"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Multimedia"
-msgstr "Додати мультимедіа"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Help Media"
-msgstr "Додати медіа для довідки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Bulk Translations"
-msgstr "Редагувати масові переклади"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Translations"
-msgstr "Оновити переклади"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Copy these translations into a spreadsheet program like Excel. You can edit "
-"them there and then paste them back here when you're done. These will update "
-"the translations used in your form. Press 'Update Translations' to save "
-"changes, or 'Close' to cancel."
-msgstr ""
-"Скопіюйте ці переклади у програму для роботи з електронними таблицями, "
-"наприклад Excel. Ви можете редагувати їх там, а потім вставити назад сюди, "
-"коли закінчите. Це оновить переклади, які використовуються у вашій формі. "
-"Натисніть 'Оновити переклади', щоб зберегти зміни, або 'Закрити', щоб "
-"скасувати."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "App Properties"
-msgstr "Властивості застосунку"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Could not load app properties."
-msgstr "Не вдалося завантажити властивості додатка."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "If this error persists, please report an issue."
-msgstr "Якщо ця помилка повторюється, будь ласка, повідомте про проблему."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {questionid} is an internal identifier for a question. It does not "
-"appear on the phone. It is the name of the question in data exports."
-msgstr ""
-"{questionid} — це внутрішній ідентифікатор питання. Він не відображається на "
-"телефоні. Це назва питання у експортованих даних."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The date and time of the action, e.g., now() or today()"
-msgstr "Дата і час дії, наприклад, now() або today()"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Balance ID"
-msgstr "ID балансу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The name of the balance you are tracking. This is an internal identifier "
-"which does not appear on the phone."
-msgstr ""
-"Назва балансу, який ви відстежуєте. Це внутрішній ідентифікатор, який не "
-"відображається на телефоні."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Product"
-msgstr "Продукт"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
-msgstr ""
-"Посилання на ID продукту, наприклад, \"/data/products/current_product\""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Quantity"
-msgstr "Кількість"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A reference to an integer question in this form."
-msgstr "Посилання на питання з цілим числом у цій формі."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
-msgid "Case"
-msgstr "Кейс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID associated with this balance."
-msgstr "XPath-вираз для ID кейсу, пов’язаного з цим балансом."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Transfer must have both Source Case and Destination Case defined."
-msgstr "Для переказу мають бути визначені як джерело, так і призначення кейсу."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot change $1 to $2"
-msgstr "Не можна змінити $1 на $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Source Case"
-msgstr "Джерело кейсу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID issuing the transaction."
-msgstr "XPath-вираз для ID кейсу, який ініціює транзакцію."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Destination Case"
-msgstr "Призначення кейсу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID receiving the transaction."
-msgstr "XPath-вираз для ID кейсу, який отримує транзакцію."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Dispense must have a Source Case."
-msgstr "Для видачі має бути визначене джерело кейсу."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Receive must have a Destination Case."
-msgstr "Для отримання має бути визначене призначення кейсу."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Model Iteration ID Query"
-msgstr "Запит ідентифікатора ітерації моделі"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Property Name"
-msgstr "Назва властивості"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
-msgid "Calculation"
-msgstr "Обчислення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relevant"
-msgstr "Актуальність"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship Identifier (e.g. parent or host)"
-msgstr "Ідентифікатор відношення (наприклад, parent або host)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Referenced Case ID"
-msgstr "ID посилання на кейс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Referenced Case Type"
-msgstr "Тип посилання на кейс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship (child or extension)"
-msgstr "Відношення (child або extension)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Node Name"
-msgstr "Назва вузла"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Source"
-msgstr "Джерело"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "From"
-msgstr "Від"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachment Name"
-msgstr "Назва вкладення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Property"
-msgstr "Додати властивість"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date Modified"
-msgstr "Дата зміни"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User ID"
-msgstr "ID користувача"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Case Type"
-msgstr "Тип кейсу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
-msgid "Case ID"
-msgstr "ID кейсу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Create Case"
-msgstr "Створити кейс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Properties To Create"
-msgstr "Властивості для створення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You must include {columns} columns to create a case"
-msgstr "Ви повинні включити стовпці {columns}, щоб створити кейс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You can only use the following properties:"
-msgstr "Ви можете використовувати лише такі властивості:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{props} are invalid properties"
-msgstr "{props} є недійсними властивостями"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Close Case"
-msgstr "Закрити кейс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Close Condition"
-msgstr "Умова закриття"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Case"
-msgstr "Оновити кейс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Properties To Update"
-msgstr "Властивості для оновлення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Index"
-msgstr "Використовувати індекс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Index Properties"
-msgstr "Властивості індексу"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship must be child or extension"
-msgstr "Відношення має бути child або extension"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Attachments"
-msgstr "Використовувати вкладення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachment Properties"
-msgstr "Властивості вкладення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The from attribute must be one of: local, remote, or inline"
-msgstr "Атрибут from має бути одним із: local, remote або inline"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Inlined attachments must have an attachment name"
-msgstr "Вбудовані вкладення повинні мати ім'я вкладення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
-msgid "Create"
-msgstr "Створити"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update"
-msgstr "Оновити"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Index"
-msgstr "Індекс"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachments"
-msgstr "Вкладення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "An error occurred when parsing bind node [{path}]. Please fix this."
-msgstr ""
-"Сталася помилка під час розбору вузла прив'язки [{path}]. Будь ласка, "
-"виправте це."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Upload"
-msgstr "Завантажити"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Select new"
-msgstr "Вибрати новий"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Select File"
-msgstr "Вибрати файл"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Current"
-msgstr "Поточний"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Begin Upload"
-msgstr "Почати завантаження"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Replace"
-msgstr "Замінити"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Reference"
-msgstr "Без посилання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Advanced: Show Path"
-msgstr "Додатково: Показати шлях"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hide Path"
-msgstr "Сховати шлях"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Video"
-msgstr "Відео"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Inline Video"
-msgstr "Вбудоване відео"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "HTML"
-msgstr "HTML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copying and Pasting Questions"
-msgstr "Копіювання та вставка запитань"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"These actions are available via the browser's Edit menu, and you can also "
-"use:"
-msgstr ""
-"Ці дії доступні через меню Редагування браузера, а також можна "
-"використовувати:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "for copy"
-msgstr "для копіювання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "for paste"
-msgstr "для вставки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copy from or Paste into this text box:"
-msgstr "Скопіюйте або вставте у це текстове поле:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Insert Questions"
-msgstr "Вставити запитання"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Selecting Multiple Questions"
-msgstr "Вибір кількох запитань"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hold {key} and click on each question."
-msgstr "Утримуйте {key} і натискайте на кожне запитання."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Other Tips"
-msgstr "Інші поради"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Questions can be copied between forms, and even to other apps."
-msgstr "Запитання можна копіювати між формами, а також в інші додатки."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert {type} into tree root"
-msgstr "Не можна вставити {type} у корінь дерева"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert $1 into or after $2"
-msgstr "Не можна вставити $1 у або після $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert $1 into $2"
-msgstr "Не можна вставити $1 у $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsupported paste format"
-msgstr "Непідтримуваний формат вставки"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsupported paste format:"
-msgstr "Непідтримуваний формат вставки:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown question type:"
-msgstr "Невідомий тип запитання:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter command"
-msgstr "Введіть команду"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Command Bar"
-msgstr "Панель команд"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -3001,6 +1425,13 @@ msgstr ""
 "Не вдалося підключитися до сервісу відтворення форм. Будь ласка, повідомте "
 "про проблему, якщо це повідомлення з'являється знову."
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Loading..."
+msgstr "Завантаження..."
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
 msgid "Fetching your location..."
 msgstr "Визначення вашого місцезнаходження..."
@@ -3094,8 +1525,21 @@ msgid "Confirm?"
 msgstr "Підтвердити?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "OK"
+msgstr "ОК"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Cancel"
+msgstr "Скасувати"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Page <%- num %>"
 msgstr "Сторінка <%- num %>"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Close"
+msgstr "Закрити"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
@@ -3285,6 +1729,14 @@ msgstr ""
 "Ідентифікатори можна знайти у <a href=\"<%- url %>\">експорті даних кейсу</a>"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Case ID"
+msgstr "ID кейсу"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Case found!"
 msgstr "Кейс знайдено!"
 
@@ -3405,6 +1857,10 @@ msgstr "Останні 30 днів"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Month"
 msgstr "Попередній місяць"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Custom"
+msgstr "Власний"
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
 msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
@@ -3577,6 +2033,16 @@ msgstr ""
 "strong>: Усі користувачі можуть редагувати та експортувати."
 
 #: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Save"
+msgstr "Зберегти"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Create"
+msgstr "Створити"
+
+#: corehq/apps/export/static/export/js/models.js
 msgid "The table path should end with []"
 msgstr "Шлях до таблиці має закінчуватися на []"
 
@@ -3730,6 +2196,12 @@ msgstr "поточний користувач"
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Mobile Worker"
 msgstr "Мобільний працівник"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Case"
+msgstr "Кейс"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
@@ -3994,6 +2466,12 @@ msgstr "Спробувати ще раз"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+msgid "Delete"
+msgstr "Видалити"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Deleting..."
 msgstr "Видалення..."
 
@@ -4098,6 +2576,16 @@ msgstr " до "
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "key"
+msgstr "ключ"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "value"
+msgstr "значення"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "blank"
 msgstr "порожньо"
 
@@ -4117,6 +2605,11 @@ msgstr "Додати елемент"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
 msgid "Click <strong>Edit</strong> to Add Values</span>"
 msgstr "Натисніть <strong>Редагувати</strong>, щоб додати значення</span>"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Calculation"
+msgstr "Обчислення"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
@@ -4368,6 +2861,10 @@ msgstr "Будь ласка, вкажіть."
 msgid "Please list your organization or company name."
 msgstr "Будь ласка, вкажіть назву вашої організації або компанії."
 
+#: corehq/apps/registration/static/registration/js/user_login_form.js
+msgid "Continue"
+msgstr "Продовжити"
+
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
 msgstr ""
@@ -4587,6 +3084,11 @@ msgstr "З часу"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "Time"
+msgstr "Час"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "Оберіть мову..."
@@ -4750,6 +3252,10 @@ msgstr "Зберегти фільтри"
 #: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
 msgid "Export Data"
 msgstr "Експортувати дані"
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
+msgid "Search..."
+msgstr "Пошук..."
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/columns.js
 msgid "Column Title"
@@ -5026,6 +3532,10 @@ msgstr "статичний"
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "deactivated"
 msgstr "деактивовано"
+
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Data Source"
+msgstr "Джерело даних"
 
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
 msgid "Unknown error"
@@ -5696,6 +4206,10 @@ msgid "Username"
 msgstr "Ім'я користувача"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Password"
+msgstr "Пароль"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
 msgstr "Client ID"
 
@@ -5722,6 +4236,1166 @@ msgstr "Помилка! Відповідь: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ не вдалося виконати запит: "
+
+#~ msgid "Questions"
+#~ msgstr "Питання"
+
+#~ msgid "Copy"
+#~ msgstr "Копіювати"
+
+#~ msgid "Expand All"
+#~ msgstr "Розгорнути все"
+
+#~ msgid "Collapse All"
+#~ msgstr "Згорнути все"
+
+#~ msgid "Bulk Update All Questions"
+#~ msgstr "Масове оновлення всіх питань"
+
+#~ msgid "Add Question"
+#~ msgstr "Додати питання"
+
+#~ msgid "Click {btn} to start building your form."
+#~ msgstr "Натисніть {btn}, щоб почати створювати форму."
+
+#~ msgid "Question Details"
+#~ msgstr "Деталі питання"
+
+#~ msgid "Expression Editor"
+#~ msgstr "Редактор виразів"
+
+#~ msgid "Cannot Change Question Type"
+#~ msgstr "Не можна змінити тип питання"
+
+#~ msgid "Change Question Type To"
+#~ msgstr "Змінити тип питання на"
+
+#~ msgid "Show"
+#~ msgstr "Показати"
+
+#~ msgid "Used By"
+#~ msgstr "Використовується в"
+
+#~ msgid "In Property"
+#~ msgstr "У властивості"
+
+#~ msgid "No match for {info} found!"
+#~ msgstr "Не знайдено збігів для {info}!"
+
+#~ msgid "Multiple matches for {info} found!"
+#~ msgstr "Знайдено декілька збігів для {info}!"
+
+#~ msgid "Add Key&rarr;Value Pair"
+#~ msgstr "Додати пару Ключ&rarr;Значення"
+
+#~ msgid "show in question list"
+#~ msgstr "показати у списку питань"
+
+#~ msgid "Date Format Options"
+#~ msgstr "Параметри формату дати"
+
+#~ msgid "No Formatting"
+#~ msgstr "Без форматування"
+
+#~ msgid "Invalid XPath expression."
+#~ msgstr "Неправильний вираз XPath."
+
+#~ msgid ""
+#~ "The {property} for a question is not allowed to reference the question "
+#~ "itself. Please remove the . from the {property} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "{property} для питання не може посилатися на саме питання. Будь ласка, "
+#~ "видаліть . з {property}, інакше у вашій формі будуть помилки."
+
+#~ msgid "Unknown question:"
+#~ msgstr "Невідоме питання:"
+
+#~ msgid "Unknown questions:"
+#~ msgstr "Невідомі питання:"
+
+#~ msgid "no formatting"
+#~ msgstr "без форматування"
+
+#~ msgid "{question} is required."
+#~ msgstr "{question} є обов'язковим."
+
+#~ msgid "{question} is not allowed."
+#~ msgstr "{question} не дозволено."
+
+#~ msgid "{question} validation failed"
+#~ msgstr "Перевірка {question} не пройшла"
+
+#~ msgid "Unknown (read-only) question type"
+#~ msgstr "Невідомий (тільки для читання) тип питання"
+
+#~ msgid "Lookup Table Data"
+#~ msgstr "Дані таблиці пошуку"
+
+#~ msgid "No Translation Data"
+#~ msgstr "Немає даних для перекладу"
+
+#~ msgid "Question ID"
+#~ msgstr "ID питання"
+
+#~ msgid ""
+#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended "
+#~ "to pick a different Question ID."
+#~ msgstr ""
+#~ "ID '{nodeID}' може спричинити проблеми з обробкою форми. Рекомендується "
+#~ "вибрати інший ID питання."
+
+#~ msgid ""
+#~ "{nodeID} is not a valid Question ID. It must start with a letter and "
+#~ "contain only letters, numbers, and '-' or '_' characters."
+#~ msgstr ""
+#~ "{nodeID} не є дійсним ID питання. Він має починатися з літери та містити "
+#~ "лише літери, цифри, а також символи '-' або '_'."
+
+#~ msgid "'meta' is not a valid Question ID."
+#~ msgstr "'meta' не є дійсним ID питання."
+
+#~ msgid ""
+#~ "Making this change will create a new Question ID (and a new column in "
+#~ "exports)."
+#~ msgstr "Ця зміна створить новий ID питання (і нову колонку в експорті)."
+
+#~ msgid ""
+#~ "This question has the same Question ID as another question in the same "
+#~ "group. Please choose a unique Question ID."
+#~ msgstr ""
+#~ "Це питання має такий самий ID, як і інше питання в цій групі. Будь ласка, "
+#~ "оберіть унікальний ID питання."
+
+#~ msgid "Default Data Value"
+#~ msgstr "Значення даних за замовчуванням"
+
+#~ msgid "Special Hidden Value XMLNS attribute"
+#~ msgstr "Спеціальний прихований атрибут XMLNS"
+
+#~ msgid "Extra Data Attributes"
+#~ msgstr "Додаткові атрибути даних"
+
+#~ msgid "Calculate Condition"
+#~ msgstr "Умова обчислення"
+
+#~ msgid ""
+#~ "You cannot have a Validation Error Message with no Validation Condition!"
+#~ msgstr ""
+#~ "Не можна додати повідомлення про помилку перевірки без умови перевірки!"
+
+#~ msgid "Validation Error Message"
+#~ msgstr "Повідомлення про помилку перевірки"
+
+#~ msgid "Required Condition"
+#~ msgstr "Умова обов'язковості"
+
+#~ msgid "The condition will be ignored unless you mark the question required."
+#~ msgstr "Умова буде ігноруватися, якщо не позначити питання як обов'язкове."
+
+#~ msgid "Extra Bind Attributes"
+#~ msgstr "Додаткові атрибути зв'язування"
+
+#~ msgid ""
+#~ "You are referencing a node in this form. This can cause errors in the form"
+#~ msgstr ""
+#~ "Ви посилаєтеся на вузол у цій формі. Це може спричинити помилки у формі"
+
+#~ msgid "Appearance Attribute"
+#~ msgstr "Атрибут вигляду"
+
+#~ msgid "Default Display Text"
+#~ msgstr "Текст для відображення за замовчуванням"
+
+#~ msgid "Default Display Text is required"
+#~ msgstr "Текст для відображення за замовчуванням є обов'язковим"
+
+#~ msgid "Hint Display Text"
+#~ msgstr "Текст підказки"
+
+#~ msgid "Extra Control Attributes"
+#~ msgstr "Додаткові атрибути керування"
+
+#~ msgid "Raw XML"
+#~ msgstr "Сирий XML"
+
+#~ msgid "Data Parent"
+#~ msgstr "Батьківський елемент даних"
+
+#~ msgid "Must be valid path"
+#~ msgstr "Має бути дійсний шлях"
+
+#~ msgid ""
+#~ "Data parent of question in repeat group must be (in) the same repeat group"
+#~ msgstr ""
+#~ "Батьківський елемент питання у групі повторень має бути (у) тій самій "
+#~ "групі повторень"
+
+#~ msgid "Hidden Value"
+#~ msgstr "Приховане значення"
+
+#~ msgid "Text"
+#~ msgstr "Текст"
+
+#~ msgid "Phone Number or Numeric ID"
+#~ msgstr "Номер телефону або числовий ID"
+
+#~ msgid "Integer"
+#~ msgstr "Ціле число"
+
+#~ msgid "Audio Capture"
+#~ msgstr "Запис аудіо"
+
+#~ msgid "Image Capture"
+#~ msgstr "Захоплення зображення"
+
+#~ msgid "Image Size"
+#~ msgstr "Розмір зображення"
+
+#~ msgid "Small"
+#~ msgstr "Малий"
+
+#~ msgid "Medium"
+#~ msgstr "Середній"
+
+#~ msgid "Large"
+#~ msgstr "Великий"
+
+#~ msgid "Original"
+#~ msgstr "Оригінал"
+
+#~ msgid ""
+#~ "This will resize the image before sending the form. Use this option to "
+#~ "send smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+#~ "megapixels</li></ul>"
+#~ msgstr ""
+#~ "Ця опція змінить розмір зображення перед надсиланням форми. "
+#~ "Використовуйте цю опцію, щоб надсилати менші зображення в районах із "
+#~ "поганим з'єднанням.<ul><li>Малий — 0,1 мегапікселя</li><li>Середній — 0,2 "
+#~ "мегапікселя</li><li>Великий — 0,5 мегапікселя</li></ul>"
+
+#~ msgid "Micro-Image"
+#~ msgstr "Мікро-зображення"
+
+#~ msgid "Video Capture"
+#~ msgstr "Запис відео"
+
+#~ msgid "Signature Capture"
+#~ msgstr "Захоплення підпису"
+
+#~ msgid "Document Upload"
+#~ msgstr "Завантаження документа"
+
+#~ msgid "GPS"
+#~ msgstr "GPS"
+
+#~ msgid "Barcode Scan"
+#~ msgstr "Сканування штрихкоду"
+
+#~ msgid "Date and Time"
+#~ msgstr "Дата і час"
+
+#~ msgid "Long"
+#~ msgstr "Довге"
+
+#~ msgid "Decimal"
+#~ msgstr "Десяткове"
+
+#~ msgid "Choice"
+#~ msgstr "Вибір"
+
+#~ msgid "Choice Value"
+#~ msgstr "Значення вибору"
+
+#~ msgid "Whitespace in values is not allowed."
+#~ msgstr "Пробіли у значеннях не дозволені."
+
+#~ msgid "This choice value has been used in the same question"
+#~ msgstr "Це значення вибору вже використано в цьому питанні"
+
+#~ msgid ""
+#~ "Cannot change a Multiple/Single Choice question to a non-Choice question "
+#~ "if it has Choices. Please remove all Choices and try again."
+#~ msgstr ""
+#~ "Не можна змінити питання з множинним/одиночним вибором на питання без "
+#~ "вибору, якщо воно містить варіанти. Будь ласка, видаліть усі варіанти та "
+#~ "спробуйте ще раз."
+
+#~ msgid "Checkbox"
+#~ msgstr "Прапорець"
+
+#~ msgid "Multiple Choice"
+#~ msgstr "Множинний вибір"
+
+#~ msgid "Group"
+#~ msgstr "Група"
+
+#~ msgid "Question List"
+#~ msgstr "Список питань"
+
+#~ msgid "Repeat Group"
+#~ msgstr "Повторювана група"
+
+#~ msgid "Repeat Count"
+#~ msgstr "Кількість повторів"
+
+#~ msgid "Repeat Count is required."
+#~ msgstr "Кількість повторів є обов'язковою."
+
+#~ msgid "Extra Repeat Attributes"
+#~ msgstr "Додаткові атрибути повтору"
+
+#~ msgid "You have deleted a question."
+#~ msgstr "Ви видалили питання."
+
+#~ msgid "Undo"
+#~ msgstr "Скасувати"
+
+#~ msgid ""
+#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
+#~ "will be discarded!"
+#~ msgstr ""
+#~ "Вузол прив'язки [{path}] знайдено, але він не має відповідного вузла "
+#~ "даних. Цей вузол прив'язки буде видалено!"
+
+#~ msgid "Not Found"
+#~ msgstr "Не знайдено"
+
+#~ msgid ""
+#~ "{type} nodes cannot be used in an output value. Please remove the output "
+#~ "value for '{path}' or your form will have errors."
+#~ msgstr ""
+#~ "Вузли {type} не можна використовувати у вихідному значенні. Будь ласка, "
+#~ "видаліть вихідне значення для '{path}', інакше у вашій формі будуть "
+#~ "помилки."
+
+#~ msgid ""
+#~ "The {field} for a question is not allowed to reference the question "
+#~ "itself. Please remove the {ref} from the {field} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "Поле {field} для питання не може посилатися на саме питання. Будь ласка, "
+#~ "видаліть {ref} з {field}, інакше у вашій формі будуть помилки."
+
+#~ msgid "output value"
+#~ msgstr "вихідне значення"
+
+#~ msgid "Validation Failed"
+#~ msgstr "Перевірка не пройшла"
+
+#~ msgid "Please fix the error before leaving this page:"
+#~ msgstr "Будь ласка, виправте помилку перед виходом із цієї сторінки:"
+
+#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
+#~ msgstr "Редагувати <span class='property-name'>Вираз</span> (Розширено)"
+
+#~ msgid "Show Simple Mode"
+#~ msgstr "Показати простий режим"
+
+#~ msgid ""
+#~ "You are currently in Advanced Mode because your logic is too complicated "
+#~ "for Simple Mode."
+#~ msgstr ""
+#~ "Зараз ви перебуваєте в розширеному режимі, оскільки ваша логіка занадто "
+#~ "складна для простого режиму."
+
+#~ msgid "You can drag a question into the box."
+#~ msgstr "Ви можете перетягнути питання у це поле."
+
+#~ msgid "Guide to Common Logic and Calculations"
+#~ msgstr "Посібник із поширеної логіки та обчислень"
+
+#~ msgid "Edit <span class='property-name'>Expression</span>"
+#~ msgstr "Редагувати <span class='property-name'>Вираз</span>"
+
+#~ msgid "Show Advanced Mode"
+#~ msgstr "Показати розширений режим"
+
+#~ msgid "Result is"
+#~ msgstr "Результат:"
+
+#~ msgid "Expression"
+#~ msgstr "Вираз"
+
+#~ msgid "Add Expression"
+#~ msgstr "Додати вираз"
+
+#~ msgid "Error"
+#~ msgstr "Помилка"
+
+#~ msgid "Warning"
+#~ msgstr "Попередження"
+
+#~ msgid "Form Warning"
+#~ msgstr "Попередження форми"
+
+#~ msgid "Notification"
+#~ msgstr "Сповіщення"
+
+#~ msgid ""
+#~ "Holding the ALT key while clicking save invokes an inefficient save "
+#~ "procedure. Do this only if a normal save fails."
+#~ msgstr ""
+#~ "Утримання клавіші ALT під час натискання збереження викликає неефективну "
+#~ "процедуру збереження. Робіть це лише якщо звичайне збереження не вдалося."
+
+#~ msgid "Are you sure you want to exit? All unsaved changes will be lost!"
+#~ msgstr "Ви впевнені, що хочете вийти? Усі незбережені зміни буде втрачено!"
+
+#~ msgid ""
+#~ "Look for questions marked with $1 and check they don't reference deleted "
+#~ "questions."
+#~ msgstr ""
+#~ "Знайдіть питання, позначені $1, і переконайтеся, що вони не посилаються "
+#~ "на видалені питання."
+
+#~ msgid "Errors in Form"
+#~ msgstr "Помилки у формі"
+
+#~ msgid "Form has reference errors."
+#~ msgstr "Форма містить помилки посилань."
+
+#~ msgid "Look for questions marked with $1 and fix the errors."
+#~ msgstr "Знайдіть питання, позначені $1, і виправте помилки."
+
+#~ msgid "Form has validation errors."
+#~ msgstr "Форма містить помилки валідації."
+
+#~ msgid "Multimedia Capture"
+#~ msgstr "Захоплення мультимедіа"
+
+#~ msgid "Number"
+#~ msgstr "Число"
+
+#~ msgid "Groups"
+#~ msgstr "Групи"
+
+#~ msgid "Advanced"
+#~ msgstr "Додатково"
+
+#~ msgid "Make Required"
+#~ msgstr "Зробити обов'язковим"
+
+#~ msgid ""
+#~ "You are about to make all existing questions on this form required. This "
+#~ "action will overwrite the current configuration of this form and can only "
+#~ "be undone by editing individual questions."
+#~ msgstr ""
+#~ "Ви збираєтеся зробити всі існуючі питання у цій формі обов'язковими. Ця "
+#~ "дія перезапише поточну конфігурацію форми і може бути скасована лише "
+#~ "шляхом редагування окремих питань."
+
+#~ msgid "Load Default Values"
+#~ msgstr "Завантажити типові значення"
+
+#~ msgid ""
+#~ "You are about to set matching case properties as Default Values for all "
+#~ "existing questions. This action will overwrite existing Default Values "
+#~ "for all questions with matching case properties and can only be undone by "
+#~ "editing individual questions."
+#~ msgstr ""
+#~ "Ви збираєтеся встановити відповідні властивості справи як типові значення "
+#~ "для всіх існуючих питань. Ця дія перезапише існуючі типові значення для "
+#~ "всіх питань із відповідними властивостями справи і може бути скасована "
+#~ "лише шляхом редагування окремих питань."
+
+#~ msgid "Are you sure you want to perform this action?"
+#~ msgstr "Ви впевнені, що хочете виконати цю дію?"
+
+#~ msgid "Expand Editor"
+#~ msgstr "Розгорнути редактор"
+
+#~ msgid "Shrink Editor"
+#~ msgstr "Згорнути редактор"
+
+#~ msgid "Export Form Contents"
+#~ msgstr "Експортувати вміст форми"
+
+#~ msgid "Edit Source XML"
+#~ msgstr "Редагувати вихідний XML"
+
+#~ msgid "Form Properties"
+#~ msgstr "Властивості форми"
+
+#~ msgid "Find Usages"
+#~ msgstr "Знайти використання"
+
+#~ msgid "Validation failed. Form may not perform correctly on your device!"
+#~ msgstr ""
+#~ "Валідація не пройдена. Форма може працювати некоректно на вашому пристрої!"
+
+#~ msgid "Edit Form's Source XML"
+#~ msgstr "Редагувати вихідний XML форми"
+
+#~ msgid "Update Source"
+#~ msgstr "Оновити джерело"
+
+#~ msgid ""
+#~ "This is the raw XML. You can edit or paste into this box to make changes "
+#~ "to your form. Press 'Update Source' to save changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "Це сирий XML. Ви можете редагувати або вставити у це поле, щоб внести "
+#~ "зміни до вашої форми. Натисніть 'Оновити джерело' для збереження змін або "
+#~ "'Закрити' для скасування."
+
+#~ msgid ""
+#~ "Copy and paste this content into a spreadsheet program like Excel to "
+#~ "easily share your form with others."
+#~ msgstr ""
+#~ "Скопіюйте та вставте цей вміст у програму для роботи з електронними "
+#~ "таблицями, наприклад Excel, щоб легко поділитися вашою формою з іншими."
+
+#~ msgid "Lost Work Warning"
+#~ msgstr "Попередження про втрату роботи"
+
+#~ msgid "Overwrite their work"
+#~ msgstr "Перезаписати їхню роботу"
+
+#~ msgid "Show XML Differences"
+#~ msgstr "Показати відмінності у XML"
+
+#~ msgid ""
+#~ "Looks like someone else has edited this form since you loaded the page. "
+#~ "Are you sure you want to overwrite their work?"
+#~ msgstr ""
+#~ "Схоже, хтось інший відредагував цю форму після того, як ви завантажили "
+#~ "сторінку. Ви впевнені, що хочете перезаписати їхню роботу?"
+
+#~ msgid "Edit Form Properties"
+#~ msgstr "Редагувати властивості форми"
+
+#~ msgid "Disable Text Formatting"
+#~ msgstr "Вимкнути форматування тексту"
+
+#~ msgid "Use Easy References"
+#~ msgstr "Використовувати прості посилання"
+
+#~ msgid "Use of each question"
+#~ msgstr "Використання кожного питання"
+
+#~ msgid "Unsaved Changes in Editor"
+#~ msgstr "Незбережені зміни в редакторі"
+
+#~ msgid ""
+#~ "You have UNSAVED changes in the Expression Editor. Please save changes "
+#~ "before continuing."
+#~ msgstr ""
+#~ "У вас є НЕЗБЕРЕЖЕНІ зміни у редакторі виразів. Будь ласка, збережіть "
+#~ "зміни перед продовженням."
+
+#~ msgid "Parsing Error. Please check that your form is valid XML."
+#~ msgstr "Помилка розбору. Перевірте, чи ваша форма є коректним XML."
+
+#~ msgid "Sorry, {err}"
+#~ msgstr "Вибачте, {err}"
+
+#~ msgid "Add Choice"
+#~ msgstr "Додати варіант"
+
+#~ msgid "and"
+#~ msgstr "та"
+
+#~ msgid "There are errors in the form"
+#~ msgstr "У формі є помилки"
+
+#~ msgid "Fix Manually"
+#~ msgstr "Виправити вручну"
+
+#~ msgid "Fix Automatically"
+#~ msgstr "Виправити автоматично"
+
+#~ msgid ""
+#~ "It looks like your form is not valid XML. This can often happen if you "
+#~ "use a reserved character in one of your questions. Characters to look out "
+#~ "for are <, >, and &. You can still save, but you CANNOT LOAD THIS FORM "
+#~ "again until you fix the XML by hand. What would you like to do?"
+#~ msgstr ""
+#~ "Схоже, ваша форма не є коректним XML. Це часто трапляється, якщо у "
+#~ "питанні використано зарезервований символ. Зверніть увагу на символи <, > "
+#~ "та &. Ви все ще можете зберегти, але НЕ ЗМОЖЕТЕ ЗАВАНТАЖИТИ ЦЮ ФОРМУ "
+#~ "знову, поки не виправите XML вручну. Що ви хочете зробити?"
+
+#~ msgid "Form Validation Error"
+#~ msgstr "Помилка перевірки форми"
+
+#~ msgid "Fix the problem (recommended)"
+#~ msgstr "Виправити проблему (рекомендовано)"
+
+#~ msgid "Save anyway"
+#~ msgstr "Зберегти все одно"
+
+#~ msgid ""
+#~ "The {displaytext} appears in the application. This text will not appear "
+#~ "in data exports."
+#~ msgstr ""
+#~ "{displaytext} відображається у застосунку. Цей текст не з'явиться у "
+#~ "експортованих даних."
+
+#~ msgid "Display Text"
+#~ msgstr "Текст для відображення"
+
+#~ msgid ""
+#~ "You can configure an external data source like a case list or lookup "
+#~ "table to use as the choices for a multiple choice question."
+#~ msgstr ""
+#~ "Ви можете налаштувати зовнішнє джерело даних, наприклад, список кейсів "
+#~ "або таблицю для вибору варіантів у питанні з кількома варіантами."
+
+#~ msgid "Media"
+#~ msgstr "Медіа"
+
+#~ msgid ""
+#~ "This will allow you to add images, audio or video media to a question, or "
+#~ "other custom content."
+#~ msgstr ""
+#~ "Це дозволить додати зображення, аудіо чи відео до питання або інший "
+#~ "власний контент."
+
+#~ msgid ""
+#~ "These are advanced settings and are not needed for most applications.  "
+#~ "Please only change these if you have a specific need!"
+#~ msgstr ""
+#~ "Це розширені налаштування, які не потрібні для більшості застосунків. "
+#~ "Будь ласка, змінюйте їх лише за конкретної потреби!"
+
+#~ msgid ""
+#~ "This question represents advanced content that is not supported by the "
+#~ "form builder. Please only change it if you have a specific need!"
+#~ msgstr ""
+#~ "Це питання містить розширений контент, який не підтримується "
+#~ "конструктором форм. Будь ласка, змінюйте його лише за конкретної потреби!"
+
+#~ msgid "Ignored XML"
+#~ msgstr "Ігнорований XML"
+
+#~ msgid "Android App Callout"
+#~ msgstr "Виклик Android-додатку"
+
+#~ msgid "External App"
+#~ msgstr "Зовнішній додаток"
+
+#~ msgid "Insert Android Application ID"
+#~ msgstr "Вставте ідентифікатор Android-додатку"
+
+#~ msgid "change your subscription"
+#~ msgstr "змініть свою підписку"
+
+#~ msgid ""
+#~ "You no longer have access to built in or external integration in your "
+#~ "application.\n"
+#~ "\n"
+#~ "Built in integrations are available on the Pro plan and higher. External "
+#~ "integrations are available on the Advanced plan and higher. Before you "
+#~ "can make a new version of your application, you must {link} or delete "
+#~ "this question."
+#~ msgstr ""
+#~ "Ви більше не маєте доступу до вбудованої чи зовнішньої інтеграції у "
+#~ "вашому застосунку.\n"
+#~ "\n"
+#~ "Вбудовані інтеграції доступні у тарифі Pro та вище. Зовнішні інтеграції "
+#~ "доступні у тарифі Advanced та вище. Перш ніж створити нову версію "
+#~ "застосунку, потрібно {link} або видалити це питання."
+
+#~ msgid ""
+#~ "Your subscription only has access to built-in integration.\n"
+#~ "\n"
+#~ "External integrations are available on the Advanced plan and higher. "
+#~ "Before you can make a new version of your application, you must {link} or "
+#~ "delete this question."
+#~ msgstr ""
+#~ "Ваша підписка має доступ лише до вбудованої інтеграції.\n"
+#~ "\n"
+#~ "Зовнішні інтеграції доступні у тарифі Advanced та вище. Перш ніж створити "
+#~ "нову версію застосунку, потрібно {link} або видалити це питання."
+
+#~ msgid ""
+#~ "Android app callouts of the same type must have different question ids."
+#~ msgstr ""
+#~ "Виклики Android-додатків одного типу повинні мати різні ідентифікатори "
+#~ "питань."
+
+#~ msgid "Extra"
+#~ msgstr "Додатково"
+
+#~ msgid "Response"
+#~ msgstr "Відповідь"
+
+#~ msgid "Special Intent XMLNS attribute"
+#~ msgstr "Спеціальний атрибут XMLNS для Intent"
+
+#~ msgid "Print"
+#~ msgstr "Друк"
+
+#~ msgid "Document Template"
+#~ msgstr "Шаблон документа"
+
+#~ msgid "Edit Data Source"
+#~ msgstr "Редагувати джерело даних"
+
+#~ msgid "Query Expression"
+#~ msgstr "Вираз для запиту"
+
+#~ msgid "Optional Instance Properties"
+#~ msgstr "Необов'язкові властивості екземпляра"
+
+#~ msgid "Instance ID"
+#~ msgstr "ID екземпляра"
+
+#~ msgid "Instance URI"
+#~ msgstr "URI екземпляра"
+
+#~ msgid "Lookup table was not found in the project"
+#~ msgstr "Таблицю пошуку не знайдено в проєкті"
+
+#~ msgid ""
+#~ "You no longer have access to Lookup Tables in your application. Lookup "
+#~ "Tables are available on the Standard plan and higher.\n"
+#~ "Before you can make a new version of your application, you must {link} or "
+#~ "delete this question"
+#~ msgstr ""
+#~ "Ви більше не маєте доступу до таблиць пошуку у вашому застосунку. Таблиці "
+#~ "пошуку доступні у тарифному плані Standard та вище.\n"
+#~ "Перш ніж створити нову версію вашого застосунку, потрібно {link} або "
+#~ "видалити це питання"
+
+#~ msgid "A data source must be selected."
+#~ msgstr "Необхідно вибрати джерело даних."
+
+#~ msgid "Display Text Field"
+#~ msgstr "Поле для відображення тексту"
+
+#~ msgid "Sort Field"
+#~ msgstr "Поле для сортування"
+
+#~ msgid "Filter"
+#~ msgstr "Фільтр"
+
+#~ msgid ""
+#~ "This is an XPath expression that will filter the set of choices from the "
+#~ "lookup table"
+#~ msgstr ""
+#~ "Це вираз XPath, який відфільтровує набір варіантів із таблиці пошуку"
+
+#~ msgid "Lookup Tables"
+#~ msgstr "Таблиці пошуку"
+
+#~ msgid "Checkbox Lookup Table"
+#~ msgstr "Таблиця пошуку з прапорцями"
+
+#~ msgid ""
+#~ "Cannot change to Multiple/Single Choice question if it has Choices. "
+#~ "Please remove all Choices and try again."
+#~ msgstr ""
+#~ "Неможливо змінити на питання з множинним/одиночним вибором, якщо вже є "
+#~ "варіанти. Будь ласка, видаліть усі варіанти та спробуйте ще раз."
+
+#~ msgid "Can only change to a Multiple Choice Lookup Table"
+#~ msgstr "Можна змінити лише на таблицю пошуку з множинним вибором"
+
+#~ msgid "Multiple Choice Lookup Table"
+#~ msgstr "Таблиця пошуку з множинним вибором"
+
+#~ msgid "Can only change to a Checkbox Lookup Table"
+#~ msgstr "Можна змінити лише на таблицю пошуку з прапорцями"
+
+#~ msgid "{attr} was not found in the lookup table"
+#~ msgstr "{attr} не знайдено в таблиці пошуку"
+
+#~ msgid "Display"
+#~ msgstr "Відображення"
+
+#~ msgid "auto?"
+#~ msgstr "авто?"
+
+#~ msgid ""
+#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> "
+#~ "words, use bulleted lists, and <a target='_blank' href='https://help."
+#~ "commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
+#~ msgstr ""
+#~ "Використовуйте форматування тексту для <strong>жирного</strong> та "
+#~ "<em>курсивного</em> виділення слів, створюйте марковані списки та <a "
+#~ "target='_blank' href='https://help.commcarehq.org/display/commcarepublic/"
+#~ "Text+Formatting'>інші можливості</a>"
+
+#~ msgid "Turn Off Text Formatting"
+#~ msgstr "Вимкнути форматування тексту"
+
+#~ msgid "Turn On Text Formatting"
+#~ msgstr "Увімкнути форматування тексту"
+
+#~ msgid "custom..."
+#~ msgstr "власне..."
+
+#~ msgid "New Content Type"
+#~ msgstr "Новий тип контенту"
+
+#~ msgid "Content Type"
+#~ msgstr "Тип контенту"
+
+#~ msgid ""
+#~ "You have languages in your form that are not specified in the "
+#~ "\"Languages\" page of the application builder. The following language "
+#~ "will be deleted on save unless you add it to the \"Languages\" page:"
+#~ msgstr ""
+#~ "У вашій формі є мови, які не вказані на сторінці \"Мови\" конструктора "
+#~ "застосунку. Наступна мова буде видалена під час збереження, якщо ви не "
+#~ "додасте її на сторінку \"Мови\":"
+
+#~ msgid "{name} (or multimedia) is required."
+#~ msgstr "{name} (або мультимедіа) є обов'язковим."
+
+#~ msgid "{name} (or multimedia) is required for all languages."
+#~ msgstr "{name} (або мультимедіа) є обов'язковим для всіх мов."
+
+#~ msgid "{name} Itext ID is required."
+#~ msgstr "Потрібен Itext ID для {name}."
+
+#~ msgid "{name} is not a valid ID."
+#~ msgstr "{name} не є дійсним ID."
+
+#~ msgid "Multimedia was not copied; it must be uploaded separately."
+#~ msgstr "Мультимедіа не було скопійовано; його потрібно завантажити окремо."
+
+#~ msgid "Discarded languages:"
+#~ msgstr "Відхилені мови:"
+
+#~ msgid "Validation Message"
+#~ msgstr "Повідомлення про перевірку"
+
+#~ msgid ""
+#~ "Can't have a Validation Message Itext ID without a Validation Condition"
+#~ msgstr ""
+#~ "Неможливо мати Itext ID повідомлення про перевірку без умови перевірки"
+
+#~ msgid "Validation Message Itext ID"
+#~ msgstr "Itext ID повідомлення про перевірку"
+
+#~ msgid "Add Validation Media"
+#~ msgstr "Додати медіа для перевірки"
+
+#~ msgid "Display Text Itext ID"
+#~ msgstr "Itext ID для відображення тексту"
+
+#~ msgid "Hint Message"
+#~ msgstr "Підказка"
+
+#~ msgid "Hint Itext ID"
+#~ msgstr "Itext ID підказки"
+
+#~ msgid "Help Message"
+#~ msgstr "Довідкове повідомлення"
+
+#~ msgid "Help Itext ID"
+#~ msgstr "Itext ID довідки"
+
+#~ msgid "Add New Item Button Text"
+#~ msgstr "Текст кнопки \"Додати новий елемент\""
+
+#~ msgid "Add New Itext ID"
+#~ msgstr "Додати новий Itext ID"
+
+#~ msgid "Add Another Item Button Text"
+#~ msgstr "Текст кнопки \"Додати ще один елемент\""
+
+#~ msgid "Add Another Itext ID"
+#~ msgstr "Додати ще один Itext ID"
+
+#~ msgid "Add Other Content"
+#~ msgstr "Додати інший контент"
+
+#~ msgid "Add Multimedia"
+#~ msgstr "Додати мультимедіа"
+
+#~ msgid "Add Help Media"
+#~ msgstr "Додати медіа для довідки"
+
+#~ msgid "Edit Bulk Translations"
+#~ msgstr "Редагувати масові переклади"
+
+#~ msgid "Update Translations"
+#~ msgstr "Оновити переклади"
+
+#~ msgid ""
+#~ "Copy these translations into a spreadsheet program like Excel. You can "
+#~ "edit them there and then paste them back here when you're done. These "
+#~ "will update the translations used in your form. Press 'Update "
+#~ "Translations' to save changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "Скопіюйте ці переклади у програму для роботи з електронними таблицями, "
+#~ "наприклад Excel. Ви можете редагувати їх там, а потім вставити назад "
+#~ "сюди, коли закінчите. Це оновить переклади, які використовуються у вашій "
+#~ "формі. Натисніть 'Оновити переклади', щоб зберегти зміни, або 'Закрити', "
+#~ "щоб скасувати."
+
+#~ msgid "App Properties"
+#~ msgstr "Властивості застосунку"
+
+#~ msgid "Could not load app properties."
+#~ msgstr "Не вдалося завантажити властивості додатка."
+
+#~ msgid "If this error persists, please report an issue."
+#~ msgstr "Якщо ця помилка повторюється, будь ласка, повідомте про проблему."
+
+#~ msgid ""
+#~ "The {questionid} is an internal identifier for a question. It does not "
+#~ "appear on the phone. It is the name of the question in data exports."
+#~ msgstr ""
+#~ "{questionid} — це внутрішній ідентифікатор питання. Він не відображається "
+#~ "на телефоні. Це назва питання у експортованих даних."
+
+#~ msgid "The date and time of the action, e.g., now() or today()"
+#~ msgstr "Дата і час дії, наприклад, now() або today()"
+
+#~ msgid "Balance ID"
+#~ msgstr "ID балансу"
+
+#~ msgid ""
+#~ "The name of the balance you are tracking. This is an internal identifier "
+#~ "which does not appear on the phone."
+#~ msgstr ""
+#~ "Назва балансу, який ви відстежуєте. Це внутрішній ідентифікатор, який не "
+#~ "відображається на телефоні."
+
+#~ msgid "Product"
+#~ msgstr "Продукт"
+
+#~ msgid ""
+#~ "A reference to a product ID, e.g., \"/data/products/current_product\""
+#~ msgstr ""
+#~ "Посилання на ID продукту, наприклад, \"/data/products/current_product\""
+
+#~ msgid "Quantity"
+#~ msgstr "Кількість"
+
+#~ msgid "A reference to an integer question in this form."
+#~ msgstr "Посилання на питання з цілим числом у цій формі."
+
+#~ msgid "XPath expression for the case ID associated with this balance."
+#~ msgstr "XPath-вираз для ID кейсу, пов’язаного з цим балансом."
+
+#~ msgid "Transfer must have both Source Case and Destination Case defined."
+#~ msgstr ""
+#~ "Для переказу мають бути визначені як джерело, так і призначення кейсу."
+
+#~ msgid "Cannot change $1 to $2"
+#~ msgstr "Не можна змінити $1 на $2"
+
+#~ msgid "Source Case"
+#~ msgstr "Джерело кейсу"
+
+#~ msgid "XPath expression for the case ID issuing the transaction."
+#~ msgstr "XPath-вираз для ID кейсу, який ініціює транзакцію."
+
+#~ msgid "Destination Case"
+#~ msgstr "Призначення кейсу"
+
+#~ msgid "XPath expression for the case ID receiving the transaction."
+#~ msgstr "XPath-вираз для ID кейсу, який отримує транзакцію."
+
+#~ msgid "Dispense must have a Source Case."
+#~ msgstr "Для видачі має бути визначене джерело кейсу."
+
+#~ msgid "Receive must have a Destination Case."
+#~ msgstr "Для отримання має бути визначене призначення кейсу."
+
+#~ msgid "Model Iteration ID Query"
+#~ msgstr "Запит ідентифікатора ітерації моделі"
+
+#~ msgid "Property Name"
+#~ msgstr "Назва властивості"
+
+#~ msgid "Relevant"
+#~ msgstr "Актуальність"
+
+#~ msgid "Relationship Identifier (e.g. parent or host)"
+#~ msgstr "Ідентифікатор відношення (наприклад, parent або host)"
+
+#~ msgid "Referenced Case ID"
+#~ msgstr "ID посилання на кейс"
+
+#~ msgid "Referenced Case Type"
+#~ msgstr "Тип посилання на кейс"
+
+#~ msgid "Relationship (child or extension)"
+#~ msgstr "Відношення (child або extension)"
+
+#~ msgid "Node Name"
+#~ msgstr "Назва вузла"
+
+#~ msgid "Source"
+#~ msgstr "Джерело"
+
+#~ msgid "From"
+#~ msgstr "Від"
+
+#~ msgid "Attachment Name"
+#~ msgstr "Назва вкладення"
+
+#~ msgid "Add Property"
+#~ msgstr "Додати властивість"
+
+#~ msgid "Date Modified"
+#~ msgstr "Дата зміни"
+
+#~ msgid "User ID"
+#~ msgstr "ID користувача"
+
+#~ msgid "Case Type"
+#~ msgstr "Тип кейсу"
+
+#~ msgid "Create Case"
+#~ msgstr "Створити кейс"
+
+#~ msgid "Properties To Create"
+#~ msgstr "Властивості для створення"
+
+#~ msgid "You must include {columns} columns to create a case"
+#~ msgstr "Ви повинні включити стовпці {columns}, щоб створити кейс"
+
+#~ msgid "You can only use the following properties:"
+#~ msgstr "Ви можете використовувати лише такі властивості:"
+
+#~ msgid "{props} are invalid properties"
+#~ msgstr "{props} є недійсними властивостями"
+
+#~ msgid "Close Case"
+#~ msgstr "Закрити кейс"
+
+#~ msgid "Close Condition"
+#~ msgstr "Умова закриття"
+
+#~ msgid "Update Case"
+#~ msgstr "Оновити кейс"
+
+#~ msgid "Properties To Update"
+#~ msgstr "Властивості для оновлення"
+
+#~ msgid "Use Index"
+#~ msgstr "Використовувати індекс"
+
+#~ msgid "Index Properties"
+#~ msgstr "Властивості індексу"
+
+#~ msgid "Relationship must be child or extension"
+#~ msgstr "Відношення має бути child або extension"
+
+#~ msgid "Use Attachments"
+#~ msgstr "Використовувати вкладення"
+
+#~ msgid "Attachment Properties"
+#~ msgstr "Властивості вкладення"
+
+#~ msgid "The from attribute must be one of: local, remote, or inline"
+#~ msgstr "Атрибут from має бути одним із: local, remote або inline"
+
+#~ msgid "Inlined attachments must have an attachment name"
+#~ msgstr "Вбудовані вкладення повинні мати ім'я вкладення"
+
+#~ msgid "Update"
+#~ msgstr "Оновити"
+
+#~ msgid "Index"
+#~ msgstr "Індекс"
+
+#~ msgid "Attachments"
+#~ msgstr "Вкладення"
+
+#~ msgid "An error occurred when parsing bind node [{path}]. Please fix this."
+#~ msgstr ""
+#~ "Сталася помилка під час розбору вузла прив'язки [{path}]. Будь ласка, "
+#~ "виправте це."
+
+#~ msgid "Upload"
+#~ msgstr "Завантажити"
+
+#~ msgid "Select new"
+#~ msgstr "Вибрати новий"
+
+#~ msgid "Select File"
+#~ msgstr "Вибрати файл"
+
+#~ msgid "Current"
+#~ msgstr "Поточний"
+
+#~ msgid "Begin Upload"
+#~ msgstr "Почати завантаження"
+
+#~ msgid "Replace"
+#~ msgstr "Замінити"
+
+#~ msgid "No Reference"
+#~ msgstr "Без посилання"
+
+#~ msgid "Advanced: Show Path"
+#~ msgstr "Додатково: Показати шлях"
+
+#~ msgid "Hide Path"
+#~ msgstr "Сховати шлях"
+
+#~ msgid "Video"
+#~ msgstr "Відео"
+
+#~ msgid "Inline Video"
+#~ msgstr "Вбудоване відео"
+
+#~ msgid "HTML"
+#~ msgstr "HTML"
+
+#~ msgid "Copying and Pasting Questions"
+#~ msgstr "Копіювання та вставка запитань"
+
+#~ msgid ""
+#~ "These actions are available via the browser's Edit menu, and you can also "
+#~ "use:"
+#~ msgstr ""
+#~ "Ці дії доступні через меню Редагування браузера, а також можна "
+#~ "використовувати:"
+
+#~ msgid "for copy"
+#~ msgstr "для копіювання"
+
+#~ msgid "for paste"
+#~ msgstr "для вставки"
+
+#~ msgid "Copy from or Paste into this text box:"
+#~ msgstr "Скопіюйте або вставте у це текстове поле:"
+
+#~ msgid "Insert Questions"
+#~ msgstr "Вставити запитання"
+
+#~ msgid "Selecting Multiple Questions"
+#~ msgstr "Вибір кількох запитань"
+
+#~ msgid "Hold {key} and click on each question."
+#~ msgstr "Утримуйте {key} і натискайте на кожне запитання."
+
+#~ msgid "Other Tips"
+#~ msgstr "Інші поради"
+
+#~ msgid "Questions can be copied between forms, and even to other apps."
+#~ msgstr "Запитання можна копіювати між формами, а також в інші додатки."
+
+#~ msgid "Cannot insert {type} into tree root"
+#~ msgstr "Не можна вставити {type} у корінь дерева"
+
+#~ msgid "Cannot insert $1 into or after $2"
+#~ msgstr "Не можна вставити $1 у або після $2"
+
+#~ msgid "Cannot insert $1 into $2"
+#~ msgstr "Не можна вставити $1 у $2"
+
+#~ msgid "Unsupported paste format"
+#~ msgstr "Непідтримуваний формат вставки"
+
+#~ msgid "Unsupported paste format:"
+#~ msgstr "Непідтримуваний формат вставки:"
+
+#~ msgid "Unknown question type:"
+#~ msgstr "Невідомий тип запитання:"
+
+#~ msgid "Enter command"
+#~ msgstr "Введіть команду"
 
 #~ msgid "Module ID"
 #~ msgstr "ID модуля"

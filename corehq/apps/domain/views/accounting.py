@@ -1366,16 +1366,20 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return downgrade_handler.get_response()
 
     @property
-    def is_upgrade(self):
+    def is_downgrade(self):
+        return is_downgrade(
+            current_edition=self.current_subscription.plan_version.plan.edition,
+            next_edition=self.edition
+        )
+
+    @property
+    def is_monthly_upgrade(self):
         if self.current_subscription.is_trial:
             return True
-        elif self.current_subscription.plan_version.plan.edition == self.edition:
+        elif self.is_same_edition or self.is_annual_plan:
             return False
         else:
-            return not is_downgrade(
-                current_edition=self.current_subscription.plan_version.plan.edition,
-                next_edition=self.edition
-            )
+            return not self.is_downgrade
 
     @property
     def is_same_edition(self):
@@ -1383,14 +1387,9 @@ class ConfirmSelectedPlanView(PlanViewBase):
 
     @property
     def is_downgrade_before_minimum(self):
-        if self.is_upgrade:
-            return False
-        elif self.current_subscription is None or self.current_subscription.is_trial:
-            return False
-        elif self.current_subscription.is_below_minimum_subscription:
-            return True
-        else:
-            return False
+        return (not self.is_monthly_upgrade
+                and self.is_downgrade
+                and self.current_subscription.is_below_minimum_subscription)
 
     @property
     def current_subscription_end_date(self):
@@ -1409,15 +1408,17 @@ class ConfirmSelectedPlanView(PlanViewBase):
     def page_context(self):
         return {
             'downgrade_messages': self.downgrade_messages(),
-            'is_upgrade': self.is_upgrade,
-            'is_same_edition': self.is_same_edition,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
-            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'new_plan_edition': self.edition,
+            'is_annual_plan': self.is_annual_plan,
+            'is_monthly_upgrade': self.is_monthly_upgrade,
+            'is_same_edition': self.is_same_edition,
+            'is_downgrade': self.is_downgrade,
+            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
             'is_paused': self.is_paused,
             'tile_css': 'tile-{}'.format(self.edition.lower()),
         }
@@ -1487,11 +1488,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
     @property
     def downgrade_email_note(self):
-        if self.is_upgrade:
+        if self.is_downgrade:
+            return _get_downgrade_or_pause_note(self.request)
+        else:
             return None
-        if self.is_same_edition:
-            return None
-        return _get_downgrade_or_pause_note(self.request)
 
     @property
     @memoized
@@ -1575,7 +1575,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             messages.error(
                 request, _(
                     "You have already scheduled a downgrade to the %(software_plan_name)s Software Plan on "
-                    "%(downgrade_date)s. If this is a mistake, please reach out to %(contact_email)."
+                    "%(downgrade_date)s. If this is a mistake, please reach out to %(contact_email)s."
                 ) % {
                     'software_plan_name': software_plan_name,
                     'downgrade_date': downgrade_date,
