@@ -1,52 +1,35 @@
+{% extends "data_cleaning/status/base_modal_body.html" %}
 {% load i18n %}
+{% load django_tables2 %}
 
-<div
-  hx-get="{{ request.path_info }}"
-  hx-trigger="every 5s from:load"
-  hq-hx-action="poll_session_status"
+{% block htmx-attrs %}
+  hx-get="{{ request.path_info }}{% querystring %}"
   hx-swap="outerHTML"
->
-  <div class="modal-header">
-    <h5 class="modal-title">
-      {% trans "Applying Changes..." %}
-    </h5>
-  </div>
-  <div class="modal-body">
-    <div class="alert alert-success">
-      <div class="progress mb-2" role="progressbar" aria-label="Basic example" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-bar bg-success" style="width: {{ session.percent_complete }}%"></div>
-      </div>
-      <div class="d-flex justify-content-between">
-        <div>
-          <i class="fa-solid fa-check-double me-1"></i>
-          {% blocktrans %}
-            Applying changes, please wait...
-          {% endblocktrans %}
-        </div>
-        {% if is_task_complete %}
-          <div>
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            {% blocktrans %}
-              Database is refreshing...almost there!
-            {% endblocktrans %}
-          </div>
-        {% endif %}
-      </div>
+  hx-trigger="every 0.5s from:load"
+  hq-hx-action="poll_session_status"
+{% endblock htmx-attrs %}
+
+{% block modal-header %}
+  {% trans "Applying Changes..." %}
+{% endblock modal-header %}
+
+{% block task-status-text %}
+  <div class="d-flex justify-content-between">
+    <div>
+      <i class="fa-solid fa-check-double me-1"></i>
+      {% blocktrans %}
+        Applying changes, please wait...
+      {% endblocktrans %}
     </div>
+
+    {# artificial buffer to let change feed catch up #}
+    {% if is_task_complete %}
+      <div>
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        {% blocktrans %}
+          Database is refreshing...almost there!
+        {% endblocktrans %}
+      </div>
+    {% endif %}
   </div>
-  <div class="modal-footer">
-    <a
-      class="btn btn-outline-primary"
-      href="{{ exit_url }}"
-    >
-      {% trans "Exit session" %}
-    </a>
-    <button
-      type="button"
-      class="btn btn-primary"
-      disabled="disabled"
-    >
-      {% trans "Continue editing" %}
-    </button>
-  </div>
-</div>
+{% endblock task-status-text %}
