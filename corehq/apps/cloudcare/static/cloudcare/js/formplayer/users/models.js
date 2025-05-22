@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/formplayer/users/models", [
+define("cloudcare/js/formplayer/users/models", [
     "underscore",
     "backbone",
     "analytix/js/kissmetrix",
