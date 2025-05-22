@@ -11,7 +11,7 @@ import assertProperties from "hqwebapp/js/assert_properties";
 import hqLayout from "hqwebapp/js/layout";
 import widgets from "app_manager/js/widgets";  // version dropdown
 import kissmetricsAnalytics from "analytix/js/kissmetrix";
-import DOMPurify from "DOMPurify";
+import DOMPurify from "dompurify";
 
 var menuItemModel = function (options) {
     assertProperties.assert(options, ['unique_id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);

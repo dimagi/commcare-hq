@@ -1,6 +1,6 @@
 hqDefine('cloudcare/js/markdown', [
     'jquery',
-    'DOMPurify',
+    'dompurify',
     'markdown-it/dist/markdown-it',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
