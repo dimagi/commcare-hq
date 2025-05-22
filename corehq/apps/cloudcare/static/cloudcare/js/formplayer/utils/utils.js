@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/formplayer/utils/utils", [
+define("cloudcare/js/formplayer/utils/utils", [
     'jquery',
     'underscore',
     'backbone',

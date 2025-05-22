@@ -1,5 +1,5 @@
 
-hqDefine('hqwebapp/js/ui_elements/ui-element-langcode-button', [], function () {
+define('hqwebapp/js/ui_elements/ui-element-langcode-button', [], function () {
     var module = {};
 
     var LangCodeButton = function ($elem, newLang) {
