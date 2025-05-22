@@ -54,7 +54,6 @@ function hqDefine(path, dependencies, moduleAccessor) {
             'ace-builds/src-min-noconflict/ace': 'ace',
             'chai/chai': 'chai',
             'DOMPurify': 'DOMPurify',
-            'DOMPurify/dist/purify.min': 'DOMPurify',
             'mocha/mocha': 'mocha',
             'moment/moment': 'moment',
             'crypto-js/crypto-js': 'CryptoJS',
