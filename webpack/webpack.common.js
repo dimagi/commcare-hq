@@ -28,6 +28,9 @@ const aliases = {
 };
 
 const vellumDebugDir = vellumUtils.getDebugDir();
+console.log("============================");
+console.log(JSON.stringify(vellumUtils.getDebugRule()));
+console.log("===> " + vellumDebugDir);
 module.exports = {
     entry: utils.getEntries(),
 
@@ -37,6 +40,13 @@ module.exports = {
                 if (request.match(/\bbootstrap\b/)) {
                     return callback(null, 'global bootstrap');
                 }
+            }
+            else if (context.indexOf("vellum") !== -1 && context.indexOf("node_modules") === -1) {
+// just vellum/hqAnalytics and jquery
+console.log("== vellum > " + context + " = " + request);
+            }
+            else if (context.indexOf("richText") !== -1) {
+console.log("== src > " + context + " = " + request);
             }
             callback();
         },
