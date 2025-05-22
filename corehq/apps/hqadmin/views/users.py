@@ -2,7 +2,7 @@ import csv
 import itertools
 import os
 import urllib.parse
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from io import StringIO
 
@@ -111,7 +111,7 @@ class SuperuserManagement(UserAdministration):
             can_assign_superuser = 'can_assign_superuser' in form.cleaned_data['can_assign_superuser']
 
             selected_tag_slugs = form.cleaned_data['feature_flag_edit_permissions'] if is_superuser else []
-            self._update_toggle_edit_permissions(selected_tag_slugs, users)
+            toggle_edit_permission_changes = self._update_toggle_edit_permissions(selected_tag_slugs, users)
 
             user_changes = []
             for user in users:
@@ -133,6 +133,11 @@ class SuperuserManagement(UserAdministration):
 
                 if fields_changed:
                     user.save()
+
+                if user.username in toggle_edit_permission_changes:
+                    fields_changed['feature_flag_edit_permissions'] = toggle_edit_permission_changes[user.username]
+
+                if fields_changed:
                     couch_user = CouchUser.from_django_user(user)
                     log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
                                     changed_by_user=self.request.couch_user,
@@ -149,13 +154,16 @@ class SuperuserManagement(UserAdministration):
                     if 'can_assign_superuser' not in fields_changed:
                         fields_changed['same_management_privilege'] = web_user.can_assign_superuser
                     user_changes.append(fields_changed)
+
             if user_changes:
                 send_email_notif(user_changes, self.request.couch_user.username)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
 
-    def _update_toggle_edit_permissions(self, selected_tag_slugs, users):
+    @staticmethod
+    def _update_toggle_edit_permissions(selected_tag_slugs, users):
+        user_changes = defaultdict(lambda: {'added': [], 'removed': []})
         usernames = {user.username for user in users}
 
         for tag in ALL_TAGS:
@@ -166,11 +174,17 @@ class SuperuserManagement(UserAdministration):
                     permission = ToggleEditPermission(tag_slug=tag.slug)
                 users_to_add = usernames - set(permission.enabled_users)
                 if users_to_add:
+                    for username in users_to_add:
+                        user_changes[username]['added'].append(tag.name)
                     permission.add_users(list(users_to_add))
             elif permission:
                 users_to_remove = usernames & set(permission.enabled_users)
                 if users_to_remove:
+                    for username in users_to_remove:
+                        user_changes[username]['removed'].append(tag.name)
                     permission.remove_users(list(users_to_remove))
+
+        return dict(user_changes)
 
 
 def send_email_notif(user_changes, changed_by_user):
