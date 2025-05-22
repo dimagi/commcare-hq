@@ -48,6 +48,7 @@ from PIL import Image
 
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
+from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -1950,10 +1951,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         funding_source=FundingSource.CLIENT,
                     )
                 else:
-                    # date_start on Subscription.change_plan is always today so just set the end date
-                    new_sub_date_end = (
-                        datetime.date.today() + relativedelta(years=1) if self.is_annual_plan else None
-                    )
+                    new_sub_date_start = datetime.date.today()
+                    new_sub_date_end = new_sub_date_start + relativedelta(years=1) if self.is_annual_plan else None
                     self.current_subscription.change_plan(
                         self.plan_version,
                         date_end=new_sub_date_end,
@@ -1964,6 +1963,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         do_not_invoice=False,
                         no_invoice_reason='',
                     )
+                if self.plan_version.plan.is_annual_plan:
+                    self.send_prepayment_invoice(new_sub_date_start, new_sub_date_end)
                 if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
                     self_signup.complete_workflow(self.plan_version.plan.edition)
             return True
@@ -1974,6 +1975,21 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 show_stack_trace=True,
             )
             return False
+
+    def send_prepayment_invoice(self, date_start, date_end):
+        label = f"One month of {self.plan_version.plan.name}"
+        monthly_fee = self.plan_version.product_rate.monthly_fee
+        quantity = 12  # todo: pass in as kwarg and/or calculate from dates
+        amount = monthly_fee * quantity
+
+        email_list = self.cleaned_data['email_list']
+        contact_emails = [email_list[0]]
+        cc_emails = [email for email in email_list[1:]]
+
+        invoice_factory = DomainWireInvoiceFactory(self.domain, contact_emails=contact_emails, cc_emails=cc_emails)
+        invoice_factory.create_wire_credits_invoice(
+            amount, label, monthly_fee, quantity, date_start, date_end
+        )
 
     @property
     def is_annual_plan(self):
