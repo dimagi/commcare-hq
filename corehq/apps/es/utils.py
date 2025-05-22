@@ -9,6 +9,7 @@ from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from corehq.apps.es.exceptions import TaskError, TaskMissing
 from corehq.util.es.elasticsearch import SerializationError
 from corehq.util.json import CommCareJSONEncoder
+from corehq.util.log import with_progress_bar
 
 TASK_POLL_DELAY = 10  # number of seconds to sleep between polling for task info
 
@@ -207,11 +208,22 @@ def get_user_domain_memberships(user):
 
 def populate_user_domain_memberships():
     from corehq.apps.es.users import UserES, user_adapter
+    common_dm = 'user_domain_memberships'
+    mobile_dm = 'domain_membership'
+    web_dm = 'domain_memberships'
 
-    for user in UserES().scroll_ids_to_disk_and_iter_docs():
-        memberships = get_user_domain_memberships(user)
-        user_adapter.update(
-            user['_id'],
-            {'user_domain_memberships': memberships},
-            refresh=True
-        )
+    for user in with_progress_bar(UserES().scroll_ids_to_disk_and_iter_docs(), UserES().count()):
+        update_common_dm = False
+        if common_dm not in user:
+            update_common_dm = True
+        elif common_dm in user and mobile_dm in user and [user[mobile_dm]] != user[common_dm]:
+            update_common_dm = True
+        elif common_dm in user and web_dm in user and user[web_dm] != user[common_dm]:
+            update_common_dm = True
+        if update_common_dm:
+            memberships = get_user_domain_memberships(user)
+            user_adapter.update(
+                user['_id'],
+                {common_dm: memberships},
+                refresh=True
+            )
