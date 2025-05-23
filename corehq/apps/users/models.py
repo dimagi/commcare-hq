@@ -87,7 +87,7 @@ from corehq.apps.users.util import (
     bulk_auto_deactivate_commcare_users,
     is_dimagi_email,
 )
-from corehq.const import INVITATION_CHANGE_VIA_WEB
+from corehq.const import INVITATION_CHANGE_VIA_WEB, USER_CHANGE_VIA_WEB
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
@@ -748,6 +748,12 @@ class SingleMembershipMixin(_AuthorizableMixin):
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+
+    @memoized
+    def is_active_in_domain(self, domain):
+        if self.get_domain_membership(domain):
+            return self.get_domain_membership(domain).is_active
+        return False
 
 
 class LowercaseStringProperty(StringProperty):
@@ -2497,6 +2503,30 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         for user_doc in iter_docs(cls.get_db(), user_ids):
             if is_dimagi_email(user_doc['email']):
                 yield user_doc['email']
+
+    def deactivate(self, domain, changed_by):
+        from corehq.apps.sso.models import IdentityProvider
+        if IdentityProvider.get_required_identity_provider(self.username):
+            return
+        membership = self.get_domain_membership(domain)
+        if membership.is_active:
+            membership.is_active = False
+            self.save()
+            log_user_change(by_domain=domain, for_domain=domain, couch_user=self,
+                            changed_by_user=changed_by, changed_via=USER_CHANGE_VIA_WEB,
+                            fields_changed={'is_active_in_domain': False})
+
+    def reactivate(self, domain, changed_by):
+        from corehq.apps.sso.models import IdentityProvider
+        if IdentityProvider.get_required_identity_provider(self.username):
+            return
+        membership = self.get_domain_membership(domain)
+        if not membership.is_active:
+            membership.is_active = True
+            self.save()
+            log_user_change(by_domain=domain, for_domain=domain, couch_user=self,
+                            changed_by_user=changed_by, changed_via=USER_CHANGE_VIA_WEB,
+                            fields_changed={'is_active_in_domain': True})
 
     def save(self, fire_signals=True, **params):
         super().save(fire_signals=fire_signals, **params)
