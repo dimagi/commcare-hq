@@ -15,7 +15,7 @@
         "@turf/turf": "6.5.0",
         "At.js": "millerdev/At.js#master",
         "Caret.js": "INTELOGIE/Caret.js#0.3.1",
-        "dompurify": "3.1.7",
+        "dompurify": "3.2.4",
         "ace-builds": "1.5.0",
         "alpinejs": "3.14.1",
         "babel-loader": "9.1.3",
