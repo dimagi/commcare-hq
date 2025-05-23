@@ -157,8 +157,18 @@
         <!-- /ko -->
         <!-- ko if: $parent.showCaseListOptimizations -->
         <td
-          data-bind="jqueryElement: $optimizationSelectElement, visible: supportsOptimizations"
-        ></td>
+          class="col-sm-2"
+          data-bind="css: {'has-error': showCaseListOptimizationsWarning}, visible: supportsOptimizations"
+        >
+          <div data-bind="jqueryElement: $optimizationSelectElement"></div>
+          <div data-bind="visible: showCaseListOptimizationsWarning">
+            <span
+              class="help-block"
+              data-bind="text: caseListOptimizationsWarningText"
+            >
+            </span>
+          </div>
+        </td>
         <td data-bind="hidden: supportsOptimizations">
           <select class="form-control" disabled>
             <option>{% trans "N/A" %}</option>
