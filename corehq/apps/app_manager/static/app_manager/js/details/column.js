@@ -249,6 +249,21 @@ export default function (col, screen) {
         // Invalid property name
         return (self.field.observableVal() || self.saveAttempted()) && !Utils.isValidPropertyName(self.field.observableVal());
     }, self);
+    self.caseListOptimizationsWarningText = gettext(
+      "Warning: Calculated property used is not compatible with caching and may result in stale data on case list properties"
+    );
+
+    function containsSpecialFunctions(str) {
+      // ToDo: Implement
+      return false;
+    }
+
+    self.showCaseListOptimizationsWarning = ko.computed(function () {
+        if (!self.useXpathExpression) {
+            return false;
+        }
+        return false;
+    }, self);
 
     // Add the graphing option if self is a graph so self we can set the value to graph
     let menuOptions = Utils.getFieldFormats();
