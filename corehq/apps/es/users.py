@@ -31,6 +31,7 @@ from .const import (
     HQ_USERS_SECONDARY_INDEX_NAME,
 )
 from .es_query import HQESQuery
+from .utils import get_user_domain_memberships
 from .index.settings import IndexSettingsKey
 
 
@@ -106,6 +107,10 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
         user_dict.pop('password', None)
+
+        memberships = get_user_domain_memberships(user_dict)
+        user_dict['user_domain_memberships'] = memberships
+
         if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
             user_data = user_obj.get_user_data(user_obj.domain)
@@ -138,7 +143,10 @@ def domain(domain, allow_enterprise=False):
 def domains(domains):
     return filters.OR(
         filters.term("domain.exact", domains),
-        filters.term("domain_memberships.domain.exact", domains)
+        queries.nested(
+            'user_domain_memberships',
+            filters.term("user_domain_memberships.domain.exact", domains)
+        )
     )
 
 
@@ -207,8 +215,11 @@ def location(location_id):
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
         filters.AND(
             web_users(),
-            filters.term('domain_memberships.assigned_location_ids', location_id)
-        ),
+            queries.nested(
+                'user_domain_memberships',
+                filters.term('user_domain_memberships.assigned_location_ids', location_id),
+            )
+        )
     )
 
 
@@ -217,14 +228,32 @@ def is_practice_user(practice_mode=True):
 
 
 def role_id(role_id):
-    return filters.OR(
-        filters.term("domain_membership.role_id", role_id),     # mobile users
-        filters.term("domain_memberships.role_id", role_id)     # web users
+    return queries.nested(
+        'user_domain_memberships',
+        filters.term('user_domain_memberships.role_id', role_id),
     )
 
 
-def is_active(active=True):
-    return filters.term("is_active", active)
+def is_active(active=True, domain=None):
+    user_active_filter = filters.term("is_active", active)
+    if not domain:
+        return user_active_filter
+    if active:
+        and_or = filters.AND
+        domain_membership_filter = filters.NOT(filters.term("user_domain_memberships.is_active", False))
+    else:
+        and_or = filters.OR
+        domain_membership_filter = filters.term("user_domain_memberships.is_active", False)
+    return and_or(
+        user_active_filter,
+        queries.nested(
+            'user_domain_memberships',
+            filters.AND(
+                filters.term('user_domain_memberships.domain.exact', domain),
+                domain_membership_filter
+            )
+        )
+    )
 
 
 def _user_data(key, filter_):
