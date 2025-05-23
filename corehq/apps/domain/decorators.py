@@ -107,6 +107,9 @@ def login_and_domain_required(view_func):
             return call_view()
 
         if couch_user.is_member_of(domain_obj, allow_enterprise=True):
+            if (couch_user.is_web_user() and not couch_user.is_superuser
+               and not couch_user.is_active_in_domain(domain_name)):
+                return HttpResponseForbidden(_("You have been deactivated from {domain}.").format(domain=domain))
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req,
                                         template='two_factor/core/bootstrap3/otp_required.html',

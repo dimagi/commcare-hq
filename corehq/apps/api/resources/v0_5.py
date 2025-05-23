@@ -398,6 +398,7 @@ class WebUserResource(v0_1.WebUserResource):
     profile = fields.CharField(null=True)
     user_data = fields.DictField()
     tableau_role = fields.CharField(null=True)
+    is_active_in_domain = fields.BooleanField()
     # Don't use in list for performance - it currently makes a request for each user in the response
     tableau_groups = fields.ListField(null=True, use_in='detail')
 
@@ -438,6 +439,9 @@ class WebUserResource(v0_1.WebUserResource):
         if profile_id:
             return CustomDataFieldsProfile.objects.get(id=profile_id).name
         return ''
+
+    def dehydrate_is_active_in_domain(self, bundle):
+        return bundle.obj.is_active_in_domain(bundle.request.domain)
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if bundle_or_obj is None:
