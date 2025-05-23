@@ -3,7 +3,7 @@ define('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
     'jquery',
     'underscore',
     'hqwebapp/js/bootstrap5/main',
-    'DOMPurify',
+    'dompurify',
 ], function (
     $,
     _,

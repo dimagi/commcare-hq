@@ -14,7 +14,7 @@ from corehq.apps.es import CaseSearchES
 BULK_OPERATION_CHUNK_SIZE = 1000
 MAX_RECORDED_LIMIT = 100000
 MAX_SESSION_CHANGES = 200
-APPLY_CHANGES_WAIT_TIME = 15  # seconds
+APPLY_CHANGES_WAIT_TIME = 3  # seconds
 
 
 class BulkEditSession(models.Model):
@@ -88,6 +88,10 @@ class BulkEditSession(models.Model):
     @classmethod
     def get_committed_sessions(cls, user, domain_name):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
+
+    @classmethod
+    def get_all_sessions(cls, user, domain_name):
+        return cls.objects.filter(user=user, domain=domain_name).order_by('-created_on')
 
     def get_resumed_session(self):
         new_session = self.new_case_session(

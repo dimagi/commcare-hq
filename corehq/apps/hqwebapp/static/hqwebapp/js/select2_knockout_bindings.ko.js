@@ -3,7 +3,7 @@ define("hqwebapp/js/select2_knockout_bindings.ko", [
     'jquery',
     'underscore',
     'knockout',
-    'DOMPurify',
+    'dompurify',
     'select2/dist/js/select2.full.min',
 ], function (
     $,

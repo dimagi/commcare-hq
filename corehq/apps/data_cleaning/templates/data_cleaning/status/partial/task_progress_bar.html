@@ -1,0 +1,15 @@
+{% load i18n %}
+
+<div
+  class="progress mb-2"
+  role="progressbar"
+  aria-label="{% trans "Task progress" %}"
+  aria-valuenow="{{ weighted_percent_complete }}"
+  aria-valuemin="0"
+  aria-valuemax="100"
+>
+  <div
+    class="progress-bar bg-success"
+    style="width: {{ weighted_percent_complete }}%"
+  ></div>
+</div>
