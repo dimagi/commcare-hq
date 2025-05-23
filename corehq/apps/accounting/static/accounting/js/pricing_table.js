@@ -72,10 +72,6 @@ var PricingTable = function (options) {
         return new PlanOption(opt, self);
     }));
 
-    self.oShowNext = ko.computed(function () {
-        return !self.oShowAnnualPricing();
-    });
-
     self.form = undefined;
     self.openMinimumSubscriptionModal = function (pricingTable, e) {
         self.form = $(e.currentTarget).closest("form");

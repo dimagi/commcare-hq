@@ -240,8 +240,6 @@
       class="form"
       id="select-plan-form"
       method="post"
-      data-bind="visible: oShowNext"
-      style="display: none;"
       action="{% url 'confirm_selected_plan' domain %}"
     >
       {% csrf_token %}
@@ -280,26 +278,6 @@
           </button>
         </div>
       {% endif %}
-    </form>
-
-    <form
-      action="{% url 'annual_plan_request_quote' domain %}"
-      data-bind="visible: !oShowNext()"
-    >
-      {% csrf_token %}
-      <input
-        type="hidden"
-        name="plan_edition"
-        data-bind="value: oSelectedPlan"
-      />
-      <div class="text-center plan-next">
-        <button
-          class="btn btn-primary btn-lg"
-          data-bind="click: contactSales"
-        >
-          {% trans 'Talk to Sales' %}
-        </button>
-      </div>
     </form>
   </section>
 {% endblock %}
