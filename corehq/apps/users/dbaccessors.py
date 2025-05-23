@@ -1,11 +1,13 @@
+import datetime
 from collections import namedtuple
+from dateutil.relativedelta import relativedelta
 
 from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.es.users import web_users, mobile_users
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserHistory, UserRole
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
@@ -253,9 +255,15 @@ def get_web_user_count(domain, include_inactive=True, exclude_deactivated_web=Fa
     ])
     if exclude_deactivated_web:
         web_users = get_all_web_users_by_domain(domain)
+        today = datetime.datetime.today()
+        start_date = today - relativedelta(months=1)
         for u in web_users:
             if not u.is_active_in_domain(domain):
-                total -= 1
+                user_history = UserHistory.objects.filter(
+                    by_domain=domain, for_domain=domain, user_type="WebUser", user_id=u.user_id,
+                    changed_at__lte=today, changed_at__gt=start_date, changes__has_key='is_active_in_domain')
+                if user_history is None:
+                    total -= 1
     return total
 
 
