@@ -1341,7 +1341,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
 
     @property
     def is_annual_plan(self):
-        return self.request.POST.get('is_annual_plan') == 'true'
+        return self.request.POST.get('is_annual_plan', '').lower() == 'true'
 
     @property
     @memoized
