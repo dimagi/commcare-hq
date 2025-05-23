@@ -83,6 +83,17 @@ class Settlement(NamedTuple):
     location_id: Optional[str]  # location_id is None for new locations
 
     def __str__(self):
+        """
+        Returns settlement_name, and location_id if set.
+
+        >>> print(Settlement('', '', '', '', 'West End', None))
+        West End
+        >>> print(Settlement('', '', '', '', 'West End', 'abc123'))
+        West End (abc123)
+
+        """
+        if self.location_id:
+            return f"{self.settlement_name} ({self.location_id})"
         return self.settlement_name
 
     def __bool__(self):
@@ -103,25 +114,25 @@ class Settlement(NamedTuple):
             self.location_id,
         ))
 
-    def get_location_or_none(self, domain: str) -> Optional[SQLLocation]:
+    def get_location_or_none(self) -> Optional[SQLLocation]:
         try:
-            return self.get_location(domain)
+            return self.get_location()
         except LocationNotFoundError:
             return None
         # Fail hard on MultipleLocationsFoundError
 
-    def get_location(self, domain: str) -> SQLLocation:
+    def get_location(self) -> SQLLocation:
         if self.location_id:
-            return get_location_by_id(domain, self.location_id)
+            return get_location_by_id(self.domain, self.location_id)
         state_code = self.get_state_code()
-        state = get_location_by_code(domain, state_code, COUNTRY_ID)
+        state = get_location_by_code(self.domain, state_code, COUNTRY_ID)
         lga_code = self.get_lga_code()
-        lga = get_location_by_code(domain, lga_code, state.location_id)
+        lga = get_location_by_code(self.domain, lga_code, state.location_id)
         ward_code = self.get_ward_code()
-        ward = get_location_by_code(domain, ward_code, lga.location_id)
+        ward = get_location_by_code(self.domain, ward_code, lga.location_id)
         settlement_code = self.get_settlement_code()
         return get_location_by_code(
-            domain,
+            self.domain,
             settlement_code,
             ward.location_id,
             self.get_site_code(),
@@ -211,11 +222,11 @@ class Command(BaseCommand):
             device_id=__name__
         ) as submit_case_block:
             for old_settlement, new_settlement in all_settlement_pairs:
-                if new_location := new_settlement.get_location_or_none(domain):
+                if new_location := new_settlement.get_location_or_none():
                     if new_location.location_id != old_settlement.location_id:
-                        for user in iter_users(domain, old_settlement.location_id):
+                        for user in iter_users(old_settlement):
                             assign_location(user, new_location)
-                    cases = iter_cases(domain, old_settlement.location_id)
+                    cases = iter_cases(old_settlement)
                     for case_block in move_cases_caseblocks(
                         cases,
                         new_location,
@@ -224,12 +235,11 @@ class Command(BaseCommand):
                     ):
                         submit_case_block.send(case_block)
                     if new_location.location_id != old_settlement.location_id:
-                        delete_settlement(domain, old_settlement.location_id)
+                        delete_settlement(old_settlement)
                 else:
-                    move_settlement(domain, old_settlement, new_settlement)
-                    cases = iter_cases(domain, old_settlement.location_id)
+                    move_settlement(old_settlement, new_settlement)
+                    cases = iter_cases(old_settlement)
                     for case_block in update_cases_caseblocks(
-                        domain,
                         cases,
                         old_settlement,
                         new_settlement,
@@ -349,32 +359,37 @@ def select_location(
     )
 
 
-def delete_settlement(domain: str, location_id: str) -> None:
+def delete_settlement(settlement: Settlement) -> None:
+    assert settlement.location_id
     if verbose:
-        print(f'Deleting settlement location {location_id}')
-    settlement_loc = SQLLocation.objects.get(domain=domain, location_id=location_id)
-    ward_loc = get_location_by_id(domain, settlement_loc.parent_location_id)
+        print(f'Deleting settlement {settlement}')
+    location = SQLLocation.objects.get(
+        domain=settlement.domain,
+        location_id=settlement.location_id,
+    )
+    ward = get_location_by_id(settlement.domain, location.parent_location_id)
     if not dry_run:
-        settlement_loc.delete()
-        if not ward_loc.children.exists():
+        location.delete()
+        if not ward.children.exists():
             if verbose:
-                print(f'Deleting ward location {ward_loc.location_id}')
-            ward_loc.delete()
+                print(f'Deleting ward {loc_str(ward)}')
+            ward.delete()
 
 
-def iter_users(domain: str, location_id: str) -> Iterator[CommCareUser]:
+def iter_users(settlement: Settlement) -> Iterator[CommCareUser]:
     """
     Yields CommCareUser instances for the given location ID.
     """
+    assert settlement.location_id
     iter_user_ids = (
         UserES()
         .mobile_users()
-        .domain(domain)
-        .location(location_id)
+        .domain(settlement.domain)
+        .location(settlement.location_id)
         .scroll_ids()
     )
     for user_id in iter_user_ids:
-        yield CommCareUser.get_by_user_id(user_id, domain)
+        yield CommCareUser.get_by_user_id(user_id, settlement.domain)
 
 
 def assign_location(user: CommCareUser, location: SQLLocation) -> None:
@@ -387,14 +402,13 @@ def assign_location(user: CommCareUser, location: SQLLocation) -> None:
 
 
 def move_settlement(
-    domain: str,
     old_settlement: Settlement,
     new_settlement: Settlement,
 ) -> None:
     """
     Rename a settlement and/or move it to a new parent location.
     """
-    location = old_settlement.get_location(domain)
+    location = old_settlement.get_location()
     if new_settlement.settlement_name != old_settlement.settlement_name:
         # Rename settlement
         if verbose:
@@ -410,11 +424,23 @@ def move_settlement(
             print(f'Moving {new_settlement} to {new_settlement.lga_name}, '
                   f'{new_settlement.ward_name}')
         state_code = new_settlement.get_state_code()
-        state = get_location_by_code(domain, state_code, COUNTRY_ID)
+        state = get_location_by_code(
+            new_settlement.domain,
+            state_code,
+            COUNTRY_ID,
+        )
         lga_code = new_settlement.get_lga_code()
-        lga = get_location_by_code(domain, lga_code, state.location_id)
+        lga = get_location_by_code(
+            new_settlement.domain,
+            lga_code,
+            state.location_id,
+        )
         ward_code = new_settlement.get_ward_code()
-        ward = get_location_by_code(domain, ward_code, lga.location_id)
+        ward = get_location_by_code(
+            new_settlement.domain,
+            ward_code,
+            lga.location_id,
+        )
         location.parent = ward
 
     location.site_code = new_settlement.get_site_code()
@@ -423,19 +449,20 @@ def move_settlement(
         del location_cache[old_settlement.location_id]
 
 
-def iter_cases(domain: str, location_id: str) -> Iterator[CommCareCase]:
+def iter_cases(settlement: Settlement) -> Iterator[CommCareCase]:
     """
-    Yields cases owned by location_id
+    Yields cases owned by settlement
     """
+    assert settlement.location_id
     iter_household_case_ids = (
         CaseES()
-        .domain(domain)
+        .domain(settlement.domain)
         .case_type('household')
-        .owner(location_id)
+        .owner(settlement.location_id)
         .scroll_ids()
     )
     for case_id in iter_household_case_ids:
-        household = CommCareCase.objects.get_case(case_id, domain)
+        household = CommCareCase.objects.get_case(case_id, settlement.domain)
         yield household
         for household_member in household.get_subcases():
             yield household_member
@@ -470,7 +497,6 @@ def move_cases_caseblocks(
 
 
 def update_cases_caseblocks(
-    domain: str,
     cases: Iterable[CommCareCase],
     old_settlement: Settlement,
     new_settlement: Settlement,
@@ -478,7 +504,7 @@ def update_cases_caseblocks(
     """
     Yields CaseBlocks as text to update location names in cases.
     """
-    location = old_settlement.get_location(domain)
+    location = old_settlement.get_location()
     for case in cases:
         case_updates = get_case_updates(
             case,

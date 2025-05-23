@@ -167,7 +167,7 @@ class TestSettlement(LocationHierarchyPerTest):
                 location_id=None,
             )
 
-            location = settlement.get_location(self.domain)
+            location = settlement.get_location()
             assert location == self.settlement
 
     def test_get_location_settlement_not_found(self):
@@ -189,7 +189,7 @@ class TestSettlement(LocationHierarchyPerTest):
                 "^No location found for 'West end' under Edinburgh "
                 r"\([a-f0-9]{32}\)$"
             )):
-                settlement.get_location(self.domain)
+                settlement.get_location()
 
 
 def test_doctests():
