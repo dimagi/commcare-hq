@@ -12,6 +12,7 @@ var PricingTable = function (options) {
         'editions',
         'planOptions',
         'currentEdition',
+        'currentIsAnnualPlan',
         'isRenewal',
         'startDateAfterMinimum',
         'isSubscriptionBelowMin',
@@ -28,6 +29,7 @@ var PricingTable = function (options) {
     self.oStartDateAfterMinimumSubscription = ko.observable(options.startDateAfterMinimum);
     self.oCurrentPrice = ko.observable(options.currentPrice);
     self.oIsPriceDiscounted = ko.observable(options.isPriceDiscounted);
+    self.currentIsAnnualPlan = options.currentIsAnnualPlan;
     self.editions = options.editions;
     self.isRenewal = options.isRenewal;
     self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
@@ -35,11 +37,12 @@ var PricingTable = function (options) {
 
     self.oSelectedPlan = ko.observable(options.currentEdition);
 
-    self.oShowAnnualPricing = ko.observable(false);
+    self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
     self.oIsSubmitDisabled = ko.computed(function () {
-        var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription(),
-            isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
+        var isSamePaySchedule = self.currentIsAnnualPlan === self.oShowAnnualPricing();
+        var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription() && isSamePaySchedule;
+        var isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
         return !self.oSelectedPlan() || isNextPlan || isCurrentPlan;
     });
 
@@ -273,6 +276,7 @@ $(function () {
         editions: initialPageData.get('editions'),
         planOptions: initialPageData.get('planOptions'),
         currentEdition: initialPageData.get('currentEdition'),
+        currentIsAnnualPlan: initialPageData.get('currentIsAnnualPlan'),
         isRenewal: initialPageData.get('is_renewal'),
         startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
         isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),
