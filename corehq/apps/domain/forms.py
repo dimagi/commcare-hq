@@ -1869,6 +1869,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
+    is_annual_plan = forms.CharField(
+        widget=forms.HiddenInput,
+    )
 
     def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None,
                  *args, **kwargs):
@@ -1878,12 +1881,14 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                                                          *args, **kwargs)
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
+        self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'plan_edition',
+            'is_annual_plan',
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -1933,7 +1938,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     and self.current_subscription.is_below_minimum_subscription
                 ):
                     new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
-                    new_sub_date_end = new_sub_date_start + relativedelta(years=1) if self.is_annual_plan else None
+                    new_sub_date_end = (new_sub_date_start + relativedelta(years=1)
+                                        if self.selected_annual_plan else None)
                     self.current_subscription.update_subscription(
                         date_start=self.current_subscription.date_start,
                         date_end=new_sub_date_start
@@ -1952,7 +1958,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     )
                 else:
                     new_sub_date_start = datetime.date.today()
-                    new_sub_date_end = new_sub_date_start + relativedelta(years=1) if self.is_annual_plan else None
+                    new_sub_date_end = (new_sub_date_start + relativedelta(years=1)
+                                        if self.selected_annual_plan else None)
                     self.current_subscription.change_plan(
                         self.plan_version,
                         date_end=new_sub_date_end,
@@ -1963,7 +1970,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         do_not_invoice=False,
                         no_invoice_reason='',
                     )
-                if self.plan_version.plan.is_annual_plan:
+                if self.selected_annual_plan:
                     self.send_prepayment_invoice(new_sub_date_start, new_sub_date_end)
                 if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
                     self_signup.complete_workflow(self.plan_version.plan.edition)
@@ -1997,7 +2004,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         )
 
     @property
-    def is_annual_plan(self):
+    def selected_annual_plan(self):
         return self.plan_version.plan.is_annual_plan
 
     def is_same_edition(self):
