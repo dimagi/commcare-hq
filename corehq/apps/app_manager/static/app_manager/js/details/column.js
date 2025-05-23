@@ -260,13 +260,46 @@ export default function (col, screen) {
     );
 
     function containsSpecialFunctions(str) {
-      // ToDo: Implement
+      // Match for following
+      // 1. Xpath contains any of the following methods - today(), now(),  here(), random(), uuid(), sleep(), depend()
+      // 2. If Xpath contains any instance() expressions which doesn’t start with instance('casedb')
+      const patterns = [
+        /today\(\)/,
+        /now\(\)/,
+        /here\(\)/,
+        /random\(\)/,
+        /uuid\(\)/,
+        /sleep\(\)/,
+        /depend\(\)/,
+      ];
+      if (patterns.some(pattern => pattern.test(str))) {
+        return true;
+      }
+
+      // Regex to match all instance() calls (including nested)
+      const instanceRegex = /instance\s*\(([^)]*)\)/g;
+      let match;
+      while ((match = instanceRegex.exec(str)) !== null) {
+        // Extract arguments, handle spaces and quotes
+        const args = match[1].split(',').map(s => s.trim().replace(/^['"]|['"]$/g, ''));
+        // If first argument is not 'casedb', return true
+        if (args[0] !== 'casedb') {
+          return true;
+        }
+      }
+
       return false;
     }
 
     self.showCaseListOptimizationsWarning = ko.computed(function () {
         if (!self.useXpathExpression) {
             return false;
+        }
+        if (
+            self.optimizationSelectElement &&
+            _.contains(['cache', 'cache_and_lazy_load'], self.optimizationSelectElement.observableVal())
+        ) {
+            return containsSpecialFunctions(self.field.observableVal());
         }
         return false;
     }, self);
