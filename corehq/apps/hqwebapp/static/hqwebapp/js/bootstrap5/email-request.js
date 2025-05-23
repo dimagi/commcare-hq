@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/bootstrap5/email-request', [
+define('hqwebapp/js/bootstrap5/email-request', [
     "jquery",
     "knockout",
     "bootstrap5",

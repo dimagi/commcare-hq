@@ -1,7 +1,7 @@
 /*
     To use, include this file on a page that also includes hqwebapp/downgrade_modal.html
 */
-hqDefine("hqwebapp/js/bootstrap3/prepaid_modal", [
+define("hqwebapp/js/bootstrap3/prepaid_modal", [
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
     'jquery',

@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/atwho', [
+define('hqwebapp/js/atwho', [
     "knockout",
     "underscore",
     "Caret.js/dist/jquery.caret",

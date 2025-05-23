@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/hq_extensions.jquery", ["jquery"], function ($) {
+define("hqwebapp/js/hq_extensions.jquery", ["jquery"], function ($) {
     $.extend({
         postGo: function (url, params) {
             params.csrfmiddlewaretoken = $("#csrfTokenContainer").val();
@@ -36,6 +36,4 @@ hqDefine("hqwebapp/js/hq_extensions.jquery", ["jquery"], function ($) {
             return params;
         },
     });
-
-    return 1;   // Flag the module as loaded by hqModules.js
 });

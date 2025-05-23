@@ -17,6 +17,9 @@ class Command(BaseCommand):
         with open(MANIFEST_FILE, 'r+') as f:
             manifest = json.loads(f.read())
 
+        if not os.path.exists(JS_CACHE_DIR):
+            return
+
         for filename in os.listdir(JS_CACHE_DIR):
             content_hash = filename.split('.')[0]
             if not self._in_manifest(content_hash, manifest):

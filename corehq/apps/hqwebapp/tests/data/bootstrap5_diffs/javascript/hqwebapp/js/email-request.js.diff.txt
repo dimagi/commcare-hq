@@ -1,8 +1,8 @@
 --- 
 +++ 
 @@ -1,13 +1,14 @@
--hqDefine('hqwebapp/js/bootstrap3/email-request', [
-+hqDefine('hqwebapp/js/bootstrap5/email-request', [
+-define('hqwebapp/js/bootstrap3/email-request', [
++define('hqwebapp/js/bootstrap5/email-request', [
      "jquery",
      "knockout",
 -    "hqwebapp/js/bootstrap3/hq.helpers",

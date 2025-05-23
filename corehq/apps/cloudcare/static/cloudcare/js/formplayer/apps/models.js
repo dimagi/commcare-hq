@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/formplayer/apps/models", [
+define("cloudcare/js/formplayer/apps/models", [
     'backbone',
 ], function (
     Backbone,

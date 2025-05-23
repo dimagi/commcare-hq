@@ -1,6 +1,6 @@
 var _kmq = window._kmq = _kmq || [];
 
-hqDefine('analytix/js/kissmetrix', [
+define('analytix/js/kissmetrix', [
     'underscore',
     'analytix/js/initial',
     'analytix/js/logging',

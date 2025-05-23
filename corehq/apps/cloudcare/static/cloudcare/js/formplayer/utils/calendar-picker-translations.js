@@ -1,4 +1,4 @@
-hqDefine('cloudcare/js/formplayer/utils/calendar-picker-translations', [
+define('cloudcare/js/formplayer/utils/calendar-picker-translations', [
     'jquery',
     'calendars/dist/js/jquery.plugin',
     'calendars/dist/js/jquery.calendars',
