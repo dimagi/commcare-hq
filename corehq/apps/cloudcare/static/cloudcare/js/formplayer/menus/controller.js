@@ -2,7 +2,7 @@ define("cloudcare/js/formplayer/menus/controller", [
     'jquery',
     'underscore',
     'backbone',
-    'DOMPurify',
+    'dompurify',
     'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',

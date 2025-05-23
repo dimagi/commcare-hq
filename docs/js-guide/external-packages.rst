@@ -100,14 +100,14 @@ In ESM modules:
 
 ::
 
-    import DOMPurify from "DOMPurify";
+    import DOMPurify from "dompurify";
 
 In modules using AMD style:
 
 ::
 
     define("my_app/js/my_module", [
-        "DOMPurify",
+        "dompurify",
     ], function (
         DOMPurify,
     ) {

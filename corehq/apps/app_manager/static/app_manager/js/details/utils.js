@@ -5,7 +5,7 @@
  * Depends on `add_ons` being available in initial page data
  */
 import _ from "underscore";
-import DOMPurify from "DOMPurify";
+import DOMPurify from "dompurify";
 import toggles from "hqwebapp/js/toggles";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "select2/dist/js/select2.full.min";

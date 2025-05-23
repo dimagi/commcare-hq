@@ -8,7 +8,7 @@
      'underscore',
 -    'hqwebapp/js/bootstrap3/main',
 +    'hqwebapp/js/bootstrap5/main',
-     'DOMPurify',
+     'dompurify',
  ], function (
      $,
 @@ -20,7 +20,7 @@

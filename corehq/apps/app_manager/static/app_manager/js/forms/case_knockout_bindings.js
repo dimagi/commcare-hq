@@ -2,7 +2,7 @@ define("app_manager/js/forms/case_knockout_bindings", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify',
+    'dompurify',
     'hqwebapp/js/atwho',    // autocompleteAtwho
     'select2/dist/js/select2.full.min',
 ], function (
