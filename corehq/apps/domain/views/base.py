@@ -70,7 +70,7 @@ def select(request, do_not_redirect=False, next_view=None):
             ):
                 redirect_last_domain = True
                 if (
-                    request.couch_user.is_web_user()
+                    request.couch_user.is_web_user() and not request.couch_user.is_superuser
                     and not request.couch_user.is_active_in_domain(last_visited_domain)
                 ):
                     redirect_last_domain = False
