@@ -11,7 +11,10 @@ from corehq.apps.es.client import (
     create_document_adapter,
     manager,
 )
-from corehq.apps.es.const import HQ_APPS_INDEX_CANONICAL_NAME
+from corehq.apps.es.const import (
+    HQ_APPS_INDEX_CANONICAL_NAME,
+    HQ_APPS_INDEX_NAME,
+)
 from corehq.apps.es.exceptions import (
     IndexAlreadySwappedException,
     IndexMultiplexedException,
@@ -174,7 +177,7 @@ class TestESSyncUtil(SimpleTestCase):
     )
     @patch(
         'corehq.apps.es.management.commands.elastic_sync_multiplexed.es_consts.HQ_APPS_INDEX_NAME',
-        'test_apps-20230524'
+        f'test_{HQ_APPS_INDEX_NAME}'
     )
     @patch('builtins.input', return_value='N')
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname')
@@ -196,7 +199,7 @@ class TestESSyncUtil(SimpleTestCase):
     )
     @patch(
         'corehq.apps.es.management.commands.elastic_sync_multiplexed.es_consts.HQ_APPS_INDEX_NAME',
-        'test_apps-20230524'
+        f'test_{HQ_APPS_INDEX_NAME}'
     )
     @patch('builtins.input', return_value=HQ_APPS_INDEX_CANONICAL_NAME)
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname')
