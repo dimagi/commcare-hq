@@ -224,8 +224,8 @@ class Command(BaseCommand):
             for old_settlement, new_settlement in all_settlement_pairs:
                 if new_location := new_settlement.get_location_or_none():
                     if new_location.location_id != old_settlement.location_id:
-                        for user in iter_users(old_settlement):
-                            assign_location(user, new_location)
+                        for user_id in iter_user_ids(old_settlement):
+                            assign_location(user_id, new_location)
                     cases = iter_cases(old_settlement)
                     for case_block in move_cases_caseblocks(
                         cases,
@@ -376,23 +376,22 @@ def delete_settlement(settlement: Settlement) -> None:
             ward.delete()
 
 
-def iter_users(settlement: Settlement) -> Iterator[CommCareUser]:
+def iter_user_ids(settlement: Settlement) -> Iterator[str]:
     """
     Yields CommCareUser instances for the given location ID.
     """
     assert settlement.location_id
-    iter_user_ids = (
+    return (
         UserES()
         .mobile_users()
         .domain(settlement.domain)
         .location(settlement.location_id)
         .scroll_ids()
     )
-    for user_id in iter_user_ids:
-        yield CommCareUser.get_by_user_id(user_id, settlement.domain)
 
 
-def assign_location(user: CommCareUser, location: SQLLocation) -> None:
+def assign_location(user_id: str, location: SQLLocation) -> None:
+    user = CommCareUser.get_by_user_id(user_id, location.domain)
     if verbose:
         print(f'Assigning {user.raw_username} to {loc_str(location)}')
     if not dry_run:
