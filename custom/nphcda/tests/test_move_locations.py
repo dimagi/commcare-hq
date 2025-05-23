@@ -7,7 +7,6 @@ from unittest.mock import call, patch
 
 import pytest
 
-from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
 from corehq.apps.locations.tests.util import LocationHierarchyPerTest
 from corehq.apps.users.management.commands.nphcda_move_locations import (
     LocationError,
@@ -17,6 +16,8 @@ from corehq.apps.users.management.commands.nphcda_move_locations import (
     submit_case_block_coro,
 )
 
+DOMAIN = 'test-domain'
+
 
 def test_load_csv():
     csv_content = cleandoc("""
@@ -25,10 +26,11 @@ def test_load_csv():
         ,,,,,,,,,,,,,,,,,,,,
         """) + '\n'
     with get_temp_filename(csv_content) as csv_filename:
-        location_pairs = list(load_csv(csv_filename))
+        location_pairs = list(load_csv(DOMAIN, csv_filename))
     assert location_pairs == [
         SettlementPair(
             old_settlement=Settlement(
+                domain=DOMAIN,
                 state_name='Scotland',
                 lga_name='Midlothian',
                 ward_name='Edinburgh',
@@ -36,6 +38,7 @@ def test_load_csv():
                 location_id='abc123',
             ),
             new_settlement=Settlement(
+                domain=DOMAIN,
                 state_name='Scotland',
                 lga_name='Midlothian',
                 ward_name='Edinburgh',
@@ -72,7 +75,7 @@ def test_submit_case_block_coro():
 
 
 class TestSettlement(LocationHierarchyPerTest):
-    domain = 'test-domain'
+    domain = DOMAIN
     location_type_names = ['country', 'state', 'lga', 'ward', 'settlement']
     location_structure = [
         ('United Kingdom', [
@@ -96,6 +99,7 @@ class TestSettlement(LocationHierarchyPerTest):
 
     def test_get_state_code(self):
         settlement = Settlement(
+            domain=DOMAIN,
             state_name='Scotland',
             lga_name='Midlothian',
             ward_name='Edinburgh',
@@ -106,6 +110,7 @@ class TestSettlement(LocationHierarchyPerTest):
 
     def test_get_lga_code(self):
         settlement = Settlement(
+            domain=DOMAIN,
             state_name='Scotland',
             lga_name='Midlothian',
             ward_name='Edinburgh',
@@ -116,6 +121,7 @@ class TestSettlement(LocationHierarchyPerTest):
 
     def test_get_ward_code(self):
         settlement = Settlement(
+            domain=DOMAIN,
             state_name='Scotland',
             lga_name='Midlothian',
             ward_name='Edinburgh',
@@ -126,6 +132,7 @@ class TestSettlement(LocationHierarchyPerTest):
 
     def test_get_settlement_code(self):
         settlement = Settlement(
+            domain=DOMAIN,
             state_name='Scotland',
             lga_name='Midlothian',
             ward_name='Edinburgh',
@@ -136,6 +143,7 @@ class TestSettlement(LocationHierarchyPerTest):
 
     def test_get_site_code(self):
         settlement = Settlement(
+            domain=DOMAIN,
             state_name='Scotland',
             lga_name='Midlothian',
             ward_name='Edinburgh',
@@ -151,6 +159,7 @@ class TestSettlement(LocationHierarchyPerTest):
             self.country.location_id,
         ):
             settlement = Settlement(
+                domain=DOMAIN,
                 state_name='Scotland',
                 lga_name='Midlothian',
                 ward_name='Edinburgh',
@@ -168,6 +177,7 @@ class TestSettlement(LocationHierarchyPerTest):
             self.country.location_id,
         ):
             settlement = Settlement(
+                domain=DOMAIN,
                 state_name='Scotland',
                 lga_name='Midlothian',
                 ward_name='Edinburgh',

@@ -75,6 +75,7 @@ class MultipleLocationsFoundError(LocationError):
 
 
 class Settlement(NamedTuple):
+    domain: str
     state_name: str
     lga_name: str
     ward_name: str
@@ -83,6 +84,24 @@ class Settlement(NamedTuple):
 
     def __str__(self):
         return self.settlement_name
+
+    def __bool__(self):
+        """
+        True if anything but domain is set.
+
+        >>> bool(Settlement('test-domain', '', '', '', '', None))
+        False
+        >>> bool(Settlement('test-domain', '', '', '', '', 'abc123'))
+        True
+
+        """
+        return any((
+            self.state_name,
+            self.lga_name,
+            self.ward_name,
+            self.settlement_name,
+            self.location_id,
+        ))
 
     def get_location_or_none(self, domain: str) -> Optional[SQLLocation]:
         try:
@@ -130,6 +149,7 @@ class Settlement(NamedTuple):
         Generate a site code for a settlement.
 
         >>> settlement = Settlement(
+        ...    domain='test-domain',
         ...    state_name='Sokoto',
         ...    lga_name='Bodinga',
         ...    ward_name='Bagarawa',
@@ -176,9 +196,9 @@ class Command(BaseCommand):
         ):
             raise CommandError('Please specify only one input file')
         elif options['input_csv']:
-            all_settlement_pairs = load_csv(options['input_csv'])
+            all_settlement_pairs = load_csv(domain, options['input_csv'])
         elif options['input_xls']:
-            all_settlement_pairs = load_xls(options['input_xls'])
+            all_settlement_pairs = load_xls(domain, options['input_xls'])
         else:
             raise CommandError('Must specify either input-csv or input-xls')
 
@@ -230,27 +250,28 @@ def only_one(*args):
     return sum(1 for arg in args if arg) == 1
 
 
-def load_csv(csv_filename: str) -> Iterator[SettlementPair]:
+def load_csv(domain: str, csv_filename: str) -> Iterator[SettlementPair]:
     """
     Yields UserChanges instances from the given CSV file.
     """
     sheet = CSVSheet(csv_filename)
-    return load_sheet(sheet)
+    return load_sheet(domain, sheet)
 
 
-def load_xls(xls_filename: str) -> Iterator[SettlementPair]:
+def load_xls(domain: str, xls_filename: str) -> Iterator[SettlementPair]:
     """
     Yields UserChanges instances from the given Excel file (XLS format).
     """
     book = xlrd.open_workbook(xls_filename)
     sheet = book.sheet_by_index(0)
-    return load_sheet(sheet)
+    return load_sheet(domain, sheet)
 
 
-def load_sheet(sheet: SheetProto) -> Iterator[SettlementPair]:
+def load_sheet(domain: str, sheet: SheetProto) -> Iterator[SettlementPair]:
     for row in range(1, sheet.nrows):  # Skip the first row
         # Skip the first column (Username): Unused
         old_settlement = Settlement(
+            domain=domain,
             state_name=sheet.cell_value(rowx=row, colx=1),
             lga_name=sheet.cell_value(rowx=row, colx=2),
             ward_name=sheet.cell_value(rowx=row, colx=3),
@@ -258,13 +279,14 @@ def load_sheet(sheet: SheetProto) -> Iterator[SettlementPair]:
             location_id=sheet.cell_value(rowx=row, colx=5),
         )
         new_settlement = Settlement(
+            domain=domain,
             state_name=sheet.cell_value(rowx=row, colx=6),
             lga_name=sheet.cell_value(rowx=row, colx=7),
             ward_name=sheet.cell_value(rowx=row, colx=8),
             settlement_name=sheet.cell_value(rowx=row, colx=9),
             location_id=sheet.cell_value(rowx=row, colx=10) or None,
         )
-        if any(old_settlement + new_settlement):  # Row is not blank
+        if old_settlement or new_settlement:  # Row is not blank
             yield SettlementPair(old_settlement, new_settlement)
 
 
