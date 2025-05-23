@@ -1,5 +1,5 @@
 
-hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list', [
+define('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list', [
     'jquery',
     'underscore',
     'hqwebapp/js/bootstrap5/main',

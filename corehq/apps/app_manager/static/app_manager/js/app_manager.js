@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/app_manager', [
+define('app_manager/js/app_manager', [
     'jquery',
     'knockout',
     'underscore',

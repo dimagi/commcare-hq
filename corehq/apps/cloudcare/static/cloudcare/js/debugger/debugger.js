@@ -1,4 +1,4 @@
-hqDefine('cloudcare/js/debugger/debugger', [
+define('cloudcare/js/debugger/debugger', [
     'jquery',
     'knockout',
     'underscore',
