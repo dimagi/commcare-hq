@@ -113,6 +113,12 @@ export default function (col, screen) {
             optimizationOptions,
         ).val(self.original.optimization || "");
         self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
+        // Make it possible to observe changes to self.optimizationSelectElement
+        // same as done for self.field
+        self.optimizationSelectElement.observableVal = ko.observable(self.optimizationSelectElement.val());
+        self.optimizationSelectElement.on("change", function () {
+            self.optimizationSelectElement.observableVal(self.optimizationSelectElement.val());
+        });
     }
     self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
     self.tileWidthOptions = ko.computed(function () {
