@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from lxml import etree
+from lxml.builder import E
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.tests.utils import call_fixture_generator
@@ -54,9 +55,11 @@ class TestCaseSearchFixtures(TestCase):
     def render(self, template_string):
         return _get_template_renderer(self.restore_user).render(template_string)
 
-    def generate_fixture(self):
-        res = call_fixture_generator(case_search_fixture_generator, self.restore_user, self.domain_obj)
-        return etree.tostring(next(res), encoding='utf-8')
+    def generate_fixtures(self):
+        res = E.TestRestore(
+            *call_fixture_generator(case_search_fixture_generator, self.restore_user, self.domain_obj)
+        )
+        return etree.tostring(res, encoding='utf-8')
 
     def test_no_interpolation(self):
         res = self.render("dob < '2020-01-01'")
@@ -88,13 +91,15 @@ class TestCaseSearchFixtures(TestCase):
         ]
 
         expected = """
-        <fixture id="case-search-fixture">
-           <values>
-               <value name="pre_pandemic_births">42</value>
-               <value name="owned_by_user">42</value>
-           </values>
-        </fixture>"""
-        assert_xml_equal(expected, self.generate_fixture())
+        <TestRestore>
+            <fixture id="case-search-fixture:pre_pandemic_births">
+                <value>42</value>
+            </fixture>
+            <fixture id="case-search-fixture:owned_by_user">
+                <value>42</value>
+            </fixture>
+        </TestRestore>"""
+        assert_xml_equal(expected, self.generate_fixtures())
 
     @patch('corehq.apps.case_search.fixtures._get_indicators')
     def test_full_query(self, get_indicators):
@@ -107,7 +112,8 @@ class TestCaseSearchFixtures(TestCase):
         ]
         get_indicators.return_value = [(name, csql_template) for name, csql_template, _ in indicators]
 
-        res = self.generate_fixture()
+        res = self.generate_fixtures()
         for name, _, expected in indicators:
-            expected_xml = f'<partial><value name="{name}">{expected}</value></partial>'
-            assert_xml_partial_equal(expected_xml, res, f'./values/value[@name="{name}"]')
+            expected_xml = f'<partial><value>{expected}</value></partial>'
+            assert_xml_partial_equal(
+                expected_xml, res, f'./fixture[@id="case-search-fixture:{name}"]/value')

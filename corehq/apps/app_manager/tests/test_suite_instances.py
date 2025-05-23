@@ -15,8 +15,10 @@ from corehq.apps.app_manager.models import (
     ShadowModule,
 )
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    get_all_instances_referenced_in_xpaths,
     get_instance_names,
 )
+from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -298,3 +300,14 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
 ], SuiteInstanceTests)
 def test_get_instance_names(self, xpath, expected_names):
     self.assertEqual(get_instance_names(xpath), expected_names)
+
+
+@generate_cases([
+    ("instance('case-search-fixture:myindicator')/value",
+     Instance(id="case-search-fixture:myindicator", src="jr://fixture/case-search-fixture:myindicator")),
+], SuiteInstanceTests)
+def test_instance_factories(self, xpath, expected_instance):
+    instances, _ = get_all_instances_referenced_in_xpaths(self.factory.app, [xpath])
+    instance, = instances
+    self.assertEqual(instance.id, expected_instance.id)
+    self.assertEqual(instance.src, expected_instance.src)

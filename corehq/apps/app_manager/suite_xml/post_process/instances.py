@@ -336,7 +336,6 @@ INSTANCE_KWARGS_BY_ID = {
     'casedb': {'id': 'casedb', 'src': 'jr://instance/casedb'},
     'commcaresession': {'id': 'commcaresession', 'src': 'jr://instance/session'},
     'registry': {'id': 'registry', 'src': 'jr://instance/remote/registry'},
-    'case-search-fixture': {'id': 'case-search-fixture', 'src': 'jr://fixture/case-search-fixture'},
 }
 
 
@@ -409,6 +408,11 @@ def location_fixture_instances(app, instance_name):
             and not LocationFixtureConfiguration.for_domain(app.domain).sync_flat_fixture):
         return Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name))
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('case-search-fixture')
+def case_search_fixture_instances(app, instance_name):
+    return Instance(id=instance_name, src=f'jr://fixture/{instance_name}')
 
 
 def get_all_instances_referenced_in_xpaths(app, xpaths):
