@@ -67,33 +67,47 @@ class ResumeOrRestartCaseSessionForm(forms.Form):
     def __init__(self, domain, container_id, cancel_url, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.allowed_case_types = sorted(get_case_types_for_domain(domain))
+
+        alpine_data_model = {
+            "nextStep": self.data.get('next_step', 'resume'),
+        }
+        start_new_session = _("Start New Session")
+        resume_session = _("Resume Session")
+
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
-            crispy.HTML(render_to_string(
-                'data_cleaning/forms/partials/active_session_exists.html', {}
-            )),
-            crispy.Field(
-                'case_type',
-                readonly="",
-                css_class="form-control-plaintext",
-            ),
-            'next_step',
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Start Session"),
-                    type="submit",
-                    css_class="btn btn-primary",
+            crispy.Div(
+                crispy.HTML(render_to_string(
+                    'data_cleaning/forms/partials/active_session_exists.html', {}
+                )),
+                crispy.Field(
+                    'case_type',
+                    readonly="",
+                    css_class="form-control-plaintext",
                 ),
-                twbscrispy.StrictButton(
-                    _("Go Back"),
-                    type="button",
-                    css_class="btn btn-outline-primary",
-                    hx_get=cancel_url,
-                    hx_target=f"#{container_id}",
-                    hx_disabled_elt='this',
+                crispy.Field(
+                    'next_step',
+                    x_model="nextStep",
                 ),
-                css_class="mb-0"
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        start_new_session,
+                        type="submit",
+                        css_class="btn btn-primary",
+                        x_text=f"(nextStep === 'new') ? '{start_new_session}' : '{resume_session}'",
+                    ),
+                    twbscrispy.StrictButton(
+                        _("Go Back"),
+                        type="button",
+                        css_class="btn btn-outline-primary",
+                        hx_get=cancel_url,
+                        hx_target=f"#{container_id}",
+                        hx_disabled_elt='this',
+                    ),
+                    css_class="mb-0"
+                ),
+                x_data=json.dumps(alpine_data_model),
             ),
         )
 

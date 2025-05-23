@@ -1,0 +1,1611 @@
+{
+  "comment": "An app used for generating fake data for the data cleaning tool themed around plant care.",
+  "name": "Plant Care (Data Cleaning Test)",
+  "langs": [
+    "en"
+  ],
+  "modules": [
+    {
+      "name": {
+        "en": "Plant Health"
+      },
+      "forms": [
+        {
+          "name": {
+            "en": "Add Plant"
+          },
+          "form_type": "module_form",
+          "requires": "none",
+          "actions": {
+            "open_case": {
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "name_update": {
+                "question_path": "/data/plant_name",
+                "update_mode": "always",
+                "doc_type": "ConditionalCaseUpdate"
+              },
+              "external_id": null,
+              "doc_type": "OpenCaseAction"
+            },
+            "update_case": {
+              "update": {
+                "nickname": {
+                  "question_path": "/data/nickname",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "description": {
+                  "question_path": "/data/description",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "height": {
+                  "question_path": "/data/height_cm",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "number_of_leaves": {
+                  "question_path": "/data/number_of_leaves",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "last_watered_on": {
+                  "question_path": "/data/last_watered_on",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "last_repotted": {
+                  "question_path": "/data/last_repotted",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "health_indicators": {
+                  "question_path": "/data/health_indicators",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "pot_type": {
+                  "question_path": "/data/pot_type",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "last_watered_time": {
+                  "question_path": "/data/last_watered_time",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "last_watered_datetime": {
+                  "question_path": "/data/last_watered_datetime",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                }
+              },
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "UpdateCaseAction"
+            },
+            "close_case": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "case_preload": {
+              "preload": {},
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "PreloadAction"
+            },
+            "usercase_update": {
+              "update": {},
+              "doc_type": "UpdateCaseAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "usercase_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "subcases": [],
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "update_referral": {
+              "followup_date": null,
+              "doc_type": "UpdateReferralAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_referral": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "referral_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "load_from_form": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "doc_type": "FormActions"
+          },
+          "doc_type": "Form",
+          "unique_id": "ac9d611a429240c58e99a5f6ca5508b4",
+          "show_count": false,
+          "xmlns": "http://openrosa.org/formdesigner/B55100FC-10F5-4CED-BD8D-C9B7B6637E93",
+          "version": null,
+          "post_form_workflow": "default",
+          "post_form_workflow_fallback": null,
+          "auto_gps_capture": false,
+          "form_links": [],
+          "custom_assertions": [],
+          "custom_instances": [],
+          "case_references_data": {
+            "load": {},
+            "save": {},
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "respect_relevancy": true,
+          "function_datum_endpoints": [],
+          "submit_label": {},
+          "submit_notification_label": {},
+          "comment": "",
+          "media_image": {},
+          "media_audio": {},
+          "custom_icons": [],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        },
+        {
+          "name": {
+            "en": "Water Plant"
+          },
+          "form_type": "module_form",
+          "requires": "case",
+          "actions": {
+            "open_case": {
+              "name_update": {
+                "question_path": null,
+                "update_mode": "always",
+                "doc_type": "ConditionalCaseUpdate"
+              },
+              "external_id": null,
+              "doc_type": "OpenCaseAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "update_case": {
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "update": {},
+              "doc_type": "UpdateCaseAction"
+            },
+            "close_case": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "update_referral": {
+              "followup_date": null,
+              "doc_type": "UpdateReferralAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_referral": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "case_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "referral_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "load_from_form": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "usercase_update": {
+              "update": {},
+              "doc_type": "UpdateCaseAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "usercase_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "subcases": [],
+            "doc_type": "FormActions"
+          },
+          "doc_type": "Form",
+          "unique_id": "a96f69dce02049eb8daa9c89df282aa0",
+          "show_count": false,
+          "xmlns": "http://openrosa.org/formdesigner/A6EC3E43-707B-49E0-8628-B930AD94B400",
+          "version": null,
+          "post_form_workflow": "default",
+          "post_form_workflow_fallback": null,
+          "auto_gps_capture": false,
+          "form_links": [],
+          "custom_assertions": [],
+          "custom_instances": [],
+          "case_references_data": {
+            "load": {},
+            "save": {},
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "respect_relevancy": true,
+          "function_datum_endpoints": [],
+          "submit_label": {},
+          "submit_notification_label": {},
+          "comment": "",
+          "media_image": {},
+          "media_audio": {},
+          "custom_icons": [],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        }
+      ],
+      "case_type": "plant",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "hasAutocomplete": true,
+              "useXpathExpression": false,
+              "grid_x": 0,
+              "grid_y": 0,
+              "enum": [],
+              "graph_configuration": null,
+              "late_flag": 30,
+              "time_ago_interval": 365.25,
+              "date_format": "%d/%m/%y",
+              "doc_type": "DetailColumn",
+              "calc_xpath": ".",
+              "horizontal_align": "left",
+              "vertical_align": "start",
+              "font_size": "medium",
+              "isTab": false,
+              "hasNodeset": false,
+              "nodeset": "",
+              "nodesetCaseType": "",
+              "nodesetFilter": "",
+              "relevant": "",
+              "height": 1,
+              "width": 6
+            },
+            {
+              "hasAutocomplete": true,
+              "calc_xpath": ".",
+              "enum": [],
+              "field": "last_modified",
+              "format": "date",
+              "graph_configuration": null,
+              "header": {
+                "en": "Last Modified"
+              },
+              "model": "case",
+              "date_format": "%b %d, %Y",
+              "time_ago_interval": 365.25,
+              "horizontal_align": "left",
+              "vertical_align": "start",
+              "font_size": "medium",
+              "late_flag": 30,
+              "isTab": false,
+              "hasNodeset": false,
+              "nodeset": "",
+              "nodesetCaseType": "",
+              "nodesetFilter": "",
+              "relevant": "",
+              "grid_x": 0,
+              "grid_y": 0,
+              "height": 1,
+              "width": 6,
+              "useXpathExpression": false,
+              "doc_type": "DetailColumn"
+            },
+            {
+              "hasAutocomplete": true,
+              "calc_xpath": ".",
+              "enum": [],
+              "field": "pot_type",
+              "format": "plain",
+              "graph_configuration": null,
+              "header": {
+                "en": "Pot Type"
+              },
+              "model": "case",
+              "date_format": "",
+              "time_ago_interval": 365.25,
+              "horizontal_align": "left",
+              "vertical_align": "start",
+              "font_size": "medium",
+              "late_flag": 30,
+              "isTab": false,
+              "hasNodeset": false,
+              "nodeset": "",
+              "nodesetCaseType": "",
+              "nodesetFilter": "",
+              "relevant": "",
+              "grid_x": 0,
+              "grid_y": 0,
+              "height": 1,
+              "width": 6,
+              "useXpathExpression": false,
+              "doc_type": "DetailColumn"
+            },
+            {
+              "hasAutocomplete": true,
+              "calc_xpath": ".",
+              "enum": [],
+              "field": "status",
+              "format": "plain",
+              "graph_configuration": null,
+              "header": {
+                "en": "Status"
+              },
+              "model": "case",
+              "date_format": "",
+              "time_ago_interval": 365.25,
+              "horizontal_align": "left",
+              "vertical_align": "start",
+              "font_size": "medium",
+              "late_flag": 30,
+              "isTab": false,
+              "hasNodeset": false,
+              "nodeset": "",
+              "nodesetCaseType": "",
+              "nodesetFilter": "",
+              "relevant": "",
+              "grid_x": 0,
+              "grid_y": 0,
+              "height": 1,
+              "width": 6,
+              "useXpathExpression": false,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "short",
+          "tabs": [],
+          "sort_elements": [],
+          "instance_name": "casedb",
+          "persist_case_context": false,
+          "persistent_case_context_xml": "case_name",
+          "multi_select": false,
+          "auto_select": false,
+          "max_select_value": 100,
+          "persist_tile_on_forms": false,
+          "pull_down_tile": false,
+          "case_tile_group": {
+            "index_identifier": null,
+            "header_rows": 2,
+            "doc_type": "CaseTileGroupConfig"
+          },
+          "print_template": {},
+          "no_items_text": {
+            "en": "List is empty."
+          },
+          "select_text": {
+            "en": "Continue"
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_image": null,
+          "lookup_extras": [],
+          "lookup_responses": [],
+          "lookup_display_results": false,
+          "lookup_field_header": {}
+        },
+        "long": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "hasAutocomplete": true,
+              "useXpathExpression": false,
+              "grid_x": null,
+              "grid_y": null,
+              "enum": [],
+              "graph_configuration": {
+                "config": {},
+                "locale_specific_config": {},
+                "annotations": [],
+                "series": [],
+                "doc_type": "GraphConfiguration"
+              },
+              "late_flag": 30,
+              "time_ago_interval": 365.25,
+              "date_format": "%d/%m/%y",
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "long",
+          "tabs": [],
+          "sort_elements": [],
+          "instance_name": "casedb",
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "multi_select": false,
+          "auto_select": false,
+          "max_select_value": 100,
+          "persist_tile_on_forms": null,
+          "pull_down_tile": null,
+          "case_tile_group": {
+            "index_identifier": null,
+            "header_rows": 2,
+            "doc_type": "CaseTileGroupConfig"
+          },
+          "print_template": {},
+          "no_items_text": {
+            "en": "List is empty."
+          },
+          "select_text": {
+            "en": "Continue"
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_image": null,
+          "lookup_extras": [],
+          "lookup_responses": [],
+          "lookup_display_results": false,
+          "lookup_field_header": {}
+        },
+        "doc_type": "DetailPair"
+      },
+      "module_type": "basic",
+      "ref_details": {
+        "short": {
+          "display": "short",
+          "columns": [],
+          "tabs": [],
+          "sort_elements": [],
+          "instance_name": "casedb",
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "multi_select": false,
+          "auto_select": false,
+          "max_select_value": 100,
+          "persist_tile_on_forms": null,
+          "pull_down_tile": null,
+          "case_tile_group": {
+            "index_identifier": null,
+            "header_rows": 2,
+            "doc_type": "CaseTileGroupConfig"
+          },
+          "print_template": {},
+          "no_items_text": {
+            "en": "List is empty."
+          },
+          "select_text": {
+            "en": "Continue"
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_image": null,
+          "lookup_extras": [],
+          "lookup_responses": [],
+          "lookup_display_results": false,
+          "lookup_field_header": {}
+        },
+        "long": {
+          "display": "long",
+          "columns": [],
+          "tabs": [],
+          "sort_elements": [],
+          "instance_name": "casedb",
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "multi_select": false,
+          "auto_select": false,
+          "max_select_value": 100,
+          "persist_tile_on_forms": null,
+          "pull_down_tile": null,
+          "case_tile_group": {
+            "index_identifier": null,
+            "header_rows": 2,
+            "doc_type": "CaseTileGroupConfig"
+          },
+          "print_template": {},
+          "no_items_text": {
+            "en": "List is empty."
+          },
+          "select_text": {
+            "en": "Continue"
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_image": null,
+          "lookup_extras": [],
+          "lookup_responses": [],
+          "lookup_display_results": false,
+          "lookup_field_header": {}
+        },
+        "doc_type": "DetailPair"
+      },
+      "case_list": {
+        "label": {},
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {},
+        "media_audio": {},
+        "custom_icons": [],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "referral_list": {
+        "label": {},
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {},
+        "media_audio": {},
+        "custom_icons": [],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "task_list": {
+        "label": {},
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {},
+        "media_audio": {},
+        "custom_icons": [],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "parent_select": {
+        "module_id": "",
+        "relationship": "parent",
+        "active": false,
+        "doc_type": "ParentSelect"
+      },
+      "search_config": {
+        "command_label": {
+          "en": "Search All Cases"
+        },
+        "again_label": {
+          "en": "Search Again"
+        },
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          },
+          "doc_type": "CaseSearchLabel",
+          "media_image": {},
+          "media_audio": {},
+          "custom_icons": [],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        },
+        "search_again_label": {
+          "label": {
+            "en": "Search Again"
+          },
+          "doc_type": "CaseSearchAgainLabel",
+          "media_image": {},
+          "media_audio": {},
+          "custom_icons": [],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        },
+        "properties": [],
+        "auto_launch": false,
+        "default_search": false,
+        "default_properties": [],
+        "custom_sort_properties": [],
+        "additional_case_types": [],
+        "additional_registry_cases": [],
+        "title_label": {},
+        "description": {},
+        "include_all_related_cases": false,
+        "dynamic_search": false,
+        "search_on_clear": false,
+        "inline_search": false,
+        "doc_type": "CaseSearch"
+      },
+      "display_style": "list",
+      "lazy_load_case_list_fields": false,
+      "doc_type": "Module",
+      "unique_id": "fc224a18a6dc4343b503592bfa8cc034",
+      "case_list_form": {
+        "form_id": null,
+        "label": {},
+        "post_form_workflow": "default",
+        "doc_type": "CaseListForm",
+        "media_image": {},
+        "media_audio": {},
+        "custom_icons": [],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "put_in_root": false,
+      "fixture_select": {
+        "active": false,
+        "localize": false,
+        "doc_type": "FixtureSelect"
+      },
+      "report_context_tile": false,
+      "auto_select_case": false,
+      "is_training_module": false,
+      "custom_assertions": [],
+      "media_image": {
+        "en": ""
+      },
+      "media_audio": {
+        "en": ""
+      },
+      "custom_icons": [],
+      "use_default_image_for_all": false,
+      "use_default_audio_for_all": false,
+      "comment": "",
+      "show_case_list_optimization_options": false
+    },
+    {
+      "name": {
+        "en": "Manage Rooms"
+      },
+      "forms": [
+        {
+          "name": {
+            "en": "Add Room"
+          },
+          "form_type": "module_form",
+          "requires": "none",
+          "actions": {
+            "open_case": {
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "name_update": {
+                "question_path": "/data/room_name",
+                "update_mode": "always",
+                "doc_type": "ConditionalCaseUpdate"
+              },
+              "external_id": null,
+              "doc_type": "OpenCaseAction"
+            },
+            "update_case": {
+              "update": {
+                "description": {
+                  "question_path": "/data/description",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "room_id": {
+                  "question_path": "/data/room_id",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "room_barcode": {
+                  "question_path": "/data/room_barcode",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "distance_from_window_cm": {
+                  "question_path": "/data/water_info/distance_from_window_cm",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "min_water_required": {
+                  "question_path": "/data/water_info/min_water_required",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "light_level": {
+                  "question_path": "/data/light_level",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "room_location": {
+                  "question_path": "/data/room_location",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "plant_surfaces": {
+                  "question_path": "/data/plant_surfaces",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                },
+                "water_ratio": {
+                  "question_path": "/data/water_info/water_ratio",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                }
+              },
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "UpdateCaseAction"
+            },
+            "close_case": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "case_preload": {
+              "preload": {},
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "PreloadAction"
+            },
+            "usercase_update": {
+              "update": {},
+              "doc_type": "UpdateCaseAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "usercase_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "subcases": [],
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "update_referral": {
+              "followup_date": null,
+              "doc_type": "UpdateReferralAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_referral": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "referral_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "load_from_form": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "doc_type": "FormActions"
+          },
+          "doc_type": "Form",
+          "unique_id": "c625ddbda28a4f568b9922c3ac1182e9",
+          "show_count": false,
+          "xmlns": "http://openrosa.org/formdesigner/195A8D85-AB8E-40A3-93E7-70709D520CDD",
+          "version": null,
+          "post_form_workflow": "default",
+          "post_form_workflow_fallback": null,
+          "auto_gps_capture": false,
+          "form_links": [],
+          "custom_assertions": [],
+          "custom_instances": [],
+          "case_references_data": {
+            "load": {},
+            "save": {},
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "respect_relevancy": true,
+          "function_datum_endpoints": [],
+          "submit_label": {},
+          "submit_notification_label": {},
+          "comment": "",
+          "media_image": {},
+          "media_audio": {},
+          "custom_icons": [],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        },
+        {
+          "name": {
+            "en": "Update Room"
+          },
+          "form_type": "module_form",
+          "requires": "case",
+          "actions": {
+            "open_case": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "name_update": {
+                "question_path": null,
+                "update_mode": "always",
+                "doc_type": "ConditionalCaseUpdate"
+              },
+              "external_id": null,
+              "doc_type": "OpenCaseAction"
+            },
+            "update_case": {
+              "update": {
+                "description": {
+                  "question_path": "/data/description",
+                  "update_mode": "always",
+                  "doc_type": "ConditionalCaseUpdate"
+                }
+              },
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "UpdateCaseAction"
+            },
+            "close_case": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "case_preload": {
+              "preload": {},
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "PreloadAction"
+            },
+            "usercase_update": {
+              "update": {},
+              "doc_type": "UpdateCaseAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "usercase_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "subcases": [],
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "update_referral": {
+              "followup_date": null,
+              "doc_type": "UpdateReferralAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_referral": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "referral_preload": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "load_from_form": {
+              "preload": {},
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "doc_type": "FormActions"
+          },
+          "doc_type": "Form",
+          "unique_id": "15e46e4029944f66806ec73bfb14df5a",
+          "show_count": false,
+          "xmlns": "http://openrosa.org/formdesigner/04A7C0C9-4BEB-42B9-BB7D-2C7850958464",
+          "version": null,
+          "post_form_workflow": "default",
+          "post_form_workflow_fallback": null,
+          "auto_gps_capture": false,
+          "form_links": [],
+          "custom_assertions": [],
+          "custom_instances": [],
+          "case_references_data": {
+            "load": {
+              "/data/default_label": [
+                "#case/case_name"
+              ],
+              "#form/undefined": [
+                "#case/description"
+              ]
+            },
+            "save": {},
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "respect_relevancy": true,
+          "function_datum_endpoints": [],
+          "submit_label": {},
+          "submit_notification_label": {},
+          "comment": "",
+          "media_image": {},
+          "media_audio": {},
+          "custom_icons": [],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        }
+      ],
+      "case_type": "plant_room",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "hasAutocomplete": true,
+              "useXpathExpression": false,
+              "grid_x": null,
+              "grid_y": null,
+              "enum": [],
+              "graph_configuration": {
+                "config": {},
+                "locale_specific_config": {},
+                "annotations": [],
+                "series": [],
+                "doc_type": "GraphConfiguration"
+              },
+              "late_flag": 30,
+              "time_ago_interval": 365.25,
+              "date_format": "%d/%m/%y",
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "short",
+          "tabs": [],
+          "sort_elements": [],
+          "instance_name": "casedb",
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "multi_select": false,
+          "auto_select": false,
+          "max_select_value": 100,
+          "persist_tile_on_forms": null,
+          "pull_down_tile": null,
+          "case_tile_group": {
+            "index_identifier": null,
+            "header_rows": 2,
+            "doc_type": "CaseTileGroupConfig"
+          },
+          "print_template": {},
+          "no_items_text": {
+            "en": "List is empty."
+          },
+          "select_text": {
+            "en": "Continue"
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_image": null,
+          "lookup_extras": [],
+          "lookup_responses": [],
+          "lookup_display_results": false,
+          "lookup_field_header": {}
+        },
+        "long": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "hasAutocomplete": true,
+              "useXpathExpression": false,
+              "grid_x": null,
+              "grid_y": null,
+              "enum": [],
+              "graph_configuration": {
+                "config": {},
+                "locale_specific_config": {},
+                "annotations": [],
+                "series": [],
+                "doc_type": "GraphConfiguration"
+              },
+              "late_flag": 30,
+              "time_ago_interval": 365.25,
+              "date_format": "%d/%m/%y",
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "long",
+          "tabs": [],
+          "sort_elements": [],
+          "instance_name": "casedb",
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "multi_select": false,
+          "auto_select": false,
+          "max_select_value": 100,
+          "persist_tile_on_forms": null,
+          "pull_down_tile": null,
+          "case_tile_group": {
+            "index_identifier": null,
+            "header_rows": 2,
+            "doc_type": "CaseTileGroupConfig"
+          },
+          "print_template": {},
+          "no_items_text": {
+            "en": "List is empty."
+          },
+          "select_text": {
+            "en": "Continue"
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_image": null,
+          "lookup_extras": [],
+          "lookup_responses": [],
+          "lookup_display_results": false,
+          "lookup_field_header": {}
+        },
+        "doc_type": "DetailPair"
+      },
+      "module_type": "basic",
+      "ref_details": {
+        "short": {
+          "display": "short",
+          "columns": [],
+          "tabs": [],
+          "sort_elements": [],
+          "instance_name": "casedb",
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "multi_select": false,
+          "auto_select": false,
+          "max_select_value": 100,
+          "persist_tile_on_forms": null,
+          "pull_down_tile": null,
+          "case_tile_group": {
+            "index_identifier": null,
+            "header_rows": 2,
+            "doc_type": "CaseTileGroupConfig"
+          },
+          "print_template": {},
+          "no_items_text": {
+            "en": "List is empty."
+          },
+          "select_text": {
+            "en": "Continue"
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_image": null,
+          "lookup_extras": [],
+          "lookup_responses": [],
+          "lookup_display_results": false,
+          "lookup_field_header": {}
+        },
+        "long": {
+          "display": "long",
+          "columns": [],
+          "tabs": [],
+          "sort_elements": [],
+          "instance_name": "casedb",
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "multi_select": false,
+          "auto_select": false,
+          "max_select_value": 100,
+          "persist_tile_on_forms": null,
+          "pull_down_tile": null,
+          "case_tile_group": {
+            "index_identifier": null,
+            "header_rows": 2,
+            "doc_type": "CaseTileGroupConfig"
+          },
+          "print_template": {},
+          "no_items_text": {
+            "en": "List is empty."
+          },
+          "select_text": {
+            "en": "Continue"
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_image": null,
+          "lookup_extras": [],
+          "lookup_responses": [],
+          "lookup_display_results": false,
+          "lookup_field_header": {}
+        },
+        "doc_type": "DetailPair"
+      },
+      "case_list": {
+        "label": {},
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {},
+        "media_audio": {},
+        "custom_icons": [],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "referral_list": {
+        "label": {},
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {},
+        "media_audio": {},
+        "custom_icons": [],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "task_list": {
+        "label": {},
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {},
+        "media_audio": {},
+        "custom_icons": [],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "parent_select": {
+        "active": false,
+        "relationship": "parent",
+        "module_id": null,
+        "doc_type": "ParentSelect"
+      },
+      "search_config": {
+        "command_label": {
+          "en": "Search All Cases"
+        },
+        "again_label": {
+          "en": "Search Again"
+        },
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          },
+          "doc_type": "CaseSearchLabel",
+          "media_image": {},
+          "media_audio": {},
+          "custom_icons": [],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        },
+        "search_again_label": {
+          "label": {
+            "en": "Search Again"
+          },
+          "doc_type": "CaseSearchAgainLabel",
+          "media_image": {},
+          "media_audio": {},
+          "custom_icons": [],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        },
+        "properties": [],
+        "auto_launch": false,
+        "default_search": false,
+        "default_properties": [],
+        "custom_sort_properties": [],
+        "additional_case_types": [],
+        "additional_registry_cases": [],
+        "title_label": {},
+        "description": {},
+        "include_all_related_cases": false,
+        "dynamic_search": false,
+        "search_on_clear": false,
+        "inline_search": false,
+        "doc_type": "CaseSearch"
+      },
+      "display_style": "list",
+      "lazy_load_case_list_fields": false,
+      "doc_type": "Module",
+      "unique_id": "54f0af32c573475db004ceef18be2aa1",
+      "case_list_form": {
+        "form_id": null,
+        "label": {},
+        "post_form_workflow": "default",
+        "doc_type": "CaseListForm",
+        "media_image": {},
+        "media_audio": {},
+        "custom_icons": [],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "put_in_root": false,
+      "fixture_select": {
+        "active": false,
+        "localize": false,
+        "doc_type": "FixtureSelect"
+      },
+      "report_context_tile": false,
+      "auto_select_case": false,
+      "is_training_module": false,
+      "custom_assertions": [],
+      "media_image": {
+        "en": ""
+      },
+      "media_audio": {
+        "en": ""
+      },
+      "custom_icons": [],
+      "use_default_image_for_all": false,
+      "use_default_audio_for_all": false,
+      "comment": "",
+      "show_case_list_optimization_options": false
+    }
+  ],
+  "date_created": "2025-02-20T15:29:26.193244Z",
+  "profile": {
+    "features": {
+      "users": "true"
+    },
+    "properties": {
+      "cc-autoup-freq": "freq-never",
+      "cc-content-valid": "yes",
+      "cc-autosync-freq": "freq-never",
+      "logenabled": "Enabled",
+      "log_prop_weekly": "log_short",
+      "log_prop_daily": "log_never",
+      "purge-freq": "0",
+      "user_reg_server": "required",
+      "restore-tolerance": "loose",
+      "loose_media": "no"
+    }
+  },
+  "use_custom_suite": false,
+  "custom_base_url": null,
+  "cloudcare_enabled": true,
+  "translations": {},
+  "translation_strategy": "select-known",
+  "auto_gps_capture": false,
+  "created_from_template": null,
+  "use_grid_menus": false,
+  "grid_form_menus": "none",
+  "add_ons": {
+    "advanced_itemsets": false,
+    "calc_xpaths": false,
+    "case_detail_overwrite": false,
+    "case_list_menu_item": false,
+    "conditional_enum": false,
+    "conditional_form_actions": false,
+    "display_conditions": false,
+    "enum_image": false,
+    "menu_mode": false,
+    "register_from_case_list": false,
+    "subcases": false,
+    "submenus": false,
+    "empty_case_lists": false
+  },
+  "smart_lang_display": null,
+  "custom_assertions": [],
+  "family_id": null,
+  "doc_type": "Application",
+  "recipients": "",
+  "build_spec": {
+    "version": "2.0.0",
+    "latest": true,
+    "build_number": null,
+    "doc_type": "BuildSpec"
+  },
+  "built_with": {
+    "signed": true,
+    "datetime": null,
+    "doc_type": "BuildRecord",
+    "version": null,
+    "build_number": null,
+    "latest": null
+  },
+  "build_signed": true,
+  "built_on": null,
+  "build_comment": null,
+  "comment_from": null,
+  "last_released": null,
+  "build_broken": false,
+  "is_auto_generated": false,
+  "build_broken_reason": null,
+  "is_released": false,
+  "admin_password": null,
+  "admin_password_charset": "n",
+  "secure_submissions": true,
+  "amplifies_workers": "not_set",
+  "amplifies_project": "not_set",
+  "minimum_use_threshold": "15",
+  "experienced_threshold": "3",
+  "cached_properties": {},
+  "description": null,
+  "deployment_date": null,
+  "phone_model": null,
+  "user_type": null,
+  "attribution_notes": null,
+  "case_sharing": false,
+  "vellum_case_management": true,
+  "application_version": "2.0",
+  "last_modified": "2025-03-09T15:44:45.110303Z",
+  "build_profiles": {},
+  "practice_mobile_worker_id": null,
+  "target_commcare_flavor": "none",
+  "has_submissions": false,
+  "mobile_ucr_restore_version": "2.0",
+  "location_fixture_restore": "project_default",
+  "split_screen_dynamic_search": false,
+  "persistent_menu": false,
+  "show_breadcrumbs": true,
+  "copy_history": [],
+  "multimedia_map": {},
+  "logo_refs": {},
+  "archived_media": {},
+  "_attachments": {
+    "ac9d611a429240c58e99a5f6ca5508b4.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>Add Plant</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/B55100FC-10F5-4CED-BD8D-C9B7B6637E93\" uiVersion=\"1\" version=\"1\" name=\"Add Plant\">\n\t\t\t\t\t<plant_name />\n\t\t\t\t\t<nickname />\n\t\t\t\t\t<description />\n\t\t\t\t\t<height_cm />\n\t\t\t\t\t<number_of_leaves />\n\t\t\t\t\t<last_watered_on />\n\t\t\t\t\t<last_watered_time />\n\t\t\t\t\t<last_watered_datetime />\n\t\t\t\t\t<last_repotted />\n\t\t\t\t\t<health_indicators />\n\t\t\t\t\t<pot_type />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind vellum:nodeset=\"#form/plant_name\" nodeset=\"/data/plant_name\" type=\"xsd:string\" />\n\t\t\t<bind vellum:nodeset=\"#form/nickname\" nodeset=\"/data/nickname\" type=\"xsd:string\" />\n\t\t\t<bind vellum:nodeset=\"#form/description\" nodeset=\"/data/description\" type=\"xsd:string\" />\n\t\t\t<bind vellum:nodeset=\"#form/height_cm\" nodeset=\"/data/height_cm\" type=\"xsd:double\" />\n\t\t\t<bind vellum:nodeset=\"#form/number_of_leaves\" nodeset=\"/data/number_of_leaves\" type=\"xsd:int\" />\n\t\t\t<bind vellum:nodeset=\"#form/last_watered_on\" nodeset=\"/data/last_watered_on\" type=\"xsd:date\" />\n\t\t\t<bind vellum:nodeset=\"#form/last_watered_time\" nodeset=\"/data/last_watered_time\" calculate=\"double(now())\" />\n\t\t\t<bind vellum:nodeset=\"#form/last_watered_datetime\" nodeset=\"/data/last_watered_datetime\" calculate=\"now()\" />\n\t\t\t<bind vellum:nodeset=\"#form/last_repotted\" nodeset=\"/data/last_repotted\" type=\"xsd:date\" />\n\t\t\t<bind vellum:nodeset=\"#form/health_indicators\" nodeset=\"/data/health_indicators\" />\n\t\t\t<bind vellum:nodeset=\"#form/pot_type\" nodeset=\"/data/pot_type\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"plant_name-label\">\n\t\t\t\t\t\t<value>Plant Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"nickname-label\">\n\t\t\t\t\t\t<value>Nickname</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"description-label\">\n\t\t\t\t\t\t<value>Description</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"height_cm-label\">\n\t\t\t\t\t\t<value>Height (cm)</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"number_of_leaves-label\">\n\t\t\t\t\t\t<value>Number of Leaves</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"last_watered_on-label\">\n\t\t\t\t\t\t<value>Last Watered On</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"last_repotted-label\">\n\t\t\t\t\t\t<value>Last Repotted</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"health_indicators-label\">\n\t\t\t\t\t\t<value>Poor Health Indicators</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"health_indicators-yellow_leaves-label\">\n\t\t\t\t\t\t<value>Yellow Leaves</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"health_indicators-pests-label\">\n\t\t\t\t\t\t<value>Pests</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"health_indicators-fungus-label\">\n\t\t\t\t\t\t<value>Fungus</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"health_indicators-root_rot-label\">\n\t\t\t\t\t\t<value>Root Rot</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"pot_type-label\">\n\t\t\t\t\t\t<value>Pot Type</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"pot_type-ceramic-label\">\n\t\t\t\t\t\t<value>Ceramic</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"pot_type-terra_cotta-label\">\n\t\t\t\t\t\t<value>Terra Cotta</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"pot_type-plastic-label\">\n\t\t\t\t\t\t<value>Plastic</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form/plant_name\" ref=\"/data/plant_name\">\n\t\t\t<label ref=\"jr:itext('plant_name-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/nickname\" ref=\"/data/nickname\">\n\t\t\t<label ref=\"jr:itext('nickname-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/description\" ref=\"/data/description\">\n\t\t\t<label ref=\"jr:itext('description-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/height_cm\" ref=\"/data/height_cm\">\n\t\t\t<label ref=\"jr:itext('height_cm-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/number_of_leaves\" ref=\"/data/number_of_leaves\">\n\t\t\t<label ref=\"jr:itext('number_of_leaves-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/last_watered_on\" ref=\"/data/last_watered_on\">\n\t\t\t<label ref=\"jr:itext('last_watered_on-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/last_repotted\" ref=\"/data/last_repotted\">\n\t\t\t<label ref=\"jr:itext('last_repotted-label')\" />\n\t\t</input>\n\t\t<select vellum:ref=\"#form/health_indicators\" ref=\"/data/health_indicators\">\n\t\t\t<label ref=\"jr:itext('health_indicators-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('health_indicators-yellow_leaves-label')\" />\n\t\t\t\t<value>yellow_leaves</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('health_indicators-pests-label')\" />\n\t\t\t\t<value>pests</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('health_indicators-fungus-label')\" />\n\t\t\t\t<value>fungus</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('health_indicators-root_rot-label')\" />\n\t\t\t\t<value>root_rot</value>\n\t\t\t</item>\n\t\t</select>\n\t\t<select1 vellum:ref=\"#form/pot_type\" ref=\"/data/pot_type\">\n\t\t\t<label ref=\"jr:itext('pot_type-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('pot_type-ceramic-label')\" />\n\t\t\t\t<value>ceramic</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('pot_type-terra_cotta-label')\" />\n\t\t\t\t<value>terra_cotta</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('pot_type-plastic-label')\" />\n\t\t\t\t<value>plastic</value>\n\t\t\t</item>\n\t\t</select1>\n\t</h:body>\n</h:html>",
+    "a96f69dce02049eb8daa9c89df282aa0.xml": "<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n  <h:head>\n    <h:title>Water Plant</h:title>\n    <model>\n      <instance>\n        <data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/A6EC3E43-707B-49E0-8628-B930AD94B400\" uiVersion=\"1\" version=\"1\" name=\"Water Plant\">\n          <default_label/>\n        </data>\n      </instance>\n      <bind vellum:nodeset=\"#form/default_label\" nodeset=\"/data/default_label\"/>\n      <itext>\n        <translation lang=\"en\" default=\"\">\n          <text id=\"default_label-label\">\n            <value> This is your follow up form. Delete this label and add questions for any follow up visits. </value>\n          </text>\n        </translation>\n      </itext>\n    </model>\n  </h:head>\n  <h:body>\n    <trigger vellum:ref=\"#form/default_label\" ref=\"/data/default_label\" appearance=\"minimal\">\n      <label ref=\"jr:itext('default_label-label')\"/>\n    </trigger>\n  </h:body>\n</h:html>",
+    "c625ddbda28a4f568b9922c3ac1182e9.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>Registration Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/195A8D85-AB8E-40A3-93E7-70709D520CDD\" uiVersion=\"1\" version=\"1\" name=\"Registration Form\">\n\t\t\t\t\t<room_name />\n\t\t\t\t\t<description />\n\t\t\t\t\t<room_id />\n\t\t\t\t\t<room_barcode />\n\t\t\t\t\t<water_info>\n\t\t\t\t\t\t<distance_from_window_cm />\n\t\t\t\t\t\t<min_water_required />\n\t\t\t\t\t\t<water_ratio />\n\t\t\t\t\t</water_info>\n\t\t\t\t\t<light_level />\n\t\t\t\t\t<room_location />\n\t\t\t\t\t<plant_surfaces />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind vellum:nodeset=\"#form/room_name\" nodeset=\"/data/room_name\" type=\"xsd:string\" />\n\t\t\t<bind vellum:nodeset=\"#form/description\" nodeset=\"/data/description\" type=\"xsd:string\" />\n\t\t\t<bind vellum:nodeset=\"#form/room_id\" nodeset=\"/data/room_id\" type=\"xsd:string\" />\n\t\t\t<bind vellum:nodeset=\"#form/room_barcode\" nodeset=\"/data/room_barcode\" type=\"barcode\" />\n\t\t\t<bind vellum:nodeset=\"#form/water_info\" nodeset=\"/data/water_info\" />\n\t\t\t<bind vellum:nodeset=\"#form/water_info/distance_from_window_cm\" nodeset=\"/data/water_info/distance_from_window_cm\" type=\"xsd:int\" />\n\t\t\t<bind vellum:nodeset=\"#form/water_info/min_water_required\" nodeset=\"/data/water_info/min_water_required\" type=\"xsd:double\" />\n\t\t\t<bind vellum:nodeset=\"#form/water_info/water_ratio\" nodeset=\"/data/water_info/water_ratio\" vellum:calculate=\"#form/water_info/distance_from_window_cm * #form/water_info/min_water_required\" calculate=\"/data/water_info/distance_from_window_cm * /data/water_info/min_water_required\" />\n\t\t\t<bind vellum:nodeset=\"#form/light_level\" nodeset=\"/data/light_level\" />\n\t\t\t<bind vellum:nodeset=\"#form/room_location\" nodeset=\"/data/room_location\" type=\"geopoint\" />\n\t\t\t<bind vellum:nodeset=\"#form/plant_surfaces\" nodeset=\"/data/plant_surfaces\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"room_name-label\">\n\t\t\t\t\t\t<value>Room Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"description-label\">\n\t\t\t\t\t\t<value>Description</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"room_id-label\">\n\t\t\t\t\t\t<value>Room ID</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"room_barcode-label\">\n\t\t\t\t\t\t<value>Room Barcode</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"water_info-label\">\n\t\t\t\t\t\t<value>Water Info</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"water_info/distance_from_window_cm-label\">\n\t\t\t\t\t\t<value>Distance from Window (cm)</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"water_info/min_water_required-label\">\n\t\t\t\t\t\t<value>Min Water Required</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"light_level-label\">\n\t\t\t\t\t\t<value>Light Level</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"light_level-low_light-label\">\n\t\t\t\t\t\t<value>Low Light</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"light_level-shade-label\">\n\t\t\t\t\t\t<value>Shade</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"light_level-cloudy-label\">\n\t\t\t\t\t\t<value>Cloudy</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"light_level-full_sun-label\">\n\t\t\t\t\t\t<value>Full Sun</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"room_location-label\">\n\t\t\t\t\t\t<value>Room Location</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"plant_surfaces-label\">\n\t\t\t\t\t\t<value>Plant Surfaces</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"plant_surfaces-table-label\">\n\t\t\t\t\t\t<value>Table</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"plant_surfaces-chair-label\">\n\t\t\t\t\t\t<value>Chair</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"plant_surfaces-window-label\">\n\t\t\t\t\t\t<value>Window</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"plant_surfaces-shelf-label\">\n\t\t\t\t\t\t<value>Shelf</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form/room_name\" ref=\"/data/room_name\">\n\t\t\t<label ref=\"jr:itext('room_name-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/description\" ref=\"/data/description\">\n\t\t\t<label ref=\"jr:itext('description-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/room_id\" ref=\"/data/room_id\" appearance=\"numeric\">\n\t\t\t<label ref=\"jr:itext('room_id-label')\" />\n\t\t</input>\n\t\t<input vellum:ref=\"#form/room_barcode\" ref=\"/data/room_barcode\">\n\t\t\t<label ref=\"jr:itext('room_barcode-label')\" />\n\t\t</input>\n\t\t<group vellum:ref=\"#form/water_info\" ref=\"/data/water_info\">\n\t\t\t<label ref=\"jr:itext('water_info-label')\" />\n\t\t\t<input vellum:ref=\"#form/water_info/distance_from_window_cm\" ref=\"/data/water_info/distance_from_window_cm\">\n\t\t\t\t<label ref=\"jr:itext('water_info/distance_from_window_cm-label')\" />\n\t\t\t</input>\n\t\t\t<input vellum:ref=\"#form/water_info/min_water_required\" ref=\"/data/water_info/min_water_required\">\n\t\t\t\t<label ref=\"jr:itext('water_info/min_water_required-label')\" />\n\t\t\t</input>\n\t\t</group>\n\t\t<select1 vellum:ref=\"#form/light_level\" ref=\"/data/light_level\">\n\t\t\t<label ref=\"jr:itext('light_level-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('light_level-low_light-label')\" />\n\t\t\t\t<value>low_light</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('light_level-shade-label')\" />\n\t\t\t\t<value>shade</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('light_level-cloudy-label')\" />\n\t\t\t\t<value>cloudy</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('light_level-full_sun-label')\" />\n\t\t\t\t<value>full_sun</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<input vellum:ref=\"#form/room_location\" ref=\"/data/room_location\">\n\t\t\t<label ref=\"jr:itext('room_location-label')\" />\n\t\t</input>\n\t\t<select vellum:ref=\"#form/plant_surfaces\" ref=\"/data/plant_surfaces\">\n\t\t\t<label ref=\"jr:itext('plant_surfaces-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('plant_surfaces-table-label')\" />\n\t\t\t\t<value>table</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('plant_surfaces-chair-label')\" />\n\t\t\t\t<value>chair</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('plant_surfaces-window-label')\" />\n\t\t\t\t<value>window</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('plant_surfaces-shelf-label')\" />\n\t\t\t\t<value>shelf</value>\n\t\t\t</item>\n\t\t</select>\n\t</h:body>\n</h:html>",
+    "15e46e4029944f66806ec73bfb14df5a.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>Followup Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/04A7C0C9-4BEB-42B9-BB7D-2C7850958464\" uiVersion=\"1\" version=\"1\" name=\"Followup Form\">\n\t\t\t\t\t<default_label />\n\t\t\t\t\t<description />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<instance src=\"jr://instance/casedb\" id=\"casedb\" />\n\t\t\t<instance src=\"jr://instance/session\" id=\"commcaresession\" />\n\t\t\t<bind vellum:nodeset=\"#form/default_label\" nodeset=\"/data/default_label\" />\n\t\t\t<bind vellum:nodeset=\"#form/description\" nodeset=\"/data/description\" type=\"xsd:string\" />\n\t\t\t<setvalue event=\"xforms-ready\" vellum:ref=\"#form/description\" ref=\"/data/description\" vellum:value=\"#case/description\" value=\"instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/description\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"default_label-label\">\n\t\t\t\t\t\t<value>You are updating <output value=\"instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/case_name\" vellum:value=\"#case/case_name\" /> </value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"description-label\">\n\t\t\t\t\t\t<value>Description</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t\t<vellum:hashtags>{&quot;#case/case_name&quot;:null,&quot;#case/description&quot;:null}</vellum:hashtags>\n\t\t<vellum:hashtagTransforms>{&quot;prefixes&quot;:{&quot;#case/&quot;:&quot;instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/&quot;}}</vellum:hashtagTransforms>\n\t</h:head>\n\t<h:body>\n\t\t<trigger vellum:ref=\"#form/default_label\" ref=\"/data/default_label\" appearance=\"minimal\">\n\t\t\t<label ref=\"jr:itext('default_label-label')\" />\n\t\t</trigger>\n\t\t<input vellum:ref=\"#form/description\" ref=\"/data/description\">\n\t\t\t<label ref=\"jr:itext('description-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
+  }
+}
