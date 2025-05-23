@@ -22,7 +22,7 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
     max_recorded_limit = MAX_RECORDED_LIMIT
 
     class Meta(BaseHtmxTable.Meta):
-        template_name = "data_cleaning/tables/table_with_controls.html"
+        template_name = "data_cleaning/tables/bulk_edit_session.html"
         attrs = {
             "class": "table table-striped align-middle",
         }
