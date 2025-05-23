@@ -362,6 +362,32 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
+    update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+
+    def make_multi(self):
+        '''
+        Moves any updates from `update` into `update_multi`
+        '''
+        if not (self.update and len(self.update)):
+            # update contains no items, so no changes are necessary
+            return
+
+        self.update_multi = {k: [v] for (k, v) in self.update.items()}
+        self.update = {}
+
+    def normalize_update(self):
+        '''
+        Attempt to move `update_multi` to `update`
+        If `update_multi` contains multiple updates mapped to the same case property, no changes will occur
+        '''
+        multi_question_cases = ((k, v) for (k, v) in self.update_multi.items() if len(v) > 1)
+        if any(multi_question_cases):
+            # must continue to use `update_multi`, as there are multiple questions saving to the same case property
+            return
+
+        normalized_update = {k: v[0] for (k, v) in self.update_multi.items()}
+        self.update = normalized_update
+        self.update_multi = None
 
 
 class PreloadAction(FormAction):
