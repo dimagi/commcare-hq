@@ -92,6 +92,8 @@ class Settlement(NamedTuple):
         # Fail hard on MultipleLocationsFoundError
 
     def get_location(self, domain: str) -> SQLLocation:
+        if self.location_id:
+            return get_location_by_id(domain, self.location_id)
         state_code = self.get_state_code()
         state = get_location_by_code(domain, state_code, COUNTRY_ID)
         lga_code = self.get_lga_code()
@@ -370,7 +372,7 @@ def move_settlement(
     """
     Rename a settlement and/or move it to a new parent location.
     """
-    location = get_location_by_id(domain, old_settlement.location_id)
+    location = old_settlement.get_location(domain)
     if new_settlement.settlement_name != old_settlement.settlement_name:
         # Rename settlement
         if verbose:
@@ -454,7 +456,7 @@ def update_cases_caseblocks(
     """
     Yields CaseBlocks as text to update location names in cases.
     """
-    location = get_location_by_id(domain, old_settlement.location_id)
+    location = old_settlement.get_location(domain)
     for case in cases:
         case_updates = get_case_updates(
             case,
