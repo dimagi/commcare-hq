@@ -469,16 +469,17 @@ def create_wire_credits_invoice(domain_name,
                                 date_start,
                                 date_end,
                                 contact_emails,
-                                cc_emails=None):
+                                cc_emails=None,
+                                date_due=None):
     deserialized_amount = deserialize_decimal(amount)
+    date_due = date_due or datetime.date.today() + datetime.timedelta(days=30)
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
-        date_start=datetime.date.fromisoformat(date_start),
-        date_end=datetime.date.fromisoformat(date_end),
-        date_due=datetime.date.today() + datetime.timedelta(days=30),
+        date_start=date_start,
+        date_end=date_end,
+        date_due=date_due,
         balance=deserialized_amount,
     )
-
     deserialized_items = []
     for item in invoice_items:
         general_credit_cost = item['unit_cost']
