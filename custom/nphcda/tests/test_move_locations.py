@@ -21,9 +21,9 @@ DOMAIN = 'test-domain'
 
 def test_load_csv():
     csv_content = cleandoc("""
-        Username,Map from old location,,,,,Map to new location,,,,,Unmapped old locations,,,,,Unmapped new locations,,,,
-        ,Scotland,Midlothian,Edinburgh,Craigleith,abc123,Scotland,Midlothian,Edinburgh,Inverleith,,,,,,,,,,,
-        ,,,,,,,,,,,,,,,,,,,,
+        username,old_location,,,,,new_location,,,,,
+        ,Scotland,Midlothian,Edinburgh,NEW  town,abc123,Scotland,Midlothian,Edinburgh,west   END,
+        ,,,,,,,,,,
         """) + '\n'
     with get_temp_filename(csv_content) as csv_filename:
         location_pairs = list(load_csv(DOMAIN, csv_filename))
@@ -34,7 +34,7 @@ def test_load_csv():
                 state_name='Scotland',
                 lga_name='Midlothian',
                 ward_name='Edinburgh',
-                settlement_name='Craigleith',
+                settlement_name='NEW  town',
                 location_id='abc123',
             ),
             new_settlement=Settlement(
@@ -42,7 +42,7 @@ def test_load_csv():
                 state_name='Scotland',
                 lga_name='Midlothian',
                 ward_name='Edinburgh',
-                settlement_name='Inverleith',
+                settlement_name='West End',
                 location_id=None,
             ),
         ),

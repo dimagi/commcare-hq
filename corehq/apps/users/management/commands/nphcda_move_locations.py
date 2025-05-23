@@ -288,12 +288,13 @@ def load_sheet(domain: str, sheet: SheetProto) -> Iterator[SettlementPair]:
             settlement_name=sheet.cell_value(rowx=row, colx=4),
             location_id=sheet.cell_value(rowx=row, colx=5),
         )
+        clean_name = one_space(sheet.cell_value(rowx=row, colx=9)).title()
         new_settlement = Settlement(
             domain=domain,
             state_name=sheet.cell_value(rowx=row, colx=6),
             lga_name=sheet.cell_value(rowx=row, colx=7),
             ward_name=sheet.cell_value(rowx=row, colx=8),
-            settlement_name=sheet.cell_value(rowx=row, colx=9),
+            settlement_name=clean_name,
             location_id=sheet.cell_value(rowx=row, colx=10) or None,
         )
         if old_settlement or new_settlement:  # Row is not blank
@@ -671,7 +672,7 @@ def get_code(*args: str) -> str:
     'katsina·faskari·maigora'
 
     """
-    return '·'.join([lower_one_space(name) for name in args])
+    return '·'.join([one_space(name).lower() for name in args])
 
 
 def get_location_name(code: str) -> str:
@@ -687,15 +688,15 @@ def get_location_name(code: str) -> str:
     return code.split('·')[-1].capitalize()
 
 
-def lower_one_space(string: str) -> str:
+def one_space(string: str) -> str:
     """
-    Lowercase a string and replace multiple spaces with a single space.
+    Replace multiple spaces with a single space.
 
-    >>> lower_one_space('FoO   BaR')
-    'foo bar'
+    >>> one_space(' FoO   BaR  ')
+    'FoO BaR'
 
     """
-    return re.sub(r'\s+', ' ', string).strip().lower()
+    return re.sub(r'\s+', ' ', string).strip()
 
 
 def snake_case(string: str) -> str:
