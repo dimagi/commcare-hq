@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
-from corehq.apps.app_manager.models import ConditionalCaseUpdate, import_app
+from corehq.apps.app_manager.models import CaseReferences, ConditionalCaseUpdate, import_app
 from corehq.apps.app_manager.tasks import (
     autogenerate_build,
     prune_auto_generated_builds,
@@ -16,6 +16,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
 from corehq.apps.app_manager.views.releases import make_app_build
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.util.test_utils import flag_enabled
 
 
 @patch_validate_xform()
@@ -112,11 +113,23 @@ class AppManagerTasksTest(TestCase):
             make_app_build(factory.app, "comment", user_id="user_id")
             metric_counter_mock.assert_not_called()
 
+    @flag_enabled('VELLUM_SAVE_TO_CASE')
     def test_refresh_data_dictionary_from_app(self):
         factory = AppFactory(build_version='2.56.0')
         m0, f0 = factory.new_basic_module('update', 'case')
         factory.form_requires_case(f0, update={'texture': '/data/texture'})
         f0.source = get_simple_form(xmlns=f0.unique_id)
+        f0.case_references = CaseReferences.wrap({
+            'save': {
+                "/data/question1": {
+                    "case_type": "household",
+                    "properties": [
+                        "save_to_case_p1",
+                        "save_to_case_p2"
+                    ],
+                }
+            }
+        })
         factory.form_uses_usercase(f0, update={
             'favorite_color': ConditionalCaseUpdate(question_path='/data/favorite_color')
         })
@@ -131,9 +144,10 @@ class AppManagerTasksTest(TestCase):
             refresh_data_dictionary_from_app(self.domain, factory.app.get_id)
 
         types = CaseType.objects.filter(domain=self.domain)
-        self.assertEqual(types.count(), 3)
-        self.assertEqual({t.name for t in types}, {'case', 'person', 'commcare-user'})
+        self.assertEqual(types.count(), 4)
+        self.assertEqual({t.name for t in types}, {'case', 'person', 'commcare-user', 'household'})
 
         props = CaseProperty.objects.filter(case_type__domain=self.domain)
-        self.assertEqual(props.count(), 2)
-        self.assertEqual({p.name for p in props}, {'texture', 'favorite_color'})
+        self.assertEqual(props.count(), 4)
+        self.assertEqual({p.name for p in props}, {'texture', 'favorite_color',
+                                                   'save_to_case_p1', 'save_to_case_p2'})
