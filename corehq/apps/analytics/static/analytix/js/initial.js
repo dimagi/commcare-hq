@@ -3,7 +3,7 @@
  *  Fetches all the initialization data needed for the different analytics platforms.
  *  Note that all of this initialization data is undefined until the document is ready.
  */
-hqDefine('analytix/js/initial', [
+define('analytix/js/initial', [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
