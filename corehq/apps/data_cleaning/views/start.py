@@ -69,7 +69,7 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
                 'resume': lambda: BulkEditSession.objects.active_case_session(
                     request.user, self.domain, case_type
                 ),
-                'new': lambda: BulkEditSession.restart_case_session(
+                'new': lambda: BulkEditSession.objects.restart_case_session(
                     request.user, self.domain, case_type
                 ),
             }[next_step]

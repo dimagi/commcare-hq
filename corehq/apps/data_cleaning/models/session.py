@@ -65,6 +65,15 @@ class BulkEditSessionManager(models.Manager):
     def new_form_session(self, user, domain_name, xmlns):
         raise NotImplementedError("Form bulk edit sessions are not yet supported!")
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def restart_case_session(self, user, domain_name, case_type):
+        previous_session = self.active_case_session(user, domain_name, case_type)
+        if previous_session:
+            previous_session.delete()
+        new_session = self.new_case_session(user, domain_name, case_type)
+        return new_session
+
 
 class BulkEditSession(models.Model):
     user = models.ForeignKey(User, related_name="bulk_edit_sessions", on_delete=models.CASCADE)
@@ -86,16 +95,6 @@ class BulkEditSession(models.Model):
 
     class Meta:
         ordering = ["-created_on"]
-
-    @classmethod
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    def restart_case_session(cls, user, domain_name, case_type):
-        with transaction.atomic():
-            previous_session = cls.objects.active_case_session(user, domain_name, case_type)
-            if previous_session:
-                previous_session.delete()
-            new_session = cls.objects.new_case_session(user, domain_name, case_type)
-        return new_session
 
     @classmethod
     def get_committed_sessions(cls, user, domain_name):
