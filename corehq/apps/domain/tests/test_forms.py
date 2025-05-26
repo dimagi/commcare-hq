@@ -5,6 +5,10 @@ from django.test import SimpleTestCase, TestCase
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.accounting.const import (
+    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
+)
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
@@ -321,8 +325,10 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
         self.assertEqual(prepayment_invoice.date_start, new_subscription.date_start)
         self.assertEqual(prepayment_invoice.date_end, new_subscription.date_end)
-        self.assertEqual(prepayment_invoice.date_due, date.today() + timedelta(days=15))
-        self.assertEqual(prepayment_invoice.balance, new_plan_version.product_rate.monthly_fee * 12)
+        self.assertEqual(prepayment_invoice.date_due,
+                         date.today() + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
+        self.assertEqual(prepayment_invoice.balance,
+                         new_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
 
     def test_downgrade_minimum_subscription_length(self):
         self.subscription.delete()
