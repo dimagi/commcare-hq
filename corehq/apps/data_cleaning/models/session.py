@@ -62,6 +62,9 @@ class BulkEditSessionManager(models.Manager):
             case_session.columns.create_session_defaults(case_session)
         return case_session
 
+    def new_form_session(self, user, domain_name, xmlns):
+        raise NotImplementedError("Form bulk edit sessions are not yet supported!")
+
 
 class BulkEditSession(models.Model):
     user = models.ForeignKey(User, related_name="bulk_edit_sessions", on_delete=models.CASCADE)
@@ -93,10 +96,6 @@ class BulkEditSession(models.Model):
                 previous_session.delete()
             new_session = cls.objects.new_case_session(user, domain_name, case_type)
         return new_session
-
-    @classmethod
-    def new_form_session(cls, user, domain_name, xmlns):
-        raise NotImplementedError("Form bulk edit sessions are not yet supported!")
 
     @classmethod
     def get_committed_sessions(cls, user, domain_name):
