@@ -14,6 +14,12 @@ Alpine.data('wiggleButtonModel', wiggleButton);
 
 Alpine.store('isCleaningAllowed', false);
 Alpine.store('showWhitespaces', false);
+Alpine.store('changes', {
+    'hasChanges': false,
+    update: function (hasChanges) {
+        this.hasChanges = hasChanges;
+    },
+});
 
 import Alpine from 'alpinejs';
 Alpine.start();
@@ -21,4 +27,8 @@ Alpine.start();
 document.body.addEventListener("showDataCleaningModal", function (event) {
     const modal = new Modal(event.detail.elt);
     modal.show();
+});
+
+document.body.addEventListener("updateChanges", function (event) {
+    Alpine.store('changes').update(event.detail.hasChanges);
 });

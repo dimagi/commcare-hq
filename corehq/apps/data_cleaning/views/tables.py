@@ -181,9 +181,15 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             record,
             table,
         )
-        return self.render_htmx_partial_response(
+        response = self.render_htmx_partial_response(
             request, EditableHtmxColumn.template_name, context
         )
+        response['HX-Trigger'] = json.dumps({
+            "updateChanges": {
+                "hasChanges": self.session.has_changes(),
+            },
+        })
+        return response
 
     def _get_cell_request_details(self, request):
         """
