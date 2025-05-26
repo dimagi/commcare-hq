@@ -106,7 +106,11 @@ class BulkEditSessionTest(TestCase):
     def test_restart_case_session(self):
         old_session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         old_session_id = old_session.session_id
-        new_session = BulkEditSession.restart_case_session(self.django_user, self.domain_name, self.case_type)
+        new_session = BulkEditSession.objects.restart_case_session(
+            self.django_user,
+            self.domain_name,
+            self.case_type,
+        )
         self.assertNotEqual(old_session_id, new_session.session_id)
 
 
