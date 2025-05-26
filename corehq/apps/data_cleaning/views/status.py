@@ -78,7 +78,6 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            "active_session": self.get_active_session(),
             "num_records_changed": (
                 self.session.num_changed_records
                 if self.session.committed_on is not None
