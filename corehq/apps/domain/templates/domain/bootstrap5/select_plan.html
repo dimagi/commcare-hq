@@ -280,6 +280,29 @@
         </div>
       {% endif %}
     </form>
+
+    <hr />
+    <form action="{% url 'custom_plan_request_quote' domain %}">
+      {% csrf_token %}
+      <input
+        type="hidden"
+        name="plan_edition"
+        data-bind="value: oSelectedPlan"
+      />
+      <div class="text-center plan-next">
+        <p>
+          {% blocktrans %}
+            Questions about which software plan is right for you?
+          {% endblocktrans %}
+          <button
+            class="btn btn-link p-0"
+            data-bind="click: contactSales"
+          >
+            {% trans "Talk with our team." %}
+          </button>
+        </p>
+      </div>
+    </form>
   </section>
 {% endblock %}
 
