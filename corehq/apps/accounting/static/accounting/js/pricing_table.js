@@ -43,7 +43,7 @@ var PricingTable = function (options) {
         var isSamePaySchedule = self.currentIsAnnualPlan === self.oShowAnnualPricing();
         var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription() && isSamePaySchedule;
         var isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
-        return !self.oSelectedPlan() || isNextPlan || isCurrentPlan;
+        return !self.oSelectedPlan() || self.oSelectedPlan() === 'free' || isNextPlan || isCurrentPlan;
     });
 
     self.oIsCurrentPlanFreeEdition = ko.observable(options.currentEdition === 'free');
