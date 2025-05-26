@@ -50,6 +50,18 @@ class BulkEditSessionManager(models.Manager):
     def recent_form_session(self, user, domain_name):
         return self._get_recent_session(user, domain_name, BulkEditSessionType.FORM)
 
+    def new_case_session(self, user, domain_name, case_type, is_default=True):
+        case_session = self.create(
+            user=user,
+            domain=domain_name,
+            identifier=case_type,
+            session_type=BulkEditSessionType.CASE,
+        )
+        if is_default:
+            case_session.pinned_filters.create_session_defaults(case_session)
+            case_session.columns.create_session_defaults(case_session)
+        return case_session
+
 
 class BulkEditSession(models.Model):
     user = models.ForeignKey(User, related_name="bulk_edit_sessions", on_delete=models.CASCADE)
@@ -73,26 +85,13 @@ class BulkEditSession(models.Model):
         ordering = ["-created_on"]
 
     @classmethod
-    def new_case_session(cls, user, domain_name, case_type, is_default=True):
-        case_session = cls.objects.create(
-            user=user,
-            domain=domain_name,
-            identifier=case_type,
-            session_type=BulkEditSessionType.CASE,
-        )
-        if is_default:
-            case_session.pinned_filters.create_session_defaults(case_session)
-            case_session.columns.create_session_defaults(case_session)
-        return case_session
-
-    @classmethod
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     def restart_case_session(cls, user, domain_name, case_type):
         with transaction.atomic():
             previous_session = cls.objects.active_case_session(user, domain_name, case_type)
             if previous_session:
                 previous_session.delete()
-            new_session = cls.new_case_session(user, domain_name, case_type)
+            new_session = cls.objects.new_case_session(user, domain_name, case_type)
         return new_session
 
     @classmethod
@@ -108,7 +107,7 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name).order_by('-created_on')
 
     def get_resumed_session(self):
-        new_session = self.new_case_session(
+        new_session = self.objects.new_case_session(
             self.user,
             self.domain,
             self.identifier,
