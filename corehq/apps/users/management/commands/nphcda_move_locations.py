@@ -361,13 +361,9 @@ def select_location(
 
 
 def delete_settlement(settlement: Settlement) -> None:
-    assert settlement.location_id
     if verbose:
         print(f'Deleting settlement {settlement}')
-    location = SQLLocation.objects.get(
-        domain=settlement.domain,
-        location_id=settlement.location_id,
-    )
+    location = settlement.get_location()
     ward = get_location_by_id(settlement.domain, location.parent_location_id)
     if not dry_run:
         location.delete()
