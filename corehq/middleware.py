@@ -350,3 +350,29 @@ class SecureCookiesMiddleware(MiddlewareMixin):
             for cookie in response.cookies:
                 response.cookies[cookie]['secure'] = settings.SECURE_COOKIES or response.cookies[cookie]['secure']
         return response
+
+
+class HqHtmxActionMiddleware:
+    """
+    We append `_hq-hx-action` to HTMX requests using hq-hx-action
+    so browsers can cache fragments under a distinct URL per action.
+
+    This middleware removes the flag before views run, keeping handler
+    code and user-facing URLs clean.
+
+    Benefits:
+      - Unique cache slots for HTMX fragments without polluting view logic
+      - Clean request parameters in views
+      - Transparent request logs revealing the HTMX action name in the URL
+    """
+    _FLAG = "_hq-hx-action"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if self._FLAG in request.GET:
+            q = request.GET.copy()
+            q.pop(self._FLAG, None)
+            request.GET = q
+        return self.get_response(request)
