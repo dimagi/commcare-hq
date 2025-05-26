@@ -147,6 +147,10 @@ class DomainInvoiceFactory(object):
                 if not self.logged_throttle_error:
                     log_accounting_error(str(e))
                     self.logged_throttle_error = True
+
+            if invoice.get_flagged_pay_annually_prepay_invoice() and record.should_send_email:
+                # todo: send notification email to ops
+                pass
         else:
             record.skipped_email = True
             record.save()
