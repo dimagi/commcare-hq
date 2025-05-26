@@ -47,13 +47,13 @@ class BulkEditSessionTest(TestCase):
         cls.form_xmlns = 'http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF'
 
     def test_has_no_active_case_session(self):
-        active_session = BulkEditSession.get_active_case_session(
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, self.case_type
         )
         self.assertIsNone(active_session)
 
     def test_has_no_active_form_session(self):
-        active_session = BulkEditSession.get_active_form_session(
+        active_session = BulkEditSession.objects.active_form_session(
             self.django_user, self.domain_name, self.form_xmlns
         )
         self.assertIsNone(active_session)
@@ -69,7 +69,7 @@ class BulkEditSessionTest(TestCase):
 
     def test_has_active_case_session(self):
         BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        active_session = BulkEditSession.get_active_case_session(
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, self.case_type
         )
         self.assertIsNotNone(active_session)
@@ -79,7 +79,7 @@ class BulkEditSessionTest(TestCase):
 
     def test_has_no_active_case_session_other_type(self):
         BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        active_session = BulkEditSession.get_active_case_session(
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, 'other'
         )
         self.assertIsNone(active_session)
@@ -88,7 +88,7 @@ class BulkEditSessionTest(TestCase):
         case_session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         case_session.committed_on = datetime.datetime.now()
         case_session.save()
-        active_session = BulkEditSession.get_active_case_session(
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, self.case_type
         )
         self.assertIsNone(active_session)
@@ -98,7 +98,7 @@ class BulkEditSessionTest(TestCase):
         case_session.committed_on = datetime.datetime.now()
         case_session.completed_on = datetime.datetime.now()
         case_session.save()
-        active_session = BulkEditSession.get_active_case_session(
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, self.case_type
         )
         self.assertIsNone(active_session)
