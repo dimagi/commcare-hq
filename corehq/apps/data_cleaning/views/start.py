@@ -39,7 +39,7 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
         next_action = 'validate_session'
         if form.is_valid():
             case_type = form.cleaned_data['case_type']
-            active_session = BulkEditSession.get_active_case_session(
+            active_session = BulkEditSession.objects.active_case_session(
                 request.user, self.domain, case_type
             )
             if not active_session:
@@ -66,7 +66,7 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
             case_type = form.cleaned_data['case_type']
             next_step = form.cleaned_data['next_step']
             get_session = {
-                'resume': lambda: BulkEditSession.get_active_case_session(
+                'resume': lambda: BulkEditSession.objects.active_case_session(
                     request.user, self.domain, case_type
                 ),
                 'new': lambda: BulkEditSession.restart_case_session(
