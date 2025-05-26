@@ -282,7 +282,7 @@ class BulkEditRecordChangesTest(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
+        self.session = BulkEditSession.objects.new_case_session(
             self.user, self.domain_name, self.case_type
         )
         factory = CaseFactory(domain=self.domain_name)

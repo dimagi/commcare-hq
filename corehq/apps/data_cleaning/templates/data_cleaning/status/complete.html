@@ -12,7 +12,7 @@
   {% blocktrans count count=num_records_changed %}
     Finished processing changes, updated 1 case.
   {% plural %}
-    Finished processing changes, updated {{ num_records_changed }} cases.
+    Finished processing changes, updated {{ count }} cases.
   {% endblocktrans %}
   {# prettier-ignore-end #}
 {% endblock task-status-text %}

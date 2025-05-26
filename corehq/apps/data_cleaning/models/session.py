@@ -17,6 +17,64 @@ MAX_SESSION_CHANGES = 200
 APPLY_CHANGES_WAIT_TIME = 3  # seconds
 
 
+class BulkEditSessionManager(models.Manager):
+    def _get_active_session(self, user, domain_name, identifier, session_type):
+        try:
+            return self.get(
+                user=user,
+                domain=domain_name,
+                identifier=identifier,
+                session_type=session_type,
+                committed_on=None,
+                completed_on=None,
+            )
+        except self.model.DoesNotExist:
+            return None
+
+    def active_case_session(self, user, domain_name, case_type):
+        return self._get_active_session(user, domain_name, case_type, BulkEditSessionType.CASE)
+
+    def active_form_session(self, user, domain_name, xmlns):
+        return self._get_active_session(user, domain_name, xmlns, BulkEditSessionType.FORM)
+
+    def _get_recent_session(self, user, domain_name, session_type):
+        return self.filter(
+            user=user,
+            domain=domain_name,
+            session_type=session_type,
+        ).order_by('-created_on').first()
+
+    def recent_case_session(self, user, domain_name):
+        return self._get_recent_session(user, domain_name, BulkEditSessionType.CASE)
+
+    def recent_form_session(self, user, domain_name):
+        return self._get_recent_session(user, domain_name, BulkEditSessionType.FORM)
+
+    def new_case_session(self, user, domain_name, case_type, is_default=True):
+        case_session = self.create(
+            user=user,
+            domain=domain_name,
+            identifier=case_type,
+            session_type=BulkEditSessionType.CASE,
+        )
+        if is_default:
+            case_session.pinned_filters.create_session_defaults(case_session)
+            case_session.columns.create_session_defaults(case_session)
+        return case_session
+
+    def new_form_session(self, user, domain_name, xmlns):
+        raise NotImplementedError("Form bulk edit sessions are not yet supported!")
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def restart_case_session(self, user, domain_name, case_type):
+        previous_session = self.active_case_session(user, domain_name, case_type)
+        if previous_session:
+            previous_session.delete()
+        new_session = self.new_case_session(user, domain_name, case_type)
+        return new_session
+
+
 class BulkEditSession(models.Model):
     user = models.ForeignKey(User, related_name="bulk_edit_sessions", on_delete=models.CASCADE)
     domain = models.CharField(max_length=255, db_index=True)
@@ -33,57 +91,10 @@ class BulkEditSession(models.Model):
     result = models.JSONField(null=True, blank=True)
     completed_on = models.DateTimeField(null=True, blank=True)
 
+    objects = BulkEditSessionManager()
+
     class Meta:
         ordering = ["-created_on"]
-
-    @classmethod
-    def get_active_case_session(cls, user, domain_name, case_type):
-        return cls._get_active_session(user, domain_name, case_type, BulkEditSessionType.CASE)
-
-    @classmethod
-    def get_active_form_session(cls, user, domain_name, xmlns):
-        return cls._get_active_session(user, domain_name, xmlns, BulkEditSessionType.FORM)
-
-    @classmethod
-    def _get_active_session(cls, user, domain_name, identifier, session_type):
-        try:
-            return cls.objects.get(
-                user=user,
-                domain=domain_name,
-                identifier=identifier,
-                session_type=session_type,
-                committed_on=None,
-                completed_on=None,
-            )
-        except cls.DoesNotExist:
-            return None
-
-    @classmethod
-    def new_case_session(cls, user, domain_name, case_type, is_default=True):
-        case_session = cls.objects.create(
-            user=user,
-            domain=domain_name,
-            identifier=case_type,
-            session_type=BulkEditSessionType.CASE,
-        )
-        if is_default:
-            case_session.pinned_filters.create_session_defaults(case_session)
-            case_session.columns.create_session_defaults(case_session)
-        return case_session
-
-    @classmethod
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    def restart_case_session(cls, user, domain_name, case_type):
-        with transaction.atomic():
-            previous_session = cls.get_active_case_session(user, domain_name, case_type)
-            if previous_session:
-                previous_session.delete()
-            new_session = cls.new_case_session(user, domain_name, case_type)
-        return new_session
-
-    @classmethod
-    def new_form_session(cls, user, domain_name, xmlns):
-        raise NotImplementedError("Form bulk edit sessions are not yet supported!")
 
     @classmethod
     def get_committed_sessions(cls, user, domain_name):
@@ -94,7 +105,7 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name).order_by('-created_on')
 
     def get_resumed_session(self):
-        new_session = self.new_case_session(
+        new_session = BulkEditSession.objects.new_case_session(
             self.user,
             self.domain,
             self.identifier,
