@@ -47,6 +47,10 @@ from memoized import memoized
 from PIL import Image
 
 from corehq import privileges
+from corehq.apps.accounting.const import (
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
+    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
+)
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
@@ -1933,7 +1937,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     and self.current_subscription.is_below_minimum_subscription
                 ):
                     new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
-                    new_sub_date_end = new_sub_date_start + relativedelta(years=1) if self.is_annual_plan else None
+                    new_sub_date_end = (
+                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+                        if self.is_annual_plan else None
+                    )
                     self.current_subscription.update_subscription(
                         date_start=self.current_subscription.date_start,
                         date_end=new_sub_date_start
@@ -1952,7 +1959,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     )
                 else:
                     new_sub_date_start = datetime.date.today()
-                    new_sub_date_end = new_sub_date_start + relativedelta(years=1) if self.is_annual_plan else None
+                    new_sub_date_end = (
+                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+                        if self.is_annual_plan else None
+                    )
                     self.current_subscription.change_plan(
                         self.plan_version,
                         date_end=new_sub_date_end,
@@ -1982,7 +1992,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         duration = relativedelta(date_end, date_start)
         num_months = getattr(duration, 'years', 0) * 12  # todo: support other subscription lengths
         amount = monthly_fee * num_months
-        date_due = max(date_start, datetime.date.today() + datetime.timedelta(days=15))
+        date_due = max(date_start,
+                       datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
 
         email_list = self.cleaned_data['email_list']
         contact_emails = [email_list[0]]
