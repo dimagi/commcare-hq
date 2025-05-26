@@ -106,7 +106,7 @@
 +      height: $table-loading-spinner-size;
 +      $_offset: $table-loading-spinner-size / 2;
 +      left: calc(50% - $_offset);
-+      top: calc(50% - $_offset);
++      top: 10%;
 +    }
 +
 +    .table-loading-progress {
