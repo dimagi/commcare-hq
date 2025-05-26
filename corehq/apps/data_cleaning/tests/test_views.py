@@ -94,7 +94,7 @@ class CleanCasesViewAccessTest(TestCase):
             role_with_permission,
         )
         cls.client = Client()
-        session = BulkEditSession.new_case_session(
+        session = BulkEditSession.objects.new_case_session(
             cls.user_in_domain.get_django_user(), cls.domain_name, 'plants',
         )
         cls.real_session_id = session.session_id
