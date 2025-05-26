@@ -194,6 +194,7 @@ def make_web_user_dict(user, location_cache, domain):
         'role': role_name,
         'location_code': location_codes,
         'status': gettext('Active User') if user.is_active else gettext('Inactive User'),
+        'is_active_in_domain': str(user.is_active_in_domain(domain) if user.is_active else ''),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
@@ -325,7 +326,7 @@ def parse_web_users(domain, user_filters, owner, task=None, total_count=None):
 
     user_headers = [
         'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
-        'last_login (read only)', 'status', 'remove'
+        'last_login (read only)', 'status', 'is_active_in_domain', 'remove'
     ]
     user_headers.extend(user_data_contributor.get_headers())
     if domain_has_privilege(domain, privileges.LOCATIONS):
