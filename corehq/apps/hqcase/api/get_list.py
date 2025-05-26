@@ -1,4 +1,5 @@
 from base64 import b64decode, b64encode
+from urllib.parse import unquote
 
 from django.http import QueryDict
 
@@ -95,7 +96,8 @@ COMPOUND_FILTERS = {
 
 def get_list(domain, couch_user, params):
     if 'cursor' in params:
-        params_string = b64decode(params['cursor']).decode('utf-8')
+        url_decoded_cursor = unquote(params['cursor'])
+        params_string = b64decode(url_decoded_cursor).decode('utf-8')
         params = QueryDict(params_string, mutable=True)
         # QueryDict.pop() returns a list
         last_date = params.pop(INDEXED_AFTER, [None])[0]
