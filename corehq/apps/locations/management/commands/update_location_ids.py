@@ -60,11 +60,12 @@ def get_case_block_text(case_es_hit, new_location_id):
     """
     Returns a case block to update a case with its new location ID.
     """
+    update = {'settlement_id': new_location_id}
+    if case_es_hit['type'] == 'household':
+        update['choose_settlement'] = new_location_id
     return CaseBlock(
         create=False,
         case_id=case_es_hit['_id'],
         owner_id=new_location_id,
-        update={
-            'settlement_id': new_location_id,
-        },
+        update=update,
     ).as_text()
