@@ -43,7 +43,7 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
                 request.user, self.domain, case_type
             )
             if not active_session:
-                new_session = BulkEditSession.new_case_session(
+                new_session = BulkEditSession.objects.new_case_session(
                     request.user, self.domain, case_type
                 )
                 return self.render_session_redirect(new_session)
