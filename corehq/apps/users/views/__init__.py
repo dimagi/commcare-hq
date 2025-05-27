@@ -879,6 +879,8 @@ def paginate_web_users(request, domain):
             'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
                 domain, u.username
             ),
+            'deactivateUrl': '',
+            'reactivateUrl': '',
         }
         # Omit option to deactivate/reactivate for a domain if user access is controlled by an IdentityProvider
         if IdentityProvider.get_required_identity_provider(u.username) is None:
@@ -888,11 +890,9 @@ def paginate_web_users(request, domain):
                         reverse('deactivate_web_user', args=[domain, u.user_id])
                         if request.user.username != u.username else None
                     ),
-                    'reactivateUrl': '',
                 })
             else:
                 user.update({
-                    'deactivateUrl': '',
                     'reactivateUrl': (
                         reverse('reactivate_web_user', args=[domain, u.user_id])
                         if request.user.username != u.username else None
@@ -992,8 +992,11 @@ def undo_remove_web_user(request, domain, record_id):
 @location_safe
 def deactivate_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
-    user.deactivate(domain, changed_by=request.couch_user)
-    messages.success(request, 'You have successfully deactivated {username}.'.format(username=user.username))
+    if user:
+        if not user_can_access_other_user(domain, request.couch_user, user):
+            return HttpResponse(status=401)
+        user.deactivate(domain, changed_by=request.couch_user)
+        messages.success(request, 'You have successfully deactivated {username}.'.format(username=user.username))
     return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
 
 
@@ -1003,8 +1006,11 @@ def deactivate_web_user(request, domain, couch_user_id):
 @location_safe
 def reactivate_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
-    user.reactivate(domain, changed_by=request.couch_user)
-    messages.success(request, 'You have successfully reactivated {username}.'.format(username=user.username))
+    if user:
+        if not user_can_access_other_user(domain, request.couch_user, user):
+            return HttpResponse(status=401)
+        user.reactivate(domain, changed_by=request.couch_user)
+        messages.success(request, 'You have successfully reactivated {username}.'.format(username=user.username))
     return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
 
 

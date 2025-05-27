@@ -67,17 +67,13 @@ def select(request, do_not_redirect=False, next_view=None):
                 request.couch_user.is_member_of(domain_obj, allow_enterprise=True)
                 or (request.user.is_superuser and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
+                and not (request.couch_user.is_web_user()
+                         and not request.couch_user.is_superuser
+                         and not request.couch_user.is_active_in_domain(last_visited_domain))
             ):
-                redirect_last_domain = True
-                if (
-                    request.couch_user.is_web_user() and not request.couch_user.is_superuser
-                    and not request.couch_user.is_active_in_domain(last_visited_domain)
-                ):
-                    redirect_last_domain = False
                 try:
-                    if redirect_last_domain:
-                        return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
-                                                            args=[last_visited_domain]))
+                    return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
+                                                        args=[last_visited_domain]))
                 except Http404:
                     pass
 
