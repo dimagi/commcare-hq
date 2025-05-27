@@ -750,8 +750,9 @@ class MultiMembershipMixin(_AuthorizableMixin):
 
     @memoized
     def is_active_in_domain(self, domain):
-        if self.get_domain_membership(domain):
-            return self.get_domain_membership(domain).is_active
+        domain_membership = self.get_domain_membership(domain)
+        if domain_membership:
+            return domain_membership.is_active
         return False
 
 
