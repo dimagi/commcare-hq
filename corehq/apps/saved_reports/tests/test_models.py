@@ -5,6 +5,7 @@ from smtplib import SMTPSenderRefused
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODE
 from unittest.mock import create_autospec, patch, PropertyMock, ANY
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports import views
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.saved_reports import models
@@ -141,6 +142,23 @@ class TestRecipientsByLanguage(TestCase):
 
         recipients_by_language = report.recipients_by_language
         self.assertEqual(recipients_by_language, {'en': ['test@dimagi.com']})
+
+    def test_omit_deactivated_web_users(self):
+        report = self._create_report_for_emails('deactivate@dimagi.com')
+        self._establish_user_languages([])
+        domain = Domain(name="test_domain", is_active=True)
+        domain.save()
+        self.addCleanup(domain.delete)
+
+        web_user = WebUser.create(domain.name, 'deactivate@dimagi.com', 'secret', None, None)
+        self.addCleanup(web_user.delete, domain.name, deleted_by=None)
+        recipients = report.recipients_by_language
+        self.assertEqual(recipients, {'en': ['deactivate@dimagi.com']})
+
+        new_report = self._create_report_for_emails('deactivate@dimagi.com')
+        web_user.deactivate(domain.name, web_user)
+        empty_recipients = new_report.recipients_by_language
+        self.assertEqual(empty_recipients, {})
 
     def setUp(self):
         owner_patcher = patch.object(ReportNotification, 'owner_email', new_callable=PropertyMock)

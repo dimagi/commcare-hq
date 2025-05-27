@@ -11,7 +11,8 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from corehq.apps.domain.tests.test_utils import delete_all_domains
-from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users, get_all_web_users_by_domain
+from corehq.apps.users.models import UserHistory
 
 
 class TestDomainUserHistory(BaseInvoiceTestCase):
@@ -119,6 +120,29 @@ class TestBillingAccountWebUserHistory(TestCase):
         # Should only have users from both domain_2
         self.assertEqual(standard_users, 2)
 
+    def test_remove_deactivated_web_user(self):
+        # A web user with no history of domain_membership.is_active changes in the past month
+        # will be removed from the count
+        domain, user = self._get_domain_user_from_account()
+        domain_membership = user.get_domain_membership(domain)  # deactivating without logging
+        domain_membership.is_active = False
+        user.save()
+
+        tasks.calculate_web_users_in_all_billing_accounts()
+        standard_users = BillingAccountWebUserHistory.objects.get(billing_account=self.account_standard).num_users
+        self.assertEqual(standard_users, 1)
+
+    def test_dont_remove_recently_deactivated_user(self):
+        # A web user with domain_membership.is_active changes in the past month will be included in the count
+        domain, user = self._get_domain_user_from_account()
+        user.deactivate(domain, user)
+        tasks.calculate_web_users_in_all_billing_accounts()
+        standard_users = BillingAccountWebUserHistory.objects.get(billing_account=self.account_standard).num_users
+        self.assertEqual(standard_users, 2)
+
+        user.reactivate(domain, user)
+        UserHistory.objects.all().delete()
+
     def test_mobile_workers_are_not_counted(self):
         generator.arbitrary_commcare_users_for_domain(self.domain_3.name, 3)
         tasks.calculate_web_users_in_all_billing_accounts()
@@ -126,6 +150,12 @@ class TestBillingAccountWebUserHistory(TestCase):
 
         # Should only have users from both domain_2
         self.assertEqual(standard_users, 2)
+
+    def _get_domain_user_from_account(self):
+        domain = self.account_standard.get_domains()[0]
+        web_users = get_all_web_users_by_domain(domain)
+        for u in web_users:
+            return domain, u
 
     @classmethod
     def tearDownClass(cls):
