@@ -20,19 +20,19 @@ Prepayment Invoice
 
 
 Billing Account Information
-  Account name: {{ billing_account.name }}>
-  Contracted vs. Self-service: {{ billing_account.entry_point }}>
-  Dimagi Contact: {{ billing_account.dimagi_contact }}>
+  Account name: {{ billing_account.name }}
+  Contracted vs. Self-service: {{ billing_account.entry_point }}
+  Dimagi Contact: {{ billing_account.dimagi_contact }}
   Billing Contacts: {{ billing_account.billingcontactinfo.email_list }}
 
 
 Subscription
-  Software Plan: {{ subscription.plan_version }}>
-  Subscription Type: {{ subscription.service_type }}>
-  Start Date: {{ subscription.date_start }}>
-  End Date:{{ subscription.date_end }}>
-  Do not invoice: {{ subscription.do_not_invoice }}>
-  Auto generate credits: {{ subscription.auto_generate_credits }}>
+  Software Plan: {{ subscription.plan_version }}
+  Subscription Type: {{ subscription.service_type }}
+  Start Date: {{ subscription.date_start }}
+  End Date: {{ subscription.date_end }}
+  Do not invoice: {{ subscription.do_not_invoice }}
+  Auto generate credits: {{ subscription.auto_generate_credits }}
 
 
 You can view the project space here: {{ domain_url }}
