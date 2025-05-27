@@ -41,7 +41,7 @@ from corehq.apps.domain.auth import (
     get_username_and_password_from_request,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, show_deactivated_notice
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.sso.utils.request_helpers import (
     is_request_blocked_from_viewing_domain_due_to_sso,
@@ -109,10 +109,7 @@ def login_and_domain_required(view_func):
         if couch_user.is_member_of(domain_obj, allow_enterprise=True):
             if (couch_user.is_web_user() and not couch_user.is_superuser
                and not couch_user.is_active_in_domain(domain_name)):
-                return TemplateResponse(request=req,
-                                        template='domain/bootstrap3/deactivated_notice.html',
-                                        status=403,
-                                        context={'domain': domain})
+                return show_deactivated_notice(req, domain)
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req,
                                         template='two_factor/core/bootstrap3/otp_required.html',

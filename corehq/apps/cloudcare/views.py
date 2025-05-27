@@ -71,6 +71,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.domain.utils import show_deactivated_notice
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
@@ -104,6 +105,9 @@ class FormplayerMain(View):
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
+        user = request.couch_user
+        if user and user.is_web_user() and not user.get_domain_membership(request.domain).is_active:
+            return show_deactivated_notice(request, request.domain)
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app_fn(self):
