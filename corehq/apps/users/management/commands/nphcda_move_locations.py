@@ -124,12 +124,7 @@ class Settlement(NamedTuple):
     def get_location(self) -> SQLLocation:
         if self.location_id:
             return get_location_by_id(self.domain, self.location_id)
-        state_code = self.get_state_code()
-        state = get_location_by_code(self.domain, state_code, COUNTRY_ID)
-        lga_code = self.get_lga_code()
-        lga = get_location_by_code(self.domain, lga_code, state.location_id)
-        ward_code = self.get_ward_code()
-        ward = get_location_by_code(self.domain, ward_code, lga.location_id)
+        ward = self.get_ward()
         settlement_code = self.get_settlement_code()
         return get_location_by_code(
             self.domain,
@@ -137,6 +132,14 @@ class Settlement(NamedTuple):
             ward.location_id,
             self.get_site_code(),
         )
+
+    def get_ward(self):
+        state_code = self.get_state_code()
+        state = get_location_by_code(self.domain, state_code, COUNTRY_ID)
+        lga_code = self.get_lga_code()
+        lga = get_location_by_code(self.domain, lga_code, state.location_id)
+        ward_code = self.get_ward_code()
+        return get_location_by_code(self.domain, ward_code, lga.location_id)
 
     def get_state_code(self):
         return get_code(self.state_name)
@@ -196,6 +199,7 @@ class Command(BaseCommand):
         parser.add_argument('-x', '--input-xls', type=str)
         parser.add_argument('--verbose', action='store_true')
         parser.add_argument('--dry-run', action='store_true')
+        parser.add_argument('--pre-check', action='store_true')
 
     def handle(self, domain, *args, **options):
         global verbose
@@ -215,6 +219,11 @@ class Command(BaseCommand):
 
         verbose = options['verbose']
         dry_run = options['dry_run']
+
+        if options['pre_check']:
+            pre_check(all_settlement_pairs)
+            self.stdout.write(self.style.SUCCESS('OK'))
+            return
 
         with submit_case_block_coro(
             CASEBLOCK_CHUNKSIZE,
@@ -298,7 +307,28 @@ def load_sheet(domain: str, sheet: SheetProto) -> Iterator[SettlementPair]:
             location_id=sheet.cell_value(rowx=row, colx=10) or None,
         )
         if old_settlement or new_settlement:  # Row is not blank
+            if verbose:
+                print(f'Processing {old_settlement!r}')
             yield SettlementPair(old_settlement, new_settlement)
+
+
+def pre_check(settlement_pairs: Iterator[SettlementPair]) -> None:
+    errors = []
+    for old_settlement, new_settlement in settlement_pairs:
+        if old_settlement.location_id in location_cache:
+            errors.append(f'{old_settlement} has already been processed')
+        try:
+            # Check old location exists
+            old_settlement.get_location()
+        except Exception as err:
+            errors.append(f'Current location {old_settlement!r}: {err}')
+        try:
+            # Check spelling of parent locations
+            new_settlement.get_ward()
+        except Exception as err:
+            errors.append(f'New location {new_settlement!r} ward: {err}')
+    if errors:
+        raise CommandError('\n'.join(errors))
 
 
 def get_location_by_code(
@@ -419,25 +449,7 @@ def move_settlement(
         if verbose:
             print(f'Moving {new_settlement} to {new_settlement.lga_name}, '
                   f'{new_settlement.ward_name}')
-        state_code = new_settlement.get_state_code()
-        state = get_location_by_code(
-            new_settlement.domain,
-            state_code,
-            COUNTRY_ID,
-        )
-        lga_code = new_settlement.get_lga_code()
-        lga = get_location_by_code(
-            new_settlement.domain,
-            lga_code,
-            state.location_id,
-        )
-        ward_code = new_settlement.get_ward_code()
-        ward = get_location_by_code(
-            new_settlement.domain,
-            ward_code,
-            lga.location_id,
-        )
-        location.parent = ward
+        location.parent = new_settlement.get_ward()
 
     location.site_code = new_settlement.get_site_code()
     if not dry_run:
