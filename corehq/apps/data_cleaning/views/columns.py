@@ -1,4 +1,3 @@
-import json
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 from django.views.generic import TemplateView
@@ -32,12 +31,14 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
         return context
 
     def _trigger_clean_form_refresh(self, response):
-        response['HX-Trigger'] = json.dumps({
-            'dcEditFormRefresh': {
-                'target': '#hq-hx-edit-selected-records-form',
+        return self.add_hx_trigger_to_response(
+            response,
+            {
+                "dcEditFormRefresh": {
+                    "target": "#hq-hx-edit-selected-records-form",
+                },
             },
-        })
-        return response
+        )
 
     @hq_hx_action('post')
     def add_column(self, request, *args, **kwargs):

@@ -1,5 +1,3 @@
-import json
-
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -66,15 +64,17 @@ class EditCasesTableView(BulkEditSessionViewMixin,
     def clear_filters(self, request, *args, **kwargs):
         self.session.reset_filtering()
         response = self.get(request, *args, **kwargs)
-        response['HX-Trigger'] = json.dumps({
-            'dcPinnedFilterRefresh': {
-                'target': '#hq-hx-pinned-filters',
+        return self.add_hx_trigger_to_response(
+            response,
+            {
+                "dcPinnedFilterRefresh": {
+                    "target": "#hq-hx-pinned-filters",
+                },
+                "dcFilterRefresh": {
+                    "target": "#hq-hx-active-filters",
+                },
             },
-            'dcFilterRefresh': {
-                'target': '#hq-hx-active-filters',
-            },
-        })
-        return response
+        )
 
     @hq_hx_action('post')
     def select_record(self, request, *args, **kwargs):
@@ -121,12 +121,14 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         ):
             self.session.select_all_records_in_queryset()
             return response
-        response['HX-Trigger'] = json.dumps({
-            'showDataCleaningModal': {
-                'target': '#select-all-not-possible-modal',
+        return self.add_hx_trigger_to_response(
+            response,
+            {
+                "showDataCleaningModal": {
+                    "target": "#select-all-not-possible-modal",
+                },
             },
-        })
-        return response
+        )
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
@@ -136,12 +138,14 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             self.session.save()
             commit_data_cleaning.delay(self.session.session_id)
         response = self.render_htmx_no_response(request, *args, **kwargs)
-        response['HX-Trigger'] = json.dumps({
-            'dcRefreshStatusModal': {
-                'target': '#session-status-modal-body',
+        return self.add_hx_trigger_to_response(
+            response,
+            {
+                "dcRefreshStatusModal": {
+                    "target": "#session-status-modal-body",
+                },
             },
-        })
-        return response
+        )
 
     @hq_hx_action("post")
     def undo_last_change(self, request, *args, **kwargs):
@@ -158,12 +162,14 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         )
 
     def _trigger_clean_form_refresh(self, response):
-        response['HX-Trigger'] = json.dumps({
-            'dcEditFormRefresh': {
-                'target': '#hq-hx-edit-selected-records-form',
+        return self.add_hx_trigger_to_response(
+            response,
+            {
+                "dcEditFormRefresh": {
+                    "target": "#hq-hx-edit-selected-records-form",
+                },
             },
-        })
-        return response
+        )
 
     def _render_table_cell_response(self, doc_id, column, request, *args, **kwargs):
         """
@@ -184,12 +190,14 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         response = self.render_htmx_partial_response(
             request, EditableHtmxColumn.template_name, context
         )
-        response['HX-Trigger'] = json.dumps({
-            "updateChanges": {
-                "hasChanges": self.session.has_changes(),
+        return self.add_hx_trigger_to_response(
+            response,
+            {
+                "updateChanges": {
+                    "hasChanges": self.session.has_changes(),
+                },
             },
-        })
-        return response
+        )
 
     def _get_cell_request_details(self, request):
         """

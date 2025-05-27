@@ -1,5 +1,3 @@
-import json
-
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
@@ -99,11 +97,14 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         if self.session.is_read_only:
-            response['HX-Trigger'] = json.dumps({
-                'showDataCleaningModal': {
-                    'target': '#session-status-modal',
+            return self.add_hx_trigger_to_response(
+                response,
+                {
+                    "showDataCleaningModal": {
+                        "target": "#session-status-modal",
+                    },
                 },
-            })
+            )
         return response
 
     @hq_hx_action('get')
