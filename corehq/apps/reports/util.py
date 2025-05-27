@@ -384,12 +384,16 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, recipient, link, subject=None, domain=None):
+def send_report_download_email(title, recipient, link, subject=None, domain=None, limit=None):
     if subject is None:
         subject = _("%s: Requested export excel data") % title
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
+
+    if limit:
+        body += f"<br><br>This download is limited to {limit:,d} rows. " \
+                "If you need to export more than this, please use filters to create multiple exports."
 
     send_HTML_email(
         subject,

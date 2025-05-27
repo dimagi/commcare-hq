@@ -10,13 +10,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.9'
+          version: '0.7.2'
       - name: Install docs requirements
-        run: pip install -r requirements/docs-requirements.txt
+        run: uv sync --group=docs --no-group=sso --locked --compile-bytecode --no-progress
       - name: Test docs build
-        run: bash ./scripts/test-make-docs.sh
+        run: |
+          source .venv/bin/activate
+          ./scripts/test-make-docs.sh
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4

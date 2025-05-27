@@ -1,2 +1,0 @@
--r base-requirements.in
--r sso-requirements.in  # these are split out because they are hard to install on readthedocs

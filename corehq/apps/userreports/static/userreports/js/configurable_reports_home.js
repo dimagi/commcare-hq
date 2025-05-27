@@ -1,7 +1,7 @@
 import "commcarehq";
 import $ from "jquery";
 import _ from "underscore";
-import DOMPurify from "DOMPurify";
+import DOMPurify from "dompurify";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "select2/dist/js/select2.full.min";
 

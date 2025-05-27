@@ -10,8 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2025-05-02 16:52+0000\n"
 "Last-Translator: Amit Phulera by OpenAI <devops@dimagi.com>\n"
-"Language-Team: Italian (http://app.transifex.com/dimagi/commcare-hq/language/"
-"ita/)\n"
+"Language-Team: Italian (http://app.transifex.com/dimagi/commcare-hq/language/ita/)\n"
 "Language: ita\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -71,76 +70,78 @@ msgstr "Mettere in pausa l'abbonamento?"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
-"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
-"Edition Plan subscription to be paused on <strong> <%- date %> </strong></"
-"p><p>If you have questions or if you would like to speak to us about your "
-"subscription, please reach out to <a href='mailto: <%- invoicingContact "
-"%>'><%- invoicingContact %></a>.</p>"
-msgstr ""
-"<p>Tutti gli abbonamenti CommCare richiedono un impegno minimo di 30 giorni."
-"</p><p>Proseguendo potrai programmare la sospensione del tuo attuale "
-"abbonamento <%- oldPlan %> Edition Plan in data <strong> <%- date %> </"
-"strong></p><p>Se hai domande o desideri parlare con noi del tuo abbonamento, "
-"contatta <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></"
-"a>.</p>"
-
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js
-msgid ""
-"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to "
-"be paused on <strong> <%- date %> </strong></p><p>Continuing ahead will "
-"allow you to schedule your current <%- oldPlan %> Edition Plan subscription "
-"to be downgraded to the <%- newPlan %> Edition Plan on <strong> <%- date %> "
-"</strong></p><p>If you have questions or if you would like to speak to us "
-"about your subscription, please reach out to <a href='mailto: <%- "
+"<p>All CommCare subscriptions require a 30 day minimum "
+"commitment.</p><p>Continuing ahead will allow you to schedule your current "
+"<%- oldPlan %> Edition Plan subscription to be paused on <strong> <%- date "
+"%> </strong></p><p>If you have questions or if you would like to speak to us"
+" about your subscription, please reach out to <a href='mailto: <%- "
 "invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
-"<p>Tutti gli abbonamenti CommCare richiedono un impegno minimo di 30 giorni."
-"</p><p>Il tuo attuale abbonamento <%- oldPlan %> Edition Plan è programmato "
-"per essere sospeso in data <strong> <%- date %> </strong></p><p>Proseguendo "
-"potrai programmare il downgrade del tuo attuale abbonamento <%- oldPlan %> "
-"Edition Plan al piano <%- newPlan %> Edition Plan in data <strong> <%- date "
-"%> </strong></p><p>Se hai domande o desideri parlare con noi del tuo "
+"<p>Tutti gli abbonamenti CommCare richiedono un impegno minimo di 30 "
+"giorni.</p><p>Proseguendo potrai programmare la sospensione del tuo attuale "
+"abbonamento <%- oldPlan %> Edition Plan in data <strong> <%- date %> "
+"</strong></p><p>Se hai domande o desideri parlare con noi del tuo "
 "abbonamento, contatta <a href='mailto: <%- invoicingContact %>'><%- "
 "invoicingContact %></a>.</p>"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
-"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to "
-"be downgraded to the <%- nextSubscription %> Edition Plan on <strong> <%- "
-"date %> </strong></p><p>Continuing ahead will allow you to schedule your "
-"current <%- oldPlan %> Edition Plan subscription to be downgraded to the <%- "
-"newPlan %> Edition Plan on <strong> <%- date %> </strong></p><p>If you have "
-"questions or if you would like to speak to us about your subscription, "
-"please reach out to <a href='mailto: <%- invoicingContact %>'><%- "
-"invoicingContact %></a>.</p>"
+"<p>All CommCare subscriptions require a 30 day minimum "
+"commitment.</p><p>Your current <%- oldPlan %> Edition Plan subscription is "
+"scheduled to be paused on <strong> <%- date %> </strong></p><p>Continuing "
+"ahead will allow you to schedule your current <%- oldPlan %> Edition Plan "
+"subscription to be downgraded to the <%- newPlan %> Edition Plan on <strong>"
+" <%- date %> </strong></p><p>If you have questions or if you would like to "
+"speak to us about your subscription, please reach out to <a href='mailto: "
+"<%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
-"<p>Tutti gli abbonamenti CommCare richiedono un impegno minimo di 30 giorni."
-"</p><p>Il tuo attuale abbonamento <%- oldPlan %> Edition Plan è programmato "
-"per essere declassato al piano <%- nextSubscription %> Edition Plan in data "
-"<strong> <%- date %> </strong></p><p>Proseguendo potrai programmare il "
-"downgrade del tuo attuale abbonamento <%- oldPlan %> Edition Plan al piano "
-"<%- newPlan %> Edition Plan in data <strong> <%- date %> </strong></p><p>Se "
-"hai domande o desideri parlare con noi del tuo abbonamento, contatta <a "
-"href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+"<p>Tutti gli abbonamenti CommCare richiedono un impegno minimo di 30 "
+"giorni.</p><p>Il tuo attuale abbonamento <%- oldPlan %> Edition Plan è "
+"programmato per essere sospeso in data <strong> <%- date %> "
+"</strong></p><p>Proseguendo potrai programmare il downgrade del tuo attuale "
+"abbonamento <%- oldPlan %> Edition Plan al piano <%- newPlan %> Edition Plan"
+" in data <strong> <%- date %> </strong></p><p>Se hai domande o desideri "
+"parlare con noi del tuo abbonamento, contatta <a href='mailto: <%- "
+"invoicingContact %>'><%- invoicingContact %></a>.</p>"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
-"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
-"Edition Plan subscription to be downgraded to the <%- newPlan %> Edition "
-"Plan on <strong> <%- date %> </strong></p>If you have questions or if you "
-"would like to speak to us about your subscription, please reach out to <a "
-"href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+"<p>All CommCare subscriptions require a 30 day minimum "
+"commitment.</p><p>Your current <%- oldPlan %> Edition Plan subscription is "
+"scheduled to be downgraded to the <%- nextSubscription %> Edition Plan on "
+"<strong> <%- date %> </strong></p><p>Continuing ahead will allow you to "
+"schedule your current <%- oldPlan %> Edition Plan subscription to be "
+"downgraded to the <%- newPlan %> Edition Plan on <strong> <%- date %> "
+"</strong></p><p>If you have questions or if you would like to speak to us "
+"about your subscription, please reach out to <a href='mailto: <%- "
+"invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
-"<p>Tutti gli abbonamenti CommCare richiedono un impegno minimo di 30 giorni."
-"</p><p>Proseguendo potrai programmare il downgrade del tuo attuale "
-"abbonamento <%- oldPlan %> Edition Plan al piano <%- newPlan %> Edition Plan "
-"in data <strong> <%- date %> </strong></p>Se hai domande o desideri parlare "
-"con noi del tuo abbonamento, contatta <a href='mailto: <%- invoicingContact "
-"%>'><%- invoicingContact %></a>."
+"<p>Tutti gli abbonamenti CommCare richiedono un impegno minimo di 30 "
+"giorni.</p><p>Il tuo attuale abbonamento <%- oldPlan %> Edition Plan è "
+"programmato per essere declassato al piano <%- nextSubscription %> Edition "
+"Plan in data <strong> <%- date %> </strong></p><p>Proseguendo potrai "
+"programmare il downgrade del tuo attuale abbonamento <%- oldPlan %> Edition "
+"Plan al piano <%- newPlan %> Edition Plan in data <strong> <%- date %> "
+"</strong></p><p>Se hai domande o desideri parlare con noi del tuo "
+"abbonamento, contatta <a href='mailto: <%- invoicingContact %>'><%- "
+"invoicingContact %></a>.</p>"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum "
+"commitment.</p><p>Continuing ahead will allow you to schedule your current "
+"<%- oldPlan %> Edition Plan subscription to be downgraded to the <%- newPlan"
+" %> Edition Plan on <strong> <%- date %> </strong></p>If you have questions "
+"or if you would like to speak to us about your subscription, please reach "
+"out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact "
+"%></a>."
+msgstr ""
+"<p>Tutti gli abbonamenti CommCare richiedono un impegno minimo di 30 "
+"giorni.</p><p>Proseguendo potrai programmare il downgrade del tuo attuale "
+"abbonamento <%- oldPlan %> Edition Plan al piano <%- newPlan %> Edition Plan"
+" in data <strong> <%- date %> </strong></p>Se hai domande o desideri parlare"
+" con noi del tuo abbonamento, contatta <a href='mailto: <%- invoicingContact"
+" %>'><%- invoicingContact %></a>."
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Free edition"
@@ -235,7 +236,6 @@ msgstr "Questo tipo di caso è stato deprecato nel Dizionario Dati."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add"
 msgstr "Aggiungi"
 
@@ -257,8 +257,8 @@ msgstr "Cos'è un Menu Sondaggio?"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid ""
-"Surveys are used to collect independent forms that do not need to be tracked "
-"over time. Common examples include satisfaction surveys or anonymous "
+"Surveys are used to collect independent forms that do not need to be tracked"
+" over time. Common examples include satisfaction surveys or anonymous "
 "feedback forms."
 msgstr ""
 "I sondaggi vengono utilizzati per raccogliere moduli indipendenti che non "
@@ -276,9 +276,9 @@ msgid ""
 "examples include maternal health, student attendance, or crop monitoring."
 msgstr ""
 "Le Liste Casi vengono utilizzate per registrare e tracciare dati correlati "
-"(casi) nel tempo. Questi dati possono essere richiamati in altri moduli e da "
-"altri casi. Esempi comuni includono salute materna, presenza degli studenti "
-"o monitoraggio delle colture."
+"(casi) nel tempo. Questi dati possono essere richiamati in altri moduli e da"
+" altri casi. Esempi comuni includono salute materna, presenza degli studenti"
+" o monitoraggio delle colture."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Select None"
@@ -324,7 +324,6 @@ msgstr "Opzioni Tabella di Riferimento"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lookup Table"
 msgstr "Tabella di Riferimento"
 
@@ -349,7 +348,6 @@ msgid "Tab Name"
 msgstr "Nome Scheda"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display Condition"
 msgstr "Condizione di Visualizzazione"
 
@@ -531,7 +529,6 @@ msgid "Plain"
 msgstr "Semplice"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Date"
 msgstr "Data"
 
@@ -580,7 +577,6 @@ msgid "Picture"
 msgstr "Immagine"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Audio"
 msgstr "Audio"
 
@@ -597,7 +593,6 @@ msgid "Translatable Text"
 msgstr "Testo traducibile"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Image"
 msgstr "Immagine"
 
@@ -669,7 +664,8 @@ msgstr "ID di riferimento al genitore richiesto per i sottocasi: "
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
-"Il sottocaso deve essere nello stesso contesto di ripetizione del genitore \""
+"Il sottocaso deve essere nello stesso contesto di ripetizione del genitore "
+"\""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Select parent"
@@ -724,7 +720,8 @@ msgstr "All'interno della ripetizione sbagliata!"
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
 msgid "Parent property references not allowed for subcases"
 msgstr ""
-"I riferimenti alle proprietà del genitore non sono consentiti per i sottocasi"
+"I riferimenti alle proprietà del genitore non sono consentiti per i "
+"sottocasi"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
 msgid "Two properties load to the same question"
@@ -739,6 +736,8 @@ msgid "You have unchanged user properties settings"
 msgstr "Hai impostazioni delle proprietà utente non modificate"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "Property uses unrecognized prefix <strong>"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La proprietà utilizza un prefisso non riconosciuto <strong>"
 
@@ -793,7 +792,6 @@ msgid "Datum ID"
 msgstr "ID dato"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath Expression"
 msgstr "Espressione XPath"
 
@@ -921,8 +919,8 @@ msgid ""
 "This value is currently inherited from the master app. Once this page is "
 "saved, it will no longer be inherited."
 msgstr ""
-"Questo valore è attualmente ereditato dall'app principale. Una volta salvata "
-"questa pagina, non sarà più ereditato."
+"Questo valore è attualmente ereditato dall'app principale. Una volta salvata"
+" questa pagina, non sarà più ereditato."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
 msgid "You have unsaved settings."
@@ -967,7 +965,6 @@ msgid "Form"
 msgstr "Modulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Question"
 msgstr "Domanda"
 
@@ -976,7 +973,6 @@ msgid "Name"
 msgstr "Nome"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Label"
 msgstr "Etichetta"
 
@@ -1001,7 +997,6 @@ msgid "Display condition"
 msgstr "Condizione di visualizzazione"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Required"
 msgstr "Obbligatorio"
 
@@ -1010,17 +1005,14 @@ msgid "Question Comment"
 msgstr "Commento sulla domanda"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Default Value"
 msgstr "Valore predefinito"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Condition"
 msgstr "Condizione di validazione"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Comment"
 msgstr "Commento"
 
@@ -1105,917 +1097,87 @@ msgstr "La lingua compare due volte"
 msgid "This conflicts with a current language"
 msgstr "Questo è in conflitto con una lingua attuale"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Questions"
-msgstr "Domande"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copy"
-msgstr "Copia"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expand All"
-msgstr "Espandi tutto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Collapse All"
-msgstr "Comprimi tutto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Bulk Update All Questions"
-msgstr "Aggiorna in blocco tutte le domande"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Question"
-msgstr "Aggiungi domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Click {btn} to start building your form."
-msgstr "Fai clic su {btn} per iniziare a costruire il modulo."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question Details"
-msgstr "Dettagli della domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expression Editor"
-msgstr "Editor di espressioni"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot Change Question Type"
-msgstr "Impossibile cambiare il tipo di domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Change Question Type To"
-msgstr "Cambia tipo di domanda in"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-msgid "Delete"
-msgstr "Elimina"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show"
-msgstr "Mostra"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Used By"
-msgstr "Usato da"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "In Property"
-msgstr "Nella proprietà"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
-msgid "Search..."
-msgstr "Cerca..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No match for {info} found!"
-msgstr "Nessuna corrispondenza trovata per {info}!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple matches for {info} found!"
-msgstr "Trovate più corrispondenze per {info}!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
-msgid "key"
-msgstr "chiave"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
-msgid "value"
-msgstr "valore"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Key&rarr;Value Pair"
-msgstr "Aggiungi Coppia Chiave&rarr;Valore"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "show in question list"
-msgstr "mostra nell'elenco delle domande"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date Format Options"
-msgstr "Opzioni Formato Data"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Formatting"
-msgstr "Nessuna formattazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Invalid XPath expression."
-msgstr "Espressione XPath non valida."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {property} for a question is not allowed to reference the question "
-"itself. Please remove the . from the {property} or your form will have "
-"errors."
-msgstr ""
-"La {property} di una domanda non può fare riferimento alla domanda stessa. "
-"Rimuovi il . dalla {property} o il modulo avrà degli errori."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown question:"
-msgstr "Domanda sconosciuta:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown questions:"
-msgstr "Domande sconosciute:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "no formatting"
-msgstr "nessuna formattazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
-msgid "Custom"
-msgstr "Personalizzato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} is required."
-msgstr "{question} è obbligatorio."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} is not allowed."
-msgstr "{question} non è consentito."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} validation failed"
-msgstr "Validazione di {question} non riuscita"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown (read-only) question type"
-msgstr "Tipo di domanda sconosciuto (sola lettura)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup Table Data"
-msgstr "Dati Tabella di Ricerca"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Translation Data"
-msgstr "Nessun Dato di Traduzione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question ID"
-msgstr "ID Domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The ID '{nodeID}' may cause problems with form parsing. It is recommended to "
-"pick a different Question ID."
-msgstr ""
-"L'ID '{nodeID}' potrebbe causare problemi nell'analisi del modulo. Si "
-"consiglia di scegliere un altro ID Domanda."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"{nodeID} is not a valid Question ID. It must start with a letter and contain "
-"only letters, numbers, and '-' or '_' characters."
-msgstr ""
-"{nodeID} non è un ID Domanda valido. Deve iniziare con una lettera e "
-"contenere solo lettere, numeri e i caratteri '-' o '_'."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "'meta' is not a valid Question ID."
-msgstr "'meta' non è un ID Domanda valido."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Making this change will create a new Question ID (and a new column in "
-"exports)."
-msgstr ""
-"Questa modifica creerà un nuovo ID Domanda (e una nuova colonna nelle "
-"esportazioni)."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This question has the same Question ID as another question in the same "
-"group. Please choose a unique Question ID."
-msgstr ""
-"Questa domanda ha lo stesso ID Domanda di un'altra domanda nello stesso "
-"gruppo. Scegli un ID Domanda univoco."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Data Value"
-msgstr "Valore Dati Predefinito"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Special Hidden Value XMLNS attribute"
-msgstr "Attributo XMLNS Valore Nascosto Speciale"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Data Attributes"
-msgstr "Attributi Dati Extra"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Calculate Condition"
-msgstr "Condizione di Calcolo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You cannot have a Validation Error Message with no Validation Condition!"
-msgstr ""
-"Non puoi avere un Messaggio di Errore di Validazione senza una Condizione di "
-"Validazione!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Error Message"
-msgstr "Messaggio di Errore di Validazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Required Condition"
-msgstr "Condizione Obbligatoria"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The condition will be ignored unless you mark the question required."
-msgstr ""
-"La condizione verrà ignorata a meno che tu non segni la domanda come "
-"obbligatoria."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Bind Attributes"
-msgstr "Attributi Bind Extra"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are referencing a node in this form. This can cause errors in the form"
-msgstr ""
-"Stai facendo riferimento a un nodo in questo modulo. Questo può causare "
-"errori nel modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Appearance Attribute"
-msgstr "Attributo Aspetto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Display Text"
-msgstr "Testo di Visualizzazione Predefinito"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Display Text is required"
-msgstr "Il Testo di Visualizzazione Predefinito è obbligatorio"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Display Text"
-msgstr "Testo Suggerimento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Control Attributes"
-msgstr "Attributi di Controllo Extra"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Raw XML"
-msgstr "XML Grezzo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Data Parent"
-msgstr "Genitore Dati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be valid path"
-msgstr "Deve essere un percorso valido"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} non è un genitore dati valido"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Data parent of question in repeat group must be (in) the same repeat group"
-msgstr ""
-"Il genitore dati della domanda in un gruppo ripetuto deve essere (nel)lo "
-"stesso gruppo ripetuto"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "Create"
+msgid "createXML"
+msgstr "Crea"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hidden Value"
-msgstr "Valore Nascosto"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "User Data"
+msgid "getData"
+msgstr "Dati utente"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Text"
-msgstr "Testo"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Phone Number or Numeric ID"
-msgstr "Numero di Telefono o ID Numerico"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/motech/static/motech/js/connection_settings_detail.js
-msgid "Password"
-msgstr "Password"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Integer"
-msgstr "Intero"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Audio Capture"
-msgstr "Acquisizione audio"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image Capture"
-msgstr "Acquisizione immagine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image Size"
-msgstr "Dimensione immagine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Small"
-msgstr "Piccola"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Medium"
-msgstr "Media"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Large"
-msgstr "Grande"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Original"
-msgstr "Originale"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This will resize the image before sending the form. Use this option to send "
-"smaller images in areas of poor connectivity.<ul><li>Small - 0.1 megapixels</"
-"li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 megapixels</li></ul>"
-msgstr ""
-"Questa opzione ridimensionerà l'immagine prima di inviare il modulo. Usa "
-"questa opzione per inviare immagini più piccole in aree con connettività "
-"scarsa.<ul><li>Piccola - 0,1 megapixel</li><li>Media - 0,2 megapixel</"
-"li><li>Grande - 0,5 megapixel</li></ul>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Micro-Image"
-msgstr "Micro-immagine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Video Capture"
-msgstr "Acquisizione video"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Signature Capture"
-msgstr "Acquisizione firma"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Document Upload"
-msgstr "Caricamento documento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "GPS"
-msgstr "GPS"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Barcode Scan"
-msgstr "Scansione codice a barre"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date and Time"
-msgstr "Data e ora"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
-msgid "Time"
-msgstr "Ora"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Long"
-msgstr "Lungo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Decimal"
-msgstr "Decimale"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Choice"
-msgstr "Scelta"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Choice Value"
-msgstr "Valore scelta"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Whitespace in values is not allowed."
-msgstr "Gli spazi nei valori non sono consentiti."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "This choice value has been used in the same question"
-msgstr "Questo valore di scelta è già stato usato nella stessa domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Cannot change a Multiple/Single Choice question to a non-Choice question if "
-"it has Choices. Please remove all Choices and try again."
-msgstr ""
-"Non è possibile cambiare una domanda a scelta multipla/singola in una "
-"domanda non a scelta se contiene delle scelte. Rimuovi tutte le scelte e "
-"riprova."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Checkbox"
-msgstr "Casella di controllo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple Choice"
-msgstr "Scelta multipla"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Group"
-msgstr "Gruppo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question List"
-msgstr "Elenco domande"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Group"
-msgstr "Gruppo ripetuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Count"
-msgstr "Conteggio ripetizioni"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Count is required."
-msgstr "Il conteggio ripetizioni è obbligatorio."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Repeat Attributes"
-msgstr "Attributi extra di ripetizione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You have deleted a question."
-msgstr "Hai eliminato una domanda."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Undo"
-msgstr "Annulla"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Warning: {errs} is still referenced by other questions."
-msgid_plural "Warning: {errs} are still referenced by other questions."
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
 msgid "New Form"
 msgstr "Nuovo modulo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Bind Node [{path}] found but has no associated Data node. This bind node "
-"will be discarded!"
-msgstr ""
-"Nodo Bind [{path}] trovato ma non ha un nodo Dati associato. Questo nodo "
-"bind verrà scartato!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Not Found"
-msgstr "Non trovato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"{type} nodes cannot be used in an output value. Please remove the output "
-"value for '{path}' or your form will have errors."
-msgstr ""
-"I nodi di tipo {type} non possono essere usati in un valore di output. "
-"Rimuovi il valore di output per '{path}' o il modulo avrà degli errori."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {field} for a question is not allowed to reference the question itself. "
-"Please remove the {ref} from the {field} or your form will have errors."
-msgstr ""
-"Il campo {field} di una domanda non può fare riferimento alla domanda "
-"stessa. Rimuovi {ref} dal campo {field} o il modulo avrà degli errori."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "output value"
-msgstr "valore di output"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Failed"
-msgstr "Validazione non riuscita"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Please fix the error before leaving this page:"
-msgstr "Correggi l'errore prima di lasciare questa pagina:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
-msgstr "Modifica <span class='property-name'>Espressione</span> (Avanzato)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show Simple Mode"
-msgstr "Mostra modalità semplice"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are currently in Advanced Mode because your logic is too complicated for "
-"Simple Mode."
-msgstr ""
-"Attualmente sei in modalità avanzata perché la tua logica è troppo complessa "
-"per la modalità semplice."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You can drag a question into the box."
-msgstr "Puoi trascinare una domanda nella casella."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Guide to Common Logic and Calculations"
-msgstr "Guida alla logica e ai calcoli comuni"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit <span class='property-name'>Expression</span>"
-msgstr "Modifica <span class='property-name'>Espressione</span>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show Advanced Mode"
-msgstr "Mostra Modalità Avanzata"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Result is"
-msgstr "Il risultato è"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expression"
-msgstr "Espressione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Expression"
-msgstr "Aggiungi Espressione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
-msgid "Save"
-msgstr "Salva"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "Cancel"
-msgstr "Annulla"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
 msgstr "Trascina qui la domanda"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is equal to"
 msgstr "è uguale a"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is not equal to"
 msgstr "non è uguale a"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is less than"
 msgstr "è minore di"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is less than or equal to"
 msgstr "è minore o uguale a"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is greater than"
 msgstr "è maggiore di"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is greater than or equal to"
 msgstr "è maggiore o uguale a"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "has selected value"
 msgstr "ha il valore selezionato"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ALL of the expressions are true."
 msgstr "Vero quando TUTTE le espressioni sono vere."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ANY of the expressions are true."
 msgstr "Vero quando QUALSIASI delle espressioni è vera."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Error"
-msgstr "Errore"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Command Bar"
+msgstr "Barra dei comandi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Warning"
-msgstr "Avviso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Warning"
-msgstr "Avviso del Modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Notification"
-msgstr "Notifica"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Holding the ALT key while clicking save invokes an inefficient save "
-"procedure. Do this only if a normal save fails."
-msgstr ""
-"Tenere premuto il tasto ALT mentre si fa clic su salva avvia una procedura "
-"di salvataggio inefficiente. Fallo solo se il salvataggio normale fallisce."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Are you sure you want to exit? All unsaved changes will be lost!"
-msgstr ""
-"Sei sicuro di voler uscire? Tutte le modifiche non salvate andranno perse!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Look for questions marked with $1 and check they don't reference deleted "
-"questions."
-msgstr ""
-"Cerca le domande contrassegnate con $1 e verifica che non facciano "
-"riferimento a domande eliminate."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Errors in Form"
-msgstr "Errori nel Modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form has reference errors."
-msgstr "Il modulo contiene errori di riferimento."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Look for questions marked with $1 and fix the errors."
-msgstr "Cerca le domande contrassegnate con $1 e correggi gli errori."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form has validation errors."
-msgstr "Il modulo contiene errori di validazione."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
-msgstr "Acquisizione Multimediale"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Number"
-msgstr "Numero"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Groups"
-msgstr "Gruppi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Advanced"
-msgstr "Avanzato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Make Required"
-msgstr "Rendi Obbligatorio"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are about to make all existing questions on this form required. This "
-"action will overwrite the current configuration of this form and can only be "
-"undone by editing individual questions."
-msgstr ""
-"Stai per rendere obbligatorie tutte le domande esistenti in questo modulo. "
-"Questa azione sovrascriverà la configurazione attuale del modulo e potrà "
-"essere annullata solo modificando le singole domande."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Load Default Values"
-msgstr "Carica Valori Predefiniti"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are about to set matching case properties as Default Values for all "
-"existing questions. This action will overwrite existing Default Values for "
-"all questions with matching case properties and can only be undone by "
-"editing individual questions."
-msgstr ""
-"Stai per impostare le proprietà del caso corrispondenti come Valori "
-"Predefiniti per tutte le domande esistenti. Questa azione sovrascriverà i "
-"Valori Predefiniti esistenti per tutte le domande con proprietà del caso "
-"corrispondenti e potrà essere annullata solo modificando le singole domande."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Are you sure you want to perform this action?"
-msgstr "Sei sicuro di voler eseguire questa azione?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "Continua"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expand Editor"
-msgstr "Espandi Editor"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Shrink Editor"
-msgstr "Riduci Editor"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Export Form Contents"
-msgstr "Esporta Contenuto Modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Source XML"
-msgstr "Modifica XML Sorgente"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Properties"
-msgstr "Proprietà del Modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Find Usages"
-msgstr "Trova Utilizzi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation failed. Form may not perform correctly on your device!"
-msgstr ""
-"Validazione non riuscita. Il modulo potrebbe non funzionare correttamente "
-"sul tuo dispositivo!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Form's Source XML"
-msgstr "Modifica l'XML Sorgente del Modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Source"
-msgstr "Aggiorna Sorgente"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This is the raw XML. You can edit or paste into this box to make changes to "
-"your form. Press 'Update Source' to save changes, or 'Close' to cancel."
-msgstr ""
-"Questo è l'XML grezzo. Puoi modificarlo o incollarlo in questa casella per "
-"apportare modifiche al modulo. Premi 'Aggiorna Sorgente' per salvare le "
-"modifiche, oppure 'Chiudi' per annullare."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Copy and paste this content into a spreadsheet program like Excel to easily "
-"share your form with others."
-msgstr ""
-"Copia e incolla questo contenuto in un programma per fogli di calcolo come "
-"Excel per condividere facilmente il modulo con altri."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lost Work Warning"
-msgstr "Avviso di Lavoro Perso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Overwrite their work"
-msgstr "Sovrascrivi il loro lavoro"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show XML Differences"
-msgstr "Mostra le differenze XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Looks like someone else has edited this form since you loaded the page. Are "
-"you sure you want to overwrite their work?"
-msgstr ""
-"Sembra che qualcun altro abbia modificato questo modulo da quando hai "
-"caricato la pagina. Sei sicurə di voler sovrascrivere il loro lavoro?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Form Properties"
-msgstr "Modifica proprietà modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Disable Text Formatting"
-msgstr "Disabilita formattazione del testo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Easy References"
-msgstr "Usa riferimenti semplici"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use of each question"
-msgstr "Utilizzo di ogni domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
-msgid "Close"
-msgstr "Chiudi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsaved Changes in Editor"
-msgstr "Modifiche non salvate nell'editor"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You have UNSAVED changes in the Expression Editor. Please save changes "
-"before continuing."
-msgstr ""
-"Hai modifiche NON SALVATE nell'Editor di Espressioni. Salva le modifiche "
-"prima di continuare."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Parsing Error. Please check that your form is valid XML."
-msgstr "Errore di parsing. Controlla che il modulo sia un XML valido."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "OK"
-msgstr "OK"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Sorry, {err}"
-msgstr "Spiacente, {err}"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Choice"
-msgstr "Aggiungi scelta"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "and"
-msgstr "e"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "There are errors in the form"
-msgstr "Ci sono errori nel modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix Manually"
-msgstr "Correggi manualmente"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix Automatically"
-msgstr "Correggi automaticamente"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"It looks like your form is not valid XML. This can often happen if you use a "
-"reserved character in one of your questions. Characters to look out for are "
-"<, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
-"you fix the XML by hand. What would you like to do?"
-msgstr ""
-"Sembra che il tuo modulo non sia un XML valido. Questo può succedere spesso "
-"se usi un carattere riservato in una delle tue domande. I caratteri a cui "
-"prestare attenzione sono <, > e &. Puoi comunque salvare, ma NON POTRAI "
-"CARICARE QUESTO MODULO di nuovo finché non correggi l'XML manualmente. Cosa "
-"vuoi fare?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Validation Error"
-msgstr "Errore di validazione del modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix the problem (recommended)"
-msgstr "Correggi il problema (consigliato)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Save anyway"
-msgstr "Salva comunque"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Basic"
 msgstr "Base"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {displaytext} appears in the application. This text will not appear in "
-"data exports."
-msgstr ""
-"Il {displaytext} appare nell'applicazione. Questo testo non apparirà nelle "
-"esportazioni dei dati."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text"
-msgstr "Testo visualizzato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
-msgid "Data Source"
-msgstr "Fonte dati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You can configure an external data source like a case list or lookup table "
-"to use as the choices for a multiple choice question."
-msgstr ""
-"Puoi configurare una fonte dati esterna come una lista di casi o una tabella "
-"di ricerca da usare come scelte per una domanda a risposta multipla."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Logic"
 msgstr "Logica"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -2025,757 +1187,6 @@ msgstr ""
 "risposte sono valide. Puoi aggiungere logica per mostrare una domanda in "
 "base a una risposta precedente, rendere la domanda obbligatoria o "
 "assicurarti che la risposta sia in un intervallo valido."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Media"
-msgstr "Media"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This will allow you to add images, audio or video media to a question, or "
-"other custom content."
-msgstr ""
-"Questo ti permetterà di aggiungere immagini, audio o video a una domanda, o "
-"altri contenuti personalizzati."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"These are advanced settings and are not needed for most applications.  "
-"Please only change these if you have a specific need!"
-msgstr ""
-"Queste sono impostazioni avanzate e non sono necessarie per la maggior parte "
-"delle applicazioni. Cambiale solo se hai una necessità specifica!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This question represents advanced content that is not supported by the form "
-"builder. Please only change it if you have a specific need!"
-msgstr ""
-"Questa domanda rappresenta contenuti avanzati che non sono supportati dal "
-"generatore di moduli. Modificala solo se hai una necessità specifica!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Ignored XML"
-msgstr "XML ignorato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Android App Callout"
-msgstr "Chiamata app Android"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "External App"
-msgstr "App esterna"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Insert Android Application ID"
-msgstr "Inserisci ID applicazione Android"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "change your subscription"
-msgstr "modifica il tuo abbonamento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You no longer have access to built in or external integration in your "
-"application.\n"
-"\n"
-"Built in integrations are available on the Pro plan and higher. External "
-"integrations are available on the Advanced plan and higher. Before you can "
-"make a new version of your application, you must {link} or delete this "
-"question."
-msgstr ""
-"Non hai più accesso all'integrazione integrata o esterna nella tua "
-"applicazione.\n"
-"\n"
-"Le integrazioni integrate sono disponibili con il piano Pro e superiori. Le "
-"integrazioni esterne sono disponibili con il piano Advanced e superiori. "
-"Prima di poter creare una nuova versione della tua applicazione, devi {link} "
-"o eliminare questa domanda."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Your subscription only has access to built-in integration.\n"
-"\n"
-"External integrations are available on the Advanced plan and higher. Before "
-"you can make a new version of your application, you must {link} or delete "
-"this question."
-msgstr ""
-"Il tuo abbonamento consente solo l'accesso all'integrazione integrata.\n"
-"\n"
-"Le integrazioni esterne sono disponibili con il piano Advanced e superiori. "
-"Prima di poter creare una nuova versione della tua applicazione, devi {link} "
-"o eliminare questa domanda."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Android app callouts of the same type must have different question ids."
-msgstr ""
-"Le chiamate app Android dello stesso tipo devono avere ID domanda diversi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra"
-msgstr "Extra"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Response"
-msgstr "Risposta"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Special Intent XMLNS attribute"
-msgstr "Attributo XMLNS Special Intent"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Print"
-msgstr "Stampa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Document Template"
-msgstr "Modello di documento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Data Source"
-msgstr "Modifica fonte dati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Query Expression"
-msgstr "Espressione di query"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Optional Instance Properties"
-msgstr "Proprietà opzionali dell'istanza"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Instance ID"
-msgstr "ID istanza"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Instance URI"
-msgstr "URI istanza"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup table was not found in the project"
-msgstr "La tabella di ricerca non è stata trovata nel progetto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
-msgid "Loading..."
-msgstr "Caricamento..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You no longer have access to Lookup Tables in your application. Lookup "
-"Tables are available on the Standard plan and higher.\n"
-"Before you can make a new version of your application, you must {link} or "
-"delete this question"
-msgstr ""
-"Non hai più accesso alle Tabelle di Ricerca nella tua applicazione. Le "
-"Tabelle di Ricerca sono disponibili con il piano Standard e superiori.\n"
-"Prima di poter creare una nuova versione della tua applicazione, devi {link} "
-"o eliminare questa domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A data source must be selected."
-msgstr "È necessario selezionare una fonte dati."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text Field"
-msgstr "Campo Testo da Visualizzare"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Sort Field"
-msgstr "Campo di Ordinamento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Filter"
-msgstr "Filtro"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This is an XPath expression that will filter the set of choices from the "
-"lookup table"
-msgstr ""
-"Questa è un'espressione XPath che filtrerà l'insieme di scelte dalla tabella "
-"di ricerca"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup Tables"
-msgstr "Tabelle di Ricerca"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Checkbox Lookup Table"
-msgstr "Tabella di Ricerca a Casella di Selezione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Cannot change to Multiple/Single Choice question if it has Choices. Please "
-"remove all Choices and try again."
-msgstr ""
-"Non è possibile cambiare in domanda a Scelta Multipla/Singola se sono "
-"presenti Scelte. Rimuovi tutte le Scelte e riprova."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can only change to a Multiple Choice Lookup Table"
-msgstr "È possibile cambiare solo in una Tabella di Ricerca a Scelta Multipla"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple Choice Lookup Table"
-msgstr "Tabella di Ricerca a Scelta Multipla"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can only change to a Checkbox Lookup Table"
-msgstr ""
-"È possibile cambiare solo in una Tabella di Ricerca a Casella di Selezione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{attr} was not found in the lookup table"
-msgstr "{attr} non è stato trovato nella tabella di ricerca"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display"
-msgstr "Visualizza"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "auto?"
-msgstr "auto?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
-"use bulleted lists, and <a target='_blank' href='https://help.commcarehq.org/"
-"display/commcarepublic/Text+Formatting'>more</a>"
-msgstr ""
-"Usa la formattazione del testo per <strong>grassetto</strong> e <em>corsivo</"
-"em> delle parole, usa elenchi puntati e <a target='_blank' href='https://"
-"help.commcarehq.org/display/commcarepublic/Text+Formatting'>altro</a>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Turn Off Text Formatting"
-msgstr "Disattiva Formattazione Testo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Turn On Text Formatting"
-msgstr "Attiva Formattazione Testo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "custom..."
-msgstr "personalizzato..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "New Content Type"
-msgstr "Nuovo Tipo di Contenuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Content Type"
-msgstr "Tipo di Contenuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You have languages in your form that are not specified in the \"Languages\" "
-"page of the application builder. The following language will be deleted on "
-"save unless you add it to the \"Languages\" page:"
-msgstr ""
-"Hai lingue nel tuo modulo che non sono specificate nella pagina \"Lingue\" "
-"del costruttore dell'applicazione. La seguente lingua verrà eliminata al "
-"salvataggio a meno che tu non la aggiunga alla pagina \"Lingue\":"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} (or multimedia) is required."
-msgstr "{name} (o contenuto multimediale) è obbligatorio."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} (or multimedia) is required for all languages."
-msgstr "{name} (o contenuto multimediale) è obbligatorio per tutte le lingue."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} Itext ID is required."
-msgstr "ID Itext di {name} è obbligatorio."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} is not a valid ID."
-msgstr "{name} non è un ID valido."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia was not copied; it must be uploaded separately."
-msgstr ""
-"Il contenuto multimediale non è stato copiato; deve essere caricato "
-"separatamente."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Discarded languages:"
-msgstr "Lingue scartate:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Message"
-msgstr "Messaggio di Validazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can't have a Validation Message Itext ID without a Validation Condition"
-msgstr ""
-"Non è possibile avere un ID Itext del Messaggio di Validazione senza una "
-"Condizione di Validazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Message Itext ID"
-msgstr "ID Itext del Messaggio di Validazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Validation Media"
-msgstr "Aggiungi Media di Validazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text Itext ID"
-msgstr "ID Itext del Testo da Visualizzare"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Message"
-msgstr "Messaggio Suggerimento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Itext ID"
-msgstr "ID Itext del Suggerimento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Help Message"
-msgstr "Messaggio di Aiuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Help Itext ID"
-msgstr "ID Itext dell'Aiuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add New Item Button Text"
-msgstr "Testo del Pulsante Aggiungi Nuovo Elemento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add New Itext ID"
-msgstr "Aggiungi Nuovo ID Itext"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Another Item Button Text"
-msgstr "Testo del Pulsante Aggiungi un Altro Elemento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Another Itext ID"
-msgstr "Aggiungi un Altro ID Itext"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Other Content"
-msgstr "Aggiungi Altro Contenuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Multimedia"
-msgstr "Aggiungi Contenuto Multimediale"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Help Media"
-msgstr "Aggiungi Media di Aiuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Bulk Translations"
-msgstr "Modifica Traduzioni in Blocco"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Translations"
-msgstr "Aggiorna Traduzioni"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Copy these translations into a spreadsheet program like Excel. You can edit "
-"them there and then paste them back here when you're done. These will update "
-"the translations used in your form. Press 'Update Translations' to save "
-"changes, or 'Close' to cancel."
-msgstr ""
-"Copia queste traduzioni in un programma per fogli di calcolo come Excel. "
-"Puoi modificarle lì e poi incollarle nuovamente qui quando hai finito. "
-"Queste aggiorneranno le traduzioni usate nel tuo modulo. Premi 'Aggiorna "
-"Traduzioni' per salvare le modifiche, oppure 'Chiudi' per annullare."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "App Properties"
-msgstr "Proprietà dell'App"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Could not load app properties."
-msgstr "Impossibile caricare le proprietà dell'app."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "If this error persists, please report an issue."
-msgstr "Se questo errore persiste, si prega di segnalare un problema."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {questionid} is an internal identifier for a question. It does not "
-"appear on the phone. It is the name of the question in data exports."
-msgstr ""
-"Il {questionid} è un identificatore interno per una domanda. Non appare sul "
-"telefono. È il nome della domanda nelle esportazioni dei dati."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The date and time of the action, e.g., now() or today()"
-msgstr "La data e l'ora dell'azione, ad esempio, now() o today()"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Balance ID"
-msgstr "ID Saldo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The name of the balance you are tracking. This is an internal identifier "
-"which does not appear on the phone."
-msgstr ""
-"Il nome del saldo che stai monitorando. Questo è un identificatore interno "
-"che non appare sul telefono."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Product"
-msgstr "Prodotto"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
-msgstr ""
-"Un riferimento a un ID prodotto, ad esempio, \"/data/products/"
-"current_product\""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Quantity"
-msgstr "Quantità"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A reference to an integer question in this form."
-msgstr "Un riferimento a una domanda intera in questo modulo."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
-msgid "Case"
-msgstr "Caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID associated with this balance."
-msgstr "Espressione XPath per l'ID caso associato a questo saldo."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Transfer must have both Source Case and Destination Case defined."
-msgstr ""
-"Il trasferimento deve avere sia il Caso di Origine che il Caso di "
-"Destinazione definiti."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot change $1 to $2"
-msgstr "Impossibile cambiare $1 in $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Source Case"
-msgstr "Caso di Origine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID issuing the transaction."
-msgstr "Espressione XPath per l'ID caso che emette la transazione."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Destination Case"
-msgstr "Caso di Destinazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID receiving the transaction."
-msgstr "Espressione XPath per l'ID caso che riceve la transazione."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Dispense must have a Source Case."
-msgstr "L'erogazione deve avere un Caso di Origine."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Receive must have a Destination Case."
-msgstr "La ricezione deve avere un Caso di Destinazione."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Model Iteration ID Query"
-msgstr "Query ID Iterazione Modello"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Property Name"
-msgstr "Nome Proprietà"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
-msgid "Calculation"
-msgstr "Calcolo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relevant"
-msgstr "Rilevante"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship Identifier (e.g. parent or host)"
-msgstr "Identificatore di Relazione (ad es. parent o host)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Referenced Case ID"
-msgstr "ID Caso Referenziato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Referenced Case Type"
-msgstr "Tipo di Caso Referenziato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship (child or extension)"
-msgstr "Relazione (figlio o estensione)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Node Name"
-msgstr "Nome Nodo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Source"
-msgstr "Origine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "From"
-msgstr "Da"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachment Name"
-msgstr "Nome Allegato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Property"
-msgstr "Aggiungi Proprietà"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date Modified"
-msgstr "Data Modifica"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User ID"
-msgstr "ID Utente"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Case Type"
-msgstr "Tipo di Caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
-msgid "Case ID"
-msgstr "ID Caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Create Case"
-msgstr "Crea Caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Properties To Create"
-msgstr "Proprietà da Creare"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You must include {columns} columns to create a case"
-msgstr "Devi includere le colonne {columns} per creare un caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You can only use the following properties:"
-msgstr "Puoi utilizzare solo le seguenti proprietà:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{props} are invalid properties"
-msgstr "{props} sono proprietà non valide"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Close Case"
-msgstr "Chiudi Caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Close Condition"
-msgstr "Condizione di Chiusura"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Case"
-msgstr "Aggiorna Caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Properties To Update"
-msgstr "Proprietà da Aggiornare"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Index"
-msgstr "Usa Indice"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Index Properties"
-msgstr "Proprietà Indice"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship must be child or extension"
-msgstr "La relazione deve essere figlio o estensione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Attachments"
-msgstr "Usa Allegati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachment Properties"
-msgstr "Proprietà dell'allegato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The from attribute must be one of: local, remote, or inline"
-msgstr "L'attributo from deve essere uno tra: local, remote o inline"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Inlined attachments must have an attachment name"
-msgstr "Gli allegati in linea devono avere un nome allegato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
-msgid "Create"
-msgstr "Crea"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update"
-msgstr "Aggiorna"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Index"
-msgstr "Indice"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachments"
-msgstr "Allegati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "An error occurred when parsing bind node [{path}]. Please fix this."
-msgstr ""
-"Si è verificato un errore durante l'analisi del nodo bind [{path}]. Si prega "
-"di correggere."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Upload"
-msgstr "Carica"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Select new"
-msgstr "Seleziona nuovo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Select File"
-msgstr "Seleziona file"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Current"
-msgstr "Attuale"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Begin Upload"
-msgstr "Inizia caricamento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Replace"
-msgstr "Sostituisci"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Reference"
-msgstr "Nessun riferimento"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Advanced: Show Path"
-msgstr "Avanzate: Mostra percorso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hide Path"
-msgstr "Nascondi percorso"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Video"
-msgstr "Video"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Inline Video"
-msgstr "Video in linea"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "HTML"
-msgstr "HTML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copying and Pasting Questions"
-msgstr "Copia e incolla domande"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"These actions are available via the browser's Edit menu, and you can also "
-"use:"
-msgstr ""
-"Queste azioni sono disponibili tramite il menu Modifica del browser, e puoi "
-"anche usare:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "for copy"
-msgstr "per copiare"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "for paste"
-msgstr "per incollare"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copy from or Paste into this text box:"
-msgstr "Copia da o incolla in questa casella di testo:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Insert Questions"
-msgstr "Inserisci domande"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Selecting Multiple Questions"
-msgstr "Selezione multipla di domande"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hold {key} and click on each question."
-msgstr "Tieni premuto {key} e fai clic su ogni domanda."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Other Tips"
-msgstr "Altri suggerimenti"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Questions can be copied between forms, and even to other apps."
-msgstr "Le domande possono essere copiate tra moduli e anche in altre app."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert {type} into tree root"
-msgstr "Impossibile inserire {type} nella radice dell'albero"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert $1 into or after $2"
-msgstr "Impossibile inserire $1 in o dopo $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert $1 into $2"
-msgstr "Impossibile inserire $1 in $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsupported paste format"
-msgstr "Formato incolla non supportato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsupported paste format:"
-msgstr "Formato incolla non supportato:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown question type:"
-msgstr "Tipo di domanda sconosciuto:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter command"
-msgstr "Inserisci comando"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Command Bar"
-msgstr "Barra dei comandi"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -2852,8 +1263,8 @@ msgid ""
 "The file you selected exceeds the size limit of 4MB. Please select a file "
 "that is smaller than 4MB."
 msgstr ""
-"Il file selezionato supera il limite di dimensione di 4MB. Seleziona un file "
-"più piccolo di 4MB."
+"Il file selezionato supera il limite di dimensione di 4MB. Seleziona un file"
+" più piccolo di 4MB."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
@@ -2868,8 +1279,8 @@ msgid ""
 "Something unexpected went wrong on that request. If you have problems "
 "filling in the rest of your form please submit an issue. Technical Details: "
 msgstr ""
-"Si è verificato un errore imprevisto durante la richiesta. Se hai problemi a "
-"compilare il resto del modulo, invia una segnalazione. Dettagli tecnici: "
+"Si è verificato un errore imprevisto durante la richiesta. Se hai problemi a"
+" compilare il resto del modulo, invia una segnalazione. Dettagli tecnici: "
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid "You have been logged out because of inactivity."
@@ -2896,8 +1307,8 @@ msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
 msgstr ""
-"Un altro processo ci ha impedito di soddisfare la tua richiesta. Riprova più "
-"tardi."
+"Un altro processo ci ha impedito di soddisfare la tua richiesta. Riprova più"
+" tardi."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
@@ -2933,14 +1344,11 @@ msgstr "Non siamo riusciti a salvare questa risposta. Riprova più tardi."
 msgid ""
 "We’re unable to submit this form right now due to high system usage. \n"
 "\n"
-"Please keep this window open and try again in a minute, or come back to this "
-"form in Incomplete Forms later."
+"Please keep this window open and try again in a minute, or come back to this form in Incomplete Forms later."
 msgstr ""
-"Non possiamo inviare questo modulo in questo momento a causa dell'elevato "
-"utilizzo del sistema. \n"
+"Non possiamo inviare questo modulo in questo momento a causa dell'elevato utilizzo del sistema. \n"
 "\n"
-"Tieni aperta questa finestra e riprova tra un minuto, oppure torna a questo "
-"modulo in Moduli Incompleti più tardi."
+"Tieni aperta questa finestra e riprova tra un minuto, oppure torna a questo modulo in Moduli Incompleti più tardi."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "Form submission failed with error"
@@ -3001,8 +1409,8 @@ msgstr "Nascondi Menu Completo"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 msgid ""
-"You have selected a case in a different domain. App Preview does not support "
-"this feature."
+"You have selected a case in a different domain. App Preview does not support"
+" this feature."
 msgstr ""
 "Hai selezionato un caso in un dominio diverso. L'Anteprima App non supporta "
 "questa funzione."
@@ -3014,6 +1422,13 @@ msgid ""
 msgstr ""
 "Impossibile connettersi al servizio di esecuzione moduli. Segnala un "
 "problema se continui a vedere questo messaggio."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Loading..."
+msgstr "Caricamento..."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
 msgid "Fetching your location..."
@@ -3108,8 +1523,21 @@ msgid "Confirm?"
 msgstr "Confermare?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "OK"
+msgstr "OK"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Cancel"
+msgstr "Annulla"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Page <%- num %>"
 msgstr "Pagina <%- num %>"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Close"
+msgstr "Chiudi"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
@@ -3126,7 +1554,8 @@ msgstr "Dati utente sincronizzati con successo."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Could not clear user data. Please report an issue if this persists."
-msgstr "Impossibile cancellare i dati utente. Segnala un problema se persiste."
+msgstr ""
+"Impossibile cancellare i dati utente. Segnala un problema se persiste."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "User data successfully cleared."
@@ -3139,8 +1568,8 @@ msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
 msgid ""
-"Sorry, there was an problem contacting the server to fetch the data. Please, "
-"try again in a little bit."
+"Sorry, there was an problem contacting the server to fetch the data. Please,"
+" try again in a little bit."
 msgstr ""
 "Spiacenti, si è verificato un problema nel contattare il server per "
 "recuperare i dati. Riprova tra poco."
@@ -3184,8 +1613,8 @@ msgid ""
 "Help colleagues upload correct data into case properties by listing the "
 "valid values here."
 msgstr ""
-"Aiuta i colleghi a caricare dati corretti nelle proprietà dei casi elencando "
-"qui i valori validi."
+"Aiuta i colleghi a caricare dati corretti nelle proprietà dei casi elencando"
+" qui i valori validi."
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid "valid value"
@@ -3295,8 +1724,16 @@ msgstr "Trova Caso"
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "IDs can be found in a <a href=\"<%- url %>\">case data export</a>"
 msgstr ""
-"Gli ID possono essere trovati in una <a href=\"<%- url %>\">esportazione dei "
-"dati dei casi</a>"
+"Gli ID possono essere trovati in una <a href=\"<%- url %>\">esportazione dei"
+" dati dei casi</a>"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Case ID"
+msgstr "ID Caso"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Case found!"
@@ -3313,8 +1750,8 @@ msgstr "Trova Invio Modulo"
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "IDs can be found in a <a href=\"<%- url %>\">form data export</a>"
 msgstr ""
-"Gli ID possono essere trovati in una <a href=\"<%- url %>\">esportazione dei "
-"dati dei moduli</a>"
+"Gli ID possono essere trovati in una <a href=\"<%- url %>\">esportazione dei"
+" dati dei moduli</a>"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Could not find form submission"
@@ -3395,8 +1832,9 @@ msgid ""
 "the project space as a member in order to override your timezone."
 msgstr ""
 "Non puoi modificare il fuso orario di questo spazio di progetto perché hai "
-"accesso a questo spazio solo tramite un'Organizzazione. Devi essere aggiunto "
-"allo spazio di progetto come membro per poter modificare il tuo fuso orario."
+"accesso a questo spazio solo tramite un'Organizzazione. Devi essere aggiunto"
+" allo spazio di progetto come membro per poter modificare il tuo fuso "
+"orario."
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
@@ -3407,8 +1845,8 @@ msgid ""
 msgstr ""
 "Non consentire la registrazione di nuovi utenti su commcarehq.org. "
 "Potrebbero essere necessarie fino a un'ora per rendere effettiva la "
-"modifica. <br>Questo influenzerà gli utenti con indirizzi email dai seguenti "
-"domini: <strong><%- domains %></strong><br>Contatta <a href='mailto:<%- "
+"modifica. <br>Questo influenzerà gli utenti con indirizzi email dai seguenti"
+" domini: <strong><%- domains %></strong><br>Contatta <a href='mailto:<%- "
 "email %>'><%- email %></a> per modificare l'elenco dei domini."
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
@@ -3420,6 +1858,10 @@ msgstr "Ultimi 30 Giorni"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Month"
 msgstr "Mese Precedente"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Custom"
+msgstr "Personalizzato"
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
 msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
@@ -3513,8 +1955,8 @@ msgstr "File dati eliminato."
 #: corehq/apps/export/static/export/js/download_export.js
 msgid "Sorry, there was a problem reaching the server. Please try again."
 msgstr ""
-"Spiacente, si è verificato un problema nel raggiungere il server. Per favore "
-"riprova."
+"Spiacente, si è verificato un problema nel raggiungere il server. Per favore"
+" riprova."
 
 #: corehq/apps/export/static/export/js/download_export.js
 msgid "Server maintenance in progress. Please try again later."
@@ -3592,6 +2034,16 @@ msgstr ""
 "Tutti gli utenti possono modificare ed esportare."
 
 #: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Save"
+msgstr "Salva"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Create"
+msgstr "Crea"
+
+#: corehq/apps/export/static/export/js/models.js
 msgid "The table path should end with []"
 msgstr "Il percorso della tabella deve terminare con []"
 
@@ -3662,8 +2114,8 @@ msgid ""
 "Something went wrong processing <%- failedClusters %> groups. These groups "
 "will not be exported."
 msgstr ""
-"Si è verificato un errore nell'elaborazione di <%- failedClusters %> gruppi. "
-"Questi gruppi non saranno esportati."
+"Si è verificato un errore nell'elaborazione di <%- failedClusters %> gruppi."
+" Questi gruppi non saranno esportati."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
@@ -3746,6 +2198,12 @@ msgstr "utente attuale"
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Mobile Worker"
 msgstr "Lavoratore mobile"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Case"
+msgstr "Caso"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
@@ -4010,6 +2468,12 @@ msgstr "Riprova"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+msgid "Delete"
+msgstr "Elimina"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Deleting..."
 msgstr "Eliminazione in corso..."
 
@@ -4043,7 +2507,8 @@ msgstr "<%- num %> per pagina"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
-"Visualizzazione da <%- firstItem %> a <%- lastItem %> di <%- maxItems %> voci"
+"Visualizzazione da <%- firstItem %> a <%- lastItem %> di <%- maxItems %> "
+"voci"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
 msgid "No File selected"
@@ -4099,7 +2564,8 @@ msgstr "Rimuovi tutti"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
-msgstr "La tua password è troppo debole! Prova ad aggiungere numeri o simboli."
+msgstr ""
+"La tua password è troppo debole! Prova ad aggiungere numeri o simboli."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js
 msgid ""
@@ -4111,6 +2577,16 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid " to "
 msgstr " a "
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "key"
+msgstr "chiave"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "value"
+msgstr "valore"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
@@ -4133,6 +2609,11 @@ msgstr "Aggiungi elemento"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
 msgid "Click <strong>Edit</strong> to Add Values</span>"
 msgstr "Fai clic su <strong>Modifica</strong> per aggiungere valori</span>"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Calculation"
+msgstr "Calcolo"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
@@ -4341,7 +2822,8 @@ msgstr ""
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
 msgid "Your password is too weak! Try adding numbers or symbols!"
-msgstr "La tua password è troppo debole! Prova ad aggiungere numeri o simboli!"
+msgstr ""
+"La tua password è troppo debole! Prova ad aggiungere numeri o simboli!"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
@@ -4385,6 +2867,10 @@ msgstr "Per favore specifica."
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please list your organization or company name."
 msgstr "Per favore indica il nome della tua organizzazione o azienda."
+
+#: corehq/apps/registration/static/registration/js/user_login_form.js
+msgid "Continue"
+msgstr "Continua"
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
@@ -4495,9 +2981,9 @@ msgstr ""
 msgid ""
 "Problem Rendering Report. Our error monitoring tools have noticed this and "
 "we are working quickly to resolve this issue as soon as possible. We "
-"encourage you to contact CommCare HQ Support if this issue persists for more "
-"than a few minutes. We appreciate any additional information you can give us "
-"about this problem so we can fix it immediately."
+"encourage you to contact CommCare HQ Support if this issue persists for more"
+" than a few minutes. We appreciate any additional information you can give "
+"us about this problem so we can fix it immediately."
 msgstr ""
 "Problema nella generazione del report. I nostri strumenti di monitoraggio "
 "degli errori hanno rilevato il problema e stiamo lavorando rapidamente per "
@@ -4548,7 +3034,8 @@ msgstr "Non siamo riusciti a caricare il report:"
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/configurable_report.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/configurable_report.js
 msgid "You can email a saved version<br />of this report."
-msgstr "Puoi inviare una versione salvata<br />di questo report tramite email."
+msgstr ""
+"Puoi inviare una versione salvata<br />di questo report tramite email."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/case_details.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/case_details.js
@@ -4603,6 +3090,11 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "From Time"
 msgstr "Dall'ora"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "Time"
+msgstr "Ora"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
@@ -4755,8 +3247,8 @@ msgid ""
 "An error occured with the tableau server request, please ensure the server "
 "configuration is correct and try again."
 msgstr ""
-"Si è verificato un errore con la richiesta al server tableau, assicurati che "
-"la configurazione del server sia corretta e riprova."
+"Si è verificato un errore con la richiesta al server tableau, assicurati che"
+" la configurazione del server sia corretta e riprova."
 
 #: corehq/apps/reports/static/reports/v2/js/bootstrap3/datagrid.js
 #: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
@@ -4767,6 +3259,10 @@ msgstr "Salva filtri"
 #: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
 msgid "Export Data"
 msgstr "Esporta dati"
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
+msgid "Search..."
+msgstr "Cerca..."
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/columns.js
 msgid "Column Title"
@@ -4923,8 +3419,8 @@ msgid ""
 "This will pick the most common translations for your selected language. You "
 "can then edit them as needed."
 msgstr ""
-"Questo selezionerà le traduzioni più comuni per la lingua scelta. Potrai poi "
-"modificarle se necessario."
+"Questo selezionerà le traduzioni più comuni per la lingua scelta. Potrai poi"
+" modificarle se necessario."
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "You have unsaved user interface translations."
@@ -4936,8 +3432,8 @@ msgstr "Problema di formattazione dei parametri!"
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid ""
-"Autofill is not available in English (en). Please change your language using "
-"the dropdown in the top left."
+"Autofill is not available in English (en). Please change your language using"
+" the dropdown in the top left."
 msgstr ""
 "La compilazione automatica non è disponibile in inglese (en). Cambia lingua "
 "utilizzando il menu a tendina in alto a sinistra."
@@ -4988,25 +3484,26 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid ""
-"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
-"this if the property is a date.<br/><strong>Choice</strong>: Select this if "
-"the property is text or multiple choice."
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select"
+" this if the property is a date.<br/><strong>Choice</strong>: Select this if"
+" the property is text or multiple choice."
 msgstr ""
 "Che tipo di proprietà è questo filtro?<br/><br/><strong>Data</strong>: "
-"Seleziona questa opzione se la proprietà è una data.<br/><strong>Scelta</"
-"strong>: Seleziona questa opzione se la proprietà è testo o scelta multipla."
+"Seleziona questa opzione se la proprietà è una "
+"data.<br/><strong>Scelta</strong>: Seleziona questa opzione se la proprietà "
+"è testo o scelta multipla."
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid ""
-"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
-"this to filter the property by a date range.<br/><strong>Value</strong>: "
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select"
+" this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 "Che tipo di proprietà è questo filtro?<br/><br/><strong>Data</strong>: "
-"Seleziona questa opzione per filtrare la proprietà per intervallo di date."
-"<br/><strong>Valore</strong>: Seleziona questa opzione per filtrare la "
+"Seleziona questa opzione per filtrare la proprietà per intervallo di "
+"date.<br/><strong>Valore</strong>: Seleziona questa opzione per filtrare la "
 "proprietà per un singolo valore."
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
@@ -5048,6 +3545,10 @@ msgstr "statico"
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "deactivated"
 msgstr "disattivato"
+
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Data Source"
+msgstr "Fonte dati"
 
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
 msgid "Unknown error"
@@ -5273,8 +3774,8 @@ msgstr "Accedi a Messaggistica"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
-"<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update "
-"data. Specific APIs may require additional permissions."
+"<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update"
+" data. Specific APIs may require additional permissions."
 msgstr ""
 "<strong>Accedi alle API</strong> &mdash; usa le API di CommCare HQ per "
 "leggere e aggiornare i dati. Alcune API specifiche possono richiedere "
@@ -5388,8 +3889,8 @@ msgstr "Configurazioni collegate"
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to edit linked configurations on this project space"
 msgstr ""
-"Consenti al ruolo di modificare le configurazioni collegate in questo spazio "
-"progetto"
+"Consenti al ruolo di modificare le configurazioni collegate in questo spazio"
+" progetto"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Reports"
@@ -5535,8 +4036,8 @@ msgid ""
 "your organization is blocking emails from our address (<%- fromAddress %>)."
 msgstr ""
 "Abbiamo inviato l'email di invito a questo utente, ma il server di posta "
-"dell'utente l'ha rifiutata. Questo di solito significa che l'indirizzo email "
-"non è corretto oppure che la tua organizzazione sta bloccando le email "
+"dell'utente l'ha rifiutata. Questo di solito significa che l'indirizzo email"
+" non è corretto oppure che la tua organizzazione sta bloccando le email "
 "provenienti dal nostro indirizzo (<%- fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/web_users_list.js
@@ -5580,8 +4081,8 @@ msgid ""
 "hours. Restart this rule?"
 msgstr ""
 "Una regola dovrebbe essere riavviata solo se si ritiene che sia bloccata e "
-"non stia progredendo. Potrai riavviare questa regola solo una volta ogni due "
-"ore. Riavviare questa regola?"
+"non stia progredendo. Potrai riavviare questa regola solo una volta ogni due"
+" ore. Riavviare questa regola?"
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid ""
@@ -5713,19 +4214,13 @@ msgstr "Impossibile recuperare i tentativi"
 msgid "Failed to fetch payload"
 msgstr "Impossibile recuperare il payload"
 
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to send"
-msgstr "Invio non riuscito"
-
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed to cancel"
-msgstr "Annullamento non riuscito"
-
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Username"
 msgstr "Nome utente"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Password"
+msgstr "Password"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
@@ -5754,6 +4249,1162 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Questions"
+#~ msgstr "Domande"
+
+#~ msgid "Copy"
+#~ msgstr "Copia"
+
+#~ msgid "Expand All"
+#~ msgstr "Espandi tutto"
+
+#~ msgid "Collapse All"
+#~ msgstr "Comprimi tutto"
+
+#~ msgid "Bulk Update All Questions"
+#~ msgstr "Aggiorna in blocco tutte le domande"
+
+#~ msgid "Add Question"
+#~ msgstr "Aggiungi domanda"
+
+#~ msgid "Click {btn} to start building your form."
+#~ msgstr "Fai clic su {btn} per iniziare a costruire il modulo."
+
+#~ msgid "Question Details"
+#~ msgstr "Dettagli della domanda"
+
+#~ msgid "Expression Editor"
+#~ msgstr "Editor di espressioni"
+
+#~ msgid "Cannot Change Question Type"
+#~ msgstr "Impossibile cambiare il tipo di domanda"
+
+#~ msgid "Change Question Type To"
+#~ msgstr "Cambia tipo di domanda in"
+
+#~ msgid "Show"
+#~ msgstr "Mostra"
+
+#~ msgid "Used By"
+#~ msgstr "Usato da"
+
+#~ msgid "In Property"
+#~ msgstr "Nella proprietà"
+
+#~ msgid "No match for {info} found!"
+#~ msgstr "Nessuna corrispondenza trovata per {info}!"
+
+#~ msgid "Multiple matches for {info} found!"
+#~ msgstr "Trovate più corrispondenze per {info}!"
+
+#~ msgid "Add Key&rarr;Value Pair"
+#~ msgstr "Aggiungi Coppia Chiave&rarr;Valore"
+
+#~ msgid "show in question list"
+#~ msgstr "mostra nell'elenco delle domande"
+
+#~ msgid "Date Format Options"
+#~ msgstr "Opzioni Formato Data"
+
+#~ msgid "No Formatting"
+#~ msgstr "Nessuna formattazione"
+
+#~ msgid "Invalid XPath expression."
+#~ msgstr "Espressione XPath non valida."
+
+#~ msgid ""
+#~ "The {property} for a question is not allowed to reference the question "
+#~ "itself. Please remove the . from the {property} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "La {property} di una domanda non può fare riferimento alla domanda stessa. "
+#~ "Rimuovi il . dalla {property} o il modulo avrà degli errori."
+
+#~ msgid "Unknown question:"
+#~ msgstr "Domanda sconosciuta:"
+
+#~ msgid "Unknown questions:"
+#~ msgstr "Domande sconosciute:"
+
+#~ msgid "no formatting"
+#~ msgstr "nessuna formattazione"
+
+#~ msgid "{question} is required."
+#~ msgstr "{question} è obbligatorio."
+
+#~ msgid "{question} is not allowed."
+#~ msgstr "{question} non è consentito."
+
+#~ msgid "{question} validation failed"
+#~ msgstr "Validazione di {question} non riuscita"
+
+#~ msgid "Unknown (read-only) question type"
+#~ msgstr "Tipo di domanda sconosciuto (sola lettura)"
+
+#~ msgid "Lookup Table Data"
+#~ msgstr "Dati Tabella di Ricerca"
+
+#~ msgid "No Translation Data"
+#~ msgstr "Nessun Dato di Traduzione"
+
+#~ msgid "Question ID"
+#~ msgstr "ID Domanda"
+
+#~ msgid ""
+#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
+#~ " pick a different Question ID."
+#~ msgstr ""
+#~ "L'ID '{nodeID}' potrebbe causare problemi nell'analisi del modulo. Si "
+#~ "consiglia di scegliere un altro ID Domanda."
+
+#~ msgid ""
+#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
+#~ " only letters, numbers, and '-' or '_' characters."
+#~ msgstr ""
+#~ "{nodeID} non è un ID Domanda valido. Deve iniziare con una lettera e "
+#~ "contenere solo lettere, numeri e i caratteri '-' o '_'."
+
+#~ msgid "'meta' is not a valid Question ID."
+#~ msgstr "'meta' non è un ID Domanda valido."
+
+#~ msgid ""
+#~ "Making this change will create a new Question ID (and a new column in "
+#~ "exports)."
+#~ msgstr ""
+#~ "Questa modifica creerà un nuovo ID Domanda (e una nuova colonna nelle "
+#~ "esportazioni)."
+
+#~ msgid ""
+#~ "This question has the same Question ID as another question in the same "
+#~ "group. Please choose a unique Question ID."
+#~ msgstr ""
+#~ "Questa domanda ha lo stesso ID Domanda di un'altra domanda nello stesso "
+#~ "gruppo. Scegli un ID Domanda univoco."
+
+#~ msgid "Default Data Value"
+#~ msgstr "Valore Dati Predefinito"
+
+#~ msgid "Special Hidden Value XMLNS attribute"
+#~ msgstr "Attributo XMLNS Valore Nascosto Speciale"
+
+#~ msgid "Extra Data Attributes"
+#~ msgstr "Attributi Dati Extra"
+
+#~ msgid "Calculate Condition"
+#~ msgstr "Condizione di Calcolo"
+
+#~ msgid ""
+#~ "You cannot have a Validation Error Message with no Validation Condition!"
+#~ msgstr ""
+#~ "Non puoi avere un Messaggio di Errore di Validazione senza una Condizione di"
+#~ " Validazione!"
+
+#~ msgid "Validation Error Message"
+#~ msgstr "Messaggio di Errore di Validazione"
+
+#~ msgid "Required Condition"
+#~ msgstr "Condizione Obbligatoria"
+
+#~ msgid "The condition will be ignored unless you mark the question required."
+#~ msgstr ""
+#~ "La condizione verrà ignorata a meno che tu non segni la domanda come "
+#~ "obbligatoria."
+
+#~ msgid "Extra Bind Attributes"
+#~ msgstr "Attributi Bind Extra"
+
+#~ msgid ""
+#~ "You are referencing a node in this form. This can cause errors in the form"
+#~ msgstr ""
+#~ "Stai facendo riferimento a un nodo in questo modulo. Questo può causare "
+#~ "errori nel modulo"
+
+#~ msgid "Appearance Attribute"
+#~ msgstr "Attributo Aspetto"
+
+#~ msgid "Default Display Text"
+#~ msgstr "Testo di Visualizzazione Predefinito"
+
+#~ msgid "Default Display Text is required"
+#~ msgstr "Il Testo di Visualizzazione Predefinito è obbligatorio"
+
+#~ msgid "Hint Display Text"
+#~ msgstr "Testo Suggerimento"
+
+#~ msgid "Extra Control Attributes"
+#~ msgstr "Attributi di Controllo Extra"
+
+#~ msgid "Raw XML"
+#~ msgstr "XML Grezzo"
+
+#~ msgid "Data Parent"
+#~ msgstr "Genitore Dati"
+
+#~ msgid "Must be valid path"
+#~ msgstr "Deve essere un percorso valido"
+
+#~ msgid ""
+#~ "Data parent of question in repeat group must be (in) the same repeat group"
+#~ msgstr ""
+#~ "Il genitore dati della domanda in un gruppo ripetuto deve essere (nel)lo "
+#~ "stesso gruppo ripetuto"
+
+#~ msgid "Hidden Value"
+#~ msgstr "Valore Nascosto"
+
+#~ msgid "Text"
+#~ msgstr "Testo"
+
+#~ msgid "Phone Number or Numeric ID"
+#~ msgstr "Numero di Telefono o ID Numerico"
+
+#~ msgid "Integer"
+#~ msgstr "Intero"
+
+#~ msgid "Audio Capture"
+#~ msgstr "Acquisizione audio"
+
+#~ msgid "Image Capture"
+#~ msgstr "Acquisizione immagine"
+
+#~ msgid "Image Size"
+#~ msgstr "Dimensione immagine"
+
+#~ msgid "Small"
+#~ msgstr "Piccola"
+
+#~ msgid "Medium"
+#~ msgstr "Media"
+
+#~ msgid "Large"
+#~ msgstr "Grande"
+
+#~ msgid "Original"
+#~ msgstr "Originale"
+
+#~ msgid ""
+#~ "This will resize the image before sending the form. Use this option to send "
+#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+#~ "megapixels</li></ul>"
+#~ msgstr ""
+#~ "Questa opzione ridimensionerà l'immagine prima di inviare il modulo. Usa "
+#~ "questa opzione per inviare immagini più piccole in aree con connettività "
+#~ "scarsa.<ul><li>Piccola - 0,1 megapixel</li><li>Media - 0,2 "
+#~ "megapixel</li><li>Grande - 0,5 megapixel</li></ul>"
+
+#~ msgid "Micro-Image"
+#~ msgstr "Micro-immagine"
+
+#~ msgid "Video Capture"
+#~ msgstr "Acquisizione video"
+
+#~ msgid "Signature Capture"
+#~ msgstr "Acquisizione firma"
+
+#~ msgid "Document Upload"
+#~ msgstr "Caricamento documento"
+
+#~ msgid "GPS"
+#~ msgstr "GPS"
+
+#~ msgid "Barcode Scan"
+#~ msgstr "Scansione codice a barre"
+
+#~ msgid "Date and Time"
+#~ msgstr "Data e ora"
+
+#~ msgid "Long"
+#~ msgstr "Lungo"
+
+#~ msgid "Decimal"
+#~ msgstr "Decimale"
+
+#~ msgid "Choice"
+#~ msgstr "Scelta"
+
+#~ msgid "Choice Value"
+#~ msgstr "Valore scelta"
+
+#~ msgid "Whitespace in values is not allowed."
+#~ msgstr "Gli spazi nei valori non sono consentiti."
+
+#~ msgid "This choice value has been used in the same question"
+#~ msgstr "Questo valore di scelta è già stato usato nella stessa domanda"
+
+#~ msgid ""
+#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
+#~ "it has Choices. Please remove all Choices and try again."
+#~ msgstr ""
+#~ "Non è possibile cambiare una domanda a scelta multipla/singola in una "
+#~ "domanda non a scelta se contiene delle scelte. Rimuovi tutte le scelte e "
+#~ "riprova."
+
+#~ msgid "Checkbox"
+#~ msgstr "Casella di controllo"
+
+#~ msgid "Multiple Choice"
+#~ msgstr "Scelta multipla"
+
+#~ msgid "Group"
+#~ msgstr "Gruppo"
+
+#~ msgid "Question List"
+#~ msgstr "Elenco domande"
+
+#~ msgid "Repeat Group"
+#~ msgstr "Gruppo ripetuto"
+
+#~ msgid "Repeat Count"
+#~ msgstr "Conteggio ripetizioni"
+
+#~ msgid "Repeat Count is required."
+#~ msgstr "Il conteggio ripetizioni è obbligatorio."
+
+#~ msgid "Extra Repeat Attributes"
+#~ msgstr "Attributi extra di ripetizione"
+
+#~ msgid "You have deleted a question."
+#~ msgstr "Hai eliminato una domanda."
+
+#~ msgid "Undo"
+#~ msgstr "Annulla"
+
+#~ msgid ""
+#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
+#~ "will be discarded!"
+#~ msgstr ""
+#~ "Nodo Bind [{path}] trovato ma non ha un nodo Dati associato. Questo nodo "
+#~ "bind verrà scartato!"
+
+#~ msgid "Not Found"
+#~ msgstr "Non trovato"
+
+#~ msgid ""
+#~ "{type} nodes cannot be used in an output value. Please remove the output "
+#~ "value for '{path}' or your form will have errors."
+#~ msgstr ""
+#~ "I nodi di tipo {type} non possono essere usati in un valore di output. "
+#~ "Rimuovi il valore di output per '{path}' o il modulo avrà degli errori."
+
+#~ msgid ""
+#~ "The {field} for a question is not allowed to reference the question itself. "
+#~ "Please remove the {ref} from the {field} or your form will have errors."
+#~ msgstr ""
+#~ "Il campo {field} di una domanda non può fare riferimento alla domanda "
+#~ "stessa. Rimuovi {ref} dal campo {field} o il modulo avrà degli errori."
+
+#~ msgid "output value"
+#~ msgstr "valore di output"
+
+#~ msgid "Validation Failed"
+#~ msgstr "Validazione non riuscita"
+
+#~ msgid "Please fix the error before leaving this page:"
+#~ msgstr "Correggi l'errore prima di lasciare questa pagina:"
+
+#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
+#~ msgstr "Modifica <span class='property-name'>Espressione</span> (Avanzato)"
+
+#~ msgid "Show Simple Mode"
+#~ msgstr "Mostra modalità semplice"
+
+#~ msgid ""
+#~ "You are currently in Advanced Mode because your logic is too complicated for"
+#~ " Simple Mode."
+#~ msgstr ""
+#~ "Attualmente sei in modalità avanzata perché la tua logica è troppo complessa"
+#~ " per la modalità semplice."
+
+#~ msgid "You can drag a question into the box."
+#~ msgstr "Puoi trascinare una domanda nella casella."
+
+#~ msgid "Guide to Common Logic and Calculations"
+#~ msgstr "Guida alla logica e ai calcoli comuni"
+
+#~ msgid "Edit <span class='property-name'>Expression</span>"
+#~ msgstr "Modifica <span class='property-name'>Espressione</span>"
+
+#~ msgid "Show Advanced Mode"
+#~ msgstr "Mostra Modalità Avanzata"
+
+#~ msgid "Result is"
+#~ msgstr "Il risultato è"
+
+#~ msgid "Expression"
+#~ msgstr "Espressione"
+
+#~ msgid "Add Expression"
+#~ msgstr "Aggiungi Espressione"
+
+#~ msgid "Error"
+#~ msgstr "Errore"
+
+#~ msgid "Warning"
+#~ msgstr "Avviso"
+
+#~ msgid "Form Warning"
+#~ msgstr "Avviso del Modulo"
+
+#~ msgid "Notification"
+#~ msgstr "Notifica"
+
+#~ msgid ""
+#~ "Holding the ALT key while clicking save invokes an inefficient save "
+#~ "procedure. Do this only if a normal save fails."
+#~ msgstr ""
+#~ "Tenere premuto il tasto ALT mentre si fa clic su salva avvia una procedura "
+#~ "di salvataggio inefficiente. Fallo solo se il salvataggio normale fallisce."
+
+#~ msgid "Are you sure you want to exit? All unsaved changes will be lost!"
+#~ msgstr ""
+#~ "Sei sicuro di voler uscire? Tutte le modifiche non salvate andranno perse!"
+
+#~ msgid ""
+#~ "Look for questions marked with $1 and check they don't reference deleted "
+#~ "questions."
+#~ msgstr ""
+#~ "Cerca le domande contrassegnate con $1 e verifica che non facciano "
+#~ "riferimento a domande eliminate."
+
+#~ msgid "Errors in Form"
+#~ msgstr "Errori nel Modulo"
+
+#~ msgid "Form has reference errors."
+#~ msgstr "Il modulo contiene errori di riferimento."
+
+#~ msgid "Look for questions marked with $1 and fix the errors."
+#~ msgstr "Cerca le domande contrassegnate con $1 e correggi gli errori."
+
+#~ msgid "Form has validation errors."
+#~ msgstr "Il modulo contiene errori di validazione."
+
+#~ msgid "Multimedia Capture"
+#~ msgstr "Acquisizione Multimediale"
+
+#~ msgid "Number"
+#~ msgstr "Numero"
+
+#~ msgid "Groups"
+#~ msgstr "Gruppi"
+
+#~ msgid "Advanced"
+#~ msgstr "Avanzato"
+
+#~ msgid "Make Required"
+#~ msgstr "Rendi Obbligatorio"
+
+#~ msgid ""
+#~ "You are about to make all existing questions on this form required. This "
+#~ "action will overwrite the current configuration of this form and can only be"
+#~ " undone by editing individual questions."
+#~ msgstr ""
+#~ "Stai per rendere obbligatorie tutte le domande esistenti in questo modulo. "
+#~ "Questa azione sovrascriverà la configurazione attuale del modulo e potrà "
+#~ "essere annullata solo modificando le singole domande."
+
+#~ msgid "Load Default Values"
+#~ msgstr "Carica Valori Predefiniti"
+
+#~ msgid ""
+#~ "You are about to set matching case properties as Default Values for all "
+#~ "existing questions. This action will overwrite existing Default Values for "
+#~ "all questions with matching case properties and can only be undone by "
+#~ "editing individual questions."
+#~ msgstr ""
+#~ "Stai per impostare le proprietà del caso corrispondenti come Valori "
+#~ "Predefiniti per tutte le domande esistenti. Questa azione sovrascriverà i "
+#~ "Valori Predefiniti esistenti per tutte le domande con proprietà del caso "
+#~ "corrispondenti e potrà essere annullata solo modificando le singole domande."
+
+#~ msgid "Are you sure you want to perform this action?"
+#~ msgstr "Sei sicuro di voler eseguire questa azione?"
+
+#~ msgid "Expand Editor"
+#~ msgstr "Espandi Editor"
+
+#~ msgid "Shrink Editor"
+#~ msgstr "Riduci Editor"
+
+#~ msgid "Export Form Contents"
+#~ msgstr "Esporta Contenuto Modulo"
+
+#~ msgid "Edit Source XML"
+#~ msgstr "Modifica XML Sorgente"
+
+#~ msgid "Form Properties"
+#~ msgstr "Proprietà del Modulo"
+
+#~ msgid "Find Usages"
+#~ msgstr "Trova Utilizzi"
+
+#~ msgid "Validation failed. Form may not perform correctly on your device!"
+#~ msgstr ""
+#~ "Validazione non riuscita. Il modulo potrebbe non funzionare correttamente "
+#~ "sul tuo dispositivo!"
+
+#~ msgid "Edit Form's Source XML"
+#~ msgstr "Modifica l'XML Sorgente del Modulo"
+
+#~ msgid "Update Source"
+#~ msgstr "Aggiorna Sorgente"
+
+#~ msgid ""
+#~ "This is the raw XML. You can edit or paste into this box to make changes to "
+#~ "your form. Press 'Update Source' to save changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "Questo è l'XML grezzo. Puoi modificarlo o incollarlo in questa casella per "
+#~ "apportare modifiche al modulo. Premi 'Aggiorna Sorgente' per salvare le "
+#~ "modifiche, oppure 'Chiudi' per annullare."
+
+#~ msgid ""
+#~ "Copy and paste this content into a spreadsheet program like Excel to easily "
+#~ "share your form with others."
+#~ msgstr ""
+#~ "Copia e incolla questo contenuto in un programma per fogli di calcolo come "
+#~ "Excel per condividere facilmente il modulo con altri."
+
+#~ msgid "Lost Work Warning"
+#~ msgstr "Avviso di Lavoro Perso"
+
+#~ msgid "Overwrite their work"
+#~ msgstr "Sovrascrivi il loro lavoro"
+
+#~ msgid "Show XML Differences"
+#~ msgstr "Mostra le differenze XML"
+
+#~ msgid ""
+#~ "Looks like someone else has edited this form since you loaded the page. Are "
+#~ "you sure you want to overwrite their work?"
+#~ msgstr ""
+#~ "Sembra che qualcun altro abbia modificato questo modulo da quando hai "
+#~ "caricato la pagina. Sei sicurə di voler sovrascrivere il loro lavoro?"
+
+#~ msgid "Edit Form Properties"
+#~ msgstr "Modifica proprietà modulo"
+
+#~ msgid "Disable Text Formatting"
+#~ msgstr "Disabilita formattazione del testo"
+
+#~ msgid "Use Easy References"
+#~ msgstr "Usa riferimenti semplici"
+
+#~ msgid "Use of each question"
+#~ msgstr "Utilizzo di ogni domanda"
+
+#~ msgid "Unsaved Changes in Editor"
+#~ msgstr "Modifiche non salvate nell'editor"
+
+#~ msgid ""
+#~ "You have UNSAVED changes in the Expression Editor. Please save changes "
+#~ "before continuing."
+#~ msgstr ""
+#~ "Hai modifiche NON SALVATE nell'Editor di Espressioni. Salva le modifiche "
+#~ "prima di continuare."
+
+#~ msgid "Parsing Error. Please check that your form is valid XML."
+#~ msgstr "Errore di parsing. Controlla che il modulo sia un XML valido."
+
+#~ msgid "Sorry, {err}"
+#~ msgstr "Spiacente, {err}"
+
+#~ msgid "Add Choice"
+#~ msgstr "Aggiungi scelta"
+
+#~ msgid "and"
+#~ msgstr "e"
+
+#~ msgid "There are errors in the form"
+#~ msgstr "Ci sono errori nel modulo"
+
+#~ msgid "Fix Manually"
+#~ msgstr "Correggi manualmente"
+
+#~ msgid "Fix Automatically"
+#~ msgstr "Correggi automaticamente"
+
+#~ msgid ""
+#~ "It looks like your form is not valid XML. This can often happen if you use a"
+#~ " reserved character in one of your questions. Characters to look out for are"
+#~ " <, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
+#~ "you fix the XML by hand. What would you like to do?"
+#~ msgstr ""
+#~ "Sembra che il tuo modulo non sia un XML valido. Questo può succedere spesso "
+#~ "se usi un carattere riservato in una delle tue domande. I caratteri a cui "
+#~ "prestare attenzione sono <, > e &. Puoi comunque salvare, ma NON POTRAI "
+#~ "CARICARE QUESTO MODULO di nuovo finché non correggi l'XML manualmente. Cosa "
+#~ "vuoi fare?"
+
+#~ msgid "Form Validation Error"
+#~ msgstr "Errore di validazione del modulo"
+
+#~ msgid "Fix the problem (recommended)"
+#~ msgstr "Correggi il problema (consigliato)"
+
+#~ msgid "Save anyway"
+#~ msgstr "Salva comunque"
+
+#~ msgid ""
+#~ "The {displaytext} appears in the application. This text will not appear in "
+#~ "data exports."
+#~ msgstr ""
+#~ "Il {displaytext} appare nell'applicazione. Questo testo non apparirà nelle "
+#~ "esportazioni dei dati."
+
+#~ msgid "Display Text"
+#~ msgstr "Testo visualizzato"
+
+#~ msgid ""
+#~ "You can configure an external data source like a case list or lookup table "
+#~ "to use as the choices for a multiple choice question."
+#~ msgstr ""
+#~ "Puoi configurare una fonte dati esterna come una lista di casi o una tabella"
+#~ " di ricerca da usare come scelte per una domanda a risposta multipla."
+
+#~ msgid "Media"
+#~ msgstr "Media"
+
+#~ msgid ""
+#~ "This will allow you to add images, audio or video media to a question, or "
+#~ "other custom content."
+#~ msgstr ""
+#~ "Questo ti permetterà di aggiungere immagini, audio o video a una domanda, o "
+#~ "altri contenuti personalizzati."
+
+#~ msgid ""
+#~ "These are advanced settings and are not needed for most applications.  "
+#~ "Please only change these if you have a specific need!"
+#~ msgstr ""
+#~ "Queste sono impostazioni avanzate e non sono necessarie per la maggior parte"
+#~ " delle applicazioni. Cambiale solo se hai una necessità specifica!"
+
+#~ msgid ""
+#~ "This question represents advanced content that is not supported by the form "
+#~ "builder. Please only change it if you have a specific need!"
+#~ msgstr ""
+#~ "Questa domanda rappresenta contenuti avanzati che non sono supportati dal "
+#~ "generatore di moduli. Modificala solo se hai una necessità specifica!"
+
+#~ msgid "Ignored XML"
+#~ msgstr "XML ignorato"
+
+#~ msgid "Android App Callout"
+#~ msgstr "Chiamata app Android"
+
+#~ msgid "External App"
+#~ msgstr "App esterna"
+
+#~ msgid "Insert Android Application ID"
+#~ msgstr "Inserisci ID applicazione Android"
+
+#~ msgid "change your subscription"
+#~ msgstr "modifica il tuo abbonamento"
+
+#~ msgid ""
+#~ "You no longer have access to built in or external integration in your application.\n"
+#~ "\n"
+#~ "Built in integrations are available on the Pro plan and higher. External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
+#~ msgstr ""
+#~ "Non hai più accesso all'integrazione integrata o esterna nella tua applicazione.\n"
+#~ "\n"
+#~ "Le integrazioni integrate sono disponibili con il piano Pro e superiori. Le integrazioni esterne sono disponibili con il piano Advanced e superiori. Prima di poter creare una nuova versione della tua applicazione, devi {link} o eliminare questa domanda."
+
+#~ msgid ""
+#~ "Your subscription only has access to built-in integration.\n"
+#~ "\n"
+#~ "External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
+#~ msgstr ""
+#~ "Il tuo abbonamento consente solo l'accesso all'integrazione integrata.\n"
+#~ "\n"
+#~ "Le integrazioni esterne sono disponibili con il piano Advanced e superiori. Prima di poter creare una nuova versione della tua applicazione, devi {link} o eliminare questa domanda."
+
+#~ msgid ""
+#~ "Android app callouts of the same type must have different question ids."
+#~ msgstr ""
+#~ "Le chiamate app Android dello stesso tipo devono avere ID domanda diversi."
+
+#~ msgid "Extra"
+#~ msgstr "Extra"
+
+#~ msgid "Response"
+#~ msgstr "Risposta"
+
+#~ msgid "Special Intent XMLNS attribute"
+#~ msgstr "Attributo XMLNS Special Intent"
+
+#~ msgid "Print"
+#~ msgstr "Stampa"
+
+#~ msgid "Document Template"
+#~ msgstr "Modello di documento"
+
+#~ msgid "Edit Data Source"
+#~ msgstr "Modifica fonte dati"
+
+#~ msgid "Query Expression"
+#~ msgstr "Espressione di query"
+
+#~ msgid "Optional Instance Properties"
+#~ msgstr "Proprietà opzionali dell'istanza"
+
+#~ msgid "Instance ID"
+#~ msgstr "ID istanza"
+
+#~ msgid "Instance URI"
+#~ msgstr "URI istanza"
+
+#~ msgid "Lookup table was not found in the project"
+#~ msgstr "La tabella di ricerca non è stata trovata nel progetto"
+
+#~ msgid ""
+#~ "You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
+#~ "Before you can make a new version of your application, you must {link} or delete this question"
+#~ msgstr ""
+#~ "Non hai più accesso alle Tabelle di Ricerca nella tua applicazione. Le Tabelle di Ricerca sono disponibili con il piano Standard e superiori.\n"
+#~ "Prima di poter creare una nuova versione della tua applicazione, devi {link} o eliminare questa domanda"
+
+#~ msgid "A data source must be selected."
+#~ msgstr "È necessario selezionare una fonte dati."
+
+#~ msgid "Display Text Field"
+#~ msgstr "Campo Testo da Visualizzare"
+
+#~ msgid "Sort Field"
+#~ msgstr "Campo di Ordinamento"
+
+#~ msgid "Filter"
+#~ msgstr "Filtro"
+
+#~ msgid ""
+#~ "This is an XPath expression that will filter the set of choices from the "
+#~ "lookup table"
+#~ msgstr ""
+#~ "Questa è un'espressione XPath che filtrerà l'insieme di scelte dalla tabella"
+#~ " di ricerca"
+
+#~ msgid "Lookup Tables"
+#~ msgstr "Tabelle di Ricerca"
+
+#~ msgid "Checkbox Lookup Table"
+#~ msgstr "Tabella di Ricerca a Casella di Selezione"
+
+#~ msgid ""
+#~ "Cannot change to Multiple/Single Choice question if it has Choices. Please "
+#~ "remove all Choices and try again."
+#~ msgstr ""
+#~ "Non è possibile cambiare in domanda a Scelta Multipla/Singola se sono "
+#~ "presenti Scelte. Rimuovi tutte le Scelte e riprova."
+
+#~ msgid "Can only change to a Multiple Choice Lookup Table"
+#~ msgstr "È possibile cambiare solo in una Tabella di Ricerca a Scelta Multipla"
+
+#~ msgid "Multiple Choice Lookup Table"
+#~ msgstr "Tabella di Ricerca a Scelta Multipla"
+
+#~ msgid "Can only change to a Checkbox Lookup Table"
+#~ msgstr ""
+#~ "È possibile cambiare solo in una Tabella di Ricerca a Casella di Selezione"
+
+#~ msgid "{attr} was not found in the lookup table"
+#~ msgstr "{attr} non è stato trovato nella tabella di ricerca"
+
+#~ msgid "Display"
+#~ msgstr "Visualizza"
+
+#~ msgid "auto?"
+#~ msgstr "auto?"
+
+#~ msgid ""
+#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
+#~ "use bulleted lists, and <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
+#~ msgstr ""
+#~ "Usa la formattazione del testo per <strong>grassetto</strong> e "
+#~ "<em>corsivo</em> delle parole, usa elenchi puntati e <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>altro</a>"
+
+#~ msgid "Turn Off Text Formatting"
+#~ msgstr "Disattiva Formattazione Testo"
+
+#~ msgid "Turn On Text Formatting"
+#~ msgstr "Attiva Formattazione Testo"
+
+#~ msgid "custom..."
+#~ msgstr "personalizzato..."
+
+#~ msgid "New Content Type"
+#~ msgstr "Nuovo Tipo di Contenuto"
+
+#~ msgid "Content Type"
+#~ msgstr "Tipo di Contenuto"
+
+#~ msgid ""
+#~ "You have languages in your form that are not specified in the \"Languages\" "
+#~ "page of the application builder. The following language will be deleted on "
+#~ "save unless you add it to the \"Languages\" page:"
+#~ msgstr ""
+#~ "Hai lingue nel tuo modulo che non sono specificate nella pagina \"Lingue\" "
+#~ "del costruttore dell'applicazione. La seguente lingua verrà eliminata al "
+#~ "salvataggio a meno che tu non la aggiunga alla pagina \"Lingue\":"
+
+#~ msgid "{name} (or multimedia) is required."
+#~ msgstr "{name} (o contenuto multimediale) è obbligatorio."
+
+#~ msgid "{name} (or multimedia) is required for all languages."
+#~ msgstr "{name} (o contenuto multimediale) è obbligatorio per tutte le lingue."
+
+#~ msgid "{name} Itext ID is required."
+#~ msgstr "ID Itext di {name} è obbligatorio."
+
+#~ msgid "{name} is not a valid ID."
+#~ msgstr "{name} non è un ID valido."
+
+#~ msgid "Multimedia was not copied; it must be uploaded separately."
+#~ msgstr ""
+#~ "Il contenuto multimediale non è stato copiato; deve essere caricato "
+#~ "separatamente."
+
+#~ msgid "Discarded languages:"
+#~ msgstr "Lingue scartate:"
+
+#~ msgid "Validation Message"
+#~ msgstr "Messaggio di Validazione"
+
+#~ msgid ""
+#~ "Can't have a Validation Message Itext ID without a Validation Condition"
+#~ msgstr ""
+#~ "Non è possibile avere un ID Itext del Messaggio di Validazione senza una "
+#~ "Condizione di Validazione"
+
+#~ msgid "Validation Message Itext ID"
+#~ msgstr "ID Itext del Messaggio di Validazione"
+
+#~ msgid "Add Validation Media"
+#~ msgstr "Aggiungi Media di Validazione"
+
+#~ msgid "Display Text Itext ID"
+#~ msgstr "ID Itext del Testo da Visualizzare"
+
+#~ msgid "Hint Message"
+#~ msgstr "Messaggio Suggerimento"
+
+#~ msgid "Hint Itext ID"
+#~ msgstr "ID Itext del Suggerimento"
+
+#~ msgid "Help Message"
+#~ msgstr "Messaggio di Aiuto"
+
+#~ msgid "Help Itext ID"
+#~ msgstr "ID Itext dell'Aiuto"
+
+#~ msgid "Add New Item Button Text"
+#~ msgstr "Testo del Pulsante Aggiungi Nuovo Elemento"
+
+#~ msgid "Add New Itext ID"
+#~ msgstr "Aggiungi Nuovo ID Itext"
+
+#~ msgid "Add Another Item Button Text"
+#~ msgstr "Testo del Pulsante Aggiungi un Altro Elemento"
+
+#~ msgid "Add Another Itext ID"
+#~ msgstr "Aggiungi un Altro ID Itext"
+
+#~ msgid "Add Other Content"
+#~ msgstr "Aggiungi Altro Contenuto"
+
+#~ msgid "Add Multimedia"
+#~ msgstr "Aggiungi Contenuto Multimediale"
+
+#~ msgid "Add Help Media"
+#~ msgstr "Aggiungi Media di Aiuto"
+
+#~ msgid "Edit Bulk Translations"
+#~ msgstr "Modifica Traduzioni in Blocco"
+
+#~ msgid "Update Translations"
+#~ msgstr "Aggiorna Traduzioni"
+
+#~ msgid ""
+#~ "Copy these translations into a spreadsheet program like Excel. You can edit "
+#~ "them there and then paste them back here when you're done. These will update"
+#~ " the translations used in your form. Press 'Update Translations' to save "
+#~ "changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "Copia queste traduzioni in un programma per fogli di calcolo come Excel. "
+#~ "Puoi modificarle lì e poi incollarle nuovamente qui quando hai finito. "
+#~ "Queste aggiorneranno le traduzioni usate nel tuo modulo. Premi 'Aggiorna "
+#~ "Traduzioni' per salvare le modifiche, oppure 'Chiudi' per annullare."
+
+#~ msgid "App Properties"
+#~ msgstr "Proprietà dell'App"
+
+#~ msgid "Could not load app properties."
+#~ msgstr "Impossibile caricare le proprietà dell'app."
+
+#~ msgid "If this error persists, please report an issue."
+#~ msgstr "Se questo errore persiste, si prega di segnalare un problema."
+
+#~ msgid ""
+#~ "The {questionid} is an internal identifier for a question. It does not "
+#~ "appear on the phone. It is the name of the question in data exports."
+#~ msgstr ""
+#~ "Il {questionid} è un identificatore interno per una domanda. Non appare sul "
+#~ "telefono. È il nome della domanda nelle esportazioni dei dati."
+
+#~ msgid "The date and time of the action, e.g., now() or today()"
+#~ msgstr "La data e l'ora dell'azione, ad esempio, now() o today()"
+
+#~ msgid "Balance ID"
+#~ msgstr "ID Saldo"
+
+#~ msgid ""
+#~ "The name of the balance you are tracking. This is an internal identifier "
+#~ "which does not appear on the phone."
+#~ msgstr ""
+#~ "Il nome del saldo che stai monitorando. Questo è un identificatore interno "
+#~ "che non appare sul telefono."
+
+#~ msgid "Product"
+#~ msgstr "Prodotto"
+
+#~ msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
+#~ msgstr ""
+#~ "Un riferimento a un ID prodotto, ad esempio, "
+#~ "\"/data/products/current_product\""
+
+#~ msgid "Quantity"
+#~ msgstr "Quantità"
+
+#~ msgid "A reference to an integer question in this form."
+#~ msgstr "Un riferimento a una domanda intera in questo modulo."
+
+#~ msgid "XPath expression for the case ID associated with this balance."
+#~ msgstr "Espressione XPath per l'ID caso associato a questo saldo."
+
+#~ msgid "Transfer must have both Source Case and Destination Case defined."
+#~ msgstr ""
+#~ "Il trasferimento deve avere sia il Caso di Origine che il Caso di "
+#~ "Destinazione definiti."
+
+#~ msgid "Cannot change $1 to $2"
+#~ msgstr "Impossibile cambiare $1 in $2"
+
+#~ msgid "Source Case"
+#~ msgstr "Caso di Origine"
+
+#~ msgid "XPath expression for the case ID issuing the transaction."
+#~ msgstr "Espressione XPath per l'ID caso che emette la transazione."
+
+#~ msgid "Destination Case"
+#~ msgstr "Caso di Destinazione"
+
+#~ msgid "XPath expression for the case ID receiving the transaction."
+#~ msgstr "Espressione XPath per l'ID caso che riceve la transazione."
+
+#~ msgid "Dispense must have a Source Case."
+#~ msgstr "L'erogazione deve avere un Caso di Origine."
+
+#~ msgid "Receive must have a Destination Case."
+#~ msgstr "La ricezione deve avere un Caso di Destinazione."
+
+#~ msgid "Model Iteration ID Query"
+#~ msgstr "Query ID Iterazione Modello"
+
+#~ msgid "Property Name"
+#~ msgstr "Nome Proprietà"
+
+#~ msgid "Relevant"
+#~ msgstr "Rilevante"
+
+#~ msgid "Relationship Identifier (e.g. parent or host)"
+#~ msgstr "Identificatore di Relazione (ad es. parent o host)"
+
+#~ msgid "Referenced Case ID"
+#~ msgstr "ID Caso Referenziato"
+
+#~ msgid "Referenced Case Type"
+#~ msgstr "Tipo di Caso Referenziato"
+
+#~ msgid "Relationship (child or extension)"
+#~ msgstr "Relazione (figlio o estensione)"
+
+#~ msgid "Node Name"
+#~ msgstr "Nome Nodo"
+
+#~ msgid "Source"
+#~ msgstr "Origine"
+
+#~ msgid "From"
+#~ msgstr "Da"
+
+#~ msgid "Attachment Name"
+#~ msgstr "Nome Allegato"
+
+#~ msgid "Add Property"
+#~ msgstr "Aggiungi Proprietà"
+
+#~ msgid "Date Modified"
+#~ msgstr "Data Modifica"
+
+#~ msgid "User ID"
+#~ msgstr "ID Utente"
+
+#~ msgid "Case Type"
+#~ msgstr "Tipo di Caso"
+
+#~ msgid "Create Case"
+#~ msgstr "Crea Caso"
+
+#~ msgid "Properties To Create"
+#~ msgstr "Proprietà da Creare"
+
+#~ msgid "You must include {columns} columns to create a case"
+#~ msgstr "Devi includere le colonne {columns} per creare un caso"
+
+#~ msgid "You can only use the following properties:"
+#~ msgstr "Puoi utilizzare solo le seguenti proprietà:"
+
+#~ msgid "{props} are invalid properties"
+#~ msgstr "{props} sono proprietà non valide"
+
+#~ msgid "Close Case"
+#~ msgstr "Chiudi Caso"
+
+#~ msgid "Close Condition"
+#~ msgstr "Condizione di Chiusura"
+
+#~ msgid "Update Case"
+#~ msgstr "Aggiorna Caso"
+
+#~ msgid "Properties To Update"
+#~ msgstr "Proprietà da Aggiornare"
+
+#~ msgid "Use Index"
+#~ msgstr "Usa Indice"
+
+#~ msgid "Index Properties"
+#~ msgstr "Proprietà Indice"
+
+#~ msgid "Relationship must be child or extension"
+#~ msgstr "La relazione deve essere figlio o estensione"
+
+#~ msgid "Use Attachments"
+#~ msgstr "Usa Allegati"
+
+#~ msgid "Attachment Properties"
+#~ msgstr "Proprietà dell'allegato"
+
+#~ msgid "The from attribute must be one of: local, remote, or inline"
+#~ msgstr "L'attributo from deve essere uno tra: local, remote o inline"
+
+#~ msgid "Inlined attachments must have an attachment name"
+#~ msgstr "Gli allegati in linea devono avere un nome allegato"
+
+#~ msgid "Update"
+#~ msgstr "Aggiorna"
+
+#~ msgid "Index"
+#~ msgstr "Indice"
+
+#~ msgid "Attachments"
+#~ msgstr "Allegati"
+
+#~ msgid "An error occurred when parsing bind node [{path}]. Please fix this."
+#~ msgstr ""
+#~ "Si è verificato un errore durante l'analisi del nodo bind [{path}]. Si prega"
+#~ " di correggere."
+
+#~ msgid "Upload"
+#~ msgstr "Carica"
+
+#~ msgid "Select new"
+#~ msgstr "Seleziona nuovo"
+
+#~ msgid "Select File"
+#~ msgstr "Seleziona file"
+
+#~ msgid "Current"
+#~ msgstr "Attuale"
+
+#~ msgid "Begin Upload"
+#~ msgstr "Inizia caricamento"
+
+#~ msgid "Replace"
+#~ msgstr "Sostituisci"
+
+#~ msgid "No Reference"
+#~ msgstr "Nessun riferimento"
+
+#~ msgid "Advanced: Show Path"
+#~ msgstr "Avanzate: Mostra percorso"
+
+#~ msgid "Hide Path"
+#~ msgstr "Nascondi percorso"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Inline Video"
+#~ msgstr "Video in linea"
+
+#~ msgid "HTML"
+#~ msgstr "HTML"
+
+#~ msgid "Copying and Pasting Questions"
+#~ msgstr "Copia e incolla domande"
+
+#~ msgid ""
+#~ "These actions are available via the browser's Edit menu, and you can also "
+#~ "use:"
+#~ msgstr ""
+#~ "Queste azioni sono disponibili tramite il menu Modifica del browser, e puoi "
+#~ "anche usare:"
+
+#~ msgid "for copy"
+#~ msgstr "per copiare"
+
+#~ msgid "for paste"
+#~ msgstr "per incollare"
+
+#~ msgid "Copy from or Paste into this text box:"
+#~ msgstr "Copia da o incolla in questa casella di testo:"
+
+#~ msgid "Insert Questions"
+#~ msgstr "Inserisci domande"
+
+#~ msgid "Selecting Multiple Questions"
+#~ msgstr "Selezione multipla di domande"
+
+#~ msgid "Hold {key} and click on each question."
+#~ msgstr "Tieni premuto {key} e fai clic su ogni domanda."
+
+#~ msgid "Other Tips"
+#~ msgstr "Altri suggerimenti"
+
+#~ msgid "Questions can be copied between forms, and even to other apps."
+#~ msgstr "Le domande possono essere copiate tra moduli e anche in altre app."
+
+#~ msgid "Cannot insert {type} into tree root"
+#~ msgstr "Impossibile inserire {type} nella radice dell'albero"
+
+#~ msgid "Cannot insert $1 into or after $2"
+#~ msgstr "Impossibile inserire $1 in o dopo $2"
+
+#~ msgid "Cannot insert $1 into $2"
+#~ msgstr "Impossibile inserire $1 in $2"
+
+#~ msgid "Unsupported paste format"
+#~ msgstr "Formato incolla non supportato"
+
+#~ msgid "Unsupported paste format:"
+#~ msgstr "Formato incolla non supportato:"
+
+#~ msgid "Unknown question type:"
+#~ msgstr "Tipo di domanda sconosciuto:"
+
+#~ msgid "Enter command"
+#~ msgstr "Inserisci comando"
 
 #~ msgid "Module ID"
 #~ msgstr "ID modulo"
@@ -5786,11 +5437,11 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgstr "ID entità"
 
 #~ msgid ""
-#~ "XPath expression for the entity ID associated with this Delivery Unit e."
-#~ "g. the case ID."
+#~ "XPath expression for the entity ID associated with this Delivery Unit e.g. "
+#~ "the case ID."
 #~ msgstr ""
-#~ "Espressione XPath per l'ID entità associato a questa Unità di Consegna, "
-#~ "ad es. l'ID del caso."
+#~ "Espressione XPath per l'ID entità associato a questa Unità di Consegna, ad "
+#~ "es. l'ID del caso."
 
 #~ msgid "Entity Name"
 #~ msgstr "Nome entità"
@@ -5799,5 +5450,10 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ "XPath expression for the name of the entity associated with this Delivery "
 #~ "Unit."
 #~ msgstr ""
-#~ "Espressione XPath per il nome dell'entità associata a questa Delivery "
-#~ "Unit."
+#~ "Espressione XPath per il nome dell'entità associata a questa Delivery Unit."
+
+#~ msgid "Failed to send"
+#~ msgstr "Invio non riuscito"
+
+#~ msgid "Failed to cancel"
+#~ msgstr "Annullamento non riuscito"

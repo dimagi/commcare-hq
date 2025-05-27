@@ -11,12 +11,11 @@
 # Build docs locally on your branch to see what warnings/errors
 # you have introduced. To do so, follow these instructions:
 #
-# 1) Install requirements/docs-requirements.txt ideally using pip-sync:
-#   `pip-sync requirements/docs-requirements.txt`
+# 1) Install requirements: `uv sync --group=docs`
 # 2) Ensure a fresh docs build by deleting any previously generated build
 #    `rm -rf docs/_build`
-# 3) Using bash, run this script:
-#    `bash test-make-docs.sh`
+# 3) Run this script:
+#    `./test-make-docs.sh`
 # 4) Inspect the terminal output or make-docs-errors.log (they are the same) to understand new warnings/errors:
 #    `cat make-docs-errors.log`
 

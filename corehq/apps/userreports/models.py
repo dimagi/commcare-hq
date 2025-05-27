@@ -2,10 +2,10 @@ import glob
 import json
 import os
 import re
-from ast import literal_eval
+import sqlalchemy
 from collections import namedtuple
 from copy import copy, deepcopy
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import cached_property
 from uuid import UUID
 
@@ -15,9 +15,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext as _
 
-import requests
 import yaml
-from celery.states import FAILURE
 from couchdbkit.exceptions import BadValueError, ResourceConflict
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from jsonpath_ng.ext import parser
@@ -106,7 +104,7 @@ from .reports.factory import (
 from .reports.filters.factory import ReportFilterFactory
 from .reports.filters.specs import FilterSpec
 from .specs import EvaluationContext, FactoryContext
-from .sql import get_metadata
+from .sql import get_indicator_table
 from .sql.util import decode_column_name
 from .util import (
     get_async_indicator_modify_lock_key,
@@ -215,72 +213,6 @@ class DataSourceBuildInformation(DocumentSchema):
     @property
     def is_rebuild_in_progress(self):
         return self.is_rebuilding or self.is_rebuilding_in_place
-
-    def rebuild_failed(self, data_source_config_id):
-        """
-        Returns ``True`` if the rebuild failed, ``False`` if it succeeded
-        or has not yet failed, or ``None`` if Flower is not available.
-        """
-        flower_url = getattr(settings, 'CELERY_FLOWER_URL', None)
-
-        def none_max(a, b):
-            if a is None:
-                return b
-            if b is None:
-                return a
-            return max(a, b)
-
-        def format_datetime(dt):
-            return dt.strftime('%Y-%m-%d %H:%M')
-
-        def is_this_data_source(rebuild_task):
-            args = literal_eval(rebuild_task['args'])  # a tuple
-            return args[0] == data_source_config_id
-
-        def iter_tasks():
-            task_names = (
-                'corehq.apps.userreports.tasks.rebuild_indicators',
-                'corehq.apps.userreports.tasks.rebuild_indicators_in_place',
-                'corehq.apps.userreports.tasks.resume_building_indicators',
-            )
-            initiated_at = none_max(self.initiated, self.initiated_in_place)
-            start = format_datetime(initiated_at - timedelta(seconds=60))
-            for task_name in task_names:
-                tasks = requests.get(
-                    flower_url + '/api/tasks',
-                    params={
-                        'taskname': task_name,
-                        'received_start': start,
-                    },
-                    timeout=3,
-                ).json()
-                for task_uuid, task in tasks.items():
-                    if is_this_data_source(task):
-                        yield task
-
-        if not self.initiated and not self.initiated_in_place:
-            # The rebuild task hasn't started.
-            return False
-
-        if (
-            (self.initiated and self.finished)
-            or (self.initiated_in_place and self.finished_in_place)
-        ):
-            # The rebuild task completed.
-            return False
-
-        if not flower_url:
-            # We are unable to find out about the rebuild task.
-            return None
-
-        rebuild_tasks = sorted(iter_tasks(), key=lambda t: t['started'])
-        if rebuild_tasks:
-            # Return True if the last task failed, otherwise return False.
-            return rebuild_tasks[-1]['state'] == FAILURE
-
-        # The rebuild is not finished and the task is not found. It must
-        # have died.
-        return True
 
 
 class DataSourceMeta(DocumentSchema):
@@ -747,17 +679,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             columns = self.sql_settings.primary_key
         return columns
 
-    @cached_property
-    def rebuild_failed(self):
-        # `DataSourceBuildInformation.rebuild_failed()` returns `None`
-        # if we don't know whether the rebuild has failed. Calling code
-        # can give the benefit of the doubt by treating `None` as falsy.
-        return self.meta.build.rebuild_failed(self._id)
-
-    @property
-    def rebuild_awaiting_or_in_progress(self):
-        return self.meta.build.awaiting or (self.meta.build.is_rebuild_in_progress and not self.rebuild_failed)
-
     def set_rebuild_flags(self):
         """
         Sets rebuild flags based on whether a build is required.
@@ -771,13 +692,19 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if not self.meta.build.awaiting:
             engine = connection_manager.get_engine(self.engine_id)
             table_name = get_table_name(self.domain, self.table_id)
-            engine_metadata = get_metadata(self.engine_id)
-            diffs = get_table_diffs(engine, [table_name], engine_metadata)
-            tables_to_rebuild = get_tables_to_rebuild(diffs)
-            if table_name in tables_to_rebuild:
+            # use a fresh metadata because the one from get_metadata might be stale
+            engine_metadata = sqlalchemy.MetaData()
+            if not sqlalchemy.Table(table_name, engine_metadata).exists(bind=engine):
                 self.set_build_queued()
             else:
-                self.set_build_not_required()
+                # get fresh table configuration; this also updates table schema in engine_metadata
+                get_indicator_table(self, engine_metadata)
+                diffs = get_table_diffs(engine, [table_name], engine_metadata)
+                tables_to_rebuild = get_tables_to_rebuild(diffs)
+                if table_name in tables_to_rebuild:
+                    self.set_build_queued()
+                else:
+                    self.set_build_not_required()
 
     def set_build_queued(self, *, reset_init_fin=True):
         self.meta.build.awaiting = True

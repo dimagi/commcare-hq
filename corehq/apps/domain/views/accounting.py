@@ -1168,16 +1168,6 @@ class PlanViewBase(DomainAccountingSettings):
             current_price = 0
             default_price = 0
         return {
-            'editions': [
-                edition.lower()
-                for edition in [
-                    SoftwarePlanEdition.FREE,
-                    SoftwarePlanEdition.STANDARD,
-                    SoftwarePlanEdition.PRO,
-                    SoftwarePlanEdition.ADVANCED,
-                ]
-            ],
-            'plan_options': [p._asdict() for p in self.plan_options],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
@@ -1188,7 +1178,6 @@ class PlanViewBase(DomainAccountingSettings):
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
             'next_subscription_edition': self.next_subscription_edition,
-            'can_domain_unpause': self.can_domain_unpause,
         }
 
 
@@ -1207,6 +1196,24 @@ class SelectPlanView(PlanViewBase):
         subscription = self.current_subscription
         is_annual_plan = subscription.plan_version.plan.is_annual_plan
         return not is_annual_plan
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'editions': [
+                edition.lower() for edition in [
+                    SoftwarePlanEdition.FREE,
+                    SoftwarePlanEdition.STANDARD,
+                    SoftwarePlanEdition.PRO,
+                    SoftwarePlanEdition.ADVANCED,
+                    SoftwarePlanEdition.ENTERPRISE,
+                ]
+            ],
+            'plan_options': [p._asdict() for p in self.plan_options],
+            'can_domain_unpause': self.can_domain_unpause,
+        })
+        return context
 
 
 class ContactFormViewBase(PlanViewBase):
@@ -1331,6 +1338,10 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return self.edition == SoftwarePlanEdition.PAUSED
 
     @property
+    def is_annual_plan(self):
+        return self.request.POST.get('is_annual_plan') == 'true'
+
+    @property
     @memoized
     def edition(self):
         edition = self.request.POST.get('plan_edition').title()
@@ -1341,7 +1352,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan_version(self.edition)
+        return DefaultProductPlan.get_default_plan_version(self.edition, is_annual_plan=self.is_annual_plan)
 
     def downgrade_messages(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
@@ -1355,16 +1366,20 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return downgrade_handler.get_response()
 
     @property
-    def is_upgrade(self):
+    def is_downgrade(self):
+        return is_downgrade(
+            current_edition=self.current_subscription.plan_version.plan.edition,
+            next_edition=self.edition
+        )
+
+    @property
+    def is_monthly_upgrade(self):
         if self.current_subscription.is_trial:
             return True
-        elif self.current_subscription.plan_version.plan.edition == self.edition:
+        elif self.is_same_edition or self.is_annual_plan:
             return False
         else:
-            return not is_downgrade(
-                current_edition=self.current_subscription.plan_version.plan.edition,
-                next_edition=self.edition
-            )
+            return not self.is_downgrade
 
     @property
     def is_same_edition(self):
@@ -1372,14 +1387,9 @@ class ConfirmSelectedPlanView(PlanViewBase):
 
     @property
     def is_downgrade_before_minimum(self):
-        if self.is_upgrade:
-            return False
-        elif self.current_subscription is None or self.current_subscription.is_trial:
-            return False
-        elif self.current_subscription.is_below_minimum_subscription:
-            return True
-        else:
-            return False
+        return (not self.is_monthly_upgrade
+                and self.is_downgrade
+                and self.current_subscription.is_below_minimum_subscription)
 
     @property
     def current_subscription_end_date(self):
@@ -1398,15 +1408,17 @@ class ConfirmSelectedPlanView(PlanViewBase):
     def page_context(self):
         return {
             'downgrade_messages': self.downgrade_messages(),
-            'is_upgrade': self.is_upgrade,
-            'is_same_edition': self.is_same_edition,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
-            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'new_plan_edition': self.edition,
+            'is_annual_plan': self.is_annual_plan,
+            'is_monthly_upgrade': self.is_monthly_upgrade,
+            'is_same_edition': self.is_same_edition,
+            'is_downgrade': self.is_downgrade,
+            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
             'is_paused': self.is_paused,
             'tile_css': 'tile-{}'.format(self.edition.lower()),
         }
@@ -1476,11 +1488,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
     @property
     def downgrade_email_note(self):
-        if self.is_upgrade:
+        if self.is_downgrade:
+            return _get_downgrade_or_pause_note(self.request)
+        else:
             return None
-        if self.is_same_edition:
-            return None
-        return _get_downgrade_or_pause_note(self.request)
 
     @property
     @memoized
@@ -1564,7 +1575,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             messages.error(
                 request, _(
                     "You have already scheduled a downgrade to the %(software_plan_name)s Software Plan on "
-                    "%(downgrade_date)s. If this is a mistake, please reach out to %(contact_email)."
+                    "%(downgrade_date)s. If this is a mistake, please reach out to %(contact_email)s."
                 ) % {
                     'software_plan_name': software_plan_name,
                     'downgrade_date': downgrade_date,
@@ -1796,31 +1807,6 @@ class ConfirmSubscriptionRenewalView(PlanViewBase, DomainAccountingSettings,
                     reverse(DomainSubscriptionView.urlname, args=[self.domain])
                 )
         return self.get(request, *args, **kwargs)
-
-
-class EmailOnDowngradeView(View):
-    urlname = "email_on_downgrade"
-
-    def post(self, request, *args, **kwargs):
-        message = '\n'.join([
-            '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}.',
-            '',
-            'Note from user: {note}',
-        ]).format(
-            user=request.couch_user.username,
-            domain=request.domain,
-            old_plan=request.POST.get('old_plan', 'unknown'),
-            new_plan=request.POST.get('new_plan', 'unknown'),
-            note=request.POST.get('note', 'none'),
-        )
-
-        send_mail_async.delay(
-            '{}Subscription downgrade for {}'.format(
-                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
-                request.domain
-            ), message, [settings.GROWTH_EMAIL]
-        )
-        return json_response({'success': True})
 
 
 class BaseCardView(DomainAccountingSettings):

@@ -11,13 +11,12 @@
 # in code areas you are interested in.
 
 
-/.github/ @orangejenny
 /.github/workflows/ @dimagi/dependency-watchers
 
 /corehq/blobs/ @millerdev
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/form_processor/ @snopoke
-/corehq/messaging/ @orangejenny @mkangia
+/corehq/messaging/ @mkangia
 /corehq/motech/ @kaapstorm
 /corehq/pillows/ @calellowitz @amitphulera
 /corehq/sql_accessors/ @snopoke
@@ -38,12 +37,12 @@
 /corehq/apps/analytics/ @biyeun
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/callcenter/ @snopoke
-/corehq/apps/case_search/ @orangejenny @MartinRiese @esoergel @stephherbers @Robert-Costello @Jtang-1
+/corehq/apps/case_search/ @MartinRiese @esoergel @stephherbers @Robert-Costello @Jtang-1
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/cleanup/management/commands/populate_sql_model_from_couch_model.py @millerdev
 /corehq/apps/cloudcare/ @MartinRiese @stephherbers @Robert-Costello @Jtang-1 @nospame
 /corehq/apps/commtrack/ @esoergel
-/corehq/apps/data_dictionary/ @esoergel @orangejenny @zandre-eng
+/corehq/apps/data_dictionary/ @esoergel @zandre-eng
 /corehq/apps/domain/decorators.py @esoergel
 /corehq/apps/domain/auth.py @esoergel
 /corehq/apps/domain/views/accounting.py @nospame
@@ -63,11 +62,10 @@
 /corehq/apps/reports/standard/tableau.py @AddisonDunn
 /corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/settings/views.py @gherceg
-/corehq/apps/sms*/ @orangejenny @mkangia
+/corehq/apps/sms*/ @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun
 /corehq/apps/sso/ @biyeun
-/corehq/apps/styleguide/ @orangejenny @biyeun
-/corehq/apps/translations/app_translations/ @orangejenny
+/corehq/apps/styleguide/ @biyeun
 /corehq/apps/user_importer/ @stephherbers
 /corehq/apps/userreports/ @calellowitz
 /corehq/apps/userreports/reports/builder/ @kaapstorm
@@ -82,6 +80,7 @@
 /docker/ @millerdev
 
 /package.json @dimagi/dependency-watchers
+/pyproject.toml @dimagi/dependency-watchers
 
 /scripts/docker @millerdev
 /scripts/test-make-docs.sh @dimagi/dependency-watchers
@@ -92,4 +91,5 @@
 /testapps/test_pillowtop/ @amitphulera
 /testapps/test_elasticsearch/ @amitphulera
 
+/uv.lock @dimagi/dependency-watchers
 /yarn.lock @dimagi/dependency-watchers

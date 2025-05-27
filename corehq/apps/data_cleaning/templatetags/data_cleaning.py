@@ -7,7 +7,7 @@ from django.utils.html import format_html, escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
-from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
+from corehq.apps.data_cleaning.columns import EditableHtmxColumn
 from corehq.apps.data_cleaning.models import DataType
 from corehq.apps.hqwebapp.tables.elasticsearch.records import BaseElasticRecord
 
@@ -64,7 +64,7 @@ def get_edited_value(record, bound_column):
 
     We return `NO_VALUE` set to `Ellipsis` if the value is not set in
     the `edited_properties` dictionary. This is because the original value
-    can be made `None` by the cleaning actions, and we want to be
+    can be made `None` by the edit actions, and we want to be
     able to reflect that value.
 
     :params record:
@@ -90,9 +90,9 @@ def has_edits(edited_value):
 
 
 def _validate_htmx_column(bound_column):
-    if not isinstance(bound_column.column, DataCleaningHtmxColumn):
+    if not isinstance(bound_column.column, EditableHtmxColumn):
         raise template.TemplateSyntaxError(
-            f"Expected bound_column.column to be a DataCleaningHtmxColumn, "
+            f"Expected bound_column.column to be a EditableHtmxColumn, "
             f"got {type(bound_column.column)} instead."
         )
 
@@ -112,7 +112,7 @@ def cell_request_params(record, bound_column):
     :param record:
         subclass of BaseElasticRecord
     :param bound_column:
-        `BoundColumn` instance, with a `DataCleaningHtmxColumn` as `column`
+        `BoundColumn` instance, with a `EditableHtmxColumn` as `column`
     """
     if not isinstance(record, BaseElasticRecord):
         raise template.TemplateSyntaxError(
@@ -137,7 +137,7 @@ def get_cell_value(value, edited_value):
 def display_dc_value(value):
     """
     Returns a template that "styles" the value for display in the
-    data cleaning table.
+    bulk edit table.
 
     The styling is based on:
         - if the value is "NULL"

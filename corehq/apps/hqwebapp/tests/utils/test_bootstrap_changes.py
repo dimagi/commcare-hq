@@ -322,22 +322,25 @@ def test_file_does_not_contain_reference_to_path():
 
 
 def test_javascript_file_contains_reference_to_path():
-    filedata = """hqDefine('foobarapp/js/bugz_two', [
-        'foobarapp/js/bugz'
-        'foobarapp/js/layout'
-    ], function() {
-        // nothing to do, this is just to define the dependencies for foobarapp/base.html
-    });"""
+    filedata = """
+import 'foobarapp/js/bugz';
+import Layout from 'foobarapp/js/layout';
+import { OneThing } from 'foobarapp/js/things';
+// do stuff
+    """
     contains_ref = file_contains_reference_to_path(filedata, "foobarapp/js/bugz")
+    eq(contains_ref, True)
+    contains_ref = file_contains_reference_to_path(filedata, "foobarapp/js/layout")
+    eq(contains_ref, True)
+    contains_ref = file_contains_reference_to_path(filedata, "foobarapp/js/things")
     eq(contains_ref, True)
 
 
 def test_javascript_file_does_not_contain_reference_to_path():
-    filedata = """hqDefine('foobarapp/js/bugz_two', [
-        'foobarapp/js/layout'
-    ], function() {
-        // nothing to do, this is just to define the dependencies for foobarapp/base.html
-    });"""
+    filedata = """
+import 'foobarapp/js/layout';
+// do stuff
+    """
     contains_ref = file_contains_reference_to_path(filedata, "foobarapp/js/bugz")
     eq(contains_ref, False)
 
@@ -370,19 +373,17 @@ def test_replace_path_references():
 
 
 def test_replace_path_references_javascript():
-    filedata = """hqDefine('foobarapp/js/bugz_two', [
-    'foobarapp/js/bugz',
-    'foobarapp/js/layout'
-], function() {
-    // nothing to do, this is just to define the dependencies for foobarapp/base.html
-});"""
+    filedata = """
+import 'foobarapp/js/bugz';
+import 'foobarapp/js/layout';
+// do stuff
+"""
     result = replace_path_references(filedata, "foobarapp/js/bugz", "foobarapp/js/bootstrap3/bugz")
-    expected_result = """hqDefine('foobarapp/js/bugz_two', [
-    'foobarapp/js/bootstrap3/bugz',
-    'foobarapp/js/layout'
-], function() {
-    // nothing to do, this is just to define the dependencies for foobarapp/base.html
-});"""
+    expected_result = """
+import 'foobarapp/js/bootstrap3/bugz';
+import 'foobarapp/js/layout';
+// do stuff
+"""
     eq(result, expected_result)
 
 

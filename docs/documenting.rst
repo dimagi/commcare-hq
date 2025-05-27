@@ -90,8 +90,7 @@ appear on the build server.
 .. code-block:: sh
 
    $ cd commcare-hq/
-   $ mkvirtualenv --python=python3.9 hq-docs
-   $ pip install -r requirements/docs-requirements.txt
+   $ uv sync --group=docs --inexact
    $ cd docs/
    $ make html
 
