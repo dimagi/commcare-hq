@@ -97,10 +97,6 @@ class BulkEditSession(models.Model):
         ordering = ["-created_on"]
 
     @classmethod
-    def get_committed_sessions(cls, user, domain_name):
-        return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
-
-    @classmethod
     def get_all_sessions(cls, user, domain_name):
         return cls.objects.filter(user=user, domain=domain_name).order_by('-created_on')
 
