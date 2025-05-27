@@ -1,4 +1,6 @@
 {% load i18n %}
+{% load hq_shared_tags %}
+{% registerurl "feature_flags_and_privileges" "---"%}
 
 <div class="modal fade" id="copy-toggles">
   <div class="modal-dialog">
@@ -13,7 +15,8 @@
         <p>
           {% blocktrans %}
             The following features are not turned on in the domain to which you're copying.
-            Select any that you wish to copy along with this application.
+            Please enable the necessary feature flags required for the app to function
+            from <a id="feature-flags-link" href="" target="_blank">here</a>.
           {% endblocktrans %}
         </p>
         <div>

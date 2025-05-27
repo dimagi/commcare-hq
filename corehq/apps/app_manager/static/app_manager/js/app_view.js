@@ -84,7 +84,10 @@ $(function () {
                 success: function (toggles) {
                     if (toggles.length) {
                         var template = _.template($modal.find("script").html()),
-                            $ul = $modal.find("ul").html("");
+                            $ul = $modal.find("ul").html(""),
+                            flagsUrl = initialPageData.reverse("feature_flags_and_privileges", domain);
+
+                        $modal.find("#feature-flags-link").attr("href", flagsUrl);
 
                         _.each(toggles, function (toggle) {
                             $ul.append(template(toggle));
