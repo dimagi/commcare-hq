@@ -1318,6 +1318,22 @@ class SelectedCustomPlanView(ContactFormViewBase):
         return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
 
 
+class GeneralPlanQuestionView(ContactFormViewBase):
+    urlname = 'select_plan_general_question'
+    request_type = 'Plan Question'
+
+    @property
+    def edition(self):
+        return (
+            self.current_subscription.plan_version.plan.edition
+            if self.current_subscription is not None else ''
+        )
+
+    @property
+    def back_button(self):
+        return (_("Back to Select Plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
+
+
 class ConfirmSelectedPlanView(PlanViewBase):
     template_name = 'domain/bootstrap3/confirm_plan.html'
     urlname = 'confirm_selected_plan'
