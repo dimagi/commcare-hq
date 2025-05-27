@@ -1,4 +1,4 @@
-hqDefine('integration/js/simprints', [
+define('integration/js/simprints', [
     'jquery',
     'knockout',
 ], function (
