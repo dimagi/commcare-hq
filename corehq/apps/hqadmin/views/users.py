@@ -66,7 +66,6 @@ from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import ALL_TAGS
-from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
 from corehq.toggles.sql_models import ToggleEditPermission
 from corehq.util import reverse
 from corehq.util.bounced_email_utils import get_email_statuses
@@ -265,7 +264,14 @@ def _augment_users_with_accounting_admin(users):
 
 def _augment_users_with_feature_flag_edit_permissions(users):
     for user in users:
-        user.tags_edit_permission = [tag.name for tag in get_editable_toggle_tags_for_user(user.username)]
+        user.tags_edit_permission = []
+    for tag in ALL_TAGS:
+        permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
+        if not permission:
+            continue
+        for user in users:
+            if permission.is_user_enabled(user.username):
+                user.tags_edit_permission.append(tag)
     return users
 
 
