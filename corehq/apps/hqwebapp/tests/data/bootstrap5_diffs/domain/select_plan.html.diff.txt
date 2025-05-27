@@ -38,18 +38,7 @@
        data-bind="visible: oIsNextPlanDowngrade"
      >
        <i class="fa fa-warning"></i>
-@@ -295,9 +295,8 @@
-             Questions about which software plan is right for you?
-           {% endblocktrans %}
-           <button
--            class="btn btn-link"
-+            class="btn btn-link p-0"
-             data-bind="click: contactSales"
--            style="padding: 0;"
-           >
-             {% trans "Talk with our team." %}
-           </button>
-@@ -315,9 +314,9 @@
+@@ -301,9 +301,9 @@
          <div class="modal-header">
            <button
              type="button"
@@ -62,7 +51,7 @@
              <span aria-hidden="true">&times;</span>
              <span class="sr-only">{% trans "Close" %}</span>
            </button>
-@@ -328,13 +327,13 @@
+@@ -314,13 +314,13 @@
            <button
              type="button"
              class="btn btn-primary"
