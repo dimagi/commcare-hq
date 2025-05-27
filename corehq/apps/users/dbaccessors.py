@@ -1,11 +1,13 @@
+import datetime
 from collections import namedtuple
+from dateutil.relativedelta import relativedelta
 
 from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.es.users import web_users, mobile_users
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserHistory, UserRole
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
@@ -75,18 +77,24 @@ def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
-    # The following two filters applies only to MOBILE_USER_TYPE
-    selected_location_only = user_filters.get('selected_location_only', False)
     user_active_status = user_filters.get('user_active_status', None)
+    # The following filter applies only to MOBILE_USER_TYPE
+    selected_location_only = user_filters.get('selected_location_only', False)
 
     if user_active_status is None:
         # Show all users in domain - will always be true for WEB_USER_TYPE
         query = UserES().domain(domain).remove_default_filter('active')
     elif user_active_status:
         # Active users filtered by default
-        query = UserES().domain(domain)
+        if user_type == MOBILE_USER_TYPE:
+            query = UserES().domain(domain)
+        if user_type == WEB_USER_TYPE:
+            query = UserES().domain(domain).is_active(True, domain)
     else:
-        query = UserES().domain(domain).show_only_inactive()
+        if user_type == MOBILE_USER_TYPE:
+            query = UserES().domain(domain).show_only_inactive()
+        if user_type == WEB_USER_TYPE:
+            query = UserES().domain(domain).is_active(False, domain)
 
     if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()
@@ -183,6 +191,11 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
     support ES search syntax, it's just a case-insensitive substring search.
     Ignores any other filters.
     """
+    only_active = user_filters.get("user_active_status", None)
+    if not only_active and only_active is not None:
+        if count_only:
+            return 0
+        return []
     filters = {}
     search_string = user_filters.get("search_string", None)
     if search_string:
@@ -229,8 +242,8 @@ def get_active_web_usernames_by_domain(domain):
     return (row['key'][3] for row in get_all_user_rows(domain, include_mobile_users=False, include_inactive=False))
 
 
-def get_web_user_count(domain, include_inactive=True):
-    return sum([
+def get_web_user_count(domain, include_inactive=True, exclude_deactivated_web=False):
+    total = sum([
         row['value']
         for row in get_all_user_rows(
             domain,
@@ -240,6 +253,18 @@ def get_web_user_count(domain, include_inactive=True):
             count_only=True
         ) if row
     ])
+    if exclude_deactivated_web:
+        web_users = get_all_web_users_by_domain(domain)
+        today = datetime.datetime.today()
+        start_date = today - relativedelta(months=1)
+        for u in web_users:
+            if not u.is_active_in_domain(domain):
+                user_history = UserHistory.objects.filter(
+                    by_domain=domain, for_domain=domain, user_type="WebUser", user_id=u.user_id,
+                    changed_at__lte=today, changed_at__gt=start_date, changes__has_key='is_active_in_domain')
+                if not user_history.exists():
+                    total -= 1
+    return total
 
 
 def get_mobile_user_count(domain, include_inactive=True):
