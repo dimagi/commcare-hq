@@ -3,7 +3,6 @@ import doctest
 import json
 import re
 from contextlib import contextmanager
-from unittest import mock
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
