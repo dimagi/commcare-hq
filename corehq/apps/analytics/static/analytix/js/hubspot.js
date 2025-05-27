@@ -2,7 +2,7 @@
 /**
  * Instatiates the Hubspot analytics platform.
  */
-hqDefine('analytix/js/hubspot', [
+define('analytix/js/hubspot', [
     'jquery',
     'underscore',
     'analytix/js/initial',
