@@ -1944,7 +1944,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
                     new_sub_date_end = (
                         new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-                        if self.is_annual_plan else None
+                        if self.is_annual_plan_selected() else None
                     )
                     self.current_subscription.update_subscription(
                         date_start=self.current_subscription.date_start,
@@ -1966,7 +1966,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     new_sub_date_start = datetime.date.today()
                     new_sub_date_end = (
                         new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-                        if self.is_annual_plan else None
+                        if self.is_annual_plan_selected() else None
                     )
                     self.current_subscription.change_plan(
                         self.plan_version,
