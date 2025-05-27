@@ -1978,7 +1978,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         do_not_invoice=False,
                         no_invoice_reason='',
                     )
-                if self.selected_annual_plan:
+                if self.is_annual_plan_selected():
                     self.send_prepayment_invoice(new_sub_date_start, new_sub_date_end)
                 if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
                     self_signup.complete_workflow(self.plan_version.plan.edition)
@@ -2012,8 +2012,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             amount, label, monthly_fee, num_months, date_due
         )
 
-    @property
-    def selected_annual_plan(self):
+    def is_annual_plan_selected(self):
         return self.plan_version.plan.is_annual_plan
 
     def is_same_edition(self):
