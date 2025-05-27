@@ -710,10 +710,12 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         credit_label = request.POST.get('credit_label', 'General Credits')
 
         wire_invoice_factory = DomainWireInvoiceFactory(
-            request.domain, contact_emails=[contact_email], cc_emails=cc_emails)
+            request.domain, date_start=date_start, date_end=date_end,
+            contact_emails=[contact_email], cc_emails=cc_emails
+        )
         try:
             wire_invoice_factory.create_wire_credits_invoice(
-                amount, credit_label, unit_cost, quantity, date_start, date_end
+                amount, credit_label, unit_cost, quantity
             )
         except Exception as e:
             return json_response({'error': {'message': str(e)}})
