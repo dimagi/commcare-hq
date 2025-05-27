@@ -84,22 +84,13 @@ $(function () {
                 success: function (toggles) {
                     if (toggles.length) {
                         var template = _.template($modal.find("script").html()),
-                            $ul = $modal.find("ul").html(""),
-                            allSelected = false;
-                        $modal.find(".select-all").click(function (e) {
-                            allSelected = !allSelected;
-                            $(e.currentTarget).text(allSelected ? gettext("Select None") : gettext("Select All"));
-                            $ul.find("input:checkbox").prop('checked', allSelected);
-                        });
+                            $ul = $modal.find("ul").html("");
+
                         _.each(toggles, function (toggle) {
                             $ul.append(template(toggle));
                         });
                         $modal.modal().one("click", ".btn-primary", function () {
                             $(this).disableButton();
-                            var slugs = _.map($modal.find(":checked"), function (c) {
-                                return $(c).data("slug");
-                            });
-                            $form.find("input[name='toggles']").val(slugs.join(","));
                             $form.submit();
                         }).one("hide.bs.modal", function () {
                             $submit.enableButton();
