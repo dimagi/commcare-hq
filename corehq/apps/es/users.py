@@ -235,25 +235,20 @@ def role_id(role_id):
 
 
 def is_active(active=True, domain=None):
-    user_active_filter = filters.term("is_active", active)
-    if not domain:
-        return user_active_filter
-    if active:
-        and_or = filters.AND
-        domain_membership_filter = filters.NOT(filters.term("user_domain_memberships.is_active", False))
-    else:
-        and_or = filters.OR
-        domain_membership_filter = filters.term("user_domain_memberships.is_active", False)
-    return and_or(
-        user_active_filter,
+    filter = filters.AND(
+        filters.term("is_active", True),
         queries.nested(
             'user_domain_memberships',
             filters.AND(
                 filters.term('user_domain_memberships.domain.exact', domain),
-                domain_membership_filter
+                filters.NOT(filters.term("user_domain_memberships.is_active", False))
             )
         )
     )
+    if active:
+        return filter
+    else:
+        return filters.NOT(filter)
 
 
 def _user_data(key, filter_):
