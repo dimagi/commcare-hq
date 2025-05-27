@@ -164,15 +164,6 @@ var PricingTable = function (options) {
         }
     };
 
-    self.contactSales = function (pricingTable, e) {
-        var $button = $(e.currentTarget);
-        $button.disableButton();
-
-        self.form = $(e.currentTarget).closest("form");
-        self.oCurrentEdition(self.oCurrentEdition() + " - annual pricing");
-        self.form.submit();
-    };
-
     self.init = function () {
         self.form = $("#select-plan-form");
     };

@@ -282,28 +282,14 @@
     </form>
 
     <hr />
-    <form action="{% url 'custom_plan_request_quote' domain %}">
-      {% csrf_token %}
-      <input
-        type="hidden"
-        name="plan_edition"
-        data-bind="value: oSelectedEdition"
-      />
-      <div class="text-center plan-next">
-        <p>
-          {% blocktrans %}
-            Questions about which software plan is right for you?
-          {% endblocktrans %}
-          <button
-            class="btn btn-link"
-            data-bind="click: contactSales"
-            style="padding: 0;"
-          >
-            {% trans "Talk with our team." %}
-          </button>
-        </p>
-      </div>
-    </form>
+    <p class="text-center">
+      {% blocktrans %}
+        Questions about which software plan is right for you?
+      {% endblocktrans %}
+      <a href="{% url 'custom_plan_request_quote' domain %}"
+        >{% trans "Talk with our team" %}</a
+      >.
+    </p>
   </section>
 {% endblock %}
 
