@@ -104,7 +104,6 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.toggles.shortcuts import set_toggles
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -450,10 +449,6 @@ def copy_app(request, domain):
 
     def _inner(request, to_domain, data, from_domain=domain):
         clear_app_cache(request, to_domain)
-
-        if data['toggles']:
-            toggle_slugs = data['toggles'].split(",")
-            set_toggles(toggle_slugs, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
 
         linked = data.get('linked')
         if linked:
