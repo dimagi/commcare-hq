@@ -74,6 +74,9 @@ class BulkEditSessionManager(models.Manager):
         new_session = self.new_case_session(user, domain_name, case_type)
         return new_session
 
+    def all_sessions(self, user, domain_name):
+        return self.filter(user=user, domain=domain_name).order_by('-created_on')
+
 
 class BulkEditSession(models.Model):
     user = models.ForeignKey(User, related_name="bulk_edit_sessions", on_delete=models.CASCADE)
@@ -95,10 +98,6 @@ class BulkEditSession(models.Model):
 
     class Meta:
         ordering = ["-created_on"]
-
-    @classmethod
-    def get_all_sessions(cls, user, domain_name):
-        return cls.objects.filter(user=user, domain=domain_name).order_by('-created_on')
 
     def get_resumed_session(self):
         new_session = BulkEditSession.objects.new_case_session(
