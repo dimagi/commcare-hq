@@ -1,15 +1,19 @@
 import datetime
+from dateutil.relativedelta import relativedelta
 
-from django.db.models import Q, Sum
+from django.db.models import Exists, OuterRef, Q, Sum
 
 from corehq.apps.accounting.const import (
     DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
     DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE,
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
 )
 from corehq.apps.accounting.models import (
     CustomerInvoice,
     Invoice,
+    LineItem,
     SubscriptionType,
+    WirePrepaymentInvoice,
 )
 
 UNPAID_INVOICE_THRESHOLD = 1
@@ -120,3 +124,34 @@ def _get_accounts_over_threshold_in_daterange(date_start, date_end):
             if total_unpaid_to_date >= UNPAID_INVOICE_THRESHOLD:
                 accounts.add((account, plan))
                 yield unpaid_invoice, total_unpaid_to_date
+
+
+def get_flagged_pay_annually_prepay_invoice(invoice):
+    plan = invoice.subscription.plan_version.plan
+    if not plan.is_annual_plan:
+        return None
+
+    product_line_item = invoice.lineitem_set.get_products().first()
+    if (
+        product_line_item is None
+        or product_line_item.applied_credit >= product_line_item.subtotal
+    ):
+        return None
+
+    matching_lineitem = LineItem.objects.filter(
+        subscription_invoice=OuterRef('pk'),
+        unit_cost=product_line_item.product_rate.monthly_fee,
+        quantity=PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
+    )
+
+    past_due_prepay_invoice = WirePrepaymentInvoice.objects.filter(
+        domain=invoice.get_domain(),
+        date_due__lt=datetime.date.today(),
+        date_due__gte=datetime.date.today() - relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS),
+    ).annotate(
+        has_matching_lineitem=Exists(matching_lineitem)
+    ).filter(
+        has_matching_lineitem=True
+    ).first()
+
+    return past_due_prepay_invoice

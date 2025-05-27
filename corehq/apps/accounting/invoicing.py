@@ -14,7 +14,9 @@ from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
 from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
-from corehq.apps.accounting.emails import send_flagged_pay_annually_subscription_alert
+from corehq.apps.accounting.emails import (
+    send_flagged_pay_annually_subscription_alert,
+)
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -50,6 +52,9 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
     months_from_date,
+)
+from corehq.apps.accounting.utils.invoicing import (
+    get_flagged_pay_annually_prepay_invoice,
 )
 from corehq.apps.domain.dbaccessors import deleted_domain_exists, domain_exists
 from corehq.apps.domain.utils import (
@@ -149,7 +154,7 @@ class DomainInvoiceFactory(object):
                     log_accounting_error(str(e))
                     self.logged_throttle_error = True
 
-            flagged_prepay_invoice = invoice.get_flagged_pay_annually_prepay_invoice()
+            flagged_prepay_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
             if flagged_prepay_invoice:
                 send_flagged_pay_annually_subscription_alert(subscription, invoice, flagged_prepay_invoice)
         else:

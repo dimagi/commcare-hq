@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
-from django.db.models import Exists, F, OuterRef, Q, Subquery
+from django.db.models import F, OuterRef, Q, Subquery
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -17,7 +17,6 @@ from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 import stripe
-from dateutil.relativedelta import relativedelta
 from django_prbac.models import Role
 from memoized import memoized
 
@@ -31,7 +30,6 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
     EXCHANGE_RATE_DECIMAL_PLACES,
-    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
     SMALL_INVOICE_THRESHOLD,
 )
 from corehq.apps.accounting.emails import (
@@ -2403,36 +2401,6 @@ class Invoice(InvoiceBase):
 
         self.update_balance()
         self.save()
-
-    def get_flagged_pay_annually_prepay_invoice(self):
-        plan = self.subscription.plan_version.plan
-        if not plan.is_annual_plan:
-            return None
-
-        product_line_item = self.lineitem_set.get_products().first()
-        if (
-            product_line_item is None
-            or product_line_item.applied_credit >= product_line_item.subtotal
-        ):
-            return None
-
-        matching_lineitem = LineItem.objects.filter(
-            subscription_invoice=OuterRef('pk'),
-            unit_cost=product_line_item.product_rate.monthly_fee,
-            quantity=PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
-        )
-
-        past_due_prepay_invoice = WirePrepaymentInvoice.objects.filter(
-            domain=self.get_domain(),
-            date_due__lt=datetime.date.today(),
-            date_due__gte=datetime.date.today() - relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS),
-        ).annotate(
-            has_matching_lineitem=Exists(matching_lineitem)
-        ).filter(
-            has_matching_lineitem=True
-        ).first()
-
-        return past_due_prepay_invoice
 
 
 class CustomerInvoice(InvoiceBase):
