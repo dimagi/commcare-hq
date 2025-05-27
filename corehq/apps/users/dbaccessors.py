@@ -262,7 +262,7 @@ def get_web_user_count(domain, include_inactive=True, exclude_deactivated_web=Fa
                 user_history = UserHistory.objects.filter(
                     by_domain=domain, for_domain=domain, user_type="WebUser", user_id=u.user_id,
                     changed_at__lte=today, changed_at__gt=start_date, changes__has_key='is_active_in_domain')
-                if user_history is None:
+                if not user_history.exists():
                     total -= 1
     return total
 
