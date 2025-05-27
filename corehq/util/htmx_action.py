@@ -1,3 +1,5 @@
+import json
+
 from django.http import HttpResponseForbidden, HttpResponse
 
 ANY_METHOD = 'any_method'
@@ -74,6 +76,10 @@ class HqHtmxActionMixin:
         :return: string (path to template)
         """
         return self.default_htmx_error_template
+
+    def add_hx_trigger_to_response(self, response, trigger_data):
+        response['HX-Trigger'] = json.dumps(trigger_data)
+        return response
 
     def render_htmx_redirect(self, url, response_message=None):
         response = HttpResponse(response_message or "")
