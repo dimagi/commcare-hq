@@ -13,6 +13,7 @@ from typing import (
 from django.core.management.base import BaseCommand, CommandError
 
 import xlrd
+from couchdbkit import ResourceConflict
 
 from casexml.apps.case.mock import CaseBlock
 
@@ -422,7 +423,12 @@ def assign_location(user_id: str, location: SQLLocation) -> None:
     if verbose:
         print(f'Assigning {user.raw_username} to {loc_str(location)}')
     if not dry_run:
-        user.add_to_assigned_locations(location)
+        try:
+            user.add_to_assigned_locations(location)
+        except ResourceConflict:
+            # Give the user another chance
+            user = CommCareUser.get_by_user_id(user_id, location.domain)
+            user.add_to_assigned_locations(location)
     # We don't need to unassign the user from the old settlement. That
     # will be done when we delete the location.
 
