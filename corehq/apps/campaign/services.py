@@ -25,11 +25,13 @@ def _get_number_of_mobile_workers(gauge):
 
 
 def _get_number_of_active_mobile_workers(gauge):
-    return UserES().domain(gauge.dashboard.domain).mobile_users().is_active().count()
+    domain = gauge.dashboard.domain
+    return UserES().domain(domain).mobile_users().is_active(domain, True).count()
 
 
 def _get_number_of_inactive_mobile_workers(gauge):
-    return UserES().domain(gauge.dashboard.domain).mobile_users().is_active(active=False).count()
+    domain = gauge.dashboard.domain
+    return UserES().domain(domain).mobile_users().is_active(domain, False).count()
 
 
 def _get_number_of_forms_submitted_by_mobile_workers(gauge):
