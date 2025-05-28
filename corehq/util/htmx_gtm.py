@@ -8,7 +8,7 @@ def get_htmx_gtm_event(name, data=None):
 
     Note: This function is best paired with `HqHtmxActionMixin`,
     calling/returning the following in an hq_hx_action method:
-        self.add_gtm_event_to_response(response, name, data)
+        self.include_gtm_event_with_response(response, name, data)
 
     :param name: The name of the event.
     :param data: Optional additional data to include with the event.

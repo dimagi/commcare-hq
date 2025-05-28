@@ -43,13 +43,13 @@ class ManagePinnedFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
     def update_filters(self, request, *args, **kwargs):
         [f.update_stored_value() for f in self.form_filters]
         response = self.get(request, *args, **kwargs)
-        return self.add_gtm_event_to_response(response, "bulk_edit_pinned_filters_updated")
+        return self.include_gtm_event_with_response(response, "bulk_edit_pinned_filters_updated")
 
     @hq_hx_action('post')
     def reset_filters(self, request, *args, **kwargs):
         self.session.reset_pinned_filters()
         response = self.get(request, *args, **kwargs)
-        return self.add_gtm_event_to_response(response, "bulk_edit_pinned_filters_reset")
+        return self.include_gtm_event_with_response(response, "bulk_edit_pinned_filters_reset")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -83,7 +83,7 @@ class ManageFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
         if filter_form.is_valid():
             filter_form.create_filter()
             response = self.get(request, filter_form=None, *args, **kwargs)
-            return self.add_gtm_event_to_response(
+            return self.include_gtm_event_with_response(
                 response,
                 "bulk_edit_filter_added",
                 {
@@ -98,10 +98,10 @@ class ManageFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
         filter_ids = request.POST.getlist('filter_ids')
         self.session.update_filter_order(filter_ids)
         response = self.get(request, *args, **kwargs)
-        return self.add_gtm_event_to_response(response, "bulk_edit_filter_order_updated")
+        return self.include_gtm_event_with_response(response, "bulk_edit_filter_order_updated")
 
     @hq_hx_action('post')
     def delete_filter(self, request, *args, **kwargs):
         self.session.remove_filter(request.POST['delete_id'])
         response = self.get(request, *args, **kwargs)
-        return self.add_gtm_event_to_response(response, "bulk_edit_filter_deleted")
+        return self.include_gtm_event_with_response(response, "bulk_edit_filter_deleted")

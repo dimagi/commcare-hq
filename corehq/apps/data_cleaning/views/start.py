@@ -83,7 +83,7 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
             reverse(BulkEditCasesSessionView.urlname, args=(self.domain, session.session_id, )),
             response_message=_("Starting Bulk Edit Session...")
         )
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_session_started",
             {

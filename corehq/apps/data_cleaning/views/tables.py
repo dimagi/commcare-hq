@@ -74,7 +74,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
                 'target': '#hq-hx-active-filters',
             },
         })
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_clear_filters",
             {
@@ -94,7 +94,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         else:
             self.session.deselect_record(doc_id)
         response = self.render_htmx_no_response(request, *args, **kwargs)
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_select_record",
             {
@@ -115,7 +115,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         else:
             self.session.deselect_multiple_records(doc_ids)
         response = self.render_htmx_no_response(request, *args, **kwargs)
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_select_page",
             {
@@ -143,7 +143,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         """
         self.session.deselect_all_records_in_queryset()
         response = self.get(request, *args, **kwargs)
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_deselect_all_records",
             {
@@ -163,7 +163,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             table_num_records=num_records
         ):
             self.session.select_all_records_in_queryset()
-            return self.add_gtm_event_to_response(
+            return self.include_gtm_event_with_response(
                 response,
                 "bulk_edit_select_all_records",
                 {
@@ -176,7 +176,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
                 'target': '#select-all-not-possible-modal',
             },
         })
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_select_all_records_not_possible",
             {
@@ -198,7 +198,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
                 'target': '#session-status-modal-body',
             },
         })
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_apply_all_changes",
             {
@@ -212,7 +212,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         response = self._trigger_clean_form_refresh(
             self.get(request, *args, **kwargs)
         )
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_undo_last_change",
             {
@@ -226,7 +226,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         response = self._trigger_clean_form_refresh(
             self.get(request, *args, **kwargs)
         )
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_clear_all_changes",
             {

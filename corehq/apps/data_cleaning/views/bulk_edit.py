@@ -40,7 +40,7 @@ class EditSelectedRecordsFormView(BulkEditSessionViewMixin,
                 form.get_bulk_edit_change()
             )
             response = self.get(request, form=None, change=change, *args, **kwargs)
-            return self.add_gtm_event_to_response(
+            return self.include_gtm_event_with_response(
                 response,
                 "bulk_edit_change_created",
                 {

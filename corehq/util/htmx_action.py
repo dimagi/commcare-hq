@@ -107,7 +107,7 @@ class HqHtmxActionMixin:
             triggers = {}
         return triggers
 
-    def add_gtm_event_to_response(self, response, event_name, event_data=None):
+    def include_gtm_event_with_response(self, response, event_name, event_data=None):
         """
         Add a GTM event to the HTMX response headers.
         """

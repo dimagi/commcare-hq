@@ -104,7 +104,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
                     'target': '#session-status-modal',
                 },
             })
-        return self.add_gtm_event_to_response(
+        return self.include_gtm_event_with_response(
             response,
             "bulk_edit_session_status_viewed",
             {

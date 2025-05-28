@@ -11,7 +11,7 @@ document.body.addEventListener('hqHtmxGtmSendEvent', (event) => {
      * which call the following in an htmx action handler:
      * ```python
      * response = self.get(...)
-     * return self.add_gtm_event_to_response(response, 'myEventName', {'key': 'value'})
+     * return self.include_gtm_event_with_response(response, 'myEventName', {'key': 'value'})
      * ```
      */
     _logger.debug.log(`event triggered: ${event.detail.name}`);
