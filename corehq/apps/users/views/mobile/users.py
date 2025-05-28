@@ -960,7 +960,7 @@ def paginate_mobile_workers(request, domain):
     users_query = _user_query(query, page - 1, limit)
     # run with a blank query to fetch total records with same scope as in search
     if deactivated_only:
-        users_query = users_query.show_only_inactive()
+        users_query = users_query.show_only_inactive(domain)
     users_data = users_query.source([
         '_id',
         'first_name',
