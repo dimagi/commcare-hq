@@ -2,6 +2,7 @@ import 'commcarehq';
 import { Modal } from 'bootstrap5';
 import 'hqwebapp/js/htmx_base';
 import 'hqwebapp/js/htmx_utils/hq_hx_select_all';
+import 'hqwebapp/js/htmx_utils/htmx_gtx';
 import 'hqwebapp/js/alpinejs/directives/select2';
 import 'hqwebapp/js/alpinejs/directives/report_select2';
 import 'hqwebapp/js/alpinejs/directives/datepicker';
