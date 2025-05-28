@@ -51,12 +51,9 @@ class CopyApplicationForm(forms.Form):
         widget=forms.Select(choices=[], attrs={"class": "app-manager-version-dropdown",
                                                "placeholder": _("Current")}))
 
-    # Toggles to enable when copying the app
-    toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
-
     def __init__(self, from_domain, app, *args, **kwargs):
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
-        fields = ['domain', 'name', 'toggles', 'build_id']
+        fields = ['domain', 'name', 'build_id']
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name

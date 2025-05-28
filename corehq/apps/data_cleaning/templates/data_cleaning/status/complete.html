@@ -12,31 +12,17 @@
   {% blocktrans count count=num_records_changed %}
     Finished processing changes, updated 1 case.
   {% plural %}
-    Finished processing changes, updated {{ num_records_changed }} cases.
+    Finished processing changes, updated {{ count }} cases.
   {% endblocktrans %}
   {# prettier-ignore-end #}
 {% endblock task-status-text %}
 
 {% block modal-body %}
-  {% if active_session %}
-    <p class="lead">
-      {% blocktrans %}
-        Resume this session with the same columns and filters?
-      {% endblocktrans %}
-    </p>
-    <div class="alert alert-warning">
-      <strong>{% trans "Important" %}:</strong>
-      {% blocktrans %}
-        This will replace your existing active session with a new one. Any edits you made will be lost.
-      {% endblocktrans %}
-    </div>
-  {% else %}
-    <p class="lead">
-      {% blocktrans %}
-        Continue editing <strong class="fw-bold">{{ case_type }}</strong> cases with the same columns and filters?
-      {% endblocktrans %}
-    </p>
-  {% endif %}
+  <p class="lead">
+    {% blocktrans %}
+      Continue editing <strong class="fw-bold">{{ case_type }}</strong> cases with the same columns and filters?
+    {% endblocktrans %}
+  </p>
 {% endblock modal-body %}
 
 {% block continue-button %}
@@ -48,10 +34,6 @@
     hx-swap="none"
     hx-disabled-elt="this"
   >
-    {% if active_session %}
-      {% trans "Resume this session" %}
-    {% else %}
-      {% trans "Continue editing" %}
-    {% endif %}
+    {% trans "Continue editing" %}
   </button>
 {% endblock continue-button %}

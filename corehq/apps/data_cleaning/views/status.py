@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from memoized import memoized
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models.session import APPLY_CHANGES_WAIT_TIME, BulkEditSession
@@ -27,6 +28,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     urlname = "bulk_edit_session_status"
     template_name = "data_cleaning/status/complete.html"
     template_in_progress = "data_cleaning/status/in_progress.html"
+    template_previous_session = "data_cleaning/status/previous_session.html"
 
     @property
     def seconds_since_complete(self):
@@ -58,9 +60,13 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     def get_template_names(self):
         if self.is_session_in_progress:
             return [self.template_in_progress]
+        elif self.active_session:
+            return [self.template_previous_session]
         return [self.template_name]
 
-    def get_active_session(self):
+    @property
+    @memoized
+    def active_session(self):
         if self.session.completed_on is None:
             return None
         return BulkEditSession.get_active_case_session(
@@ -78,7 +84,6 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            "active_session": self.get_active_session(),
             "num_records_changed": (
                 self.session.num_changed_records
                 if self.session.committed_on is not None
@@ -108,9 +113,8 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
 
     @hq_hx_action('post')
     def resume_session(self, request, *args, **kwargs):
-        active_session = self.get_active_session()
-        if active_session:
-            active_session.delete()
+        if self.active_session is not None:
+            self.active_session.delete()
         new_session = self.session.get_resumed_session()
 
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView

@@ -59,7 +59,12 @@ module.exports = {
                     {
                         test: /\.js$/,
                         loader: 'babel-loader',
-                        exclude: /node_modules/,
+                        exclude: [
+                            /node_modules/,
+                            // Vellum is already compressed, so it does not need babel's processing
+                            path.resolve(
+                                __dirname, '../corehq/apps/app_manager/static/app_manager/js/vellum/main.js'),
+                        ],
                     },
                     {
                         test: /\.png/,
