@@ -141,20 +141,40 @@ class EditCasesTableView(BulkEditSessionViewMixin,
                 'target': '#session-status-modal-body',
             },
         })
-        return response
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_apply_all_changes",
+            {
+                "session_type": self.session.session_type,
+            },
+        )
 
     @hq_hx_action("post")
     def undo_last_change(self, request, *args, **kwargs):
         self.session.undo_last_change()
-        return self._trigger_clean_form_refresh(
+        response = self._trigger_clean_form_refresh(
             self.get(request, *args, **kwargs)
+        )
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_undo_last_change",
+            {
+                "session_type": self.session.session_type,
+            },
         )
 
     @hq_hx_action("post")
     def clear_all_changes(self, request, *args, **kwargs):
         self.session.clear_all_changes()
-        return self._trigger_clean_form_refresh(
+        response = self._trigger_clean_form_refresh(
             self.get(request, *args, **kwargs)
+        )
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_clear_all_changes",
+            {
+                "session_type": self.session.session_type,
+            },
         )
 
     def _trigger_clean_form_refresh(self, response):
