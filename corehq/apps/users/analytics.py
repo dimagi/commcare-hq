@@ -84,7 +84,8 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
 
 def get_role_user_count(domain, role_id, web_users_only=False):
     from corehq.apps.es.users import UserES
-    query = UserES().is_active().domain(domain).role_id(role_id)
+    query = UserES().is_active(domain, True).domain(domain).role_id(role_id)
+    # this should probably include domain deactivated but still active users
     if web_users_only:
         query = query.web_users()
     users_count = query.count()

@@ -51,7 +51,8 @@ class Command(BaseCommand):
                     doc['base_username'].split('@')[0]
                     for doc in UserES()
                     .domain(domain)
-                    .web_users().is_active()
+                    .web_users().is_active(domain, True)
+                    # need to include domain deactivated but still active web users
                     .created(gte=start_date, lt=current_month)
                     .run().hits
                 )
