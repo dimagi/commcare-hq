@@ -4542,6 +4542,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
         from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
+        from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
@@ -4556,9 +4557,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
         get_mobile_ucr_count.clear(self.domain)
-        if toggles.DATA_CLEANING_CASES.enabled(self.domain):
-            from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
-            clear_caches_case_data_cleaning(self.domain)
+        clear_caches_case_data_cleaning(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
