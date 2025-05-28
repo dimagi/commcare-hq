@@ -38,7 +38,7 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.privileges import BULK_DATA_EDITING
-from corehq.util.test_utils import flag_enabled, privilege_enabled
+from corehq.util.test_utils import privilege_enabled
 
 
 @es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
@@ -186,7 +186,6 @@ class CleanCasesViewAccessTest(TestCase):
             )
 
     @privilege_enabled(BULK_DATA_EDITING)
-    @flag_enabled('DATA_CLEANING_CASES')
     def test_has_access_with_prereqs(self):
         self.client.login(username=self.user_in_domain.username, password=self.password)
         for view_class, args in self.all_views:
@@ -202,7 +201,6 @@ class CleanCasesViewAccessTest(TestCase):
             )
 
     @privilege_enabled(BULK_DATA_EDITING)
-    @flag_enabled('DATA_CLEANING_CASES')
     def test_has_no_access_to_wrong_session(self):
         self.client.login(
             username=self.user_in_domain_not_in_session.username,
@@ -221,7 +219,6 @@ class CleanCasesViewAccessTest(TestCase):
             )
 
     @privilege_enabled(BULK_DATA_EDITING)
-    @flag_enabled('DATA_CLEANING_CASES')
     def test_redirects_session_with_no_existing_session(self):
         self.client.login(username=self.user_in_domain.username, password=self.password)
         session_url = reverse(BulkEditCasesSessionView.urlname, args=(self.domain_name, self.fake_session_id))
@@ -229,7 +226,6 @@ class CleanCasesViewAccessTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
     @privilege_enabled(BULK_DATA_EDITING)
-    @flag_enabled('DATA_CLEANING_CASES')
     def test_views_not_found_with_invalid_session(self):
         self.client.login(username=self.user_in_domain.username, password=self.password)
 
@@ -247,7 +243,6 @@ class CleanCasesViewAccessTest(TestCase):
             )
 
     @privilege_enabled(BULK_DATA_EDITING)
-    @flag_enabled('DATA_CLEANING_CASES')
     def test_has_no_access_with_other_domain(self):
         self.client.login(username=self.user_outside_of_domain.username, password=self.password)
         for view_class, args in self.all_views:
