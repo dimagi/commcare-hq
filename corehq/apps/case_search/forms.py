@@ -27,6 +27,29 @@ class CSQLFixtureExpressionForm(forms.ModelForm):
             'spellcheck': "false",
         }
 
+    def get_context(self):
+        context = super().get_context()
+        context.update({
+            'filter_modal_form': CSQLFixtureFilterForm(self.domain, instance=self.instance),
+        })
+        return context
+
+    def save(self, commit=True):
+        self.instance.domain = self.domain
+        return super().save(commit)
+
+
+class CSQLFixtureFilterForm(forms.ModelForm):
+    template_name = 'case_search/csql_modal_form.html'
+
+    class Meta:
+        model = CSQLFixtureExpression
+        fields = []
+
+    def __init__(self, domain, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.domain = domain
+
     def save(self, commit=True):
         self.instance.domain = self.domain
         return super().save(commit)

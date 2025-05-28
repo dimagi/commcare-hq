@@ -18,7 +18,7 @@
     <div class="col-2">
       <button
         type="button"
-        class="btn btn-outline-secondary ms-2"
+        class="btn btn-outline-secondary"
         data-bs-toggle="modal"
         data-bs-target="#customModal"
       >
@@ -48,22 +48,7 @@
   <div class="modal fade" id="customModal" tabindex="-1" aria-labelledby="customModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
-        <form>
-          <div class="modal-header">
-            <h5 class="modal-title" id="customModalLabel">{% trans "Custom Modal" %}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="customInput" class="form-label">{% trans "Input" %}</label>
-              <input type="text" class="form-control" id="customInput" placeholder="{% trans 'Enter value' %}">
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-            <button type="button" class="btn btn-primary">{% trans "Save" %}</button>
-          </div>
-        </form>
+        {{filter_modal_form}}
       </div>
     </div>
   </div>
