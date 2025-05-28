@@ -247,10 +247,16 @@ class Command(BaseCommand):
                     if new_location.location_id != old_settlement.location_id:
                         delete_settlement(old_settlement)
                 else:
-                    move_settlement(old_settlement, new_settlement)
+                    location = old_settlement.get_location()
+                    move_settlement(
+                        location,
+                        old_settlement,
+                        new_settlement,
+                    )
                     cases = iter_cases(old_settlement)
                     for case_block in update_cases_caseblocks(
                         cases,
+                        location,
                         old_settlement,
                         new_settlement,
                     ):
@@ -434,13 +440,13 @@ def assign_location(user_id: str, location: SQLLocation) -> None:
 
 
 def move_settlement(
+    location: SQLLocation,
     old_settlement: Settlement,
     new_settlement: Settlement,
 ) -> None:
     """
     Rename a settlement and/or move it to a new parent location.
     """
-    location = old_settlement.get_location()
     if new_settlement.settlement_name != old_settlement.settlement_name:
         # Rename settlement
         if verbose:
@@ -460,7 +466,6 @@ def move_settlement(
     location.site_code = new_settlement.get_site_code()
     if not dry_run:
         location.save()
-        del location_cache[old_settlement.location_id]
 
 
 def iter_cases(settlement: Settlement) -> Iterator[CommCareCase]:
@@ -497,9 +502,9 @@ def move_cases_caseblocks(
     for case in cases:
         case_updates = get_case_updates(
             case,
+            location,
             old_settlement,
             new_settlement,
-            location,
         )
         case_updates.update(get_settlement_id_updates(case, location))
         yield CaseBlock(
@@ -512,19 +517,19 @@ def move_cases_caseblocks(
 
 def update_cases_caseblocks(
     cases: Iterable[CommCareCase],
+    location: SQLLocation,
     old_settlement: Settlement,
     new_settlement: Settlement,
 ) -> Iterator[str]:
     """
     Yields CaseBlocks as text to update location names in cases.
     """
-    location = old_settlement.get_location()
     for case in cases:
         case_updates = get_case_updates(
             case,
+            location,
             old_settlement,
             new_settlement,
-            location,
         )
         yield CaseBlock(
             create=False,
@@ -535,9 +540,9 @@ def update_cases_caseblocks(
 
 def get_case_updates(
     case: CommCareCase,
+    location: SQLLocation,
     old_settlement: Settlement,
     new_settlement: Settlement,
-    location: SQLLocation,
 ) -> dict[str, str]:
     case_updates = get_settlement_name_updates(case, location)
     if new_settlement.lga_name != old_settlement.lga_name:
