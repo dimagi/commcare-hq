@@ -86,7 +86,7 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
         return self.add_gtm_event_to_response(
             response,
             "bulk_edit_session_started",
-            data={
+            {
                 "creation_method": creation_method,
                 "session_type": session.session_type,
             }
