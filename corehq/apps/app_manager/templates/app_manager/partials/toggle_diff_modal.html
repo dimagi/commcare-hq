@@ -1,4 +1,6 @@
 {% load i18n %}
+{% load hq_shared_tags %}
+{% registerurl "feature_flags_and_privileges" "---" %}
 
 <div class="modal fade" id="copy-toggles">
   <div class="modal-dialog">
@@ -12,30 +14,27 @@
       <div class="modal-body form-horizontal">
         <p>
           {% blocktrans %}
-            The following features are not turned on in the domain to which you're copying.
-            Select any that you wish to copy along with this application.
+            The following features are not turned on in the domain to which
+            you're copying. Please enable the necessary feature flags required
+            for the app to function from
+            <a id="feature-flags-link" href="" target="_blank">here</a>.
           {% endblocktrans %}
         </p>
-        <div>
-          <button class="btn btn-default btn-xs select-all">
-            {% trans "Select All" %}
-          </button>
-        </div>
+        <div></div>
         <ul class="list-unstyled"></ul>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+        <button class="btn btn-default" data-dismiss="modal">
+          {% trans "Cancel" %}
+        </button>
         <button class="btn btn-primary">{% trans "Copy" %}</button>
       </div>
     </div>
   </div>
   <script type="text/html">
-    <li class="checkbox">
-      <label>
-        <input type="checkbox" data-slug="<%- slug %>" />
-        <span class='label label-<%- tag_css_class %>'><%- tag_name %></span>
-        <%- label %>
-      </label>
+    <li class="mb-3">
+      <span class="label label-<%- tag_css_class %>"><%- tag_name %></span>
+      <%- label %>
     </li>
   </script>
 </div>

@@ -5,10 +5,15 @@ from django.test import SimpleTestCase, TestCase
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.accounting.const import (
+    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
+)
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
     Subscription,
+    WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -307,6 +312,23 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         self.assertEqual(new_subscription.plan_version, new_plan_version)
         self.assertEqual(new_subscription.date_start, date.today())
         self.assertEqual(new_subscription.date_end, new_subscription.date_start + relativedelta(years=1))
+
+    def test_pay_annually_creates_prepayment_invoice(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=True
+        )
+        form = self.create_form_for_submission(new_plan_version)
+        form.save()
+        self.assertTrue(form.is_valid())
+
+        prepayment_invoice = WirePrepaymentInvoice.objects.get(domain=self.domain.name)
+        new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        self.assertEqual(prepayment_invoice.date_start, new_subscription.date_start)
+        self.assertEqual(prepayment_invoice.date_end, new_subscription.date_end)
+        self.assertEqual(prepayment_invoice.date_due,
+                         date.today() + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
+        self.assertEqual(prepayment_invoice.balance,
+                         new_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
 
     def test_downgrade_minimum_subscription_length(self):
         self.subscription.delete()

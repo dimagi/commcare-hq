@@ -231,7 +231,7 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
     def get_queryset(self):
         return [
             self._get_record(session) if session.committed_on else self._get_active_record(session)
-            for session in BulkEditSession.get_all_sessions(self.request.user, self.domain)
+            for session in BulkEditSession.objects.all_sessions(self.request.user, self.domain)
         ]
 
     def _get_session_url(self, session):
