@@ -85,8 +85,8 @@ function python_preheat {
 }
 
 function run_tests {
-    # Disabled due to: https://github.com/github/feedback/discussions/8848
-    # [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
+    # Disable group if https://github.com/github/feedback/discussions/8848 resurfaces
+    [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
     TEST="$1"
     shift
     suite_pat=$(printf '%s|' "${VALID_TEST_SUITES[@]}" | sed -E 's/\|$//')
