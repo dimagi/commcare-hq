@@ -1,5 +1,6 @@
 import $ from "jquery";
 import _ from "underscore";
+import "jquery-textchange/jquery.textchange";
 
 function getLabel(slug) { return $('.case-list-setting-label[data-slug="' + slug + '"]'); }
 function getShow(slug) { return $('.case-list-setting-show[data-slug="' + slug + '"]'); }
