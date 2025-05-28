@@ -42,12 +42,14 @@ class ManagePinnedFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
     @hq_hx_action('post')
     def update_filters(self, request, *args, **kwargs):
         [f.update_stored_value() for f in self.form_filters]
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(response, "bulk_edit_pinned_filters_updated")
 
     @hq_hx_action('post')
     def reset_filters(self, request, *args, **kwargs):
         self.session.reset_pinned_filters()
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(response, "bulk_edit_pinned_filters_reset")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -80,16 +82,26 @@ class ManageFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
         filter_form = AddFilterForm(self.session, request.POST)
         if filter_form.is_valid():
             filter_form.create_filter()
-            filter_form = None
+            response = self.get(request, filter_form=None, *args, **kwargs)
+            return self.add_gtm_event_to_response(
+                response,
+                "bulk_edit_filter_added",
+                {
+                    "data_type": filter_form.cleaned_data.get("data_type"),
+                    "match_type": filter_form.cleaned_data.get("match_type"),
+                },
+            )
         return self.get(request, filter_form=filter_form, *args, **kwargs)
 
     @hq_hx_action('post')
     def update_filter_order(self, request, *args, **kwargs):
         filter_ids = request.POST.getlist('filter_ids')
         self.session.update_filter_order(filter_ids)
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(response, "bulk_edit_filter_order_updated")
 
     @hq_hx_action('post')
     def delete_filter(self, request, *args, **kwargs):
         self.session.remove_filter(request.POST['delete_id'])
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(response, "bulk_edit_filter_deleted")

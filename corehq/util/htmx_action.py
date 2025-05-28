@@ -1,6 +1,13 @@
+import json
+import logging
+
 from django.http import HttpResponseForbidden, HttpResponse
+from django.utils.encoding import force_str
+
+from corehq.util.htmx_gtm import get_htmx_gtm_event
 
 ANY_METHOD = 'any_method'
+logger = logging.getLogger(__name__)
 
 
 class HqHtmxActionMixin:
@@ -78,6 +85,37 @@ class HqHtmxActionMixin:
     def render_htmx_redirect(self, url, response_message=None):
         response = HttpResponse(response_message or "")
         response['HX-Redirect'] = url
+        return response
+
+    @staticmethod
+    def _get_existing_hx_triggers(response):
+        """
+        Get existing HX-Trigger from the response headers.
+        If it exists, parse it as JSON and return it as a dictionary.
+        """
+        existing = response.get('HX-Trigger', None)
+        if existing:
+            try:
+                raw = force_str(existing)
+                triggers = json.loads(raw)
+            except (ValueError, TypeError):
+                logger.warning(f"Couldn't parse HX-Trigger header: {existing}")
+                triggers = {}
+            if not isinstance(triggers, dict):
+                triggers = {}
+        else:
+            triggers = {}
+        return triggers
+
+    def add_gtm_event_to_response(self, response, event_name, event_data=None):
+        """
+        Add a GTM event to the HTMX response headers.
+        """
+        triggers = self._get_existing_hx_triggers(response)
+        if not event_data:
+            event_data = {}
+        triggers.update(get_htmx_gtm_event(event_name, event_data))
+        response["HX-Trigger"] = json.dumps(triggers)
         return response
 
     def render_htmx_no_response(self, request, *args, **kwargs):

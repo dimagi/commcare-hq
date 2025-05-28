@@ -74,7 +74,13 @@ class EditCasesTableView(BulkEditSessionViewMixin,
                 'target': '#hq-hx-active-filters',
             },
         })
-        return response
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_clear_filters",
+            {
+                "session_type": self.session.session_type,
+            },
+        )
 
     @hq_hx_action('post')
     def select_record(self, request, *args, **kwargs):
@@ -87,7 +93,15 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             self.session.select_record(doc_id)
         else:
             self.session.deselect_record(doc_id)
-        return self.render_htmx_no_response(request, *args, **kwargs)
+        response = self.render_htmx_no_response(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_select_record",
+            {
+                "session_type": self.session.session_type,
+                "is_selected": is_selected,
+            },
+        )
 
     @hq_hx_action('post')
     def select_page(self, request, *args, **kwargs):
@@ -100,7 +114,27 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             self.session.select_multiple_records(doc_ids)
         else:
             self.session.deselect_multiple_records(doc_ids)
-        return self.render_htmx_no_response(request, *args, **kwargs)
+        response = self.render_htmx_no_response(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_select_page",
+            {
+                "session_type": self.session.session_type,
+                "selected": select_page,
+                "num_records": len(doc_ids),
+            },
+        )
+
+    def _get_record_count_from_response(self, response):
+        try:
+            # If the response is a paginated table, it should have a paginator context
+            # with the total count of records.
+            return response.context_data['paginator'].count
+        except KeyError:
+            # If the response does not have a paginator context, we assume there are no records.
+            # This can happen if the table is not paginated or if the response is not a table.
+            # In such cases, we return 0 as the count.
+            return 0
 
     @hq_hx_action('post')
     def deselect_all(self, request, *args, **kwargs):
@@ -108,7 +142,15 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         De-selects all records in the current filtered view.
         """
         self.session.deselect_all_records_in_queryset()
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_deselect_all_records",
+            {
+                "session_type": self.session.session_type,
+                "num_records": self._get_record_count_from_response(response),
+            },
+        )
 
     @hq_hx_action('post')
     def select_all(self, request, *args, **kwargs):
@@ -116,17 +158,32 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         Selects all records in the current filtered view.
         """
         response = self.get(request, *args, **kwargs)
+        num_records = self._get_record_count_from_response(response)
         if self.session.can_select_all(
-            table_num_records=response.context_data['paginator'].count
+            table_num_records=num_records
         ):
             self.session.select_all_records_in_queryset()
-            return response
+            return self.add_gtm_event_to_response(
+                response,
+                "bulk_edit_select_all_records",
+                {
+                    "session_type": self.session.session_type,
+                    "num_records": num_records,
+                },
+            )
         response['HX-Trigger'] = json.dumps({
             'showDataCleaningModal': {
                 'target': '#select-all-not-possible-modal',
             },
         })
-        return response
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_select_all_records_not_possible",
+            {
+                "session_type": self.session.session_type,
+                "num_records": num_records,
+            },
+        )
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
@@ -141,20 +198,40 @@ class EditCasesTableView(BulkEditSessionViewMixin,
                 'target': '#session-status-modal-body',
             },
         })
-        return response
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_apply_all_changes",
+            {
+                "session_type": self.session.session_type,
+            },
+        )
 
     @hq_hx_action("post")
     def undo_last_change(self, request, *args, **kwargs):
         self.session.undo_last_change()
-        return self._trigger_clean_form_refresh(
+        response = self._trigger_clean_form_refresh(
             self.get(request, *args, **kwargs)
+        )
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_undo_last_change",
+            {
+                "session_type": self.session.session_type,
+            },
         )
 
     @hq_hx_action("post")
     def clear_all_changes(self, request, *args, **kwargs):
         self.session.clear_all_changes()
-        return self._trigger_clean_form_refresh(
+        response = self._trigger_clean_form_refresh(
             self.get(request, *args, **kwargs)
+        )
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_clear_all_changes",
+            {
+                "session_type": self.session.session_type,
+            },
         )
 
     def _trigger_clean_form_refresh(self, response):

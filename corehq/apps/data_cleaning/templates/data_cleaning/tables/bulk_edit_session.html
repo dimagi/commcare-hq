@@ -51,7 +51,10 @@
           type="button"
           data-bs-toggle="modal"
           data-bs-target="#confirm-clear-modal"
-          @click="$dispatch('updateClearSummaryMessage');"
+          @click="
+            $dispatch('updateClearSummaryMessage');
+            $store.gtm.sendEvent('bulk_edit_show_clear_modal');
+          "
         >
           <i class="fa-solid fa-close"></i>
           {% trans "Clear" %}
@@ -62,7 +65,10 @@
           type="button"
           data-bs-toggle="modal"
           data-bs-target="#confirm-undo-modal"
-          @click="$dispatch('updateUndoSummaryMessage');"
+          @click="
+            $dispatch('updateUndoSummaryMessage');
+            $store.gtm.sendEvent('bulk_edit_show_undo_modal');
+          "
         >
           <i class="fa-solid fa-undo"></i>
           {% trans "Undo" %}
@@ -73,7 +79,10 @@
           type="button"
           data-bs-toggle="modal"
           data-bs-target="#confirm-apply-modal"
-          @click="$dispatch('updateApplySummaryMessage');"
+          @click="
+            $dispatch('updateApplySummaryMessage');
+            $store.gtm.sendEvent('bulk_edit_show_apply_modal');
+          "
         >
           <i class="fa-solid fa-check-double"></i>
           {% trans "Apply" %}
