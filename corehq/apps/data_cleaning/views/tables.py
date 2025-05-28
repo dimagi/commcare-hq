@@ -74,7 +74,13 @@ class EditCasesTableView(BulkEditSessionViewMixin,
                 'target': '#hq-hx-active-filters',
             },
         })
-        return response
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_clear_filters",
+            {
+                "session_type": self.session.session_type,
+            },
+        )
 
     @hq_hx_action('post')
     def select_record(self, request, *args, **kwargs):
