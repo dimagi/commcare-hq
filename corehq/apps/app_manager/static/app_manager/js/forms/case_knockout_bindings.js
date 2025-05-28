@@ -2,6 +2,7 @@ import $ from 'jquery';
 import ko from 'knockout';
 import _ from 'underscore';
 import DOMPurify from 'dompurify';
+import "jquery-textchange/jquery.textchange";
 import 'hqwebapp/js/atwho';    // autocompleteAtwho
 import 'select2/dist/js/select2.full.min';
 
