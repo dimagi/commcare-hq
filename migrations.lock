@@ -122,7 +122,6 @@ accounting
  0100_alter_customerinvoicecommunicationhistory_communication_type_and_more
  0101_update_standard_plan_pricing_users_and_privs
  0102_alter_defaultproductplan_edition_and_more
- 0103_bulk_data_cleaning_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -460,6 +459,7 @@ es
  0012_add_new_index_for_bha
  0013_add_last_modifed
  0014_enable_slowlogs
+ 0015_add_user_domain_memberships
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -1321,7 +1321,6 @@ users
  0076_connectiduserlink_messaging_consent_and_more
  0077_invitationhistory
  0078_sqluserdata_deleted_on
- 0079_alter_sqluserdata_managers
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

@@ -193,3 +193,13 @@ def get_es_reindex_setting_value(name, default):
     if ES_REINDEX_LOG[-1] != getattr(settings, 'ES_MULTIPLEX_TO_VERSION', None):
         return default
     return getattr(settings, name, default)
+
+
+def get_user_domain_memberships(user):
+    memberships = []
+    if user['doc_type'] == 'CommCareUser':
+        memberships.append(user['domain_membership'])
+    elif user['doc_type'] == 'WebUser':
+        for membership in user['domain_memberships']:
+            memberships.append(membership)
+    return memberships
