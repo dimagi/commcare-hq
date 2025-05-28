@@ -19,6 +19,7 @@
     <a
       class="btn btn-outline-primary"
       href="{{ exit_url }}"
+      @click="$store.gtm.sendEvent('bulk_edit_exit_session_status');"
     >
       {% trans "Exit session" %}
     </a>
