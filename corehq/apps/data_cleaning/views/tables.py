@@ -102,6 +102,17 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             self.session.deselect_multiple_records(doc_ids)
         return self.render_htmx_no_response(request, *args, **kwargs)
 
+    def _get_record_count_from_response(self, response):
+        try:
+            # If the response is a paginated table, it should have a paginator context
+            # with the total count of records.
+            return response.context_data['paginator'].count
+        except KeyError:
+            # If the response does not have a paginator context, we assume there are no records.
+            # This can happen if the table is not paginated or if the response is not a table.
+            # In such cases, we return 0 as the count.
+            return 0
+
     @hq_hx_action('post')
     def deselect_all(self, request, *args, **kwargs):
         """
@@ -116,8 +127,9 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         Selects all records in the current filtered view.
         """
         response = self.get(request, *args, **kwargs)
+        num_records = self._get_record_count_from_response(response)
         if self.session.can_select_all(
-            table_num_records=response.context_data['paginator'].count
+            table_num_records=num_records
         ):
             self.session.select_all_records_in_queryset()
             return self.add_gtm_event_to_response(
@@ -125,7 +137,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
                 "bulk_edit_select_all_records",
                 {
                     "session_type": self.session.session_type,
-                    "num_records": response.context_data['paginator'].count,
+                    "num_records": num_records,
                 },
             )
         response['HX-Trigger'] = json.dumps({
@@ -138,7 +150,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             "bulk_edit_select_all_records_not_possible",
             {
                 "session_type": self.session.session_type,
-                "num_records": response.context_data['paginator'].count,
+                "num_records": num_records,
             },
         )
 
