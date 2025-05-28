@@ -34,5 +34,4 @@ def _run_migration():
             user_adapter.update(
                 user['_id'],
                 {common_dm: memberships},
-                refresh=True
             )
