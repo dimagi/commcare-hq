@@ -50,7 +50,7 @@ COPY pyproject.toml uv.lock package.json /vendor/
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv venv --allow-existing /vendor \
   && UV_PROJECT=/vendor uv sync --locked --group=test --no-dev --no-install-project \
-  && rm /vendor/{pyproject.toml,uv.lock}
+  && rm /vendor/pyproject.toml /vendor/uv.lock
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'
