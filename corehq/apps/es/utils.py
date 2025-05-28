@@ -196,10 +196,8 @@ def get_es_reindex_setting_value(name, default):
 
 
 def get_user_domain_memberships(user):
-    memberships = []
     if user['doc_type'] == 'CommCareUser':
-        memberships.append(user['domain_membership'])
-    elif user['doc_type'] == 'WebUser':
-        for membership in user['domain_memberships']:
-            memberships.append(membership)
-    return memberships
+        return [user['domain_membership']]
+    if user['doc_type'] == 'WebUser':
+        return user['domain_memberships']
+    return []
