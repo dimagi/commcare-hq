@@ -108,7 +108,16 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             self.session.select_multiple_records(doc_ids)
         else:
             self.session.deselect_multiple_records(doc_ids)
-        return self.render_htmx_no_response(request, *args, **kwargs)
+        response = self.render_htmx_no_response(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_select_page",
+            {
+                "session_type": self.session.session_type,
+                "selected": select_page,
+                "num_records": len(doc_ids),
+            },
+        )
 
     def _get_record_count_from_response(self, response):
         try:
