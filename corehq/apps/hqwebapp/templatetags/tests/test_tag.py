@@ -83,7 +83,7 @@ class TagTest(SimpleTestCase):
                 {% extends "webpack_base.html" %}
                 {% load hq_shared_tags %}
                 {% js_entry "webpack/main" %}
-                {% block content %}{% if use_js_bundler %}{{js_entry}}{% endif %}{% endblock %}
+                {% block content %}{{js_entry}}{% endblock %}
             """).strip(),
             "webpack/main after tag\nwebpack/main",
         )
@@ -94,7 +94,6 @@ class TagTest(SimpleTestCase):
             self.render("""
                 {% load hq_shared_tags %}
                 {% js_entry %}
-                {% if use_js_bundler %}unexpected truth{% endif %}
                 {% if js_entry %}unexpected truth 2{% endif %}
                 {{js_entry}}
             """).strip(),
