@@ -1,4 +1,4 @@
-hqDefine('cloudcare/js/utils', [
+define('cloudcare/js/utils', [
     'jquery',
     'underscore',
     'backbone.marionette',
