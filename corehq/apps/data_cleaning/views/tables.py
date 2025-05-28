@@ -119,7 +119,15 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         De-selects all records in the current filtered view.
         """
         self.session.deselect_all_records_in_queryset()
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_deselect_all_records",
+            {
+                "session_type": self.session.session_type,
+                "num_records": self._get_record_count_from_response(response),
+            },
+        )
 
     @hq_hx_action('post')
     def select_all(self, request, *args, **kwargs):
