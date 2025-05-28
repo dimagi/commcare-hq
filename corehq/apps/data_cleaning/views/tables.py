@@ -87,7 +87,15 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             self.session.select_record(doc_id)
         else:
             self.session.deselect_record(doc_id)
-        return self.render_htmx_no_response(request, *args, **kwargs)
+        response = self.render_htmx_no_response(request, *args, **kwargs)
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_select_record",
+            {
+                "session_type": self.session.session_type,
+                "is_selected": is_selected,
+            },
+        )
 
     @hq_hx_action('post')
     def select_page(self, request, *args, **kwargs):
