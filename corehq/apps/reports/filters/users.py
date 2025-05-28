@@ -376,24 +376,24 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             # and move it with mobile worker filter
             q = q.remove_default_filter('active')
             if HQUserType.DEACTIVATED in user_types:
-                deactivated_mbwf = filters.AND(user_es.is_active(False), user_es.mobile_users())
+                deactivated_mbwf = filters.AND(user_es.is_active(domain, False), user_es.mobile_users())
                 user_type_filters.append(deactivated_mbwf)
             if HQUserType.ACTIVE in user_types:
-                activated_mbwf = filters.AND(user_es.is_active(), user_es.mobile_users())
+                activated_mbwf = filters.AND(user_es.is_active(domain, True), user_es.mobile_users())
                 user_type_filters.append(activated_mbwf)
         elif HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
-            q = q.show_inactive()
+            q = q.show_inactive().mobile_users()
         elif HQUserType.DEACTIVATED in user_types:
-            q = q.show_only_inactive()
+            q = q.show_only_inactive(domain, True).mobile_users()
 
         if HQUserType.ADMIN in user_types:
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
         if HQUserType.WEB in user_types:
-            user_type_filters.append(filters.AND(user_es.is_active(True, domain), user_es.web_users()))
+            user_type_filters.append(filters.AND(user_es.is_active(domain, True), user_es.web_users()))
         if HQUserType.DEACTIVATED_WEB in user_types:
-            user_type_filters.append(filters.AND(user_es.is_active(False, domain), user_es.web_users()))
+            user_type_filters.append(filters.AND(user_es.is_active(domain, False), user_es.web_users()))
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 

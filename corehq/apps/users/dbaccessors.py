@@ -80,24 +80,18 @@ def _get_es_query(domain, user_type, user_filters):
     selected_location_only = user_filters.get('selected_location_only', False)
 
     if user_active_status is None:
-        # Show all users in domain - will always be true for WEB_USER_TYPE
         query = UserES().domain(domain).remove_default_filter('active')
     elif user_active_status:
         # Active users filtered by default
         if user_type == MOBILE_USER_TYPE:
-            query = UserES().domain(domain)
+            query = UserES().domain(domain).mobile_users()
         if user_type == WEB_USER_TYPE:
-            query = UserES().domain(domain).is_active(True, domain)
+            query = UserES().domain(domain).is_active(domain, True).web_users()
     else:
         if user_type == MOBILE_USER_TYPE:
-            query = UserES().domain(domain).show_only_inactive()
+            query = UserES().domain(domain).show_only_inactive(domain).mobile_users()
         if user_type == WEB_USER_TYPE:
-            query = UserES().domain(domain).is_active(False, domain)
-
-    if user_type == MOBILE_USER_TYPE:
-        query = query.mobile_users()
-    if user_type == WEB_USER_TYPE:
-        query = query.web_users()
+            query = UserES().domain(domain).is_active(domain, False).web_users()
 
     if role_id:
         query = query.role_id(role_id)

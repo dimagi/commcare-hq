@@ -65,11 +65,12 @@ class UserES(HQESQuery):
 
     def show_inactive(self):
         """Include inactive users, which would normally be filtered out."""
+        # This should be inclusive of domain deactivated users too.
         return self.remove_default_filter('active')
 
-    def show_only_inactive(self):
+    def show_only_inactive(self, domain):
         query = self.remove_default_filter('active')
-        return query.is_active(False)
+        return query.is_active(domain, False)
 
 
 class ElasticUser(ElasticDocumentAdapter):
@@ -234,7 +235,7 @@ def role_id(role_id):
     )
 
 
-def is_active(active=True, domain=None):
+def is_active(domain, active=True):
     filter = filters.AND(
         filters.term("is_active", True),
         queries.nested(
