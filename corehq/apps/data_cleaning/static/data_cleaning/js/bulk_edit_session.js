@@ -8,6 +8,7 @@ import 'hqwebapp/js/alpinejs/directives/report_select2';
 import 'hqwebapp/js/alpinejs/directives/datepicker';
 import 'hqwebapp/js/alpinejs/directives/htmx_sortable';
 import 'hqwebapp/js/alpinejs/directives/tooltip';
+import 'hqwebapp/js/alpinejs/stores/gtx';
 import 'data_cleaning/js/directives/dynamic_options_select2';
 
 import wiggleButton from 'hqwebapp/js/alpinejs/components/wiggle_button';
