@@ -212,3 +212,23 @@ class AppInDifferentDomainException(AppManagerException):
     If the returned app is not in the targeted domain, we raise this exception.
     """
     pass
+
+
+class MissingPropertyException(Exception):
+    def __init__(self, *missing_properties):
+        self.missing_properties = missing_properties
+        if self.missing_properties:
+            message = f"The following properties were not found: {', '.join(self.missing_properties)}"
+        else:
+            message = "No missing properties specified"
+        super().__init__(message)
+
+
+class DiffConflictException(Exception):
+    def __init__(self, *conflicting_keys):
+        self.conflicting_keys = conflicting_keys
+        if self.conflicting_keys:
+            message = f"The following keys were affected by multiple actions: {', '.join(self.conflicting_keys)}"
+        else:
+            message = "No conflicting keys specified"
+        super().__init__(message)
