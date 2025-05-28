@@ -15,23 +15,8 @@ class Command(BaseCommand):
 
 @once_off_migration("populate_user_domain_memberships")
 def _run_migration():
-    common_dm = 'user_domain_memberships'
-    mobile_dm = 'domain_membership'
-    web_dm = 'domain_memberships'
-
     query_set = UserES().show_inactive()
-
     for user in with_progress_bar(query_set.scroll_ids_to_disk_and_iter_docs(), query_set.count()):
-        update_common_dm = False
-        if common_dm not in user:
-            update_common_dm = True
-        elif common_dm in user and mobile_dm in user and [user[mobile_dm]] != user[common_dm]:
-            update_common_dm = True
-        elif common_dm in user and web_dm in user and user[web_dm] != user[common_dm]:
-            update_common_dm = True
-        if update_common_dm:
+        if 'user_domain_memberships' not in user:
             memberships = get_user_domain_memberships(user)
-            user_adapter.update(
-                user['_id'],
-                {common_dm: memberships},
-            )
+            user_adapter.update(user['_id'], {'user_domain_memberships': memberships})
