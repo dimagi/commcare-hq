@@ -34,6 +34,7 @@
     hq-hx-action="resume_session"
     hx-swap="none"
     hx-disabled-elt="this"
+    @click="$store.gtm.sendEvent('bulk_edit_restart_session');"
   >
     {% trans "Restart this session" %}
   </button>
