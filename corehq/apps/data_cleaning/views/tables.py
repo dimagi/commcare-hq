@@ -120,13 +120,27 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             table_num_records=response.context_data['paginator'].count
         ):
             self.session.select_all_records_in_queryset()
-            return response
+            return self.add_gtm_event_to_response(
+                response,
+                "bulk_edit_select_all_records",
+                {
+                    "session_type": self.session.session_type,
+                    "num_records": response.context_data['paginator'].count,
+                },
+            )
         response['HX-Trigger'] = json.dumps({
             'showDataCleaningModal': {
                 'target': '#select-all-not-possible-modal',
             },
         })
-        return response
+        return self.add_gtm_event_to_response(
+            response,
+            "bulk_edit_select_all_records_not_possible",
+            {
+                "session_type": self.session.session_type,
+                "num_records": response.context_data['paginator'].count,
+            },
+        )
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
