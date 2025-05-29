@@ -467,7 +467,7 @@ class BulkEditSession(models.Model):
         if num_committed_records == 0:
             result['percent'] = 100
         elif num_committed_records is not None:
-            result['percent'] = result['record_count'] * 100 / num_committed_records
+            result['percent'] = (result['record_count'] / num_committed_records) * 100
 
         self.result = result
         self.save(update_fields=['result'])
