@@ -442,8 +442,13 @@ class BulkEditSession(models.Model):
         # the most potentially expensive query is below:
         return num_records + self._get_num_unrecorded() <= MAX_RECORDED_LIMIT
 
-    def update_result(self, record_count, form_id=None, error=None):
+    def update_result(self, record_count, form_id=None, error=None, num_committed_records=None):
         result = self.result or {}
+
+        if 'num_committed_records' in result:
+            num_committed_records = result['num_committed_records']
+        elif num_committed_records is not None:
+            result['num_committed_records'] = num_committed_records
 
         if 'form_ids' not in result:
             result['form_ids'] = []
@@ -459,10 +464,10 @@ class BulkEditSession(models.Model):
         if error:
             result['errors'].append(error)
         result['record_count'] += record_count
-        if self.records.count() == 0:
+        if num_committed_records == 0:
             result['percent'] = 100
-        else:
-            result['percent'] = result['record_count'] * 100 / self.records.count()
+        elif num_committed_records is not None:
+            result['percent'] = (result['record_count'] / num_committed_records) * 100
 
         self.result = result
         self.save(update_fields=['result'])
