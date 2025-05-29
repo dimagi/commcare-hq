@@ -395,8 +395,6 @@ class DataSourceConfigurationTests(TestCase):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
 
-@patch('corehq.apps.userreports.models.DataSourceBuildInformation.rebuild_failed',
-       MagicMock(return_value=None))
 class DataSourceConfigurationRebuildTests(TestCase):
 
     def setUp(self):
@@ -407,9 +405,6 @@ class DataSourceConfigurationRebuildTests(TestCase):
         )
         self.config.save()
         self.addCleanup(self.config.delete)
-
-    def test_rebuild_failed(self):
-        assert self.config.rebuild_failed is None
 
     def test_set_build_not_required(self):
         self.config.set_build_not_required()
@@ -423,51 +418,48 @@ class DataSourceConfigurationRebuildTests(TestCase):
         assert self.config.meta.build.initiated is None
         assert self.config.meta.build.finished is False
 
-    def test_build_not_required(self):
-        self.config.set_build_not_required()
-        assert self.config.rebuild_awaiting_or_in_progress is None
+    def test_rebuild_flag_for_missing_table(self):
+        assert self.config.meta.build.awaiting is False
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
 
-    def test_build_queued(self):
-        self.config.set_build_queued()
-        assert self.config.rebuild_awaiting_or_in_progress is True
-
-    def test_build_initiated(self):
-        self.config.meta.build.awaiting = False
-        self.config.meta.build.initiated = datetime.datetime.now()
-        self.config.meta.build.finished = False
-        assert self.config.rebuild_awaiting_or_in_progress is True
-
-    def test_build_finished(self):
-        self.config.meta.build.awaiting = False
-        self.config.meta.build.initiated = datetime.datetime.now()
-        self.config.meta.build.finished = True
-        assert self.config.rebuild_awaiting_or_in_progress is None
-
+    @patch('sqlalchemy.Table.exists', return_value=True)
     @patch('corehq.apps.userreports.rebuild.get_table_diffs')
-    def test_set_rebuild_flags_queued(self, mock_get_table_diffs):
+    def test_rebuild_flag_for_migratable_table(self, mock_get_table_diffs, mock_table_exists):
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        diff = MagicMock(table_name=table_name, type=DiffTypes.ADD_NULLABLE_COLUMN)
+        mock_get_table_diffs.return_value = [diff]
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is False
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_rebuildable_table(self, mock_get_table_diffs, mock_table_exists):
         table_name = get_table_name(self.config.domain, self.config.table_id)
         diff = MagicMock(table_name=table_name, type=DiffTypes.MODIFY_TYPE)
         mock_get_table_diffs.return_value = [diff]
         self.config.set_rebuild_flags()
         assert self.config.meta.build.awaiting is True
 
+    @patch('sqlalchemy.Table.exists', return_value=True)
     @patch('corehq.apps.userreports.rebuild.get_table_diffs')
-    def test_set_rebuild_flags_not_required(self, mock_get_table_diffs):
+    def test_rebuild_flag_for_no_change(self, mock_get_table_diffs, mock_table_exists):
         mock_get_table_diffs.return_value = []
         self.config.set_rebuild_flags()
         assert self.config.meta.build.awaiting is False
 
+    @patch('sqlalchemy.Table.exists', return_value=True)
     @patch('corehq.apps.userreports.rebuild.get_table_diffs')
-    def test_set_rebuild_flags_not_required_awaiting(self, mock_get_table_diffs):
+    def test_rebuild_flag_for_already_queued_table(self, mock_get_table_diffs, mock_table_exists):
         # If a rebuild is already awaiting, it is not unset.
         mock_get_table_diffs.return_value = []
         self.config.meta.build.awaiting = True
         self.config.set_rebuild_flags()
         assert self.config.meta.build.awaiting is True
 
+    @patch('sqlalchemy.Table.exists', return_value=True)
     @patch('corehq.apps.userreports.rebuild.get_table_diffs')
-    def test_set_rebuild_flags_in_progress(self, mock_get_table_diffs):
-        # If a rebuild is in progress, it is set to awaiting.
+    def test_rebuild_flag_for_rebuilding_table(self, mock_get_table_diffs, mock_table_exists):
         table_name = get_table_name(self.config.domain, self.config.table_id)
         diff = MagicMock(table_name=table_name, type=DiffTypes.MODIFY_TYPE)
         mock_get_table_diffs.return_value = [diff]

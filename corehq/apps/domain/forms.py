@@ -47,7 +47,12 @@ from memoized import memoized
 from PIL import Image
 
 from corehq import privileges
+from corehq.apps.accounting.const import (
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
+    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
+)
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
+from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -1927,51 +1932,52 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
-                if self.current_subscription is not None:
-                    if self.is_same_edition():
-                        self.current_subscription.update_subscription(
-                            date_start=self.current_subscription.date_start,
-                            date_end=None
-                        )
-                    elif self.is_downgrade_from_paid_plan() and \
-                            self.current_subscription.is_below_minimum_subscription:
-                        self.current_subscription.update_subscription(
-                            date_start=self.current_subscription.date_start,
-                            date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
-                        )
-                        Subscription.new_domain_subscription(
-                            account=self.account,
-                            domain=self.domain,
-                            plan_version=self.plan_version,
-                            date_start=self.current_subscription.date_start + datetime.timedelta(days=30),
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                            funding_source=FundingSource.CLIENT,
-                        )
-                    else:
-                        self.current_subscription.change_plan(
-                            self.plan_version,
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                            do_not_invoice=False,
-                            no_invoice_reason='',
-                        )
-                    if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
-                        self_signup.complete_workflow(self.plan_version.plan.edition)
-                else:
+                if (
+                    self.is_downgrade_from_paid_plan()
+                    and self.current_subscription.is_below_minimum_subscription
+                ):
+                    new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
+                    new_sub_date_end = (
+                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+                        if self.is_annual_plan else None
+                    )
+                    self.current_subscription.update_subscription(
+                        date_start=self.current_subscription.date_start,
+                        date_end=new_sub_date_start
+                    )
                     Subscription.new_domain_subscription(
-                        self.account, self.domain, self.plan_version,
+                        account=self.account,
+                        domain=self.domain,
+                        plan_version=self.plan_version,
+                        date_start=new_sub_date_start,
+                        date_end=new_sub_date_end,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT,
                     )
-                return True
+                else:
+                    new_sub_date_start = datetime.date.today()
+                    new_sub_date_end = (
+                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+                        if self.is_annual_plan else None
+                    )
+                    self.current_subscription.change_plan(
+                        self.plan_version,
+                        date_end=new_sub_date_end,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.PRODUCT,
+                        pro_bono_status=ProBonoStatus.NO,
+                        do_not_invoice=False,
+                        no_invoice_reason='',
+                    )
+                if self.plan_version.plan.is_annual_plan:
+                    self.send_prepayment_invoice(new_sub_date_start, new_sub_date_end)
+                if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
+                    self_signup.complete_workflow(self.plan_version.plan.edition)
+            return True
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
@@ -1979,6 +1985,31 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 show_stack_trace=True,
             )
             return False
+
+    def send_prepayment_invoice(self, date_start, date_end):
+        label = f"One month of {self.plan_version.plan.name}"
+        monthly_fee = self.plan_version.product_rate.monthly_fee
+        duration = relativedelta(date_end, date_start)
+        num_months = getattr(duration, 'years', 0) * 12  # todo: support other subscription lengths
+        amount = monthly_fee * num_months
+        date_due = max(date_start,
+                       datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
+
+        email_list = self.cleaned_data['email_list']
+        contact_emails = [email_list[0]]
+        cc_emails = [email for email in email_list[1:]]
+
+        invoice_factory = DomainWireInvoiceFactory(
+            self.domain, date_start=date_start, date_end=date_end,
+            contact_emails=contact_emails, cc_emails=cc_emails
+        )
+        invoice_factory.create_wire_credits_invoice(
+            amount, label, monthly_fee, num_months, date_due
+        )
+
+    @property
+    def is_annual_plan(self):
+        return self.plan_version.plan.is_annual_plan
 
     def is_same_edition(self):
         return self.current_subscription.plan_version.plan.edition == self.plan_version.plan.edition

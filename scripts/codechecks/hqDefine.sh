@@ -9,11 +9,11 @@ function list-js() {
 }
 
 function list-no-esm-js() {
-  list-js | xargs grep -L '^import.*;'
+  list-js | xargs grep -l '^hqDefine.*'
 }
 
 function list-esm-js() {
-  list-js | xargs grep -l '^import.*;'
+  list-js | xargs grep -L '^hqDefine.*'
 }
 
 ## Calculate migrated percentage for given statistic

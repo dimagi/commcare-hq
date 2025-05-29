@@ -21,8 +21,8 @@ class BaseFilterFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
     pass
 
 
-class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
-    urlname = "data_cleaning_pinned_filter_form"
+class ManagePinnedFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
+    urlname = "bulk_edit_pinned_filters"
     template_name = "data_cleaning/forms/pinned_filter_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve pinned filters, session was not found.")
 
@@ -42,12 +42,14 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
     @hq_hx_action('post')
     def update_filters(self, request, *args, **kwargs):
         [f.update_stored_value() for f in self.form_filters]
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.include_gtm_event_with_response(response, "bulk_edit_pinned_filters_updated")
 
     @hq_hx_action('post')
     def reset_filters(self, request, *args, **kwargs):
         self.session.reset_pinned_filters()
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.include_gtm_event_with_response(response, "bulk_edit_pinned_filters_reset")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -61,17 +63,17 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         return context
 
 
-class ManageFiltersFormView(BulkEditSessionViewMixin, BaseFilterFormView):
-    urlname = "data_cleaning_manage_filters"
+class ManageFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
+    urlname = "bulk_edit_manage_filters"
     template_name = "data_cleaning/forms/manage_filters_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve filters, session was not found.")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, filter_form=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'manage-filters',
             'active_filters': self.session.filters.all(),
-            'add_filter_form': kwargs.pop('filter_form', None) or AddFilterForm(self.session),
+            'add_filter_form': filter_form or AddFilterForm(self.session),
         })
         return context
 
@@ -80,16 +82,26 @@ class ManageFiltersFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         filter_form = AddFilterForm(self.session, request.POST)
         if filter_form.is_valid():
             filter_form.create_filter()
-            filter_form = None
+            response = self.get(request, filter_form=None, *args, **kwargs)
+            return self.include_gtm_event_with_response(
+                response,
+                "bulk_edit_filter_added",
+                {
+                    "data_type": filter_form.cleaned_data.get("data_type"),
+                    "match_type": filter_form.cleaned_data.get("match_type"),
+                },
+            )
         return self.get(request, filter_form=filter_form, *args, **kwargs)
 
     @hq_hx_action('post')
     def update_filter_order(self, request, *args, **kwargs):
         filter_ids = request.POST.getlist('filter_ids')
         self.session.update_filter_order(filter_ids)
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.include_gtm_event_with_response(response, "bulk_edit_filter_order_updated")
 
     @hq_hx_action('post')
     def delete_filter(self, request, *args, **kwargs):
         self.session.remove_filter(request.POST['delete_id'])
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self.include_gtm_event_with_response(response, "bulk_edit_filter_deleted")

@@ -35,7 +35,6 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.cases.utils import (
-    all_project_data_filter,
     deactivated_case_owners,
     get_case_owners,
     query_location_restricted_cases,
@@ -127,7 +126,7 @@ class BulkEditFilterQueryTests(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
+        self.session = BulkEditSession.objects.new_case_session(
             self.web_user.get_django_user(), self.domain, 'plants',
         )
 
@@ -614,7 +613,7 @@ class TestReportFilterSubclasses(TestCase):
         self.request.can_access_all_locations = True
         self.request.couch_user = self.web_user
         self.request.project = self.domain_obj
-        self.session = BulkEditSession.new_case_session(
+        self.session = BulkEditSession.objects.new_case_session(
             self.web_user.get_django_user(), self.domain, 'plants',
         )
 
@@ -630,7 +629,7 @@ class TestReportFilterSubclasses(TestCase):
                     ],
                     'default_text': 'Filter by...',
                     'selected': [
-                        {'id': 'project_data', 'text': '[Project Data]'},
+                        {'id': 'all_data', 'text': '[All Data]'},
                     ],
                     'placeholder': 'Please add case owners to filter the list of cases.',
                 },
@@ -645,7 +644,7 @@ class TestReportFilterSubclasses(TestCase):
             'filter_help': [
                 '<i class="fa fa-info-circle"></i> See <a href="'
                 'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
-                '2215051298/Organization+Data+Management#Search-for-Locations" '
+                '2143947350/Report+and+Export+Filters"'
                 'target="_blank"> Filter Definitions</a>.',
             ],
         }
@@ -664,7 +663,7 @@ class TestReportFilterSubclasses(TestCase):
                     ],
                     'default_text': 'Filter by...',
                     'selected': [
-                        {'id': 'project_data', 'text': '[Project Data]'},
+                        {'id': 'all_data', 'text': '[All Data]'},
                     ],
                     'placeholder': 'Please add case owners to filter the list of cases.',
                 },
@@ -679,14 +678,14 @@ class TestReportFilterSubclasses(TestCase):
             'filter_help': [
                 '<i class="fa fa-info-circle"></i> See <a href="'
                 'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
-                '2215051298/Organization+Data+Management#Search-for-Locations" '
+                '2143947350/Report+and+Export+Filters"'
                 'target="_blank"> Filter Definitions</a>.',
                 'When searching by location, put your location name in quotes to '
                 'show only exact matches. To more easily find a location, you may '
                 'specify multiple levels by separating with a "/". For example, '
                 '"Massachusetts/Suffolk/Boston". <a href="https://dimagi.atlassian'
                 '.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data'
-                '+Management"target="_blank">Learn more</a>.'
+                '+Management#Search-for-Locations"target="_blank">Learn more</a>.'
             ],
         }
         self.assertDictEqual(report_filter.filter_context, expected_context)
@@ -790,10 +789,10 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
+        self.session = BulkEditSession.objects.new_case_session(
             self.session_user.get_django_user(), self.domain, 'plants',
         )
-        self.session_location_restricted = BulkEditSession.new_case_session(
+        self.session_location_restricted = BulkEditSession.objects.new_case_session(
             self.web_location_user.get_django_user(), self.domain, 'plants',
         )
 
@@ -817,8 +816,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         )
         self.assertIsNone(pinned_filter.value)
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query.OR(all_project_data_filter(self.domain, ['project_data']))
-        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+        self.assertDictEqual(filtered_query.es_query, query.es_query)
 
     def test_default_location_restricted(self):
         query = CaseSearchES().domain(self.domain)
@@ -1035,7 +1033,7 @@ class TestCaseStatusPinnedFilterQuery(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
+        self.session = BulkEditSession.objects.new_case_session(
             self.web_user.get_django_user(), self.domain, 'plants',
         )
 

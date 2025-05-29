@@ -995,11 +995,11 @@ class ProjectDataTab(UITab):
 
         if self._can_view_case_data_cleaning:
             from corehq.apps.data_cleaning.views.main import (
-                CleanCasesMainView,
+                BulkEditCasesMainView,
             )
             clean_cases_view = {
-                'title': _(CleanCasesMainView.page_title),
-                'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+                'title': _(BulkEditCasesMainView.page_title),
+                'url': reverse(BulkEditCasesMainView.urlname, args=[self.domain]),
                 'icon': 'fa-solid fa-shower',
             }
             edit_section[0][1].append(clean_cases_view)
@@ -1010,7 +1010,6 @@ class ProjectDataTab(UITab):
     def _can_view_case_data_cleaning(self):
         return (
             bulk_data_cleaning_enabled_for_request(self._request)
-            and toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
         )
 
     def _get_explore_data_views(self):

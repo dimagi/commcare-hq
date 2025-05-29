@@ -210,7 +210,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         'To more easily find a location, you may specify multiple levels by separating with a "/". '
         'For example, "Massachusetts/Suffolk/Boston". '
         '<a href="https://dimagi.atlassian.net/wiki/spaces/'
-        'commcarepublic/pages/2215051298/Organization+Data+Management"'
+        'commcarepublic/pages/2215051298/Organization+Data+Management#Search-for-Locations"'
         'target="_blank">Learn more</a>.'
     ))
 
@@ -222,8 +222,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     options_url = 'emwf_options_all_users'
     filter_help_inline = mark_safe(gettext_lazy(  # nosec: no user input
         '<i class="fa fa-info-circle"></i> See '
-        '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-for-Locations"'  # noqa: E501
-        ' target="_blank"> Filter Definitions</a>.'))
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/Report+and+Export+Filters"'  # noqa: E501
+        'target="_blank"> Filter Definitions</a>.'))
 
     @property
     @memoized
@@ -275,9 +275,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         defaults = [
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
+            self.utils.user_type_tuple(HQUserType.WEB),
         ]
-        if toggles.WEB_USERS_IN_REPORTS.enabled(self.domain):
-            defaults.append(self.utils.user_type_tuple(HQUserType.WEB))
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -472,6 +471,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return {
             cls.slug: 'l__%s' % loc_id
         }
+
+
+class SubmittedByExpandedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    label = gettext_lazy("Submitted By")
 
 
 class EnterpriseUsersUtils(EmwfUtils):

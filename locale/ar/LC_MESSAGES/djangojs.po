@@ -1,0 +1,5338 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Commcare HQ\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2025-05-02 16:52+0000\n"
+"Last-Translator: Amit Phulera by OpenAI <devops@dimagi.com>\n"
+"Language-Team: Arabic (http://app.transifex.com/dimagi/commcare-hq/language/"
+"ara/)\n"
+"Language: ara\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js
+msgid "My project ended"
+msgstr "انتهى مشروعي"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js
+msgid "The funding for my project ended"
+msgstr "انتهى التمويل لمشروعي"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js
+msgid ""
+"I don’t need the features of my paid plan anymore but I plan on continuing "
+"using CommCare"
+msgstr ""
+"لم أعد بحاجة إلى ميزات خطتي المدفوعة ولكنني أخطط للاستمرار في استخدام "
+"CommCare"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js
+msgid "We are switching to a different mobile data collection tool"
+msgstr "نحن ننتقل إلى أداة جمع بيانات ميدانية أخرى"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js
+msgid "For budget reasons"
+msgstr "لأسباب تتعلق بالميزانية"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js
+msgid "I need more limited features"
+msgstr "أحتاج إلى ميزات أكثر تحديدًا"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js
+msgid "I need additional/custom features"
+msgstr "أحتاج إلى ميزات إضافية/مخصصة"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js
+#: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/maps_utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
+msgid "Other"
+msgstr "أخرى"
+
+#: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
+msgid "Response from Stripe did not complete properly."
+msgstr "لم تكتمل الاستجابة من Stripe بشكل صحيح."
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid "Downgrading?"
+msgstr "هل ترغب في تخفيض الخطة؟"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid "Pausing Subscription?"
+msgstr "هل ترغب في إيقاف الاشتراك مؤقتًا؟"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
+"p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
+"Edition Plan subscription to be paused on <strong> <%- date %> </strong></"
+"p><p>If you have questions or if you would like to speak to us about your "
+"subscription, please reach out to <a href='mailto: <%- invoicingContact "
+"%>'><%- invoicingContact %></a>.</p>"
+msgstr ""
+"<p>جميع اشتراكات CommCare تتطلب التزامًا لمدة 30 يومًا كحد أدنى.</"
+"p><p>المتابعة ستتيح لك جدولة إيقاف اشتراك خطة <%- oldPlan %> Edition الحالية "
+"مؤقتًا في <strong> <%- date %> </strong></p><p>إذا كان لديك أي أسئلة أو ترغب "
+"في التحدث معنا حول اشتراكك، يرجى التواصل عبر <a href='mailto: <%- "
+"invoicingContact %>'><%- invoicingContact %></a>.</p>"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
+"p><p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to "
+"be paused on <strong> <%- date %> </strong></p><p>Continuing ahead will "
+"allow you to schedule your current <%- oldPlan %> Edition Plan subscription "
+"to be downgraded to the <%- newPlan %> Edition Plan on <strong> <%- date %> "
+"</strong></p><p>If you have questions or if you would like to speak to us "
+"about your subscription, please reach out to <a href='mailto: <%- "
+"invoicingContact %>'><%- invoicingContact %></a>.</p>"
+msgstr ""
+"<p>جميع اشتراكات CommCare تتطلب التزامًا لمدة 30 يومًا كحد أدنى.</p><p>تمت "
+"جدولة إيقاف اشتراك خطة <%- oldPlan %> Edition الحالية مؤقتًا في <strong> <%- "
+"date %> </strong></p><p>المتابعة ستتيح لك جدولة تخفيض اشتراك خطة <%- oldPlan "
+"%> Edition الحالية إلى خطة <%- newPlan %> Edition في <strong> <%- date %> </"
+"strong></p><p>إذا كان لديك أي أسئلة أو ترغب في التحدث معنا حول اشتراكك، يرجى "
+"التواصل عبر <a href='mailto: <%- invoicingContact %>'><%- invoicingContact "
+"%></a>.</p>"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
+"p><p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to "
+"be downgraded to the <%- nextSubscription %> Edition Plan on <strong> <%- "
+"date %> </strong></p><p>Continuing ahead will allow you to schedule your "
+"current <%- oldPlan %> Edition Plan subscription to be downgraded to the <%- "
+"newPlan %> Edition Plan on <strong> <%- date %> </strong></p><p>If you have "
+"questions or if you would like to speak to us about your subscription, "
+"please reach out to <a href='mailto: <%- invoicingContact %>'><%- "
+"invoicingContact %></a>.</p>"
+msgstr ""
+"<p>جميع اشتراكات CommCare تتطلب التزامًا لمدة 30 يومًا كحد أدنى.</p><p>تمت "
+"جدولة تخفيض اشتراك خطة <%- oldPlan %> Edition الحالية إلى خطة <%- "
+"nextSubscription %> Edition في <strong> <%- date %> </strong></p><p>المتابعة "
+"ستتيح لك جدولة تخفيض اشتراك خطة <%- oldPlan %> Edition الحالية إلى خطة <%- "
+"newPlan %> Edition في <strong> <%- date %> </strong></p><p>إذا كان لديك أي "
+"أسئلة أو ترغب في التحدث معنا حول اشتراكك، يرجى التواصل عبر <a href='mailto: "
+"<%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
+"p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
+"Edition Plan subscription to be downgraded to the <%- newPlan %> Edition "
+"Plan on <strong> <%- date %> </strong></p>If you have questions or if you "
+"would like to speak to us about your subscription, please reach out to <a "
+"href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+msgstr ""
+"<p>جميع اشتراكات CommCare تتطلب التزامًا لمدة 30 يومًا كحد أدنى.</"
+"p><p>المتابعة ستتيح لك جدولة تخفيض اشتراك خطة <%- oldPlan %> Edition الحالية "
+"إلى خطة <%- newPlan %> Edition في <strong> <%- date %> </strong></p>إذا كان "
+"لديك أي أسئلة أو ترغب في التحدث معنا حول اشتراكك، يرجى التواصل عبر <a "
+"href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid "Free edition"
+msgstr "الإصدار المجاني"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid "Billed Annually"
+msgstr "يتم الفوترة سنويًا"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid "Billed Monthly"
+msgstr "يتم الفوترة شهريًا"
+
+#: corehq/apps/accounting/static/accounting/js/widgets.js
+#: corehq/apps/domain/static/domain/js/pro-bono.js
+msgid "Please enter a valid email."
+msgstr "يرجى إدخال بريد إلكتروني صالح."
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+msgid "Please enter your first name."
+msgstr "يرجى إدخال الاسم الأول."
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+msgid "Please enter your last name."
+msgstr "يرجى إدخال اسم العائلة."
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+msgid "Please enter your organization."
+msgstr "يرجى إدخال اسم المؤسسة."
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+msgid "Please enter your job title."
+msgstr "يرجى إدخال المسمى الوظيفي."
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+msgid "Please enter your email address."
+msgstr "يرجى إدخال عنوان بريدك الإلكتروني."
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+msgid "We are sorry, but something unexpected has occurred."
+msgstr "نأسف، حدث أمر غير متوقع."
+
+#: corehq/apps/analytics/static/analytix/js/hubspot.js
+msgid "Submit Request"
+msgstr "إرسال الطلب"
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Seconds"
+msgstr "ثوانٍ"
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Chart"
+msgstr "مخطط"
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_logs.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Show All Dates"
+msgstr "عرض جميع التواريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
+#: corehq/apps/locations/static/locations/js/location_types.js
+msgid "You have unsaved changes."
+msgstr "لديك تغييرات غير محفوظة."
+
+#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+msgid "There was an error saving."
+msgstr "حدث خطأ أثناء الحفظ."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+msgid "Hide Past Versions"
+msgstr "إخفاء الإصدارات السابقة"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+msgid "See Past Versions"
+msgstr "عرض الإصدارات السابقة"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
+msgstr "يمكن أن تتضمن أنواع الحالات فقط الأحرف a-z، والأرقام 0-9، و'-' و'_'"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "This is a reserved case type. Please choose another name."
+msgstr "هذا نوع حالة محجوز. يرجى اختيار اسم آخر."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "This case type has been deprecated in the Data Dictionary."
+msgstr "تم إيقاف استخدام نوع الحالة هذا في قاموس البيانات."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
+msgid "Add"
+msgstr "إضافة"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Moved successfully."
+msgstr "تم النقل بنجاح."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "You have unsaved changes"
+msgstr "لديك تغييرات غير محفوظة"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Add a new case type or use an existing one"
+msgstr "أضف نوع حالة جديد أو استخدم نوعًا موجودًا"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "What is a Survey Menu?"
+msgstr "ما هو قائمة الاستبيانات؟"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"Surveys are used to collect independent forms that do not need to be tracked "
+"over time. Common examples include satisfaction surveys or anonymous "
+"feedback forms."
+msgstr ""
+"تُستخدم الاستبيانات لجمع نماذج مستقلة لا تحتاج إلى تتبعها مع مرور الوقت. من "
+"الأمثلة الشائعة استبيانات الرضا أو نماذج الملاحظات المجهولة."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "What is a Case List?"
+msgstr "ما هي قائمة الحالات؟"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"Case Lists are used to register and track related data (cases) over time. "
+"This data can be referenced in other forms and by other cases. Common "
+"examples include maternal health, student attendance, or crop monitoring."
+msgstr ""
+"تُستخدم قوائم الحالات لتسجيل وتتبع البيانات ذات الصلة (الحالات) مع مرور "
+"الوقت. يمكن الرجوع إلى هذه البيانات في نماذج أخرى أو من خلال حالات أخرى. من "
+"الأمثلة الشائعة: صحة الأم، حضور الطلاب، أو مراقبة المحاصيل."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Select None"
+msgstr "عدم اختيار أي"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Select All"
+msgstr "اختيار الكل"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Application name is required"
+msgstr "اسم التطبيق مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Project name is required"
+msgstr "اسم المشروع مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Invalid Project Selected"
+msgstr "تم اختيار مشروع غير صالح"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+msgid "Oops, there was a problem loading this section. Please try again."
+msgstr "عذرًا، حدثت مشكلة في تحميل هذا القسم. يرجى المحاولة مرة أخرى."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
+msgid "Mobile UCR Options"
+msgstr "خيارات UCR للجوال"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
+msgid "Mobile UCR Report"
+msgstr "تقرير UCR للجوال"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
+msgid "Select a Report..."
+msgstr "اختر تقريرًا..."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
+msgid "Lookup Table Options"
+msgstr "خيارات جدول البحث"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "Lookup Table"
+msgstr "جدول البحث"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
+msgid "Select a Lookup Table..."
+msgstr "اختر جدول بحث..."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache"
+msgstr "التخزين المؤقت"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Lazy Load"
+msgstr "التحميل الكسول"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache & Lazy Load"
+msgstr "التخزين المؤقت والتحميل الكسول"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Tab Name"
+msgstr "اسم التبويب"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Display Condition"
+msgstr "شرط العرض"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Oct 31, "
+msgstr "31 أكتوبر، "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid " Format "
+msgstr " تنسيق "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid " Days late "
+msgstr " أيام متأخرة "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Years since date"
+msgstr "سنوات منذ التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Months since date"
+msgstr "أشهر منذ التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Weeks since date"
+msgstr "أسابيع منذ التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Days since date"
+msgstr "أيام منذ التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Days until date"
+msgstr "أيام حتى التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Weeks until date"
+msgstr "أسابيع حتى التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Months until date"
+msgstr "أشهر حتى التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid " Measuring "
+msgstr " القياس "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
+msgid "Data Tab: Custom Expression"
+msgstr "علامة التبويب البيانات: تعبير مخصص"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
+msgid "Data Tab: Child Cases: "
+msgstr "علامة التبويب البيانات: الحالات الفرعية: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/fixture_select.js
+msgid "Select One"
+msgstr "اختر واحدًا"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
+msgid "Edit Graph"
+msgstr "تعديل الرسم البياني"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Copied!"
+msgstr "تم النسخ!"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
+msgid ""
+"It is recommended that you leave this value blank. Future changes to your "
+"report's chart configuration will not be reflected here."
+msgstr ""
+"يُنصح بترك هذه القيمة فارغة. لن تنعكس التغييرات المستقبلية على إعدادات مخطط "
+"التقرير هنا."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
+#: corehq/apps/export/static/export/js/models.js
+msgid "None"
+msgstr "لا شيء"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
+msgid "Parent"
+msgstr "الأصل"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
+msgid "Unknown menu"
+msgstr "قائمة غير معروفة"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "لا تستخدم مربعات الحالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Manually configure Case Tiles"
+msgstr "تكوين مربعات الحالة يدويًا"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Edit Custom Variables"
+msgstr "تعديل المتغيرات المخصصة"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "You have unsaved detail screen configurations."
+msgstr "لديك إعدادات شاشة تفاصيل غير محفوظة."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "There is an error in your tab: "
+msgstr "هناك خطأ في التبويب الخاص بك: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "There is an error in your property name: "
+msgstr "هناك خطأ في اسم الخاصية: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "You can only have one property with the 'Image' format"
+msgstr "يمكنك فقط وجود خاصية واحدة بتنسيق 'صورة'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "All properties must be below a tab."
+msgstr "يجب أن تكون جميع الخصائص تحت تبويب."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid ""
+"Search Properties and Default Search Filters can't have common properties. "
+"Please update following properties: "
+msgstr ""
+"لا يمكن أن يكون لخصائص البحث ومرشحات البحث الافتراضية خصائص مشتركة. يرجى "
+"تحديث الخصائص التالية: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "There are errors in your configuration."
+msgstr "هناك أخطاء في إعداداتك."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
+msgstr "<%- name %> (خاصية محسوبة رقم <%- index %>)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Increasing (a, b, c)"
+msgstr "تصاعدي (أ، ب، ج)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Increasing (May 1st, May 2nd)"
+msgstr "تصاعدي (1 مايو، 2 مايو)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Increasing (1, 2, 3)"
+msgstr "تصاعدي (1، 2، 3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Increasing (1.1, 1.2, 1.3)"
+msgstr "تصاعدي (1.1، 1.2، 1.3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Decreasing (c, b, a)"
+msgstr "تنازلي (ج، ب، أ)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Decreasing (May 2nd, May 1st)"
+msgstr "تنازلي (2 مايو، 1 مايو)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Decreasing (3, 2, 1)"
+msgstr "تنازلي (3، 2، 1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Decreasing (1.3, 1.2, 1.1)"
+msgstr "تنازلي (1.3، 1.2، 1.1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid ""
+"Must begin with a letter and contain only letters, numbers, '-', and '_'"
+msgstr "يجب أن يبدأ بحرف ويحتوي فقط على أحرف أو أرقام أو '-' أو '_'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Plain"
+msgstr "عادي"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Date"
+msgstr "تاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Time Since or Until Date"
+msgstr "الوقت منذ أو حتى التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Phone Number"
+msgstr "رقم الهاتف"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "ID Mapping"
+msgstr "تعيين الهوية"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Late Flag"
+msgstr "إشارة التأخير"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Search Only"
+msgstr "للبحث فقط"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address"
+msgstr "العنوان"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Distance from current location"
+msgstr "المسافة من الموقع الحالي"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Markdown"
+msgstr "ماركداون"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address Popup (Web Apps only)"
+msgstr "نافذة منبثقة للعنوان (تطبيقات الويب فقط)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Clickable Icon (Web Apps only)"
+msgstr "أيقونة قابلة للنقر (تطبيقات الويب فقط)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Picture"
+msgstr "صورة"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Audio"
+msgstr "صوت"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Icon"
+msgstr "أيقونة"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Conditional ID Mapping"
+msgstr "تعيين هوية شرطي"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Translatable Text"
+msgstr "نص قابل للترجمة"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Image"
+msgstr "صورة"
+
+#: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
+msgid ""
+"Sorry, something went wrong with the download. If you see this repeatedly "
+"please report an issue."
+msgstr "عذراً، حدث خطأ أثناء التنزيل. إذا تكرر ذلك يرجى الإبلاغ عن المشكلة."
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Case Type required"
+msgstr "نوع الحالة مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Case Tag required"
+msgstr "وسم الحالة مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
+msgstr "وسم الحالة: مسموح فقط بالأحرف أو الأرقام أو '-' أو '_'"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Case Tag already in use"
+msgstr "وسم الحالة مستخدم بالفعل"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "subcase of"
+msgstr "حالة فرعية لـ"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "autoselect mode: "
+msgstr "وضع التحديد التلقائي: "
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid " (from fixture)"
+msgstr " (من التثبيت)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Autoselect mode required"
+msgstr "وضع التحديد التلقائي مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Property required"
+msgstr "خاصية مطلوبة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Case required"
+msgstr "الحالة مطلوبة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Lookup table tag required"
+msgstr "وسم جدول البحث مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Expected case type required"
+msgstr "نوع الحالة المتوقع مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Subcase parent reference is missing"
+msgstr "مرجع الوالد للحالة الفرعية مفقود"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Parent reference ID required for subcases: "
+msgstr "معرف مرجع الوالد مطلوب للحالات الفرعية: "
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Subcase must be in same repeat context as parent \""
+msgstr "يجب أن تكون الحالة الفرعية في نفس سياق التكرار مثل الوالد \""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+msgid "Select parent"
+msgstr "اختر الوالد"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "Raw"
+msgstr "خام"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "User Data"
+msgstr "بيانات المستخدم"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "User Properties"
+msgstr "خصائص المستخدم"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "Case Index"
+msgstr "فهرس الحالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "Load / Update / Close a case"
+msgstr "تحميل / تحديث / إغلاق حالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "Automatic Case Selection"
+msgstr "اختيار الحالة تلقائياً"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "Load Case From Fixture"
+msgstr "تحميل الحالة من التثبيت"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+msgid "Open a Case"
+msgstr "فتح حالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Property updated by two questions"
+msgstr "تم تحديث الخاصية بواسطة سؤالين"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
+msgid "Reserved word: "
+msgstr "كلمة محجوزة: "
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Inside the wrong repeat!"
+msgstr "داخل تكرار خاطئ!"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
+msgid "Parent property references not allowed for subcases"
+msgstr "مراجع خصائص الوالد غير مسموحة للحالات الفرعية"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
+msgid "Two properties load to the same question"
+msgstr "خاصيتان يتم تحميلهما لنفس السؤال"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged case settings"
+msgstr "لديك إعدادات حالة لم تتغير"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged user properties settings"
+msgstr "لديك إعدادات خصائص المستخدم غير معدلة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "Property uses unrecognized prefix <strong>"
+msgid "Property uses unrecognized prefix <strong>"
+msgstr "الخاصية تستخدم بادئة غير معروفة <strong>"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid "Unidentified Question"
+msgstr "سؤال غير محدد"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid ""
+"We cannot find this question in the allowed questions for this field. It is "
+"likely that you deleted or renamed the question. Please choose a valid "
+"question from the dropdown."
+msgstr ""
+"لا يمكننا العثور على هذا السؤال ضمن الأسئلة المسموح بها لهذا الحقل. من "
+"المحتمل أنك حذفت أو أعدت تسمية السؤال. يرجى اختيار سؤال صالح من القائمة "
+"المنسدلة."
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid "Select a Question"
+msgstr "اختر سؤالاً"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js
+msgid "Edit Form"
+msgstr "تعديل النموذج"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
+msgid "Form Settings"
+msgstr "إعدادات النموذج"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
+msgid "Could not enable user properties, please try again later."
+msgstr "تعذر تفعيل خصائص المستخدم، يرجى المحاولة مرة أخرى لاحقًا."
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "This form either no longer exists or has a different case type"
+msgstr "هذا النموذج إما لم يعد موجودًا أو لديه نوع حالة مختلف"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Unrecognized value"
+msgstr "قيمة غير معروفة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr "ربط البيانات يدويًا"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr "تعيين البيانات المطلوبة للتنقل إلى النموذج أو القائمة المحددة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Datum ID"
+msgstr "معرّف البيانات"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "XPath Expression"
+msgstr "تعبير XPath"
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
+msgid "Active"
+msgstr "نشط"
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
+msgid "Inactive"
+msgstr "غير نشط"
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
+msgid "Deactivate"
+msgstr "إلغاء التفعيل"
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
+msgid "Activate"
+msgstr "تفعيل"
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
+#: corehq/apps/sms/static/sms/js/add_gateway.js
+msgid "Remove"
+msgstr "إزالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+msgid "Menu Settings"
+msgstr "إعدادات القائمة"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+msgid "Case type is required."
+msgstr "نوع الحالة مطلوب."
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+msgid "Go back to case list"
+msgstr "العودة إلى قائمة الحالات"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+msgid "Proceed with registered case"
+msgstr "المتابعة مع الحالة المسجلة"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+msgid "Show All"
+msgstr "عرض الكل"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+msgid "Display text is required"
+msgstr "نص العرض مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+msgid "You have unsaved changes in your report list module"
+msgstr "لديك تغييرات غير محفوظة في وحدة قائمة التقارير"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+msgid "This code is used in multiple places."
+msgstr "يتم استخدام هذا الرمز في أماكن متعددة."
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
+msgid "Releases"
+msgstr "الإصدارات"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+msgid "You have unsaved changes to your application profiles"
+msgstr "لديك تغييرات غير محفوظة في ملفات تعريف التطبيق"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "There was an error saving"
+msgstr "حدث خطأ أثناء الحفظ"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+msgid "Select a user"
+msgstr "اختر مستخدمًا"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+msgid "(Default)"
+msgstr "(افتراضي)"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+msgid "Unknown App"
+msgstr "تطبيق غير معروف"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+msgid ""
+"An error occurred. Reload the page and click Make New Version to try again."
+msgstr ""
+"حدث خطأ. أعد تحميل الصفحة وانقر على إنشاء إصدار جديد للمحاولة مرة أخرى."
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+msgid "Sorry, that didn't go through. Please reload your page and try again"
+msgstr "عذرًا، لم تكتمل العملية. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+msgid "The versions list has changed since you loaded the page."
+msgstr "تغيرت قائمة الإصدارات منذ تحميلك للصفحة."
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+msgid "No new changes!"
+msgstr "لا توجد تغييرات جديدة!"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+msgid "You have unsaved changes to your prompt setting"
+msgstr "لديك تغييرات غير محفوظة في إعداد المطالبة"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#, javascript-format
+msgid "Upgrade to CommCare %s for this option!"
+msgstr "قم بالترقية إلى CommCare %s لهذا الخيار!"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#, javascript-format
+msgid "Upgrade to CommCare %s!"
+msgstr "قم بالترقية إلى CommCare %s!"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+msgid "Auto-set by "
+msgstr "تم التعيين تلقائيًا بواسطة "
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+msgid ""
+"This value is currently inherited from the master app. Once this page is "
+"saved, it will no longer be inherited."
+msgstr ""
+"هذه القيمة موروثة حاليًا من التطبيق الرئيسي. بمجرد حفظ هذه الصفحة، لن تكون "
+"موروثة بعد ذلك."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+msgid "You have unsaved settings."
+msgstr "لديك إعدادات غير محفوظة."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+msgid "Settings"
+msgstr "الإعدادات"
+
+#: corehq/apps/app_manager/static/app_manager/js/source_files.js
+msgid "Please enter a version to compare"
+msgstr "يرجى إدخال إصدار للمقارنة"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+msgid "Filter properties"
+msgstr "تصفية الخصائص"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+msgid "View All Cases"
+msgstr "عرض جميع الحالات"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js
+msgid "View All Forms"
+msgstr "عرض جميع النماذج"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
+msgid "View Changed Items"
+msgstr "عرض العناصر التي تم تغييرها"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_models.js
+msgid "Filter questions or cases"
+msgstr "تصفية الأسئلة أو الحالات"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Module"
+msgstr "الوحدة"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Form"
+msgstr "النموذج"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Question"
+msgstr "السؤال"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Name"
+msgstr "الاسم"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Label"
+msgstr "التسمية"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Question Type"
+msgstr "نوع السؤال"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Question Value"
+msgstr "قيمة السؤال"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Option"
+msgstr "الخيار"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Calculate condition"
+msgstr "شرط الحساب"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Display condition"
+msgstr "شرط العرض"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Required"
+msgstr "مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Question Comment"
+msgstr "تعليق السؤال"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Default Value"
+msgstr "القيمة الافتراضية"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Validation Condition"
+msgstr "شرط التحقق"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Comment"
+msgstr "تعليق"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Form Filter"
+msgstr "تصفية النماذج"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Module Filter"
+msgstr "تصفية الوحدات"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Old Value"
+msgstr "القيمة القديمة"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "New Value"
+msgstr "القيمة الجديدة"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Loaded Case Properties"
+msgstr "خصائص الحالة المحملة"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Saved Case Properties"
+msgstr "خصائص الحالة المحفوظة"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "load"
+msgstr "تحميل"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "save"
+msgstr "حفظ"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "Case Property"
+msgstr "خاصية الحالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+msgid "of Case Type"
+msgstr "من نوع الحالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js
+msgid "Latest saved"
+msgstr "آخر حفظ"
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
+msgid "[unknown]"
+msgstr "[غير معروف]"
+
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
+msgid "Warning: unrecognized language"
+msgstr "تحذير: لغة غير معروفة"
+
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
+msgid "You have unsaved changes in your supported languages"
+msgstr "لديك تغييرات غير محفوظة في اللغات المدعومة"
+
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
+msgid "There are errors in your configuration"
+msgstr "هناك أخطاء في الإعدادات"
+
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
+msgid "You must have at least one language"
+msgstr "يجب أن يكون لديك لغة واحدة على الأقل"
+
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
+msgid "Please enter language"
+msgstr "يرجى إدخال اللغة"
+
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
+msgid "Invalid language code"
+msgstr "رمز لغة غير صالح"
+
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
+msgid "Language appears twice"
+msgstr "اللغة مكررة"
+
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
+msgid "This conflicts with a current language"
+msgstr "هذا يتعارض مع لغة حالية"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+msgid "{path} is not a valid data parent"
+msgstr "{path} ليس أصل بيانات صالح"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "Create"
+msgid "createXML"
+msgstr "إنشاء"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "User Data"
+msgid "getData"
+msgstr "بيانات المستخدم"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+msgid "getMugByPath"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
+msgid "New Form"
+msgstr "نموذج جديد"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "Drag question here"
+msgstr "اسحب السؤال هنا"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "is equal to"
+msgstr "يساوي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "is not equal to"
+msgstr "لا يساوي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "is less than"
+msgstr "أقل من"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "is less than or equal to"
+msgstr "أقل من أو يساوي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "is greater than"
+msgstr "أكبر من"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "is greater than or equal to"
+msgstr "أكبر من أو يساوي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "has selected value"
+msgstr "لديه قيمة محددة"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "True when ALL of the expressions are true."
+msgstr "صحيح عندما تكون جميع التعابير صحيحة."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+msgid "True when ANY of the expressions are true."
+msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Command Bar"
+msgstr "شريط الأوامر"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Basic"
+msgstr "أساسي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Logic"
+msgstr "المنطق"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid ""
+"Use logic to control when questions are asked and what answers are valid. "
+"You can add logic to display a question based on a previous answer, to make "
+"the question required or ensure the answer is in a valid range."
+msgstr ""
+"استخدم المنطق للتحكم في متى يتم طرح الأسئلة وما هي الإجابات الصالحة. يمكنك "
+"إضافة منطق لعرض سؤال بناءً على إجابة سابقة، لجعل السؤال مطلوبًا أو لضمان أن "
+"الإجابة ضمن نطاق صالح."
+
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js
+msgid "no comment"
+msgstr "لا يوجد تعليق"
+
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js
+#: corehq/apps/translations/static/translations/js/app_translations.js
+msgid "Select Profile"
+msgstr "اختر الملف الشخصي"
+
+#: corehq/apps/campaign/static/campaign/js/dashboard.js
+msgid "Add Widget"
+msgstr "إضافة عنصر واجهة"
+
+#: corehq/apps/campaign/static/campaign/js/dashboard.js
+msgid "Edit Widget"
+msgstr "تعديل عنصر واجهة"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
+msgid "Form Data"
+msgstr "بيانات النموذج"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
+msgid "Form XML"
+msgstr "XML النموذج"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
+msgid "Evaluate XPath"
+msgstr "تقييم XPath"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
+msgid "Expand Data Preview"
+msgstr "توسيع معاينة البيانات"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
+msgid "Collapse Data Preview"
+msgstr "طي معاينة البيانات"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js
+msgid "Error evaluating expression."
+msgstr "حدث خطأ أثناء تقييم التعبير."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Not a valid whole number"
+msgstr "ليس عدداً صحيحاً صالحاً"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Number is too large"
+msgstr "العدد كبير جداً"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Not a valid number"
+msgstr "ليس عدداً صالحاً"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Please choose an item"
+msgstr "يرجى اختيار عنصر"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Not a valid choice"
+msgstr "خيار غير صالح"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "No file selected."
+msgstr "لم يتم اختيار أي ملف."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Invalid file type chosen. Please select a valid multimedia file."
+msgstr "نوع الملف المختار غير صالح. يرجى اختيار ملف وسائط متعددة صالح."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid ""
+"The file you selected exceeds the size limit of 4MB. Please select a file "
+"that is smaller than 4MB."
+msgstr ""
+"الملف الذي اخترته يتجاوز الحد الأقصى للحجم وهو 4 ميجابايت. يرجى اختيار ملف "
+"أصغر من 4 ميجابايت."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Map layer not configured."
+msgstr "طبقة الخريطة غير مهيأة."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Could not load map. Please try again later."
+msgstr "تعذر تحميل الخريطة. يرجى المحاولة مرة أخرى لاحقاً."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid ""
+"Something unexpected went wrong on that request. If you have problems "
+"filling in the rest of your form please submit an issue. Technical Details: "
+msgstr ""
+"حدث أمر غير متوقع أثناء هذا الطلب. إذا واجهت مشاكل في إكمال النموذج يرجى "
+"إرسال بلاغ بالمشكلة. التفاصيل التقنية: "
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid "You have been logged out because of inactivity."
+msgstr "تم تسجيل خروجك بسبب عدم النشاط."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid ""
+"An unknown error occurred. If you have problems filling in the rest of your "
+"form please submit an issue. Technical Details: "
+msgstr ""
+"حدث خطأ غير معروف. إذا واجهت مشاكل في إكمال النموذج يرجى إرسال بلاغ "
+"بالمشكلة. التفاصيل التقنية: "
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid ""
+"CommCare HQ has detected a possible network connectivity problem. Please "
+"make sure you are connected to the Internet in order to submit your form."
+msgstr ""
+"اكتشف CommCare HQ وجود مشكلة محتملة في الاتصال بالشبكة. يرجى التأكد من "
+"اتصالك بالإنترنت لإرسال النموذج."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid ""
+"Another process prevented us from servicing your request. Please try again "
+"later."
+msgstr "منعنا إجراء آخر من معالجة طلبك. يرجى المحاولة مرة أخرى لاحقاً."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid ""
+"We have detected an issue with your network. Please check your Internet "
+"connection and retry when connectivity improves."
+msgstr ""
+"اكتشفنا مشكلة في شبكتك. يرجى التحقق من اتصال الإنترنت وإعادة المحاولة عند "
+"تحسن الاتصال."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
+msgid "Submit"
+msgstr "إرسال"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
+msgid "Submitting..."
+msgstr "جارٍ الإرسال..."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
+msgid "An answer is required"
+msgstr "الإجابة مطلوبة"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
+msgid "This answer is outside the allowed range."
+msgstr "هذه الإجابة خارج النطاق المسموح به."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
+msgid "We were unable to save this answer. Please try again later."
+msgstr "تعذر حفظ هذه الإجابة. يرجى المحاولة مرة أخرى لاحقاً."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
+msgid ""
+"We’re unable to submit this form right now due to high system usage. \n"
+"\n"
+"Please keep this window open and try again in a minute, or come back to this "
+"form in Incomplete Forms later."
+msgstr ""
+"لا يمكننا إرسال هذا النموذج الآن بسبب ارتفاع استخدام النظام.\n"
+"\n"
+"يرجى إبقاء هذه النافذة مفتوحة والمحاولة بعد دقيقة، أو العودة إلى هذا النموذج "
+"في النماذج غير المكتملة لاحقاً."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
+msgid "Form submission failed with error"
+msgstr "فشل إرسال النموذج مع وجود خطأ"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "You have a form in progress. Are you sure you want to navigate away?"
+msgstr "لديك نموذج قيد التقدم. هل أنت متأكد أنك تريد الانتقال بعيداً؟"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "Form successfully saved!"
+msgstr "تم حفظ النموذج بنجاح!"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid ""
+"You are now offline. Web Apps is not optimized for offline use. Please "
+"reconnect to the Internet before continuing."
+msgstr ""
+"أنت الآن غير متصل بالإنترنت. تطبيقات الويب ليست مُحسّنة للاستخدام دون اتصال. "
+"يرجى إعادة الاتصال بالإنترنت قبل المتابعة."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "You are are back online."
+msgstr "لقد عدت إلى الاتصال بالإنترنت."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+msgid "Waiting for server progress"
+msgstr "انتظار تقدم الخادم"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "Please wait..."
+msgstr "يرجى الانتظار..."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "Web Apps - CommCare HQ"
+msgstr "تطبيقات الويب - CommCare HQ"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/constants.js
+msgid ""
+"An unexpected error occurred. Please report an issue if you continue to see "
+"this message."
+msgstr "حدث خطأ غير متوقع. يرجى الإبلاغ عن المشكلة إذا استمر ظهور هذه الرسالة."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js
+msgid "Completed: "
+msgstr "تم الاكتمال: "
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js
+msgid "Show Full Menu"
+msgstr "عرض القائمة الكاملة"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js
+msgid "Hide Full Menu"
+msgstr "إخفاء القائمة الكاملة"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+msgid ""
+"You have selected a case in a different domain. App Preview does not support "
+"this feature."
+msgstr "لقد اخترت حالة في نطاق مختلف. المعاينة في التطبيق لا تدعم هذه الميزة."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+msgid ""
+"Unable to connect to form playing service. Please report an issue if you "
+"continue to see this message."
+msgstr ""
+"تعذر الاتصال بخدمة تشغيل النماذج. يرجى الإبلاغ عن المشكلة إذا استمر ظهور هذه "
+"الرسالة."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Loading..."
+msgstr "جارٍ التحميل..."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
+msgid "Fetching your location..."
+msgstr "جارٍ تحديد موقعك..."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Please perform a search."
+msgstr "يرجى إجراء بحث."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Show Map"
+msgstr "عرض الخريطة"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Hide Map"
+msgstr "إخفاء الخريطة"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid ""
+"You have selected more than the maximum selection limit of <%- value %> . "
+"Please uncheck some values to continue."
+msgstr ""
+"لقد قمت بتحديد أكثر من الحد الأقصى المسموح به وهو <%- value %> . يرجى إلغاء "
+"تحديد بعض القيم للمتابعة."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Your location"
+msgstr "موقعك"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid ""
+"Sorry, this input is not supported because your project doesn't have a "
+"Geocoder privilege"
+msgstr ""
+"عذراً، هذا الإدخال غير مدعوم لأن مشروعك لا يمتلك صلاحية محدد المواقع "
+"الجغرافية (Geocoder)"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please select one"
+msgstr "يرجى اختيار واحد"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please select one or more"
+msgstr "يرجى اختيار واحد أو أكثر"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please check the following fields:"
+msgstr "يرجى التحقق من الحقول التالية:"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/api.js
+msgid "Unable to delete incomplete form '<%- title %>'"
+msgstr "تعذر حذف النموذج غير المكتمل '<%- title %>'"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Delete incomplete form?"
+msgstr "حذف النموذج غير المكتمل؟"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Are you sure you want to delete '<%- title %>'?"
+msgstr "هل أنت متأكد أنك تريد حذف '<%- title %>'؟"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Yes"
+msgstr "نعم"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "No"
+msgstr "لا"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
+msgid "Working as <b><%- restoreAs %></b> in <b><%- domain %></b>."
+msgstr "تعمل كـ <b><%- restoreAs %></b> في <b><%- domain %></b>."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
+msgid "Working as <b><%- restoreAs %></b>."
+msgstr "تعمل كـ <b><%- restoreAs %></b>."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
+msgid "Use <%- username %>."
+msgstr "استخدم <%- username %>."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
+msgid "Log in as <%- username %>?"
+msgstr "تسجيل الدخول باسم <%- username %>؟"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
+msgid "Log in"
+msgstr "تسجيل الدخول"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Confirm?"
+msgstr "تأكيد؟"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "OK"
+msgstr "حسنًا"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Cancel"
+msgstr "إلغاء"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Page <%- num %>"
+msgstr "الصفحة <%- num %>"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Close"
+msgstr "إغلاق"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+msgid "Error saving!"
+msgstr "حدث خطأ أثناء الحفظ!"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+msgid "Could not sync user data. Please report an issue if this persists."
+msgstr "تعذر مزامنة بيانات المستخدم. يرجى الإبلاغ عن المشكلة إذا استمرت."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+msgid "User Data successfully synced."
+msgstr "تمت مزامنة بيانات المستخدم بنجاح."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+msgid "Could not clear user data. Please report an issue if this persists."
+msgstr "تعذر مسح بيانات المستخدم. يرجى الإبلاغ عن المشكلة إذا استمرت."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+msgid "User data successfully cleared."
+msgstr "تم مسح بيانات المستخدم بنجاح."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+msgid "Error breaking locks. Please report an issue if this persists."
+msgstr "حدث خطأ أثناء كسر الأقفال. يرجى الإبلاغ عن المشكلة إذا استمرت."
+
+#: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
+msgid ""
+"Sorry, there was an problem contacting the server to fetch the data. Please, "
+"try again in a little bit."
+msgstr ""
+"عذراً، حدثت مشكلة في الاتصال بالخادم لجلب البيانات. يرجى المحاولة مرة أخرى "
+"بعد قليل."
+
+#: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
+msgid "Could not <%= action %> product. Please try again later."
+msgstr "تعذر <%= action %> المنتج. يرجى المحاولة لاحقاً."
+
+#: corehq/apps/commtrack/static/commtrack/js/sms.js
+msgid "SMS keyword is required."
+msgstr "كلمة مفتاحية للرسائل النصية مطلوبة."
+
+#: corehq/apps/commtrack/static/commtrack/js/sms.js
+msgid "Name is required."
+msgstr "الاسم مطلوب."
+
+#: corehq/apps/custom_data_fields/static/custom_data_fields/js/custom_data_fields.js
+msgid "Edit Profile"
+msgstr "تعديل الملف الشخصي"
+
+#: corehq/apps/data_cleaning/static/data_cleaning/js/directives/dynamic_options_select2.js
+msgid "No available suggestions. Add more by separating words with spaces."
+msgstr "لا توجد اقتراحات متاحة. أضف المزيد بفصل الكلمات بمسافات."
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
+msgid "No Name"
+msgstr "لا يوجد اسم"
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
+msgid ""
+"When importing data, CommCare will not save a row if its cells don't match "
+"these valid values."
+msgstr ""
+"عند استيراد البيانات، لن يقوم CommCare بحفظ الصف إذا لم تتطابق خلاياه مع هذه "
+"القيم الصحيحة."
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
+msgid ""
+"Help colleagues upload correct data into case properties by listing the "
+"valid values here."
+msgstr ""
+"ساعد الزملاء على رفع بيانات صحيحة إلى خصائص الحالة من خلال إدراج القيم "
+"الصحيحة هنا."
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
+msgid "valid value"
+msgstr "قيمة صحيحة"
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
+msgid "description"
+msgstr "الوصف"
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
+msgid "You have unsaved changes to your data dictionary."
+msgstr "لديك تغييرات غير محفوظة في قاموس البيانات الخاص بك."
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
+msgid ""
+"You have unsaved changes to this case type. Are you sure you would like to "
+"continue?"
+msgstr ""
+"لديك تغييرات غير محفوظة في نوع الحالة هذا. هل أنت متأكد أنك تريد المتابعة؟"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Issue communicating with server. Try again."
+msgstr "مشكلة في التواصل مع الخادم. حاول مرة أخرى."
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
+msgid "OR"
+msgstr "أو"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
+msgid "AND"
+msgstr "و"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
+msgid "True when ANY of the case properties match"
+msgstr "صحيح عندما تتطابق أي من خصائص الحالة"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
+msgid "True when ALL of the case properties match"
+msgstr "صحيح عندما تتطابق جميع خصائص الحالة"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Out of range of filter. Will not appear on page refresh."
+msgstr "خارج نطاق عامل التصفية. لن يظهر عند تحديث الصفحة."
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "updated"
+msgstr "تم التحديث"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Case copied"
+msgstr "تم نسخ الحالة"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Cases copied"
+msgstr "تم نسخ الحالات"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Case Reassignment (via HQ)"
+msgstr "إعادة تعيين الحالة (عبر HQ)"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Search for users"
+msgstr "البحث عن المستخدمين"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Search for users or groups"
+msgstr "البحث عن المستخدمين أو المجموعات"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/manage_case_groups.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/manage_case_groups.js
+msgid "Sorry, it looks like the upload failed."
+msgstr "عذرًا، يبدو أن التحميل فشل."
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
+msgid "case property name"
+msgstr "اسم خاصية الحالة"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid ""
+"<a href='<%- link %>' target='_blank'>View <i class='fa-solid fa-up-right-"
+"from-square'></i></a>"
+msgstr ""
+"<a href='<%- link %>' target='_blank'>عرض <i class='fa-solid fa-up-right-"
+"from-square'></i></a>"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "Find Case"
+msgstr "البحث عن حالة"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "IDs can be found in a <a href=\"<%- url %>\">case data export</a>"
+msgstr ""
+"يمكن العثور على المعرفات في <a href=\"<%- url %>\">تصدير بيانات الحالات</a>"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Case ID"
+msgstr "معرّف الحالة"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "Case found!"
+msgstr "تم العثور على الحالة!"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "Could not find case"
+msgstr "تعذر العثور على الحالة"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "Find Form Submission"
+msgstr "البحث عن إرسال نموذج"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "IDs can be found in a <a href=\"<%- url %>\">form data export</a>"
+msgstr ""
+"يمكن العثور على المعرفات في <a href=\"<%- url %>\">تصدير بيانات النماذج</a>"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "Could not find form submission"
+msgstr "تعذر العثور على إرسال النموذج"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "Form Submission ID"
+msgstr "معرّف إرسال النموذج"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+msgid "Form submission found!"
+msgstr "تم العثور على إرسال النموذج!"
+
+#: corehq/apps/domain/static/domain/js/bootstrap3/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/billing_statements.js
+msgid "Submit Payment"
+msgstr "إرسال الدفع"
+
+#: corehq/apps/domain/static/domain/js/bootstrap3/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/billing_statements.js
+msgid "Submit Invoice Request"
+msgstr "إرسال طلب فاتورة"
+
+#: corehq/apps/domain/static/domain/js/bootstrap3/case_search.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/case_search.js
+msgid "You have unchanged settings"
+msgstr "لديك إعدادات لم تتغير"
+
+#: corehq/apps/domain/static/domain/js/bootstrap3/info_basic.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/info_basic.js
+msgid "Select a Timezone..."
+msgstr "اختر منطقة زمنية..."
+
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Buy Credits"
+msgstr "شراء أرصدة"
+
+#: corehq/apps/domain/static/domain/js/internal_settings.js
+msgid "Available Countries"
+msgstr "الدول المتاحة"
+
+#: corehq/apps/domain/static/domain/js/internal_settings.js
+msgid "Active Countries"
+msgstr "الدول النشطة"
+
+#: corehq/apps/domain/static/domain/js/internal_settings.js
+msgid "Search Countries..."
+msgstr "البحث عن دول..."
+
+#: corehq/apps/domain/static/domain/js/internal_settings.js
+msgid "Inactive Expressions"
+msgstr "التعابير غير النشطة"
+
+#: corehq/apps/domain/static/domain/js/internal_settings.js
+msgid "Active Expressions"
+msgstr "التعابير النشطة"
+
+#: corehq/apps/domain/static/domain/js/internal_settings.js
+msgid "Search Expressions"
+msgstr "البحث عن تعابير"
+
+#: corehq/apps/domain/static/domain/js/my_project_settings.js
+msgid "Reset to Default"
+msgstr "إعادة التعيين إلى الافتراضي"
+
+#: corehq/apps/domain/static/domain/js/my_project_settings.js
+msgid "This matches the global setting: "
+msgstr "يتطابق هذا مع الإعداد العالمي: "
+
+#: corehq/apps/domain/static/domain/js/my_project_settings.js
+msgid "This does not match global setting: "
+msgstr "هذا لا يتطابق مع الإعداد العالمي: "
+
+#: corehq/apps/domain/static/domain/js/my_project_settings.js
+msgid ""
+"You may not override this project space's timezone because you only have "
+"access to this project space through an Organization. You must be added to "
+"the project space as a member in order to override your timezone."
+msgstr ""
+"لا يمكنك تجاوز المنطقة الزمنية لمساحة المشروع هذه لأن وصولك إليها فقط من "
+"خلال مؤسسة. يجب إضافتك كعضو في مساحة المشروع لتتمكن من تجاوز منطقتك الزمنية."
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
+msgid ""
+"Do not allow new users to sign up on commcarehq.org. This may take up to an "
+"hour to take effect. <br>This will affect users with email addresses from "
+"the following domains: <strong><%- domains %></strong><br>Contact <a "
+"href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
+msgstr ""
+"لا تسمح للمستخدمين الجدد بالتسجيل على commcarehq.org. قد يستغرق ذلك ما يصل "
+"إلى ساعة ليصبح ساري المفعول.<br>سيؤثر ذلك على المستخدمين الذين لديهم عناوين "
+"بريد إلكتروني من النطاقات التالية: <strong><%- domains %></"
+"strong><br>للتغيير في قائمة النطاقات، تواصل مع <a href='mailto:<%- email "
+"%>'><%- email %></a>."
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Last 30 Days"
+msgstr "آخر 30 يومًا"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Month"
+msgstr "الشهر السابق"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Custom"
+msgstr "مخصص"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
+msgstr "يمتد من <%- startDate %> إلى <%- endDate %> (UTC)"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid ""
+"Error updating display total, please try again or report an issue if this "
+"persists."
+msgstr ""
+"حدث خطأ أثناء تحديث إجمالي العرض، يرجى المحاولة مرة أخرى أو الإبلاغ عن "
+"المشكلة إذا استمرت."
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "??"
+msgstr "؟؟"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid ""
+"Error sending email, please try again or report an issue if this persists."
+msgstr ""
+"حدث خطأ أثناء إرسال البريد الإلكتروني، يرجى المحاولة مرة أخرى أو الإبلاغ عن "
+"المشكلة إذا استمرت."
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Disable Mobile Worker Attendees"
+msgstr "تعطيل حضور العاملين عبر الجوال"
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Enable Mobile Worker Attendees"
+msgstr "تمكين حضور العاملين عبر الجوال"
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Possible Attendees"
+msgstr "الحضور المحتملون"
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Expected Attendees"
+msgstr "الحضور المتوقعون"
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Search Attendees"
+msgstr "البحث عن الحضور"
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Possible Attendance Takers"
+msgstr "مسجلو الحضور المحتملون"
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Selected Attendance Takers"
+msgstr "مسجلو الحضور المحددون"
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Search Attendance Takers"
+msgstr "البحث عن مسجلي الحضور"
+
+#: corehq/apps/export/static/export/js/create_export.js
+msgid "<%- count %> form submission available."
+msgstr "يتوفر <%- count %> إرسال نموذج."
+
+#: corehq/apps/export/static/export/js/create_export.js
+msgid "<%- count %> form submissions available."
+msgstr "يتوفر <%- count %> إرسال نماذج."
+
+#: corehq/apps/export/static/export/js/create_export.js
+msgid "User Registration"
+msgstr "تسجيل المستخدم"
+
+#: corehq/apps/export/static/export/js/create_export.js
+msgid ""
+"There was an issue fetching data. Please check your internet connection."
+msgstr "حدثت مشكلة أثناء جلب البيانات. يرجى التحقق من اتصال الإنترنت."
+
+#: corehq/apps/export/static/export/js/create_export.js
+msgid "There is an issue communicating with the server at this time."
+msgstr "هناك مشكلة في الاتصال بالخادم في الوقت الحالي."
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
+msgstr "نسخ إلى الحافظة: Ctrl-C، Enter (ماك: Cmd-C، Enter)"
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Data file URL copied to clipboard."
+msgstr "تم نسخ رابط ملف البيانات إلى الحافظة."
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Data file deleted."
+msgstr "تم حذف ملف البيانات."
+
+#: corehq/apps/export/static/export/js/download_export.js
+msgid "Sorry, there was a problem reaching the server. Please try again."
+msgstr "عذرًا، حدثت مشكلة في الوصول إلى الخادم. يرجى المحاولة مرة أخرى."
+
+#: corehq/apps/export/static/export/js/download_export.js
+msgid "Server maintenance in progress. Please try again later."
+msgstr "جاري صيانة الخادم. يرجى المحاولة لاحقًا."
+
+#: corehq/apps/export/static/export/js/download_export.js
+msgid "There was an error downloading your export."
+msgstr "حدث خطأ أثناء تنزيل التصدير الخاص بك."
+
+#: corehq/apps/export/static/export/js/export_list.js
+msgid "Download Requested"
+msgstr "تم طلب التنزيل"
+
+#: corehq/apps/export/static/export/js/export_list.js
+msgid "Invalid date format"
+msgstr "تنسيق التاريخ غير صالح"
+
+#: corehq/apps/export/static/export/js/export_list.js
+msgid "Problem saving dashboard feed filters"
+msgstr "حدثت مشكلة في حفظ عوامل تصفية موجز لوحة المعلومات"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Process"
+msgstr "معالجة"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Processing..."
+msgstr "جارٍ المعالجة..."
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Refresh page"
+msgstr "تحديث الصفحة"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Web Page (Excel Dashboards)"
+msgstr "صفحة ويب (لوحات بيانات Excel)"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "CSV (Zip file)"
+msgstr "CSV (ملف مضغوط)"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Excel (older versions)"
+msgstr "Excel (الإصدارات الأقدم)"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Excel 2007+"
+msgstr "Excel 2007+"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "GeoJSON"
+msgstr "GeoJSON"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Private"
+msgstr "خاص"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Export Only"
+msgstr "تصدير فقط"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Edit and Export"
+msgstr "تعديل وتصدير"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid ""
+"<strong>Private</strong>: Only you can edit and export.<br/> <strong>Export "
+"Only</strong>: You can edit and export, other users can only export.<br/> "
+"<strong>Edit and Export</strong>: All users can edit and export."
+msgstr ""
+"<strong>خاص</strong>: يمكنك فقط التعديل والتصدير.<br/> <strong>تصدير فقط</"
+"strong>: يمكنك التعديل والتصدير، ويمكن للمستخدمين الآخرين التصدير فقط.<br/> "
+"<strong>تعديل وتصدير</strong>: يمكن لجميع المستخدمين التعديل والتصدير."
+
+#: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Save"
+msgstr "حفظ"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Create"
+msgstr "إنشاء"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "The table path should end with []"
+msgstr "يجب أن ينتهي مسار الجدول بـ []"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Sensitive ID"
+msgstr "معرّف حساس"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Sensitive Date"
+msgstr "تاريخ حساس"
+
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
+msgid "Can not create table with ID '<%= tag %>'. Table IDs should be unique."
+msgstr ""
+"لا يمكن إنشاء جدول بالمعرّف '<%= tag %>'. يجب أن تكون معرّفات الجداول فريدة."
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid "No group"
+msgstr "لا مجموعة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid "Group ID"
+msgstr "معرّف المجموعة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid "Group Name"
+msgstr "اسم المجموعة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid "Group Center Coordinates"
+msgstr "إحداثيات مركز المجموعة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Case Name"
+msgstr "اسم الحالة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid "Case Owner Name"
+msgstr "اسم مالك الحالة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid "Case Coordinates"
+msgstr "إحداثيات الحالة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid "Select group"
+msgstr "اختر مجموعة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid "Group <%- pageNumber %>-<%- groupCount %>"
+msgstr "المجموعة <%- pageNumber %>-<%- groupCount %>"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+msgid ""
+"Something went wrong processing <%- failedClusters %> groups. These groups "
+"will not be exported."
+msgstr ""
+"حدث خطأ أثناء معالجة <%- failedClusters %> من المجموعات. لن يتم تصدير هذه "
+"المجموعات."
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+msgid "Max cases per user"
+msgstr "الحد الأقصى للحالات لكل مستخدم"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+msgid "Min cases per user"
+msgstr "الحد الأدنى للحالات لكل مستخدم"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+msgid "Max distance to case"
+msgstr "أقصى مسافة للحالة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+msgid "minutes"
+msgstr "دقائق"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+msgid "Max travel time"
+msgstr "أقصى وقت للسفر"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+msgid ""
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
+msgstr ""
+"عذرًا! حدث خطأ ما! يرجى التأكد من ضبط إعداداتك الجغرافية بشكل صحيح أو التواصل "
+"مع المسؤول إذا استمرت المشكلة."
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+msgid ""
+"Please ensure that the filtered area includes both cases and mobile workers "
+"before attempting to run disbursement."
+msgstr ""
+"يرجى التأكد من أن المنطقة المصفاة تتضمن كلًا من الحالات والعاملين الميدانيين "
+"قبل محاولة تنفيذ الصرف."
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+msgid "All locations"
+msgstr "جميع المواقع"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid ""
+"Oops! Something went wrong! Please report an issue if the problem persists."
+msgstr "عذرًا! حدث خطأ ما! يرجى الإبلاغ عن المشكلة إذا استمرت."
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
+msgid "Token successfully verified!"
+msgstr "تم التحقق من الرمز بنجاح!"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
+msgid ""
+"Invalid API token. Please verify that the token matches the one on your "
+"Mapbox account and has the correct scope configured."
+msgstr ""
+"رمز API غير صالح. يرجى التأكد من أن الرمز يطابق الرمز الموجود في حساب Mapbox "
+"الخاص بك وأن النطاق مضبوط بشكل صحيح."
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/gps_capture.js
+msgid "current user"
+msgstr "المستخدم الحالي"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Mobile Worker"
+msgstr "عامل ميداني"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Case"
+msgstr "الحالة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid ""
+"Warning! This action will clear the current disbursement. Please confirm if "
+"you want to proceed."
+msgstr ""
+"تحذير! سيؤدي هذا الإجراء إلى مسح الصرف الحالي. يرجى التأكيد إذا كنت ترغب في "
+"المتابعة."
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Refreshing Page..."
+msgstr "جارٍ تحديث الصفحة..."
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Name of the Area"
+msgstr "اسم المنطقة"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Please enter the name for the area!"
+msgstr "يرجى إدخال اسم للمنطقة!"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "No user selected (unassign mode)"
+msgstr "لم يتم تحديد مستخدم (وضع إلغاء التعيين)"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Assigned User ID"
+msgstr "معرّف المستخدم المخصص"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Assigned Username"
+msgstr "اسم المستخدم المخصص"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Assigned User Primary Location"
+msgstr "الموقع الرئيسي للمستخدم المخصص"
+
+#: corehq/apps/groups/static/groups/js/group_members.js
+msgid "Edit Group Information"
+msgstr "تعديل معلومات المجموعة"
+
+#: corehq/apps/groups/static/groups/js/group_members.js
+msgid "The following changes will not be saved: "
+msgstr "لن يتم حفظ التغييرات التالية: "
+
+#: corehq/apps/groups/static/groups/js/group_members.js
+msgid "Successfully saved "
+msgstr "تم الحفظ بنجاح "
+
+#: corehq/apps/groups/static/groups/js/group_members.js
+msgid "Failed to save "
+msgstr "فشل في الحفظ "
+
+#: corehq/apps/groups/static/groups/js/group_members.js
+msgid "Please wait and do not navigate away..."
+msgstr "يرجى الانتظار وعدم مغادرة الصفحة..."
+
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js
+msgid ""
+"Error fetching multimedia, please try again or report an issue if the "
+"problem persists."
+msgstr ""
+"حدث خطأ أثناء جلب الوسائط المتعددة، يرجى المحاولة مرة أخرى أو الإبلاغ عن "
+"المشكلة إذا استمرت."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
+msgid "This is Danny, one of our best developers."
+msgstr "هذا داني، أحد أفضل مطورينا."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
+msgid ""
+"Danny is pretty sad that you had to encounter this issue. He's making sure "
+"it gets fixed as soon as possible."
+msgstr ""
+"يشعر داني بالحزن لأنك واجهت هذه المشكلة. وهو يتأكد من إصلاحها في أقرب وقت "
+"ممكن."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Clear selection"
+msgstr "مسح التحديد"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Close the picker"
+msgstr "إغلاق أداة الاختيار"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Hour"
+msgstr "إنقاص الساعة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Minute"
+msgstr "إنقاص الدقيقة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Second"
+msgstr "إنقاص الثانية"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Hour"
+msgstr "زيادة الساعة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Minute"
+msgstr "زيادة الدقيقة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Second"
+msgstr "زيادة الثانية"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Century"
+msgstr "القرن التالي"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Decade"
+msgstr "العقد التالي"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Month"
+msgstr "الشهر التالي"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Year"
+msgstr "السنة التالية"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Hour"
+msgstr "اختر الساعة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Minute"
+msgstr "اختر الدقيقة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Second"
+msgstr "اختر الثانية"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Century"
+msgstr "القرن السابق"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Decade"
+msgstr "العقد السابق"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Year"
+msgstr "السنة السابقة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Date"
+msgstr "اختر التاريخ"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Decade"
+msgstr "اختر العقد"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Month"
+msgstr "اختر الشهر"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Time"
+msgstr "اختر الوقت"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Year"
+msgstr "اختر السنة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Go to today"
+msgstr "اذهب إلى اليوم"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Toggle Meridiem"
+msgstr "تبديل الفترة الزمنية"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Incorrect Format"
+msgstr "تنسيق غير صحيح"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Only Dimagi email addresses can be included"
+msgstr "يمكن تضمين عناوين البريد الإلكتروني الخاصة بـ Dimagi فقط"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
+msgid "Could not authenticate, please log in and try again"
+msgstr "تعذر المصادقة، يرجى تسجيل الدخول والمحاولة مرة أخرى"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
+msgid "There was a problem, please refresh and try again"
+msgstr "حدثت مشكلة، يرجى التحديث والمحاولة مرة أخرى"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Done"
+msgstr "تم"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Saving..."
+msgstr "جارٍ الحفظ..."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Saved"
+msgstr "تم الحفظ"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Try Again"
+msgstr "حاول مرة أخرى"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+msgid "Delete"
+msgstr "حذف"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Deleting..."
+msgstr "جارٍ الحذف..."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Deleted"
+msgstr "تم الحذف"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "There was an error deleting"
+msgstr "حدث خطأ أثناء الحذف"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/validators.ko.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/validators.ko.js
+msgid "Not a valid email"
+msgstr "البريد الإلكتروني غير صالح"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/validators.ko.js
+msgid "Checking..."
+msgstr "جارٍ التحقق..."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
+msgid "Error saving, please try again."
+msgstr "حدث خطأ أثناء الحفظ، يرجى المحاولة مرة أخرى."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js
+msgid "<%- num %> per page"
+msgstr "<%- num %> لكل صفحة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js
+msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
+msgstr "عرض <%- firstItem %> إلى <%- lastItem %> من أصل <%- maxItems %> مدخلاً"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "No File selected"
+msgstr "لم يتم اختيار ملف"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image: "
+msgstr "فشل في رفع الصورة: "
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image. Please try again."
+msgstr "فشل في رفع الصورة. يرجى المحاولة مرة أخرى."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+msgid "Clear"
+msgstr "مسح"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
+msgid "Gateway Timeout Error. Max retries exceeded."
+msgstr "خطأ في مهلة البوابة. تم تجاوز الحد الأقصى للمحاولات."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
+msgid "Request timed out. Max retries exceeded."
+msgstr "انتهت مهلة الطلب. تم تجاوز الحد الأقصى للمحاولات."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
+msgid "Unknown Event"
+msgstr "حدث غير معروف"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
+msgid "Unknown Path"
+msgstr "مسار غير معروف"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
+msgid "Items"
+msgstr "العناصر"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
+msgid "Selected items"
+msgstr "العناصر المحددة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
+msgid "Search items"
+msgstr "بحث عن عناصر"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
+msgid "Add All"
+msgstr "إضافة الكل"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
+msgid "Remove All"
+msgstr "إزالة الكل"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
+msgid "Your password is too weak! Try adding numbers or symbols."
+msgstr "كلمة المرور الخاصة بك ضعيفة جدًا! حاول إضافة أرقام أو رموز."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js
+msgid ""
+"There was an issue communicating with the server. Please try back later."
+msgstr "حدثت مشكلة في الاتصال بالخادم. يرجى المحاولة لاحقًا."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid " to "
+msgstr " إلى "
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "key"
+msgstr "مفتاح"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "value"
+msgstr "قيمة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "blank"
+msgstr "فارغ"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Edit"
+msgstr "تعديل"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Add Item"
+msgstr "إضافة عنصر"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Click <strong>Edit</strong> to Add Values</span>"
+msgstr "انقر على <strong>تعديل</strong> لإضافة القيم</span>"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Calculation"
+msgstr "الحساب"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Calculation is duplicated"
+msgstr "تم تكرار الحساب"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Add Image"
+msgstr "إضافة صورة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Calculation contains an invalid character."
+msgstr "يحتوي الحساب على حرف غير صالح."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Add Key, Value Mapping"
+msgstr "إضافة تعيين مفتاح وقيمة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Key"
+msgstr "المفتاح"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "This key is already defined"
+msgstr "هذا المفتاح معرف بالفعل"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Add Key, Translation Mapping"
+msgstr "إضافة تعيين مفتاح وترجمة"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Key contains invalid characters."
+msgstr "يحتوي المفتاح على أحرف غير صالحة."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Key is duplicated"
+msgstr "المفتاح مكرر"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Key contains an invalid character."
+msgstr "يحتوي المفتاح على حرف غير صالح."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Edit mapping for \"<%- property %>\""
+msgstr "تعديل التعيين لـ \"<%- property %>\""
+
+#: corehq/apps/integration/static/integration/js/dialer/connect-streams-min.js
+msgid "MultiSessionHangUp"
+msgstr "إنهاء متعدد الجلسات"
+
+#: corehq/apps/integration/static/integration/js/dialer/connect-streams-min.js
+msgid "MultiSessions"
+msgstr "جلسات متعددة"
+
+#: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
+msgid "Welcome, "
+msgstr "مرحبًا، "
+
+#: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
+msgid "Agent is logged in: "
+msgstr "تم تسجيل دخول الوكيل: "
+
+#: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
+msgid "Connecting..."
+msgstr "جارٍ الاتصال..."
+
+#: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
+msgid "Connected"
+msgstr "متصل"
+
+#: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
+msgid "Disconnected"
+msgstr "غير متصل"
+
+#: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
+msgid "There is no valid phone number available."
+msgstr "لا يوجد رقم هاتف صالح متاح."
+
+#: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
+msgid "You have not logged in."
+msgstr "لم تقم بتسجيل الدخول."
+
+#: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
+msgid "You already have an active call."
+msgstr "لديك مكالمة نشطة بالفعل."
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
+msgid "Error updating."
+msgstr "حدث خطأ أثناء التحديث."
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
+msgid "Report successfully linked."
+msgstr "تم ربط التقرير بنجاح."
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
+msgid ""
+"Something unexpected happened.\n"
+"Please try again, or report an issue if the problem persists."
+msgstr ""
+"حدث أمر غير متوقع.\n"
+"يرجى المحاولة مرة أخرى، أو الإبلاغ عن المشكلة إذا استمرت."
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
+msgid "All project spaces"
+msgstr "جميع مساحات المشروع"
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
+msgid "Project spaces to push to"
+msgstr "مساحات المشروع للدفع إليها"
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
+msgid "Search project spaces"
+msgstr "ابحث في مساحات المشاريع"
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
+msgid "Unable to link project spaces. <%- error %>"
+msgstr "تعذر ربط مساحات المشاريع. <%- error %>"
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
+msgid ""
+"Unable to link project spaces.\n"
+"Please try again, or report an issue if the problem persists."
+msgstr ""
+"تعذر ربط مساحات المشاريع.\n"
+"يرجى المحاولة مرة أخرى، أو الإبلاغ عن المشكلة إذا استمرت."
+
+#: corehq/apps/locations/static/locations/js/filtered_download.js
+msgid "Download <%- count %> Location"
+msgstr "تنزيل <%- count %> موقع"
+
+#: corehq/apps/locations/static/locations/js/filtered_download.js
+msgid "Download <%- count %> Locations"
+msgstr "تنزيل <%- count %> مواقع"
+
+#: corehq/apps/locations/static/locations/js/filtered_download.js
+msgid "Error determining number of matching locations"
+msgstr "حدث خطأ في تحديد عدد المواقع المطابقة"
+
+#: corehq/apps/locations/static/locations/js/location_tree.js
+msgid "You have successfully archived the location <%-name%>"
+msgstr "تم أرشفة الموقع <%-name%> بنجاح"
+
+#: corehq/apps/locations/static/locations/js/location_tree.js
+msgid ""
+"You have successfully deleted the location <%-name%> and all of its child "
+"locations"
+msgstr "تم حذف الموقع <%-name%> وجميع المواقع الفرعية التابعة له بنجاح"
+
+#: corehq/apps/locations/static/locations/js/location_tree.js
+msgid ""
+"An error occurred while deleting your location. If the problem persists, "
+"please report an issue"
+msgstr "حدث خطأ أثناء حذف موقعك. إذا استمرت المشكلة، يرجى الإبلاغ عنها"
+
+#: corehq/apps/locations/static/locations/js/widgets.js
+msgid "Select a Location"
+msgstr "اختر موقعًا"
+
+#: corehq/apps/locations/static/locations/js/widgets.js
+msgid "Choose a primary location"
+msgstr "اختر موقعًا رئيسيًا"
+
+#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
+msgid ""
+"Could not load data. Please try again later or report an issue if this "
+"problem persists."
+msgstr ""
+"تعذر تحميل البيانات. يرجى المحاولة لاحقًا أو الإبلاغ عن المشكلة إذا استمرت."
+
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
+msgid "yes"
+msgstr "نعم"
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Password must have at least <%- passwordLength %> characters."
+msgstr "يجب أن تحتوي كلمة المرور على الأقل على <%- passwordLength %> أحرف."
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid ""
+"<i class='fa fa-warning'></i>This password is automatically generated. "
+"Please copy it or create your own. It will not be shown again."
+msgstr ""
+"<i class='fa fa-warning'></i>تم إنشاء كلمة المرور هذه تلقائيًا. يرجى نسخها أو "
+"إنشاء كلمة مرور خاصة بك. لن يتم عرضها مرة أخرى."
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Your password is too weak! Try adding numbers or symbols!"
+msgstr "كلمة المرور الخاصة بك ضعيفة جدًا! حاول إضافة أرقام أو رموز!"
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Your password is almost strong enough! Try adding numbers or symbols!"
+msgstr "كلمة المرور الخاصة بك شبه قوية! حاول إضافة أرقام أو رموز!"
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Good Job! Your password is strong!"
+msgstr "عمل رائع! كلمة المرور الخاصة بك قوية!"
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Please enter your name."
+msgstr "يرجى إدخال اسمك."
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
+#: corehq/apps/users/static/users/js/invite_web_user.js
+msgid "Please specify an email."
+msgstr "يرجى تحديد بريد إلكتروني."
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Checking email..."
+msgstr "جارٍ التحقق من البريد الإلكتروني..."
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
+msgid "Please specify a password."
+msgstr "يرجى تحديد كلمة مرور."
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Please specify a project name."
+msgstr "يرجى تحديد اسم المشروع."
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Please specify."
+msgstr "يرجى التحديد."
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Please list your organization or company name."
+msgstr "يرجى ذكر اسم المنظمة أو الشركة الخاصة بك."
+
+#: corehq/apps/registration/static/registration/js/user_login_form.js
+msgid "Continue"
+msgstr "متابعة"
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js
+msgid "An unknown error occurred. Please try again or report an issue."
+msgstr "حدث خطأ غير معروف. يرجى المحاولة مرة أخرى أو الإبلاغ عن المشكلة."
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js
+msgid "Opt in successful"
+msgstr "تم الاشتراك بنجاح"
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js
+msgid "Opt out successful"
+msgstr "تم إلغاء الاشتراك بنجاح"
+
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+msgid "All Project Spaces"
+msgstr "جميع مساحات المشاريع"
+
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+msgid "All Actions"
+msgstr "جميع الإجراءات"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "%(count)s Invitation Accepted"
+msgid_plural "%(count)s Invitations Accepted"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "%(count)s Invitation Pending"
+msgid_plural "%(count)s Invitations Pending"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "%(count)s Invitation Rejected"
+msgid_plural "%(count)s Invitations Rejected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "%(count)s Project Space Participating"
+msgid_plural "%(count)s Project Spaces Participating"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "Rejected"
+msgstr "مرفوض"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "Accepted"
+msgstr "مقبول"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "fa-ban"
+msgstr "fa-ban"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "fa-regular fa-clock"
+msgstr "fa-regular fa-clock"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "fa-regular fa-circle-check"
+msgstr "fa-regular fa-circle-check"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "label-warning-light"
+msgstr "label-warning-light"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "label-success-light"
+msgstr "label-success-light"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js
+msgid "label-info-light"
+msgstr "label-info-light"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Please check your Internet connection!"
+msgstr "يرجى التحقق من اتصالك بالإنترنت!"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Report Not Found."
+msgstr "لم يتم العثور على التقرير."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"Request timed out when rendering this report. This might be an issue with "
+"our servers or with your Internet connection. We encourage you to report an "
+"issue to CommCare HQ Support so we can look into any possible issues."
+msgstr ""
+"انتهت مهلة الطلب أثناء عرض هذا التقرير. قد تكون هناك مشكلة في خوادمنا أو في "
+"اتصالك بالإنترنت. نشجعك على الإبلاغ عن المشكلة إلى دعم CommCare HQ حتى نتمكن "
+"من التحقق من أي مشاكل محتملة."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"Problem Rendering Report. Our error monitoring tools have noticed this and "
+"we are working quickly to resolve this issue as soon as possible. We "
+"encourage you to contact CommCare HQ Support if this issue persists for more "
+"than a few minutes. We appreciate any additional information you can give us "
+"about this problem so we can fix it immediately."
+msgstr ""
+"مشكلة في عرض التقرير. لقد لاحظت أدوات مراقبة الأخطاء لدينا ذلك ونعمل بسرعة "
+"لحل هذه المشكلة في أقرب وقت ممكن. نشجعك على التواصل مع دعم CommCare HQ إذا "
+"استمرت هذه المشكلة لأكثر من بضع دقائق. نقدر أي معلومات إضافية يمكنك تقديمها "
+"حول هذه المشكلة حتى نتمكن من إصلاحها فورًا."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Bad Gateway. Please contact CommCare HQ Support."
+msgstr "بوابة سيئة. يرجى التواصل مع دعم CommCare HQ."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"CommCare HQ is experiencing server difficulties. We're working quickly to "
+"resolve it. Thank you for your patience. We are extremely sorry."
+msgstr ""
+"يواجه CommCare HQ صعوبات في الخادم. نحن نعمل بسرعة لحلها. شكرًا لصبرك. نحن "
+"نعتذر بشدة."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr "انتهت مهلة البوابة. يرجى التواصل مع دعم CommCare HQ."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr "مصطلح البحث الخاص بك طويل جدًا. يرجى تقديم عامل تصفية بحث أقصر"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Loading Stopped"
+msgstr "تم إيقاف التحميل"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "We were unsuccessful loading the report:"
+msgstr "لم نتمكن من تحميل التقرير:"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/base.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/base.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configurable_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configurable_report.js
+msgid "You can email a saved version<br />of this report."
+msgstr "يمكنك إرسال نسخة محفوظة<br />من هذا التقرير عبر البريد الإلكتروني."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/case_details.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/case_details.js
+msgid "Unknown"
+msgstr "غير معروف"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/case_details.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/case_details.js
+msgid "Sorry, there was an issue communicating with the server."
+msgstr "عذرًا، حدثت مشكلة في الاتصال بالخادم."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/data_corrections.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/data_corrections.js
+msgid "Select a value"
+msgstr "اختر قيمة"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "Loading"
+msgstr "جارٍ التحميل"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "No data available to display. Please try changing your filters."
+msgstr "لا توجد بيانات متاحة للعرض. يرجى محاولة تغيير عوامل التصفية."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/tabular.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/tabular.js
+msgid "Sorry!"
+msgstr "عذرًا!"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid ""
+"There was an error with your query, it has been logged, please try another "
+"query."
+msgstr "حدث خطأ في استعلامك، تم تسجيله، يرجى تجربة استعلام آخر."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid ""
+"Your search query is invalid, please adjust the formatting and try again."
+msgstr "استعلام البحث غير صالح، يرجى تعديل التنسيق والمحاولة مرة أخرى."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "From Time"
+msgstr "من الوقت"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "Time"
+msgstr "الوقت"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "Select a language..."
+msgstr "اختر لغة..."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "Available Reports"
+msgstr "التقارير المتاحة"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "Included Reports"
+msgstr "التقارير المضمنة"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "Search Reports..."
+msgstr "بحث في التقارير..."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/hq_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/hq_report.js
+msgid ""
+"Your requested Excel report will be sent to the email address defined in "
+"your account settings."
+msgstr ""
+"سيتم إرسال تقرير Excel المطلوب إلى عنوان البريد الإلكتروني المحدد في إعدادات "
+"حسابك."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/maps_utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
+msgid "No Data"
+msgstr "لا توجد بيانات"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Sorry, we couldn't load that."
+msgstr "عذرًا، لم نتمكن من تحميل ذلك."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "No data available in table"
+msgstr "لا توجد بيانات متاحة في الجدول"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Showing _START_ to _END_ of _TOTAL_ entries"
+msgstr "عرض _START_ إلى _END_ من أصل _TOTAL_ مدخل"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/report_config_models.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr "بعض الحقول المطلوبة مفقودة. يرجى إكمالها قبل الحفظ."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/report_config_models.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/report_config_models.js
+msgid "Start date cannot be after end date."
+msgstr "لا يمكن أن يكون تاريخ البدء بعد تاريخ الانتهاء."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Labels"
+msgstr "التسميات"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Question IDs"
+msgstr "معرفات الأسئلة"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
+msgid "Report successfully emailed"
+msgstr "تم إرسال التقرير بنجاح عبر البريد الإلكتروني"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
+msgid "An error occurred emailing your report. Please try again."
+msgstr ""
+"حدث خطأ أثناء إرسال تقريرك عبر البريد الإلكتروني. يرجى المحاولة مرة أخرى."
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Success!"
+msgstr "تم بنجاح!"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Failed"
+msgstr "فشل"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+msgid "Failed to re-process"
+msgstr "فشل في إعادة المعالجة"
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "_MENU_ per page"
+msgstr "_MENU_ لكل صفحة"
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "All Rows"
+msgstr "كل الصفوف"
+
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+#: corehq/apps/reports/static/reports/js/filters/schedule_instance.js
+msgid "All"
+msgstr "الكل"
+
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Select a group"
+msgstr "اختر مجموعة"
+
+#: corehq/apps/reports/static/reports/js/filters/case_list_explorer.js
+msgid "case types"
+msgstr "أنواع الحالات"
+
+#: corehq/apps/reports/static/reports/js/filters/case_list_explorer_knockout_bindings.js
+msgid "e.g. (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') "
+msgstr "مثال: (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') "
+
+#: corehq/apps/reports/static/reports/js/filters/phone_number.js
+msgid "That have phone numbers"
+msgstr "الذين لديهم أرقام هواتف"
+
+#: corehq/apps/reports/static/reports/js/filters/phone_number.js
+msgid "That do not have phone numbers"
+msgstr "الذين لا يملكون أرقام هواتف"
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
+msgid "My Scheduled Reports"
+msgstr "تقاريري المجدولة"
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
+msgid "Other Scheduled Reports"
+msgstr "تقارير مجدولة أخرى"
+
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
+msgstr ""
+"حدث خطأ في طلب خادم tableau، يرجى التأكد من صحة إعدادات الخادم والمحاولة مرة "
+"أخرى."
+
+#: corehq/apps/reports/static/reports/v2/js/bootstrap3/datagrid.js
+#: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
+msgid "Save Filters"
+msgstr "حفظ عوامل التصفية"
+
+#: corehq/apps/reports/static/reports/v2/js/bootstrap3/datagrid.js
+#: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
+msgid "Export Data"
+msgstr "تصدير البيانات"
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
+msgid "Search..."
+msgstr "بحث..."
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/columns.js
+msgid "Column Title"
+msgstr "عنوان العمود"
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js
+msgid "Select <%= title %>..."
+msgstr "اختر <%= title %>..."
+
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap5/maps.js
+msgid "Streets"
+msgstr "الشوارع"
+
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap5/maps.js
+msgid "Satellite"
+msgstr "القمر الصناعي"
+
+#: corehq/apps/sms/static/sms/js/add_gateway.js
+msgid "You must have at least one phone number."
+msgstr "يجب أن يكون لديك رقم هاتف واحد على الأقل."
+
+#: corehq/apps/sms/static/sms/js/chat.js
+msgid "(New Message) - "
+msgstr "(رسالة جديدة) - "
+
+#: corehq/apps/sms/static/sms/js/chat_contacts.js
+msgid "Chat"
+msgstr "دردشة"
+
+#: corehq/apps/sms/static/sms/js/chat_contacts.js
+msgid "Show "
+msgstr "عرض "
+
+#: corehq/apps/sms/static/sms/js/chat_contacts.js
+msgid " contacts per page"
+msgstr " جهات اتصال لكل صفحة"
+
+#: corehq/apps/sms/static/sms/js/chat_contacts.js
+msgid "Loading Contacts..."
+msgstr "جارٍ تحميل جهات الاتصال..."
+
+#: corehq/apps/sms/static/sms/js/chat_contacts.js
+msgid "Showing _START_ to _END_ of _TOTAL_ contacts"
+msgstr "عرض _START_ إلى _END_ من أصل _TOTAL_ جهة اتصال"
+
+#: corehq/apps/sms/static/sms/js/chat_contacts.js
+msgid "(filtered from _MAX_ total contacts)"
+msgstr "(تمت التصفية من أصل _MAX_ جهة اتصال)"
+
+#: corehq/apps/smsbillables/static/smsbillables/js/rate_calc.js
+msgid "There was an error fetching the SMS rate."
+msgstr "حدث خطأ أثناء جلب سعر الرسائل القصيرة."
+
+#: corehq/apps/smsbillables/static/smsbillables/js/rate_calc.js
+msgid "Please Select a Country Code"
+msgstr "يرجى اختيار رمز الدولة"
+
+#: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
+msgid "Available Letters"
+msgstr "الأحرف المتاحة"
+
+#: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
+msgid "Letters Selected"
+msgstr "الأحرف المحددة"
+
+#: corehq/apps/styleguide/static/styleguide/bootstrap3/js/multiselect.js
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect.js
+msgid "Search Letters..."
+msgstr "بحث عن أحرف..."
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
+msgid "Forms"
+msgstr "النماذج"
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
+msgid "Cases"
+msgstr "الحالات"
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
+msgid "Reports"
+msgstr "التقارير"
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
+msgid "App Builder"
+msgstr "منشئ التطبيق"
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
+msgid "Thank you, "
+msgstr "شكرًا لك، "
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout.js
+msgid "Submission has been cancelled."
+msgstr "تم إلغاء الإرسال."
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
+msgid "Please specify a username."
+msgstr "يرجى تحديد اسم مستخدم."
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
+msgid "Username must be at least three characters long."
+msgstr "يجب أن يكون اسم المستخدم ثلاثة أحرف على الأقل."
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
+msgid "Your password must be at least 6 characters long"
+msgstr "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل"
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
+msgid "Resetting form..."
+msgstr "جارٍ إعادة تعيين النموذج..."
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect_crispy.js
+msgid "Benched"
+msgstr "على الاحتياط"
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect_crispy.js
+msgid "Playing"
+msgstr "يشارك"
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/multiselect_crispy.js
+msgid "Search Team..."
+msgstr "بحث عن فريق..."
+
+#: corehq/apps/styleguide/static/styleguide/js/examples/paginated_table.js
+#: corehq/apps/users/static/users/js/web_users_list.js
+msgid ""
+"Could not load users. Please try again later or report an issue if this "
+"problem persists."
+msgstr ""
+"تعذر تحميل المستخدمين. يرجى المحاولة مرة أخرى لاحقًا أو الإبلاغ عن المشكلة "
+"إذا استمرت."
+
+#: corehq/apps/translations/static/translations/js/translations.js
+msgid "Delete Translation"
+msgstr "حذف الترجمة"
+
+#: corehq/apps/translations/static/translations/js/translations.js
+msgid "Add Translation"
+msgstr "إضافة ترجمة"
+
+#: corehq/apps/translations/static/translations/js/translations.js
+msgid "Auto fill translations"
+msgstr "إكمال الترجمة تلقائيًا"
+
+#: corehq/apps/translations/static/translations/js/translations.js
+msgid "Auto Fill translations"
+msgstr "إكمال الترجمة تلقائيًا"
+
+#: corehq/apps/translations/static/translations/js/translations.js
+msgid ""
+"This will pick the most common translations for your selected language. You "
+"can then edit them as needed."
+msgstr ""
+"سيتم اختيار الترجمات الأكثر شيوعًا للغة التي اخترتها. يمكنك تعديلها لاحقًا حسب "
+"الحاجة."
+
+#: corehq/apps/translations/static/translations/js/translations.js
+msgid "You have unsaved user interface translations."
+msgstr "لديك ترجمات لواجهة المستخدم غير محفوظة."
+
+#: corehq/apps/translations/static/translations/js/translations.js
+msgid "Parameters formatting problem!"
+msgstr "مشكلة في تنسيق المعاملات!"
+
+#: corehq/apps/translations/static/translations/js/translations.js
+msgid ""
+"Autofill is not available in English (en). Please change your language using "
+"the dropdown in the top left."
+msgstr ""
+"الإكمال التلقائي غير متوفر باللغة الإنجليزية (en). يرجى تغيير اللغة باستخدام "
+"القائمة المنسدلة في أعلى اليسار."
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/base.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/base.js
+msgid "Showing the current page of data. Switch pages to see more data."
+msgstr ""
+"يتم عرض صفحة البيانات الحالية. انتقل بين الصفحات لرؤية المزيد من البيانات."
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Linked projects"
+msgstr "المشاريع المرتبطة"
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Projects to copy to"
+msgstr "المشاريع للنسخ إليها"
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Search projects"
+msgstr "بحث عن مشاريع"
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js
+msgid "Choose the property you would like to add as a filter to this report."
+msgstr "اختر الخاصية التي ترغب في إضافتها كعامل تصفية لهذا التقرير."
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js
+msgid ""
+"Web users viewing the report will see this display text instead of the "
+"property name. Name your filter something easy for users to understand."
+msgstr ""
+"سيشاهد مستخدمو الويب الذين يعرضون التقرير نص العرض هذا بدلاً من اسم الخاصية. "
+"سمِّ عامل التصفية باسم سهل الفهم للمستخدمين."
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js
+msgid ""
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
+"this if the property is a date.<br/><strong>Choice</strong>: Select this if "
+"the property is text or multiple choice."
+msgstr ""
+"ما نوع الخاصية لهذا الفلتر؟<br/><br/><strong>تاريخ</strong>: اختر هذا إذا "
+"كانت الخاصية تاريخًا.<br/><strong>اختيار</strong>: اختر هذا إذا كانت الخاصية "
+"نصًا أو اختيارًا متعددًا."
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js
+msgid ""
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
+"this to filter the property by a date range.<br/><strong>Value</strong>: "
+"Select this to filter the property by a single value."
+msgstr ""
+"ما نوع الخاصية لهذا الفلتر؟<br/><br/><strong>تاريخ</strong>: اختر هذا لتصفية "
+"الخاصية حسب نطاق تاريخ.<br/><strong>قيمة</strong>: اختر هذا لتصفية الخاصية "
+"حسب قيمة واحدة."
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js
+msgid "What value or date range must the property be equal to?"
+msgstr "ما القيمة أو نطاق التاريخ الذي يجب أن تساويه الخاصية؟"
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/ucr_expression.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/ucr_expression.js
+msgid "Expression saved"
+msgstr "تم حفظ التعبير"
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js
+msgid ""
+"Column format selection will determine how each row's value is calculated."
+msgstr "سيحدد اختيار تنسيق العمود كيفية حساب قيمة كل صف."
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js
+msgid "Please check above for any errors in your configuration."
+msgstr "يرجى التحقق أعلاه من وجود أي أخطاء في الإعدادات."
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
+msgid "Edit a custom web report or custom web report source"
+msgstr "تعديل تقرير ويب مخصص أو مصدر تقرير ويب مخصص"
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
+msgid "Edit a report or data source"
+msgstr "تعديل تقرير أو مصدر بيانات"
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
+msgid "static"
+msgstr "ثابت"
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
+msgid "deactivated"
+msgstr "معطل"
+
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Data Source"
+msgstr "مصدر البيانات"
+
+#: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
+msgid "Unknown error"
+msgstr "خطأ غير معروف"
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "Password changed successfully."
+msgstr "تم تغيير كلمة المرور بنجاح."
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "Password is not strong enough. Try making your password more complex."
+msgstr ""
+"كلمة المرور غير قوية بما فيه الكفاية. حاول جعل كلمة المرور أكثر تعقيدًا."
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "The two password fields didn't match."
+msgstr "حقلا كلمة المرور غير متطابقين."
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "Password was not changed. "
+msgstr "لم يتم تغيير كلمة المرور."
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "Available Groups"
+msgstr "المجموعات المتاحة"
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "Groups with this User"
+msgstr "المجموعات مع هذا المستخدم"
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "Search Group..."
+msgstr "بحث عن مجموعة..."
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js
+msgid "Group membership has changed."
+msgstr "تم تغيير عضوية المجموعة."
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid "<%- user_count %> user"
+msgstr "<%- user_count %> مستخدم"
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid "<%- user_count %> users"
+msgstr "<%- user_count %> مستخدمين"
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid " and <%- group_count %> group"
+msgstr " و <%- group_count %> مجموعة"
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid " and <%- group_count %> groups"
+msgstr " و <%- group_count %> مجموعات"
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid "Error determining number of matching users"
+msgstr "حدث خطأ أثناء تحديد عدد المستخدمين المطابقين"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Email address is required when users confirm their own accounts."
+msgstr "عنوان البريد الإلكتروني مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Please enter a valid email address."
+msgstr "يرجى إدخال عنوان بريد إلكتروني صالح."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+"رقم الهاتف مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم عبر الرسائل القصيرة."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
+msgstr "يجب أن يحتوي رقم الهاتف على أرقام فقط من 0 إلى 9."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Checking availability..."
+msgstr "جارٍ التحقق من التوفر..."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Issue connecting to server. Check Internet connection."
+msgstr "مشكلة في الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "No Access"
+msgstr "لا يوجد وصول"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access All"
+msgstr "وصول كامل"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Limited Access"
+msgstr "وصول محدود"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Select which items the role can access:"
+msgstr "حدد العناصر التي يمكن للدور الوصول إليها:"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Web Users</strong> &mdash; invite new web users, manage account "
+"settings, remove membership"
+msgstr ""
+"<strong>مستخدمو الويب</strong> &mdash; دعوة مستخدمي ويب جدد، إدارة إعدادات "
+"الحساب، إزالة العضوية"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Mobile Workers"
+msgstr "تعديل وعرض العاملين على الأجهزة المحمولة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Mobile Workers"
+msgstr "عرض فقط العاملين على الأجهزة المحمولة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
+"configuration for web users"
+msgstr ""
+"<strong>إدارة إعدادات Tableau</strong> &mdash; إدارة إعدادات Tableau "
+"لمستخدمي الويب"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View tableau configuration for web users"
+msgstr "تعديل وعرض إعدادات Tableau لمستخدمي الويب"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only tableau configuration for web users"
+msgstr "عرض فقط إعدادات Tableau لمستخدمي الويب"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
+"settings, deactivate or delete mobile workers."
+msgstr ""
+"<strong>العاملون على الأجهزة المحمولة</strong> &mdash; إنشاء حسابات جديدة، "
+"إدارة إعدادات الحساب، إلغاء تفعيل أو حذف العاملين على الأجهزة المحمولة."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Web Users"
+msgstr "تعديل وعرض مستخدمي الويب"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Web Users"
+msgstr "عرض فقط مستخدمي الويب"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
+msgstr ""
+"<strong>المجموعات</strong> &mdash; إدارة مجموعات العاملين على الأجهزة "
+"المحمولة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Groups"
+msgstr "تعديل وعرض المجموعات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Web Groups"
+msgstr "عرض فقط مجموعات الويب"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow changing group membership (requires edit groups)."
+msgstr "السماح بتغيير عضوية المجموعة (يتطلب تعديل المجموعات)."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Locations</strong> &mdash; manage locations in the Organization's "
+"Hierarchy"
+msgstr "<strong>المواقع</strong> &mdash; إدارة المواقع في هيكلية المؤسسة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Locations"
+msgstr "تعديل وعرض المواقع"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Web Locations"
+msgstr "عرض فقط مواقع الويب"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow changing workers at a location."
+msgstr "السماح بتغيير العاملين في الموقع."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Data Dictionary</strong> &mdash; manage case properties within "
+"CommCare HQ"
+msgstr ""
+"<strong>قاموس البيانات</strong> &mdash; إدارة خصائص الحالات ضمن CommCare HQ"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Data Dictionary"
+msgstr "تعديل وعرض قاموس البيانات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Data Dictionary"
+msgstr "عرض فقط قاموس البيانات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Data</strong> &mdash; view, export, and edit form and case data, "
+"reassign cases"
+msgstr ""
+"<strong>البيانات</strong> &mdash; عرض وتصدير وتعديل بيانات النماذج والحالات، "
+"إعادة تعيين الحالات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Data"
+msgstr "تعديل وعرض البيانات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Messaging</strong> &mdash; configure and send conditional alerts"
+msgstr "<strong>الرسائل</strong> &mdash; إعداد وإرسال التنبيهات الشرطية"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access Messaging"
+msgstr "الوصول إلى الرسائل"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update "
+"data. Specific APIs may require additional permissions."
+msgstr ""
+"<strong>الوصول إلى واجهات برمجة التطبيقات (APIs)</strong> &mdash; استخدام "
+"واجهات برمجة تطبيقات CommCare HQ لقراءة وتحديث البيانات. قد تتطلب بعض "
+"الواجهات أذونات إضافية."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access APIs"
+msgstr "الوصول إلى واجهات برمجة التطبيقات (APIs)"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Applications</strong> &mdash; modify or view the structure and "
+"configuration of all applications."
+msgstr ""
+"<strong>التطبيقات</strong> &mdash; تعديل أو عرض هيكل وإعدادات جميع التطبيقات."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Apps"
+msgstr "تعديل وعرض التطبيقات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Applications"
+msgstr "تطبيقات للعرض فقط"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
+"worker roles &amp; permissions (only Admins can edit roles)"
+msgstr ""
+"<strong>الأدوار والصلاحيات</strong> &mdash; عرض أدوار وصلاحيات مستخدمي الويب "
+"والعاملين على الأجهزة المحمولة (فقط المسؤولون يمكنهم تعديل الأدوار)"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View Roles and Permissions"
+msgstr "عرض الأدوار والصلاحيات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Dropzone</strong> &mdash; Upload and download files from the file "
+"Dropzone"
+msgstr ""
+"<strong>منطقة الإسقاط</strong> &mdash; رفع وتنزيل الملفات من منطقة الإسقاط"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & Download files from the Dropzone "
+msgstr "تعديل وتنزيل الملفات من منطقة الإسقاط"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Dropzone"
+msgstr "منطقة الإسقاط للعرض فقط"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
+"and structure of shared exports"
+msgstr ""
+"<strong>إدارة الصادرات المشتركة</strong> &mdash; الوصول إلى محتوى وهيكل "
+"الصادرات المشتركة وتعديله"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
+"events and users"
+msgstr ""
+"<strong>تتبع الحضور</strong> &mdash; تنسيق فعاليات تتبع الحضور والمستخدمين"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit Attendance Tracking Events"
+msgstr "تعديل فعاليات تتبع الحضور"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
+"associated with this project"
+msgstr ""
+"<strong>تحليلات CommCare</strong> &mdash; إدارة تحليلات CommCare المرتبطة "
+"بهذا المشروع"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View CommCare Analytics"
+msgstr "تعديل وعرض تحليلات CommCare"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only CommCare Analytics"
+msgstr "تحليلات CommCare للعرض فقط"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Enterprise Release Management"
+msgstr "إدارة الإصدارات المؤسسية"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Multi-Environment Release Management"
+msgstr "إدارة الإصدارات متعددة البيئات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Project Spaces"
+msgstr "مساحات المشاريع المرتبطة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to configure linked project spaces"
+msgstr "السماح للدور بتكوين مساحات المشاريع المرتبطة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Configurations"
+msgstr "الإعدادات المرتبطة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to edit linked configurations on this project space"
+msgstr "السماح للدور بتعديل الإعدادات المرتبطة في مساحة المشروع هذه"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Reports"
+msgstr "إنشاء وتعديل التقارير"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit reports in report builder."
+msgstr "السماح للدور بإنشاء وتعديل التقارير في منشئ التقارير."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Custom Web Reports"
+msgstr "إنشاء وتعديل تقارير الويب المخصصة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit custom web reports."
+msgstr "السماح للدور بإنشاء وتعديل تقارير الويب المخصصة."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Configurable Reports"
+msgstr "إنشاء وتعديل التقارير القابلة للتكوين"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit configurable reports."
+msgstr "السماح للدور بإنشاء وتعديل التقارير القابلة للتكوين."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access All CommCare Reports"
+msgstr "الوصول إلى جميع تقارير CommCare"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access All Reports"
+msgstr "الوصول إلى جميع التقارير"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"Allow role to view all CommCare reports. Excludes embedded Tableau reports"
+msgstr "السماح للدور بعرض جميع تقارير CommCare. لا يشمل تقارير Tableau المدمجة"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to access all reports."
+msgstr "السماح للدور بالوصول إلى جميع التقارير."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Download and Email Reports"
+msgstr "تنزيل وإرسال التقارير عبر البريد الإلكتروني"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to download and email report data."
+msgstr "السماح للدور بتنزيل بيانات التقارير وإرسالها عبر البريد الإلكتروني."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access All Tableau Reports"
+msgstr "الوصول إلى جميع تقارير Tableau"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to access all embedded Tableau reports."
+msgstr "السماح للدور بالوصول إلى جميع تقارير Tableau المدمجة."
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Manage Registries"
+msgstr "إدارة السجلات"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Select which registries the role can manage:"
+msgstr "حدد السجلات التي يمكن للدور إدارتها:"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View Registry Data"
+msgstr "عرض بيانات السجل"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Select which registry data the role can view:"
+msgstr "حدد بيانات السجل التي يمكن للدور عرضها:"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Use Web Apps for online data entry"
+msgstr "استخدام تطبيقات الويب لإدخال البيانات عبر الإنترنت"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Select which web apps the role has access to:"
+msgstr "حدد تطبيقات الويب التي يمكن للدور الوصول إليها:"
+
+#: corehq/apps/users/static/users/js/roles.js
+#, javascript-format
+msgid "Select at least one item from the list for \"%s\""
+msgstr "يرجى اختيار عنصر واحد على الأقل من القائمة لـ \"%s\""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit Role: "
+msgstr "تعديل الدور: "
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View Role: "
+msgstr "عرض الدور: "
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "New Role"
+msgstr "دور جديد"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Delete Role: "
+msgstr "حذف الدور: "
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Are you sure you want to delete the role <%- role %>?"
+msgstr "هل أنت متأكد أنك تريد حذف الدور <%- role %>؟"
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "An error occurred, please try again."
+msgstr "حدث خطأ، يرجى المحاولة مرة أخرى."
+
+#: corehq/apps/users/static/users/js/roles_and_permissions.js
+msgid "View Only"
+msgstr "عرض فقط"
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid "<%- days %> days remaining"
+msgstr "متبقي <%- days %> يوم"
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid "Unable to delete invitation, please try again later."
+msgstr "تعذر حذف الدعوة، يرجى المحاولة لاحقًا."
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid "Unable to resend invitation, please try again later."
+msgstr "تعذر إعادة إرسال الدعوة، يرجى المحاولة لاحقًا."
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid "Delete request"
+msgstr "حذف الطلب"
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid "Are you sure you want to delete this request?"
+msgstr "هل أنت متأكد أنك تريد حذف هذا الطلب؟"
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid ""
+"We have sent the invitation email to this user but the user's email server "
+"rejected it. This usually means either the email address is incorrect or "
+"your organization is blocking emails from our address (<%- fromAddress %>)."
+msgstr ""
+"لقد أرسلنا رسالة الدعوة إلى هذا المستخدم لكن خادم البريد الإلكتروني للمستخدم "
+"رفضها. عادةً ما يعني هذا أن عنوان البريد الإلكتروني غير صحيح أو أن مؤسستك "
+"تحظر الرسائل من عنواننا (<%- fromAddress %>)."
+
+#: corehq/apps/users/static/users/js/web_users_list.js
+msgid "No users matched your search."
+msgstr "لم يتم العثور على أي مستخدمين يطابقون بحثك."
+
+#: corehq/apps/users/static/users/js/web_users_list.js
+msgid "This project has no web users."
+msgstr "لا يوجد مستخدمو ويب لهذا المشروع."
+
+#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
+msgid "Requeued"
+msgstr "تمت إعادة الجدولة"
+
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js
+msgid "Are you sure you want to delete this scheduled message?"
+msgstr "هل أنت متأكد أنك تريد حذف هذه الرسالة المجدولة؟"
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
+msgid "This rule has been restarted."
+msgstr "تمت إعادة تشغيل هذه القاعدة."
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
+#, javascript-format
+msgid ""
+"Unable to restart rule. Rules can only be started every two hours and there "
+"are %s minute(s) remaining before this rule can be started again."
+msgstr ""
+"غير قادر على إعادة تشغيل القاعدة. يمكن تشغيل القواعد مرة كل ساعتين وهناك %s "
+"دقيقة/دقائق متبقية قبل أن تتمكن من تشغيل هذه القاعدة مرة أخرى."
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
+msgid "Are you sure you want to remove this conditional message?"
+msgstr "هل أنت متأكد أنك تريد إزالة هذه الرسالة الشرطية؟"
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
+msgid ""
+"A rule should only be restarted when you believe it is stuck and is not "
+"progressing. You will only be able to restart this rule once every two "
+"hours. Restart this rule?"
+msgstr ""
+"يجب إعادة تشغيل القاعدة فقط إذا كنت تعتقد أنها متوقفة ولا تتقدم. ستتمكن من "
+"إعادة تشغيل هذه القاعدة مرة واحدة فقط كل ساعتين. هل تريد إعادة تشغيل هذه "
+"القاعدة؟"
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
+msgid ""
+"A rule should only be restarted when you believe it is stuck and is not "
+"progressing. Your user is able to restart as many times as you like, but "
+"restarting too many times without finishing can place a burden on the "
+"system. Restart this rule?"
+msgstr ""
+"يجب إعادة تشغيل القاعدة فقط إذا كنت تعتقد أنها متوقفة ولا تتقدم. يمكن "
+"لمستخدمك إعادة التشغيل بعدد غير محدود من المرات، لكن إعادة التشغيل المتكررة "
+"دون إكمال قد تضع عبئًا على النظام. هل تريد إعادة تشغيل هذه القاعدة؟"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "hour(s)"
+msgstr "ساعة/ساعات"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "minute(s)"
+msgstr "دقيقة/دقائق"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "last"
+msgstr "الأخير"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "last - 1"
+msgstr "الأخير - 1"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "last - 2"
+msgstr "الأخير - 2"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "every day"
+msgstr "كل يوم"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "every week"
+msgstr "كل أسبوع"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "every month"
+msgstr "كل شهر"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "Send Broadcast"
+msgstr "إرسال بث"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
+msgid "Schedule Broadcast"
+msgstr "جدولة بث"
+
+#: corehq/messaging/scheduling/static/scheduling/js/dashboard.js
+msgid "(no errors over the given date range)"
+msgstr "(لا توجد أخطاء ضمن نطاق التاريخ المحدد)"
+
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js
+msgid "Server error. Try again..."
+msgstr "خطأ في الخادم. حاول مرة أخرى..."
+
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js
+msgid "Send"
+msgstr "إرسال"
+
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js
+msgid "Complete"
+msgstr "إكمال"
+
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map.js
+msgid "DHIS2 response: "
+msgstr "استجابة DHIS2: "
+
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map.js
+msgid "CommCare HQ was unable to send the DataSet: "
+msgstr "تعذر على CommCare HQ إرسال مجموعة البيانات: "
+
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map_json.js
+msgid "Unable to save DataSet map"
+msgstr "تعذر حفظ خريطة مجموعة البيانات"
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js
+msgid "Unable to save case configs"
+msgstr "تعذر حفظ إعدادات الحالات"
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_events_config.js
+msgid "Unable to save form configs"
+msgstr "تعذر حفظ إعدادات النماذج"
+
+#: corehq/motech/generic_inbound/static/generic_inbound/js/copy_data.js
+msgid "URL Copied"
+msgstr "تم نسخ الرابط"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
+msgid "Daily"
+msgstr "يوميًا"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
+msgid "Weekly"
+msgstr "أسبوعيًا"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
+msgid "Monthly"
+msgstr "شهريًا"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
+msgid "Disable logging"
+msgstr "تعطيل التسجيل"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
+msgid "Unable to save OpenMRS Importers"
+msgstr "تعذر حفظ مستوردات OpenMRS"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
+msgid "Importing from OpenMRS will begin shortly."
+msgstr "سيبدأ الاستيراد من OpenMRS قريبًا."
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
+msgid "Failed to schedule task to import from OpenMRS."
+msgstr "فشل في جدولة مهمة الاستيراد من OpenMRS."
+
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Failed to fetch attempts"
+msgstr "فشل في جلب المحاولات"
+
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Failed to fetch payload"
+msgstr "فشل في جلب الحمولة"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Username"
+msgstr "اسم المستخدم"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Password"
+msgstr "كلمة المرور"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Client ID"
+msgstr "معرّف العميل"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Client Secret"
+msgstr "سر العميل"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "HTTP Header Name"
+msgstr "اسم ترويسة HTTP"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "API Key"
+msgstr "مفتاح API"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Success! Response is: "
+msgstr "تم بنجاح! الاستجابة هي: "
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Failed! Response is: "
+msgstr "فشل! الاستجابة هي: "
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "CommCare HQ was unable to make the request: "
+msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
+
+#~ msgid "long"
+#~ msgstr "طويل"
+
+#~ msgid "2-digit"
+#~ msgstr "رقمان"
+
+#~ msgid "Questions"
+#~ msgstr "الأسئلة"
+
+#~ msgid "Copy"
+#~ msgstr "نسخ"
+
+#~ msgid "Expand All"
+#~ msgstr "توسيع الكل"
+
+#~ msgid "Collapse All"
+#~ msgstr "طي الكل"
+
+#~ msgid "Bulk Update All Questions"
+#~ msgstr "تحديث جميع الأسئلة دفعة واحدة"
+
+#~ msgid "Add Question"
+#~ msgstr "إضافة سؤال"
+
+#~ msgid "Click {btn} to start building your form."
+#~ msgstr "انقر على {btn} للبدء في بناء النموذج."
+
+#~ msgid "Question Details"
+#~ msgstr "تفاصيل السؤال"
+
+#~ msgid "Expression Editor"
+#~ msgstr "محرر التعبيرات"
+
+#~ msgid "Cannot Change Question Type"
+#~ msgstr "لا يمكن تغيير نوع السؤال"
+
+#~ msgid "Change Question Type To"
+#~ msgstr "تغيير نوع السؤال إلى"
+
+#~ msgid "Show"
+#~ msgstr "عرض"
+
+#~ msgid "Used By"
+#~ msgstr "يستخدم من قبل"
+
+#~ msgid "In Property"
+#~ msgstr "في الخاصية"
+
+#~ msgid "No match for {info} found!"
+#~ msgstr "لم يتم العثور على تطابق لـ {info}!"
+
+#~ msgid "Multiple matches for {info} found!"
+#~ msgstr "تم العثور على تطابقات متعددة لـ {info}!"
+
+#~ msgid "Add Key&rarr;Value Pair"
+#~ msgstr "إضافة زوج مفتاح&rarr;قيمة"
+
+#~ msgid "show in question list"
+#~ msgstr "إظهار في قائمة الأسئلة"
+
+#~ msgid "Date Format Options"
+#~ msgstr "خيارات تنسيق التاريخ"
+
+#~ msgid "No Formatting"
+#~ msgstr "بدون تنسيق"
+
+#~ msgid "Invalid XPath expression."
+#~ msgstr "تعبير XPath غير صالح."
+
+#~ msgid ""
+#~ "The {property} for a question is not allowed to reference the question "
+#~ "itself. Please remove the . from the {property} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "لا يُسمح بأن تشير {property} لسؤال إلى السؤال نفسه. يرجى إزالة . من "
+#~ "{property} وإلا سيحدث أخطاء في النموذج."
+
+#~ msgid "Unknown question:"
+#~ msgstr "سؤال غير معروف:"
+
+#~ msgid "Unknown questions:"
+#~ msgstr "أسئلة غير معروفة:"
+
+#~ msgid "no formatting"
+#~ msgstr "بدون تنسيق"
+
+#~ msgid "{question} is required."
+#~ msgstr "{question} مطلوب."
+
+#~ msgid "{question} is not allowed."
+#~ msgstr "غير مسموح بـ {question}."
+
+#~ msgid "{question} validation failed"
+#~ msgstr "فشل التحقق من {question}"
+
+#~ msgid "Unknown (read-only) question type"
+#~ msgstr "نوع سؤال غير معروف (للقراءة فقط)"
+
+#~ msgid "Lookup Table Data"
+#~ msgstr "بيانات جدول البحث"
+
+#~ msgid "No Translation Data"
+#~ msgstr "لا توجد بيانات ترجمة"
+
+#~ msgid "Question ID"
+#~ msgstr "معرّف السؤال"
+
+#~ msgid ""
+#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended "
+#~ "to pick a different Question ID."
+#~ msgstr ""
+#~ "قد يتسبب المعرّف '{nodeID}' في مشاكل عند تحليل النموذج. يُنصح باختيار معرّف "
+#~ "سؤال مختلف."
+
+#~ msgid ""
+#~ "{nodeID} is not a valid Question ID. It must start with a letter and "
+#~ "contain only letters, numbers, and '-' or '_' characters."
+#~ msgstr ""
+#~ "{nodeID} ليس معرّف سؤال صالح. يجب أن يبدأ بحرف ويحتوي فقط على أحرف أو "
+#~ "أرقام أو '-' أو '_'."
+
+#~ msgid "'meta' is not a valid Question ID."
+#~ msgstr "'meta' ليس معرّف سؤال صالح."
+
+#~ msgid ""
+#~ "Making this change will create a new Question ID (and a new column in "
+#~ "exports)."
+#~ msgstr ""
+#~ "سيؤدي إجراء هذا التغيير إلى إنشاء معرّف سؤال جديد (وعمود جديد في التصدير)."
+
+#~ msgid ""
+#~ "This question has the same Question ID as another question in the same "
+#~ "group. Please choose a unique Question ID."
+#~ msgstr ""
+#~ "هذا السؤال له نفس معرّف السؤال لسؤال آخر في نفس المجموعة. يرجى اختيار معرّف "
+#~ "سؤال فريد."
+
+#~ msgid "Default Data Value"
+#~ msgstr "قيمة البيانات الافتراضية"
+
+#~ msgid "Special Hidden Value XMLNS attribute"
+#~ msgstr "سمة XMLNS المخفية الخاصة"
+
+#~ msgid "Extra Data Attributes"
+#~ msgstr "سمات بيانات إضافية"
+
+#~ msgid "Calculate Condition"
+#~ msgstr "شرط الحساب"
+
+#~ msgid ""
+#~ "You cannot have a Validation Error Message with no Validation Condition!"
+#~ msgstr "لا يمكنك وجود رسالة خطأ تحقق بدون شرط تحقق!"
+
+#~ msgid "Validation Error Message"
+#~ msgstr "رسالة خطأ التحقق"
+
+#~ msgid "Required Condition"
+#~ msgstr "شرط الإلزام"
+
+#~ msgid "The condition will be ignored unless you mark the question required."
+#~ msgstr "سيتم تجاهل الشرط ما لم تحدد أن السؤال إلزامي."
+
+#~ msgid "Extra Bind Attributes"
+#~ msgstr "سمات ربط إضافية"
+
+#~ msgid ""
+#~ "You are referencing a node in this form. This can cause errors in the form"
+#~ msgstr "أنت تشير إلى عقدة في هذا النموذج. قد يسبب ذلك أخطاء في النموذج"
+
+#~ msgid "Appearance Attribute"
+#~ msgstr "سمة المظهر"
+
+#~ msgid "Default Display Text"
+#~ msgstr "نص العرض الافتراضي"
+
+#~ msgid "Default Display Text is required"
+#~ msgstr "نص العرض الافتراضي مطلوب"
+
+#~ msgid "Hint Display Text"
+#~ msgstr "نص تلميح العرض"
+
+#~ msgid "Extra Control Attributes"
+#~ msgstr "سمات تحكم إضافية"
+
+#~ msgid "Raw XML"
+#~ msgstr "XML خام"
+
+#~ msgid "Data Parent"
+#~ msgstr "الأصل البياني"
+
+#~ msgid "Must be valid path"
+#~ msgstr "يجب أن يكون مسارًا صالحًا"
+
+#~ msgid ""
+#~ "Data parent of question in repeat group must be (in) the same repeat group"
+#~ msgstr ""
+#~ "يجب أن يكون أصل بيانات السؤال في مجموعة التكرار (ضمن) نفس مجموعة التكرار"
+
+#~ msgid "Hidden Value"
+#~ msgstr "قيمة مخفية"
+
+#~ msgid "Text"
+#~ msgstr "نص"
+
+#~ msgid "Phone Number or Numeric ID"
+#~ msgstr "رقم هاتف أو معرّف رقمي"
+
+#~ msgid "Integer"
+#~ msgstr "عدد صحيح"
+
+#~ msgid "Audio Capture"
+#~ msgstr "تسجيل صوتي"
+
+#~ msgid "Image Capture"
+#~ msgstr "التقاط صورة"
+
+#~ msgid "Image Size"
+#~ msgstr "حجم الصورة"
+
+#~ msgid "Small"
+#~ msgstr "صغير"
+
+#~ msgid "Medium"
+#~ msgstr "متوسط"
+
+#~ msgid "Large"
+#~ msgstr "كبير"
+
+#~ msgid "Original"
+#~ msgstr "الأصلي"
+
+#~ msgid ""
+#~ "This will resize the image before sending the form. Use this option to "
+#~ "send smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+#~ "megapixels</li></ul>"
+#~ msgstr ""
+#~ "سيتم تغيير حجم الصورة قبل إرسال النموذج. استخدم هذا الخيار لإرسال صور "
+#~ "أصغر في المناطق ذات الاتصال الضعيف.<ul><li>صغير - 0.1 ميغابيكسل</"
+#~ "li><li>متوسط - 0.2 ميغابيكسل</li><li>كبير - 0.5 ميغابيكسل</li></ul>"
+
+#~ msgid "Micro-Image"
+#~ msgstr "صورة مصغرة"
+
+#~ msgid "Video Capture"
+#~ msgstr "تسجيل فيديو"
+
+#~ msgid "Signature Capture"
+#~ msgstr "التقاط توقيع"
+
+#~ msgid "Document Upload"
+#~ msgstr "رفع مستند"
+
+#~ msgid "GPS"
+#~ msgstr "نظام تحديد المواقع (GPS)"
+
+#~ msgid "Barcode Scan"
+#~ msgstr "مسح الباركود"
+
+#~ msgid "Date and Time"
+#~ msgstr "التاريخ والوقت"
+
+#~ msgid "Long"
+#~ msgstr "طويل"
+
+#~ msgid "Decimal"
+#~ msgstr "عشري"
+
+#~ msgid "Choice"
+#~ msgstr "اختيار"
+
+#~ msgid "Choice Value"
+#~ msgstr "قيمة الاختيار"
+
+#~ msgid "Whitespace in values is not allowed."
+#~ msgstr "لا يُسمح بالمسافات البيضاء في القيم."
+
+#~ msgid "This choice value has been used in the same question"
+#~ msgstr "تم استخدام قيمة هذا الاختيار في نفس السؤال"
+
+#~ msgid ""
+#~ "Cannot change a Multiple/Single Choice question to a non-Choice question "
+#~ "if it has Choices. Please remove all Choices and try again."
+#~ msgstr ""
+#~ "لا يمكن تغيير سؤال اختيار متعدد/مفرد إلى سؤال غير اختياري إذا كان يحتوي "
+#~ "على اختيارات. يرجى إزالة جميع الاختيارات والمحاولة مرة أخرى."
+
+#~ msgid "Checkbox"
+#~ msgstr "مربع اختيار"
+
+#~ msgid "Multiple Choice"
+#~ msgstr "اختيار متعدد"
+
+#~ msgid "Group"
+#~ msgstr "مجموعة"
+
+#~ msgid "Question List"
+#~ msgstr "قائمة الأسئلة"
+
+#~ msgid "Repeat Group"
+#~ msgstr "تكرار المجموعة"
+
+#~ msgid "Repeat Count"
+#~ msgstr "عدد التكرارات"
+
+#~ msgid "Repeat Count is required."
+#~ msgstr "عدد التكرارات مطلوب."
+
+#~ msgid "Extra Repeat Attributes"
+#~ msgstr "سمات تكرار إضافية"
+
+#~ msgid "You have deleted a question."
+#~ msgstr "لقد قمت بحذف سؤال."
+
+#~ msgid "Undo"
+#~ msgstr "تراجع"
+
+#~ msgid ""
+#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
+#~ "will be discarded!"
+#~ msgstr ""
+#~ "تم العثور على عقدة ربط [{path}] ولكن لا يوجد لها عقدة بيانات مرتبطة. سيتم "
+#~ "تجاهل عقدة الربط هذه!"
+
+#~ msgid "Not Found"
+#~ msgstr "غير موجود"
+
+#~ msgid ""
+#~ "{type} nodes cannot be used in an output value. Please remove the output "
+#~ "value for '{path}' or your form will have errors."
+#~ msgstr ""
+#~ "لا يمكن استخدام عقد {type} في قيمة الإخراج. يرجى إزالة قيمة الإخراج لـ "
+#~ "'{path}' أو سيحتوي النموذج على أخطاء."
+
+#~ msgid ""
+#~ "The {field} for a question is not allowed to reference the question "
+#~ "itself. Please remove the {ref} from the {field} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "لا يُسمح لـ {field} في السؤال بالإشارة إلى نفس السؤال. يرجى إزالة {ref} من "
+#~ "{field} أو سيحتوي النموذج على أخطاء."
+
+#~ msgid "output value"
+#~ msgstr "قيمة الإخراج"
+
+#~ msgid "Validation Failed"
+#~ msgstr "فشل التحقق"
+
+#~ msgid "Please fix the error before leaving this page:"
+#~ msgstr "يرجى تصحيح الخطأ قبل مغادرة هذه الصفحة:"
+
+#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
+#~ msgstr "تعديل <span class='property-name'>التعبير</span> (متقدم)"
+
+#~ msgid "Show Simple Mode"
+#~ msgstr "إظهار الوضع البسيط"
+
+#~ msgid ""
+#~ "You are currently in Advanced Mode because your logic is too complicated "
+#~ "for Simple Mode."
+#~ msgstr ""
+#~ "أنت الآن في الوضع المتقدم لأن المنطق الخاص بك معقد جدًا للوضع البسيط."
+
+#~ msgid "You can drag a question into the box."
+#~ msgstr "يمكنك سحب سؤال إلى المربع."
+
+#~ msgid "Guide to Common Logic and Calculations"
+#~ msgstr "دليل المنطق والحسابات الشائعة"
+
+#~ msgid "Edit <span class='property-name'>Expression</span>"
+#~ msgstr "تعديل <span class='property-name'>التعبير</span>"
+
+#~ msgid "Show Advanced Mode"
+#~ msgstr "إظهار الوضع المتقدم"
+
+#~ msgid "Result is"
+#~ msgstr "النتيجة هي"
+
+#~ msgid "Expression"
+#~ msgstr "التعبير"
+
+#~ msgid "Add Expression"
+#~ msgstr "إضافة تعبير"
+
+#~ msgid "Error"
+#~ msgstr "خطأ"
+
+#~ msgid "Warning"
+#~ msgstr "تحذير"
+
+#~ msgid "Form Warning"
+#~ msgstr "تحذير النموذج"
+
+#~ msgid "Notification"
+#~ msgstr "إشعار"
+
+#~ msgid ""
+#~ "Holding the ALT key while clicking save invokes an inefficient save "
+#~ "procedure. Do this only if a normal save fails."
+#~ msgstr ""
+#~ "الضغط على مفتاح ALT أثناء النقر على حفظ يؤدي إلى إجراء حفظ غير فعال. قم "
+#~ "بذلك فقط إذا فشل الحفظ العادي."
+
+#~ msgid "Are you sure you want to exit? All unsaved changes will be lost!"
+#~ msgstr "هل أنت متأكد أنك تريد الخروج؟ جميع التغييرات غير المحفوظة ستضيع!"
+
+#~ msgid ""
+#~ "Look for questions marked with $1 and check they don't reference deleted "
+#~ "questions."
+#~ msgstr ""
+#~ "ابحث عن الأسئلة المميزة بـ $1 وتأكد من أنها لا تشير إلى أسئلة محذوفة."
+
+#~ msgid "Errors in Form"
+#~ msgstr "أخطاء في النموذج"
+
+#~ msgid "Form has reference errors."
+#~ msgstr "النموذج يحتوي على أخطاء في المراجع."
+
+#~ msgid "Look for questions marked with $1 and fix the errors."
+#~ msgstr "ابحث عن الأسئلة المميزة بـ $1 وقم بإصلاح الأخطاء."
+
+#~ msgid "Form has validation errors."
+#~ msgstr "النموذج يحتوي على أخطاء في التحقق."
+
+#~ msgid "Multimedia Capture"
+#~ msgstr "التقاط الوسائط المتعددة"
+
+#~ msgid "Number"
+#~ msgstr "رقم"
+
+#~ msgid "Groups"
+#~ msgstr "مجموعات"
+
+#~ msgid "Advanced"
+#~ msgstr "متقدم"
+
+#~ msgid "Make Required"
+#~ msgstr "اجعلها مطلوبة"
+
+#~ msgid ""
+#~ "You are about to make all existing questions on this form required. This "
+#~ "action will overwrite the current configuration of this form and can only "
+#~ "be undone by editing individual questions."
+#~ msgstr ""
+#~ "أنت على وشك جعل جميع الأسئلة الحالية في هذا النموذج مطلوبة. سيؤدي هذا "
+#~ "الإجراء إلى استبدال إعدادات النموذج الحالية ولا يمكن التراجع عنه إلا من "
+#~ "خلال تعديل كل سؤال على حدة."
+
+#~ msgid "Load Default Values"
+#~ msgstr "تحميل القيم الافتراضية"
+
+#~ msgid ""
+#~ "You are about to set matching case properties as Default Values for all "
+#~ "existing questions. This action will overwrite existing Default Values "
+#~ "for all questions with matching case properties and can only be undone by "
+#~ "editing individual questions."
+#~ msgstr ""
+#~ "أنت على وشك تعيين خصائص الحالة المطابقة كقيم افتراضية لجميع الأسئلة "
+#~ "الحالية. سيؤدي هذا الإجراء إلى استبدال القيم الافتراضية الحالية لجميع "
+#~ "الأسئلة ذات خصائص الحالة المطابقة ولا يمكن التراجع عنه إلا من خلال تعديل "
+#~ "كل سؤال على حدة."
+
+#~ msgid "Are you sure you want to perform this action?"
+#~ msgstr "هل أنت متأكد أنك تريد تنفيذ هذا الإجراء؟"
+
+#~ msgid "Expand Editor"
+#~ msgstr "توسيع المحرر"
+
+#~ msgid "Shrink Editor"
+#~ msgstr "تصغير المحرر"
+
+#~ msgid "Export Form Contents"
+#~ msgstr "تصدير محتوى النموذج"
+
+#~ msgid "Edit Source XML"
+#~ msgstr "تعديل مصدر XML"
+
+#~ msgid "Form Properties"
+#~ msgstr "خصائص النموذج"
+
+#~ msgid "Find Usages"
+#~ msgstr "البحث عن الاستخدامات"
+
+#~ msgid "Validation failed. Form may not perform correctly on your device!"
+#~ msgstr "فشل التحقق. قد لا يعمل النموذج بشكل صحيح على جهازك!"
+
+#~ msgid "Edit Form's Source XML"
+#~ msgstr "تعديل مصدر XML للنموذج"
+
+#~ msgid "Update Source"
+#~ msgstr "تحديث المصدر"
+
+#~ msgid ""
+#~ "This is the raw XML. You can edit or paste into this box to make changes "
+#~ "to your form. Press 'Update Source' to save changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "هذا هو ملف XML الخام. يمكنك تعديله أو لصقه في هذا المربع لإجراء تغييرات "
+#~ "على النموذج الخاص بك. اضغط على 'تحديث المصدر' لحفظ التغييرات، أو 'إغلاق' "
+#~ "للإلغاء."
+
+#~ msgid ""
+#~ "Copy and paste this content into a spreadsheet program like Excel to "
+#~ "easily share your form with others."
+#~ msgstr ""
+#~ "انسخ هذا المحتوى والصقه في برنامج جداول بيانات مثل Excel لمشاركة النموذج "
+#~ "بسهولة مع الآخرين."
+
+#~ msgid "Lost Work Warning"
+#~ msgstr "تحذير فقدان العمل"
+
+#~ msgid "Overwrite their work"
+#~ msgstr "استبدال عملهم"
+
+#~ msgid "Show XML Differences"
+#~ msgstr "عرض اختلافات XML"
+
+#~ msgid ""
+#~ "Looks like someone else has edited this form since you loaded the page. "
+#~ "Are you sure you want to overwrite their work?"
+#~ msgstr ""
+#~ "يبدو أن شخصًا آخر قد قام بتعديل هذا النموذج منذ أن قمت بتحميل الصفحة. هل "
+#~ "أنت متأكد أنك تريد الكتابة فوق عملهم؟"
+
+#~ msgid "Edit Form Properties"
+#~ msgstr "تعديل خصائص النموذج"
+
+#~ msgid "Disable Text Formatting"
+#~ msgstr "تعطيل تنسيق النص"
+
+#~ msgid "Use Easy References"
+#~ msgstr "استخدام المراجع السهلة"
+
+#~ msgid "Use of each question"
+#~ msgstr "استخدام كل سؤال"
+
+#~ msgid "Unsaved Changes in Editor"
+#~ msgstr "تغييرات غير محفوظة في المحرر"
+
+#~ msgid ""
+#~ "You have UNSAVED changes in the Expression Editor. Please save changes "
+#~ "before continuing."
+#~ msgstr ""
+#~ "لديك تغييرات غير محفوظة في محرر التعبيرات. يرجى حفظ التغييرات قبل "
+#~ "المتابعة."
+
+#~ msgid "Parsing Error. Please check that your form is valid XML."
+#~ msgstr "خطأ في التحليل. يرجى التأكد من أن النموذج الخاص بك هو XML صالح."
+
+#~ msgid "Sorry, {err}"
+#~ msgstr "عذرًا، {err}"
+
+#~ msgid "Add Choice"
+#~ msgstr "إضافة خيار"
+
+#~ msgid "and"
+#~ msgstr "و"
+
+#~ msgid "There are errors in the form"
+#~ msgstr "هناك أخطاء في النموذج"
+
+#~ msgid "Fix Manually"
+#~ msgstr "إصلاح يدويًا"
+
+#~ msgid "Fix Automatically"
+#~ msgstr "إصلاح تلقائيًا"
+
+#~ msgid ""
+#~ "It looks like your form is not valid XML. This can often happen if you "
+#~ "use a reserved character in one of your questions. Characters to look out "
+#~ "for are <, >, and &. You can still save, but you CANNOT LOAD THIS FORM "
+#~ "again until you fix the XML by hand. What would you like to do?"
+#~ msgstr ""
+#~ "يبدو أن النموذج الخاص بك ليس XML صالحًا. غالبًا ما يحدث هذا إذا استخدمت "
+#~ "حرفًا محجوزًا في أحد أسئلتك. الأحرف التي يجب الانتباه لها هي <، >، و &. لا "
+#~ "يزال بإمكانك الحفظ، لكن لا يمكنك تحميل هذا النموذج مرة أخرى حتى تقوم "
+#~ "بإصلاح XML يدويًا. ماذا تريد أن تفعل؟"
+
+#~ msgid "Form Validation Error"
+#~ msgstr "خطأ في التحقق من صحة النموذج"
+
+#~ msgid "Fix the problem (recommended)"
+#~ msgstr "إصلاح المشكلة (موصى به)"
+
+#~ msgid "Save anyway"
+#~ msgstr "الحفظ على أي حال"
+
+#~ msgid ""
+#~ "The {displaytext} appears in the application. This text will not appear "
+#~ "in data exports."
+#~ msgstr "يظهر {displaytext} في التطبيق. لن يظهر هذا النص في تصدير البيانات."
+
+#~ msgid "Display Text"
+#~ msgstr "نص العرض"
+
+#~ msgid ""
+#~ "You can configure an external data source like a case list or lookup "
+#~ "table to use as the choices for a multiple choice question."
+#~ msgstr ""
+#~ "يمكنك تكوين مصدر بيانات خارجي مثل قائمة الحالات أو جدول البحث لاستخدامه "
+#~ "كخيارات لسؤال اختيار من متعدد."
+
+#~ msgid "Media"
+#~ msgstr "وسائط"
+
+#~ msgid ""
+#~ "This will allow you to add images, audio or video media to a question, or "
+#~ "other custom content."
+#~ msgstr ""
+#~ "سيسمح لك هذا بإضافة صور أو وسائط صوتية أو فيديو إلى سؤال، أو محتوى مخصص "
+#~ "آخر."
+
+#~ msgid ""
+#~ "These are advanced settings and are not needed for most applications.  "
+#~ "Please only change these if you have a specific need!"
+#~ msgstr ""
+#~ "هذه إعدادات متقدمة وليست مطلوبة لمعظم التطبيقات. يرجى تغييرها فقط إذا كان "
+#~ "لديك حاجة محددة!"
+
+#~ msgid ""
+#~ "This question represents advanced content that is not supported by the "
+#~ "form builder. Please only change it if you have a specific need!"
+#~ msgstr ""
+#~ "يمثل هذا السؤال محتوى متقدمًا غير مدعوم من منشئ النماذج. يرجى تغييره فقط "
+#~ "إذا كان لديك حاجة محددة!"
+
+#~ msgid "Ignored XML"
+#~ msgstr "XML متجاهل"
+
+#~ msgid "Android App Callout"
+#~ msgstr "استدعاء تطبيق أندرويد"
+
+#~ msgid "External App"
+#~ msgstr "تطبيق خارجي"
+
+#~ msgid "Insert Android Application ID"
+#~ msgstr "إدخال معرف تطبيق أندرويد"
+
+#~ msgid "change your subscription"
+#~ msgstr "تغيير اشتراكك"
+
+#~ msgid ""
+#~ "You no longer have access to built in or external integration in your "
+#~ "application.\n"
+#~ "\n"
+#~ "Built in integrations are available on the Pro plan and higher. External "
+#~ "integrations are available on the Advanced plan and higher. Before you "
+#~ "can make a new version of your application, you must {link} or delete "
+#~ "this question."
+#~ msgstr ""
+#~ "لم يعد لديك حق الوصول إلى التكامل المدمج أو التكامل الخارجي في تطبيقك.\n"
+#~ "\n"
+#~ "التكاملات المدمجة متاحة في خطة Pro وما فوق. التكاملات الخارجية متاحة في "
+#~ "خطة Advanced وما فوق. قبل أن تتمكن من إنشاء إصدار جديد من تطبيقك، يجب "
+#~ "عليك {link} أو حذف هذا السؤال."
+
+#~ msgid ""
+#~ "Your subscription only has access to built-in integration.\n"
+#~ "\n"
+#~ "External integrations are available on the Advanced plan and higher. "
+#~ "Before you can make a new version of your application, you must {link} or "
+#~ "delete this question."
+#~ msgstr ""
+#~ "اشتراكك يتيح فقط الوصول إلى التكامل المدمج.\n"
+#~ "\n"
+#~ "التكاملات الخارجية متاحة في خطة Advanced وما فوق. قبل أن تتمكن من إنشاء "
+#~ "إصدار جديد من تطبيقك، يجب عليك {link} أو حذف هذا السؤال."
+
+#~ msgid ""
+#~ "Android app callouts of the same type must have different question ids."
+#~ msgstr ""
+#~ "يجب أن يكون لاستدعاءات تطبيق أندرويد من نفس النوع معرفات أسئلة مختلفة."
+
+#~ msgid "Extra"
+#~ msgstr "إضافي"
+
+#~ msgid "Response"
+#~ msgstr "استجابة"
+
+#~ msgid "Special Intent XMLNS attribute"
+#~ msgstr "سمة XMLNS ذات نية خاصة"
+
+#~ msgid "Print"
+#~ msgstr "طباعة"
+
+#~ msgid "Document Template"
+#~ msgstr "قالب المستند"
+
+#~ msgid "Edit Data Source"
+#~ msgstr "تعديل مصدر البيانات"
+
+#~ msgid "Query Expression"
+#~ msgstr "تعبير الاستعلام"
+
+#~ msgid "Optional Instance Properties"
+#~ msgstr "خصائص المثيل الاختيارية"
+
+#~ msgid "Instance ID"
+#~ msgstr "معرف المثيل"
+
+#~ msgid "Instance URI"
+#~ msgstr "رابط المثيل"
+
+#~ msgid "Lookup table was not found in the project"
+#~ msgstr "لم يتم العثور على جدول البحث في المشروع"
+
+#~ msgid ""
+#~ "You no longer have access to Lookup Tables in your application. Lookup "
+#~ "Tables are available on the Standard plan and higher.\n"
+#~ "Before you can make a new version of your application, you must {link} or "
+#~ "delete this question"
+#~ msgstr ""
+#~ "لم يعد لديك حق الوصول إلى جداول البحث في تطبيقك. جداول البحث متوفرة في "
+#~ "خطة Standard وما فوق.\n"
+#~ "قبل أن تتمكن من إنشاء إصدار جديد من تطبيقك، يجب عليك {link} أو حذف هذا "
+#~ "السؤال"
+
+#~ msgid "A data source must be selected."
+#~ msgstr "يجب تحديد مصدر بيانات."
+
+#~ msgid "Display Text Field"
+#~ msgstr "حقل نص العرض"
+
+#~ msgid "Sort Field"
+#~ msgstr "حقل الفرز"
+
+#~ msgid "Filter"
+#~ msgstr "تصفية"
+
+#~ msgid ""
+#~ "This is an XPath expression that will filter the set of choices from the "
+#~ "lookup table"
+#~ msgstr "هذه عبارة عن تعبير XPath سيقوم بتصفية مجموعة الخيارات من جدول البحث"
+
+#~ msgid "Lookup Tables"
+#~ msgstr "جداول البحث"
+
+#~ msgid "Checkbox Lookup Table"
+#~ msgstr "جدول بحث خانة اختيار"
+
+#~ msgid ""
+#~ "Cannot change to Multiple/Single Choice question if it has Choices. "
+#~ "Please remove all Choices and try again."
+#~ msgstr ""
+#~ "لا يمكن التغيير إلى سؤال اختيار متعدد/مفرد إذا كان يحتوي على خيارات. يرجى "
+#~ "إزالة جميع الخيارات والمحاولة مرة أخرى."
+
+#~ msgid "Can only change to a Multiple Choice Lookup Table"
+#~ msgstr "يمكن التغيير فقط إلى جدول بحث اختيار متعدد"
+
+#~ msgid "Multiple Choice Lookup Table"
+#~ msgstr "جدول بحث اختيار متعدد"
+
+#~ msgid "Can only change to a Checkbox Lookup Table"
+#~ msgstr "يمكن التغيير فقط إلى جدول بحث خانة اختيار"
+
+#~ msgid "{attr} was not found in the lookup table"
+#~ msgstr "لم يتم العثور على {attr} في جدول البحث"
+
+#~ msgid "Display"
+#~ msgstr "عرض"
+
+#~ msgid "auto?"
+#~ msgstr "تلقائي؟"
+
+#~ msgid ""
+#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> "
+#~ "words, use bulleted lists, and <a target='_blank' href='https://help."
+#~ "commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
+#~ msgstr ""
+#~ "استخدم تنسيق النص لـ <strong>تغليظ</strong> و<em>إمالة</em> الكلمات، "
+#~ "واستخدم القوائم النقطية، و<a target='_blank' href='https://help."
+#~ "commcarehq.org/display/commcarepublic/Text+Formatting'>المزيد</a>"
+
+#~ msgid "Turn Off Text Formatting"
+#~ msgstr "إيقاف تنسيق النص"
+
+#~ msgid "Turn On Text Formatting"
+#~ msgstr "تشغيل تنسيق النص"
+
+#~ msgid "custom..."
+#~ msgstr "مخصص..."
+
+#~ msgid "New Content Type"
+#~ msgstr "نوع محتوى جديد"
+
+#~ msgid "Content Type"
+#~ msgstr "نوع المحتوى"
+
+#~ msgid ""
+#~ "You have languages in your form that are not specified in the "
+#~ "\"Languages\" page of the application builder. The following language "
+#~ "will be deleted on save unless you add it to the \"Languages\" page:"
+#~ msgstr ""
+#~ "لديك لغات في النموذج الخاص بك غير محددة في صفحة \"اللغات\" في منشئ "
+#~ "التطبيق. سيتم حذف اللغة التالية عند الحفظ ما لم تقم بإضافتها إلى صفحة "
+#~ "\"اللغات\":"
+
+#~ msgid "{name} (or multimedia) is required."
+#~ msgstr "{name} (أو وسائط متعددة) مطلوب."
+
+#~ msgid "{name} (or multimedia) is required for all languages."
+#~ msgstr "{name} (أو وسائط متعددة) مطلوب لجميع اللغات."
+
+#~ msgid "{name} Itext ID is required."
+#~ msgstr "معرف Itext الخاص بـ {name} مطلوب."
+
+#~ msgid "{name} is not a valid ID."
+#~ msgstr "{name} ليس معرفًا صالحًا."
+
+#~ msgid "Multimedia was not copied; it must be uploaded separately."
+#~ msgstr "لم يتم نسخ الوسائط المتعددة؛ يجب تحميلها بشكل منفصل."
+
+#~ msgid "Discarded languages:"
+#~ msgstr "اللغات التي تم تجاهلها:"
+
+#~ msgid "Validation Message"
+#~ msgstr "رسالة التحقق"
+
+#~ msgid ""
+#~ "Can't have a Validation Message Itext ID without a Validation Condition"
+#~ msgstr "لا يمكن وجود معرف Itext لرسالة التحقق بدون شرط تحقق"
+
+#~ msgid "Validation Message Itext ID"
+#~ msgstr "معرف Itext لرسالة التحقق"
+
+#~ msgid "Add Validation Media"
+#~ msgstr "إضافة وسائط تحقق"
+
+#~ msgid "Display Text Itext ID"
+#~ msgstr "معرف Itext لنص العرض"
+
+#~ msgid "Hint Message"
+#~ msgstr "رسالة تلميح"
+
+#~ msgid "Hint Itext ID"
+#~ msgstr "معرف Itext للتلميح"
+
+#~ msgid "Help Message"
+#~ msgstr "رسالة المساعدة"
+
+#~ msgid "Help Itext ID"
+#~ msgstr "معرف Itext للمساعدة"
+
+#~ msgid "Add New Item Button Text"
+#~ msgstr "نص زر إضافة عنصر جديد"
+
+#~ msgid "Add New Itext ID"
+#~ msgstr "إضافة معرف Itext جديد"
+
+#~ msgid "Add Another Item Button Text"
+#~ msgstr "نص زر إضافة عنصر آخر"
+
+#~ msgid "Add Another Itext ID"
+#~ msgstr "إضافة معرف Itext آخر"
+
+#~ msgid "Add Other Content"
+#~ msgstr "إضافة محتوى آخر"
+
+#~ msgid "Add Multimedia"
+#~ msgstr "إضافة وسائط متعددة"
+
+#~ msgid "Add Help Media"
+#~ msgstr "إضافة وسائط مساعدة"
+
+#~ msgid "Edit Bulk Translations"
+#~ msgstr "تحرير الترجمات المجمعة"
+
+#~ msgid "Update Translations"
+#~ msgstr "تحديث الترجمات"
+
+#~ msgid ""
+#~ "Copy these translations into a spreadsheet program like Excel. You can "
+#~ "edit them there and then paste them back here when you're done. These "
+#~ "will update the translations used in your form. Press 'Update "
+#~ "Translations' to save changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "انسخ هذه الترجمات إلى برنامج جداول بيانات مثل Excel. يمكنك تعديلها هناك "
+#~ "ثم لصقها هنا عند الانتهاء. سيتم تحديث الترجمات المستخدمة في النموذج الخاص "
+#~ "بك. اضغط على 'تحديث الترجمات' لحفظ التغييرات، أو 'إغلاق' للإلغاء."
+
+#~ msgid "App Properties"
+#~ msgstr "خصائص التطبيق"
+
+#~ msgid "Could not load app properties."
+#~ msgstr "تعذَّر تحميل خصائص التطبيق."
+
+#~ msgid "If this error persists, please report an issue."
+#~ msgstr "إذا استمر هذا الخطأ، يرجى الإبلاغ عن المشكلة."
+
+#~ msgid ""
+#~ "The {questionid} is an internal identifier for a question. It does not "
+#~ "appear on the phone. It is the name of the question in data exports."
+#~ msgstr ""
+#~ "{questionid} هو معرف داخلي للسؤال. لا يظهر على الهاتف. إنه اسم السؤال في "
+#~ "تصدير البيانات."
+
+#~ msgid "The date and time of the action, e.g., now() or today()"
+#~ msgstr "تاريخ ووقت الإجراء، مثل now() أو today()"
+
+#~ msgid "Balance ID"
+#~ msgstr "معرّف الرصيد"
+
+#~ msgid ""
+#~ "The name of the balance you are tracking. This is an internal identifier "
+#~ "which does not appear on the phone."
+#~ msgstr "اسم الرصيد الذي تتابعه. هذا معرف داخلي لا يظهر على الهاتف."
+
+#~ msgid "Product"
+#~ msgstr "المنتج"
+
+#~ msgid ""
+#~ "A reference to a product ID, e.g., \"/data/products/current_product\""
+#~ msgstr "مرجع إلى معرّف المنتج، مثل \"/data/products/current_product\""
+
+#~ msgid "Quantity"
+#~ msgstr "الكمية"
+
+#~ msgid "A reference to an integer question in this form."
+#~ msgstr "مرجع إلى سؤال عدد صحيح في هذا النموذج."
+
+#~ msgid "XPath expression for the case ID associated with this balance."
+#~ msgstr "تعبير XPath لمعرّف الحالة المرتبط بهذا الرصيد."
+
+#~ msgid "Transfer must have both Source Case and Destination Case defined."
+#~ msgstr "يجب أن يحتوي التحويل على كل من حالة المصدر وحالة الوجهة."
+
+#~ msgid "Cannot change $1 to $2"
+#~ msgstr "لا يمكن تغيير $1 إلى $2"
+
+#~ msgid "Source Case"
+#~ msgstr "حالة المصدر"
+
+#~ msgid "XPath expression for the case ID issuing the transaction."
+#~ msgstr "تعبير XPath لمعرّف الحالة التي تصدر المعاملة."
+
+#~ msgid "Destination Case"
+#~ msgstr "حالة الوجهة"
+
+#~ msgid "XPath expression for the case ID receiving the transaction."
+#~ msgstr "تعبير XPath لمعرّف الحالة التي تستلم المعاملة."
+
+#~ msgid "Dispense must have a Source Case."
+#~ msgstr "يجب أن تحتوي عملية الصرف على حالة مصدر."
+
+#~ msgid "Receive must have a Destination Case."
+#~ msgstr "يجب أن تحتوي عملية الاستلام على حالة وجهة."
+
+#~ msgid "Model Iteration ID Query"
+#~ msgstr "استعلام معرّف تكرار النموذج"
+
+#~ msgid "Property Name"
+#~ msgstr "اسم الخاصية"
+
+#~ msgid "Relevant"
+#~ msgstr "ذو صلة"
+
+#~ msgid "Relationship Identifier (e.g. parent or host)"
+#~ msgstr "معرّف العلاقة (مثل الأصل أو المضيف)"
+
+#~ msgid "Referenced Case ID"
+#~ msgstr "معرّف الحالة المشار إليها"
+
+#~ msgid "Referenced Case Type"
+#~ msgstr "نوع الحالة المشار إليها"
+
+#~ msgid "Relationship (child or extension)"
+#~ msgstr "العلاقة (فرعية أو امتداد)"
+
+#~ msgid "Node Name"
+#~ msgstr "اسم العقدة"
+
+#~ msgid "Source"
+#~ msgstr "المصدر"
+
+#~ msgid "From"
+#~ msgstr "من"
+
+#~ msgid "Attachment Name"
+#~ msgstr "اسم المرفق"
+
+#~ msgid "Add Property"
+#~ msgstr "إضافة خاصية"
+
+#~ msgid "Date Modified"
+#~ msgstr "تاريخ التعديل"
+
+#~ msgid "User ID"
+#~ msgstr "معرّف المستخدم"
+
+#~ msgid "Case Type"
+#~ msgstr "نوع الحالة"
+
+#~ msgid "Create Case"
+#~ msgstr "إنشاء حالة"
+
+#~ msgid "Properties To Create"
+#~ msgstr "الخصائص المطلوب إنشاؤها"
+
+#~ msgid "You must include {columns} columns to create a case"
+#~ msgstr "يجب تضمين أعمدة {columns} لإنشاء حالة"
+
+#~ msgid "You can only use the following properties:"
+#~ msgstr "يمكنك استخدام الخصائص التالية فقط:"
+
+#~ msgid "{props} are invalid properties"
+#~ msgstr "{props} خصائص غير صالحة"
+
+#~ msgid "Close Case"
+#~ msgstr "إغلاق الحالة"
+
+#~ msgid "Close Condition"
+#~ msgstr "شرط الإغلاق"
+
+#~ msgid "Update Case"
+#~ msgstr "تحديث الحالة"
+
+#~ msgid "Properties To Update"
+#~ msgstr "الخصائص المطلوب تحديثها"
+
+#~ msgid "Use Index"
+#~ msgstr "استخدام الفهرس"
+
+#~ msgid "Index Properties"
+#~ msgstr "خصائص الفهرس"
+
+#~ msgid "Relationship must be child or extension"
+#~ msgstr "يجب أن تكون العلاقة فرعية أو امتداد"
+
+#~ msgid "Use Attachments"
+#~ msgstr "استخدام المرفقات"
+
+#~ msgid "Attachment Properties"
+#~ msgstr "خصائص المرفق"
+
+#~ msgid "The from attribute must be one of: local, remote, or inline"
+#~ msgstr "يجب أن تكون خاصية from واحدة من: local، remote، أو inline"
+
+#~ msgid "Inlined attachments must have an attachment name"
+#~ msgstr "يجب أن تحتوي المرفقات المضمنة على اسم مرفق"
+
+#~ msgid "Update"
+#~ msgstr "تحديث"
+
+#~ msgid "Index"
+#~ msgstr "فهرس"
+
+#~ msgid "Attachments"
+#~ msgstr "المرفقات"
+
+#~ msgid "An error occurred when parsing bind node [{path}]. Please fix this."
+#~ msgstr "حدث خطأ أثناء تحليل عقدة الربط [{path}]. يرجى تصحيح ذلك."
+
+#~ msgid "Upload"
+#~ msgstr "رفع"
+
+#~ msgid "Select new"
+#~ msgstr "اختر جديدًا"
+
+#~ msgid "Select File"
+#~ msgstr "اختر ملفًا"
+
+#~ msgid "Current"
+#~ msgstr "الحالي"
+
+#~ msgid "Begin Upload"
+#~ msgstr "بدء الرفع"
+
+#~ msgid "Replace"
+#~ msgstr "استبدال"
+
+#~ msgid "No Reference"
+#~ msgstr "لا يوجد مرجع"
+
+#~ msgid "Advanced: Show Path"
+#~ msgstr "متقدم: إظهار المسار"
+
+#~ msgid "Hide Path"
+#~ msgstr "إخفاء المسار"
+
+#~ msgid "Video"
+#~ msgstr "فيديو"
+
+#~ msgid "Inline Video"
+#~ msgstr "فيديو مضمن"
+
+#~ msgid "HTML"
+#~ msgstr "HTML"
+
+#~ msgid "Copying and Pasting Questions"
+#~ msgstr "نسخ ولصق الأسئلة"
+
+#~ msgid ""
+#~ "These actions are available via the browser's Edit menu, and you can also "
+#~ "use:"
+#~ msgstr ""
+#~ "هذه الإجراءات متاحة من خلال قائمة تحرير المتصفح، ويمكنك أيضًا استخدام:"
+
+#~ msgid "for copy"
+#~ msgstr "للنسخ"
+
+#~ msgid "for paste"
+#~ msgstr "للصق"
+
+#~ msgid "Copy from or Paste into this text box:"
+#~ msgstr "انسخ من أو الصق في مربع النص هذا:"
+
+#~ msgid "Insert Questions"
+#~ msgstr "إدراج أسئلة"
+
+#~ msgid "Selecting Multiple Questions"
+#~ msgstr "تحديد عدة أسئلة"
+
+#~ msgid "Hold {key} and click on each question."
+#~ msgstr "اضغط مع الاستمرار على {key} وانقر على كل سؤال."
+
+#~ msgid "Other Tips"
+#~ msgstr "نصائح أخرى"
+
+#~ msgid "Questions can be copied between forms, and even to other apps."
+#~ msgstr "يمكن نسخ الأسئلة بين النماذج، وحتى إلى تطبيقات أخرى."
+
+#~ msgid "Cannot insert {type} into tree root"
+#~ msgstr "لا يمكن إدراج {type} في جذر الشجرة"
+
+#~ msgid "Cannot insert $1 into or after $2"
+#~ msgstr "لا يمكن إدراج $1 في أو بعد $2"
+
+#~ msgid "Cannot insert $1 into $2"
+#~ msgstr "لا يمكن إدراج $1 في $2"
+
+#~ msgid "Unsupported paste format"
+#~ msgstr "تنسيق لصق غير مدعوم"
+
+#~ msgid "Unsupported paste format:"
+#~ msgstr "تنسيق لصق غير مدعوم:"
+
+#~ msgid "Unknown question type:"
+#~ msgstr "نوع سؤال غير معروف:"
+
+#~ msgid "Enter command"
+#~ msgstr "أدخل الأمر"
+
+#~ msgid "Module ID"
+#~ msgstr "معرّف الوحدة"
+
+#~ msgid "Description"
+#~ msgstr "الوصف"
+
+#~ msgid "Time Estimate"
+#~ msgstr "تقدير الوقت"
+
+#~ msgid "Must be an integer"
+#~ msgstr "يجب أن يكون عددًا صحيحًا"
+
+#~ msgid "Estimated time to complete the module in hours."
+#~ msgstr "الوقت المقدر لإكمال الوحدة بالساعات."
+
+#~ msgid "Assessment ID"
+#~ msgstr "معرّف التقييم"
+
+#~ msgid "User Score"
+#~ msgstr "نتيجة المستخدم"
+
+#~ msgid "XPath expression for the users assessment score."
+#~ msgstr "تعبير XPath لنتيجة تقييم المستخدم."
+
+#~ msgid "Delivery Unit ID"
+#~ msgstr "معرّف وحدة التسليم"
+
+#~ msgid "Entity ID"
+#~ msgstr "معرّف الكيان"
+
+#~ msgid ""
+#~ "XPath expression for the entity ID associated with this Delivery Unit e."
+#~ "g. the case ID."
+#~ msgstr "تعبير XPath لمعرّف الكيان المرتبط بوحدة التسليم هذه مثل معرّف الحالة."
+
+#~ msgid "Entity Name"
+#~ msgstr "اسم الكيان"
+
+#~ msgid ""
+#~ "XPath expression for the name of the entity associated with this Delivery "
+#~ "Unit."
+#~ msgstr "تعبير XPath لاسم الكيان المرتبط بوحدة التسليم هذه."
+
+#~ msgid "Failed to send"
+#~ msgstr "فشل في الإرسال"
+
+#~ msgid "Failed to cancel"
+#~ msgstr "فشل في الإلغاء"

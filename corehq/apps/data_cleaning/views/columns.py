@@ -18,23 +18,23 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 ], name='dispatch')
 class ManageColumnsFormView(BulkEditSessionViewMixin,
                             LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
-    urlname = "data_cleaning_manage_columns_form"
+    urlname = "bulk_edit_manage_columns_form"
     template_name = "data_cleaning/forms/manage_columns_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve columns, session was not found.")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, column_form=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'manage-columns',
             'active_columns': self.session.columns.all(),
-            'add_column_form': kwargs.pop('column_form', None) or AddColumnForm(self.session),
+            'add_column_form': column_form or AddColumnForm(self.session),
         })
         return context
 
     def _trigger_clean_form_refresh(self, response):
         response['HX-Trigger'] = json.dumps({
-            'dcCleanFormRefresh': {
-                'target': '#hq-hx-clean-selected-records-form',
+            'dcEditFormRefresh': {
+                'target': '#hq-hx-edit-selected-records-form',
             },
         })
         return response
@@ -44,21 +44,22 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
         column_form = AddColumnForm(self.session, request.POST)
         if column_form.is_valid():
             column_form.add_column()
-            column_form = None
-        response = self.get(request, column_form=column_form, *args, **kwargs)
-        if column_form is None:
+            response = self.get(request, column_form=None, *args, **kwargs)
             response = self._trigger_clean_form_refresh(response)
-        return response
+            return self.include_gtm_event_with_response(response, "bulk_edit_column_added")
+        return self.get(request, column_form=column_form, *args, **kwargs)
 
     @hq_hx_action('post')
     def update_column_order(self, request, *args, **kwargs):
         column_ids = request.POST.getlist('column_ids')
         self.session.update_column_order(column_ids)
         response = self.get(request, *args, **kwargs)
-        return self._trigger_clean_form_refresh(response)
+        response = self._trigger_clean_form_refresh(response)
+        return self.include_gtm_event_with_response(response, "bulk_edit_column_order_updated")
 
     @hq_hx_action('post')
     def remove_column(self, request, *args, **kwargs):
         self.session.remove_column(request.POST['delete_id'])
         response = self.get(request, *args, **kwargs)
-        return self._trigger_clean_form_refresh(response)
+        response = self._trigger_clean_form_refresh(response)
+        return self.include_gtm_event_with_response(response, "bulk_edit_column_removed")

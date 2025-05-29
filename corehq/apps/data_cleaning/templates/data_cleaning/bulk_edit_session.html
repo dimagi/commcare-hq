@@ -1,0 +1,61 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+{% load compress %}
+{% load i18n %}
+{% js_entry "data_cleaning/js/bulk_edit_session" %}
+
+{% block stylesheets %}
+  {% compress css %}
+    <link
+      type="text/scss"
+      rel="stylesheet"
+      media="all"
+      href="{% static "hqwebapp/scss/data_cleaning.scss" %}"
+    />
+  {% endcompress %}
+{% endblock stylesheets %}
+
+{% block content %}
+  {% breadcrumbs current_page section current_page.parents %}
+  <div class="d-flex align-items-center m-3">
+    <h1 class="fs-3 pe-3 py-3 m-0">{{ current_page.page_name }}</h1>
+    <div>
+      {% include "data_cleaning/partials/button_bar.html" %}
+    </div>
+    <div class="ps-3">
+      <div class="form-check form-switch">
+        <input
+          id="show-whitespaces-switch"
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          name="show_whitespaces"
+          x-data=""  {# needed to activate x-model below #}
+          x-model="$store.showWhitespaces"
+          @click="$store.gtm.sendEvent('bulk_edit_show_whitespaces');"
+        />
+        <label class="form-check-label" for="show-whitespaces-switch">
+          {% trans "Show Whitespaces" %}
+        </label>
+      </div>
+    </div>
+  </div>
+  <div
+    class="mx-3"
+    hx-get="{{ htmx_primary_view_url }}{% querystring %}"
+    hx-trigger="load"
+    hx-swap="innerHTML"
+  >
+    <div class="htmx-indicator">
+      <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+    </div>
+  </div>
+  {% include "data_cleaning/partials/offcanvas.html" %}
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {% include "data_cleaning/status/modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

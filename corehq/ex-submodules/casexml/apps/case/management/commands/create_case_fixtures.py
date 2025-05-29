@@ -15,7 +15,8 @@ def get_faker():
     try:
         import faker
     except ModuleNotFoundError:
-        print("Error: faker is not installed. Run `pip install -r requirements/dev-requirements.txt`")
+        # --inexact preserves extraneous dependencies such as requirements/local.txt
+        print("Error: faker is not installed. Run `uv sync --dev --inexact`")
         sys.exit(1)
 
     return faker
@@ -53,8 +54,8 @@ class Command(BaseCommand):
         self._generate_data_dictionary(domain)
         print("Generated data dictionary")
 
-        if(self._generate_sample_app(domain)):
-            print ("Generated Sample App")
+        if (self._generate_sample_app(domain)):
+            print("Generated Sample App")
 
     def _create_case_structure(self, locale, owner_id):
         faker = get_faker()

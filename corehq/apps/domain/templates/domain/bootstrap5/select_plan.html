@@ -15,7 +15,6 @@
   {% initial_page_data 'invoicing_contact_email' INVOICING_CONTACT_EMAIL %}
   {% initial_page_data 'current_price' current_price %}
   {% initial_page_data 'is_price_discounted' is_price_discounted %}
-  {% registerurl 'email_on_downgrade' domain %}
 
   <p class="lead text-center">
     {{ lead_text }}
@@ -255,6 +254,11 @@
           type="hidden"
           name="plan_edition"
           data-bind="value: oSelectedPlan"
+        />
+        <input
+          type="hidden"
+          name="is_annual_plan"
+          data-bind="value: oShowAnnualPricing"
         />
         <div class="text-center plan-next">
           <button
