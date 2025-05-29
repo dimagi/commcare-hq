@@ -33,9 +33,10 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     })
 
     _purge_unedited_records(session)
+    num_committed_records = session.records.count()
 
     form_ids = []
-    session.update_result(0)
+    session.update_result(0, num_committed_records=num_committed_records)
     count_cases = case_load_counter("bulk_case_cleaning", session.domain)
 
     record_iter = session.records.iterator()
