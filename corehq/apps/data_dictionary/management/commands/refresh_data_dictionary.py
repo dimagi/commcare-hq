@@ -1,12 +1,20 @@
 from collections import defaultdict
+
 from django.core.management.base import BaseCommand
 from django.http import Http404
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
-from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+from corehq.apps.data_cleaning.utils.cases import (
+    clear_caches_case_data_cleaning,
+)
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.api import (
+    get_migration_complete,
+    set_migration_complete,
+    set_migration_started,
+)
 from corehq.toggles import VELLUM_SAVE_TO_CASE
 from corehq.util.log import with_progress_bar
 
@@ -23,6 +31,9 @@ class Command(BaseCommand):
         domains = options['domains'] or Domain.get_all_names()
 
         for domain in with_progress_bar(domains):
+            if get_migration_complete(domain, 'refresh_data_dictionary'):
+                continue
+            set_migration_started(domain, 'refresh_data_dictionary')
             try:
                 apps = get_apps_in_domain(domain)
                 for app in apps:
@@ -34,6 +45,7 @@ class Command(BaseCommand):
 
             except Exception as e:
                 print(f'Failed to get apps in domain {domain}: {str(e)}')
+            set_migration_complete(domain, 'refresh_data_dictionary')
 
 
 def _refresh_data_dictionary_from_app(domain, app_id):
@@ -47,7 +59,9 @@ def _refresh_data_dictionary_from_app(domain, app_id):
         return
 
     from corehq.apps.app_manager.util import actions_use_usercase
-    from corehq.apps.data_dictionary.util import create_properties_for_case_types
+    from corehq.apps.data_dictionary.util import (
+        create_properties_for_case_types,
+    )
 
     case_type_to_prop = defaultdict(set)
     if VELLUM_SAVE_TO_CASE.enabled(domain):
