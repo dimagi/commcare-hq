@@ -56,8 +56,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
             return base
 
         buffer = float(self.seconds_since_complete) / APPLY_CHANGES_WAIT_TIME
-        weighted_percent = int(0.9 * base + 10 * buffer)
-        return max(0, min(weighted_percent, 100))
+        return int(0.9 * base + 10 * buffer)
 
     def get_template_names(self):
         if self.is_session_in_progress:
