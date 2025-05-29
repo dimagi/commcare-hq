@@ -193,3 +193,11 @@ def get_es_reindex_setting_value(name, default):
     if ES_REINDEX_LOG[-1] != getattr(settings, 'ES_MULTIPLEX_TO_VERSION', None):
         return default
     return getattr(settings, name, default)
+
+
+def get_user_domain_memberships(user):
+    if user['doc_type'] == 'CommCareUser':
+        return [user['domain_membership']]
+    if user['doc_type'] == 'WebUser':
+        return user['domain_memberships']
+    return []
