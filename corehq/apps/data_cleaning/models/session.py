@@ -445,10 +445,10 @@ class BulkEditSession(models.Model):
     def update_result(self, record_count, form_id=None, error=None, num_committed_records=None):
         result = self.result or {}
 
-        if 'num_committed_records' not in result and num_committed_records is not None:
-            result['num_committed_records'] = num_committed_records
-        elif 'num_committed_records' in result:
+        if 'num_committed_records' in result:
             num_committed_records = result['num_committed_records']
+        elif num_committed_records is not None:
+            result['num_committed_records'] = num_committed_records
 
         if 'form_ids' not in result:
             result['form_ids'] = []
