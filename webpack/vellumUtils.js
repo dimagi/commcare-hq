@@ -63,12 +63,20 @@ const getDebugRule = function () {
     if (!config) {
         return {};
     }
+    const debugDir = getDebugDir(),
+        hqDir = path.resolve(__dirname, '..');
+    const rules = config.module.rules.map(function (rule) {
+        if (rule.loader) {
+            rule.loader = rule.loader.replace(hqDir, debugDir);
+        }
+        return rule;
+    });
     return {
         test: getDebugDir(),    // if config exists, this dir exists
         resolve: {
             alias: config.resolve.alias,
         },
-        rules: config.module.rules,
+        rules: rules,
     };
 };
 
