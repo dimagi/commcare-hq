@@ -61,7 +61,7 @@ from corehq.apps.hqadmin.views.utils import (
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.ota.views import get_restore_params, get_restore_response
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessage, TOGGLE_EDIT_PERMISSIONS_FIELD
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
@@ -154,6 +154,7 @@ class SuperuserManagement(UserAdministration):
         user_changes = []
         for user in users:
             fields_changed = {}
+            change_messages = {}
             # save user object only if needed and just once
             if self.can_toggle_status and user.is_superuser is not is_superuser:
                 user.is_superuser = is_superuser
@@ -173,13 +174,24 @@ class SuperuserManagement(UserAdministration):
                 user.save()
 
             if user.username in toggle_edit_permission_changes:
-                fields_changed['feature_flag_edit_permissions'] = toggle_edit_permission_changes[user.username]
+                change_messages[TOGGLE_EDIT_PERMISSIONS_FIELD] = defaultdict(dict)
+                if added_tags := toggle_edit_permission_changes[user.username]['added']:
+                    changes = UserChangeMessage.toggle_edit_permissions_added(added_tags)[
+                        TOGGLE_EDIT_PERMISSIONS_FIELD
+                    ]
+                    change_messages[TOGGLE_EDIT_PERMISSIONS_FIELD].update(changes)
+                if removed_tags := toggle_edit_permission_changes[user.username]['removed']:
+                    changes = UserChangeMessage.toggle_edit_permissions_removed(removed_tags)[
+                        TOGGLE_EDIT_PERMISSIONS_FIELD
+                    ]
+                    change_messages[TOGGLE_EDIT_PERMISSIONS_FIELD].update(changes)
 
-            if fields_changed:
+            if fields_changed or change_messages:
                 couch_user = CouchUser.from_django_user(user)
                 log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
                                 changed_by_user=self.request.couch_user,
                                 changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
+                                change_messages=change_messages,
                                 by_domain_required_for_log=False,
                                 for_domain_required_for_log=False)
 
@@ -191,6 +203,8 @@ class SuperuserManagement(UserAdministration):
                     fields_changed['same_staff'] = user.is_staff
                 if 'can_assign_superuser' not in fields_changed:
                     fields_changed['same_management_privilege'] = web_user.can_assign_superuser
+                if user.username in toggle_edit_permission_changes:
+                    fields_changed['feature_flag_edit_permissions'] = toggle_edit_permission_changes[user.username]
                 user_changes.append(fields_changed)
         return user_changes
 
