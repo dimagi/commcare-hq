@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
@@ -6,6 +7,17 @@ import "hqwebapp/js/atwho";  // autocompleteAtwho
 import "select2/dist/js/select2.full.min";
 
 var utils = {
+=======
+import $ from 'jquery';
+import ko from 'knockout';
+import _ from 'underscore';
+import DOMPurify from 'dompurify';
+import "jquery-textchange/jquery.textchange";
+import 'hqwebapp/js/atwho';    // autocompleteAtwho
+import 'select2/dist/js/select2.full.min';
+
+const utils = {
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
     _getIcon: function (question) {
         if (question.tag === 'upload') {
             return '<i class="fa fa-paperclip"></i> ';
@@ -36,11 +48,19 @@ var utils = {
     },
 };
 
+<<<<<<< HEAD
 var questionsById = {};
 
 // Transforms contents of this binding's value into a list of objects to feed to select2
 var _valueToSelect2Data = function (optionObjects) {
     var data = _(optionObjects).map(function (o) {
+=======
+const questionsById = {};
+
+// Transforms contents of this binding's value into a list of objects to feed to select2
+const _valueToSelect2Data = function (optionObjects) {
+    let data = _(optionObjects).map(function (o) {
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
         o = _.extend(o, {
             id: o.value,
             text: utils.getDisplay(o),
@@ -61,7 +81,11 @@ ko.bindingHandlers.questionsSelect = {
         ]
      */
     init: function (element, valueAccessor, allBindingsAccessor) {
+<<<<<<< HEAD
         var optionObjects = ko.utils.unwrapObservable(valueAccessor()),
+=======
+        let optionObjects = ko.utils.unwrapObservable(valueAccessor()),
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
             allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
             value = ko.utils.unwrapObservable(allBindings.value);
 
@@ -69,12 +93,20 @@ ko.bindingHandlers.questionsSelect = {
         if (value && !_.some(optionObjects, function (option) {
             return option.value === value;
         })) {
+<<<<<<< HEAD
             var option = {
+=======
+            const option = {
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
                 label: gettext('Unidentified Question') + ' (' + value + ')',
                 value: value,
             };
             optionObjects = [option].concat(optionObjects);
+<<<<<<< HEAD
             var $warning = $('<div class="help-block"></div>').text(gettext(
+=======
+            const $warning = $('<div class="help-block"></div>').text(gettext(
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
                 'We cannot find this question in the allowed questions for this field. ' +
                 'It is likely that you deleted or renamed the question. ' +
                 'Please choose a valid question from the dropdown.',
@@ -88,7 +120,11 @@ ko.bindingHandlers.questionsSelect = {
             placeholder: gettext('Select a Question'),
             dropdownCssClass: 'bigdrop',
             escapeMarkup: function (m) {
+<<<<<<< HEAD
                 var paperclip = '<i class="fa fa-paperclip"></i> ';
+=======
+                let paperclip = '<i class="fa fa-paperclip"></i> ';
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
                 if (m.includes(paperclip)) {
                     m = m.replace(paperclip, '');
                 } else {
@@ -116,7 +152,11 @@ ko.bindingHandlers.questionsSelect = {
         $(element).val(value).trigger('change.select2');
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
+<<<<<<< HEAD
         var $element = $(element),
+=======
+        const $element = $(element),
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
             newSelect2Data = _valueToSelect2Data(ko.utils.unwrapObservable(valueAccessor())),
             oldOptionElements = $element.find("option"),
             oldValues = _.map(oldOptionElements, function (o) { return o.value; }),
@@ -137,7 +177,11 @@ ko.bindingHandlers.questionsSelect = {
         });
 
         // If there was an error but it's fixed now, remove it
+<<<<<<< HEAD
         var $container = $element.parent(),
+=======
+        const $container = $element.parent(),
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
             allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
             value = ko.utils.unwrapObservable(allBindings.value);
         if ($container.hasClass("has-error") && _.contains(newValues, value)) {
@@ -156,9 +200,15 @@ ko.bindingHandlers.casePropertyAutocomplete = {
      */
     init: function (element, valueAccessor) {
         $(element).on('textchange', function () {
+<<<<<<< HEAD
             var $el = $(this);
             if ($el.val().match(/\s/)) {
                 var pos = $el.caret('pos');
+=======
+            const $el = $(this);
+            if ($el.val().match(/\s/)) {
+                const pos = $el.caret('pos');
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
                 $el.val($el.val().replace(/\s/g, '_'));
                 $el.caret('pos', pos);
             }
@@ -169,7 +219,11 @@ ko.bindingHandlers.casePropertyAutocomplete = {
         function wrappedValueAccessor() {
             return _.map(ko.unwrap(valueAccessor()), function (value) {
                 if (value.indexOf("attachment:") === 0) {
+<<<<<<< HEAD
                     var text = value.substring(11),
+=======
+                    const text = value.substring(11),
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
                         html = '<i class="fa fa-paperclip"></i> ' + text;
                     return {name: text, content: html};
                 }
@@ -196,8 +250,13 @@ ko.extenders.withPrevious = function (target) {
 
 ko.bindingHandlers.numericValue = {
     init: function (element, valueAccessor, allBindingsAccessor) {
+<<<<<<< HEAD
         var underlyingObservable = valueAccessor();
         var interceptor = ko.dependentObservable({
+=======
+        const underlyingObservable = valueAccessor();
+        const interceptor = ko.dependentObservable({
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4
             read: underlyingObservable,
             write: function (value) {
                 if ($.isNumeric(value)) {
@@ -211,3 +270,8 @@ ko.bindingHandlers.numericValue = {
     },
     update: ko.bindingHandlers.value.update,
 };
+<<<<<<< HEAD
+=======
+
+export default ko.bindingHandlers;
+>>>>>>> c7c8bb7678ce09f0135156712844e9a4524951b4

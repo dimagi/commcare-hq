@@ -54,7 +54,7 @@
 
 {% block pagination.range %}
   {% for p in table.page|table_page_range:table.paginator %}
-    <li class="page-item{% if table.page.number == p %}active{% endif %}">
+    <li class="page-item{% if table.page.number == p %} active{% endif %}">
       <a
         class="page-link"
         {% if p != '...' %}

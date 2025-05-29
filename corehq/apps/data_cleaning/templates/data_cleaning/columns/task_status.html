@@ -6,6 +6,7 @@
   href="{{ record.session_url }}"
   x-tooltip=""
   data-bs-title="{% trans "Open Session" %}"
+  @click="$store.gtm.sendEvent('bulk_edit_open_session_from_tasks_table');"
 >
   <i class="fa-solid fa-arrow-up-right-from-square"></i>
 </a>

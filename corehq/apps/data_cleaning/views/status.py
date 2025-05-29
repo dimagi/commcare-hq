@@ -69,7 +69,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     def active_session(self):
         if self.session.completed_on is None:
             return None
-        return BulkEditSession.get_active_case_session(
+        return BulkEditSession.objects.active_case_session(
             self.request.user, self.domain, self.session.identifier
         )
 
@@ -104,7 +104,15 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
                     'target': '#session-status-modal',
                 },
             })
-        return response
+        return self.include_gtm_event_with_response(
+            response,
+            "bulk_edit_session_status_viewed",
+            {
+                "session_type": self.session.session_type,
+                "commit_in_progress": self.is_session_in_progress,
+                "has_active_session": self.active_session is not None,
+            }
+        )
 
     @hq_hx_action('get')
     def poll_session_status(self, request, *args, **kwargs):

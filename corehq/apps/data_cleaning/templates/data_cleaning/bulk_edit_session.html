@@ -33,6 +33,7 @@
           name="show_whitespaces"
           x-data=""  {# needed to activate x-model below #}
           x-model="$store.showWhitespaces"
+          @click="$store.gtm.sendEvent('bulk_edit_show_whitespaces');"
         />
         <label class="form-check-label" for="show-whitespaces-switch">
           {% trans "Show Whitespaces" %}

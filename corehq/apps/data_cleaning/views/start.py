@@ -39,14 +39,14 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
         next_action = 'validate_session'
         if form.is_valid():
             case_type = form.cleaned_data['case_type']
-            active_session = BulkEditSession.get_active_case_session(
+            active_session = BulkEditSession.objects.active_case_session(
                 request.user, self.domain, case_type
             )
             if not active_session:
-                new_session = BulkEditSession.new_case_session(
+                new_session = BulkEditSession.objects.new_case_session(
                     request.user, self.domain, case_type
                 )
-                return self.render_session_redirect(new_session)
+                return self.render_session_redirect(new_session, 'fresh')
             form = ResumeOrRestartCaseSessionForm(
                 self.domain, self.container_id, request.path_info, {
                     'case_type': case_type,
@@ -66,20 +66,28 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
             case_type = form.cleaned_data['case_type']
             next_step = form.cleaned_data['next_step']
             get_session = {
-                'resume': lambda: BulkEditSession.get_active_case_session(
+                'resume': lambda: BulkEditSession.objects.active_case_session(
                     request.user, self.domain, case_type
                 ),
-                'new': lambda: BulkEditSession.restart_case_session(
+                'new': lambda: BulkEditSession.objects.restart_case_session(
                     request.user, self.domain, case_type
                 ),
             }[next_step]
             if get_session:
-                return self.render_session_redirect(get_session())
+                return self.render_session_redirect(get_session(), next_step)
         return self.get(request, form=form, next_action=next_action, *args, **kwargs)
 
-    def render_session_redirect(self, session):
+    def render_session_redirect(self, session, creation_method):
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
-        return self.render_htmx_redirect(
+        response = self.render_htmx_redirect(
             reverse(BulkEditCasesSessionView.urlname, args=(self.domain, session.session_id, )),
             response_message=_("Starting Bulk Edit Session...")
+        )
+        return self.include_gtm_event_with_response(
+            response,
+            "bulk_edit_session_started",
+            {
+                "creation_method": creation_method,
+                "session_type": session.session_type,
+            }
         )
