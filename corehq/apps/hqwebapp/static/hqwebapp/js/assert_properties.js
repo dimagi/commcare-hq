@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/assert_properties", ['underscore'], function (_) {
+define("hqwebapp/js/assert_properties", ['underscore'], function (_) {
     var assertRequired = function (object, required) {
         var all = _.keys(object),
             missing = _.difference(required, all);

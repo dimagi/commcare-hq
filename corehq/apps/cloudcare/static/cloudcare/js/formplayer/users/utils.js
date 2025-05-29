@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/formplayer/users/utils", [
+define("cloudcare/js/formplayer/users/utils", [
     'jquery',
     'sentry_browser',
     'hqwebapp/js/initial_page_data',
