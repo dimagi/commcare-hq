@@ -16,7 +16,23 @@
   <div class="modal-body">
     <div id="csql-criteria-rows{{form.instance.pk}}">
       {% for form in criteria_forms %}
-        {{ form }}
+        <div class="csql-criteria-row">
+          <div class="d-flex align-items-center mb-2">
+            <div class="me-2">
+              {{ form.operator }}
+            </div>
+            <div class="me-2">
+              {{ form.property_name }}
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline-danger"
+              onclick="this.closest('.csql-criteria-row').remove();"
+            >
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
       {% endfor %}
     </div>
     <button

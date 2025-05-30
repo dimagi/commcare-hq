@@ -97,9 +97,6 @@ class CSQLFixtureFilterForm(forms.ModelForm):
                 print("criteria", criteria)
                 form = UserDataCriteriaForm(initial=criteria)
                 criteria_forms.append(form)
-        else:
-            # Add one empty form by default
-            criteria_forms.append(UserDataCriteriaForm())
         print("get_context", criteria_forms)
         context = super().get_context()
         context.update({
