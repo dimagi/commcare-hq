@@ -107,7 +107,7 @@ class EnterpriseMobileWorkerSettings(models.Model):
             UserES()
             .domain(domain)
             .mobile_users()
-            .is_active()
+            .is_active(domain, True)
             .created(lte=date_of_inactivity)
             .filter(
                 filters.OR(

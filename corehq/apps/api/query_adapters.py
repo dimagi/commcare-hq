@@ -28,7 +28,8 @@ class UserQuerySetAdapter(object):
         if self.filters:
             query = query.AND(*self.filters)
         if self.show_archived:
-            return query.domain(self.domain).show_only_inactive().sort('username.exact')
+            # not sure if this should include domain deactivated but active web users
+            return query.domain(self.domain).show_only_inactive(self.domain).sort('username.exact')
         else:
             return query.domain(self.domain).sort('username.exact')
 
@@ -86,7 +87,8 @@ class GroupQuerySetAdapter(object):
             yield from (
                 UserES().domain(self.domain)
                 .user_ids(user_ids_chunk)
-                .is_active(True)
+                .is_active(self.domain, True)
+                # not sure if this should include domain deactivated but still active users
                 .values_list('_id', flat=True)
             )
 

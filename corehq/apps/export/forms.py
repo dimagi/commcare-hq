@@ -648,7 +648,8 @@ class AbstractExportFilterBuilder(object):
             (web, user_es.web_users()),
             (demo, user_es.demo_users()),
             # Sets the is_active filter status correctly for if either active or deactivated users are selected
-            (active ^ deactivated, user_es.is_active(active)),
+            (active ^ deactivated, user_es.is_active(self.domain_object.name, active)),
+            # not sure about this one.
         ] if include]
 
         if not user_filters:

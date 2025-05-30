@@ -80,7 +80,6 @@ def _get_es_query(domain, user_type, user_filters):
     user_active_status = user_filters.get('user_active_status', None)
 
     if user_active_status is None:
-        # Show all users in domain - will always be true for WEB_USER_TYPE
         query = UserES().domain(domain).remove_default_filter('active')
     elif user_active_status:
         # Active users filtered by default
