@@ -7,7 +7,8 @@
 {% block form_content %}
   {% initial_page_data 'editions' editions %}
   {% initial_page_data 'planOptions' plan_options %}
-  {% initial_page_data 'currentPlan' current_edition %}
+  {% initial_page_data 'currentEdition' current_edition %}
+  {% initial_page_data 'currentIsAnnualPlan' current_is_annual_plan %}
   {% initial_page_data 'is_renewal' is_renewal %}
   {% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
   {% initial_page_data 'subscription_below_minimum' subscription_below_minimum %}
@@ -240,8 +241,6 @@
       class="form"
       id="select-plan-form"
       method="post"
-      data-bind="visible: oShowNext"
-      style="display: none;"  {# todo B5: inline-style #}
       action="{% url 'confirm_selected_plan' domain %}"
     >
       {% csrf_token %}
@@ -253,7 +252,7 @@
         <input
           type="hidden"
           name="plan_edition"
-          data-bind="value: oSelectedPlan"
+          data-bind="value: oSelectedEdition"
         />
         <input
           type="hidden"
@@ -282,25 +281,15 @@
       {% endif %}
     </form>
 
-    <form
-      action="{% url 'annual_plan_request_quote' domain %}"
-      data-bind="visible: !oShowNext()"
-    >
-      {% csrf_token %}
-      <input
-        type="hidden"
-        name="plan_edition"
-        data-bind="value: oSelectedPlan"
-      />
-      <div class="text-center plan-next">
-        <button
-          class="btn btn-primary btn-lg"
-          data-bind="click: contactSales"
-        >
-          {% trans 'Talk to Sales' %}
-        </button>
-      </div>
-    </form>
+    <hr />
+    <p class="text-center">
+      {% blocktrans %}
+        Questions about which software plan is right for you?
+      {% endblocktrans %}
+      <a href="{% url 'select_plan_general_question' domain %}"
+        >{% trans "Talk with our team" %}</a
+      >.
+    </p>
   </section>
 {% endblock %}
 
