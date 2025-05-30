@@ -14,13 +14,21 @@
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
   </div>
   <div class="modal-body">
-    {% for form in criteria_forms %}
-      {{ form }}
-    {% endfor %}
-    <div class="mb-3">
-      <label for="customInput" class="form-label">{% trans "Input" %}</label>
-      <input type="text" class="form-control" id="customInput" placeholder="{% trans 'Enter value' %}">
+    <div id="csql-criteria-rows{{form.instance.pk}}">
+      {% for form in criteria_forms %}
+        {{ form }}
+      {% endfor %}
     </div>
+    <button
+    type="button"
+    class="btn btn-outline-primary"
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="new_criteria"
+    hx-target="#csql-criteria-rows{{form.instance.pk}}"
+    hx-swap="beforeend"
+    >
+    <i class="fa fa-plus"></i> {% trans "Add Criteria" %}
+  </button>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>

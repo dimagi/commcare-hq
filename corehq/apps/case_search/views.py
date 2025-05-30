@@ -181,12 +181,17 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
             CSQLFixtureExpression.objects.get(domain=domain, pk=pk).soft_delete()
         return self.render_htmx_no_response(request)
     
+
+    @hq_hx_action('post')
+    def new_criteria(self, *args, **kwargs):
+        from corehq.apps.case_search.forms import UserDataCriteriaForm
+        print("UserDataCriteriaForm().render()", UserDataCriteriaForm().render())
+        return HttpResponse(UserDataCriteriaForm().render())
+
     @hq_hx_action('post')
     def save_filter_modal(self, request, domain, *args, **kwargs):
         from corehq.apps.case_search.forms import CSQLFixtureFilterForm
         print("request.post", request.POST)
-        print("args", args)
-        print("kwargs", kwargs)
         mutable_post = request.POST.copy()
         if pk := request.POST.get('pk'):
             expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk)
