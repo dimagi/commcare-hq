@@ -31,6 +31,7 @@ from .const import (
     HQ_USERS_SECONDARY_INDEX_NAME,
 )
 from .es_query import HQESQuery
+from .utils import get_user_domain_memberships
 from .index.settings import IndexSettingsKey
 
 
@@ -106,6 +107,10 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
         user_dict.pop('password', None)
+
+        memberships = get_user_domain_memberships(user_dict)
+        user_dict['user_domain_memberships'] = memberships
+
         if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
             user_data = user_obj.get_user_data(user_obj.domain)

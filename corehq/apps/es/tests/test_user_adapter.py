@@ -1,8 +1,9 @@
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es import filters
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.users import UserES, user_adapter, demo_users
+from corehq.apps.es.users import UserES, demo_users, user_adapter
 from corehq.apps.users.models import CommCareUser, WebUser
 
 
@@ -65,20 +66,38 @@ class TestUserFilters(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.other_domain = 'another_test-domain'
+        cls.other_domain_obj = create_domain(cls.other_domain)
+        cls.addClassCleanup(cls.other_domain_obj.delete)
+
         cls.demo_user = CommCareUser.create(
             username="demo", domain=cls.domain, password="***********", is_active=True,
             created_by=None, created_via=None
         )
         cls.demo_user.is_demo_user = True
         cls.demo_user.save()
+
         cls.regular_user = CommCareUser.create(
             username="regular", domain=cls.domain, password="***********", is_active=True,
             created_by=None, created_via=None
         )
+        cls.regular_user.domain_membership.is_admin = True
+
+        cls.web_user = WebUser.create(
+            username="web", domain=cls.domain, password="***********", is_active=True,
+            created_by=None, created_via=None
+        )
+        cls.web_user.get_domain_membership(cls.domain).is_admin = True
+        cls.web_user.add_domain_membership(cls.other_domain)
+
         user_adapter.index(cls.demo_user, refresh=True)
         user_adapter.index(cls.regular_user, refresh=True)
+        user_adapter.index(cls.web_user, refresh=True)
         cls.addClassCleanup(cls.demo_user.delete, None, None)
         cls.addClassCleanup(cls.regular_user.delete, None, None)
+        cls.addClassCleanup(cls.web_user.delete, None, None)
 
     def test_demo_users_filter(self):
         es_query = UserES().domain(self.domain).filter(demo_users())
@@ -86,3 +105,30 @@ class TestUserFilters(TestCase):
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['_id'], self.demo_user._id)
+
+    def test_commcareuser_user_domain_membership(self):
+        es_query = UserES().domain(self.domain).mobile_users().filter(_is_admin(self.domain))
+        results = es_query.run().hits
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['_id'], self.regular_user._id)
+
+    def test_web_user_domain_membership(self):
+        # The web user is an admin on `domain` but not on `other_domain`
+        es_query = UserES().domain(self.domain).web_users().filter(_is_admin(self.domain))
+        results = es_query.run().hits
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['_id'], self.web_user._id)
+
+        es_query = UserES().domain(self.domain).web_users().filter(_is_admin(self.other_domain))
+        results = es_query.run().hits
+        self.assertEqual(len(results), 0)
+
+
+def _is_admin(domain):
+    return filters.nested(
+        'user_domain_memberships',
+        filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.term('user_domain_memberships.is_admin', True),
+        )
+    )
