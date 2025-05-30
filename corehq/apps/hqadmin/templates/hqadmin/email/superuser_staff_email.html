@@ -39,8 +39,8 @@
         {% elif 'same_management_privilege' in user_change %}
           <td>{{ user_change.same_management_privilege }}</td>
         {% endif %}
-        {% if 'feature_flag_edit_permissions' in user_change %}
-          <td>{{ user_change.feature_flag_edit_permissions }}</td>
+        {% if 'toggle_edit_permissions' in user_change %}
+          <td>{{ user_change.toggle_edit_permissions }}</td>
         {% else %}
           <td>No changes</td>
         {% endif %}

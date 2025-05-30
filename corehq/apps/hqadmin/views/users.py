@@ -227,7 +227,7 @@ class SuperuserManagement(UserAdministration):
                 web_user = WebUser.from_django_user(user)
                 fields_changed['same_management_privilege'] = web_user.can_assign_superuser
             if user.username in toggle_edit_permission_changes:
-                fields_changed['feature_flag_edit_permissions'] = toggle_edit_permission_changes[user.username]
+                fields_changed['toggle_edit_permissions'] = toggle_edit_permission_changes[user.username]
             if fields_changed:
                 user_changes.append(fields_changed)
         return user_changes
