@@ -1322,6 +1322,7 @@ users
  0077_invitationhistory
  0078_sqluserdata_deleted_on
  0079_alter_sqluserdata_managers
+ 0080_connectiduserlink_is_active
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

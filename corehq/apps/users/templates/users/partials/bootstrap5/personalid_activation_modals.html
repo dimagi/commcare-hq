@@ -1,0 +1,101 @@
+{% load i18n %}
+
+<div
+  class="modal fade"
+  data-bind="attr: {id: 'activate_personalid_link_' + user_id()}"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Link PersonalID Account" %}</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="{% trans 'Close' %}"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p class="lead">
+          {% blocktrans %}
+            Are you sure you want to <strong>link</strong> the PersonalID
+            account for this mobile worker?
+          {% endblocktrans %}
+        </p>
+        <p class="lead">
+          <i class="fa fa-user"></i>
+          <strong data-bind="text: username"></strong>
+        </p>
+        <p>
+          {% blocktrans %}
+            After linking, the mobile worker will be able to access this project
+            using their PersonalID credentials.
+          {% endblocktrans %}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          {% trans "Cancel" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          data-bs-dismiss="modal"
+          data-bind="click: function(user) { user.is_personalid_link_active(true); }"
+        >
+          {% trans "Link" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  data-bind="attr: {id: 'deactivate_personalid_link_' + user_id()}"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Unlink PersonalID Account" %}</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="{% trans 'Close' %}"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p class="lead">
+          {% blocktrans %}
+            Are you sure you want to <strong>unlink</strong> the PersonalID
+            account for this mobile worker?
+          {% endblocktrans %}
+        </p>
+        <p class="lead">
+          <i class="fa fa-user"></i>
+          <strong data-bind="text: username"></strong>
+        </p>
+        <p>
+          {% blocktrans %}
+            After unlinking, the mobile worker will no longer be able to access
+            this project using their PersonalID credentials.
+          {% endblocktrans %}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          {% trans "Cancel" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          data-bs-dismiss="modal"
+          data-bind="click: function(user) { user.is_personalid_link_active(false); }"
+        >
+          {% trans "Unlink" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
