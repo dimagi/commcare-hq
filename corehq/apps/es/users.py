@@ -57,6 +57,7 @@ class UserES(HQESQuery):
             last_modified,
             analytics_enabled,
             is_practice_user,
+            is_admin,
             role_id,
             is_active,
             username,
@@ -219,6 +220,16 @@ def location(location_id):
 
 def is_practice_user(practice_mode=True):
     return filters.term('is_demo_user', practice_mode)
+
+
+def is_admin(domain):
+    return filters.nested(
+        'user_domain_memberships',
+        filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.term('user_domain_memberships.is_admin', True),
+        )
+    )
 
 
 def role_id(role_id):

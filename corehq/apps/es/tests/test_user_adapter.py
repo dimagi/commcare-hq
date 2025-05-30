@@ -107,28 +107,18 @@ class TestUserFilters(TestCase):
         self.assertEqual(results[0]['_id'], self.demo_user._id)
 
     def test_commcareuser_user_domain_membership(self):
-        es_query = UserES().domain(self.domain).mobile_users().filter(_is_admin(self.domain))
+        es_query = UserES().domain(self.domain).mobile_users().is_admin(self.domain)
         results = es_query.run().hits
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['_id'], self.regular_user._id)
 
     def test_web_user_domain_membership(self):
         # The web user is an admin on `domain` but not on `other_domain`
-        es_query = UserES().domain(self.domain).web_users().filter(_is_admin(self.domain))
+        es_query = UserES().domain(self.domain).web_users().is_admin(self.domain)
         results = es_query.run().hits
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['_id'], self.web_user._id)
 
-        es_query = UserES().domain(self.domain).web_users().filter(_is_admin(self.other_domain))
+        es_query = UserES().domain(self.domain).web_users().is_admin(self.other_domain)
         results = es_query.run().hits
         self.assertEqual(len(results), 0)
-
-
-def _is_admin(domain):
-    return filters.nested(
-        'user_domain_memberships',
-        filters.AND(
-            filters.term('user_domain_memberships.domain.exact', domain),
-            filters.term('user_domain_memberships.is_admin', True),
-        )
-    )
