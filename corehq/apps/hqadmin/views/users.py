@@ -309,7 +309,7 @@ def _augment_users_with_feature_flag_edit_permissions(users):
             continue
         for user in users:
             if permission.is_user_enabled(user.username):
-                user.tags_edit_permission.append(tag)
+                user.tags_edit_permission.append(tag.name)
     return users
 
 
