@@ -189,7 +189,6 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
         print("kwargs", kwargs)
         mutable_post = request.POST.copy()
         if pk := request.POST.get('pk'):
-            print("pk", pk)
             expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk)
         else:
             expression = None

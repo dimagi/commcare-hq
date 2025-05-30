@@ -9,7 +9,6 @@
   {% if form.instance.pk %}
   <input type="hidden" name="pk" value="{{ form.instance.pk }}" />
   {% endif %}
-  {{form.instance.pk}}
   <div class="modal-header">
     <h5 class="modal-title" id="customModalLabel">{% trans "Custom Modal" %}</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>

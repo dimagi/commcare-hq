@@ -73,30 +73,6 @@ class CSQLFixtureFilterForm(forms.ModelForm):
         self.domain = domain
         print("args", args)
         print("kwargs", kwargs)
-        initial_criteria = []
-        # self.fields['user_data_criteria'] = forms.JSONField(
-        #     required=False,
-        #     widget=forms.HiddenInput(attrs={'id': 'user-data-criteria-json'})
-        # )
-
-        if self.instance and self.instance.user_data_criteria:
-            print("self.instance.user_data_criteria", self.instance.user_data_criteria)
-            initial_criteria = [
-                {'operator': criteria['operator'], 'property_name': criteria['property_name']}
-                for criteria in self.instance.user_data_criteria
-            ]
-
-        # Create individual criteria forms for the template to render
-        self.criteria_forms = []
-        print("initial_criteria", initial_criteria)
-        if initial_criteria:
-            for criteria in initial_criteria:
-                print("criteria", criteria)
-                form = UserDataCriteriaForm(initial=criteria)
-                self.criteria_forms.append(form)
-        else:
-            # Add one empty form by default
-            self.criteria_forms.append(UserDataCriteriaForm())
 
     def clean(self):
         cleaned_data = super().clean()
@@ -108,27 +84,30 @@ class CSQLFixtureFilterForm(forms.ModelForm):
         return cleaned_data
 
     def get_context(self):
+        initial_criteria = []
+        if self.instance and self.instance.user_data_criteria:
+            print("self.instance.user_data_criteria", self.instance.user_data_criteria)
+            initial_criteria = [
+                {'operator': criteria['operator'], 'property_name': criteria['property_name']}
+                for criteria in self.instance.user_data_criteria
+            ]
+        criteria_forms = []
+        if initial_criteria:
+            for criteria in initial_criteria:
+                print("criteria", criteria)
+                form = UserDataCriteriaForm(initial=criteria)
+                criteria_forms.append(form)
+        else:
+            # Add one empty form by default
+            criteria_forms.append(UserDataCriteriaForm())
+        print("get_context", criteria_forms)
         context = super().get_context()
         context.update({
-            'criteria_forms': self.criteria_forms,
-            'empty_criteria_form': UserDataCriteriaForm(),  # For JavaScript to clone
+            'criteria_forms': criteria_forms,
         })
         return context
 
-    def save(self, commit=True):
-        criteria_data = []
-        for form in self.criteria_forms:
-            if form.is_valid():
-                print("in form is valid")
-                operator = form.cleaned_data.get('operator')
-                print("operator", operator)
-                property_name = form.cleaned_data.get('property_name')
-                print("property_name", property_name)
-                if operator and property_name:
-                    criteria_data.append([operator, property_name])
-        print("criteria_data", criteria_data)
-
-        # Save the user_data_criteria to the instance
+    def save(self, commit=True):      # Save the user_data_criteria to the instance
         self.instance.domain = self.domain
         return super().save(commit)
 
