@@ -20,7 +20,7 @@
         type="button"
         class="btn btn-outline-secondary"
         data-bs-toggle="modal"
-        data-bs-target="#customModal"
+        data-bs-target="#customModal{{form.instance.pk}}"
       >
         <i class="fa-solid fa-filter"></i>
       </button>
@@ -45,7 +45,7 @@
 </form>
 
 {% block modals %}
-  <div class="modal fade" id="customModal" tabindex="-1" aria-labelledby="customModalLabel" aria-hidden="true">
+  <div class="modal fade" id="customModal{{form.instance.pk}}" tabindex="-1" aria-labelledby="customModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         {{filter_modal_form}}

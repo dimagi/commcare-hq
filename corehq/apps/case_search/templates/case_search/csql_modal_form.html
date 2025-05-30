@@ -1,12 +1,23 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<form>
+<form
+  hx-post="{{ request.path_info }}"
+  hq-hx-action="save_filter_modal"
+  hx-swap="outerHTML"
+>
+  {% if form.instance.pk %}
+  <input type="hidden" name="pk" value="{{ form.instance.pk }}" />
+  {% endif %}
+  {{form.instance.pk}}
   <div class="modal-header">
     <h5 class="modal-title" id="customModalLabel">{% trans "Custom Modal" %}</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
   </div>
   <div class="modal-body">
+    {% for form in criteria_forms %}
+      {{ form }}
+    {% endfor %}
     <div class="mb-3">
       <label for="customInput" class="form-label">{% trans "Input" %}</label>
       <input type="text" class="form-control" id="customInput" placeholder="{% trans 'Enter value' %}">
@@ -14,6 +25,6 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-    <button type="button" class="btn btn-primary">{% trans "Save" %}</button>
+    <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
   </div>
 </form>

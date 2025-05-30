@@ -446,10 +446,10 @@ class DomainsNotInCaseSearchIndex(models.Model):
 
 def validate_user_data_criteria(value):
     valid_operators = CSQLFixtureExpression.VALID_OPERATORS
-    for operator, property_name in value:
-        if operator not in valid_operators:
+    for criteria in value:
+        if criteria['operator'] not in valid_operators:
             raise ValidationError(
-                _(f'Invalid operator "{operator}". Allowed values are '
+                _(f'Invalid operator "{criteria["operator"]}". Allowed values are '
                 f'{", ".join(valid_operators)}.')
             )
 

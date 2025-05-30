@@ -164,6 +164,7 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
 
     @hq_hx_action('post')
     def save_expression(self, request, domain, *args, **kwargs):
+        print("save request.post", request.POST)
         if pk := request.POST.get('pk'):
             expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk)
         else:
@@ -179,3 +180,28 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
         if pk := request.POST.get('pk'):
             CSQLFixtureExpression.objects.get(domain=domain, pk=pk).soft_delete()
         return self.render_htmx_no_response(request)
+    
+    @hq_hx_action('post')
+    def save_filter_modal(self, request, domain, *args, **kwargs):
+        from corehq.apps.case_search.forms import CSQLFixtureFilterForm
+        print("request.post", request.POST)
+        print("args", args)
+        print("kwargs", kwargs)
+        mutable_post = request.POST.copy()
+        if pk := request.POST.get('pk'):
+            print("pk", pk)
+            expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk)
+        else:
+            expression = None
+        operators = request.POST.getlist('operator', [])
+        properties = request.POST.getlist('property_name', [])
+        mutable_post['user_data_criteria'] = [{"operator": operator, "property_name": property} for operator, property in zip(operators, properties)]
+        print("request.POST", request.POST)
+        print("mutable_post", mutable_post)
+        #  processing request.POST to include user_data_criteria makes it correctly update in the instance
+        # TODO figure out how to correclty repopulate this into the form for rendering
+        form = CSQLFixtureFilterForm(self.domain, mutable_post, instance=expression)
+        print("about to save form")
+        form.save()
+        print("about to render form")
+        return HttpResponse(form.render())
