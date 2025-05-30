@@ -203,7 +203,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
     def headers(self):
         headers = super().headers
         return [_('Email Address'), _('Name'), _('Role'), _('Last Login [UTC]'),
-                _('Last Access Date [UTC]'), _('Status')] + headers
+                _('Last Access Date [UTC]'), _('Status'), _('Active in Project')] + headers
 
     def rows_for_domain(self, domain_obj):
 
@@ -222,7 +222,8 @@ class EnterpriseWebUserReport(EnterpriseReport):
                     user.role_label(domain_obj.name),
                     self.format_date(user.last_login),
                     last_accessed_domain,
-                    _('Active User')
+                    _('Active User'),
+                    str(domain_membership.is_active)
                 ]
                 + self.domain_properties(domain_obj))
         for invite in Invitation.by_domain(domain_obj.name):
