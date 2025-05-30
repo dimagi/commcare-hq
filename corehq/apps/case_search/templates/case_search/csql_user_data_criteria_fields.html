@@ -1,0 +1,20 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="csql-criteria-row">
+  <div class="d-flex align-items-center mb-2">
+    <div class="me-2">
+      {{ form.operator }}  <!-- Render the operator field -->
+    </div>
+    <div class="me-2">
+      {{ form.property_name }}  <!-- Render the property name field -->
+    </div>
+    <button
+      type="button"
+      class="btn btn-danger"
+      onclick="this.closest('.csql-criteria-row').remove();"
+    >
+      <i class="fa fa-trash"></i> {% trans "Delete" %}
+    </button>
+  </div>
+</div>

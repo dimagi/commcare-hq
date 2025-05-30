@@ -183,10 +183,12 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
     
 
     @hq_hx_action('post')
-    def new_criteria(self, *args, **kwargs):
+    def new_criteria(self, request, *args, **kwargs):
+        from django.shortcuts import render
+
         from corehq.apps.case_search.forms import UserDataCriteriaForm
         print("UserDataCriteriaForm().render()", UserDataCriteriaForm().render())
-        return HttpResponse(UserDataCriteriaForm().render())
+        return render(request, 'case_search/csql_user_data_criteria_fields.html', {'form': UserDataCriteriaForm()})
 
     @hq_hx_action('post')
     def save_filter_modal(self, request, domain, *args, **kwargs):
