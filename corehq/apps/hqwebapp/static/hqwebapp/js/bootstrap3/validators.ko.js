@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/bootstrap3/validators.ko", [
+define("hqwebapp/js/bootstrap3/validators.ko", [
     'jquery',
     'knockout',
     'hqwebapp/js/constants',

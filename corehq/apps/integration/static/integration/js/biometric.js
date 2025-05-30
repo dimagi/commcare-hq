@@ -1,4 +1,4 @@
-hqDefine('integration/js/biometric', [
+define('integration/js/biometric', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'integration/js/simprints',

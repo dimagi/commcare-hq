@@ -2,7 +2,7 @@
 /**
  * Backbone model and functions for listing and selecting CommCare apps
  */
-hqDefine("cloudcare/js/formplayer/apps/api", [
+define("cloudcare/js/formplayer/apps/api", [
     'jquery',
     'cloudcare/js/formplayer/apps/collections',
     'cloudcare/js/formplayer/users/models',

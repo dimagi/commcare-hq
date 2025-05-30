@@ -1,7 +1,7 @@
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
-hqDefine("cloudcare/js/formplayer/app", [
+define("cloudcare/js/formplayer/app", [
     'jquery',
     'knockout',
     'underscore',

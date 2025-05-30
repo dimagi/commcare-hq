@@ -1,5 +1,5 @@
 
-hqDefine('analytix/js/cta_forms', [
+define('analytix/js/cta_forms', [
     'jquery',
     'knockout',
     'underscore',

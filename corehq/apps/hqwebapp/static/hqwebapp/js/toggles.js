@@ -1,5 +1,5 @@
 
-hqDefine('hqwebapp/js/toggles', [
+define('hqwebapp/js/toggles', [
     'underscore',
     'hqwebapp/js/initial_page_data',
 ], function (

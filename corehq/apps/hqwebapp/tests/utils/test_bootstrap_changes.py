@@ -97,12 +97,12 @@ def test_make_javascript_dependency_renames():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_make_javascript_dependency_renames_hqdefine():
-    line = """hqDefine("hqwebapp/js/bootstrap3/prepaid_modal", [\n"""
+def test_make_javascript_dependency_renames_amd():
+    line = """define("hqwebapp/js/bootstrap3/prepaid_modal", [\n"""
     final_line, renames = make_javascript_dependency_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """hqDefine("hqwebapp/js/bootstrap5/prepaid_modal", [\n""")
+    eq(final_line, """define("hqwebapp/js/bootstrap5/prepaid_modal", [\n""")
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 

@@ -22,7 +22,6 @@ Table of contents
     :maxdepth: 1
 
     dependencies
-    module-history
     libraries
     external-packages
 
