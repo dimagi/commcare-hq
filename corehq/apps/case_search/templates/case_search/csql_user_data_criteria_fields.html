@@ -1,20 +1,32 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+<style>
+  .csql-criteria-row:last-of-type .and-text {
+    display: none; /* Hide the AND text if it's the last csql-criteria-row */
+  }
+</style>
+
 <div class="csql-criteria-row">
   <div class="d-flex align-items-center mb-2">
     <div class="me-2">
-      {{ form.operator }}  <!-- Render the operator field -->
+      User Property
     </div>
     <div class="me-2">
-      {{ form.property_name }}  <!-- Render the property name field -->
+      {{ form.operator }}
+    </div>
+    <div class="me-2">
+      {{ form.property_name }}
     </div>
     <button
       type="button"
-      class="btn btn-danger"
+      class="btn btn-outline-danger"
       onclick="this.closest('.csql-criteria-row').remove();"
     >
-      <i class="fa fa-trash"></i> {% trans "Delete" %}
+      <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
     </button>
+  </div>
+  <div class="text-center fw-bold small and-text"> <!-- Centering the AND, smaller and bold -->
+    AND
   </div>
 </div>

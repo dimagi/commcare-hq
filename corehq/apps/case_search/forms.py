@@ -52,7 +52,7 @@ class UserDataCriteriaForm(forms.Form):
         })
     )
     property_name = forms.CharField(
-        max_length=100,
+        max_length=128,
         widget=forms.TextInput(attrs={
             'class': 'form-control user-data-property',
             'placeholder': 'property_name',
