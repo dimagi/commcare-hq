@@ -10,7 +10,11 @@
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
   </div>
   <div class="modal-body">
-
+    <div id="csql-criteria-rows{{form.instance.pk}}">
+        {% for form in criteria_forms %}
+            {% include 'case_search/csql_user_data_criteria_fields.html' with form=form %}
+        {% endfor %}
+    </div>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
