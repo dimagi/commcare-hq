@@ -81,11 +81,11 @@ class TestCaseSearchFixtures(TestCase):
         res = self.render("selected(@owner_id, '{bha.user_clinic_ids}')")
         self.assertEqual(res, "selected(@owner_id, 'abc123 def456')")
 
-    @patch('corehq.apps.case_search.fixtures._get_indicators')
+    @patch('corehq.apps.case_search.fixtures._get_indicators_for_user')
     @patch('corehq.apps.case_search.fixtures._run_query')
-    def test_fixture_generator(self, run_query, get_indicators):
+    def test_fixture_generator(self, run_query, get_indicators_for_user):
         run_query.return_value = "42"
-        get_indicators.return_value = [
+        get_indicators_for_user.return_value = [
             ('pre_pandemic_births', "dob < '2020-01-01'"),
             ('owned_by_user', "@owner_id = '{user.uuid}'"),
         ]
@@ -101,8 +101,8 @@ class TestCaseSearchFixtures(TestCase):
         </TestRestore>"""
         assert_xml_equal(expected, self.generate_fixtures())
 
-    @patch('corehq.apps.case_search.fixtures._get_indicators')
-    def test_full_query(self, get_indicators):
+    @patch('corehq.apps.case_search.fixtures._get_indicators_for_user')
+    def test_full_query(self, get_indicators_for_user):
         indicators = [
             # (name, csql_template, expected_count)
             ('owned_by_user', "@owner_id = '{user.uuid}'", 3),
@@ -110,7 +110,7 @@ class TestCaseSearchFixtures(TestCase):
             ('own_clients', "@case_type = 'client' and @owner_id = '{user.uuid}'", 2),
             ('bad_query', "this is not a valid query", "ERROR"),
         ]
-        get_indicators.return_value = [(name, csql_template) for name, csql_template, _ in indicators]
+        get_indicators_for_user.return_value = [(name, csql_template) for name, csql_template, _ in indicators]
 
         res = self.generate_fixtures()
         for name, _, expected in indicators:
