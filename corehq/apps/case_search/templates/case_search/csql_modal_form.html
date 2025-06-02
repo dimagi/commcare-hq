@@ -15,6 +15,16 @@
             {% include 'case_search/csql_user_data_criteria_fields.html' with form=form %}
         {% endfor %}
     </div>
+    <button
+        type="button"
+        class="btn btn-outline-primary"
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="new_criteria"
+        hx-target="#csql-criteria-rows{{form.instance.pk}}"
+        hx-swap="beforeend"
+        >
+        <i class="fa fa-plus"></i> {% trans "Add Criteria" %}
+  </button>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
