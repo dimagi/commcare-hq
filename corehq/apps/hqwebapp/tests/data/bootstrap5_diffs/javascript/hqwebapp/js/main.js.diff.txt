@@ -14,8 +14,8 @@
 +    "bootstrap5",
      "hqwebapp/js/hq_extensions.jquery",
      "jquery.cookie/jquery.cookie",
-     "jquery-textchange/jquery.textchange",
-@@ -17,6 +18,7 @@
+ ], function (
+@@ -16,6 +17,7 @@
      initialPageData,
      alertUser,
      googleAnalytics,
@@ -23,7 +23,7 @@
  ) {
      var eventize = function (that) {
          var events = {};
-@@ -43,11 +45,11 @@
+@@ -42,11 +44,11 @@
          wrap = wrap === undefined ? true : wrap;
          var el = $(
              '<div class="hq-help">' +
@@ -37,7 +37,7 @@
          });
          if (wrap) {
              el.hqHelp();
-@@ -102,6 +104,7 @@
+@@ -101,6 +103,7 @@
      ko.virtualElements.allowedBindings.allowDescendantBindings = true;
  
      var initBlock = function ($elem) {
@@ -45,7 +45,7 @@
          $('.submit').click(function (e) {
              var $form = $(this).closest('.form, form'),
                  data = $form.find('[name]').serialize(),
-@@ -111,8 +114,6 @@
+@@ -110,8 +113,6 @@
              $.postGo(action, $.unparam(data));
          });
  
@@ -54,7 +54,7 @@
          $("input[type='text'], input[type='password'], textarea", $elem);
          $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
  
-@@ -124,7 +125,7 @@
+@@ -123,7 +124,7 @@
      var updateDOM = function (update) {
          var key;
          for (key in update) {
@@ -63,7 +63,7 @@
                  $(key).text(update[key]).val(update[key]);
              }
          }
-@@ -155,7 +156,7 @@
+@@ -154,7 +155,7 @@
                      }).addClass(cssClass),
                      $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-primary disabled'),
                      $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-primary disabled'),
@@ -72,7 +72,7 @@
                      setStateWhenReady: function (state) {
                          if (this.state === 'saving') {
                              this.nextState = state;
-@@ -173,7 +174,7 @@
+@@ -172,7 +173,7 @@
                          this.$saved.detach();
                          this.$retry.detach();
                          var buttonUi = this.ui;
@@ -81,7 +81,7 @@
                              buttonUi.removeClass(v);
                          });
                          if (state === 'save') {
-@@ -201,7 +202,7 @@
+@@ -200,7 +201,7 @@
                              $.ajaxSettings.beforeSend(jqXHR, settings);
                              beforeSend.apply(this, arguments);
                          };
@@ -90,7 +90,7 @@
                              that.setState(that.nextState);
                              success.apply(this, arguments);
                          };
-@@ -249,11 +250,9 @@
+@@ -248,11 +249,9 @@
                  $(window).on('beforeunload', function () {
                      var lastParent = button.ui.parents()[button.ui.parents().length - 1];
                      if (lastParent) {
@@ -104,7 +104,7 @@
                              return options.unsavedMessage || "";
                          }
                      }
-@@ -377,7 +376,12 @@
+@@ -376,7 +375,12 @@
          $(window).on('beforeunload', beforeUnloadCallback);
          initBlock($("body"));
  
@@ -118,7 +118,7 @@
  
          $(document).on('click', '.track-usage-link', function (e) {
              var $link = $(e.currentTarget),
-@@ -444,8 +448,13 @@
+@@ -443,8 +447,13 @@
          // EULA modal
          var eulaCookie = "gdpr_rollout";
          if (!$.cookie(eulaCookie)) {
@@ -134,7 +134,7 @@
                  $("body").addClass("has-eula");
                  $("#eula-agree").click(function () {
                      $(this).disableButton();
-@@ -453,7 +462,7 @@
+@@ -452,7 +461,7 @@
                          url: initialPageData.reverse("agree_to_eula"),
                          method: "POST",
                          success: function () {
@@ -143,7 +143,7 @@
                              $("body").removeClass("has-eula");
                          },
                          error: function (xhr) {
-@@ -469,21 +478,22 @@
+@@ -468,21 +477,22 @@
                          },
                      });
                  });

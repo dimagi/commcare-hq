@@ -8,7 +8,6 @@ define('hqwebapp/js/bootstrap3/main', [
     "analytix/js/google",
     "hqwebapp/js/hq_extensions.jquery",
     "jquery.cookie/jquery.cookie",
-    "jquery-textchange/jquery.textchange",
 ], function (
     $,
     ko,
