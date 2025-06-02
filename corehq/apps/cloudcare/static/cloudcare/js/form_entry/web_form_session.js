@@ -1,4 +1,4 @@
-define("cloudcare/js/form_entry/web_form_session", [
+hqDefine("cloudcare/js/form_entry/web_form_session", [
     'jquery',
     'knockout',
     'underscore',

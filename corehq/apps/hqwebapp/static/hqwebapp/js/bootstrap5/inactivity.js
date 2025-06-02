@@ -2,7 +2,7 @@
  *  Handles inactvitiy timeout UI: a modal containing an iframe with the login screen,
  *  allowing users to re-login without leaving the page and losing their work.
  */
-define('hqwebapp/js/bootstrap5/inactivity', [
+hqDefine('hqwebapp/js/bootstrap5/inactivity', [
     'jquery',
     'underscore',
     'bootstrap5',

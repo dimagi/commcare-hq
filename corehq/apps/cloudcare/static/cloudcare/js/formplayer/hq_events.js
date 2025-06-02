@@ -3,7 +3,7 @@
  *
  * This is framework for allowing messages from HQ
  */
-define("cloudcare/js/formplayer/hq_events", [
+hqDefine("cloudcare/js/formplayer/hq_events", [
     'underscore',
     'cloudcare/js/formplayer/app',
 ], function (

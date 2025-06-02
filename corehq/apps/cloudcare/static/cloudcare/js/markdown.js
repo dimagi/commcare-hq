@@ -1,4 +1,4 @@
-define('cloudcare/js/markdown', [
+hqDefine('cloudcare/js/markdown', [
     'jquery',
     'dompurify',
     'markdown-it/dist/markdown-it',

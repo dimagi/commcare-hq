@@ -1,4 +1,4 @@
-define("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
+hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
     'jquery',
     'underscore',
     'knockout',

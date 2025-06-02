@@ -1,4 +1,4 @@
-define("cloudcare/js/formplayer/middleware", [
+hqDefine("cloudcare/js/formplayer/middleware", [
     'jquery',
     'underscore',
     'cloudcare/js/formplayer/app',

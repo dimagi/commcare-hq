@@ -105,23 +105,31 @@ from ``apps_base.html``.
 Why is old code formatted differently?
 --------------------------------------
 
-Some older entry points are written in AMD style and should be migrated to an ESM format.
+Most older entry points are written in a modified AMD
+style and should eventually be migrated to an ESM format.
 
-However, be careful not to migrate AMD modules that are imported by ESM modules.
+However, be careful when migrating modified AMD modules that aren't entry points, as some of these modules,
+like ``hqwebapp/js/initial_page_data``, are still being referenced by pages not using a JavaScript bundler.
+These pages still require this modified AMD approach until they transition to using Webpack.
+
+We will cover what common modified AMD modules look like in this section, but you can read more
+about this choice of module format in the `Historical Background on Module Patterns
+<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/module-history.rst>`__
 
 The process of migrating a module from AMD to ESM is very straightforward. To learn more,
 please see `Migrating Modules from AMD to ESM
 <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/amd-to-esm.rst>`__
 
 
-AMD Modules
-~~~~~~~~~~~
+Modified AMD Legacy Modules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-AMD modules look like this, with all dependencies loaded as part of ``define``:
+Modified AMD-style modules look like this,
+with all dependencies loaded as part of ``hqDefine``:
 
 ::
 
-   define("my_app/js/my_file", [
+   hqDefine("my_app/js/my_file", [
        "knockout",
        "hqwebapp/js/initial_page_data"
    ], function (
@@ -154,11 +162,11 @@ How do I add a new internal module or external dependency to an existing page?
 Webpack supports multiple module formats, with ES Modules (ESM) being the preferred format.
 New modules should be written in the ESM format.
 
-That being said, some legacy code on HQ, notably Web Apps and some of hqwebapp, is written in a AMD format.
+That being said, a lot of legacy code on HQ is written in a modified AMD format.
 If you are adding a lot of new code to such a module, it is recommended that you
 `migrate this module to ESM format
 <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/amd-to-esm.rst>`__.
-However, not every AMD module is ready to be migrated to ESM immediately,
+However, not every modified AMD module is ready to be migrated to ESM immediately,
 so it's worth familiarizing yourself with working in that format.
 
 The format of the module you add a dependency to will determine how you include that dependency.
@@ -185,19 +193,19 @@ ESM modules provide an extensive and flexible away of managing and naming import
     import * as myAliasedDep from "hqwebapp/js/my_other_dependency";
 
 
-AMD
-~~~
+Modified AMD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. warning::
     You should NOT create NEW modules with this style.
 
-To use your new module/dependency, add it your module’s ``define`` list of dependencies.
+To use your new module/dependency, add it your module’s ``hqDefine`` list of dependencies.
 If the new dependency will be directly referenced in the body of the module, also add a
-parameter to the ``define`` callback:
+parameter to the ``hqDefine`` callback:
 
 ::
 
-   define("my_app/js/my_module", [
+   hqDefine("my_app/js/my_module", [
        ...
        "hqwebapp/js/my_new_dependency",
    ], function (
@@ -246,12 +254,12 @@ How close are we to a world where we’ll just have one set of conventions?
 As above, most code is migrated, but most of the remaining areas have
 significant complexity.
 
-`amd.sh <https://github.com/dimagi/commcare-hq/blob/master/scripts/codechecks/amd.sh>`__
+`hqDefine.sh <https://github.com/dimagi/commcare-hq/blob/master/scripts/codechecks/hqDefine.sh>`__
 generates metrics for the current status of the migration and locates
 un-migrated files. At the time of writing:
 
 ::
 
-    $ ./scripts/codechecks/amd.sh
+    $ ./scripts/codechecks/hqDefine.sh
 
-80%     (522/658) of JS files use ESM format
+19%     (123/660) of JS files use ESM format

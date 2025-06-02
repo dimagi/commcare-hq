@@ -102,11 +102,11 @@ In ESM modules:
 
     import DOMPurify from "dompurify";
 
-In modules using AMD style:
+In modules using ``hqDefine``:
 
 ::
 
-    define("my_app/js/my_module", [
+    hqDefine("my_app/js/my_module", [
         "dompurify",
     ], function (
         DOMPurify,

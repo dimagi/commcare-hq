@@ -1,4 +1,4 @@
-define("hqwebapp/js/components.ko", [
+hqDefine("hqwebapp/js/components.ko", [
     'jquery',
     'knockout',
 ], function (
