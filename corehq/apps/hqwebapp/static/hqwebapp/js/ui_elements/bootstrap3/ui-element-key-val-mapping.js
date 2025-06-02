@@ -32,7 +32,6 @@ import ko from "knockout";
 import _ from "underscore";
 import hqMain from "hqwebapp/js/bootstrap3/main";
 import assertProperties from "hqwebapp/js/assert_properties";
-import "jquery-textchange/jquery.textchange";
 
 var module = {};
 
