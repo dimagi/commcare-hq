@@ -1,7 +1,7 @@
 /**
  * Backbone model for listing and selecting FormEntrySessions
  */
-define("cloudcare/js/formplayer/sessions/api", [
+hqDefine("cloudcare/js/formplayer/sessions/api", [
     'jquery',
     'underscore',
     'cloudcare/js/formplayer/sessions/collections',

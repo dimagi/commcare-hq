@@ -1,6 +1,6 @@
 #!/bin/bash
 # run as
-# scripts/codechecks/amd.sh
+# scripts/codechecks/hqDefine.sh
 
 ## Count files by type
 
@@ -9,11 +9,11 @@ function list-js() {
 }
 
 function list-no-esm-js() {
-  list-js | xargs grep -l '^define.*'
+  list-js | xargs grep -l '^hqDefine.*'
 }
 
 function list-esm-js() {
-  list-js | xargs grep -L '^define.*'
+  list-js | xargs grep -L '^hqDefine.*'
 }
 
 ## Calculate migrated percentage for given statistic
@@ -26,7 +26,7 @@ function percent() {
 ## Main script
 
 command=${1:-""}
-help="Pass list-no-esm to list the files still using AMD format, or list-esm to list ESM formatted files"
+help="Pass list-no-esm to list the files still using hqDefine, or list-esm to list ESM formatted files"
 
 jsTotalCount=$(echo $(list-js | wc -l))
 noEsmJsTotalCount=$(echo $(list-no-esm-js | wc -l))
@@ -64,4 +64,4 @@ case $command in
     echo "Unrecognized command"
     echo $help
     ;;
-esac
+esac 

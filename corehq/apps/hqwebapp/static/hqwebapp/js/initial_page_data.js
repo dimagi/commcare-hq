@@ -7,7 +7,7 @@
  *  define data, then in JavaScript use this module's get function to
  *  access it.
  */
-define('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($, _) {
+hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($, _) {
     var dataSelector = ".initial-page-data",
         _initData = {},
         urlSelector = ".commcarehq-urls",

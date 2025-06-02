@@ -1,9 +1,9 @@
-define("hqwebapp/js/select2_knockout_bindings.ko", [
+
+hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
     'jquery',
     'underscore',
     'knockout',
     'dompurify',
-    'jquery-textchange/jquery.textchange',
     'select2/dist/js/select2.full.min',
 ], function (
     $,

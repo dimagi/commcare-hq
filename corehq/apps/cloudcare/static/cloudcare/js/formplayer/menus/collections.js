@@ -3,7 +3,7 @@
  *  selects one of these items. The query screen is also implemented as
  *  a menu, where each search field is an item.
  */
-define("cloudcare/js/formplayer/menus/collections", [
+hqDefine("cloudcare/js/formplayer/menus/collections", [
     'underscore',
     'backbone',
     'sentry_browser',

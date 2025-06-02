@@ -1,4 +1,4 @@
-define("hqwebapp/js/bootstrap3/base_main", [
+hqDefine("hqwebapp/js/bootstrap3/base_main", [
     'hqwebapp/js/bootstrap3/downgrade_modal',
     'hqwebapp/js/bootstrap3/prepaid_modal',
     'hqwebapp/js/bootstrap3/hq.helpers',

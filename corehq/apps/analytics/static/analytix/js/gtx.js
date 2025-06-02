@@ -3,7 +3,7 @@
  *  Handles communication with the google tag manager API.
  *  gtx is the filename because some ad blockers blocks 'gtm.js'*
  */
-define('analytix/js/gtx', [
+hqDefine('analytix/js/gtx', [
     'jquery',
     'underscore',
     'analytix/js/initial',

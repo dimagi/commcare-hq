@@ -1,5 +1,5 @@
 
-define("hqwebapp/js/bootstrap5/widgets",[
+hqDefine("hqwebapp/js/bootstrap5/widgets",[
     'jquery',
     'underscore',
     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
