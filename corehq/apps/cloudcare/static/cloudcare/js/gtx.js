@@ -1,4 +1,4 @@
-hqDefine('cloudcare/js/gtx', [
+define('cloudcare/js/gtx', [
     'underscore',
     'analytix/js/gtx',
 ], function (

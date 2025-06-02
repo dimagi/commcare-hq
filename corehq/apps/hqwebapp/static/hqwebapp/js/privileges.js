@@ -1,5 +1,5 @@
 
-hqDefine('hqwebapp/js/privileges', [
+define('hqwebapp/js/privileges', [
     'underscore',
     'hqwebapp/js/initial_page_data',
 ], function (
