@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load django_tables2 %}
 
-{% block table-container-attrs %}
+{% block table-container-attrs %}{# prettier-ignore-start #}
   {{ block.super }}
   x-data="{
     numRecordsSelected: {{ table.num_visible_selected_records }},
@@ -18,7 +18,7 @@
     $watch('numRecordsSelected', updateCleaningStatus);
     $store.changes.update({{ table.has_changes|yesno:"true,false" }});
   "
-{% endblock %}
+{# prettier-ignore-end #}{% endblock table-container-attrs %}
 
 {% block no_results_table %}
   <div class="alert alert-primary">
@@ -28,19 +28,16 @@
         href="#"
         class="fw-bold"
         @click.prevent="$dispatch('wiggle-filters-button');"
-      >adjust your filters</a>
+        >adjust your filters</a
+      >
       and try again.
     {% endblocktrans %}
   </div>
-{% endblock %}
+{% endblock no_results_table %}
 
 {% block before_table %}
   <div class="d-flex align-items-center pb-2">
-
-    <div
-      class="pe-2"
-      x-show="$store.changes.hasChanges"
-    >
+    <div class="pe-2" x-show="$store.changes.hasChanges">
       <div class="input-group">
         <div class="input-group-text">
           <i class="fa-solid fa-pencil me-2"></i>
@@ -127,10 +124,7 @@
             {% trans "This session is read-only." %}
           {% else %}
             <i class="fa-solid fa-circle-check me-2"></i>
-            <span
-              class="me-1"
-              x-text="numRecordsSelected"
-            ></span>
+            <span class="me-1" x-text="numRecordsSelected"></span>
             {% blocktrans %}
               Cases Selected
             {% endblocktrans %}
@@ -188,9 +182,8 @@
         {% endif %}
       </div>
     </div>
-
   </div>
-{% endblock %}
+{% endblock before_table %}
 
 {% block after_table %}
   {{ block.super }}
@@ -199,4 +192,4 @@
   {% include "data_cleaning/modals/confirm_undo.html" with modal_id="confirm-undo-modal" confirm_button_class="btn-secondary" %}
   {% include "data_cleaning/modals/confirm_clear.html" with modal_id="confirm-clear-modal" confirm_button_class="btn-danger" %}
   {% include "data_cleaning/modals/confirm_apply.html" with modal_id="confirm-apply-modal" confirm_button_class="btn-success" %}
-{% endblock %}
+{% endblock after_table %}
