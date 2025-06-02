@@ -67,6 +67,14 @@ class CSQLFixtureFilterForm(forms.ModelForm):
         model = CSQLFixtureExpression
         fields = ["user_data_criteria"]
 
+    def clean(self):
+        cleaned_data = super().clean()
+        user_data_criteria = cleaned_data.get('user_data_criteria')
+        if user_data_criteria is None:
+            cleaned_data['user_data_criteria'] = []
+
+        return cleaned_data
+
     def get_context(self):
         context = super().get_context()
         context.update({

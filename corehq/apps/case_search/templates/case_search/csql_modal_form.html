@@ -1,7 +1,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<form>
+<form
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="save_filter_modal"
+    hx-swap="outerHTML"
+>
   {% if form.instance.pk %}
   <input type="hidden" name="pk" value="{{ form.instance.pk }}" />
   {% endif %}

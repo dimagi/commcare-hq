@@ -12,7 +12,11 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.case_importer.views import require_can_edit_data
-from corehq.apps.case_search.forms import CSQLFixtureExpressionForm, UserDataCriteriaForm
+from corehq.apps.case_search.forms import (
+    CSQLFixtureExpressionForm,
+    UserDataCriteriaForm,
+    CSQLFixtureFilterForm,
+)
 from corehq.apps.case_search.models import (
     CSQLFixtureExpression,
     case_search_enabled_for_domain,
@@ -184,3 +188,23 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
     @hq_hx_action('post')
     def new_criteria(self, request, *args, **kwargs):
         return render(request, 'case_search/csql_user_data_criteria_fields.html', {'form': UserDataCriteriaForm()})
+
+    @hq_hx_action('post')
+    def save_filter_modal(self, request, domain, *args, **kwargs):
+        mutable_post = request.POST.copy()
+
+        pk = request.POST.get('pk')
+        expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk) if pk else None
+
+        operators = request.POST.getlist('operator', [])
+        properties = request.POST.getlist('property_name', [])
+        mutable_post['user_data_criteria'] = [
+            {"operator": operator, "property_name": property}
+            for operator, property in zip(operators, properties)
+        ]
+
+        form = CSQLFixtureFilterForm(mutable_post, instance=expression)
+        if form.is_valid():
+            form.save()
+            return HttpResponse(form.render())
+        raise AssertionError("The user shouldn't be able to submit an invalid form")
