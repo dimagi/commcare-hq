@@ -2,6 +2,7 @@ import re
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.dispatch import receiver
@@ -443,13 +444,29 @@ class DomainsNotInCaseSearchIndex(models.Model):
     estimated_size = models.IntegerField()
 
 
+def validate_user_data_criteria(value):
+    valid_operators = CSQLFixtureExpression.VALID_OPERATORS
+    for criteria in value:
+        if criteria['operator'] not in valid_operators:
+            raise ValidationError(
+                _(f'Invalid operator "{criteria["operator"]}". Allowed values are '
+                f'{", ".join(valid_operators)}.')
+            )
+
+
 class CSQLFixtureExpression(models.Model):
+    MATCH_IS = "IS"
+    MATCH_IS_NOT = "IS_NOT"
+    VALID_OPERATORS = {MATCH_IS, MATCH_IS_NOT}
+
     domain = models.CharField(max_length=64, default='')
     name = models.CharField(max_length=64, null=False)
     csql = models.CharField(null=False)
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
+    user_data_criteria = models.JSONField(default=list, blank=True,
+                                          validators=(validate_user_data_criteria,))
 
     @classmethod
     def by_domain(cls, domain):
@@ -463,6 +480,10 @@ class CSQLFixtureExpression(models.Model):
             expression=self,
             action=CSQLFixtureExpressionLog.Action.DELETE,
         )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class CSQLFixtureExpressionLog(models.Model):
