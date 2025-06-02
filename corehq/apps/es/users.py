@@ -132,20 +132,25 @@ user_adapter = create_document_adapter(
 
 
 def domain(domain, allow_enterprise=False):
-    domain_list = [domain]
+    domains = [domain] if isinstance(domain, str) else domain
     if allow_enterprise:
-        from corehq.apps.enterprise.models import EnterprisePermissions
-        source_domain = EnterprisePermissions.get_source_domain(domain)
-        if source_domain:
-            domain_list.append(source_domain)
-    return domains(domain_list)
-
-
-def domains(domains):
+        domains += list(_get_enterprise_domains(domains))
     return filters.OR(
         filters.term("domain.exact", domains),
         filters.term("domain_memberships.domain.exact", domains)
     )
+
+
+def _get_enterprise_domains(domains):
+    from corehq.apps.enterprise.models import EnterprisePermissions
+    for domain in domains:
+        source_domain = EnterprisePermissions.get_source_domain(domain)
+        if source_domain:
+            yield source_domain
+
+
+# TODO remove
+domains = domain
 
 
 def analytics_enabled(enabled=True):
