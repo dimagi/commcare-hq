@@ -7,26 +7,31 @@
   }
 </style>
 
-<div class="csql-criteria-row">
-  <div class="d-flex align-items-center mb-2">
-    <div class="me-2">
-      User Property
+<div
+  class="csql-criteria-row"
+  x-data="{ showElement: true }" 
+>
+  <template x-if="showElement">
+    <div class="d-flex align-items-center mb-2">
+      <div class="me-2">
+        User Property
+      </div>
+      <div class="me-2">
+        {{ form.operator }}
+      </div>
+      <div class="me-2">
+        {{ form.property_name }}
+      </div>
+      <button
+        type="button"
+        class="btn btn-outline-danger"
+        @click="isUnsaved = true; showElement = false; "
+        >
+        <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+      </button>
     </div>
-    <div class="me-2">
-      {{ form.operator }}
+    <div class="text-center fw-bold small and-text"> <!-- Centering the AND, smaller and bold -->
+      AND
     </div>
-    <div class="me-2">
-      {{ form.property_name }}
-    </div>
-    <button
-      type="button"
-      class="btn btn-outline-danger"
-      onclick="this.closest('.csql-criteria-row').remove();"
-    >
-      <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
-    </button>
-  </div>
-  <div class="text-center fw-bold small and-text"> <!-- Centering the AND, smaller and bold -->
-    AND
-  </div>
+  </template>
 </div>

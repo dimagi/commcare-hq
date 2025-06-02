@@ -5,6 +5,9 @@
   hx-post="{{ request.path_info }}"
   hq-hx-action="save_filter_modal"
   hx-swap="outerHTML"
+  x-data="{ isUnsaved: false }"
+  @change="isUnsaved = true;"
+  @submit="isUnsaved = false;"
 >
   {% if form.instance.pk %}
   <input type="hidden" name="pk" value="{{ form.instance.pk }}" />
@@ -32,6 +35,6 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-    <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+    <button type="submit" class="btn btn-primary" x-bind:disabled="!isUnsaved">{% trans "Save" %}</button>
   </div>
 </form>
