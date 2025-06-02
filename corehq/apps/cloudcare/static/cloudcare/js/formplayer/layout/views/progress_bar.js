@@ -1,4 +1,4 @@
-define("cloudcare/js/formplayer/layout/views/progress_bar", [
+hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", [
     'jquery',
     'underscore',
     'backbone.marionette',

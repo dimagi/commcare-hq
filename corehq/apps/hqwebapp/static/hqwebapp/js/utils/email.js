@@ -1,5 +1,5 @@
 
-define('hqwebapp/js/utils/email', [], function () {
+hqDefine('hqwebapp/js/utils/email', [], function () {
     return {
         validateEmail: function (email) {
             // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript

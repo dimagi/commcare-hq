@@ -1,8 +1,8 @@
 --- 
 +++ 
 @@ -1,9 +1,9 @@
--define("hqwebapp/js/bootstrap3/common", [
-+define("hqwebapp/js/bootstrap5/common", [
+-hqDefine("hqwebapp/js/bootstrap3/common", [
++hqDefine("hqwebapp/js/bootstrap5/common", [
      'jquery',
      'knockout',
      'ko.mapping',

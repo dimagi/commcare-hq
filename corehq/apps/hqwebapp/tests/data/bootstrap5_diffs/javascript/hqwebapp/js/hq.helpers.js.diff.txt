@@ -1,8 +1,8 @@
 --- 
 +++ 
 @@ -1,15 +1,16 @@
--define("hqwebapp/js/bootstrap3/hq.helpers", [
-+define("hqwebapp/js/bootstrap5/hq.helpers", [
+-hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
++hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
      'jquery',
      'knockout',
      'underscore',

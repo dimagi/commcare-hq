@@ -1,4 +1,4 @@
-define("cloudcare/js/formplayer/apps/views", [
+hqDefine("cloudcare/js/formplayer/apps/views", [
     'jquery',
     'underscore',
     'backbone.marionette',

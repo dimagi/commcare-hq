@@ -82,10 +82,12 @@ setting initial page data in JavaScript instead of in a Django template:
 
 ::
 
-   import initialPageData from "hqwebapp/js/initial_page_data";
-   initialPageData.register("apps", [{
-       "_id": "my-app_id",
-   }])
+   hqDefine("my_app/js/spec/my_test", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
+       initialPageData.register("apps", [{
+           "_id": "my-app_id",
+       }])
+       ...
+   });
 
 Partials
 ~~~~~~~~
@@ -185,10 +187,12 @@ directly:
 
 ::
 
-   import initialPageData from "my_app/js/spec/my_test";
-   initialPageData.registerUrl("apps", [{
-       "build_schema": "/a/---/data/export/build_full_schema/",
-   }])
+   hqDefine("my_app/js/spec/my_test", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
+       initialPageData.registerUrl("apps", [{
+           "build_schema": "/a/---/data/export/build_full_schema/",
+       }])
+       ...
+   });
 
 Toggles and Feature Previews
 ----------------------------
@@ -203,25 +207,25 @@ enabled, use
 
 .. code:: javascript
 
-   import toggles from "hqwebapp/js/toggles"
-
-   if (toggles.toggleEnabled('IS_DEVELOPER')) {
-       ...
-   }
+   COMMCAREHQ.toggleEnabled('IS_DEVELOPER')
 
 and to check whether the ``'ENUM_IMAGE'`` feature preview is enabled,
 use
 
 .. code:: javascript
 
-   import toggles from "hqwebapp/js/toggles"
-
-   if (toggles.previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
-      ...
-   }
+   COMMCAREHQ.previewEnabled('ENUM_IMAGE')
 
 and that’s pretty much it.
 
+On a page that doesn’t inherit from our main templates, you’ll also have
+to include
+
+.. code:: html
+
+   <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+   <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+   <script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
 
 Domain Privileges
 ----------------------------
@@ -231,12 +235,30 @@ domain has a particular privilege.
 
 In JavaScript, all privileges for the current domain are available and
 easy to check. For example, you can check whether the domain has the ``export_ownership``
-privilege like this:
+privilege by including the `privileges` JS module
 
 .. code:: javascript
 
-   import privileges from "your/js/module";
+   hqDefine('your/js/module', [
+      ...
+      'hqwebapp/js/privileges'
+   ], function (
+      ...
+      privileges
+   ) {...};
+
+and then checking for the privilege using
+
+.. code:: javascript
+
    var hasPrivilege = privileges.hasPrivilege('export_ownership')
+
+On a page that doesn’t inherit from our main templates, you’ll also have
+to include
+
+.. code:: html
+
+   <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
 
 Remote Method Invocation
 ------------------------

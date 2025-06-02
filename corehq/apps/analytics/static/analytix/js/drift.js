@@ -2,7 +2,7 @@
 /**
  * Instantiates the Drift analytics and customer support messaging platform.
  */
-define('analytix/js/drift', [
+hqDefine('analytix/js/drift', [
     'underscore',
     'analytix/js/initial',
     'analytix/js/logging',

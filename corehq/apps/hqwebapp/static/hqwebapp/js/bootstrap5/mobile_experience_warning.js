@@ -1,4 +1,4 @@
-define('hqwebapp/js/bootstrap5/mobile_experience_warning', [
+hqDefine('hqwebapp/js/bootstrap5/mobile_experience_warning', [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "analytix/js/kissmetrix",
