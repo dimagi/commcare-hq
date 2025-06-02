@@ -10,7 +10,7 @@ from django.forms import model_to_dict
 from django.db.models.signals import post_save
 from django.db.transaction import atomic
 from django.utils.translation import gettext as _
-
+from dimagi.utils.parsing import string_to_boolean
 import attr
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
@@ -471,6 +471,31 @@ class CSQLFixtureExpression(models.Model):
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain, deleted=False)
+
+    @classmethod
+    def matches_user_data_criteria(cls, user_data, user_data_criteria):
+        for criteria in user_data_criteria:
+            operator = criteria['operator']
+            property_name = criteria['property_name']
+
+            # Get the value from user_data, default to None if not found
+            value = user_data.get(property_name)
+
+            # If the property does not exist in user_data, return False
+            if value is None or value == '':
+                return False
+
+            # Evaluate the condition based on the operator
+            print(property_name, operator, value)
+            try:
+                if operator == cls.MATCH_IS and not string_to_boolean(value):
+                    return False
+                elif operator == cls.MATCH_IS_NOT and string_to_boolean(value):
+                    return False
+            except ValueError:
+                return True
+
+        return True  # All criteria matched
 
     @atomic
     def soft_delete(self):
