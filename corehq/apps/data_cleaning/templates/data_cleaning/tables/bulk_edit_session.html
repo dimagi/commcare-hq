@@ -132,7 +132,11 @@
               <div
                 class="ms-2 ps-2 border-start inline-block text-warning"
                 data-bs-custom-class="fs-6"
-                data-bs-title="{% trans 'You have selected cases which have been filtered out. New previewed edits will only apply to selected cases in the current filters, unless you remove filters.' %}"
+                data-bs-title="{% blocktrans trimmed %}
+                  You have selected cases which have been filtered out. New
+                  previewed edits will only apply to selected cases in the
+                  current filters, unless you remove filters.
+                {% endblocktrans %}"
                 x-tooltip=""
               >
                 <i class="fa-solid fa-triangle-exclamation"></i>
