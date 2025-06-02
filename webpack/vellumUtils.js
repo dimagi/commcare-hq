@@ -66,7 +66,7 @@ const getDebugRule = function () {
     const debugDir = getDebugDir(),
         hqDir = path.resolve(__dirname, '..');
     const rules = config.module.rules.map(function (rule) {
-        if (rule.loader) {
+        if (rule.loader && rule.loader.startsWith(hqDir)) {
             rule.loader = rule.loader.replace(hqDir, debugDir);
         }
         return rule;
