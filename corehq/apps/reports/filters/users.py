@@ -527,7 +527,7 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
             return super()._base_user_es_query(domain, request_user)
 
         domains = list(set(EnterprisePermissions.get_domains(domain)) | {domain})
-        return user_es.UserES().domains(domains)
+        return user_es.UserES().domain(domains)
 
 
 class AffectedUserFilter(EnterpriseUserFilter):

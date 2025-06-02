@@ -58,7 +58,7 @@ class FeatureUsageCalculator(object):
 
 def get_web_user_usage(domains):
     return (UserES()
-            .domains(domains)
+            .domain(domains)
             .web_users()
             .has_domain_membership(domains, active=True)
             .count())
