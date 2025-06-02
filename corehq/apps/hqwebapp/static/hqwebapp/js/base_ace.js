@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/base_ace', [
+define('hqwebapp/js/base_ace', [
     'jquery',
     'underscore',
     'knockout',
