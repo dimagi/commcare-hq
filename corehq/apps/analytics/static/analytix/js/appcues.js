@@ -4,7 +4,7 @@
 /**
  * Instantiates the AppCues analytics and customer support messaging platform.
  */
-define('analytix/js/appcues', [
+hqDefine('analytix/js/appcues', [
     'underscore',
     'analytix/js/initial',
     'analytix/js/logging',

@@ -62,7 +62,6 @@ ko.bindingHandlers.questionsSelect = {
         ]
      */
     init: function (element, valueAccessor, allBindingsAccessor) {
-
         let optionObjects = ko.utils.unwrapObservable(valueAccessor()),
             allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
             value = ko.utils.unwrapObservable(allBindings.value);
@@ -71,13 +70,11 @@ ko.bindingHandlers.questionsSelect = {
         if (value && !_.some(optionObjects, function (option) {
             return option.value === value;
         })) {
-
             const option = {
                 label: gettext('Unidentified Question') + ' (' + value + ')',
                 value: value,
             };
             optionObjects = [option].concat(optionObjects);
-
             const $warning = $('<div class="help-block"></div>').text(gettext(
                 'We cannot find this question in the allowed questions for this field. ' +
                 'It is likely that you deleted or renamed the question. ' +
@@ -92,7 +89,6 @@ ko.bindingHandlers.questionsSelect = {
             placeholder: gettext('Select a Question'),
             dropdownCssClass: 'bigdrop',
             escapeMarkup: function (m) {
-
                 let paperclip = '<i class="fa fa-paperclip"></i> ';
                 if (m.includes(paperclip)) {
                     m = m.replace(paperclip, '');
@@ -121,7 +117,6 @@ ko.bindingHandlers.questionsSelect = {
         $(element).val(value).trigger('change.select2');
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
-
         const $element = $(element),
             newSelect2Data = _valueToSelect2Data(ko.utils.unwrapObservable(valueAccessor())),
             oldOptionElements = $element.find("option"),
@@ -143,7 +138,6 @@ ko.bindingHandlers.questionsSelect = {
         });
 
         // If there was an error but it's fixed now, remove it
-
         const $container = $element.parent(),
             allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
             value = ko.utils.unwrapObservable(allBindings.value);
@@ -163,7 +157,6 @@ ko.bindingHandlers.casePropertyAutocomplete = {
      */
     init: function (element, valueAccessor) {
         $(element).on('textchange', function () {
-
             const $el = $(this);
             if ($el.val().match(/\s/)) {
                 const pos = $el.caret('pos');
@@ -177,7 +170,6 @@ ko.bindingHandlers.casePropertyAutocomplete = {
         function wrappedValueAccessor() {
             return _.map(ko.unwrap(valueAccessor()), function (value) {
                 if (value.indexOf("attachment:") === 0) {
-
                     const text = value.substring(11),
                         html = '<i class="fa fa-paperclip"></i> ' + text;
                     return {name: text, content: html};

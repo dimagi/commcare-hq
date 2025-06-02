@@ -2,7 +2,8 @@ Static Files Organization
 -------------------------
 
 All\* JavaScript code should be in a .js file and encapsulated as a
-module either using the ES Module syntax or AMD syntax.
+module either using the ES Module syntax or modified-AMD syntax in
+legacy code using using ``hqDefine``.
 
 JavaScript files belong in the ``static`` directory of a Django app,
 which we structure as follows:

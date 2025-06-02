@@ -1,5 +1,5 @@
 
-define("hqwebapp/js/select2_knockout_bindings.ko", [
+hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
     'jquery',
     'underscore',
     'knockout',

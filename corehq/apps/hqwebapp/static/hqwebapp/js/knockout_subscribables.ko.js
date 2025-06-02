@@ -1,4 +1,4 @@
-define("hqwebapp/js/knockout_subscribables.ko", ['knockout'], function (ko) {
+hqDefine("hqwebapp/js/knockout_subscribables.ko", ['knockout'], function (ko) {
     ko.subscribable.fn.snakeCase = function (re) {
         // Converts non-word characters to snake case
         // this.my_thing = ko.observable('hi there').snakeCase()

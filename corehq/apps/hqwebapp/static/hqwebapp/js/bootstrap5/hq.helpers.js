@@ -1,4 +1,4 @@
-define("hqwebapp/js/bootstrap5/hq.helpers", [
+hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     'jquery',
     'knockout',
     'underscore',
@@ -151,4 +151,7 @@ define("hqwebapp/js/bootstrap5/hq.helpers", [
             xhr.withCredentials = true;
         },
     });
+
+    // Return something so that hqModules understands that the module has been defined
+    return 1;
 });

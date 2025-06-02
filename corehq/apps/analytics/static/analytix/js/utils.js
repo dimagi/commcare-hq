@@ -1,5 +1,5 @@
 
-define('analytix/js/utils', [
+hqDefine('analytix/js/utils', [
     'jquery',
     'underscore',
     'analytix/js/initial',

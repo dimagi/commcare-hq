@@ -1,9 +1,12 @@
 --- 
 +++ 
-@@ -1,5 +1,5 @@
- import $ from "jquery";
--import hqMain from "hqwebapp/js/bootstrap3/main";
-+import hqMain from "hqwebapp/js/bootstrap5/main";
- import langcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";
+@@ -1,7 +1,7 @@
  
- var module = {};
+-hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input', [
++hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input', [
+     'jquery',
+-    'hqwebapp/js/bootstrap3/main',
++    'hqwebapp/js/bootstrap5/main',
+     'hqwebapp/js/ui_elements/ui-element-langcode-button',
+ ], function (
+     $,

@@ -4,7 +4,7 @@
  *
  * All task functions are expected to return a promise.
  */
-define("cloudcare/js/form_entry/task_queue", [
+hqDefine("cloudcare/js/form_entry/task_queue", [
     'underscore',
 ], function (
     _,

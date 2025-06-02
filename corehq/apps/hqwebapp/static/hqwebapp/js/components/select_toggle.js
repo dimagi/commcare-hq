@@ -18,60 +18,68 @@
  *  - value: initial value of select
  */
 
-import $ from "jquery";
-import ko from "knockout";
-import _ from "underscore";
-import koComponents from "hqwebapp/js/components.ko";
-import initialPageData from "hqwebapp/js/initial_page_data";
+hqDefine('hqwebapp/js/components/select_toggle', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/components.ko',
+    "hqwebapp/js/initial_page_data",
+], function (
+    $,
+    ko,
+    _,
+    koComponents,
+    initialPageData,
+) {
+    const component = {
+        viewModel: function (params) {
+            var self = this;
 
-const component = {
-    viewModel: function (params) {
-        var self = this;
+            // Attributes passed on to the input
+            self.name = params.name || '';
+            self.id = params.id || '';
+            const readOnlyMode = initialPageData.get("read_only_mode");
+            self.disabled = params.disabled || readOnlyMode;
+            self.htmlAttrs = {};
+            if (self.name) {
+                self.htmlAttrs.name = self.name;
+            }
+            if (self.id) {
+                self.htmlAttrs.id = self.id;
+            }
 
-        // Attributes passed on to the input
-        self.name = params.name || '';
-        self.id = params.id || '';
-        const readOnlyMode = initialPageData.get("read_only_mode");
-        self.disabled = params.disabled || readOnlyMode;
-        self.htmlAttrs = {};
-        if (self.name) {
-            self.htmlAttrs.name = self.name;
-        }
-        if (self.id) {
-            self.htmlAttrs.id = self.id;
-        }
+            // Data
+            self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
+            var optionsData = ko.computed(function () {
+                return ko.isObservable(params.options) ? params.options() : params.options;
+            });
+            self.options = ko.computed(function () {
+                return ko.observableArray(_.map(optionsData(), function (o) {
+                    var id = _.isString(o) ? o : o.id,
+                        text = _.isString(o) ? o : o.text,
+                        icon = _.isString(o) ? '' : o.icon;
 
-        // Data
-        self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
-        var optionsData = ko.computed(function () {
-            return ko.isObservable(params.options) ? params.options() : params.options;
-        });
-        self.options = ko.computed(function () {
-            return ko.observableArray(_.map(optionsData(), function (o) {
-                var id = _.isString(o) ? o : o.id,
-                    text = _.isString(o) ? o : o.text,
-                    icon = _.isString(o) ? '' : o.icon;
+                    return {
+                        id: id,
+                        text: text,
+                        icon: icon,
+                        selected: ko.computed(function () {
+                            return id === self.value();
+                        }),
+                        click: function (model, e) {
+                            if (model.id !== self.value() && !self.disabled) {
+                                self.value(model.id);
+                                $(e.currentTarget).closest(".ko-select-toggle").find("select").trigger("change");
+                            }
+                        },
+                    };
+                }));
+            });
+        },
+        template: '<div data-bind="template: { name: \'ko-select-toggle\' }"></div>',
+    };
 
-                return {
-                    id: id,
-                    text: text,
-                    icon: icon,
-                    selected: ko.computed(function () {
-                        return id === self.value();
-                    }),
-                    click: function (model, e) {
-                        if (model.id !== self.value() && !self.disabled) {
-                            self.value(model.id);
-                            $(e.currentTarget).closest(".ko-select-toggle").find("select").trigger("change");
-                        }
-                    },
-                };
-            }));
-        });
-    },
-    template: '<div data-bind="template: { name: \'ko-select-toggle\' }"></div>',
-};
+    koComponents.register('select-toggle', component);
 
-koComponents.register('select-toggle', component);
-
-export default component;
+    return component;
+});

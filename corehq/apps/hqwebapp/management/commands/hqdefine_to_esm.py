@@ -5,7 +5,7 @@ import re
 from django.core.management import BaseCommand, CommandError
 
 
-logger = logging.getLogger('amd_to_esm')
+logger = logging.getLogger('hqdefine_to_esm')
 
 IMPORT_PATTERN = r'\s*["\']([^,]*)["\'],?$'
 ARGUMENT_PATTERN = r'\s*([^,]*),?$'
@@ -13,11 +13,11 @@ ARGUMENT_PATTERN = r'\s*([^,]*),?$'
 
 class Command(BaseCommand):
     help = '''
-        Attempts to migrate a JavaScript file from AMD to ESM syntax.
-        Expects input file to be formatted with AMD on one line,
+        Attempts to migrate a JavaScript file from hqDefine to ESM syntax.
+        Expects input file to be formatted with hqDefine on one line,
         then one line per import, then one line per argument:
 
-        define('this/is/my/module', [
+        hqDefine('this/is/my/module', [
            'app1/js/m1/,
            'app2/js/m2/,
         ], function (
@@ -53,7 +53,7 @@ class Command(BaseCommand):
         imports = []
         arguments = []
         line_index = -1
-        while self.in_define_block:
+        while self.in_hqdefine_block:
             line_index += 1
             if line_index >= len(lines):
                 self.fail_parsing()
@@ -77,8 +77,8 @@ class Command(BaseCommand):
         # Rewrite file
         with open(filename, 'w') as fout:
             # Repeat any pre-code comments
-            if self.define_index:
-                for line in lines[:self.define_index]:
+            if self.hqdefine_index:
+                for line in lines[:self.hqdefine_index]:
                     if self.is_use_strict(line):
                         continue
                     fout.write(line)
@@ -114,7 +114,7 @@ class Command(BaseCommand):
 
             # Write remaining file
             for line in lines[line_index:]:
-                if self.is_use_strict(line) or self.is_define_close(line):
+                if self.is_use_strict(line) or self.is_hqdefine_close(line):
                     continue
 
                 line = self.dedent(line)
@@ -127,10 +127,10 @@ class Command(BaseCommand):
     def is_use_strict(self, line):
         return 'use strict' in line
 
-    def is_define_open(self, line):
-        return 'define' in line
+    def is_hqdefine_open(self, line):
+        return 'hqDefine' in line
 
-    def is_define_close(self, line):
+    def is_hqdefine_close(self, line):
         return line.startswith("});")
 
     def parse_import(self, line):
@@ -159,10 +159,10 @@ class Command(BaseCommand):
 
     def parse_one_line_arguments(self, line, index):
         '''
-        Most modules are formatted with one define param per line,
+        Most modules are formatted with one hqDefine param per line,
         but some have a single line with all arguments, like this:
 
-        define('someModule', [
+        hqDefine('someModule', [
            ...
         ], function (module1, module2) {
 
@@ -177,8 +177,8 @@ class Command(BaseCommand):
         return []
 
     def init_parser(self):
-        self.define_index = 0
-        self.in_define_block = True
+        self.hqdefine_index = 0
+        self.in_hqdefine_block = True
         self.in_imports = False
         self.in_arguments = False
 
@@ -193,26 +193,26 @@ class Command(BaseCommand):
 
     def update_parser_location(self, line, index):
         '''
-        The parser assumes there are three "blocks": the overall define area,
+        The parser assumes there are three "blocks": the overall hqDefine area,
         the imports block within that, and then the arguments block within that.
         This is indicated via a couple of boolean flags.
         '''
         if self.is_use_strict(line):
             return line
-        if self.is_define_open(line):
-            self.define_index = index
+        if self.is_hqdefine_open(line):
+            self.hqdefine_index = index
             self.in_imports = True
             return line
         if self.in_imports and 'function' in line:
             self.in_imports = False
             if re.search(r'function\s*\(\s*\)', line):
-                self.in_define_block = False
+                self.in_hqdefine_block = False
             else:
                 self.in_arguments = True
             return line
         if self.in_arguments and ')' in line:
             self.in_arguments = False
-            self.in_define_block = False
+            self.in_hqdefine_block = False
             return line
         return False
 

@@ -1,4 +1,4 @@
-define("cloudcare/js/formplayer/router", [
+hqDefine("cloudcare/js/formplayer/router", [
     'underscore',
     'backbone',
     'backbone.marionette',
