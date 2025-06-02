@@ -1,6 +1,12 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+<style>
+    .csql-criteria-row:last-of-type .and-text {
+      display: none;
+    }
+  </style>
+
 <div class="csql-criteria-row">
     <div class="d-flex align-items-center mb-2">
       <div class="me-2">
@@ -12,5 +18,8 @@
       <div class="me-2">
         {{ form.property_name }}
       </div>
+    </div>
+    <div class="text-center fw-bold small and-text">
+        AND
     </div>
 </div>
