@@ -6,23 +6,26 @@
   {% blocktrans with table.page.paginator.count as num_records %}
     Unable to select {{ num_records }} cases
   {% endblocktrans %}
-{% endblock %}
+{% endblock modal_title %}
 
-{% block modal_dismiss_text %}{% trans "Close" %}{% endblock %}
+{% block modal_dismiss_text %}{% trans "Close" %}{% endblock modal_dismiss_text %}
 
-{% block modal_continue_button %}{% endblock %}
+{% block modal_continue_button %}
+{% endblock modal_continue_button %}
 
 {% block modal_body %}
   {% if table.has_changes %}
     <p class="lead fw-bold">
       <i class="fa-solid fa-triangle-exclamation"></i>
       {% blocktrans with table.max_recorded_limit as max_recorded_limit %}
-        Cannot select or actively edit more than {{ max_recorded_limit }} cases in a session.
+        Cannot select or actively edit more than {{ max_recorded_limit }} cases
+        in a session.
       {% endblocktrans %}
     </p>
     <p>
       {% blocktrans %}
-        Please either apply your previewed edits, or add filters to select fewer cases.
+        Please either apply your previewed edits, or add filters to select fewer
+        cases.
       {% endblocktrans %}
     </p>
   {% else %}
@@ -38,4 +41,4 @@
       {% endblocktrans %}
     </p>
   {% endif %}
-{% endblock %}
+{% endblock modal_body %}
