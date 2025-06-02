@@ -1,6 +1,7 @@
 import $ from "jquery";
 import hqMain from "hqwebapp/js/bootstrap3/main";
 import langcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";
+import "jquery-textchange/jquery.textchange";
 
 var module = {};
 

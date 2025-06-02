@@ -3,6 +3,7 @@ import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import google from "analytix/js/google";
 import uploaders from "app_manager/js/nav_menu_media_common";
+import "jquery-textchange/jquery.textchange";
 
 var appMenuMediaManager = function (o) {
     /* This interfaces the media reference for a form or module menu
