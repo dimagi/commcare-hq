@@ -94,6 +94,7 @@ from corehq.apps.app_manager.exceptions import (
     VersioningError,
     XFormException,
     XFormValidationError,
+    InvalidPropertyException,
     DiffConflictException,
     MissingPropertyException,
 )
@@ -490,6 +491,12 @@ class FormActions(DocumentSchema):
 
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
+
+    def update(self, updates):
+        for key, value in updates.items():
+            if key not in self:
+                raise InvalidPropertyException(key)
+            self.set_raw_value(key, value)
 
 
 class CaseIndex(DocumentSchema):

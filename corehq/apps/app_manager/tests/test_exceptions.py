@@ -1,5 +1,16 @@
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.exceptions import DiffConflictException, MissingPropertyException
+from corehq.apps.app_manager.exceptions import (
+    DiffConflictException,
+    MissingPropertyException,
+    InvalidPropertyException
+)
+
+
+class InvalidPropertyExceptionTests(SimpleTestCase):
+    def test_constructor(self):
+        exception = InvalidPropertyException('test_property')
+        self.assertEqual(exception.invalid_property, 'test_property')
+        self.assertEqual(str(exception), 'Invalid key found: test_property')
 
 
 class DiffConflictExceptionTests(SimpleTestCase):

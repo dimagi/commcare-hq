@@ -214,6 +214,13 @@ class AppInDifferentDomainException(AppManagerException):
     pass
 
 
+class InvalidPropertyException(Exception):
+    def __init__(self, invalid_property):
+        self.invalid_property = invalid_property
+        message = f"Invalid key found: {self.invalid_property}"
+        super().__init__(message)
+
+
 class MissingPropertyException(Exception):
     def __init__(self, *missing_properties):
         self.missing_properties = missing_properties
