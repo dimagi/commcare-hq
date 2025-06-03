@@ -124,7 +124,7 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     var updateDOM = function (update) {
         var key;
         for (key in update) {
-            if (_.has(update, key)) {
+            if (Object.prototype.hasOwnProperty.call(update, key)) {
                 $(key).text(update[key]).val(update[key]);
             }
         }

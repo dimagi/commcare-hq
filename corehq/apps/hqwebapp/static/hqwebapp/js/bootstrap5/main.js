@@ -125,7 +125,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     var updateDOM = function (update) {
         var key;
         for (key in update) {
-            if (update.hasOwnProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(update, key)) {
                 $(key).text(update[key]).val(update[key]);
             }
         }
@@ -174,7 +174,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                         this.$saved.detach();
                         this.$retry.detach();
                         var buttonUi = this.ui;
-                        _.each(BAR_STATE, function (v, k) {
+                        _.each(BAR_STATE, function (v) {
                             buttonUi.removeClass(v);
                         });
                         if (state === 'save') {
@@ -202,7 +202,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                             $.ajaxSettings.beforeSend(jqXHR, settings);
                             beforeSend.apply(this, arguments);
                         };
-                        options.success = function (data) {
+                        options.success = function () {
                             that.setState(that.nextState);
                             success.apply(this, arguments);
                         };
@@ -250,7 +250,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                 $(window).on('beforeunload', function () {
                     var lastParent = button.ui.parents()[button.ui.parents().length - 1];
                     if (lastParent) {
-                        var stillAttached = lastParent.tagName.toLowerCase() == 'html';
+                        var stillAttached = lastParent.tagName.toLowerCase() === 'html';
                         if (button.state !== 'saved' && stillAttached) {
                             if ($('.js-unhide-on-unsaved').length > 0) {$('.js-unhide-on-unsaved').removeClass('hide');}
                             return options.unsavedMessage || "";
