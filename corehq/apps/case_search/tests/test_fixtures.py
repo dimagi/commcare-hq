@@ -125,9 +125,11 @@ class TestGetIndicatorsForUser(TestCase):
     def setUp(self):
         self.domain = 'test-domain'
         create_domain(self.domain)
-        self.user = WebUser.create(self.domain, 'j@example.com', '****', None, None,
-                                   user_data={'is_active': True, 'is_superuser': False})
-        self.addCleanup(self.user.delete, self.domain, None)
+
+        self.user1 = self._create_user('user1@example.com', {'is_active': True, 'is_superuser': False})
+        self.user2 = self._create_user('user2@example.com', {'is_active': 'nonboolean', 'is_superuser': False})
+        self.user3 = self._create_user('user3@example.com', {'is_active': '', 'is_superuser': False})
+        self.user4 = self._create_user('user4@example.com', {'non_filtered_field': True})
 
         self.matching_expression = CSQLFixtureExpression.objects.create(
             domain=self.domain,
@@ -151,10 +153,46 @@ class TestGetIndicatorsForUser(TestCase):
         )
         self.addCleanup(self.non_matching_expression.delete)
 
-    def test_get_indicators_for_user(self):
-        indicators = _get_indicators_for_user(self.domain, self.user)
+        self.non_existing_criteria_field_expression = CSQLFixtureExpression.objects.create(
+            domain=self.domain,
+            name='non_existing_criteria_field_expression',
+            csql='non_existing_criteria_field_csql',
+            user_data_criteria=[
+                {'operator': 'IS', 'property_name': 'non_existing_criteria_field'},
+            ]
+        )
+        self.addCleanup(self.non_existing_criteria_field_expression.delete)
 
-        expected_indicator = (self.matching_expression.name, self.matching_expression.csql)
-        self.assertIn(expected_indicator, indicators)
+    def _create_user(self, email, user_data):
+        user = WebUser.create(self.domain, email, '****', None, None, user_data=user_data)
+        self.addCleanup(user.delete, self.domain, None)
+        return user
 
-        self.assertEqual(len(indicators), 1)
+    def test_user_with_valid_data(self):
+        indicators = _get_indicators_for_user(self.domain, self.user1)
+        expected_indicators = {self.matching_expression, self.non_existing_criteria_field_expression}
+        for indicator in expected_indicators:
+            self.assertIn((indicator.name, indicator.csql), indicators)
+        self.assertEqual(len(indicators), 2)
+
+    def test_user_with_non_boolean_value(self):
+        indicators = _get_indicators_for_user(self.domain, self.user2)
+        expected_indicators = {self.matching_expression, self.non_existing_criteria_field_expression}
+        for indicator in expected_indicators:
+            self.assertIn((indicator.name, indicator.csql), indicators)
+        self.assertEqual(len(indicators), 2)
+
+    def test_user_with_blank_value(self):
+        indicators = _get_indicators_for_user(self.domain, self.user3)
+        expected_indicators = {self.matching_expression, self.non_existing_criteria_field_expression}
+        for indicator in expected_indicators:
+            self.assertIn((indicator.name, indicator.csql), indicators)
+        self.assertEqual(len(indicators), 2)
+
+    def test_user_with_non_existent_field(self):
+        indicators = _get_indicators_for_user(self.domain, self.user4)
+        expected_indicators = {self.matching_expression, self.non_existing_criteria_field_expression,
+                               self.non_matching_expression}
+        for indicator in expected_indicators:
+            self.assertIn((indicator.name, indicator.csql), indicators)
+        self.assertEqual(len(indicators), 3)

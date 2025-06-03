@@ -483,7 +483,7 @@ class CSQLFixtureExpression(models.Model):
             value = user_data.get(property_name)
 
             if value is None or value == '':
-                return False
+                continue
 
             try:
                 if operator == cls.MATCH_IS and not string_to_boolean(value):
@@ -491,7 +491,7 @@ class CSQLFixtureExpression(models.Model):
                 elif operator == cls.MATCH_IS_NOT and string_to_boolean(value):
                     return False
             except ValueError:
-                return True
+                continue
 
         return True
 
