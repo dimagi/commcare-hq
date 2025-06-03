@@ -12,5 +12,5 @@
 -    'hqwebapp/js/bootstrap3/main',
 +    'hqwebapp/js/bootstrap5/main',
      'hqwebapp/js/assert_properties',
+     'jquery-textchange/jquery.textchange',
  ], function (
-     $,
