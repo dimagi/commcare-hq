@@ -6,16 +6,16 @@
   {% blocktrans with table.page.paginator.count as num_records %}
     Select {{ num_records }} Cases
   {% endblocktrans %}
-{% endblock %}
+{% endblock modal_title %}
 
-{% block modal_continue_attrs %}
+{% block modal_continue_attrs %}{# prettier-ignore-start #}
   hx-post="{{ request.path_info }}{% querystring %}"
   hq-hx-action="select_all"
   hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
   hx-swap="outerHTML"
   hq-hx-loading="{{ table.loading_indicator_id }}"
   hx-disable-elt="this"
-{% endblock %}
+{# prettier-ignore-end #}{% endblock modal_continue_attrs %}
 
 {% block modal_body %}
   <p class="lead">
@@ -29,4 +29,4 @@
       This operation might take a long time.
     {% endblocktrans %}
   </p>
-{% endblock %}
+{% endblock modal_body %}
