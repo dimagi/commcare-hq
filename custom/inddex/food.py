@@ -375,8 +375,7 @@ class FoodData:
             return []  # don't filter by owner
         if EMWF.show_deactivated_data(slugs):
             return (user_es.UserES()
-                    .show_only_inactive()
-                    .domain(domain)
+                    .domain(domain, include_active=False, include_inactive=True)
                     .get_ids())
         return get_case_owners(request.can_access_all_locations, domain, slugs)
 
