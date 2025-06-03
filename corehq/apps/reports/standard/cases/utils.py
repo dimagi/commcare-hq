@@ -55,8 +55,7 @@ def all_project_data_filter(domain, mobile_user_and_group_slugs):
 
 def deactivated_case_owners(domain):
     owner_ids = (user_es.UserES()
-                 .show_only_inactive()
-                 .domain(domain)
+                 .domain(domain, include_active=False, include_inactive=True)
                  .get_ids())
     return case_es.owner(owner_ids)
 
