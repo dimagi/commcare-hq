@@ -12,7 +12,7 @@ from corehq.apps.data_cleaning.models import (
     FilterMatchType,
 )
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import CaseSearchES, user_adapter, group_adapter
+from corehq.apps.es import CaseSearchES, group_adapter, user_adapter
 from corehq.apps.es.case_search import (
     case_property_missing,
     case_search_adapter,

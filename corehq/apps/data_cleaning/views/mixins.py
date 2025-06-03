@@ -1,9 +1,9 @@
+from django.contrib import messages
+from django.http import Http404
+from django.shortcuts import redirect
+from django.utils.translation import gettext_lazy
 from memoized import memoized
 
-from django.contrib import messages
-from django.shortcuts import redirect
-from django.http import Http404
-from django.utils.translation import gettext_lazy
 from corehq.apps.data_cleaning.models import BulkEditSession
 
 

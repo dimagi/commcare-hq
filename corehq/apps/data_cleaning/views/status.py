@@ -1,10 +1,10 @@
 import json
 
 from django.urls import reverse
-from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
+from django.views.generic import TemplateView
 from memoized import memoized
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases

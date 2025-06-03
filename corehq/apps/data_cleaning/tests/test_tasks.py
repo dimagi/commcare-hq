@@ -1,12 +1,13 @@
 from datetime import datetime
-from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory
+from django.test import TestCase
+
 from corehq.apps.data_cleaning.models import (
     BulkEditChange,
     BulkEditRecord,
-    BulkEditSessionType,
     BulkEditSession,
+    BulkEditSessionType,
     EditActionType,
 )
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
@@ -16,11 +17,11 @@ from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
 )
+from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
 from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
 
 
 @es_test(requires=[case_search_adapter, user_adapter], setup_class=True)

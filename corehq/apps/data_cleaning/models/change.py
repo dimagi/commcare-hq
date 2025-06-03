@@ -4,8 +4,8 @@ import uuid
 from django.db import models, transaction
 from django.utils.translation import gettext as _
 
-from corehq.apps.data_cleaning.models.types import EditActionType
 from corehq.apps.data_cleaning.exceptions import UnsupportedActionException
+from corehq.apps.data_cleaning.models.types import EditActionType
 from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 
 

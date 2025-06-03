@@ -1,4 +1,5 @@
 from functools import wraps
+
 from no_exceptions.exceptions import Http403
 
 from corehq.apps.accounting.utils import domain_has_privilege

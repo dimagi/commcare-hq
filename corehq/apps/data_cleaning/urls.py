@@ -1,6 +1,6 @@
-from django.urls import re_path as url, include
+from django.urls import include
+from django.urls import re_path as url
 
-from corehq.apps.data_cleaning.views.summary import ChangesSummaryView
 from corehq.apps.data_cleaning.views.bulk_edit import (
     EditSelectedRecordsFormView,
 )
@@ -8,8 +8,8 @@ from corehq.apps.data_cleaning.views.columns import (
     ManageColumnsFormView,
 )
 from corehq.apps.data_cleaning.views.filters import (
-    ManagePinnedFiltersView,
     ManageFiltersView,
+    ManagePinnedFiltersView,
 )
 from corehq.apps.data_cleaning.views.main import (
     BulkEditCasesMainView,
@@ -17,17 +17,17 @@ from corehq.apps.data_cleaning.views.main import (
     clear_session_caches,
     download_form_ids,
 )
-from corehq.apps.data_cleaning.views.tables import (
-    EditCasesTableView,
-    RecentCaseSessionsTableView,
-)
 from corehq.apps.data_cleaning.views.start import (
     StartCaseSessionView,
 )
 from corehq.apps.data_cleaning.views.status import (
     BulkEditSessionStatusView,
 )
-
+from corehq.apps.data_cleaning.views.summary import ChangesSummaryView
+from corehq.apps.data_cleaning.views.tables import (
+    EditCasesTableView,
+    RecentCaseSessionsTableView,
+)
 
 bulk_edit_urlpatterns = [
     url(r'^cases/$', BulkEditCasesMainView.as_view(), name=BulkEditCasesMainView.urlname),

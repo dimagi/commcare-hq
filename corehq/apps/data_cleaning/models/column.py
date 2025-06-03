@@ -2,11 +2,11 @@ import uuid
 
 from django.db import models
 
+from corehq.apps.case_search.const import METADATA_IN_REPORTS
 from corehq.apps.data_cleaning.models.types import (
     BulkEditSessionType,
     DataType,
 )
-from corehq.apps.case_search.const import METADATA_IN_REPORTS
 
 
 class BulkEditColumnManager(models.Manager):

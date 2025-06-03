@@ -1,12 +1,12 @@
+from couchexport.writers import render_to_string
 from django_tables2.columns import (
-    TemplateColumn,
-    CheckBoxColumn,
     BoundColumn,
+    CheckBoxColumn,
+    TemplateColumn,
 )
 from django_tables2.utils import AttributeDict
 
 from corehq.toggles import mark_safe
-from couchexport.writers import render_to_string
 
 
 class EditableHtmxColumn(TemplateColumn):

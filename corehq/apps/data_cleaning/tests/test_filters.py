@@ -1,9 +1,9 @@
-import pytest
-from testil import eq
 from unittest import mock
 
+import pytest
 from django.http import QueryDict
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
+from testil import eq
 
 from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.filters import (
@@ -12,14 +12,15 @@ from corehq.apps.data_cleaning.filters import (
 )
 from corehq.apps.data_cleaning.models import (
     BulkEditFilter,
+    BulkEditSession,
     DataType,
     FilterMatchType,
-    BulkEditSession,
     PinnedFilterType,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import CaseSearchES, cases as case_es
+from corehq.apps.es import CaseSearchES
+from corehq.apps.es import cases as case_es
 from corehq.apps.es.case_search import (
     case_property_missing,
     case_search_adapter,
@@ -40,7 +41,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.reports.tests.standard.cases.test_utils import BaseCaseOwnersTest
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 

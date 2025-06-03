@@ -1,4 +1,5 @@
 import json
+
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 from django.views.generic import TemplateView

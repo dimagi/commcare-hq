@@ -1,9 +1,11 @@
 import json
 
-from crispy_forms import bootstrap as twbscrispy, layout as crispy
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
 from django import forms
 from django.template.loader import render_to_string
-from django.utils.translation import gettext_lazy, gettext as _
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain

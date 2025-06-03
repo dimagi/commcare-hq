@@ -1,7 +1,6 @@
-from memoized import memoized
-
 from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
+from memoized import memoized
 
 from corehq.apps.data_cleaning.columns import (
     EditableHtmxColumn,

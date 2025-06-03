@@ -1,12 +1,12 @@
 import json
 import re
 
-from django import forms
-from django.utils.translation import gettext as _, gettext_lazy
-
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
+from django import forms
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.data_cleaning.models import (
     BulkEditChange,

@@ -1,12 +1,12 @@
-from memoized import memoized
-
 from django.contrib import messages
-from django.shortcuts import redirect
 from django.http import StreamingHttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET
-from django.utils.translation import gettext_lazy, gettext as _
+from memoized import memoized
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
@@ -17,8 +17,7 @@ from corehq.apps.data_cleaning.views.filters import ManageFiltersView, ManagePin
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.data_cleaning.views.start import StartCaseSessionView
 from corehq.apps.data_cleaning.views.status import BulkEditSessionStatusView
-from corehq.apps.data_cleaning.views.tables import RecentCaseSessionsTableView
-from corehq.apps.data_cleaning.views.tables import EditCasesTableView
+from corehq.apps.data_cleaning.views.tables import EditCasesTableView, RecentCaseSessionsTableView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.settings.views import BaseProjectDataView

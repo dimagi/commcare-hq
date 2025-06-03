@@ -4,13 +4,13 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.utils.translation import gettext as _
 
+from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.models.types import (
     BulkEditSessionType,
     DataType,
     FilterMatchType,
     PinnedFilterType,
 )
-from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 from corehq.apps.es.case_search import (
     case_property_missing,

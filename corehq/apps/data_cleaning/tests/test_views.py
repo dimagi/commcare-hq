@@ -14,12 +14,15 @@ from corehq.apps.data_cleaning.views.columns import (
     ManageColumnsFormView,
 )
 from corehq.apps.data_cleaning.views.filters import (
-    ManagePinnedFiltersView,
     ManageFiltersView,
+    ManagePinnedFiltersView,
 )
 from corehq.apps.data_cleaning.views.main import (
     BulkEditCasesMainView,
     BulkEditCasesSessionView,
+)
+from corehq.apps.data_cleaning.views.start import (
+    StartCaseSessionView,
 )
 from corehq.apps.data_cleaning.views.status import (
     BulkEditSessionStatusView,
@@ -27,9 +30,6 @@ from corehq.apps.data_cleaning.views.status import (
 from corehq.apps.data_cleaning.views.tables import (
     EditCasesTableView,
     RecentCaseSessionsTableView,
-)
-from corehq.apps.data_cleaning.views.start import (
-    StartCaseSessionView,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import group_adapter

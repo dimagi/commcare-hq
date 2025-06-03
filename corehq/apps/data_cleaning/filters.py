@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from memoized import memoized
 
 from django.utils.translation import gettext_lazy
+from memoized import memoized
 
 from corehq.apps.data_cleaning.models import PinnedFilterType
 from corehq.apps.es import cases as case_es

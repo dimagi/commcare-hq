@@ -1,15 +1,15 @@
 import json
 
-from django import forms
-from django.utils.translation import gettext as _, gettext_lazy
-
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
+from django import forms
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.data_cleaning.models import (
-    DataType,
     BulkEditColumn,
+    DataType,
 )
 from corehq.apps.data_cleaning.utils.cases import (
     get_case_property_details,

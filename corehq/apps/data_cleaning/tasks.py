@@ -1,13 +1,12 @@
 import logging
-from corehq.apps.celery import task
-
-from django.utils import timezone
-from django.db import transaction
-from django.db.models import Q
-
-from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.mock import CaseBlock
+from dimagi.utils.chunked import chunked
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
+
+from corehq.apps.celery import task
 from corehq.apps.data_cleaning.models import (
     BulkEditSession,
 )

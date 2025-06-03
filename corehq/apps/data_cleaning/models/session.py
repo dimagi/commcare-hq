@@ -1,13 +1,12 @@
 import uuid
 
+from dimagi.utils.chunked import chunked
 from django.contrib.auth.models import User
 from django.db import models, transaction
 
 from corehq.apps.data_cleaning.models.types import (
     BulkEditSessionType,
 )
-from dimagi.utils.chunked import chunked
-
 from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 from corehq.apps.es import CaseSearchES
 
