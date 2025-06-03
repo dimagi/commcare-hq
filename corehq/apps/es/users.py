@@ -176,6 +176,15 @@ def _inactive(domain):
     )
 
 
+def active_on_any_domain():
+    return filters.AND(
+        filters.term("is_active", True),
+        filters.nested('user_domain_memberships', filters.AND(
+            filters.term('user_domain_memberships.is_active', True)
+        ))
+    )
+
+
 # TODO remove
 domains = domain
 
