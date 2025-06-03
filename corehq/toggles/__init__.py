@@ -1204,6 +1204,14 @@ SAAS_PROTOTYPE = StaticToggle(
     description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
+FORMBUILDER_SAVE_TO_CASE = StaticToggle(
+    'saas_formbuilder_save_to_case',
+    'Form Builder - Save Questions to Case Properties',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Allows users to save questions to case properties within the Form Builder'
+)
+
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
     'Explore Case Data for domains that have undergone migration',
