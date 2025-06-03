@@ -45,8 +45,7 @@ def check_pillows_for_rewind():
                         'This could mean we are in a rewind state'.format(checkpoint.checkpoint_id),
                 details={
                     'pillow checkpoint seq': checkpoint.get_current_sequence_id(),
-                    'stored seq': historical_seq
-                }
+                    'stored seq': historical_seq}
             )
 
 

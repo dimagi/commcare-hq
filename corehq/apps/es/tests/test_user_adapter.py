@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import filters
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import UserES, demo_users, user_adapter
 from corehq.apps.users.models import CommCareUser, WebUser
