@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/form_entry/const", [], function () {
+define("cloudcare/js/form_entry/const", [], function () {
     return {
         GROUP_TYPE: 'sub-group',
         QUESTION_TYPE: 'question',

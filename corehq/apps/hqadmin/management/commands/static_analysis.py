@@ -84,7 +84,7 @@ class Command(BaseCommand):
         self.logger.log("commcare.static_analysis.custom_domain_count", custom_domain_count)
 
     def show_js_dependencies(self):
-        proc = subprocess.Popen(["./scripts/codechecks/hqDefine.sh", "static-analysis"], stdout=subprocess.PIPE)
+        proc = subprocess.Popen(["./scripts/codechecks/amd.sh", "static-analysis"], stdout=subprocess.PIPE)
         output = proc.communicate()[0].strip().decode("utf-8")
         (step1, step2) = output.split(" ")
 

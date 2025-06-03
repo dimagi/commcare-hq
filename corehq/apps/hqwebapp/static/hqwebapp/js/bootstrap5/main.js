@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/bootstrap5/main', [
+define('hqwebapp/js/bootstrap5/main', [
     "jquery",
     "knockout",
     "underscore",
@@ -9,6 +9,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     "bootstrap5",
     "hqwebapp/js/hq_extensions.jquery",
     "jquery.cookie/jquery.cookie",
+    "jquery-textchange/jquery.textchange",
 ], function (
     $,
     ko,
