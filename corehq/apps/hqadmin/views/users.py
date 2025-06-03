@@ -302,14 +302,14 @@ def _augment_users_with_accounting_admin(users):
 
 def _augment_users_with_feature_flag_edit_permissions(users):
     for user in users:
-        user.tags_edit_permission = []
+        user.tags_edit_permissions = []
     for tag in ALL_TAGS:
         permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
         if not permission:
             continue
         for user in users:
             if permission.is_user_enabled(user.username):
-                user.tags_edit_permission.append(tag.name)
+                user.tags_edit_permissions.append(tag.name)
     return users
 
 
