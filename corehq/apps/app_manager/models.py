@@ -94,6 +94,9 @@ from corehq.apps.app_manager.exceptions import (
     VersioningError,
     XFormException,
     XFormValidationError,
+    InvalidPropertyException,
+    DiffConflictException,
+    MissingPropertyException,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -363,6 +366,49 @@ class ConditionalCaseUpdate(DocumentSchema):
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
 
+    def with_diffs(self, diffs):
+        self.check_for_duplicate_keys(diffs)
+        self.check_for_invalid_updates(diffs)
+
+        dest = self.__class__(self.to_json())
+
+        if 'add' in diffs:
+            for (key, value) in diffs['add'].items():
+                dest.update[key] = ConditionalCaseUpdate(value)
+
+        if 'del' in diffs:
+            for key in diffs['del']:
+                if key in dest.update:
+                    del dest.update[key]
+
+        if 'update' in diffs:
+            for (key, value) in diffs['update'].items():
+                dest.update[key] = ConditionalCaseUpdate(value)
+
+        return dest
+
+    def check_for_duplicate_keys(self, diffs):
+        addition_keys = set(diffs.get('add', {}).keys())
+        deletion_keys = set(diffs.get('del', []))
+        update_keys = set(diffs.get('update', {}).keys())
+
+        overlapping_addition_keys = addition_keys & (deletion_keys | update_keys)
+        overlapping_deletion_keys = deletion_keys & update_keys
+        overlapping_keys = overlapping_addition_keys | overlapping_deletion_keys
+
+        if overlapping_keys:
+            raise DiffConflictException(*overlapping_keys)
+
+    def check_for_invalid_updates(self, diffs):
+        missing_keys = []
+        if 'update' in diffs:
+            for key in diffs['update'].keys():
+                if key not in self.update:
+                    missing_keys.append(key)
+
+            if missing_keys:
+                raise MissingPropertyException(*missing_keys)
+
 
 class PreloadAction(FormAction):
 
@@ -445,6 +491,12 @@ class FormActions(DocumentSchema):
 
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
+
+    def update(self, updates):
+        for key, value in updates.items():
+            if key not in self:
+                raise InvalidPropertyException(key)
+            self.set_raw_value(key, value)
 
 
 class CaseIndex(DocumentSchema):
