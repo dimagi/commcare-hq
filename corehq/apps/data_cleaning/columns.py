@@ -10,7 +10,7 @@ from corehq.toggles import mark_safe
 
 
 class EditableHtmxColumn(TemplateColumn):
-    template_name = "data_cleaning/columns/column_main.html"
+    template_name = 'data_cleaning/columns/column_main.html'
 
     def __init__(self, column_spec, *args, **kwargs):
         """
@@ -23,7 +23,8 @@ class EditableHtmxColumn(TemplateColumn):
             template_name=self.template_name,
             accessor=column_spec.prop_id,
             verbose_name=column_spec.label,
-            *args, **kwargs
+            *args,
+            **kwargs,
         )
         self.column_spec = column_spec
 
@@ -41,17 +42,17 @@ class EditableHtmxColumn(TemplateColumn):
         bound_column = BoundColumn(table, column, column_spec.slug)
         value = record[column_spec.prop_id]
         return {
-            "column": bound_column,
-            "record": record,
-            "value": value,
+            'column': bound_column,
+            'record': record,
+            'value': value,
         }
 
 
 class SelectableHtmxColumn(CheckBoxColumn):
-    template_column = "data_cleaning/columns/selection.html"
-    template_header = "data_cleaning/columns/selection_header.html"
-    template_read_only = "data_cleaning/columns/selection_read_only.html"
-    select_page_checkbox_id = "id-select-page-checkbox"
+    template_column = 'data_cleaning/columns/selection.html'
+    template_header = 'data_cleaning/columns/selection_header.html'
+    template_read_only = 'data_cleaning/columns/selection_read_only.html'
+    select_page_checkbox_id = 'id-select-page-checkbox'
 
     def __init__(self, session, request, select_record_action, select_page_action, *args, **kwargs):
         """
@@ -89,8 +90,8 @@ class SelectableHtmxColumn(CheckBoxColumn):
     def header(self):
         if self.session.is_read_only:
             return self.read_only_response()
-        general = self.attrs.get("input")
-        specific = self.attrs.get("th__input")
+        general = self.attrs.get('input')
+        specific = self.attrs.get('th__input')
         attrs = AttributeDict(specific or general or {})
         return mark_safe(  # nosec: render_to_string below will handle escaping
             render_to_string(
@@ -107,8 +108,8 @@ class SelectableHtmxColumn(CheckBoxColumn):
     def render(self, value, bound_column, record):
         if self.session.is_read_only:
             return self.read_only_response()
-        general = self.attrs.get("input")
-        specific = self.attrs.get("td__input")
+        general = self.attrs.get('input')
+        specific = self.attrs.get('td__input')
         attrs = AttributeDict(specific or general or {})
         return mark_safe(  # nosec: render_to_string below will handle escaping
             render_to_string(

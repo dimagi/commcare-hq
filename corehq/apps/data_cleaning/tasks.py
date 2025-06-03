@@ -26,17 +26,20 @@ def commit_data_cleaning(self, bulk_edit_session_id):
 
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
 
-    logger.info("commit_data_cleaning: starting", extra={
-        'session_id': session.session_id,
-        'domain': session.domain,
-    })
+    logger.info(
+        'commit_data_cleaning: starting',
+        extra={
+            'session_id': session.session_id,
+            'domain': session.domain,
+        },
+    )
 
     _purge_unedited_records(session)
     num_committed_records = session.records.count()
 
     form_ids = []
     session.update_result(0, num_committed_records=num_committed_records)
-    count_cases = case_load_counter("bulk_case_cleaning", session.domain)
+    count_cases = case_load_counter('bulk_case_cleaning', session.domain)
 
     record_iter = session.records.iterator()
     for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
@@ -64,28 +67,38 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     session.completed_on = timezone.now()
     session.save(update_fields=['completed_on'])
 
-    logger.info("commit_data_cleaning: completed", extra={
-        'session_id': session.session_id,
-        'domain': session.domain,
-    })
+    logger.info(
+        'commit_data_cleaning: completed',
+        extra={
+            'session_id': session.session_id,
+            'domain': session.domain,
+        },
+    )
 
     return form_ids
 
 
 def _claim_bulk_edit_session_for_task(task, bulk_edit_session_id):
-    updated = BulkEditSession.objects.filter(
-        session_id=bulk_edit_session_id,
-        completed_on__isnull=True,
-    ).filter(
-        Q(task_id__isnull=True)  # never claimed
-        | Q(task_id=task.request.id)  # or already claimed by *this* worker
-    ).update(
-        task_id=task.request.id,
+    updated = (
+        BulkEditSession.objects.filter(
+            session_id=bulk_edit_session_id,
+            completed_on__isnull=True,
+        )
+        .filter(
+            Q(task_id__isnull=True)  # never claimed
+            | Q(task_id=task.request.id)  # or already claimed by *this* worker
+        )
+        .update(
+            task_id=task.request.id,
+        )
     )
     if not updated:
-        logger.info("commit_data_cleaning: dropped task to avoid duplication", extra={
-            'session_id': bulk_edit_session_id,
-        })
+        logger.info(
+            'commit_data_cleaning: dropped task to avoid duplication',
+            extra={
+                'session_id': bulk_edit_session_id,
+            },
+        )
         return False
     return True
 
@@ -117,11 +130,13 @@ def _create_case_blocks(session, records):
             _record_case_block_creation_error(session, error, record.doc_id)
             continue
         if update:
-            blocks.append(CaseBlock(
-                create=False,
-                case_id=record.doc_id,
-                update=update,
-            ))
+            blocks.append(
+                CaseBlock(
+                    create=False,
+                    case_id=record.doc_id,
+                    update=update,
+                )
+            )
     return blocks, errored_doc_ids
 
 
@@ -133,40 +148,55 @@ def _submit_case_blocks(session, blocks):
         session.domain,
         session.user.username,
         username_to_user_id(session.user.username),
-        device_id=__name__ + ".data_cleaning",
+        device_id=__name__ + '.data_cleaning',
     )[0]
 
 
 def _log_unusual_empty_case_block(session, record_batch):
-    logger.info("commit_data_cleaning: no cases needed an update in a batch", extra={
-        'session_id': session.session_id,
-        'domain': session.domain,
-        'record_batch': [record.doc_id for record in record_batch],
-    })
+    logger.info(
+        'commit_data_cleaning: no cases needed an update in a batch',
+        extra={
+            'session_id': session.session_id,
+            'domain': session.domain,
+            'record_batch': [record.doc_id for record in record_batch],
+        },
+    )
 
 
 def _record_case_block_creation_error(session, error, doc_id):
-    session.update_result(0, error={
-        'error': str(error),
-        'doc_id': doc_id,
-    })
-    logger.error("commit_data_cleaning: error getting edited case properties", extra={
-        'session_id': session.session_id,
-        'domain': session.domain,
-        'error': str(error),
-        'doc_id': doc_id,
-    })
+    session.update_result(
+        0,
+        error={
+            'error': str(error),
+            'doc_id': doc_id,
+        },
+    )
+    logger.error(
+        'commit_data_cleaning: error getting edited case properties',
+        extra={
+            'session_id': session.session_id,
+            'domain': session.domain,
+            'error': str(error),
+            'doc_id': doc_id,
+        },
+    )
 
 
 def _record_submission_error(session, error, record_batch):
     doc_ids = [record.doc_id for record in record_batch]
-    session.update_result(0, error={
-        'error': str(error),
-        'doc_ids': doc_ids,
-    })
-    logger.error("commit_data_cleaning: error submitting case blocks", extra={
-        'session_id': session.session_id,
-        'domain': session.domain,
-        'error': str(error),
-        'doc_ids': doc_ids,
-    })
+    session.update_result(
+        0,
+        error={
+            'error': str(error),
+            'doc_ids': doc_ids,
+        },
+    )
+    logger.error(
+        'commit_data_cleaning: error submitting case blocks',
+        extra={
+            'session_id': session.session_id,
+            'domain': session.domain,
+            'error': str(error),
+            'doc_ids': doc_ids,
+        },
+    )

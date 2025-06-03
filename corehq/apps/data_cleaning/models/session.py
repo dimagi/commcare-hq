@@ -37,11 +37,15 @@ class BulkEditSessionManager(models.Manager):
         return self._get_active_session(user, domain_name, xmlns, BulkEditSessionType.FORM)
 
     def _get_recent_session(self, user, domain_name, session_type):
-        return self.filter(
-            user=user,
-            domain=domain_name,
-            session_type=session_type,
-        ).order_by('-created_on').first()
+        return (
+            self.filter(
+                user=user,
+                domain=domain_name,
+                session_type=session_type,
+            )
+            .order_by('-created_on')
+            .first()
+        )
 
     def recent_case_session(self, user, domain_name):
         return self._get_recent_session(user, domain_name, BulkEditSessionType.CASE)
@@ -62,7 +66,7 @@ class BulkEditSessionManager(models.Manager):
         return case_session
 
     def new_form_session(self, user, domain_name, xmlns):
-        raise NotImplementedError("Form bulk edit sessions are not yet supported!")
+        raise NotImplementedError('Form bulk edit sessions are not yet supported!')
 
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     @transaction.atomic
@@ -78,7 +82,7 @@ class BulkEditSessionManager(models.Manager):
 
 
 class BulkEditSession(models.Model):
-    user = models.ForeignKey(User, related_name="bulk_edit_sessions", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='bulk_edit_sessions', on_delete=models.CASCADE)
     domain = models.CharField(max_length=255, db_index=True)
     created_on = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -96,7 +100,7 @@ class BulkEditSession(models.Model):
     objects = BulkEditSessionManager()
 
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ['-created_on']
 
     def get_resumed_session(self):
         new_session = BulkEditSession.objects.new_case_session(
@@ -184,8 +188,8 @@ class BulkEditSession(models.Model):
         """
         if len(provided_ids) != related_manager.count():
             raise ValueError(
-                "The lengths of provided_ids and ALL existing objects do not match. "
-                "Please provide a list of ALL existing object ids in the desired order."
+                'The lengths of provided_ids and ALL existing objects do not match. '
+                'Please provide a list of ALL existing object ids in the desired order.'
             )
 
         # NOTE: We cast the id_field to a string in the instance map to avoid UUID comparison
@@ -198,7 +202,7 @@ class BulkEditSession(models.Model):
                 # in case the provided_ids are UUIDs.
                 instance = instance_map[str(object_id)]
             except KeyError:
-                raise ValueError(f"Object with {id_field} {object_id} not found.")
+                raise ValueError(f'Object with {id_field} {object_id} not found.')
             instance.index = index
 
         related_manager.bulk_update(instance_map.values(), ['index'])
@@ -275,9 +279,7 @@ class BulkEditSession(models.Model):
         return self.records.filter(is_selected=True).count()
 
     def get_num_selected_records_in_queryset(self):
-        case_ids = self.records.filter(is_selected=True).values_list(
-            "doc_id", flat=True
-        )
+        case_ids = self.records.filter(is_selected=True).values_list('doc_id', flat=True)
 
         from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTableData
 
@@ -317,8 +319,7 @@ class BulkEditSession(models.Model):
         if selected_records:
             through = change.records.through
             rows = [
-                through(bulkeditchange_id=change.pk, bulkeditrecord_id=record.pk)
-                for record in selected_records
+                through(bulkeditchange_id=change.pk, bulkeditrecord_id=record.pk) for record in selected_records
             ]
             through.objects.bulk_create(rows, ignore_conflicts=True)
 
@@ -331,9 +332,7 @@ class BulkEditSession(models.Model):
         assert change.session == self
         change.save()  # save the change in the atomic block, rather than the form
         if self.has_any_filtering:
-            self._apply_operation_on_queryset(
-                lambda doc_ids: self._attach_change_to_records(change, doc_ids)
-            )
+            self._apply_operation_on_queryset(lambda doc_ids: self._attach_change_to_records(change, doc_ids))
         else:
             # If there are no filters, we can just apply the change to all selected records
             # this will be a faster operation for larger data sets
@@ -344,7 +343,7 @@ class BulkEditSession(models.Model):
     def num_changed_records(self):
         if not self.committed_on:
             raise RuntimeError(
-                "Session not committed yet. Please commit the session first or use get_change_counts()"
+                'Session not committed yet. Please commit the session first or use get_change_counts()'
             )
         return self.result['record_count'] if self.completed_on else self.records.count()
 
@@ -389,9 +388,7 @@ class BulkEditSession(models.Model):
         Perform a bulk operation on the queryset for this session.
         :param operation: function to apply to each record (takes in doc ids as argument)
         """
-        for doc_ids in chunked(
-            self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
-        ):
+        for doc_ids in chunked(self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list):
             operation(doc_ids)
 
     def select_all_records_in_queryset(self):
@@ -413,9 +410,7 @@ class BulkEditSession(models.Model):
         :return: int
         """
         num_unrecorded = 0
-        for doc_ids in chunked(
-            self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
-        ):
+        for doc_ids in chunked(self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list):
             num_unrecorded += len(self.records.get_unrecorded_doc_ids(self, doc_ids))
         return num_unrecorded
 

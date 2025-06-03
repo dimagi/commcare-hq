@@ -42,7 +42,7 @@ class BulkEditFilterManager(models.Manager):
             if column_xpath is not None:
                 xpath_expressions.append(column_xpath)
         if xpath_expressions:
-            query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
+            query = query.xpath_query(session.domain, ' and '.join(xpath_expressions))
         return query
 
     def copy_to_session(self, source_session, dest_session):
@@ -58,7 +58,7 @@ class BulkEditFilterManager(models.Manager):
 
 
 class BulkEditFilter(models.Model):
-    session = models.ForeignKey("data_cleaning.BulkEditSession", related_name="filters", on_delete=models.CASCADE)
+    session = models.ForeignKey('data_cleaning.BulkEditSession', related_name='filters', on_delete=models.CASCADE)
     filter_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     index = models.IntegerField(default=0)
     prop_id = models.CharField(max_length=255)  # case property or form question_id
@@ -77,7 +77,7 @@ class BulkEditFilter(models.Model):
     objects = BulkEditFilterManager()
 
     class Meta:
-        ordering = ["index"]
+        ordering = ['index']
 
     @property
     def human_readable_match_type(self):
@@ -96,7 +96,7 @@ class BulkEditFilter(models.Model):
                 FilterMatchType.MULTI_SELECT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
             ),
         }.get(category, {})
-        return match_to_text.get(self.match_type, _("unknown"))
+        return match_to_text.get(self.match_type, _('unknown'))
 
     def filter_query(self, query):
         filter_query_functions = {
@@ -168,7 +168,7 @@ class BulkEditFilter(models.Model):
             is_number = self.data_type in DataType.FILTER_CATEGORY_DATA_TYPES[DataType.FILTER_CATEGORY_NUMBER]
             value = self.value if is_number else self.get_quoted_value(self.value)
             operator = match_operators[self.match_type]
-            return f"{self.prop_id} {operator} {value}"
+            return f'{self.prop_id} {operator} {value}'
 
         match_expression = {
             FilterMatchType.STARTS: lambda x: f'starts-with({self.prop_id}, {x})',
@@ -196,7 +196,7 @@ class BulkEditPinnedFilterManager(models.Manager):
         }.get(session.session_type)
 
         if not default_types:
-            raise NotImplementedError(f"{session.session_type} default pinned filters not yet supported")
+            raise NotImplementedError(f'{session.session_type} default pinned filters not yet supported')
 
         for index, filter_type in enumerate(default_types):
             self.create(
@@ -222,7 +222,7 @@ class BulkEditPinnedFilterManager(models.Manager):
 
 class BulkEditPinnedFilter(models.Model):
     session = models.ForeignKey(
-        "data_cleaning.BulkEditSession", related_name="pinned_filters", on_delete=models.CASCADE
+        'data_cleaning.BulkEditSession', related_name='pinned_filters', on_delete=models.CASCADE
     )
     index = models.IntegerField(default=0)
     filter_type = models.CharField(
@@ -238,13 +238,14 @@ class BulkEditPinnedFilter(models.Model):
     objects = BulkEditPinnedFilterManager()
 
     class Meta:
-        ordering = ["index"]
+        ordering = ['index']
 
     def get_report_filter_class(self):
         from corehq.apps.data_cleaning.filters import (
             CaseOwnersPinnedFilter,
             CaseStatusPinnedFilter,
         )
+
         return {
             PinnedFilterType.CASE_OWNERS: CaseOwnersPinnedFilter,
             PinnedFilterType.CASE_STATUS: CaseStatusPinnedFilter,

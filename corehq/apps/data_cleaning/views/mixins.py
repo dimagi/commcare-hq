@@ -8,7 +8,7 @@ from corehq.apps.data_cleaning.models import BulkEditSession
 
 
 class BulkEditSessionViewMixin:
-    session_not_found_message = gettext_lazy("That session does not exist. Please start a new session.")
+    session_not_found_message = gettext_lazy('That session does not exist. Please start a new session.')
     redirect_on_missing_session = False
 
     @property
@@ -21,8 +21,8 @@ class BulkEditSessionViewMixin:
         Only used when `redirect_on_missing_session` is True.
         """
         raise NotImplementedError(
-            "get_redirect_url must be implemented in the subclass of BulkEditSessionViewMixin "
-            "in order to use redirect_on_missing_session"
+            'get_redirect_url must be implemented in the subclass of BulkEditSessionViewMixin '
+            'in order to use redirect_on_missing_session'
         )
 
     @property
@@ -36,10 +36,12 @@ class BulkEditSessionViewMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({
-            'session': self.session,
-            'session_id': self.session_id,
-        })
+        context.update(
+            {
+                'session': self.session,
+                'session_id': self.session_id,
+            }
+        )
         return context
 
     def get(self, request, *args, **kwargs):

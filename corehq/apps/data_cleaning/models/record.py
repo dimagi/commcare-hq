@@ -8,18 +8,10 @@ class BulkEditRecordManager(models.Manager):
     use_for_related_fields = True
 
     def get_for_inline_editing(self, session, doc_id):
-        return self.get_or_create(
-            session=session,
-            doc_id=doc_id,
-            defaults={'is_selected': False}
-        )[0]
+        return self.get_or_create(session=session, doc_id=doc_id, defaults={'is_selected': False})[0]
 
     def select(self, session, doc_id):
-        record, _ = self.get_or_create(
-            session=session,
-            doc_id=doc_id,
-            defaults={'is_selected': True}
-        )
+        record, _ = self.get_or_create(session=session, doc_id=doc_id, defaults={'is_selected': True})
         if not record.is_selected:
             record.is_selected = True
             record.save()
@@ -53,13 +45,10 @@ class BulkEditRecordManager(models.Manager):
         existing_ids = session.records.filter(
             session=session,
             doc_id__in=doc_ids,
-        ).values_list("doc_id", flat=True)
+        ).values_list('doc_id', flat=True)
 
         missing_ids = list(set(doc_ids) - set(existing_ids))
-        new_records = [
-            self.model(session=session, doc_id=doc_id, is_selected=True)
-            for doc_id in missing_ids
-        ]
+        new_records = [self.model(session=session, doc_id=doc_id, is_selected=True) for doc_id in missing_ids]
         # using ignore_conflicts avoids IntegrityErrors if another
         # process inserts them concurrently:
         self.bulk_create(new_records, ignore_conflicts=True)
@@ -90,12 +79,12 @@ class BulkEditRecordManager(models.Manager):
     def get_unrecorded_doc_ids(self, session, doc_ids):
         recorded_doc_ids = session.records.filter(
             doc_id__in=doc_ids,
-        ).values_list("doc_id", flat=True)
+        ).values_list('doc_id', flat=True)
         return list(set(doc_ids) - set(recorded_doc_ids))
 
 
 class BulkEditRecord(models.Model):
-    session = models.ForeignKey("data_cleaning.BulkEditSession", related_name="records", on_delete=models.CASCADE)
+    session = models.ForeignKey('data_cleaning.BulkEditSession', related_name='records', on_delete=models.CASCADE)
     doc_id = models.CharField(max_length=126, db_index=True)  # case_id or form_id
     is_selected = models.BooleanField(default=True)
     calculated_change_id = models.UUIDField(null=True, blank=True)
@@ -106,8 +95,8 @@ class BulkEditRecord(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["session", "doc_id"],
-                name="unique_record_per_session",
+                fields=['session', 'doc_id'],
+                name='unique_record_per_session',
             ),
         ]
 
@@ -147,9 +136,7 @@ class BulkEditRecord(models.Model):
                 if change.prop_id in properties:
                     del properties[change.prop_id]
             else:
-                properties[change.prop_id] = change.edited_value(
-                    case, edited_properties=properties
-                )
+                properties[change.prop_id] = change.edited_value(case, edited_properties=properties)
         self.calculated_properties = properties
         self.calculated_change_id = self.changes.last().change_id
         self.save()

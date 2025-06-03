@@ -127,13 +127,16 @@ class CommitCasesTest(TestCase):
         self.assertEqual(case.get_case_property('year'), '2023')
 
         self._refresh_session()
-        self.assertDictEqual(self.session.result, {
-            'errors': [],
-            'form_ids': form_ids,
-            'num_committed_records': 1,
-            'record_count': 1,
-            'percent': 100,
-        })
+        self.assertDictEqual(
+            self.session.result,
+            {
+                'errors': [],
+                'form_ids': form_ids,
+                'num_committed_records': 1,
+                'record_count': 1,
+                'percent': 100,
+            },
+        )
         self.assertEqual(self.session.percent_complete, 100)
         self.assertListEqual(list(self.session.form_ids), form_ids)
         self.assertIsNotNone(self.session.completed_on)
@@ -141,19 +144,23 @@ class CommitCasesTest(TestCase):
     def test_chunking(self):
         cases = [self.case]
         for i in range(0, CASEBLOCK_CHUNKSIZE):
-            cases.append(self.factory.create_case(
-                case_type=self.case_type,
-                owner_id='crj123',
-                case_name=f'case{i}',
-                update={'speed': f'{i}kph'},
-            ))
+            cases.append(
+                self.factory.create_case(
+                    case_type=self.case_type,
+                    owner_id='crj123',
+                    case_name=f'case{i}',
+                    update={'speed': f'{i}kph'},
+                )
+            )
 
         records = []
         for case in cases:
-            records.append(BulkEditRecord(
-                session=self.session,
-                doc_id=case.case_id,
-            ))
+            records.append(
+                BulkEditRecord(
+                    session=self.session,
+                    doc_id=case.case_id,
+                )
+            )
             records[-1].save()
 
         change = BulkEditChange(

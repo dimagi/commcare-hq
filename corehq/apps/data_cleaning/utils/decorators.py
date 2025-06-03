@@ -7,6 +7,7 @@ def retry_on_integrity_error(max_retries=3, delay=0.1):
     """
     Decorator to retry a function call if an IntegrityError occurs.
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # note: the zero-th 'attempt' is not a 'retry', it is the first call
@@ -18,5 +19,7 @@ def retry_on_integrity_error(max_retries=3, delay=0.1):
                         time.sleep(delay)
                     else:
                         raise
+
         return wrapper
+
     return decorator

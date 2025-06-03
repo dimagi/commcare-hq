@@ -95,7 +95,9 @@ class CleanCasesViewAccessTest(TestCase):
         )
         cls.client = Client()
         session = BulkEditSession.objects.new_case_session(
-            cls.user_in_domain.get_django_user(), cls.domain_name, 'plants',
+            cls.user_in_domain.get_django_user(),
+            cls.domain_name,
+            'plants',
         )
         cls.real_session_id = session.session_id
         cls.fake_session_id = uuid.uuid4()
@@ -103,21 +105,111 @@ class CleanCasesViewAccessTest(TestCase):
             (BulkEditCasesMainView, (cls.domain_name,)),
             (StartCaseSessionView, (cls.domain_name,)),
             (RecentCaseSessionsTableView, (cls.domain_name,)),
-            (BulkEditCasesSessionView, (cls.domain_name, cls.real_session_id,)),
-            (BulkEditCasesSessionView, (cls.domain_name, cls.fake_session_id,)),
-            (EditCasesTableView, (cls.domain_name, cls.real_session_id,)),
-            (EditCasesTableView, (cls.domain_name, cls.fake_session_id,)),
-            (ManagePinnedFiltersView, (cls.domain_name, cls.real_session_id,)),
-            (ManagePinnedFiltersView, (cls.domain_name, cls.fake_session_id,)),
-            (ManageFiltersView, (cls.domain_name, cls.real_session_id,)),
-            (ManageFiltersView, (cls.domain_name, cls.fake_session_id,)),
-            (ManageColumnsFormView, (cls.domain_name, cls.real_session_id,)),
-            (ManageColumnsFormView, (cls.domain_name, cls.fake_session_id,)),
-            (ManageFiltersView, (cls.domain_name, cls.fake_session_id,)),
-            (EditSelectedRecordsFormView, (cls.domain_name, cls.real_session_id,)),
-            (EditSelectedRecordsFormView, (cls.domain_name, cls.fake_session_id,)),
-            (BulkEditSessionStatusView, (cls.domain_name, cls.real_session_id,)),
-            (BulkEditSessionStatusView, (cls.domain_name, cls.fake_session_id,)),
+            (
+                BulkEditCasesSessionView,
+                (
+                    cls.domain_name,
+                    cls.real_session_id,
+                ),
+            ),
+            (
+                BulkEditCasesSessionView,
+                (
+                    cls.domain_name,
+                    cls.fake_session_id,
+                ),
+            ),
+            (
+                EditCasesTableView,
+                (
+                    cls.domain_name,
+                    cls.real_session_id,
+                ),
+            ),
+            (
+                EditCasesTableView,
+                (
+                    cls.domain_name,
+                    cls.fake_session_id,
+                ),
+            ),
+            (
+                ManagePinnedFiltersView,
+                (
+                    cls.domain_name,
+                    cls.real_session_id,
+                ),
+            ),
+            (
+                ManagePinnedFiltersView,
+                (
+                    cls.domain_name,
+                    cls.fake_session_id,
+                ),
+            ),
+            (
+                ManageFiltersView,
+                (
+                    cls.domain_name,
+                    cls.real_session_id,
+                ),
+            ),
+            (
+                ManageFiltersView,
+                (
+                    cls.domain_name,
+                    cls.fake_session_id,
+                ),
+            ),
+            (
+                ManageColumnsFormView,
+                (
+                    cls.domain_name,
+                    cls.real_session_id,
+                ),
+            ),
+            (
+                ManageColumnsFormView,
+                (
+                    cls.domain_name,
+                    cls.fake_session_id,
+                ),
+            ),
+            (
+                ManageFiltersView,
+                (
+                    cls.domain_name,
+                    cls.fake_session_id,
+                ),
+            ),
+            (
+                EditSelectedRecordsFormView,
+                (
+                    cls.domain_name,
+                    cls.real_session_id,
+                ),
+            ),
+            (
+                EditSelectedRecordsFormView,
+                (
+                    cls.domain_name,
+                    cls.fake_session_id,
+                ),
+            ),
+            (
+                BulkEditSessionStatusView,
+                (
+                    cls.domain_name,
+                    cls.real_session_id,
+                ),
+            ),
+            (
+                BulkEditSessionStatusView,
+                (
+                    cls.domain_name,
+                    cls.fake_session_id,
+                ),
+            ),
         ]
         cls.views_not_found_with_invalid_session = [
             EditCasesTableView,
@@ -144,22 +236,14 @@ class CleanCasesViewAccessTest(TestCase):
         for view_class, args in self.all_views:
             url = reverse(view_class.urlname, args=args)
             response = self.client.get(url)
-            self.assertEqual(
-                response.status_code,
-                403,
-                msg=f"{view_class.__name__} should NOT be accessible"
-            )
+            self.assertEqual(response.status_code, 403, msg=f'{view_class.__name__} should NOT be accessible')
 
     def test_has_no_access_without_privilege(self):
         self.client.login(username=self.user_in_domain.username, password=self.password)
         for view_class, args in self.all_views:
             url = reverse(view_class.urlname, args=args)
             response = self.client.get(url)
-            self.assertEqual(
-                response.status_code,
-                403,
-                msg=f"{view_class.__name__} should NOT be accessible"
-            )
+            self.assertEqual(response.status_code, 403, msg=f'{view_class.__name__} should NOT be accessible')
 
     @privilege_enabled(BULK_DATA_EDITING)
     def test_has_no_access_without_permission(self):
@@ -167,11 +251,7 @@ class CleanCasesViewAccessTest(TestCase):
         for view_class, args in self.all_views:
             url = reverse(view_class.urlname, args=args)
             response = self.client.get(url)
-            self.assertEqual(
-                response.status_code,
-                403,
-                msg=f"{view_class.__name__} should NOT be accessible"
-            )
+            self.assertEqual(response.status_code, 403, msg=f'{view_class.__name__} should NOT be accessible')
 
     @privilege_enabled(BULK_DATA_EDITING)
     def test_has_access_with_prereqs(self):
@@ -182,18 +262,11 @@ class CleanCasesViewAccessTest(TestCase):
                 continue
             url = reverse(view_class.urlname, args=args)
             response = self.client.get(url)
-            self.assertEqual(
-                response.status_code,
-                200,
-                msg=f"{view_class.__name__} should be accessible"
-            )
+            self.assertEqual(response.status_code, 200, msg=f'{view_class.__name__} should be accessible')
 
     @privilege_enabled(BULK_DATA_EDITING)
     def test_has_no_access_to_wrong_session(self):
-        self.client.login(
-            username=self.user_in_domain_not_in_session.username,
-            password=self.password
-        )
+        self.client.login(username=self.user_in_domain_not_in_session.username, password=self.password)
         for view_class, args in self.all_views:
             if self.fake_session_id in args or len(args) == 1:
                 # only test real sessions and session views
@@ -203,7 +276,7 @@ class CleanCasesViewAccessTest(TestCase):
             self.assertEqual(
                 response.status_code,
                 302 if view_class == BulkEditCasesSessionView else 404,
-                msg=f"{view_class.__name__} should NOT be accessible"
+                msg=f'{view_class.__name__} should NOT be accessible',
             )
 
     @privilege_enabled(BULK_DATA_EDITING)
@@ -218,17 +291,12 @@ class CleanCasesViewAccessTest(TestCase):
         self.client.login(username=self.user_in_domain.username, password=self.password)
 
         for view_class, args in self.all_views:
-            if not (self.fake_session_id in args
-                    and view_class in self.views_not_found_with_invalid_session):
+            if not (self.fake_session_id in args and view_class in self.views_not_found_with_invalid_session):
                 # only test views expected to 404 with invalid sessions
                 continue
             url = reverse(view_class.urlname, args=args)
             response = self.client.get(url)
-            self.assertEqual(
-                response.status_code,
-                404,
-                msg=f"{view_class.__name__} should NOT be accessible"
-            )
+            self.assertEqual(response.status_code, 404, msg=f'{view_class.__name__} should NOT be accessible')
 
     @privilege_enabled(BULK_DATA_EDITING)
     def test_has_no_access_with_other_domain(self):
@@ -236,8 +304,4 @@ class CleanCasesViewAccessTest(TestCase):
         for view_class, args in self.all_views:
             url = reverse(view_class.urlname, args=args)
             response = self.client.get(url)
-            self.assertEqual(
-                response.status_code,
-                403,
-                msg=f"{view_class.__name__} should NOT be accessible"
-            )
+            self.assertEqual(response.status_code, 403, msg=f'{view_class.__name__} should NOT be accessible')

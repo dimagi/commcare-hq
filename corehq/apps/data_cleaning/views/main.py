@@ -24,45 +24,52 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.util.view_utils import set_file_download
 
 
-@method_decorator([
-    use_bootstrap5,
-    require_bulk_data_cleaning_cases,
-], name='dispatch')
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_bulk_data_cleaning_cases,
+    ],
+    name='dispatch',
+)
 class BulkEditCasesMainView(BaseProjectDataView):
-    page_title = gettext_lazy("Bulk Edit Case Data")
-    urlname = "bulk_edit_cases_main"
-    template_name = "data_cleaning/bulk_edit_main.html"
+    page_title = gettext_lazy('Bulk Edit Case Data')
+    urlname = 'bulk_edit_cases_main'
+    template_name = 'data_cleaning/bulk_edit_main.html'
 
     @property
     def page_context(self):
         return {
-            "htmx_start_session_form_view_url": reverse(
+            'htmx_start_session_form_view_url': reverse(
                 StartCaseSessionView.urlname,
                 args=(self.domain,),
             ),
-            "htmx_recent_sessions_table_view_url": reverse(
+            'htmx_recent_sessions_table_view_url': reverse(
                 RecentCaseSessionsTableView.urlname,
                 args=(self.domain,),
             ),
         }
 
 
-@method_decorator([
-    use_bootstrap5,
-    require_bulk_data_cleaning_cases,
-], name='dispatch')
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_bulk_data_cleaning_cases,
+    ],
+    name='dispatch',
+)
 class BulkEditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     """
     This view is a "host" view of several HTMX views that handle
     different parts of the Bulk Editing feature.
     """
-    page_title = gettext_lazy("Bulk Edit Case Type")
-    urlname = "bulk_edit_cases_session"
-    template_name = "data_cleaning/bulk_edit_session.html"
+
+    page_title = gettext_lazy('Bulk Edit Case Type')
+    urlname = 'bulk_edit_cases_session'
+    template_name = 'data_cleaning/bulk_edit_session.html'
     redirect_on_missing_session = True
 
     def get_redirect_url(self):
-        return reverse(BulkEditCasesMainView.urlname, args=(self.domain, ))
+        return reverse(BulkEditCasesMainView.urlname, args=(self.domain,))
 
     @property
     def case_type(self):
@@ -76,39 +83,47 @@ class BulkEditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     @memoized
     def page_url(self):
         if self.urlname:
-            return reverse(self.urlname, args=(self.domain, self.session_id,))
+            return reverse(
+                self.urlname,
+                args=(
+                    self.domain,
+                    self.session_id,
+                ),
+            )
 
     @property
     def parent_pages(self):
-        return [{
-            'title': BulkEditCasesMainView.page_title,
-            'url': reverse(BulkEditCasesMainView.urlname, args=(self.domain,)),
-        }]
+        return [
+            {
+                'title': BulkEditCasesMainView.page_title,
+                'url': reverse(BulkEditCasesMainView.urlname, args=(self.domain,)),
+            }
+        ]
 
     @property
     def page_context(self):
         return {
-            "htmx_primary_view_url": reverse(
+            'htmx_primary_view_url': reverse(
                 EditCasesTableView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_pinned_filters_view_url": reverse(
+            'htmx_pinned_filters_view_url': reverse(
                 ManagePinnedFiltersView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_filters_view_url": reverse(
+            'htmx_filters_view_url': reverse(
                 ManageFiltersView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_columns_view_url": reverse(
+            'htmx_columns_view_url': reverse(
                 ManageColumnsFormView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_edit_selected_records_view_url": reverse(
+            'htmx_edit_selected_records_view_url': reverse(
                 EditSelectedRecordsFormView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_session_status_view_url": reverse(
+            'htmx_session_status_view_url': reverse(
                 BulkEditSessionStatusView.urlname,
                 args=(self.domain, self.session_id),
             ),
@@ -120,7 +135,7 @@ class BulkEditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
 def clear_session_caches(request, domain, session_id):
     session = BulkEditSession.objects.get(session_id=session_id)
     clear_caches_case_data_cleaning(session.domain, session.identifier)
-    messages.success(request, _("Caches successfully cleared."))
+    messages.success(request, _('Caches successfully cleared.'))
     return redirect(reverse(BulkEditCasesMainView.urlname, args=(domain,)))
 
 
@@ -132,6 +147,6 @@ def download_form_ids(request, domain, session_id):
 
     ids_stream = ('{}\n'.format(form_id) for form_id in session.form_ids)
     response = StreamingHttpResponse(ids_stream, content_type='text/plain')
-    set_file_download(response, f"{domain}-data_cleaning-form_ids.txt")
+    set_file_download(response, f'{domain}-data_cleaning-form_ids.txt')
 
     return response
