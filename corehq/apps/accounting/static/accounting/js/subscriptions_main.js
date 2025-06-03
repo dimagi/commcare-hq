@@ -5,6 +5,7 @@ import widgets from "accounting/js/widgets";
 import "accounting/js/base_subscriptions_main";
 
 $(function () {
+    debugger;
     var asyncSelect2Handler = widgets.asyncSelect2Handler;
     var newPlanVersion = asyncSelect2Handler('new_plan_version');
     newPlanVersion.init();
