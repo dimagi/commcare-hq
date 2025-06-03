@@ -11,7 +11,7 @@
  *  - immediate: Boolean. If true, search on every keypress.
  */
 
-hqDefine('hqwebapp/js/components/search_box', [
+define('hqwebapp/js/components/search_box', [
     'jquery',
     'knockout',
     'underscore',
