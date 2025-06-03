@@ -11,11 +11,10 @@
 >
   <div class="modal-dialog modal-dialog-centered">
     {% comment %}
-      The HTMX request below will trigger a `showDataCleaningModal` event
-      for the `#session-status-modal` above after the HTMX swap.
-
-      This request will not be triggered unless the session is read-only (triggers on `load`)
-      OR the `dcRefreshStatusModal` event is sent to `#session-status-modal-body`.
+      The HTMX request below will trigger a `showDataCleaningModal` event for
+      the `#session-status-modal` above after the HTMX swap. This request will
+      not be triggered unless the session is read-only (triggers on `load`) OR
+      the `dcRefreshStatusModal` event is sent to `#session-status-modal-body`.
     {% endcomment %}
     <div
       class="modal-content"

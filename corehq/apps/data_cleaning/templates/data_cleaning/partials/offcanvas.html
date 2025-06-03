@@ -11,7 +11,9 @@
       <i class="fa-solid fa-filter"></i> {% trans "Filter Cases" %}
     </h5>
     <button
-      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      class="btn-close"
+      type="button"
+      aria-label="{% trans "Close" %}"
       data-bs-dismiss="offcanvas"
     ></button>
   </div>
@@ -45,15 +47,14 @@
       <i class="fa-solid fa-table-columns"></i> {% trans "Configure Columns" %}
     </h5>
     <button
-      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      class="btn-close"
+      type="button"
+      aria-label="{% trans "Close" %}"
       data-bs-dismiss="offcanvas"
     ></button>
   </div>
   <div class="offcanvas-body">
-    <div
-      hx-get="{{ htmx_columns_view_url }}"
-      hx-trigger="load"
-    >
+    <div hx-get="{{ htmx_columns_view_url }}" hx-trigger="load">
       {% include "data_cleaning/partials/loading_indicator.html" %}
     </div>
   </div>
@@ -70,7 +71,9 @@
       <i class="fa-solid fa-shower"></i> {% trans "Edit Selected Cases" %}
     </h5>
     <button
-      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      class="btn-close"
+      type="button"
+      aria-label="{% trans "Close" %}"
       data-bs-dismiss="offcanvas"
     ></button>
   </div>
