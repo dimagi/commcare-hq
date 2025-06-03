@@ -38,8 +38,6 @@ class UserES(HQESQuery):
     index = HQ_USERS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_deleted': filters.term("base_doc", "couchuser"),
-        # TODO remove
-        'active': filters.term("is_active", True),
     }
 
     @property
@@ -68,12 +66,11 @@ class UserES(HQESQuery):
     # TODO remove
     def show_inactive(self):
         """Include inactive users, which would normally be filtered out."""
-        return self.remove_default_filter('active')
+        return self
 
     # TODO remove
     def show_only_inactive(self):
-        query = self.remove_default_filter('active')
-        return query.is_active(False)
+        return self.is_active(False)
 
 
 class ElasticUser(ElasticDocumentAdapter):
