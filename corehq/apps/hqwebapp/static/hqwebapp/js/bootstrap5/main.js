@@ -359,21 +359,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
         },
     };
 
-    var beforeUnload = [];
-    var bindBeforeUnload = function (callback) {
-        beforeUnload.push(callback);
-    };
-    var beforeUnloadCallback = function () {
-        for (var i = 0; i < beforeUnload.length; i++) {
-            var message = beforeUnload[i]();
-            if (message !== null && message !== undefined) {
-                return message;
-            }
-        }
-    };
-
     $(function () {
-        $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
 
         var trialModalElement = $('#modalTrial30Day'),
@@ -503,7 +489,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     };
 
     return {
-        beforeUnloadCallback: beforeUnloadCallback,
         eventize: eventize,
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,
