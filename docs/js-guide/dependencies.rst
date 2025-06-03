@@ -246,12 +246,12 @@ How close are we to a world where we’ll just have one set of conventions?
 As above, most code is migrated, but most of the remaining areas have
 significant complexity.
 
-`hqDefine.sh <https://github.com/dimagi/commcare-hq/blob/master/scripts/codechecks/hqDefine.sh>`__
+`amd.sh <https://github.com/dimagi/commcare-hq/blob/master/scripts/codechecks/amd.sh>`__
 generates metrics for the current status of the migration and locates
 un-migrated files. At the time of writing:
 
 ::
 
-    $ ./scripts/codechecks/hqDefine.sh
+    $ ./scripts/codechecks/amd.sh
 
-19%     (123/660) of JS files use ESM format
+80%     (522/658) of JS files use ESM format
