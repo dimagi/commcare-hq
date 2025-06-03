@@ -4,21 +4,21 @@
 
 {% block modal_title %}
   {% trans "Apply all edits?" %}
-{% endblock %}
+{% endblock modal_title %}
 
-{% block modal_continue_attrs %}
+{% block modal_continue_attrs %}{# prettier-ignore-start #}
   hx-post="{{ request.path_info }}{% querystring %}"
   hq-hx-action="apply_all_changes"
   hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
   hx-swap="none"
   hq-hx-loading="{{ table.loading_indicator_id }}"
   hx-disable-elt="this"
-{% endblock %}
+{# prettier-ignore-end #}{% endblock modal_continue_attrs %}
 
 {% block modal_continue_text %}
   <i class="fa-solid fa-check-double"></i>
   {% trans "Apply All Edits" %}
-{% endblock %}
+{% endblock modal_continue_text %}
 
 {% block modal_body %}
   {% if table.num_visible_selected_records != table.num_selected_records %}
@@ -28,7 +28,8 @@
       </h5>
       <p class="mb-0">
         {% blocktrans %}
-          "Apply" will apply all previewed edits in the session, regardless of filters.
+          "Apply" will apply all previewed edits in the session, regardless of
+          filters.
         {% endblocktrans %}
       </p>
     </div>
@@ -42,4 +43,4 @@
     {% include "data_cleaning/summary/apply_changes.html" %}
     {% include "data_cleaning/partials/loading_indicator.html" %}
   </div>
-{% endblock %}
+{% endblock modal_body %}
