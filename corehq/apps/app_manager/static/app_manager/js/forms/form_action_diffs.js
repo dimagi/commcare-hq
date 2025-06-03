@@ -16,7 +16,10 @@ export function getDiff(original, incoming) {
             // extraneous keys like 'doc_type', so remove them to make comparison simple
             const normalizedOriginal = _.omit(original[key], 'doc_type');
             if (!_.isEqual(incoming[key], normalizedOriginal)) {
-                updates[key] = incoming[key];
+                updates[key] = {
+                    original: normalizedOriginal,
+                    updated: incoming[key],
+                };
             }
         }
     });

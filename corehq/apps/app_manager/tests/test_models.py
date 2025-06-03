@@ -61,7 +61,29 @@ class UpdateCaseAction_WithDiffsTests(SimpleTestCase):
         }})
 
         result = actions.with_diffs({
-            'update': {'two': {'question_path': 'four'}},
+            'update': {
+                'two': {
+                    'original': {'question_path': 'two'},
+                    'updated': {'question_path': 'four'},
+                },
+            },
+        })
+
+        self.assertEqual(result.update['two'].question_path, 'four')
+
+    def test_updating_stale_value_uses_updated_value(self):
+        actions = UpdateCaseAction({'update': {
+            'one': {'question_path': 'one'},
+            'two': {'question_path': 'changed'}
+        }})
+
+        result = actions.with_diffs({
+            'update': {
+                'two': {
+                    'original': {'question_path': 'two'},
+                    'updated': {'question_path': 'four'},
+                },
+            },
         })
 
         self.assertEqual(result.update['two'].question_path, 'four')
@@ -86,7 +108,12 @@ class UpdateCaseAction_WithDiffsTests(SimpleTestCase):
 
         with self.assertRaises(MissingPropertyException):
             actions.with_diffs({
-                'update': {'two': {'question_path': 'two'}}
+                'update': {
+                    'two': {
+                        'original': {'question_path': 'a'},
+                        'updated': {'question_path': 'two'}
+                    }
+                }
             })
 
     def test_missing_property_exception_contains_all_missing_properties(self):
@@ -95,8 +122,14 @@ class UpdateCaseAction_WithDiffsTests(SimpleTestCase):
         with self.assertRaises(MissingPropertyException) as context:
             actions.with_diffs({
                 'update': {
-                    'one': {'question_path': 'one'},
-                    'two': {'question_path': 'two'}
+                    'one': {
+                        'incoming': {'question_path': 'a'},
+                        'updated': {'question_path': 'one'},
+                    },
+                    'two': {
+                        'incoming': {'question_path': 'b'},
+                        'updated': {'question_path': 'two'}
+                    }
                 }
             })
 
@@ -119,7 +152,10 @@ class UpdateCaseAction_WithDiffsTests(SimpleTestCase):
 
         with self.assertRaises(DiffConflictException):
             actions.with_diffs({
-                'update': {'two': {'question_path': 'three'}},
+                'update': {'two': {
+                    'original': {'question_path': 'two'},
+                    'updated': {'question_path': 'three'}
+                }},
                 'del': ['two']
             })
 
@@ -132,7 +168,10 @@ class UpdateCaseAction_WithDiffsTests(SimpleTestCase):
         result = actions.with_diffs({
             'add': {'three': {'question_path': 'three'}},
             'del': ['one'],
-            'update': {'two': {'question_path': 'nine'}}
+            'update': {'two': {
+                'original': {'question_path': 'two'},
+                'updated': {'question_path': 'nine'}
+            }}
         })
 
         self.assertEqual(list(result.update.keys()), ['two', 'three'])

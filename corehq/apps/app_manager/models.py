@@ -383,7 +383,8 @@ class UpdateCaseAction(FormAction):
 
         if 'update' in diffs:
             for (key, value) in diffs['update'].items():
-                dest.update[key] = ConditionalCaseUpdate(value)
+                incoming_value = value['updated']
+                dest.update[key] = ConditionalCaseUpdate(incoming_value)
 
         return dest
 
