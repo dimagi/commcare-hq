@@ -45,6 +45,7 @@ class UserES(HQESQuery):
         return [
             domain,
             domains,
+            active_on_any_domain,
             created,
             mobile_users,
             web_users,
