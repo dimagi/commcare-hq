@@ -310,9 +310,9 @@ class EnterpriseUserOptionsController(EmwfOptionsController):
             (self.get_all_users_size, self.get_all_users),
         ]
 
-    def active_user_es_query(self, query):
+    def active_user_es_query(self, query, include_inactive=False):
         if not self.request.can_access_all_locations:
-            return super().active_user_es_query(query)
+            return super().active_user_es_query(query, include_inactive)
         else:
             search_fields = ["first_name", "last_name", "base_username"]
             return (UserES()

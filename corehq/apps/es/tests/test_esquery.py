@@ -35,8 +35,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                                 )
                             }
                         },
-                        {'term': {'base_doc': 'couchuser'}},
-                        {'term': {'is_active': True}}
+                        {'term': {'base_doc': 'couchuser'}}
                     ],
                     "must": {
                         "match_all": {}
@@ -117,11 +116,6 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                         {
                             "term": {
                                 "base_doc": "couchuser"
-                            }
-                        },
-                        {
-                            "term": {
-                                "is_active": True
                             }
                         }
                     ],
