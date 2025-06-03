@@ -41,9 +41,8 @@ def get_domain_device_breakdown_es(domain_name, monthspan):
 def get_mobile_users(domains):
     return set(
         UserES()
-        .show_inactive()
         .mobile_users()
-        .domain(domains)
+        .domain(domains, include_inactive=True)
         .scroll_ids()
     )
 
