@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/nav_menu_media_common", [
+define("app_manager/js/nav_menu_media_common", [
     "underscore",
     "hqwebapp/js/initial_page_data",
     "hqmedia/js/uploaders",

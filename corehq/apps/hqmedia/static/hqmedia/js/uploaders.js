@@ -1,4 +1,4 @@
-hqDefine("hqmedia/js/uploaders", [
+define("hqmedia/js/uploaders", [
     "jquery",
     "underscore",
     "hqwebapp/js/assert_properties",
