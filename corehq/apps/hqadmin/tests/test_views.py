@@ -1,13 +1,18 @@
 import os
 
+from django.contrib.messages import get_messages
 from django.http import HttpResponse
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 
 from lxml import etree
 from unittest.mock import Mock, patch
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqadmin.views.users import AdminRestoreView, DisableUserView
+from corehq.apps.users.models import WebUser
+from corehq.toggles import TAG_CUSTOM, TAG_SOLUTIONS
+from corehq.toggles.sql_models import ToggleEditPermission
 
 
 class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
@@ -92,3 +97,65 @@ class DisableUserViewTests(SimpleTestCase):
             redirect_url = view.redirect_url
 
         self.assertEqual(redirect_url, 'dummy_url')
+
+
+class TestSuperuserManagementView(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.superuser = WebUser.create(None, "superuser@dimagi.com", "password", None, None, is_superuser=True)
+        cls.regular_user = WebUser.create(None, "regular@dimagi.com", "password", None, None)
+        cls.superuser_with_permission_to_manage = WebUser.create(
+            None, "support@dimagi.com", "password", None, None, is_superuser=True
+        )
+        cls.superuser_with_permission_to_manage.can_assign_superuser = True
+        cls.superuser_with_permission_to_manage.save()
+        cls.url = reverse('superuser_management')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.superuser.delete(None, None)
+        cls.regular_user.delete(None, None)
+        cls.superuser_with_permission_to_manage.delete(None, None)
+        super().tearDownClass()
+
+    def test_superuser_access(self):
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_superuser_cannot_access(self):
+        self.client.login(username=self.regular_user.username, password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_permission_to_manage_privileges(self):
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.post(self.url, data={})
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), "You do not have permission to update superuser or staff status")
+
+    def test_update_user_privileges(self):
+        user = WebUser.create(None, "test-user@dimagi.com", "password", None, None)
+        self.addCleanup(user.delete, None, None)
+        data = {
+            'csv_email_list': user.username,
+            'privileges': ['is_superuser', 'is_staff'],
+            'feature_flag_edit_permissions': [TAG_SOLUTIONS.slug, TAG_CUSTOM.slug],
+            'can_assign_superuser': ['can_assign_superuser']
+        }
+
+        self.client.login(username=self.superuser_with_permission_to_manage.username, password='password')
+        response = self.client.post(self.url, data)
+
+        self.assertEqual(response.status_code, 200)
+        updated_user = WebUser.get_by_username(user.username)
+        self.assertTrue(updated_user.is_superuser)
+        self.assertTrue(updated_user.is_staff)
+        self.assertTrue(updated_user.can_assign_superuser)
+        for tag_slug in [TAG_SOLUTIONS.slug, TAG_CUSTOM.slug]:
+            permission = ToggleEditPermission.get_by_tag_slug(tag_slug)
+            self.assertIn(user.username, permission.enabled_users)
