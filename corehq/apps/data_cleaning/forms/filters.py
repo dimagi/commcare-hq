@@ -227,7 +227,7 @@ class AddFilterForm(forms.Form):
                             ),
                             x_show=(
                                 '!matchTypesWithNoValue.includes(dateMatchType) '
-                                '&& datetimeTypes.includes(dataType)',
+                                '&& datetimeTypes.includes(dataType)'
                             ),
                         ),
                         x_show='dateDataTypes.includes(dataType)',
