@@ -21,10 +21,8 @@ from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
-from corehq.util.test_utils import flag_enabled
 
 
-@flag_enabled('DATA_CLEANING_CASES')
 @es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class CommitCasesTest(TestCase):
     case_type = 'song'
@@ -131,6 +129,7 @@ class CommitCasesTest(TestCase):
         self.assertDictEqual(self.session.result, {
             'errors': [],
             'form_ids': form_ids,
+            'num_committed_records': 1,
             'record_count': 1,
             'percent': 100,
         })

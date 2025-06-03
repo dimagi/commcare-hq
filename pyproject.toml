@@ -136,6 +136,7 @@ Repository = "https://github.com/dimagi/commcare-hq"
 
 [tool.uv]
 default-groups = ["dev", "sso"]
+required-version = ">=0.7.0"
 
 [dependency-groups]
 dev = [

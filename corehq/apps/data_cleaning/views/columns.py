@@ -44,21 +44,22 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
         column_form = AddColumnForm(self.session, request.POST)
         if column_form.is_valid():
             column_form.add_column()
-            column_form = None
-        response = self.get(request, column_form=column_form, *args, **kwargs)
-        if column_form is None:
+            response = self.get(request, column_form=None, *args, **kwargs)
             response = self._trigger_clean_form_refresh(response)
-        return response
+            return self.include_gtm_event_with_response(response, "bulk_edit_column_added")
+        return self.get(request, column_form=column_form, *args, **kwargs)
 
     @hq_hx_action('post')
     def update_column_order(self, request, *args, **kwargs):
         column_ids = request.POST.getlist('column_ids')
         self.session.update_column_order(column_ids)
         response = self.get(request, *args, **kwargs)
-        return self._trigger_clean_form_refresh(response)
+        response = self._trigger_clean_form_refresh(response)
+        return self.include_gtm_event_with_response(response, "bulk_edit_column_order_updated")
 
     @hq_hx_action('post')
     def remove_column(self, request, *args, **kwargs):
         self.session.remove_column(request.POST['delete_id'])
         response = self.get(request, *args, **kwargs)
-        return self._trigger_clean_form_refresh(response)
+        response = self._trigger_clean_form_refresh(response)
+        return self.include_gtm_event_with_response(response, "bulk_edit_column_removed")

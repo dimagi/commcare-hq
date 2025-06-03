@@ -33,6 +33,7 @@
           name="show_whitespaces"
           x-data=""  {# needed to activate x-model below #}
           x-model="$store.showWhitespaces"
+          @click="$store.gtm.sendEvent('bulk_edit_show_whitespaces');"
         />
         <label class="form-check-label" for="show-whitespaces-switch">
           {% trans "Show Whitespaces" %}
@@ -44,6 +45,7 @@
     class="mx-3"
     hx-get="{{ htmx_primary_view_url }}{% querystring %}"
     hx-trigger="load"
+    hx-swap="innerHTML"
   >
     <div class="htmx-indicator">
       <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
@@ -54,5 +56,6 @@
 
 {% block modals %}
   {% include "hqwebapp/htmx/error_modal.html" %}
+  {% include "data_cleaning/status/modal.html" %}
   {{ block.super }}
 {% endblock modals %}

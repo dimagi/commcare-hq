@@ -7,9 +7,6 @@ if [ -z "$1" ]; then
     exit 0
 fi
 
-export UV_COMPILE_BYTECODE=1
-export UV_PROJECT_ENVIRONMENT=/vendor
-
 # NOTE: the following variable is:
 #   - Used by the 'run_tests' subcommand only.
 #   - Not externally exposed because it's only useful for debugging this script.
@@ -38,9 +35,8 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    # Fixes error: The lockfile at `uv.lock` needs to be updated, but `--locked` was provided.
-    # remove when uv>=0.7.2 has propagated from the Dockerfile
-    uv pip install --upgrade uv && hash -d uv
+    # remove after change propagates from Dockerfile
+    unset UV_PROJECT; rm /vendor/{pyproject.toml,uv.lock} || true
 
     uv sync --locked --group=test --no-dev --no-progress
     python_preheat  # preheat the python libs
@@ -85,8 +81,8 @@ function python_preheat {
 }
 
 function run_tests {
-    # Disabled due to: https://github.com/github/feedback/discussions/8848
-    # [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
+    # Disable group if https://github.com/github/feedback/discussions/8848 resurfaces
+    [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
     TEST="$1"
     shift
     suite_pat=$(printf '%s|' "${VALID_TEST_SUITES[@]}" | sed -E 's/\|$//')

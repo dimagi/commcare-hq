@@ -1,4 +1,4 @@
-from django.urls import re_path as url
+from django.urls import re_path as url, include
 
 from corehq.apps.data_cleaning.views.summary import ChangesSummaryView
 from corehq.apps.data_cleaning.views.bulk_edit import (
@@ -24,8 +24,12 @@ from corehq.apps.data_cleaning.views.tables import (
 from corehq.apps.data_cleaning.views.start import (
     StartCaseSessionView,
 )
+from corehq.apps.data_cleaning.views.status import (
+    BulkEditSessionStatusView,
+)
 
-urlpatterns = [
+
+bulk_edit_urlpatterns = [
     url(r'^cases/$', BulkEditCasesMainView.as_view(), name=BulkEditCasesMainView.urlname),
     url(r'^start/case/$', StartCaseSessionView.as_view(), name=StartCaseSessionView.urlname),
     url(r'^tasks/case/$', RecentCaseSessionsTableView.as_view(), name=RecentCaseSessionsTableView.urlname),
@@ -35,6 +39,8 @@ urlpatterns = [
         name=EditCasesTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/summary/$', ChangesSummaryView.as_view(),
         name=ChangesSummaryView.urlname),
+    url(r'^session/(?P<session_id>[\w\-]+)/status/$', BulkEditSessionStatusView.as_view(),
+        name=BulkEditSessionStatusView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/$', ManageFiltersView.as_view(),
         name=ManageFiltersView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/pinned/$', ManagePinnedFiltersView.as_view(),
@@ -46,4 +52,8 @@ urlpatterns = [
     url(r'^session/(?P<session_id>[\w\-]+)/clear/$', clear_session_caches,
         name="bulk_edit_clear_session_caches"),
     url(r'^form_ids/(?P<session_id>[\w\-]+)/$', download_form_ids, name='download_form_ids'),
+]
+
+urlpatterns = [
+    url(r'^bulk-edit/', include(bulk_edit_urlpatterns)),
 ]

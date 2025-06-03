@@ -2,7 +2,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'jquery',
     'underscore',
     'backbone',
-    'DOMPurify',
+    'dompurify',
     'backbone.marionette',
     'moment',
     'hqwebapp/js/initial_page_data',

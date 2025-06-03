@@ -14,6 +14,68 @@ from corehq.apps.es import CaseSearchES
 BULK_OPERATION_CHUNK_SIZE = 1000
 MAX_RECORDED_LIMIT = 100000
 MAX_SESSION_CHANGES = 200
+APPLY_CHANGES_WAIT_TIME = 3  # seconds
+
+
+class BulkEditSessionManager(models.Manager):
+    def _get_active_session(self, user, domain_name, identifier, session_type):
+        try:
+            return self.get(
+                user=user,
+                domain=domain_name,
+                identifier=identifier,
+                session_type=session_type,
+                committed_on=None,
+                completed_on=None,
+            )
+        except self.model.DoesNotExist:
+            return None
+
+    def active_case_session(self, user, domain_name, case_type):
+        return self._get_active_session(user, domain_name, case_type, BulkEditSessionType.CASE)
+
+    def active_form_session(self, user, domain_name, xmlns):
+        return self._get_active_session(user, domain_name, xmlns, BulkEditSessionType.FORM)
+
+    def _get_recent_session(self, user, domain_name, session_type):
+        return self.filter(
+            user=user,
+            domain=domain_name,
+            session_type=session_type,
+        ).order_by('-created_on').first()
+
+    def recent_case_session(self, user, domain_name):
+        return self._get_recent_session(user, domain_name, BulkEditSessionType.CASE)
+
+    def recent_form_session(self, user, domain_name):
+        return self._get_recent_session(user, domain_name, BulkEditSessionType.FORM)
+
+    def new_case_session(self, user, domain_name, case_type, is_default=True):
+        case_session = self.create(
+            user=user,
+            domain=domain_name,
+            identifier=case_type,
+            session_type=BulkEditSessionType.CASE,
+        )
+        if is_default:
+            case_session.pinned_filters.create_session_defaults(case_session)
+            case_session.columns.create_session_defaults(case_session)
+        return case_session
+
+    def new_form_session(self, user, domain_name, xmlns):
+        raise NotImplementedError("Form bulk edit sessions are not yet supported!")
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def restart_case_session(self, user, domain_name, case_type):
+        previous_session = self.active_case_session(user, domain_name, case_type)
+        if previous_session:
+            previous_session.delete()
+        new_session = self.new_case_session(user, domain_name, case_type)
+        return new_session
+
+    def all_sessions(self, user, domain_name):
+        return self.filter(user=user, domain=domain_name).order_by('-created_on')
 
 
 class BulkEditSession(models.Model):
@@ -32,60 +94,26 @@ class BulkEditSession(models.Model):
     result = models.JSONField(null=True, blank=True)
     completed_on = models.DateTimeField(null=True, blank=True)
 
+    objects = BulkEditSessionManager()
+
     class Meta:
         ordering = ["-created_on"]
 
-    @classmethod
-    def get_active_case_session(cls, user, domain_name, case_type):
-        return cls._get_active_session(user, domain_name, case_type, BulkEditSessionType.CASE)
-
-    @classmethod
-    def get_active_form_session(cls, user, domain_name, xmlns):
-        return cls._get_active_session(user, domain_name, xmlns, BulkEditSessionType.FORM)
-
-    @classmethod
-    def _get_active_session(cls, user, domain_name, identifier, session_type):
-        try:
-            return cls.objects.get(
-                user=user,
-                domain=domain_name,
-                identifier=identifier,
-                session_type=session_type,
-                committed_on=None,
-                completed_on=None,
-            )
-        except cls.DoesNotExist:
-            return None
-
-    @classmethod
-    def new_case_session(cls, user, domain_name, case_type):
-        case_session = cls.objects.create(
-            user=user,
-            domain=domain_name,
-            identifier=case_type,
-            session_type=BulkEditSessionType.CASE,
+    def get_resumed_session(self):
+        new_session = BulkEditSession.objects.new_case_session(
+            self.user,
+            self.domain,
+            self.identifier,
+            is_default=False,
         )
-        case_session.pinned_filters.create_session_defaults(case_session)
-        case_session.columns.create_session_defaults(case_session)
-        return case_session
-
-    @classmethod
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    def restart_case_session(cls, user, domain_name, case_type):
-        with transaction.atomic():
-            previous_session = cls.get_active_case_session(user, domain_name, case_type)
-            if previous_session:
-                previous_session.delete()
-            new_session = cls.new_case_session(user, domain_name, case_type)
+        self.pinned_filters.copy_to_session(self, new_session)
+        self.filters.copy_to_session(self, new_session)
+        self.columns.copy_to_session(self, new_session)
         return new_session
 
-    @classmethod
-    def new_form_session(cls, user, domain_name, xmlns):
-        raise NotImplementedError("Form bulk edit sessions are not yet supported!")
-
-    @classmethod
-    def get_committed_sessions(cls, user, domain_name):
-        return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
+    @property
+    def is_read_only(self):
+        return self.committed_on is not None
 
     @property
     def form_ids(self):
@@ -414,8 +442,13 @@ class BulkEditSession(models.Model):
         # the most potentially expensive query is below:
         return num_records + self._get_num_unrecorded() <= MAX_RECORDED_LIMIT
 
-    def update_result(self, record_count, form_id=None, error=None):
+    def update_result(self, record_count, form_id=None, error=None, num_committed_records=None):
         result = self.result or {}
+
+        if 'num_committed_records' in result:
+            num_committed_records = result['num_committed_records']
+        elif num_committed_records is not None:
+            result['num_committed_records'] = num_committed_records
 
         if 'form_ids' not in result:
             result['form_ids'] = []
@@ -431,10 +464,10 @@ class BulkEditSession(models.Model):
         if error:
             result['errors'].append(error)
         result['record_count'] += record_count
-        if self.records.count() == 0:
+        if num_committed_records == 0:
             result['percent'] = 100
-        else:
-            result['percent'] = result['record_count'] * 100 / self.records.count()
+        elif num_committed_records is not None:
+            result['percent'] = (result['record_count'] / num_committed_records) * 100
 
         self.result = result
         self.save(update_fields=['result'])

@@ -1204,15 +1204,6 @@ SAAS_PROTOTYPE = StaticToggle(
     description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
-DATA_CLEANING_CASES = StaticToggle(
-    'saas_data_cleaning_cases',
-    'Access Data Cleaning for Cases',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    description='Use this to allow specific users to access the case '
-                'data cleaning tool (in development)',
-)
-
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
     'Explore Case Data for domains that have undergone migration',
@@ -2660,11 +2651,10 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
 
 WEB_USERS_IN_REPORTS = StaticToggle(
     'web_users_in_reports',
-    'Adds web users to standard reports by default',
+    'Adds web users to to the body of the Worker Activity and Project Health reports',
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Adds web users to default filter selections, the [Project Data] filter for the '
-                'case list reports, and to the body of the Worker Activity and Project Health reports'
+    description='Adds web users to the body of the Worker Activity and Project Health reports'
 )
 
 CUSTOM_EMAIL_GATEWAY = StaticToggle(

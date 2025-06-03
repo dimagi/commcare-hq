@@ -197,33 +197,8 @@ def get_es_reindex_setting_value(name, default):
 
 
 def get_user_domain_memberships(user):
-    memberships = []
     if user['doc_type'] == 'CommCareUser':
-        memberships.append(user['domain_membership'])
-    elif user['doc_type'] == 'WebUser':
-        for membership in user['domain_memberships']:
-            memberships.append(membership)
-    return memberships
-
-
-def populate_user_domain_memberships():
-    from corehq.apps.es.users import UserES, user_adapter
-    common_dm = 'user_domain_memberships'
-    mobile_dm = 'domain_membership'
-    web_dm = 'domain_memberships'
-
-    for user in with_progress_bar(UserES().scroll_ids_to_disk_and_iter_docs(), UserES().count()):
-        update_common_dm = False
-        if common_dm not in user:
-            update_common_dm = True
-        elif common_dm in user and mobile_dm in user and [user[mobile_dm]] != user[common_dm]:
-            update_common_dm = True
-        elif common_dm in user and web_dm in user and user[web_dm] != user[common_dm]:
-            update_common_dm = True
-        if update_common_dm:
-            memberships = get_user_domain_memberships(user)
-            user_adapter.update(
-                user['_id'],
-                {common_dm: memberships},
-                refresh=True
-            )
+        return [user['domain_membership']]
+    if user['doc_type'] == 'WebUser':
+        return user['domain_memberships']
+    return []

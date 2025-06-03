@@ -16,6 +16,7 @@ from corehq.apps.data_cleaning.views.columns import ManageColumnsFormView
 from corehq.apps.data_cleaning.views.filters import ManageFiltersView, ManagePinnedFiltersView
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.data_cleaning.views.start import StartCaseSessionView
+from corehq.apps.data_cleaning.views.status import BulkEditSessionStatusView
 from corehq.apps.data_cleaning.views.tables import RecentCaseSessionsTableView
 from corehq.apps.data_cleaning.views.tables import EditCasesTableView
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -59,7 +60,7 @@ class BulkEditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     page_title = gettext_lazy("Bulk Edit Case Type")
     urlname = "bulk_edit_cases_session"
     template_name = "data_cleaning/bulk_edit_session.html"
-    redirect_on_session_exceptions = True
+    redirect_on_missing_session = True
 
     def get_redirect_url(self):
         return reverse(BulkEditCasesMainView.urlname, args=(self.domain, ))
@@ -106,6 +107,10 @@ class BulkEditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
             ),
             "htmx_edit_selected_records_view_url": reverse(
                 EditSelectedRecordsFormView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            "htmx_session_status_view_url": reverse(
+                BulkEditSessionStatusView.urlname,
                 args=(self.domain, self.session_id),
             ),
         }

@@ -6,7 +6,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import hqMain from "hqwebapp/js/bootstrap3/main";
 import googleAnalytics from "analytix/js/google";
 import uiElementKeyValueList from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list";
-import DOMPurify from "DOMPurify";
+import DOMPurify from "dompurify";
 import toggles from "hqwebapp/js/toggles";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
 import "data_interfaces/js/make_read_only";
