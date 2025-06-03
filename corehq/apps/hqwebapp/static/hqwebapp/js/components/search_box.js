@@ -11,45 +11,52 @@
  *  - immediate: Boolean. If true, search on every keypress.
  */
 
-import $ from "jquery";
-import ko from "knockout";
-import _ from "underscore";
-import koComponents from "hqwebapp/js/components.ko";
+define('hqwebapp/js/components/search_box', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/components.ko',
+], function (
+    $,
+    ko,
+    _,
+    koComponents,
+) {
+    const component = {
+        viewModel: function (params) {
+            var self = {};
 
-const component = {
-    viewModel: function (params) {
-        var self = {};
+            self.value = params.value;
+            self.action = params.action;
+            self.placeholder = params.placeholder || '';
+            self.immediate = params.immediate;
 
-        self.value = params.value;
-        self.action = params.action;
-        self.placeholder = params.placeholder || '';
-        self.immediate = params.immediate;
-
-        self.clickAction = function () {
-            self.action();
-        };
-        self.keypressAction = function (model, e) {
-            if (e.keyCode === 13) {
+            self.clickAction = function () {
                 self.action();
+            };
+            self.keypressAction = function (model, e) {
+                if (e.keyCode === 13) {
+                    self.action();
+                }
+                return true;
+            };
+            if (self.immediate) {
+                self.value.subscribe(_.debounce(function () {
+                    self.action();
+                }, 200));
             }
-            return true;
-        };
-        if (self.immediate) {
-            self.value.subscribe(_.debounce(function () {
+
+            self.clearQuery = function () {
+                self.value('');
                 self.action();
-            }, 200));
-        }
+            };
 
-        self.clearQuery = function () {
-            self.value('');
-            self.action();
-        };
+            return self;
+        },
+        template: '<div data-bind="template: { name: \'ko-search-box-template\' }"></div>',
+    };
 
-        return self;
-    },
-    template: '<div data-bind="template: { name: \'ko-search-box-template\' }"></div>',
-};
+    koComponents.register('search-box', component);
 
-koComponents.register('search-box', component);
-
-export default component;
+    return component;
+});

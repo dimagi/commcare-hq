@@ -21,128 +21,136 @@
  *  - iconClass: If specified add an icon in front of the container e.g. 'fa fa-envelope
  */
 
-import $ from "jquery";
-import ko from "knockout";
-import _ from "underscore";
-import DOMPurify from "dompurify";
-import koComponents from "hqwebapp/js/components.ko";
+define('hqwebapp/js/components/inline_edit', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'dompurify',
+    'hqwebapp/js/components.ko',
+], function (
+    $,
+    ko,
+    _,
+    DOMPurify,
+    koComponents,
+) {
+    const component = {
+        viewModel: function (params) {
+            var self = this;
 
-const component = {
-    viewModel: function (params) {
-        var self = this;
+            // Attributes passed on to the input
+            self.name = params.name || '';
+            self.id = params.id || '';
 
-        // Attributes passed on to the input
-        self.name = params.name || '';
-        self.id = params.id || '';
+            // Data
+            self.placeholder = params.placeholder || '';
+            self.readOnlyValue = (ko.isObservable(params.value) ? params.value() : params.value) || '';
+            self.serverValue = self.readOnlyValue;
+            self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.readOnlyValue);
+            self.lang = params.lang || '';
+            self.disallow_edit = (params.disallow_edit === undefined) ? false : params.disallow_edit;
 
-        // Data
-        self.placeholder = params.placeholder || '';
-        self.readOnlyValue = (ko.isObservable(params.value) ? params.value() : params.value) || '';
-        self.serverValue = self.readOnlyValue;
-        self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.readOnlyValue);
-        self.lang = params.lang || '';
-        self.disallow_edit = (params.disallow_edit === undefined) ? false : params.disallow_edit;
+            // Styling
+            self.nodeName = params.nodeName || 'textarea';
+            self.rows = params.rows || 2;
+            self.cols = params.cols || "";
+            self.readOnlyClass = params.readOnlyClass || '';
+            self.readOnlyAttrs = params.readOnlyAttrs || {};
+            self.iconClass = ko.observable(params.iconClass);
+            self.containerClass = params.containerClass || '';
 
-        // Styling
-        self.nodeName = params.nodeName || 'textarea';
-        self.rows = params.rows || 2;
-        self.cols = params.cols || "";
-        self.readOnlyClass = params.readOnlyClass || '';
-        self.readOnlyAttrs = params.readOnlyAttrs || {};
-        self.iconClass = ko.observable(params.iconClass);
-        self.containerClass = params.containerClass || '';
+            // Interaction: determine whether widget is in read or write mode
+            self.isEditing = ko.observable(false);
+            self.saveHasFocus = ko.observable(false);
+            self.cancelHasFocus = ko.observable(false);
+            self.afterRenderFunc = params.afterRenderFunc;
 
-        // Interaction: determine whether widget is in read or write mode
-        self.isEditing = ko.observable(false);
-        self.saveHasFocus = ko.observable(false);
-        self.cancelHasFocus = ko.observable(false);
-        self.afterRenderFunc = params.afterRenderFunc;
+            // Save to server
+            self.url = params.url;
+            self.errorMessage = ko.observable(params.errorMessage || gettext("Error saving, please try again."));
+            self.saveParams = ko.utils.unwrapObservable(params.saveParams) || {};
+            self.saveValueName = params.saveValueName || 'value';
+            self.hasError = ko.observable(false);
+            self.isSaving = ko.observable(false);
 
-        // Save to server
-        self.url = params.url;
-        self.errorMessage = ko.observable(params.errorMessage || gettext("Error saving, please try again."));
-        self.saveParams = ko.utils.unwrapObservable(params.saveParams) || {};
-        self.saveValueName = params.saveValueName || 'value';
-        self.hasError = ko.observable(false);
-        self.isSaving = ko.observable(false);
-
-        // On edit, set editing mode, which controls visibility of inner components
-        self.edit = function () {
-            if (!self.disallow_edit) {
-                self.isEditing(true);
-            }
-        };
-
-        self.beforeUnload = function () {
-            return gettext("You have unsaved changes.");
-        };
-
-        // Save to server
-        // On button press, flip back to read-only mode and show a spinner.
-        // On server success, just hide the spinner. On error, display error and go back to edit mode.
-        self.save = function () {
-            self.isEditing(false);
-
-            if (self.url) {
-                // Nothing changed
-                if (self.readOnlyValue === self.value() && self.serverValue === self.value()) {
-                    return;
+            // On edit, set editing mode, which controls visibility of inner components
+            self.edit = function () {
+                if (!self.disallow_edit) {
+                    self.isEditing(true);
                 }
+            };
 
-                // Strip HTML and then undo DOMPurify's HTML escaping
-                self.value($("<div/>").html(DOMPurify.sanitize(self.value())).text());
-                self.readOnlyValue = self.value();
+            self.beforeUnload = function () {
+                return gettext("You have unsaved changes.");
+            };
 
-                var data = self.saveParams;
-                _.each(data, function (value, key) {
-                    data[key] = ko.utils.unwrapObservable(value);
-                });
-                data[self.saveValueName] = self.value();
-                self.isSaving(true);
-                $(window).on("beforeunload", self.beforeUnload);
+            // Save to server
+            // On button press, flip back to read-only mode and show a spinner.
+            // On server success, just hide the spinner. On error, display error and go back to edit mode.
+            self.save = function () {
+                self.isEditing(false);
 
-                $.ajax({
-                    url: self.url,
-                    type: 'POST',
-                    dataType: 'JSON',
-                    data: data,
-                    success: function (data) {
-                        self.isSaving(false);
-                        self.hasError(false);
-                        self.serverValue = self.readOnlyValue;
+                if (self.url) {
+                    // Nothing changed
+                    if (self.readOnlyValue === self.value() && self.serverValue === self.value()) {
+                        return;
+                    }
 
-                        // Allow callers to attach logic that will fire after save.
-                        // This code has access to the knockout object, but not the HTML element.
-                        // Calling code typically has access to the HTML element, but not the knockout object.
-                        // So, use the document as a global message bus, which everyone has access to. Gross.
-                        $(document).trigger("inline-edit-save", data);
+                    // Strip HTML and then undo DOMPurify's HTML escaping
+                    self.value($("<div/>").html(DOMPurify.sanitize(self.value())).text());
+                    self.readOnlyValue = self.value();
 
-                        $(window).off("beforeunload", self.beforeUnload);
-                    },
-                    error: function (response) {
-                        if (response.responseJSON && response.responseJSON.error) {
-                            self.errorMessage(response.responseJSON.error);
-                        }
-                        self.isEditing(true);
-                        self.isSaving(false);
-                        self.hasError(true);
-                        $(window).off("beforeunload", self.beforeUnload);
-                    },
-                });
-            }
-        };
+                    var data = self.saveParams;
+                    _.each(data, function (value, key) {
+                        data[key] = ko.utils.unwrapObservable(value);
+                    });
+                    data[self.saveValueName] = self.value();
+                    self.isSaving(true);
+                    $(window).on("beforeunload", self.beforeUnload);
 
-        // Revert to last value and switch modes
-        self.cancel = function () {
-            self.readOnlyValue = self.serverValue;
-            self.value(self.readOnlyValue);
-            self.isEditing(false);
-            self.hasError(false);
-        };
-    },
-    template: '<div data-bind="template: { name: \'ko-inline-edit-template\' }"></div>',
-};
+                    $.ajax({
+                        url: self.url,
+                        type: 'POST',
+                        dataType: 'JSON',
+                        data: data,
+                        success: function (data) {
+                            self.isSaving(false);
+                            self.hasError(false);
+                            self.serverValue = self.readOnlyValue;
 
-koComponents.register('inline-edit', component);
+                            // Allow callers to attach logic that will fire after save.
+                            // This code has access to the knockout object, but not the HTML element.
+                            // Calling code typically has access to the HTML element, but not the knockout object.
+                            // So, use the document as a global message bus, which everyone has access to. Gross.
+                            $(document).trigger("inline-edit-save", data);
 
-export default component;
+                            $(window).off("beforeunload", self.beforeUnload);
+                        },
+                        error: function (response) {
+                            if (response.responseJSON && response.responseJSON.error) {
+                                self.errorMessage(response.responseJSON.error);
+                            }
+                            self.isEditing(true);
+                            self.isSaving(false);
+                            self.hasError(true);
+                            $(window).off("beforeunload", self.beforeUnload);
+                        },
+                    });
+                }
+            };
+
+            // Revert to last value and switch modes
+            self.cancel = function () {
+                self.readOnlyValue = self.serverValue;
+                self.value(self.readOnlyValue);
+                self.isEditing(false);
+                self.hasError(false);
+            };
+        },
+        template: '<div data-bind="template: { name: \'ko-inline-edit-template\' }"></div>',
+    };
+
+    koComponents.register('inline-edit', component);
+
+    return component;
+});

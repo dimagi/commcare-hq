@@ -13,60 +13,68 @@
  *
  */
 
-import ko from "knockout";
-import $ from "jquery";
-import _ from "underscore";
-import initialPageData from "hqwebapp/js/initial_page_data";
-import koComponents from "hqwebapp/js/components.ko";
+define('hqwebapp/js/components/bootstrap5/feedback', [
+    'knockout',
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',
+], function (
+    ko,
+    $,
+    _,
+    initialPageData,
+    koComponents,
+) {
+    const component = {
+        viewModel: function (params) {
+            let self = {};
 
-const component = {
-    viewModel: function (params) {
-        let self = {};
+            if (!params.featureName) {
+                throw new Error("Please specify a featureName in params.");
+            }
 
-        if (!params.featureName) {
-            throw new Error("Please specify a featureName in params.");
-        }
+            self.featureName = ko.observable(params.featureName);
+            self.rating = ko.observable();
+            self.additionalFeedback = ko.observable();
+            self.showSuccess = ko.observable(false);
 
-        self.featureName = ko.observable(params.featureName);
-        self.rating = ko.observable();
-        self.additionalFeedback = ko.observable();
-        self.showSuccess = ko.observable(false);
+            self.rateBad = function () {
+                self.rating(1);
+            };
 
-        self.rateBad = function () {
-            self.rating(1);
-        };
+            self.rateOk = function () {
+                self.rating(2);
+            };
 
-        self.rateOk = function () {
-            self.rating(2);
-        };
+            self.rateGood = function () {
+                self.rating(3);
+            };
 
-        self.rateGood = function () {
-            self.rating(3);
-        };
+            self.submit = function () {
+                $.ajax({
+                    url: params.url || initialPageData.reverse('submit_feedback'),
+                    method: 'post',
+                    dataType: 'json',
+                    data: {
+                        featureName: self.featureName(),
+                        rating: self.rating(),
+                        additionalFeedback: self.additionalFeedback(),
+                    },
+                })
+                    .done(function (data) {
+                        if (data.success) {
+                            self.showSuccess(true);
+                        }
+                    });
+            };
 
-        self.submit = function () {
-            $.ajax({
-                url: params.url || initialPageData.reverse('submit_feedback'),
-                method: 'post',
-                dataType: 'json',
-                data: {
-                    featureName: self.featureName(),
-                    rating: self.rating(),
-                    additionalFeedback: self.additionalFeedback(),
-                },
-            })
-                .done(function (data) {
-                    if (data.success) {
-                        self.showSuccess(true);
-                    }
-                });
-        };
+            return self;
+        },
+        template: '<div data-bind="template: { name: \'ko-feedback-template\' }"></div>',
+    };
 
-        return self;
-    },
-    template: '<div data-bind="template: { name: \'ko-feedback-template\' }"></div>',
-};
+    koComponents.register('feedback', component);
 
-koComponents.register('feedback', component);
-
-export default component;
+    return component;
+});

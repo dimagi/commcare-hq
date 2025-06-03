@@ -30,97 +30,104 @@
  *  See releases_table.html for an example.
  */
 
-import ko from "knockout";
-import _ from "underscore";
-import initialPageData from "hqwebapp/js/initial_page_data";
-import koComponents from "hqwebapp/js/components.ko";
+define('hqwebapp/js/components/pagination', [
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',
+], function (
+    ko,
+    _,
+    initialPageData,
+    koComponents,
+) {
+    const component = {
+        viewModel: function (params) {
+            var self = {};
 
-const component = {
-    viewModel: function (params) {
-        var self = {};
+            self.currentPage = ko.observable(self.currentPage || 1);
 
-        self.currentPage = ko.observable(self.currentPage || 1);
-
-        self.totalItems = params.totalItems;
-        self.slug = params.slug;
-        self.inlinePageListOnly = !!params.inlinePageListOnly;
-        self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
-        if (!self.inlinePageListOnly) {
-            self.perPageCookieName = 'ko-pagination-' + self.slug;
-            self.perPage($.cookie(self.perPageCookieName) || self.perPage());
-            self.perPage.subscribe(function (newValue) {
-                self.goToPage(1);
-                if (self.slug) {
-                    $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/', secure: initialPageData.get('secure_cookies') });
-                }
-            });
-        }
-        if (params.resetFlag) {
-            params.resetFlag.subscribe(function () {
-                self.goToPage(1);
-            });
-        }
-
-        self.perPageOptionsText = function (num) {
-            return _.template(gettext('<%- num %> per page'))({ num: num });
-        };
-
-        self.numPages = ko.computed(function () {
-            return Math.ceil(self.totalItems() / self.perPage());
-        });
-
-        self.maxPagesShown = params.maxPagesShown || 9;
-        self.showSpinner = params.showSpinner || ko.observable(false);
-
-        self.nextPage = function (model, e) {
-            self.goToPage(Math.min(self.currentPage() + 1, self.numPages()), e);
-        };
-        self.previousPage = function (model, e) {
-            self.goToPage(Math.max(self.currentPage() - 1, 1), e);
-        };
-        self.goToPage = function (page, e) {
-            self.currentPage(page);
-            params.goToPage(self.currentPage());
-            if (e) {
-                e.stopPropagation();
+            self.totalItems = params.totalItems;
+            self.slug = params.slug;
+            self.inlinePageListOnly = !!params.inlinePageListOnly;
+            self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
+            if (!self.inlinePageListOnly) {
+                self.perPageCookieName = 'ko-pagination-' + self.slug;
+                self.perPage($.cookie(self.perPageCookieName) || self.perPage());
+                self.perPage.subscribe(function (newValue) {
+                    self.goToPage(1);
+                    if (self.slug) {
+                        $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/', secure: initialPageData.get('secure_cookies') });
+                    }
+                });
             }
-        };
-        self.itemsShowing = ko.computed(function () {
-            return self.currentPage() * self.perPage();
-        });
-        self.itemsText = ko.computed(function () {
-            var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
-            return _.template(
-                params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries'),
-            )({
-                firstItem: self.totalItems() > 0 ? ((self.currentPage() - 1) * self.perPage()) + 1 : 0,
-                lastItem: isNaN(lastItem) ? 1 : lastItem,
-                maxItems: self.totalItems(),
-            });
-        });
-        self.pagesShown = ko.computed(function () {
-            var pages = [];
-            for (var pageNum = 1; pageNum <= self.numPages(); pageNum++) {
-                var midPoint = Math.floor(self.maxPagesShown / 2),
-                    leftHalf = pageNum >= self.currentPage() - midPoint,
-                    rightHalf = pageNum <= self.currentPage() + midPoint,
-                    pageVisible = (leftHalf && rightHalf) || pages.length < self.maxPagesShown && pages[pages.length - 1] > self.currentPage();
-                if (pageVisible) {
-                    pages.push(pageNum);
-                }
+            if (params.resetFlag) {
+                params.resetFlag.subscribe(function () {
+                    self.goToPage(1);
+                });
             }
-            return pages;
-        });
 
-        if (params.onLoad) {
-            params.onLoad();
-        }
+            self.perPageOptionsText = function (num) {
+                return _.template(gettext('<%- num %> per page'))({ num: num });
+            };
 
-        return self;
-    },
-    template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>',
-};
+            self.numPages = ko.computed(function () {
+                return Math.ceil(self.totalItems() / self.perPage());
+            });
 
-koComponents.register('pagination', component);
+            self.maxPagesShown = params.maxPagesShown || 9;
+            self.showSpinner = params.showSpinner || ko.observable(false);
 
-export default component;
+            self.nextPage = function (model, e) {
+                self.goToPage(Math.min(self.currentPage() + 1, self.numPages()), e);
+            };
+            self.previousPage = function (model, e) {
+                self.goToPage(Math.max(self.currentPage() - 1, 1), e);
+            };
+            self.goToPage = function (page, e) {
+                self.currentPage(page);
+                params.goToPage(self.currentPage());
+                if (e) {
+                    e.stopPropagation();
+                }
+            };
+            self.itemsShowing = ko.computed(function () {
+                return self.currentPage() * self.perPage();
+            });
+            self.itemsText = ko.computed(function () {
+                var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
+                return _.template(
+                    params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries'),
+                )({
+                    firstItem: self.totalItems() > 0 ? ((self.currentPage() - 1) * self.perPage()) + 1 : 0,
+                    lastItem: isNaN(lastItem) ? 1 : lastItem,
+                    maxItems: self.totalItems(),
+                });
+            });
+            self.pagesShown = ko.computed(function () {
+                var pages = [];
+                for (var pageNum = 1; pageNum <= self.numPages(); pageNum++) {
+                    var midPoint = Math.floor(self.maxPagesShown / 2),
+                        leftHalf = pageNum >= self.currentPage() - midPoint,
+                        rightHalf = pageNum <= self.currentPage() + midPoint,
+                        pageVisible = (leftHalf && rightHalf) || pages.length < self.maxPagesShown && pages[pages.length - 1] > self.currentPage();
+                    if (pageVisible) {
+                        pages.push(pageNum);
+                    }
+                }
+                return pages;
+            });
+
+            if (params.onLoad) {
+                params.onLoad();
+            }
+
+            return self;
+        },
+        template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>',
+    };
+
+    koComponents.register('pagination', component);
+
+    return component;
+});
