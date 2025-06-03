@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/app_manager_media", [
+define("app_manager/js/app_manager_media", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",

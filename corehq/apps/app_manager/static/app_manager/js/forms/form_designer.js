@@ -1,5 +1,5 @@
 /* global require */
-hqDefine("app_manager/js/forms/form_designer", [
+define("app_manager/js/forms/form_designer", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',

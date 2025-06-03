@@ -1,4 +1,3 @@
-
 import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";

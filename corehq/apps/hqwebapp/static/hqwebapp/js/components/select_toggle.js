@@ -18,7 +18,7 @@
  *  - value: initial value of select
  */
 
-hqDefine('hqwebapp/js/components/select_toggle', [
+define('hqwebapp/js/components/select_toggle', [
     'jquery',
     'knockout',
     'underscore',
