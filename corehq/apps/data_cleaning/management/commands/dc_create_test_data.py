@@ -2,13 +2,13 @@ import uuid
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.data_cleaning.management.commands.utils import input_validation
 from corehq.apps.data_cleaning.management.commands.utils.fake_data_users import (
     DATA_CLEANING_TEST_USER_PREFIX,
 )
 from corehq.apps.data_cleaning.management.commands.utils.fake_plant_data import (
     get_plant_case_data_with_issues,
 )
-from corehq.apps.data_cleaning.management.commands.utils import input_validation
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 from corehq.apps.users.models import WebUser
@@ -18,8 +18,10 @@ from corehq.util.timer import TimingContext
 
 
 class Command(BaseCommand):
-    help = (f"Generates test data for the Case Data Cleaning based "
-            f"on the '{input_validation.DATA_CLEANING_TEST_APP_NAME}' app structure.")
+    help = (
+        f'Generates test data for the Case Data Cleaning based '
+        f"on the '{input_validation.DATA_CLEANING_TEST_APP_NAME}' app structure."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -33,25 +35,27 @@ class Command(BaseCommand):
             return
         fake_app = input_validation.get_fake_app(domain)
         if not fake_app:
-            self.stderr.write(f"Domain {domain} does not have the "
-                              f"'{input_validation.DATA_CLEANING_TEST_APP_NAME}' app.")
-            self.stdout.write("Please run the data_cleaning_add_fake_data_app command first.")
+            self.stderr.write(
+                f"Domain {domain} does not have the '{input_validation.DATA_CLEANING_TEST_APP_NAME}' app."
+            )
+            self.stdout.write('Please run the data_cleaning_add_fake_data_app command first.')
             return
         web_user = WebUser.get_by_username(submitting_web_user)
         if not web_user:
-            self.stderr.write(f"Web user {submitting_web_user} does not exist.")
+            self.stderr.write(f'Web user {submitting_web_user} does not exist.')
             return
 
         data_cleaning_fake_users = [
-            u for u in get_all_commcare_users_by_domain(domain)
+            u
+            for u in get_all_commcare_users_by_domain(domain)
             if u.username.startswith(DATA_CLEANING_TEST_USER_PREFIX)
         ]
         if not data_cleaning_fake_users:
-            self.stderr.write(f"No fake users found for domain {domain}.")
-            self.stdout.write("Please run the data_cleaning_create_users_for_fake_data command first.")
+            self.stderr.write(f'No fake users found for domain {domain}.')
+            self.stdout.write('Please run the data_cleaning_create_users_for_fake_data command first.')
             return
         for num in range(num_submissions):
-            self.stdout.write(f"\n\nSubmitting {num + 1} of {num_submissions}...")
+            self.stdout.write(f'\n\nSubmitting {num + 1} of {num_submissions}...')
             self.create_fake_data(domain, web_user, data_cleaning_fake_users, fake_app)
 
     def create_fake_data(self, domain, web_user, data_cleaning_fake_users, fake_app):
@@ -72,18 +76,18 @@ class Command(BaseCommand):
                     user_id=web_user.get_id,
                     authenticated=True,
                 ),
-                location="http://localhost:8000",
+                location='http://localhost:8000',
                 received_on=None,
                 date_header=None,
-                path=f"/a/{domain}/receiver/secure/{fake_app.get_id}/",
-                submit_ip="127.0.0.1",
+                path=f'/a/{domain}/receiver/secure/{fake_app.get_id}/',
+                submit_ip='127.0.0.1',
                 last_sync_token=uuid.uuid1(),
                 openrosa_headers={'HTTP_X_OPENROSA_VERSION': '3.0'},
                 force_logs=False,
                 timing_context=timer,
             )
             result = submission_post.run()
-        self.stdout.write(f"Form Submitted with result: {result}\n")
+        self.stdout.write(f'Form Submitted with result: {result}\n')
 
     def get_case_data(self, fake_data):
         case_data = [
@@ -120,15 +124,17 @@ class Command(BaseCommand):
         if fake_data['pot_type'] is not None:
             case_update_data.append('<n0:pot_type>{pot_type}</n0:pot_type>')
         case_data.extend(case_update_data)
-        case_data.extend([
-            '</n0:update>',
-            '</n0:case>',
-        ])
+        case_data.extend(
+            [
+                '</n0:update>',
+                '</n0:case>',
+            ]
+        )
         return case_data
 
     def get_form_data(self, fake_data):
         form_data = [
-            '<?xml version=\'1.0\' ?>'
+            "<?xml version='1.0' ?>"
             '<data uiVersion="1" version="38" '
             'name="Add Plant" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" '
             'xmlns="http://openrosa.org/formdesigner/B55100FC-10F5-4CED-BD8D-C9B7B6637E93">',
@@ -157,17 +163,19 @@ class Command(BaseCommand):
         if fake_data['pot_type'] is not None:
             form_data.append('<pot_type>{pot_type}</pot_type>')
         form_data.extend(self.get_case_data(fake_data))
-        form_data.extend([
-            '<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">',
-            '<n1:deviceID>Management Command</n1:deviceID>',
-            '<n1:timeStart>{time_start}</n1:timeStart>',
-            '<n1:timeEnd>{time_end}</n1:timeEnd>',
-            '<n1:username>{username}</n1:username>',
-            '<n1:userID>{user_id}</n1:userID>',
-            '<n1:instanceID>{form_id}</n1:instanceID>',
-            '<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">Management Command: 1.0</n2:appVersion>',
-            '<n1:drift>0</n1:drift>',
-            '</n1:meta>',
-            '</data>',
-        ])
+        form_data.extend(
+            [
+                '<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">',
+                '<n1:deviceID>Management Command</n1:deviceID>',
+                '<n1:timeStart>{time_start}</n1:timeStart>',
+                '<n1:timeEnd>{time_end}</n1:timeEnd>',
+                '<n1:username>{username}</n1:username>',
+                '<n1:userID>{user_id}</n1:userID>',
+                '<n1:instanceID>{form_id}</n1:instanceID>',
+                '<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">Management Command: 1.0</n2:appVersion>',
+                '<n1:drift>0</n1:drift>',
+                '</n1:meta>',
+                '</data>',
+            ]
+        )
         return ''.join(form_data).format(**fake_data)
