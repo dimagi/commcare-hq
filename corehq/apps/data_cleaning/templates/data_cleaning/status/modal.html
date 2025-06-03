@@ -1,20 +1,29 @@
 {% load i18n %}
+{% load django_tables2 %}
 
 <div
   id="session-status-modal"
   class="modal fade"
   tabindex="-1"
-  aria-labelledby="staticBackdropLabel"
   aria-hidden="true"
   data-bs-backdrop="static"
   data-bs-keyboard="false"
 >
   <div class="modal-dialog modal-dialog-centered">
+    {% comment %}
+      The HTMX request below will trigger a `showDataCleaningModal` event for
+      the `#session-status-modal` above after the HTMX swap. This request will
+      not be triggered unless the session is read-only (triggers on `load`) OR
+      the `dcRefreshStatusModal` event is sent to `#session-status-modal-body`.
+    {% endcomment %}
     <div
       class="modal-content"
       id="session-status-modal-body"
-      hx-get="{{ htmx_session_status_view_url }}"
-      hx-trigger="{% if session.is_read_only %}load, {% endif %}dcRefreshStatusModal"
+      hx-get="{{ htmx_session_status_view_url }}{% querystring %}"
+      hx-trigger="
+        {% if session.is_read_only %}load,{% endif %}
+        dcRefreshStatusModal
+      "
       hx-swap="innerHTML"
     ></div>
   </div>

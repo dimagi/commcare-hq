@@ -1,9 +1,10 @@
-hqDefine("app_manager/js/app_manager_media", [
+define("app_manager/js/app_manager_media", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
     "analytix/js/google",
     "app_manager/js/nav_menu_media_common",
+    "jquery-textchange/jquery.textchange",  // textchange is referenced in bindings in nav_menu_media_single_type.html
 ], function (
     $,
     ko,
