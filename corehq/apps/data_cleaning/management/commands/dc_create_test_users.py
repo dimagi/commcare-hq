@@ -11,8 +11,10 @@ from corehq.apps.users.models import CommCareUser
 
 
 class Command(BaseCommand):
-    help = (f"Creates fake CommCare users for a domain using the "
-            f"'{input_validation.DATA_CLEANING_TEST_APP_NAME}' test app.")
+    help = (
+        f'Creates fake CommCare users for a domain using '
+        f"the '{input_validation.DATA_CLEANING_TEST_APP_NAME}' test app."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -26,18 +28,22 @@ class Command(BaseCommand):
             return
         existing_app = input_validation.get_fake_app(domain)
         if not existing_app:
-            self.stderr.write(f"Domain {domain} does not have the "
-                              f"{input_validation.DATA_CLEANING_TEST_APP_NAME} app.")
-            self.stdout.write("Please run the data_cleaning_add_fake_dappata_app command first.")
+            self.stderr.write(
+                f'Domain {domain} does not have the {input_validation.DATA_CLEANING_TEST_APP_NAME} app.'
+            )
+            self.stdout.write('Please run the data_cleaning_add_fake_dappata_app command first.')
             return
 
-        existing_dc_users = [u.username.split('@')[0] for u in get_all_commcare_users_by_domain(domain)
-                             if u.username.startswith(DATA_CLEANING_TEST_USER_PREFIX)]
+        existing_dc_users = [
+            u.username.split('@')[0]
+            for u in get_all_commcare_users_by_domain(domain)
+            if u.username.startswith(DATA_CLEANING_TEST_USER_PREFIX)
+        ]
         starting_number = len(existing_dc_users) + 1
         new_dc_users = []
         for index in range(starting_number, starting_number + num_users):
-            username = f"{DATA_CLEANING_TEST_USER_PREFIX}{index}@{domain}.commcarehq.org"
-            self.stdout.write(f"Creating user {username}...")
+            username = f'{DATA_CLEANING_TEST_USER_PREFIX}{index}@{domain}.commcarehq.org'
+            self.stdout.write(f'Creating user {username}...')
             commcare_user = CommCareUser.create(
                 domain,
                 username,
@@ -50,4 +56,4 @@ class Command(BaseCommand):
             commcare_user.is_active = True
             new_dc_users.append(commcare_user)
         CommCareUser.bulk_save(new_dc_users)
-        self.stdout.write(f"Created {num_users} users for domain {domain}.")
+        self.stdout.write(f'Created {num_users} users for domain {domain}.')

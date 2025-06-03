@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.domain.models import Domain
 
-DATA_CLEANING_TEST_APP_NAME = "Plant Care (Data Cleaning Test)"
+DATA_CLEANING_TEST_APP_NAME = 'Plant Care (Data Cleaning Test)'
 
 
 def is_real_domain(domain):
@@ -10,7 +10,7 @@ def is_real_domain(domain):
 
 
 def get_domain_missing_error(domain):
-    return f"Domain {domain} does not exist."
+    return f'Domain {domain} does not exist.'
 
 
 def get_fake_app(domain):
