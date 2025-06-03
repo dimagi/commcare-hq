@@ -141,8 +141,7 @@ def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slug
 
     if loc_ids:
         # Get users at selected locations and descendants
-        assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(
-            loc_ids)
+        assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(domain, loc_ids)
         # Get user ids for each user in specified reporting groups
 
     if selected_user_ids:
@@ -181,7 +180,7 @@ def _get_location_accessible_ids(domain, couch_user):
         domain,
         couch_user
     ))
-    accessible_user_ids = mobile_user_ids_at_locations(accessible_location_ids)
+    accessible_user_ids = mobile_user_ids_at_locations(domain, accessible_location_ids)
     accessible_ids = accessible_user_ids + list(accessible_location_ids)
     return accessible_ids
 

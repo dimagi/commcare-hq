@@ -693,7 +693,7 @@ class AbstractExportFilterBuilder(object):
         :return: User filter with users at filtered locations and their descendants
         """
         if location_ids:
-            user_ids = user_ids_at_locations_and_descendants(location_ids)
+            user_ids = user_ids_at_locations_and_descendants(self.domain_object.name, location_ids)
             return self.export_user_filter(user_ids)
 
 
@@ -780,7 +780,8 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
     def _scope_filter(self, accessible_location_ids, include_inactive_users=False):
         # Filter to be applied in AND with filters for export for restricted user
         # Restricts to forms submitted by users at accessible locations
-        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids), include_inactive_users)
+        accessible_user_ids = mobile_user_ids_at_locations(
+            self.domain_object.name, list(accessible_location_ids), include_inactive_users)
         return FormSubmittedByFilter(accessible_user_ids)
 
 
@@ -907,7 +908,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
         # Filter to be applied in AND with filters for export to add scope for restricted user
         # Restricts to cases owned by accessible locations and their respective users Or Cases
         # Last Modified by accessible users
-        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids))
+        accessible_user_ids = mobile_user_ids_at_locations(self.domain_object.name, list(accessible_location_ids))
         accessible_ids = accessible_user_ids + list(accessible_location_ids)
         return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
 
