@@ -9,6 +9,8 @@ from lxml.builder import E
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.tests.utils import call_fixture_generator
 
+from corehq.apps.case_search.models import CSQLFixtureExpression
+from corehq.apps.case_search.fixtures import _get_indicators_for_user
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import case_search_es_setup, es_test
@@ -117,3 +119,42 @@ class TestCaseSearchFixtures(TestCase):
             expected_xml = f'<partial><value>{expected}</value></partial>'
             assert_xml_partial_equal(
                 expected_xml, res, f'./fixture[@id="case-search-fixture:{name}"]/value')
+
+
+class TestGetIndicatorsForUser(TestCase):
+    def setUp(self):
+        self.domain = 'test-domain'
+        create_domain(self.domain)
+        self.user = WebUser.create(self.domain, 'j@example.com', '****', None, None,
+                                   user_data={'is_active': True, 'is_superuser': False})
+        self.addCleanup(self.user.delete, self.domain, None)
+
+        self.matching_expression = CSQLFixtureExpression.objects.create(
+            domain=self.domain,
+            name='matching_expression',
+            csql='matching_csql',
+            user_data_criteria=[
+                {'operator': 'IS', 'property_name': 'is_active'},
+                {'operator': 'IS_NOT', 'property_name': 'is_superuser'},
+            ]
+        )
+        self.addCleanup(self.matching_expression.delete)
+
+        self.non_matching_expression = CSQLFixtureExpression.objects.create(
+            domain=self.domain,
+            name='non_matching_expression',
+            csql='non_matching_csql',
+            user_data_criteria=[
+                {'operator': 'IS', 'property_name': 'is_active'},
+                {'operator': 'IS', 'property_name': 'is_superuser'},
+            ]
+        )
+        self.addCleanup(self.non_matching_expression.delete)
+
+    def test_get_indicators_for_user(self):
+        indicators = _get_indicators_for_user(self.domain, self.user)
+
+        expected_indicator = (self.matching_expression.name, self.matching_expression.csql)
+        self.assertIn(expected_indicator, indicators)
+
+        self.assertEqual(len(indicators), 1)
