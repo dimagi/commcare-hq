@@ -33,6 +33,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping', [
     'underscore',
     'hqwebapp/js/bootstrap3/main',
     'hqwebapp/js/assert_properties',
+    'jquery-textchange/jquery.textchange',
 ], function (
     $,
     ko,
