@@ -33,6 +33,7 @@
     hq-hx-action="resume_session"
     hx-swap="none"
     hx-disabled-elt="this"
+    @click="$store.gtm.sendEvent('bulk_edit_continue_editing_session');"
   >
     {% trans "Continue editing" %}
   </button>

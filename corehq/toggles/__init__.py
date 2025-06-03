@@ -1204,15 +1204,6 @@ SAAS_PROTOTYPE = StaticToggle(
     description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
-DATA_CLEANING_CASES = StaticToggle(
-    'saas_data_cleaning_cases',
-    'Access Data Cleaning for Cases',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    description='Use this to allow specific users to access the case '
-                'data cleaning tool (in development)',
-)
-
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
     'Explore Case Data for domains that have undergone migration',

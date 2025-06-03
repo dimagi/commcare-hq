@@ -47,19 +47,19 @@ class BulkEditSessionTest(TestCase):
         cls.form_xmlns = 'http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF'
 
     def test_has_no_active_case_session(self):
-        active_session = BulkEditSession.get_active_case_session(
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, self.case_type
         )
         self.assertIsNone(active_session)
 
     def test_has_no_active_form_session(self):
-        active_session = BulkEditSession.get_active_form_session(
+        active_session = BulkEditSession.objects.active_form_session(
             self.django_user, self.domain_name, self.form_xmlns
         )
         self.assertIsNone(active_session)
 
     def test_new_case_session(self):
-        new_session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        new_session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         self.assertEqual(new_session.session_type, BulkEditSessionType.CASE)
         self.assertEqual(new_session.columns.count(), 6)
         self.assertEqual(new_session.filters.count(), 0)
@@ -68,8 +68,8 @@ class BulkEditSessionTest(TestCase):
         self.assertEqual(new_session.changes.count(), 0)
 
     def test_has_active_case_session(self):
-        BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        active_session = BulkEditSession.get_active_case_session(
+        BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, self.case_type
         )
         self.assertIsNotNone(active_session)
@@ -78,35 +78,39 @@ class BulkEditSessionTest(TestCase):
         self.assertEqual(active_session.identifier, self.case_type)
 
     def test_has_no_active_case_session_other_type(self):
-        BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        active_session = BulkEditSession.get_active_case_session(
+        BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, 'other'
         )
         self.assertIsNone(active_session)
 
     def test_has_no_active_case_session_after_committed(self):
-        case_session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        case_session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         case_session.committed_on = datetime.datetime.now()
         case_session.save()
-        active_session = BulkEditSession.get_active_case_session(
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, self.case_type
         )
         self.assertIsNone(active_session)
 
     def test_has_no_active_case_session_after_completed(self):
-        case_session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        case_session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         case_session.committed_on = datetime.datetime.now()
         case_session.completed_on = datetime.datetime.now()
         case_session.save()
-        active_session = BulkEditSession.get_active_case_session(
+        active_session = BulkEditSession.objects.active_case_session(
             self.django_user, self.domain_name, self.case_type
         )
         self.assertIsNone(active_session)
 
     def test_restart_case_session(self):
-        old_session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        old_session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         old_session_id = old_session.session_id
-        new_session = BulkEditSession.restart_case_session(self.django_user, self.domain_name, self.case_type)
+        new_session = BulkEditSession.objects.restart_case_session(
+            self.django_user,
+            self.domain_name,
+            self.case_type,
+        )
         self.assertNotEqual(old_session_id, new_session.session_id)
 
 
@@ -136,7 +140,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         super().tearDownClass()
 
     def test_add_filters(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
         session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
@@ -148,7 +152,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(filters[index].index, index)
 
     def test_remove_filters(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
         session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
@@ -164,7 +168,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(filters[index].index, index)
 
     def test_remove_column(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         column_to_remove = session.columns.all()[1]  # owner_name
         self.assertEqual(column_to_remove.prop_id, 'owner_name')
         session.remove_column(column_to_remove.column_id)
@@ -176,7 +180,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(columns[index].index, index)
 
     def test_reorder_wrong_number_of_filter_ids_raises_error(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
         session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
@@ -189,7 +193,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             session.update_filter_order(new_order)
 
     def test_reorder_filters(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
         session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
@@ -212,7 +216,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         )
 
     def test_reorder_wrong_number_of_column_ids_raises_error(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         columns = session.columns.all()
         # the form that uses this method will always fetch a list of strings, and the field is a UUID
         new_order = [str(col_id) for col_id in [columns[1].column_id, columns[2].column_id]]
@@ -220,7 +224,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             session.update_column_order(new_order)
 
     def test_update_column_order(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         columns = session.columns.all()
         # the form that uses this method will always fetch a list of strings, and the field is a UUID
         new_order = [str(col_id) for col_id in [
@@ -239,7 +243,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         )
 
     def test_get_queryset_multiple_filters(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, 'lowkey')
         session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
@@ -260,7 +264,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertEqual(query.es_query, expected_query.es_query)
 
     def test_get_queryset_filters_no_xpath(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         query = session.get_queryset()
         expected_query = (
@@ -272,7 +276,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertEqual(query.es_query, expected_query.es_query)
 
     def test_get_queryset_filters_xpath_only(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
         query = session.get_queryset()
         expected_query = (
@@ -287,7 +291,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertEqual(query.es_query, expected_query.es_query)
 
     def test_has_filters_and_reset(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         self.assertFalse(session.has_filters)
         session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
         self.assertTrue(session.has_filters)
@@ -295,7 +299,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertFalse(session.has_filters)
 
     def test_has_pinned_values_and_reset(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         self.assertFalse(session.has_pinned_values)
         pinned_filter = session.pinned_filters.all()[0]
         pinned_filter.value = ['t__1']
@@ -305,7 +309,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertFalse(session.has_pinned_values)
 
     def test_has_any_filtering_and_reset(self):
-        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
         self.assertFalse(session.has_any_filtering)
         pinned_filter = session.pinned_filters.all()[0]
         pinned_filter.value = ['t__1']
@@ -343,7 +347,7 @@ class BaseBulkEditSessionTest(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
+        self.session = BulkEditSession.objects.new_case_session(
             self.django_user, self.domain_name, self.case_type
         )
 

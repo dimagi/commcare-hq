@@ -2,6 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import "jquery-textchange/jquery.textchange";
 import appManager from "app_manager/js/app_manager";
 import caseConfigUtils from "app_manager/js/case_config_utils";
 import main from "hqwebapp/js/bootstrap3/main";

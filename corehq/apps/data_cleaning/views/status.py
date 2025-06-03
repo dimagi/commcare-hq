@@ -44,18 +44,20 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     @property
     def weighted_percent_complete(self):
         """
-        This gives the user the illusion of progress while we artificially buffer the completion time.
+        Returns an integer between 0 and 100.
 
-        The buffer allows the change feed to catch up to the form submissions,
-        so that the user doesn't refresh and see that their data hasn't updated due to a slow change feed.
+        While the session is in progress we “pad” the percentage so
+        the UI doesn't jump backward when the change feed catches up.
 
         TODO: update this buffer (APPLY_CHANGES_WAIT_TIME) dynamically based on change feed status.
         """
-        if self.is_session_in_progress:
-            return int(0.9 * self.session.percent_complete + 10 * (
-                float(self.seconds_since_complete) / float(APPLY_CHANGES_WAIT_TIME)
-            ))
-        return self.session.percent_complete or 0
+        base = self.session.percent_complete or 0
+        if not self.is_session_in_progress:
+            return base
+
+        buffer = float(self.seconds_since_complete) / APPLY_CHANGES_WAIT_TIME
+        weighted_percent = int(0.9 * base + 10 * buffer)
+        return min(weighted_percent, 100)
 
     def get_template_names(self):
         if self.is_session_in_progress:
@@ -69,7 +71,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     def active_session(self):
         if self.session.completed_on is None:
             return None
-        return BulkEditSession.get_active_case_session(
+        return BulkEditSession.objects.active_case_session(
             self.request.user, self.domain, self.session.identifier
         )
 
@@ -104,7 +106,15 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
                     'target': '#session-status-modal',
                 },
             })
-        return response
+        return self.include_gtm_event_with_response(
+            response,
+            "bulk_edit_session_status_viewed",
+            {
+                "session_type": self.session.session_type,
+                "commit_in_progress": self.is_session_in_progress,
+                "has_active_session": self.active_session is not None,
+            }
+        )
 
     @hq_hx_action('get')
     def poll_session_status(self, request, *args, **kwargs):

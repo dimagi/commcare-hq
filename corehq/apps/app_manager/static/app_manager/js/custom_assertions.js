@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/custom_assertions', [
+define('app_manager/js/custom_assertions', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',

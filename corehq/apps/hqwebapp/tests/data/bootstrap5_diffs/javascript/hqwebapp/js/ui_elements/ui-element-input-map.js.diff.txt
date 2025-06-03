@@ -2,8 +2,8 @@
 +++ 
 @@ -1,8 +1,8 @@
  
--hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
-+hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
+-define('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
++define('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
      'jquery',
      'underscore',
 -    'hqwebapp/js/bootstrap3/main',

@@ -95,6 +95,7 @@ def refresh_data_dictionary_from_app(domain, app_id):
 
     from corehq.apps.app_manager.util import actions_use_usercase
     from corehq.apps.data_dictionary.util import create_properties_for_case_types
+    from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
 
     case_type_to_prop = defaultdict(set)
     if VELLUM_SAVE_TO_CASE.enabled(domain):
@@ -112,6 +113,7 @@ def refresh_data_dictionary_from_app(domain, app_id):
                         case_type_to_prop[action.case_type].update(action.case_properties)
     if case_type_to_prop:
         create_properties_for_case_types(domain, case_type_to_prop)
+    clear_caches_case_data_cleaning(domain)
 
 
 @task(queue='background_queue', ignore_result=True)

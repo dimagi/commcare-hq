@@ -5,6 +5,7 @@ import atwho from "hqwebapp/js/atwho";
 import ace from "ace-builds/src-min-noconflict/ace";
 import "ace-builds/src-min-noconflict/mode-xquery";
 import "ace-builds/src-min-noconflict/ext-language_tools";
+import "jquery-textchange/jquery.textchange";
 
 ko.bindingHandlers.xPathAutocomplete = {
     init: function (element, valueAccessor, allBindings, viewModel) {

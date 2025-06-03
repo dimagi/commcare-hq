@@ -376,6 +376,8 @@ class ConnectIDAuthBackend:
             domain=couch_user.domain,
             commcare_user__username=couch_user.username
         )
+        if not link.is_active:
+            return None
 
         return link.commcare_user
 
