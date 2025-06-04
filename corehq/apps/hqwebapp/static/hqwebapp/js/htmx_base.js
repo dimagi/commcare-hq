@@ -40,6 +40,28 @@ const HTTP_REQUEST_TIMEOUT = 408;
 document.body.addEventListener('htmx:responseError', (evt) => {
     let errorCode = evt.detail.xhr.status;
     let errorText = evt.detail.xhr.statusText;
+    let showDetails = true;
+
+    const xhr = evt.detail.xhr;
+    const hqHxActionError = xhr.getResponseHeader('HQ-HX-Action-Error');
+    if (hqHxActionError) {
+        let errorData = {};
+        try {
+            errorData = JSON.parse(hqHxActionError);
+        } catch (e) {
+            console.error('Failed to parse HQ-HX-Action-Error header:', e);
+        }
+        errorCode = errorData.status_code || errorCode;
+        errorText = errorData.message || errorText;
+        showDetails = errorData.show_details;
+        const maxRetries = errorData.max_retries || retryUtils.DEFAULT_MAX_RETRIES;
+        if (errorData.retry_after && retryUtils.isRetryAllowed(evt, maxRetries)) {
+            setTimeout(() => {
+                retryUtils.retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig);
+            }, errorData.retry_after);
+            return;
+        }
+    }
     if (errorCode === HTTP_BAD_GATEWAY) {
         if (retryUtils.isRetryAllowed(evt)) {
             retryUtils.retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig);
@@ -51,6 +73,7 @@ document.body.addEventListener('htmx:responseError', (evt) => {
         errorCode,
         errorText,
         evt,
+        showDetails,
     );
 });
 
