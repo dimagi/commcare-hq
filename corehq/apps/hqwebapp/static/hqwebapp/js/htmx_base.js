@@ -39,19 +39,17 @@ const HTTP_REQUEST_TIMEOUT = 408;
 
 document.body.addEventListener('htmx:responseError', (evt) => {
     let errorCode = evt.detail.xhr.status;
+    let errorText = evt.detail.xhr.statusText;
     if (errorCode === HTTP_BAD_GATEWAY) {
-        if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig)) {
-            showHtmxErrorModal(
-                errorCode,
-                gettext('Gateway Timeout Error. Max retries exceeded.'),
-                evt,
-            );
+        if (retryUtils.isRetryAllowed(evt)) {
+            retryUtils.retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig);
+            return;
         }
-        return;
+        errorText = gettext('Gateway Timeout Error. Max retries exceeded.');
     }
     showHtmxErrorModal(
         errorCode,
-        evt.detail.xhr.statusText,
+        errorText,
         evt,
     );
 });
