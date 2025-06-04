@@ -28,7 +28,7 @@ import 'hqwebapp/js/htmx_utils/hq_hx_action';
 import 'hqwebapp/js/htmx_utils/csrf_token';
 import 'hqwebapp/js/htmx_utils/hq_hx_loading';
 import 'hqwebapp/js/htmx_utils/hq_hx_refresh';
-import retryHtmxRequest from 'hqwebapp/js/htmx_utils/retry_request';
+import retryUtils from 'hqwebapp/js/htmx_utils/retry_request';
 import { showHtmxErrorModal } from 'hqwebapp/js/htmx_utils/errors';
 
 // By default, there is no timeout and requests hang indefinitely, so update to reasonable value.
@@ -64,7 +64,9 @@ document.body.addEventListener('htmx:timeout', (evt) => {
      * similar event listener there. Also, you may want to adjust the `htmx.config.timeout`
      * value as well.
      */
-    if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig) && evt.detail.requestConfig.verb === 'get') {
+    if (retryUtils.isRetryAllowed(evt) && evt.detail.requestConfig.verb === 'get') {
+        retryUtils.retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig);
+    } else {
         showHtmxErrorModal(
             HTTP_REQUEST_TIMEOUT,
             gettext('Request timed out. Max retries exceeded.'),
