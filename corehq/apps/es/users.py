@@ -186,10 +186,6 @@ def active_on_any_domain():
     )
 
 
-# TODO remove
-domains = domain
-
-
 def analytics_enabled(enabled=True):
     if enabled:
         return filters.OR(
