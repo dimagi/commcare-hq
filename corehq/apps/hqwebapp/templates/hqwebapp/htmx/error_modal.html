@@ -16,6 +16,7 @@
         this.errorText = evt.detail.errorText;
         this.eventError = evt.detail.eventError;
         this.requestPath = evt.detail.requestPath;
+        this.showDetails = evt.detail.showDetails;
       },
     }"
     @update-htmx-request-error-modal.camel.window="updateError"
@@ -52,7 +53,7 @@
           <p x-text="errorText"></p>
           <div
             class="card"
-            x-show="eventError && requestPath"
+            x-show="eventError && requestPath && showDetails"
           >
             <div class="card-body">
               <h5>{% trans "Additional Details" %}</h5>
