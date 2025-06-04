@@ -90,7 +90,7 @@ class EditCasesTableView(
                 },
             )
             raise HtmxResponseException(
-                message=_('We are having trouble connecting to Elasticsearch. Please try again in a few minutes.'),
+                message=_('We are having trouble connecting to the server. Please try again in a few minutes.'),
                 status_code=503,
                 retry_after=1000,
             )
