@@ -38,7 +38,8 @@ class TestWebUserSyncUsercase(TestCase):
         self.assertFalse(init_usercase.closed)
 
         self.user.deactivate(self.domain_obj.name, self.user)
-        closed_usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, self.user_id, USERCASE_TYPE)
+        closed_usercase = CommCareCase.objects.get_case_by_external_id(
+            self.domain_name, self.user_id, USERCASE_TYPE)
         self.assertTrue(closed_usercase.closed)
 
         self.user.reactivate(self.domain_obj.name, self.user)
