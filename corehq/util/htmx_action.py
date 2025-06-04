@@ -115,7 +115,10 @@ class HqHtmxActionMixin:
     def dispatch(self, request, *args, **kwargs):
         action = request.META.get('HTTP_HQ_HX_ACTION')
         if not action:
-            return super().dispatch(request, *args, **kwargs)
+            try:
+                return super().dispatch(request, *args, **kwargs)
+            except HtmxResponseException as err:
+                return self._return_error_response(err)
 
         handler = getattr(self, action, None)
         if not callable(handler):
