@@ -135,8 +135,13 @@ Documentation = "https://commcare-hq.readthedocs.io"
 Repository = "https://github.com/dimagi/commcare-hq"
 
 [tool.uv]
-default-groups = ["dev", "sso"]
 required-version = ">=0.7.0"
+default-groups = ["dev", "sso"]
+no-binary-package = [
+    # fixes xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
+    # revisit if new lxml or xmlsec versions are released
+    "lxml",
+]
 
 [dependency-groups]
 dev = [
