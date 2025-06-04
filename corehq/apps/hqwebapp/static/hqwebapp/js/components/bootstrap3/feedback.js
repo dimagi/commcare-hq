@@ -1,4 +1,3 @@
-
 /**
  *  Knockout Feedback Component
  *
@@ -15,7 +14,6 @@
 
 import ko from "knockout";
 import $ from "jquery";
-import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import koComponents from "hqwebapp/js/components.ko";
 

@@ -1,4 +1,3 @@
-
 /*
  * Component for displaying a search box. Almost certainly included within a a larger knockout template.
  *
@@ -11,8 +10,6 @@
  *  - immediate: Boolean. If true, search on every keypress.
  */
 
-import $ from "jquery";
-import ko from "knockout";
 import _ from "underscore";
 import koComponents from "hqwebapp/js/components.ko";
 

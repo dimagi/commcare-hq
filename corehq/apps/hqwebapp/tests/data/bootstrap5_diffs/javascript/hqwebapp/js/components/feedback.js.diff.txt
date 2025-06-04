@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -21,7 +21,7 @@
+@@ -19,7 +19,7 @@
  
  const component = {
      viewModel: function (params) {
@@ -9,7 +9,7 @@
  
          if (!params.featureName) {
              throw new Error("Please specify a featureName in params.");
-@@ -59,11 +59,6 @@
+@@ -57,11 +57,6 @@
                      if (data.success) {
                          self.showSuccess(true);
                      }

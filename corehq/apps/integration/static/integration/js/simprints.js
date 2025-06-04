@@ -1,6 +1,4 @@
-import $ from "jquery";
 import ko from "knockout";
-
 
 export default {
     simprintsFormModel: function (formData) {
