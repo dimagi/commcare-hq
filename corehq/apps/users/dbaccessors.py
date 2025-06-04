@@ -81,12 +81,12 @@ def _get_es_query(domain, user_type, user_filters):
 
     if user_active_status is None:
         # Show all users in domain - will always be true for WEB_USER_TYPE
-        query = UserES().domain(domain).remove_default_filter('active')
+        query = UserES().domain(domain, include_inactive=True)
     elif user_active_status:
         # Active users filtered by default
         query = UserES().domain(domain)
     else:
-        query = UserES().domain(domain).show_only_inactive()
+        query = UserES().domain(domain, include_active=False, include_inactive=True)
 
     if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()

@@ -808,7 +808,7 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
+        UserES().domains(domains, include_inactive=True).mobile_users().sort('username.exact')
         .login_as_user(web_user_usernames)
         .run()
     )
