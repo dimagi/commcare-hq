@@ -21,15 +21,16 @@ def _get_number_of_cases(gauge):
 
 
 def _get_number_of_mobile_workers(gauge):
-    return UserES().domain(gauge.dashboard.domain).mobile_users().count()
+    return UserES().domain(gauge.dashboard.domain, include_inactive=True).mobile_users().count()
 
 
 def _get_number_of_active_mobile_workers(gauge):
-    return UserES().domain(gauge.dashboard.domain).mobile_users().is_active().count()
+    return UserES().domain(gauge.dashboard.domain).mobile_users().count()
 
 
 def _get_number_of_inactive_mobile_workers(gauge):
-    return UserES().domain(gauge.dashboard.domain).mobile_users().is_active(active=False).count()
+    return UserES().domain(
+        gauge.dashboard.domain, include_active=False, include_inactive=True).mobile_users().count()
 
 
 def _get_number_of_forms_submitted_by_mobile_workers(gauge):

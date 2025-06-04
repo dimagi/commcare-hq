@@ -1640,16 +1640,14 @@ class UserFilterForm(forms.Form):
                     data_bind="checked: selected_location_only"
                 ),
                 data_bind="slideVisible: !isCrossDomain() && location_id",
-            )
+            ),
+            "user_active_status",
         ]
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
             fieldset_label = _('Filter and Download Mobile Workers')
-            fields += [
-                "user_active_status",
-                crispy.Field("columns", data_bind="value: columns"),
-            ]
+            fields += [crispy.Field("columns", data_bind="value: columns")]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(

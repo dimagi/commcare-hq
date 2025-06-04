@@ -808,7 +808,7 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
+        UserES().domains(domains, include_inactive=True).mobile_users().sort('username.exact')
         .login_as_user(web_user_usernames)
         .run()
     )
@@ -861,23 +861,44 @@ def _format_enterprise_user(domain, user):
 @location_safe
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain], filter_by_accessible_locations=True)
-    web_users_fmt = [{
-        'eulas': u.get_eulas(),
-        'email': u.get_email(),
-        'domain': domain,
-        'name': u.full_name,
-        'role': u.role_label(domain),
-        'phoneNumbers': u.phone_numbers,
-        'id': u.get_id,
-        'editUrl': reverse('user_account', args=[domain, u.get_id]),
-        'removeUrl': (
-            reverse('remove_web_user', args=[domain, u.user_id])
-            if request.user.username != u.username else None
-        ),
-        'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
-            domain, u.username
-        ),
-    } for u in web_users]
+    web_users_fmt = []
+    for u in web_users:
+        user = {
+            'eulas': u.get_eulas(),
+            'email': u.get_email(),
+            'domain': domain,
+            'name': u.full_name,
+            'role': u.role_label(domain),
+            'phoneNumbers': u.phone_numbers,
+            'id': u.get_id,
+            'editUrl': reverse('user_account', args=[domain, u.get_id]),
+            'removeUrl': (
+                reverse('remove_web_user', args=[domain, u.user_id])
+                if request.user.username != u.username else None
+            ),
+            'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
+                domain, u.username
+            ),
+            'deactivateUrl': '',
+            'reactivateUrl': '',
+        }
+        # Omit option to deactivate/reactivate for a domain if user access is controlled by an IdentityProvider
+        if IdentityProvider.get_required_identity_provider(u.username) is None:
+            if u.is_active_in_domain(domain):
+                user.update({
+                    'deactivateUrl': (
+                        reverse('deactivate_web_user', args=[domain, u.user_id])
+                        if request.user.username != u.username else None
+                    ),
+                })
+            else:
+                user.update({
+                    'reactivateUrl': (
+                        reverse('reactivate_web_user', args=[domain, u.user_id])
+                        if request.user.username != u.username else None
+                    ),
+                })
+        web_users_fmt.append(user)
 
     return JsonResponse({
         'users': web_users_fmt,
@@ -890,6 +911,7 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
     query = request.GET.get('query')
+    active_in_domain = json.loads(request.GET.get('showActiveUsers', None))
 
     user_es = (
         UserES().domains(domains).web_users().sort('username.exact')
@@ -900,6 +922,13 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
         assert len(domains) == 1
         domain = domains[0]
         user_es = filter_user_query_by_locations_accessible_to_user(user_es, domain, request.couch_user)
+    if active_in_domain is not None:
+        assert len(domains) == 1
+        domain = domains[0]
+        if active_in_domain is False:
+            user_es = user_es.is_active(False, domain)
+        else:
+            user_es = user_es.is_active(True, domain)
     result = user_es.run()
 
     return (
@@ -955,6 +984,34 @@ def undo_remove_web_user(request, domain, record_id):
 
     return HttpResponseRedirect(
         reverse(ListWebUsersView.urlname, args=[domain]))
+
+
+@always_allow_project_access
+@require_can_edit_web_users
+@require_POST
+@location_safe
+def deactivate_web_user(request, domain, couch_user_id):
+    user = WebUser.get_by_user_id(couch_user_id, domain)
+    if user:
+        if not user_can_access_other_user(domain, request.couch_user, user):
+            return HttpResponse(status=401)
+        user.deactivate(domain, changed_by=request.couch_user)
+        messages.success(request, 'You have successfully deactivated {username}.'.format(username=user.username))
+    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
+
+
+@always_allow_project_access
+@require_can_edit_web_users
+@require_POST
+@location_safe
+def reactivate_web_user(request, domain, couch_user_id):
+    user = WebUser.get_by_user_id(couch_user_id, domain)
+    if user:
+        if not user_can_access_other_user(domain, request.couch_user, user):
+            return HttpResponse(status=401)
+        user.reactivate(domain, changed_by=request.couch_user)
+        messages.success(request, 'You have successfully reactivated {username}.'.format(username=user.username))
+    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
 
 
 # If any permission less than domain admin were allowed here, having that

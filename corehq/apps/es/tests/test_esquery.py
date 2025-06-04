@@ -35,8 +35,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                                 )
                             }
                         },
-                        {'term': {'base_doc': 'couchuser'}},
-                        {'term': {'is_active': True}}
+                        {'term': {'base_doc': 'couchuser'}}
                     ],
                     "must": {
                         "match_all": {}
@@ -118,11 +117,6 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                             "term": {
                                 "base_doc": "couchuser"
                             }
-                        },
-                        {
-                            "term": {
-                                "is_active": True
-                            }
                         }
                     ],
                     "must": {
@@ -168,9 +162,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
 
     def test_remove_all_defaults(self):
         # Elasticsearch fails if you pass it an empty list of filters
-        query = (users.UserES()
-                 .remove_default_filter('not_deleted')
-                 .remove_default_filter('active'))
+        query = users.UserES().remove_default_filters()
         filters = query.raw_query['query']['bool']['filter']
         self.assertTrue(len(filters) > 0)
 
