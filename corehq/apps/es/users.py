@@ -44,7 +44,6 @@ class UserES(HQESQuery):
     def builtin_filters(self):
         return [
             domain,
-            domains,
             active_on_any_domain,
             created,
             mobile_users,
@@ -184,10 +183,6 @@ def active_on_any_domain():
             filters.term('user_domain_memberships.is_active', True)
         ))
     )
-
-
-# TODO remove
-domains = domain
 
 
 def analytics_enabled(enabled=True):
