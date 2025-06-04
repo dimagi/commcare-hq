@@ -11,9 +11,6 @@ import RMI from "jquery.rmi/jquery.rmi";
 import kissmetrics from "analytix/js/kissmetrix";
 import "hqwebapp/js/bootstrap5/hq.helpers";
 
-// Workaround for non-RequireJS pages: when `define` doesn't exist, RMI is just a global variable.
-RMI = RMI || window.RMI;
-
 var module = {};
 var _private = {};
 _private.RMI = function () {};
