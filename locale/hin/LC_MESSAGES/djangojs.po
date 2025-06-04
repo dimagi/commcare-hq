@@ -285,14 +285,6 @@ msgstr ""
 " शामिल हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "कोई नहीं चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "सभी चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "एप्लिकेशन नाम आवश्यक है"
 
@@ -353,6 +345,14 @@ msgstr "टैब नाम"
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
 msgstr "प्रदर्शन शर्त"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"चेतावनी: प्रयुक्त गणना की गई संपत्ति कैशिंग के अनुकूल नहीं है और इससे केस "
+"सूची गुणों में पुराना डेटा आ सकता है"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -4214,6 +4214,12 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Select None"
+#~ msgstr "कोई नहीं चुनें"
+
+#~ msgid "Select All"
+#~ msgstr "सभी चुनें"
 
 #~ msgid "long"
 #~ msgstr "लंबा"
