@@ -1,3 +1,7 @@
+/*
+    This file uses AMD because it is ultimately imported by Vellum,
+    which is still on AMD.
+*/
 define("app_manager/js/forms/form_designer_analytics", [
     'analytix/js/google',
     'analytix/js/kissmetrix',
