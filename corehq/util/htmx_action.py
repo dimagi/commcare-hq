@@ -3,6 +3,7 @@ import logging
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils.encoding import force_str
+from sentry_sdk import capture_exception, configure_scope
 
 from corehq.util.htmx_gtm import get_htmx_gtm_event
 
@@ -144,6 +145,19 @@ class HqHtmxActionMixin:
             response = handler(request, *args, **kwargs)
         except HtmxResponseException as err:
             return self._return_error_response(err, action=action)
+        except Exception as err:
+            with configure_scope() as scope:
+                scope.set_tag('hq_hx_action', action)
+                scope.set_extra(
+                    'request_details',
+                    {
+                        'method': request.method,
+                        'path': request.path,
+                        'domain': request.domain if hasattr(request, 'domain') else None,
+                    },
+                )
+                capture_exception(err)
+            raise
         return response
 
     def _return_error_response(self, htmx_response_error, action=None):
