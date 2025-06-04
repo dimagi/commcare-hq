@@ -1,8 +1,10 @@
 import json
 
+from dimagi.utils.logging import notify_exception
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
 
 from corehq.apps.data_cleaning.columns import EditableHtmxColumn
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
@@ -15,12 +17,13 @@ from corehq.apps.data_cleaning.tasks import commit_data_cleaning
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.es.exceptions import ESError
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import (
     HtmxInvalidPageRedirectMixin,
     SelectablePaginatedTableView,
 )
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.htmx_action import HqHtmxActionMixin, HtmxResponseException, hq_hx_action
 
 
 @method_decorator(
@@ -74,6 +77,23 @@ class EditCasesTableView(
 
     def get_queryset(self):
         return self.session.get_queryset()
+
+    def get(self, request, *args, **kwargs):
+        try:
+            return super().get(request, *args, **kwargs)
+        except ESError as err:
+            notify_exception(
+                request,
+                'Ran into ESError in bulk edit cases table.',
+                details={
+                    'error': str(err),
+                },
+            )
+            raise HtmxResponseException(
+                message=_('We are having trouble connecting to Elasticsearch. Please try again in a few minutes.'),
+                status_code=503,
+                retry_after=1000,
+            )
 
     @hq_hx_action('post')
     def clear_filters(self, request, *args, **kwargs):
