@@ -49,38 +49,12 @@ class HqHtmxActionMixin:
             ...
             return super().get(request, *args, **kwargs)
 
-    To raise exceptions in these HTMX action responses, you can raise an ``HtmxResponseException``
-    and override either ``default_htmx_error_template`` and/or ``get_htmx_error_template``
-    to return the appropriate error template based on the HTMX Action.
+    To raise exceptions in these HTMX action responses, you can raise an ``HtmxResponseException``,
+    which will be caught by the htmx:responseError event listener.
 
     Example docs here: commcarehq.org/styleguide/b5/htmx_alpine/
     See working demo here: commcarehq.org/styleguide/demo/htmx_todo/
     """
-    default_htmx_error_template = "hqwebapp/htmx/htmx_action_error.html"
-
-    def get_htmx_error_context(self, action, htmx_error, **kwargs):
-        """
-        Use this method to return the context for the HTMX error template.
-
-        :param action: string (the slug for the HTMX action taken)
-        :param htmx_error: HtmxResponseException
-        :return: dict
-        """
-        return {
-            "action": action,
-            "htmx_error": htmx_error,
-        }
-
-    def get_htmx_error_template(self, action, htmx_error):
-        """
-        Use this method to return the appropriate error template
-        based on the htmx error received.
-
-        :param action: string (the slug for the HTMX action taken)
-        :param htmx_error: HtmxResponseException
-        :return: string (path to template)
-        """
-        return self.default_htmx_error_template
 
     def render_htmx_redirect(self, url, response_message=None):
         response = HttpResponse(response_message or "")
@@ -166,9 +140,25 @@ class HqHtmxActionMixin:
         try:
             response = handler(request, *args, **kwargs)
         except HtmxResponseException as err:
-            context = self.get_htmx_error_context(action, err, **kwargs)
-            self.template_name = self.get_htmx_error_template(action, err)
-            return self.render_to_response(context)
+            return self._return_error_response(err, action=action)
+        return response
+
+    def _return_error_response(self, htmx_response_error, action=None):
+        """
+        Return a response for HTMX errors we want to handle gracefully
+        on the client side.
+        """
+        response = HttpResponse(htmx_response_error.message, status=htmx_response_error.status_code)
+        response['HQ-HX-Action-Error'] = json.dumps(
+            {
+                'message': htmx_response_error.message,
+                'status_code': htmx_response_error.status_code,
+                'retry_after': htmx_response_error.retry_after,
+                'show_details': htmx_response_error.show_details,
+                'max_retries': htmx_response_error.max_retries,
+                'action': action,
+            }
+        )
         return response
 
 
@@ -200,11 +190,17 @@ class HtmxResponseException(Exception):
     """
     Exception class for triggering HTTP 4XX responses for HTMX responses, where expected.
     """
+
     status_code = 400
     message = None
 
-    def __init__(self, message=None, status=None, *args, **kwargs):
+    def __init__(
+        self, message=None, status_code=None, retry_after=None, show_details=False, max_retries=20, *args, **kwargs
+    ):
         self.message = message
-        if status is not None:
-            self.status_code = status
+        if status_code is not None:
+            self.status_code = status_code
+        self.retry_after = retry_after  # in milliseconds
+        self.show_details = show_details
+        self.max_retries = max_retries
         super().__init__(*args, **kwargs)
