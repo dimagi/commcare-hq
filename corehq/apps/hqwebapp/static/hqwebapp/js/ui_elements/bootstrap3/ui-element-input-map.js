@@ -1,9 +1,9 @@
 
-hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
+define('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
     'jquery',
     'underscore',
     'hqwebapp/js/bootstrap3/main',
-    'DOMPurify',
+    'dompurify',
 ], function (
     $,
     _,

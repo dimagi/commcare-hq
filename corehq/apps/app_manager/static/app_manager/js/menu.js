@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/menu", [
+define("app_manager/js/menu", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/layout',

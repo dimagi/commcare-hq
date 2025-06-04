@@ -20,9 +20,7 @@
   {% breadcrumbs current_page section current_page.parents %}
   <div class="d-flex align-items-center m-3">
     <h1 class="fs-3 pe-3 py-3 m-0">{{ current_page.page_name }}</h1>
-    <div>
-      {% include "data_cleaning/partials/button_bar.html" %}
-    </div>
+    <div>{% include "data_cleaning/partials/button_bar.html" %}</div>
     <div class="ps-3">
       <div class="form-check form-switch">
         <input
@@ -31,8 +29,10 @@
           type="checkbox"
           role="switch"
           name="show_whitespaces"
-          x-data=""  {# needed to activate x-model below #}
+          x-data=""
+          {# needed to activate x-model below #}
           x-model="$store.showWhitespaces"
+          @click="$store.gtm.sendEvent('bulk_edit_show_whitespaces');"
         />
         <label class="form-check-label" for="show-whitespaces-switch">
           {% trans "Show Whitespaces" %}
@@ -41,10 +41,9 @@
     </div>
   </div>
   <div
-    id="primary-view-container"
     class="mx-3"
     hx-get="{{ htmx_primary_view_url }}{% querystring %}"
-    hx-trigger="load, statusRefresh"
+    hx-trigger="load"
     hx-swap="innerHTML"
   >
     <div class="htmx-indicator">
@@ -52,7 +51,7 @@
     </div>
   </div>
   {% include "data_cleaning/partials/offcanvas.html" %}
-{% endblock %}
+{% endblock content %}
 
 {% block modals %}
   {% include "hqwebapp/htmx/error_modal.html" %}

@@ -59,23 +59,16 @@ module.exports = {
                     {
                         test: /\.js$/,
                         loader: 'babel-loader',
-                        exclude: /node_modules/,
+                        exclude: [
+                            /node_modules/,
+                            // Vellum is already compressed, so it does not need babel's processing
+                            path.resolve(
+                                __dirname, '../corehq/apps/app_manager/static/app_manager/js/vellum/main.js'),
+                        ],
                     },
                     {
                         test: /\.png/,
                         type: 'asset/resource',
-                    },
-
-                    // this rule ensures that hqDefine is renamed to define AMD module
-                    // definition syntax that webpack understands
-                    {
-                        test: /\.js$/,
-                        loader: 'string-replace-loader',
-                        exclude: /node_modules/,
-                        options: {
-                            search: /\bhqDefine\b/g,
-                            replace: 'define',
-                        },
                     },
 
                     {

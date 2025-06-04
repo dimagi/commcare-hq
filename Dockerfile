@@ -12,7 +12,6 @@ ENV PYTHONUNBUFFERED=1 \
     NODE_VERSION=20.11.1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    UV_PROJECT=/vendor \
     UV_PROJECT_ENVIRONMENT=/vendor
 # UV_COMPILE_BYTECODE: Compile bytecode during installation to improve module
 #   load performance. Also suppresses a couchdbkit syntax error that happens
@@ -50,7 +49,8 @@ COPY pyproject.toml uv.lock package.json /vendor/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv venv --allow-existing /vendor \
-  && uv sync --locked --group=test --no-dev --no-install-project
+  && UV_PROJECT=/vendor uv sync --locked --group=test --no-dev --no-install-project \
+  && rm /vendor/pyproject.toml /vendor/uv.lock
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'

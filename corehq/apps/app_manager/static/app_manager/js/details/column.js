@@ -113,6 +113,12 @@ export default function (col, screen) {
             optimizationOptions,
         ).val(self.original.optimization || "");
         self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
+        // Make it possible to observe changes to self.optimizationSelectElement
+        // same as done for self.field
+        self.optimizationSelectElement.observableVal = ko.observable(self.optimizationSelectElement.val());
+        self.optimizationSelectElement.on("change", function () {
+            self.optimizationSelectElement.observableVal(self.optimizationSelectElement.val());
+        });
     }
     self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
     self.tileWidthOptions = ko.computed(function () {
@@ -248,6 +254,54 @@ export default function (col, screen) {
         }
         // Invalid property name
         return (self.field.observableVal() || self.saveAttempted()) && !Utils.isValidPropertyName(self.field.observableVal());
+    }, self);
+    self.caseListOptimizationsWarningText = gettext(
+      "Warning: Calculated property used is not compatible with caching and may result in stale data on case list properties"
+    );
+
+    function containsSpecialFunctions(str) {
+      // Match for following
+      // 1. Xpath contains any of the following methods - today(), now(),  here(), random(), uuid(), sleep(), depend()
+      // 2. If Xpath contains any instance() expressions which doesn’t start with instance('casedb')
+      const patterns = [
+        /today\(\)/,
+        /now\(\)/,
+        /here\(\)/,
+        /random\(\)/,
+        /uuid\(\)/,
+        /sleep\(\)/,
+        /depend\(\)/,
+      ];
+      if (patterns.some(pattern => pattern.test(str))) {
+        return true;
+      }
+
+      // Regex to match all instance() calls (including nested)
+      const instanceRegex = /instance\s*\(([^)]*)\)/g;
+      let match;
+      while ((match = instanceRegex.exec(str)) !== null) {
+        // Extract arguments, handle spaces and quotes
+        const args = match[1].split(',').map(s => s.trim().replace(/^['"]|['"]$/g, ''));
+        // If first argument is not 'casedb', return true
+        if (args[0] !== 'casedb') {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    self.showCaseListOptimizationsWarning = ko.computed(function () {
+        if (!self.useXpathExpression) {
+            return false;
+        }
+        if (
+            self.optimizationSelectElement &&
+            _.contains(['cache', 'cache_and_lazy_load'], self.optimizationSelectElement.observableVal())
+        ) {
+            return containsSpecialFunctions(self.field.observableVal());
+        }
+        return false;
     }, self);
 
     // Add the graphing option if self is a graph so self we can set the value to graph

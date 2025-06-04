@@ -3607,11 +3607,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    You have selected the <strong>%(p)s Edition</strong> subscription.\n"
+#| "  "
 msgid ""
 "\n"
-"    You have selected the <strong>%(p)s Edition</strong> subscription.\n"
-"  "
+"      You have selected the <strong>%(p)s Edition</strong> subscription.\n"
+"    "
 msgstr ""
 "\n"
 "    Você selecionou a assinatura <strong>%(p)s Edition</strong>.\n"
@@ -3628,18 +3632,97 @@ msgid "Included each month"
 msgstr "Incluído a cada mês"
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid "Note: Continuing will change your current subscription."
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Thank you for staying with your current subscription.\n"
+#| "        "
+msgid ""
+"\n"
+"        Thank you for staying with your current subscription.\n"
+"      "
+msgstr ""
+"\n"
+"          Obrigado por permanecer com sua assinatura atual.\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy
+#| msgid "We're sorry to see you downgrade!"
+msgid ""
+"\n"
+"        We're sorry to see you downgrade!\n"
+"      "
+msgstr "Lamentamos que você esteja fazendo downgrade!"
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy
+#| msgid "Note: Continuing will change your current subscription."
+msgid ""
+"\n"
+"        Note: Continuing will change your current subscription.\n"
+"      "
 msgstr "Nota: Continuar irá alterar sua assinatura atual."
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
+#| "                receive an invoice via email with bank information and\n"
+#| "                instructions for wire payment. Please include the Invoice # in\n"
+#| "                the wire payment memo or note field.\n"
+#| "                <a\n"
+#| "                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+#| "                  target=\"_blank\"\n"
+#| "                  >More information...</a\n"
+#| "                >\n"
+#| "              "
 msgid ""
 "\n"
-"          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.\n"
-"          You should expect your first invoice on %(invoice_date)s, or you can prepay for your\n"
-"          subscription by following the instructions\n"
-"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\">here</a>.\n"
-"        "
+"        By continuing you are subscribing to a Pay Annually plan and will\n"
+"        receive an invoice via email for plan fees due. In case you incur any\n"
+"        on-demand fees for excess users or SMS, you will receive invoices for\n"
+"        these charges on a monthly basis. See\n"
+"        <a\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
+"          >here</a\n"
+"        >\n"
+"        for more information about payment, cancellation, and refunds.\n"
+"      "
+msgstr ""
+"\n"
+"                A Dimagi aceita pagamentos via transferência bancária ACH e wire transfer. Você receberá\n"
+"                uma fatura por e-mail com informações bancárias e\n"
+"                instruções para pagamento via transferência. Por favor, inclua o número da fatura\n"
+"                no campo de observação ou nota do pagamento.\n"
+"                <a\n"
+"                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+"                  target=\"_blank\"\n"
+"                  >Mais informações...</a\n"
+"                >\n"
+"              "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.\n"
+#| "          You should expect your first invoice on %(invoice_date)s, or you can prepay for your\n"
+#| "          subscription by following the instructions\n"
+#| "          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\">here</a>.\n"
+#| "        "
+msgid ""
+"\n"
+"        CommCare is billed on a monthly basis, and all subscriptions require a\n"
+"        30 day minimum commitment. You should expect your first invoice on\n"
+"        %(invoice_date)s, or you can prepay for your subscription by following\n"
+"        the instructions\n"
+"        <a\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+"          >here</a\n"
+"        >.\n"
+"      "
 msgstr ""
 "\n"
 "          O CommCare é cobrado mensalmente e todas as assinaturas exigem um compromisso mínimo de 30 dias.\n"
@@ -3649,11 +3732,18 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Once you subscribe to a paid plan, you will be able to pause your subscription after 30 days,\n"
+#| "          but you will no longer be able to downgrade to the CommCare Free edition.\n"
+#| "        "
 msgid ""
 "\n"
-"          Once you subscribe to a paid plan, you will be able to pause your subscription after 30 days,\n"
-"          but you will no longer be able to downgrade to the CommCare Free edition.\n"
-"        "
+"        Once you subscribe to a paid plan, you will be able to pause your\n"
+"        subscription after 30 days, but you will no longer be able to downgrade\n"
+"        to the CommCare Free edition.\n"
+"      "
 msgstr ""
 "\n"
 "          Assim que você assinar um plano pago, poderá pausar sua assinatura após 30 dias,\n"
@@ -3661,32 +3751,18 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          Continuing will keep you on <strong>%(p)s Edition Software Plan</strong> and any\n"
+#| "          pending subscriptions will be cancelled.\n"
+#| "        "
 msgid ""
 "\n"
-"            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> I understand and wish to continue.\n"
-"          "
-msgstr ""
-"\n"
-"            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> Eu entendo e desejo continuar.\n"
-"          "
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid ""
-"\n"
-"          Thank you for staying with your current subscription.\n"
-"        "
-msgstr ""
-"\n"
-"          Obrigado por permanecer com sua assinatura atual.\n"
-"        "
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
-msgid ""
-"\n"
-"          Continuing will keep you on <strong>%(p)s Edition Software Plan</strong> and any\n"
-"          pending subscriptions will be cancelled.\n"
-"        "
+"        Continuing will keep you on\n"
+"        <strong>%(p)s Edition Software Plan</strong> and any pending\n"
+"        subscriptions will be cancelled.\n"
+"      "
 msgstr ""
 "\n"
 "          Continuar manterá você no <strong>Plano de Software %(p)s Edition</strong> e quaisquer\n"
@@ -3694,18 +3770,22 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid "We're sorry to see you downgrade!"
-msgstr "Lamentamos que você esteja fazendo downgrade!"
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          You’ll have access to the features on your\n"
+#| "          <strong>%(p)s Edition Software Plan </strong> through %(current_subscription_end_date)s.<br />\n"
+#| "          On %(start_date_after_minimum_subscription)s your current subscription will be downgraded\n"
+#| "          to the %(new_plan_edition)s Edition Software Plan.\n"
+#| "        "
 msgid ""
 "\n"
-"          You’ll have access to the features on your\n"
-"          <strong>%(p)s Edition Software Plan </strong> through %(current_subscription_end_date)s.<br />\n"
-"          On %(start_date_after_minimum_subscription)s your current subscription will be downgraded\n"
-"          to the %(new_plan_edition)s Edition Software Plan.\n"
-"        "
+"        You’ll have access to the features on your\n"
+"        <strong>%(p)s Edition Software Plan </strong> through\n"
+"        %(current_subscription_end_date)s.<br />\n"
+"        On %(start_date_after_minimum_subscription)s your current subscription\n"
+"        will be downgraded to the %(new_plan_edition)s Edition Software Plan.\n"
+"      "
 msgstr ""
 "\n"
 "          Você terá acesso aos recursos do seu\n"
@@ -3715,17 +3795,38 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          We're sorry to see you downgrade! You are currently subscribed to the\n"
+#| "          <strong>%(p)s Software Plan.</strong>\n"
+#| "        "
 msgid ""
 "\n"
-"          We're sorry to see you downgrade! You are currently subscribed to the\n"
-"          <strong>%(p)s Software Plan.</strong>\n"
-"        "
+"        We're sorry to see you downgrade! You are currently subscribed to the\n"
+"        <strong>%(p)s Software Plan.</strong>\n"
+"      "
 msgstr ""
 "\n"
 "          Lamentamos que você esteja fazendo downgrade! Atualmente você está inscrito no\n"
 "          <strong>Plano de Software %(p)s.</strong>\n"
 "        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> I understand and wish to continue.\n"
+#| "          "
+msgid ""
+"\n"
+"          <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\" /> I\n"
+"          understand and wish to continue.\n"
+"        "
+msgstr ""
+"\n"
+"            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> Eu entendo e desejo continuar.\n"
+"          "
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
@@ -3977,7 +4078,7 @@ msgstr "Gerando relatório"
 
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
@@ -4595,7 +4696,6 @@ msgstr "E-mails para notificação em caso de falha"
 #: corehq/apps/app_execution/templates/app_execution/workflow_log.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/messaging/scheduling/views.py
 #: corehq/motech/generic_inbound/models.py
@@ -7730,7 +7830,7 @@ msgstr "Instalar CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
@@ -8897,7 +8997,7 @@ msgstr "Por favor, defina um tipo de caso para sua lista de casos."
 #: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_cleaning/utils/cases.py
 #: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
@@ -8956,7 +9056,7 @@ msgstr ""
 "configurações do menu"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 msgid "Go Back"
@@ -12710,7 +12810,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Select All"
 msgstr "Selecionar tudo"
@@ -13769,7 +13869,7 @@ msgid "Edit Widget"
 msgstr "Editar Widget"
 
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_session.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
@@ -15217,7 +15317,7 @@ msgstr "Nenhuma consulta recente"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_signature.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/sms/templates/sms/chat_contacts.html
@@ -16200,13 +16300,13 @@ msgstr "Adicione responsáveis pelos casos para filtrar a lista de casos."
 msgid "[All Data]"
 msgstr "[Todos os Dados]"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 #, fuzzy
 #| msgid "Select a property to clean"
 msgid "Select a property to edit"
 msgstr "Selecione uma propriedade para limpar"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 #, fuzzy
 #| msgid ""
 #| "Choices are editable case properties that are currently visible in the "
@@ -16218,33 +16318,33 @@ msgstr ""
 "As opções são propriedades de caso editáveis que estão atualmente visíveis "
 "na tabela."
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 #, fuzzy
 #| msgid "Edit Location"
 msgid "Edit action"
 msgstr "Editar Localidade"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Find:"
 msgstr "Procurar:"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Use regular expression"
 msgstr "Usar expressão regular"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Replace with:"
 msgstr "Substituir por:"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Replace existing value with:"
 msgstr "Substituir valor existente por:"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Copy from property:"
 msgstr "Copiar da propriedade:"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid ""
 "The value from this property will replace the value from the selected "
 "property at the top."
@@ -16252,21 +16352,23 @@ msgstr ""
 "O valor desta propriedade substituirá o valor da propriedade selecionada "
 "acima."
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Select a case property..."
 msgstr "Selecione uma propriedade de caso..."
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Select a cleaning action..."
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
+#, fuzzy
+#| msgid "Select a cleaning action..."
+msgid "Select an edit action..."
 msgstr "Selecione uma ação de limpeza..."
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 #, fuzzy
 #| msgid "Preview data"
 msgid "Preview Edits"
 msgstr "Pré-visualizar dados"
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid ""
 "Please specify a value you would like to replace the existing property value"
 " with."
@@ -16274,19 +16376,19 @@ msgstr ""
 "Por favor, especifique um valor para substituir o valor existente da "
 "propriedade."
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Please specify the value you would like to find."
 msgstr "Por favor, especifique o valor que deseja encontrar."
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Not a valid regular expression."
 msgstr "Não é uma expressão regular válida."
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Please select a property to copy from."
 msgstr "Por favor, selecione uma propriedade da qual copiar."
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "You cannot copy from the same property."
 msgstr "Você não pode copiar da mesma propriedade."
 
@@ -16397,11 +16499,11 @@ msgstr ""
 msgid "Data type '{}' cannot have match type '{}'."
 msgstr "O tipo de dado '{}' não pode ter o tipo de correspondência '{}'."
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Select a Case Type"
 msgstr "Selecione um Tipo de Caso"
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -16421,29 +16523,37 @@ msgstr "Selecione um Tipo de Caso"
 msgid "Next"
 msgstr "Próximo"
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Please select a case type to continue."
 msgstr "Por favor, selecione um tipo de caso para continuar."
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "'{}' is not a valid case type"
 msgstr "'{}' não é um tipo de caso válido"
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Next Step"
 msgstr "Próxima Etapa"
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Resume the session."
 msgstr "Retomar a sessão."
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Start a new session and delete the existing session."
 msgstr "Iniciar uma nova sessão e excluir a sessão existente."
 
-#: corehq/apps/data_cleaning/forms/setup.py
-msgid "Start Session"
+#: corehq/apps/data_cleaning/forms/start_session.py
+#, fuzzy
+#| msgid "Start Session"
+msgid "Start New Session"
 msgstr "Iniciar Sessão"
+
+#: corehq/apps/data_cleaning/forms/start_session.py
+#, fuzzy
+#| msgid "Resume the session."
+msgid "Resume Session"
+msgstr "Retomar a sessão."
 
 #: corehq/apps/data_cleaning/models/change.py
 msgid "Unknown action"
@@ -16683,20 +16793,24 @@ msgid "Completed On"
 msgstr "Concluído Em"
 
 #: corehq/apps/data_cleaning/tables.py
-msgid "# Cases Cleaned"
-msgstr "# Casos Limpos"
+#, fuzzy
+#| msgid "# Cases Created"
+msgid "# Cases Edited"
+msgstr "# Casos Criados"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_main.html
 #, fuzzy
 #| msgid "Start a Cleaning Session"
 msgid "Start a Bulk Edit Session"
 msgstr "Iniciar uma Sessão de Limpeza"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
-msgid "Recent Tasks"
-msgstr "Tarefas Recentes"
+#: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_main.html
+#, fuzzy
+#| msgid "Start a Cleaning Session"
+msgid "Recent Bulk Edit Sessions"
+msgstr "Iniciar uma Sessão de Limpeza"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_session.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 msgid "Show Whitespaces"
 msgstr "Mostrar Espaços em Branco"
 
@@ -16732,6 +16846,23 @@ msgstr "Cancelar Edição"
 msgid "System"
 msgstr "Sistema"
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/selection_read_only.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+msgid "This session is read-only."
+msgstr "Esta sessão é somente leitura."
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#, fuzzy
+#| msgid "Session"
+msgid "Open Session"
+msgstr "Sessão"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#: corehq/apps/sms/models.py corehq/apps/smsforms/models.py
+#: custom/inddex/filters.py
+msgid "Completed"
+msgstr "Concluído"
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
 #: corehq/apps/integration/payments/const.py corehq/apps/registry/models.py
 #: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
@@ -16739,6 +16870,29 @@ msgstr "Sistema"
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
 msgstr "Pendente"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#, fuzzy
+#| msgid "Only dynamic case properties are allowed"
+msgid "Only one active session per case type allowed."
+msgstr "Apenas propriedades de caso dinâmicas são permitidas"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/users/views/mobile/users.py
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Active"
+msgstr "Ativo"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/values/empty.html
 msgid "EMPTY"
@@ -16748,7 +16902,7 @@ msgstr "VAZIO"
 msgid "NULL"
 msgstr "NULO"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -16756,18 +16910,18 @@ msgstr "NULO"
 #| "  "
 msgid ""
 "\n"
-"        Priviewed edits on %(num_records)s cases.\n"
+"        Previewed edits on %(num_records)s cases.\n"
 "      "
 msgstr ""
 "\n"
 "    Selecionar %(num_records)s casos\n"
 "  "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "O histórico de edições está muito grande..."
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 msgid ""
 "\n"
 "            The edit history for this session is too large to support new bulk edits.\n"
@@ -16779,11 +16933,24 @@ msgstr ""
 "            Você pode aplicar as edições atuais, desfazer as edições ou limpar o histórico de edições para começar de novo.\n"
 "          "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 msgid "No editible case properties are visible"
 msgstr "Nenhuma propriedade de caso editável está visível"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please\n"
+#| "        <a\n"
+#| "          href=\"#\"\n"
+#| "          class=\"fw-bold\"\n"
+#| "          data-bs-dismiss=\"offcanvas\"\n"
+#| "          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
+#| "        >Configure Columns</a>\n"
+#| "        to include editible case properties in the column list in\n"
+#| "        order to clean the selected cases.\n"
+#| "      "
 msgid ""
 "\n"
 "        Please\n"
@@ -16794,7 +16961,7 @@ msgid ""
 "          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
 "        >Configure Columns</a>\n"
 "        to include editible case properties in the column list in\n"
-"        order to clean the selected cases.\n"
+"        order to edit the selected cases.\n"
 "      "
 msgstr ""
 "\n"
@@ -16818,14 +16985,34 @@ msgstr ""
 #| "  "
 msgid ""
 "\n"
-"    An active bulk edit session already exists for this case type.\n"
-"    Please decide how you would like to proceed.\n"
-"  "
+"      An active bulk edit session already exists for this case type.\n"
+"    "
 msgstr ""
 "\n"
 "    Já existe uma sessão ativa de limpeza de dados para este tipo de caso.\n"
 "    Por favor, decida como deseja proceder.\n"
 "  "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+msgid ""
+"\n"
+"      Only one session can be active per case type.\n"
+"      Any previewed edits will be lost when starting a new session.\n"
+"    "
+msgstr ""
+"\n"
+"      Apenas uma sessão pode estar ativa por tipo de caso.\n"
+"      Quaisquer edições em pré-visualização serão perdidas ao iniciar uma nova sessão.\n"
+"    "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+#, fuzzy
+#| msgid "Please specify the value you would like to find."
+msgid ""
+"\n"
+"      Please decide how you would like to proceed...\n"
+"    "
+msgstr "Por favor, especifique o valor que deseja encontrar."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 msgid "Confirm Action"
@@ -16905,7 +17092,7 @@ msgid "Undo edit for multiple cases?"
 msgstr "Desfazer edição para vários casos?"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_undo.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/reports/views.py
 msgid "Undo"
 msgstr "Desfazer"
@@ -16980,6 +17167,157 @@ msgstr "Configurar colunas"
 msgid "Edit Selected Cases"
 msgstr "Casos Selecionados"
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/base_modal_body.html
+#, fuzzy
+#| msgid "Extend session"
+msgid "Exit session"
+msgstr "Estender sessão"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/base_modal_body.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+#, fuzzy
+#| msgid "Connection Settings"
+msgid "Continue editing"
+msgstr "Configurações de Conexão"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+#, fuzzy
+#| msgid "Changes saved."
+msgid "Changes Applied"
+msgstr "Alterações salvas."
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+#, python-format
+msgid ""
+"\n"
+"    Finished processing changes, updated 1 case.\n"
+"  "
+msgid_plural ""
+"\n"
+"    Finished processing changes, updated %(count)s cases.\n"
+"  "
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases with the same columns and filters?\n"
+#| "      "
+msgid ""
+"\n"
+"      Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases with the same columns and filters?\n"
+"    "
+msgstr ""
+"\n"
+"        Continuar editando casos <strong class=\"fw-bold\">%(case_type)s</strong> com as mesmas colunas e filtros?\n"
+"      "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
+msgid "Applying Changes..."
+msgstr "Aplicando alterações..."
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Navigate there.\n"
+#| "          "
+msgid ""
+"\n"
+"        Applying changes, please wait...\n"
+"      "
+msgstr ""
+"\n"
+"            Navegue até lá.\n"
+"          "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Navigate there.\n"
+#| "            "
+msgid ""
+"\n"
+"          Database is refreshing...almost there!\n"
+"        "
+msgstr ""
+"\n"
+"            Navegar até lá.\n"
+"            "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/partial/task_progress_bar.html
+#, fuzzy
+#| msgid "In Progress"
+msgid "Task progress"
+msgstr "Em Andamento"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid "This is a deprecated property"
+msgid "This is a completed session"
+msgstr "Esta é uma propriedade obsoleta"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Resume this session with the same columns and filters?\n"
+#| "      "
+msgid ""
+"\n"
+"      Restart this session with the same columns and filters?\n"
+"    "
+msgstr ""
+"\n"
+"        Retomar esta sessão com as mesmas colunas e filtros?\n"
+"      "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid "Import"
+msgid "Important"
+msgstr "Importar"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This will replace your existing active session with a new one. Any edits you made will be lost.\n"
+#| "      "
+msgid ""
+"\n"
+"      This will replace your existing active session with a new one.\n"
+"    "
+msgstr ""
+"\n"
+"        Isso substituirá sua sessão ativa existente por uma nova. Quaisquer edições feitas serão perdidas.\n"
+"      "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      The following edits will be applied...\n"
+#| "    "
+msgid ""
+"\n"
+"      Any edits you made will be lost.\n"
+"    "
+msgstr ""
+"\n"
+"      As seguintes edições serão aplicadas...\n"
+"    "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid "Resume the session."
+msgid "Restart this session"
+msgstr "Retomar a sessão."
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
 msgid ""
@@ -16988,7 +17326,7 @@ msgid ""
 "    "
 msgid_plural ""
 "\n"
-"      A total of %(num_changes)s edits will be applied.\n"
+"      A total of %(count)s edits will be applied.\n"
 "    "
 msgstr[0] ""
 msgstr[1] ""
@@ -17012,7 +17350,7 @@ msgid ""
 "    "
 msgid_plural ""
 "\n"
-"      A total of %(num_changes)s edits will be cleared.\n"
+"      A total of %(count)s edits will be cleared.\n"
 "    "
 msgstr[0] ""
 msgstr[1] ""
@@ -17055,7 +17393,7 @@ msgstr ""
 "    A seguinte edição será desfeita:\n"
 "  "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid ""
 "\n"
 "      No cases were found that match the current filters. Please\n"
@@ -17077,11 +17415,11 @@ msgstr ""
 "      e tente novamente.\n"
 "    "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Edits"
 msgstr "Edições"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -17096,11 +17434,11 @@ msgstr ""
 "              Filtros aplicados: %(num_records)s registros correspondentes\n"
 "            "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Clear Filters"
 msgstr "Limpar filtros"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -17108,14 +17446,14 @@ msgstr "Limpar filtros"
 #| "          "
 msgid ""
 "\n"
-"            Cases Selected\n"
-"          "
+"              Cases Selected\n"
+"            "
 msgstr ""
 "\n"
 "            Registros selecionados\n"
 "          "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid ""
 "You have selected cases which have been filtered out. New previewed edits "
 "will only apply to selected cases in the current filters, unless you remove "
@@ -17125,9 +17463,39 @@ msgstr ""
 " serão aplicadas aos casos selecionados nos filtros atuais, a menos que você"
 " remova os filtros."
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Clear Selection"
 msgstr "Limpar seleção"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/recent_sessions.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          No cases found.\n"
+#| "        "
+msgid ""
+"\n"
+"        No sessions exist.\n"
+"      "
+msgstr ""
+"\n"
+"          Nenhum caso encontrado.\n"
+"        "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/recent_sessions.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please request a new password reset.\n"
+#| "      "
+msgid ""
+"\n"
+"      Please start a new bulk edit session above.\n"
+"    "
+msgstr ""
+"\n"
+"        Por favor, solicite uma nova redefinição de senha.\n"
+"      "
 
 #: corehq/apps/data_cleaning/templatetags/data_cleaning.py
 msgid "space"
@@ -17212,8 +17580,11 @@ msgstr "ID do usuário que abriu"
 msgid "Last Modified (UTC)"
 msgstr "Última modificação (UTC)"
 
-#: corehq/apps/data_cleaning/views/cleaning.py
-msgid "Cannot load clean selected records form, session was not found."
+#: corehq/apps/data_cleaning/views/bulk_edit.py
+#, fuzzy
+#| msgid ""
+#| "Cannot load clean selected records form, session was not found."
+msgid "Cannot load edit selected records form, session was not found."
 msgstr ""
 "Não foi possível carregar o formulário de limpeza dos registros "
 "selecionados, sessão não encontrada."
@@ -17243,27 +17614,6 @@ msgid "Bulk Edit Case Type"
 msgstr "Tipo de Caso Padrão"
 
 #: corehq/apps/data_cleaning/views/main.py
-msgid "That session does not exist. Please start a new session."
-msgstr "Essa sessão não existe. Por favor, inicie uma nova sessão."
-
-#: corehq/apps/data_cleaning/views/main.py
-msgid ""
-"You tried to access a session for \"{}\" that was already completed. Please "
-"start a new session."
-msgstr ""
-"Você tentou acessar uma sessão para \"{}\" que já foi concluída. Por favor, "
-"inicie uma nova sessão."
-
-#: corehq/apps/data_cleaning/views/main.py
-msgid ""
-"You tried to access a session for \"{}\" that is currently applying changes."
-" Please wait for that task to complete, then start a new session."
-msgstr ""
-"Você tentou acessar uma sessão para \"{}\" que está aplicando alterações no "
-"momento. Aguarde a conclusão dessa tarefa e, em seguida, inicie uma nova "
-"sessão."
-
-#: corehq/apps/data_cleaning/views/main.py
 #, python-brace-format
 msgid "Case Type \"{case_type}\""
 msgstr "Tipo de Caso \"{case_type}\""
@@ -17273,22 +17623,24 @@ msgid "Caches successfully cleared."
 msgstr "Caches limpos com sucesso."
 
 #: corehq/apps/data_cleaning/views/mixins.py
-msgid "Data cleaning session was not found."
-msgstr "Sessão de limpeza de dados não encontrada."
+msgid "That session does not exist. Please start a new session."
+msgstr "Essa sessão não existe. Por favor, inicie uma nova sessão."
 
-#: corehq/apps/data_cleaning/views/setup.py
-msgid "Starting Data Cleaning Session..."
-msgstr "Iniciando Sessão de Limpeza de Dados..."
+#: corehq/apps/data_cleaning/views/start.py
+#, fuzzy
+#| msgid "Start a Cleaning Session"
+msgid "Starting Bulk Edit Session..."
+msgstr "Iniciar uma Sessão de Limpeza"
+
+#: corehq/apps/data_cleaning/views/status.py
+#, fuzzy
+#| msgid "Start a Cleaning Session"
+msgid "Resuming Bulk Edit Session..."
+msgstr "Iniciar uma Sessão de Limpeza"
 
 #: corehq/apps/data_cleaning/views/summary.py
 msgid "Cannot retrieve summary, session was not found."
 msgstr "Não é possível recuperar o resumo, sessão não encontrada."
-
-#: corehq/apps/data_cleaning/views/tables.py
-msgid "Changes applied. Check the Recent Tasks table for progress."
-msgstr ""
-"Alterações aplicadas. Verifique a tabela de Tarefas Recentes para acompanhar"
-" o progresso."
 
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
@@ -18543,22 +18895,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 msgid "Add Deduplication Rule"
 msgstr "Adicionar Regra de Deduplicação"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/users/views/mobile/users.py
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Active"
-msgstr "Ativo"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
@@ -21231,9 +21567,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.\n"
+#| "          "
 msgid ""
 "\n"
-"            Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.\n"
+"            Clicking the 'Confirm Plan' button below will bring you to a page\n"
+"            where you can confirm your billing information.\n"
 "          "
 msgstr ""
 "\n"
@@ -21274,10 +21616,16 @@ msgstr "Fazendo downgrade?"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              We'd love to make CommCare work better for you.\n"
+#| "              Please help us by answering these simple questions.\n"
+#| "            "
 msgid ""
 "\n"
-"              We'd love to make CommCare work better for you.\n"
-"              Please help us by answering these simple questions.\n"
+"              We'd love to make CommCare work better for you. Please help us by\n"
+"              answering these simple questions.\n"
 "            "
 msgstr ""
 "\n"
@@ -21309,10 +21657,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Do you think your project may start again?\n"
+#| "              "
 msgid ""
 "\n"
-"                Do you think your project may start again?\n"
-"              "
+"              Do you think your project may start again?\n"
+"            "
 msgstr ""
 "\n"
 "                Você acha que seu projeto pode ser retomado?\n"
@@ -21320,10 +21673,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Could you indicate which new tool you’re using?\n"
+#| "              "
 msgid ""
 "\n"
-"                Could you indicate which new tool you’re using?\n"
-"              "
+"              Could you indicate which new tool you’re using?\n"
+"            "
 msgstr ""
 "\n"
 "                Você poderia indicar qual nova ferramenta está utilizando?\n"
@@ -21331,10 +21689,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Why are you switching to a new tool?\n"
+#| "              "
 msgid ""
 "\n"
-"                Why are you switching to a new tool?\n"
-"              "
+"              Why are you switching to a new tool?\n"
+"            "
 msgstr ""
 "\n"
 "                Por que você está mudando para uma nova ferramenta?\n"
@@ -21342,10 +21705,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Please specify\n"
+#| "              "
 msgid ""
 "\n"
-"                Please specify\n"
-"              "
+"              Please specify\n"
+"            "
 msgstr ""
 "\n"
 "                Por favor, especifique\n"
@@ -23522,10 +23890,15 @@ msgid "Your project has been successfully subscribed to the %s Edition Plan."
 msgstr "Seu projeto foi inscrito com sucesso no Plano %s Edition."
 
 #: corehq/apps/domain/views/accounting.py
+#, fuzzy, python-format
+#| msgid ""
+#| "You have already scheduled a downgrade to the %(software_plan_name)s "
+#| "Software Plan on %(downgrade_date)s. If this is a mistake, please reach out "
+#| "to %(contact_email)."
 msgid ""
 "You have already scheduled a downgrade to the %(software_plan_name)s "
 "Software Plan on %(downgrade_date)s. If this is a mistake, please reach out "
-"to %(contact_email)."
+"to %(contact_email)s."
 msgstr ""
 "Você já agendou um downgrade para o Plano de Software %(software_plan_name)s"
 " em %(downgrade_date)s. Se isso for um engano, entre em contato com "
@@ -37652,13 +38025,21 @@ msgid "%s & Others"
 msgstr "%s & Outros"
 
 #: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid ""
+#| "When searching by location, put your location name in quotes to show only "
+#| "exact matches. To more easily find a location, you may specify multiple "
+#| "levels by separating with a \"/\". For example, "
+#| "\"Massachusetts/Suffolk/Boston\". <a "
+#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management\"target=\"_blank\">Learn"
+#| " more</a>."
 msgid ""
 "When searching by location, put your location name in quotes to show only "
 "exact matches. To more easily find a location, you may specify multiple "
 "levels by separating with a \"/\". For example, "
 "\"Massachusetts/Suffolk/Boston\". <a "
-"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management\"target=\"_blank\">Learn"
-" more</a>."
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-"
+"for-Locations\"target=\"_blank\">Learn more</a>."
 msgstr ""
 "Ao pesquisar por localização, coloque o nome da sua localização entre aspas "
 "para mostrar apenas correspondências exatas. Para facilitar a localização, "
@@ -37672,14 +38053,25 @@ msgid "Add users and groups to filter this report."
 msgstr "Adicione usuários e grupos para filtrar este relatório."
 
 #: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid ""
+#| "<i class=\"fa fa-info-circle\"></i> See <a "
+#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-"
+#| "for-Locations\" target=\"_blank\"> Filter Definitions</a>."
 msgid ""
 "<i class=\"fa fa-info-circle\"></i> See <a "
-"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-"
-"for-Locations\" target=\"_blank\"> Filter Definitions</a>."
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/Report+and+Export+Filters\"target=\"_blank\">"
+" Filter Definitions</a>."
 msgstr ""
 "<i class=\"fa fa-info-circle\"></i> Veja <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-"
 "for-Locations\" target=\"_blank\"> Definições de Filtro</a>."
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Submitted [UTC]"
+msgid "Submitted By"
+msgstr "Enviado [UTC]"
 
 #: corehq/apps/reports/filters/users.py
 msgid "Affected User(s)"
@@ -42112,11 +42504,6 @@ msgstr "O formato da mensagem era inválido."
 msgid "Missed"
 msgstr "Perdido"
 
-#: corehq/apps/sms/models.py corehq/apps/smsforms/models.py
-#: custom/inddex/filters.py
-msgid "Completed"
-msgstr "Concluído"
-
 #: corehq/apps/sms/models.py
 msgid "Email Sent"
 msgstr "E-mail enviado"
@@ -46495,12 +46882,6 @@ msgid "Rows from the database"
 msgstr "Linhas do banco de dados"
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-msgid "Populating your report did not complete successfully."
-msgstr "O preenchimento do seu relatório não foi concluído com sucesso."
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
 msgid "Please note that this data source is being rebuilt."
 msgstr "Por favor, note que esta fonte de dados está sendo reconstruída."
 
@@ -46557,11 +46938,6 @@ msgstr "JSON da Fonte de Relatório Web Personalizado"
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Data Source JSON"
 msgstr "JSON da Fonte de Dados"
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-msgid "Resume Build"
-msgstr "Retomar Construção"
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
@@ -47019,6 +47395,10 @@ msgstr ""
 "pelo CommCare HQ."
 
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid "Resume Build"
+msgstr "Retomar Construção"
+
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "This datasource is read only, any changes made can not be saved."
 msgstr ""
 "Esta fonte de dados é somente leitura, quaisquer alterações feitas não "
@@ -47094,18 +47474,20 @@ msgid "Filter Value should not be blank."
 msgstr "O valor do filtro não deve estar em branco."
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
-msgstr "Você pode tentar clicar em \"Avançado\" e escolher \"Retomar Construção\"."
-
-#: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
 msgid "Your report is still being populated."
 msgstr "Seu relatório ainda está sendo preenchido."
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          What you are seeing now is just a preview, and contains some or none of your data.\n"
+#| "        "
 msgid ""
 "\n"
-"          What you are seeing now is just a preview, and contains some or none of your data.\n"
-"        "
+"        What you are seeing now is just a preview, and contains some or none of\n"
+"        your data.\n"
+"      "
 msgstr ""
 "\n"
 "          O que você está vendo agora é apenas uma prévia e contém alguns ou nenhum dos seus dados.\n"
@@ -47735,9 +48117,14 @@ msgstr ""
 "CommCare HQ."
 
 #: corehq/apps/userreports/views.py
+#, fuzzy
+#| msgid ""
+#| "CommCare HQ will not perform a data source rebuild for the changes made. "
+#| "Please initiate one manually if needed."
 msgid ""
-"CommCare HQ will not perform a data source rebuild for the changes made. "
-"Please initiate one manually if needed."
+"The data source configuration will be updated but CommCare HQ will not "
+"perform a rebuild for the changes made. Please initiate one manually if "
+"needed."
 msgstr ""
 "O CommCare HQ não realizará uma reconstrução da fonte de dados para as "
 "alterações feitas. Por favor, inicie uma manualmente se necessário."
@@ -47779,7 +48166,10 @@ msgid "Data source \"{name}\" not deleted."
 msgstr "Fonte de dados \"{name}\" não foi excluída."
 
 #: corehq/apps/userreports/views.py
-msgid "Table \"{}\" is now being rebuilt. Data should start showing up soon"
+#, fuzzy
+#| msgid ""
+#| "Table \"{}\" is now being rebuilt. Data should start showing up soon"
+msgid "Table \"{}\" will be rebuilt. Data should start showing up soon"
 msgstr ""
 "A tabela \"{}\" está sendo reconstruída. Os dados devem começar a aparecer "
 "em breve"
@@ -47805,25 +48195,6 @@ msgstr ""
 "registros a serem processados atualmente é {number_of_records}, que está "
 "acima do limite de {rebuild_limit}. Atualize a fonte de dados para ter "
 "processamento assíncrono."
-
-#: corehq/apps/userreports/views.py
-msgid "Table \"{}\" has already finished building. Rebuild table to start over."
-msgstr ""
-"A tabela \"{}\" já terminou de ser construída. Reconstrua a tabela para "
-"começar novamente."
-
-#: corehq/apps/userreports/views.py
-msgid ""
-"Table \"{}\" did not finish building but resume information is not "
-"available. Unfortunately, this means you need to rebuild the table."
-msgstr ""
-"A tabela \"{}\" não terminou de ser construída e as informações para retomar"
-" não estão disponíveis. Infelizmente, isso significa que você precisa "
-"reconstruir a tabela."
-
-#: corehq/apps/userreports/views.py
-msgid "Resuming rebuilding table \"{}\"."
-msgstr "Retomando a reconstrução da tabela \"{}\"."
 
 #: corehq/apps/userreports/views.py
 msgid "Preview Data Source"
@@ -49166,36 +49537,55 @@ msgstr ""
 "CommCare HQ\n"
 
 #: corehq/apps/users/templates/users/email/user_limit_notice.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Please check that you have JavaScript enabled to use this site!\n"
+#| "      We found the following issues:\n"
+#| "    "
 msgid ""
 "\n"
-"      Please note that you have reached %(user_count)s mobile users, the maximum user limit included in your plan.\n"
-"      Your user limit represents all mobile users that are not currently deactivated\n"
-"      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number of mobile users\n"
-"      included in your plan, you will be charged as per the terms of plan.\n"
+"      Please note that you have reached the user limit included in your plan.\n"
 "    "
 msgstr ""
 "\n"
-"      Atenção: você atingiu %(user_count)s usuários móveis, o limite máximo de usuários incluído no seu plano.\n"
-"      Seu limite de usuários representa todos os usuários móveis que não estão atualmente desativados\n"
-"      (veja <a href=\"%(url)s\">aqui</a> para mais informações). Se você exceder o número de usuários móveis\n"
-"      incluídos no seu plano, será cobrado conforme os termos do plano.\n"
+"      Por favor, verifique se o JavaScript está habilitado para usar este site!\n"
+"      Encontramos os seguintes problemas:\n"
 "    "
 
 #: corehq/apps/users/templates/users/email/user_limit_notice.html
 #, python-format
 msgid ""
 "\n"
-"      Please note that you have utilised 90%% of the user limit included in your plan.\n"
-"      Your project currently has %(user_count)s mobile users out of %(plan_limit)s included in your plan.\n"
-"      Your user limit represents all mobile users that are not currently deactivated\n"
-"      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number of mobile users\n"
-"      included in your plan, you will be charged as per the terms of plan.\n"
+"      Please note that you have utilised 90%% of the user limit included in your\n"
+"      plan.\n"
 "    "
 msgstr ""
 "\n"
-"      Atenção: você utilizou 90%% do limite de usuários incluído no seu plano.\n"
-"      Seu projeto atualmente possui %(user_count)s usuários móveis de um total de %(plan_limit)s incluídos no seu plano.\n"
+"      Atenção: você utilizou 90%% do limite de usuários incluído no seu\n"
+"      plano.\n"
+"    "
+
+#: corehq/apps/users/templates/users/email/user_limit_notice.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      Please note that you have reached %(user_count)s mobile users, the maximum user limit included in your plan.\n"
+#| "      Your user limit represents all mobile users that are not currently deactivated\n"
+#| "      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number of mobile users\n"
+#| "      included in your plan, you will be charged as per the terms of plan.\n"
+#| "    "
+msgid ""
+"\n"
+"    Your project currently has %(user_count)s mobile users out of\n"
+"    %(plan_limit)s included in your plan. Your user limit represents all\n"
+"    mobile users that are not currently deactivated (see\n"
+"    <a href=\"%(url)s\">here</a> for more). If you exceed the number of mobile\n"
+"    users included in your plan, you will be charged as per the terms of plan.\n"
+"  "
+msgstr ""
+"\n"
+"      Atenção: você atingiu %(user_count)s usuários móveis, o limite máximo de usuários incluído no seu plano.\n"
 "      Seu limite de usuários representa todos os usuários móveis que não estão atualmente desativados\n"
 "      (veja <a href=\"%(url)s\">aqui</a> para mais informações). Se você exceder o número de usuários móveis\n"
 "      incluídos no seu plano, será cobrado conforme os termos do plano.\n"
@@ -55060,7 +55450,9 @@ msgid "Bulk User Management"
 msgstr "Gestão de Usuários em massa"
 
 #: corehq/privileges.py
-msgid "Bulk Data Cleaning"
+#, fuzzy
+#| msgid "Bulk Data Cleaning"
+msgid "Bulk Data Editing"
 msgstr "Limpeza de Dados em Massa"
 
 #: corehq/privileges.py
@@ -56254,6 +56646,78 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#~ msgid "# Cases Cleaned"
+#~ msgstr "# Casos Limpos"
+
+#~ msgid "Recent Tasks"
+#~ msgstr "Tarefas Recentes"
+
+#~ msgid "Populating your report did not complete successfully."
+#~ msgstr "O preenchimento do seu relatório não foi concluído com sucesso."
+
+#~ msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
+#~ msgstr "Você pode tentar clicar em \"Avançado\" e escolher \"Retomar Construção\"."
+
+#~ msgid "Table \"{}\" has already finished building. Rebuild table to start over."
+#~ msgstr ""
+#~ "A tabela \"{}\" já terminou de ser construída. Reconstrua a tabela para "
+#~ "começar novamente."
+
+#~ msgid ""
+#~ "Table \"{}\" did not finish building but resume information is not "
+#~ "available. Unfortunately, this means you need to rebuild the table."
+#~ msgstr ""
+#~ "A tabela \"{}\" não terminou de ser construída e as informações para retomar"
+#~ " não estão disponíveis. Infelizmente, isso significa que você precisa "
+#~ "reconstruir a tabela."
+
+#~ msgid "Resuming rebuilding table \"{}\"."
+#~ msgstr "Retomando a reconstrução da tabela \"{}\"."
+
+#~ msgid ""
+#~ "You tried to access a session for \"{}\" that was already completed. Please "
+#~ "start a new session."
+#~ msgstr ""
+#~ "Você tentou acessar uma sessão para \"{}\" que já foi concluída. Por favor, "
+#~ "inicie uma nova sessão."
+
+#~ msgid ""
+#~ "You tried to access a session for \"{}\" that is currently applying changes."
+#~ " Please wait for that task to complete, then start a new session."
+#~ msgstr ""
+#~ "Você tentou acessar uma sessão para \"{}\" que está aplicando alterações no "
+#~ "momento. Aguarde a conclusão dessa tarefa e, em seguida, inicie uma nova "
+#~ "sessão."
+
+#~ msgid "Data cleaning session was not found."
+#~ msgstr "Sessão de limpeza de dados não encontrada."
+
+#~ msgid "Starting Data Cleaning Session..."
+#~ msgstr "Iniciando Sessão de Limpeza de Dados..."
+
+#~ msgid "Changes applied. Check the Recent Tasks table for progress."
+#~ msgstr ""
+#~ "Alterações aplicadas. Verifique a tabela de Tarefas Recentes para acompanhar"
+#~ " o progresso."
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Please note that you have utilised 90%% of the user limit included in your plan.\n"
+#~ "      Your project currently has %(user_count)s mobile users out of %(plan_limit)s included in your plan.\n"
+#~ "      Your user limit represents all mobile users that are not currently deactivated\n"
+#~ "      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number of mobile users\n"
+#~ "      included in your plan, you will be charged as per the terms of plan.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Atenção: você utilizou 90%% do limite de usuários incluído no seu plano.\n"
+#~ "      Seu projeto atualmente possui %(user_count)s usuários móveis de um total de %(plan_limit)s incluídos no seu plano.\n"
+#~ "      Seu limite de usuários representa todos os usuários móveis que não estão atualmente desativados\n"
+#~ "      (veja <a href=\"%(url)s\">aqui</a> para mais informações). Se você exceder o número de usuários móveis\n"
+#~ "      incluídos no seu plano, será cobrado conforme os termos do plano.\n"
+#~ "    "
 
 #~ msgid ", "
 #~ msgstr ", "

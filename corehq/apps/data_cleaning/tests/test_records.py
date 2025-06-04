@@ -133,12 +133,8 @@ class BulkEditRecordSelectionTest(BaseBulkEditSessionTest):
         case_ids = [self._get_case_id() for _ in range(10)]
         self.session.select_multiple_records(case_ids)
         unrecorded_case_ids = [self._get_case_id() for _ in range(5)]
-        self.assertListEqual(
-            self.session.records.get_unrecorded_doc_ids(self.session, case_ids),
-            []
-        )
+        self.assertListEqual(self.session.records.get_unrecorded_doc_ids(self.session, case_ids), [])
         all_case_ids = case_ids + unrecorded_case_ids
         self.assertEqual(
-            set(self.session.records.get_unrecorded_doc_ids(self.session, all_case_ids)),
-            set(unrecorded_case_ids)
+            set(self.session.records.get_unrecorded_doc_ids(self.session, all_case_ids)), set(unrecorded_case_ids)
         )

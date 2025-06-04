@@ -46,7 +46,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         }
         raw_query = query.raw_query
-        self.checkQuery(raw_query, json_output, is_raw_query=True)
+        self.checkQuery(raw_query, json_output, is_raw_query=True, validate_query=False)
 
     def test_basic_query(self):
         json_output = {
@@ -345,7 +345,8 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             'base_username': 'u1',
             'user_data_es': [],
             '__group_ids': [],
-            '__group_names': []
+            '__group_names': [],
+            'user_domain_memberships': []
         })
         self.assertEqual([doc], list(query.scroll_ids_to_disk_and_iter_docs()))
 
@@ -368,7 +369,8 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             'doc_id': 'test',
             'user_data_es': [],
             '__group_ids': [],
-            '__group_names': []
+            '__group_names': [],
+            'user_domain_memberships': []
         })
         real_scroll = query.scroll
         with patch.object(query, "scroll", scroll_then_delete_one):

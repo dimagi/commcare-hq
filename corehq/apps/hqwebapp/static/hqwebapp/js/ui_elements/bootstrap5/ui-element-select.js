@@ -1,5 +1,5 @@
 
-hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-select', [
+define('hqwebapp/js/ui_elements/bootstrap5/ui-element-select', [
     'jquery',
     'underscore',
     'hqwebapp/js/bootstrap5/main',

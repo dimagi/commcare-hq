@@ -1,9 +1,9 @@
-hqDefine("cloudcare/js/formplayer/menus/views", [
+define("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
     'backbone',
     'backbone.marionette',
-    'DOMPurify',
+    'dompurify',
     'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',

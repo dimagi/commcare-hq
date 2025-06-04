@@ -710,10 +710,12 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         credit_label = request.POST.get('credit_label', 'General Credits')
 
         wire_invoice_factory = DomainWireInvoiceFactory(
-            request.domain, contact_emails=[contact_email], cc_emails=cc_emails)
+            request.domain, date_start=date_start, date_end=date_end,
+            contact_emails=[contact_email], cc_emails=cc_emails
+        )
         try:
             wire_invoice_factory.create_wire_credits_invoice(
-                amount, credit_label, unit_cost, quantity, date_start, date_end
+                amount, credit_label, unit_cost, quantity
             )
         except Exception as e:
             return json_response({'error': {'message': str(e)}})
@@ -1575,7 +1577,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             messages.error(
                 request, _(
                     "You have already scheduled a downgrade to the %(software_plan_name)s Software Plan on "
-                    "%(downgrade_date)s. If this is a mistake, please reach out to %(contact_email)."
+                    "%(downgrade_date)s. If this is a mistake, please reach out to %(contact_email)s."
                 ) % {
                     'software_plan_name': software_plan_name,
                     'downgrade_date': downgrade_date,

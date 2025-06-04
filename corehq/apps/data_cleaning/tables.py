@@ -1,7 +1,6 @@
-from memoized import memoized
-
 from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
+from memoized import memoized
 
 from corehq.apps.data_cleaning.columns import (
     EditableHtmxColumn,
@@ -22,13 +21,13 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
     max_recorded_limit = MAX_RECORDED_LIMIT
 
     class Meta(BaseHtmxTable.Meta):
-        template_name = "data_cleaning/tables/table_with_controls.html"
+        template_name = 'data_cleaning/tables/bulk_edit_session.html'
         attrs = {
-            "class": "table table-striped align-middle",
+            'class': 'table table-striped align-middle',
         }
         row_attrs = {
-            "x-data": "{ isRowSelected: $el.querySelector('input[type=checkbox]').checked }",
-            ":class": "{ 'table-primary': isRowSelected }",
+            'x-data': "{ isRowSelected: $el.querySelector('input[type=checkbox]').checked }",
+            ':class': "{ 'table-primary': isRowSelected }",
         }
 
     def __init__(self, session=None, **kwargs):
@@ -38,25 +37,29 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
     @classmethod
     def get_select_column(cls, session, request, select_record_action, select_page_action):
         return SelectableHtmxColumn(
-            session, request, select_record_action, select_page_action, accessor="case_id",
+            session,
+            request,
+            select_record_action,
+            select_page_action,
+            accessor='case_id',
             attrs={
                 'td__input': {
                     # `pageNumRecordsSelected` defined in template
-                    "x-init": "if($el.checked) { pageNumRecordsSelected++; }",
-                    "@click": (
-                        "if ($el.checked !== isRowSelected) {"
+                    'x-init': 'if($el.checked) { pageNumRecordsSelected++; }',
+                    '@click': (
+                        'if ($el.checked !== isRowSelected) {'
                         # `numRecordsSelected` defined in template
-                        "  $el.checked ? numRecordsSelected++ : numRecordsSelected--;"
+                        '  $el.checked ? numRecordsSelected++ : numRecordsSelected--;'
                         # `pageNumRecordsSelected` defined in template
-                        "  $el.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
-                        "} "
+                        '  $el.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; '
+                        '} '
                         # `isRowSelected` defined in `row_attrs` in `class Meta`
-                        "isRowSelected = $el.checked;"
+                        'isRowSelected = $el.checked;'
                     ),
                 },
                 'th__input': {
                     # `pageNumRecordsSelected`, `pageTotalRecords`: defined in template
-                    ":checked": "pageNumRecordsSelected == pageTotalRecords && pageTotalRecords > 0",
+                    ':checked': 'pageNumRecordsSelected == pageTotalRecords && pageTotalRecords > 0',
                 },
             },
         )
@@ -65,9 +68,7 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
     def get_columns_from_session(cls, session):
         visible_columns = []
         for column_spec in session.columns.all():
-            visible_columns.append(
-                (column_spec.slug, EditableHtmxColumn(column_spec))
-            )
+            visible_columns.append((column_spec.slug, EditableHtmxColumn(column_spec)))
         return visible_columns
 
     @property
@@ -107,31 +108,29 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
 
 
 class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
-
     class Meta(BaseHtmxTable.Meta):
-        pass
+        template_name = 'data_cleaning/tables/recent_sessions.html'
+        attrs = {
+            'class': 'table table-striped align-middle',
+        }
 
     status = columns.TemplateColumn(
-        template_name="data_cleaning/columns/task_status.html",
-        verbose_name=gettext_lazy("Status"),
-    )
-    committed_on = columns.Column(
-        verbose_name=gettext_lazy("Committed On"),
-    )
-    completed_on = columns.Column(
-        verbose_name=gettext_lazy("Completed On"),
+        template_name='data_cleaning/columns/task_status.html',
+        verbose_name=gettext_lazy('Status'),
     )
     case_type = columns.Column(
-        verbose_name=gettext_lazy("Case Type"),
+        verbose_name=gettext_lazy('Case Type'),
+    )
+    committed_on = columns.Column(
+        verbose_name=gettext_lazy('Committed On'),
+    )
+    completed_on = columns.Column(
+        verbose_name=gettext_lazy('Completed On'),
     )
     case_count = columns.Column(
-        verbose_name=gettext_lazy("# Cases Cleaned"),
+        verbose_name=gettext_lazy('# Cases Edited'),
     )
     form_ids = columns.TemplateColumn(
-        template_name="data_cleaning/columns/task_form_ids.html",
-        verbose_name=gettext_lazy("Form IDs"),
-    )
-    session_url = columns.TemplateColumn(
-        template_name="data_cleaning/columns/task_session_url.html",
-        verbose_name=gettext_lazy("Open Session"),
+        template_name='data_cleaning/columns/task_form_ids.html',
+        verbose_name=gettext_lazy('Form IDs'),
     )
