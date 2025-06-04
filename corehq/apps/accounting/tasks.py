@@ -89,6 +89,7 @@ from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
 from corehq.util.serialization import deserialize_decimal
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.dates import force_to_date
 
 
 @transaction.atomic
@@ -473,6 +474,10 @@ def create_wire_credits_invoice(domain_name,
                                 date_due=None):
     deserialized_amount = deserialize_decimal(amount)
     date_due = date_due or datetime.date.today() + datetime.timedelta(days=30)
+
+    date_start = force_to_date(date_start)
+    date_end = force_to_date(date_end)
+
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
         date_start=date_start,
