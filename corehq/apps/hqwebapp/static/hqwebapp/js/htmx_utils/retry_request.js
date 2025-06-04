@@ -1,30 +1,24 @@
 import htmx from 'htmx.org';
 
 const DEFAULT_MAX_RETRIES = 20;
-const retryPathCounts = {};
+const RETRY_HEADER = 'HQ-HX-Retry';
 
 /**
- * Retries an HTMX request up to a specified max retry count.
+ * Retries an HTMX request and increments the retry count in the request headers.
  *
  * @param {Object} elt - The HTMX element object (usually found in evt.detail.elt)
  * @param {Object} pathInfo - The HTMX pathInfo object (usually found in evt.detail.pathInfo)
  * @param {Object} requestConfig - The HTMX requestConfig object (usually found in evt.detail.requestConfig)
- * @param {number} [maxRetries=DEFAULT_MAX_RETRIES] - The maximum number of retries allowed.
- * @returns {boolean} - Returns `false` if max retries are exceeded, otherwise `true`.
  */
-const retryHtmxRequest = (elt, pathInfo, requestConfig, maxRetries = DEFAULT_MAX_RETRIES) => {
-    // Extract values from the HTMX event
+const retryHtmxRequest = (elt, pathInfo, requestConfig) => {
     const replaceUrl = elt.getAttribute('hx-replace-url');
     const requestPath = pathInfo.finalRequestPath;
 
-    // Initialize retry count if necessary
-    retryPathCounts[requestPath] = retryPathCounts[requestPath] || 0;
-    retryPathCounts[requestPath]++;
-
-    // Return false if the max number of retries for that path has been exceeded
-    if (retryPathCounts[requestPath] > maxRetries) {
-        return false;
+    let retryCount = 0;
+    if (RETRY_HEADER in requestConfig.headers) {
+        retryCount = parseInt(requestConfig.headers[RETRY_HEADER], 10);
     }
+    requestConfig.headers[RETRY_HEADER] = retryCount + 1;
 
     // Prepare the context for the htmx request
     const context = {
@@ -36,17 +30,30 @@ const retryHtmxRequest = (elt, pathInfo, requestConfig, maxRetries = DEFAULT_MAX
     };
 
     // Make the htmx request and handle URL update if necessary
-    htmx.ajax(requestConfig.verb, requestPath, context).then(() => {
-        if (replaceUrl === 'true') {
-            window.history.pushState(null, '', requestPath);
-        } else if (replaceUrl) {
-            const newUrl = `${window.location.origin}${window.location.pathname}${replaceUrl}`;
-            window.history.pushState(null, '', newUrl);
-        }
-        delete retryPathCounts[requestPath];
-    });
-
-    return true;
+    htmx.ajax(requestConfig.verb, requestPath, context)
+        .then(() => {
+            if (replaceUrl === 'true') {
+                window.history.pushState(null, '', requestPath);
+            } else if (replaceUrl) {
+                const newUrl = `${window.location.origin}${window.location.pathname}${replaceUrl}`;
+                window.history.pushState(null, '', newUrl);
+            }
+        })
+        .catch((error) => {
+            console.error(`Error during HTMX request to ${requestPath}:`, error);
+        });
 };
 
-export default retryHtmxRequest;
+const isRetryAllowed = (evt, maxRetries = DEFAULT_MAX_RETRIES) => {
+    let retryCount = 0;
+    if (evt.detail.requestConfig.headers && RETRY_HEADER in evt.detail.requestConfig.headers) {
+        retryCount = parseInt(evt.detail.requestConfig.headers[RETRY_HEADER], 10);
+    }
+    return retryCount < maxRetries;
+};
+
+export default {
+    retryHtmxRequest: retryHtmxRequest,
+    isRetryAllowed: isRetryAllowed,
+    DEFAULT_MAX_RETRIES: DEFAULT_MAX_RETRIES,
+};
