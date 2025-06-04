@@ -1174,6 +1174,8 @@ class PlanViewBase(DomainAccountingSettings):
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
+            'current_is_annual_plan': (self.current_subscription.plan_version.plan.is_annual_plan
+                                       if self.current_subscription is not None else False),
             'current_price': "${0:.0f}".format(current_price),
             'is_price_discounted': current_price < default_price,
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
@@ -1316,6 +1318,22 @@ class SelectedCustomPlanView(ContactFormViewBase):
         return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
 
 
+class GeneralPlanQuestionView(ContactFormViewBase):
+    urlname = 'select_plan_general_question'
+    request_type = 'Plan Question'
+
+    @property
+    def edition(self):
+        return (
+            self.current_subscription.plan_version.plan.edition
+            if self.current_subscription is not None else ''
+        )
+
+    @property
+    def back_button(self):
+        return (_("Back to Select Plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
+
+
 class ConfirmSelectedPlanView(PlanViewBase):
     template_name = 'domain/bootstrap3/confirm_plan.html'
     urlname = 'confirm_selected_plan'
@@ -1341,7 +1359,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
 
     @property
     def is_annual_plan(self):
-        return self.request.POST.get('is_annual_plan') == 'true'
+        return self.request.POST.get('is_annual_plan', '').lower() == 'true'
 
     @property
     @memoized
@@ -1429,8 +1447,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
     def main_context(self):
         context = super(ConfirmSelectedPlanView, self).main_context
         context.update({
-            'plan': (self.current_subscription.plan_version.user_facing_description if self.is_same_edition
-                     else self.selected_plan_version.user_facing_description),
+            'plan': self.selected_plan_version.user_facing_description,
         })
         return context
 
