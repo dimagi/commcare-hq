@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = "Remove user data for users no longer part of that domain"
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
+        parser.add_argument('domain', nargs='?')
         parser.add_argument('--dry-run', action='store_true', default=False)
 
     def handle(self, domain, dry_run, **kwargs):
