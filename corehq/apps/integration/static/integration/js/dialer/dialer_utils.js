@@ -2,7 +2,9 @@
 Based on AWS boilerplate
 **/
 
-define('integration/js/dialer/dialer_utils',[], function () {
+define('integration/js/dialer/dialer_utils',[
+], function (
+) {
 
     function getFormattedDate() {
     // This function returns a formatted date for use in the log table
