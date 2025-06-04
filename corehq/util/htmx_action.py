@@ -1,7 +1,7 @@
 import json
 import logging
 
-from django.http import HttpResponseForbidden, HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.utils.encoding import force_str
 
 from corehq.util.htmx_gtm import get_htmx_gtm_event
