@@ -1148,7 +1148,9 @@ msgstr ""
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -7856,6 +7858,8 @@ msgstr "Installa CommCare"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -12813,23 +12817,24 @@ msgid "Feature Discrepancy"
 msgstr "Discrepanza delle funzionalità"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            The following features are not turned on in the domain to which you're copying.\n"
+#| "            Select any that you wish to copy along with this application.\n"
+#| "          "
 msgid ""
 "\n"
-"            The following features are not turned on in the domain to which you're copying.\n"
-"            Select any that you wish to copy along with this application.\n"
+"            The following features are not turned on in the domain to which\n"
+"            you're copying. Please enable the necessary feature flags required\n"
+"            for the app to function from\n"
+"            <a id=\"feature-flags-link\" href=\"\" target=\"_blank\">here</a>.\n"
 "          "
 msgstr ""
 "\n"
 "            Le seguenti funzionalità non sono attivate nel dominio in cui stai copiando.\n"
 "            Seleziona quelle che desideri copiare insieme a questa applicazione.\n"
 "          "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select All"
-msgstr "Seleziona tutto"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/undo_delete_app.html
 msgid "Oops! This application was deleted."
@@ -15292,6 +15297,12 @@ msgid "Refine search"
 msgstr "Affina ricerca"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Select All"
+msgstr "Seleziona tutto"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "Ordina per"
 
@@ -16903,6 +16914,7 @@ msgstr "Sono consentite solo proprietà di caso dinamiche"
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/views/mobile/users.py
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -16946,8 +16958,9 @@ msgstr "La cronologia delle modifiche è troppo grande..."
 #| "        "
 msgid ""
 "\n"
-"            The edit history for this session is too large to support new bulk edits.\n"
-"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"            The edit history for this session is too large to support new bulk\n"
+"            edits. You can either apply the current edits, undo edits, or clear\n"
+"            the edit history to start over.\n"
 "          "
 msgstr ""
 "\n"
@@ -16982,8 +16995,8 @@ msgid ""
 "          data-bs-dismiss=\"offcanvas\"\n"
 "          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
 "        >Configure Columns</a>\n"
-"        to include editible case properties in the column list in\n"
-"        order to edit the selected cases.\n"
+"        to include editable case properties in the column list in order to edit\n"
+"        the selected cases.\n"
 "      "
 msgstr ""
 "\n"
@@ -17016,10 +17029,16 @@ msgstr ""
 "  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Only one session can be active per case type.\n"
+#| "      Any previewed edits will be lost when starting a new session.\n"
+#| "    "
 msgid ""
 "\n"
-"      Only one session can be active per case type.\n"
-"      Any previewed edits will be lost when starting a new session.\n"
+"      Only one session can be active per case type. Any previewed edits will be\n"
+"      lost when starting a new session.\n"
 "    "
 msgstr ""
 "\n"
@@ -17060,7 +17079,8 @@ msgstr "Hai selezionato casi che sono stati filtrati."
 #| "      "
 msgid ""
 "\n"
-"          \"Apply\" will apply all previewed edits in the session, regardless of filters.\n"
+"          \"Apply\" will apply all previewed edits in the session, regardless of\n"
+"          filters.\n"
 "        "
 msgstr ""
 "\n"
@@ -17131,10 +17151,15 @@ msgstr ""
 "  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Cannot select or actively edit more than %(max_recorded_limit)s cases in a session.\n"
+#| "      "
 msgid ""
 "\n"
-"        Cannot select or actively edit more than %(max_recorded_limit)s cases in a session.\n"
+"        Cannot select or actively edit more than %(max_recorded_limit)s cases\n"
+"        in a session.\n"
 "      "
 msgstr ""
 "\n"
@@ -17142,9 +17167,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please either apply your previewed edits, or add filters to select fewer cases.\n"
+#| "      "
 msgid ""
 "\n"
-"        Please either apply your previewed edits, or add filters to select fewer cases.\n"
+"        Please either apply your previewed edits, or add filters to select fewer\n"
+"        cases.\n"
 "      "
 msgstr ""
 "\n"
@@ -17229,7 +17260,8 @@ msgstr[1] ""
 #| "      "
 msgid ""
 "\n"
-"      Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases with the same columns and filters?\n"
+"      Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases\n"
+"      with the same columns and filters?\n"
 "    "
 msgstr ""
 "\n"
@@ -17413,6 +17445,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      No cases were found that match the current filters. Please\n"
+#| "      <a\n"
+#| "        href=\"#\"\n"
+#| "        class=\"fw-bold\"\n"
+#| "        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
+#| "      >adjust your filters</a>\n"
+#| "      and try again.\n"
+#| "    "
 msgid ""
 "\n"
 "      No cases were found that match the current filters. Please\n"
@@ -17420,7 +17463,8 @@ msgid ""
 "        href=\"#\"\n"
 "        class=\"fw-bold\"\n"
 "        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
-"      >adjust your filters</a>\n"
+"        >adjust your filters</a\n"
+"      >\n"
 "      and try again.\n"
 "    "
 msgstr ""
@@ -18924,6 +18968,7 @@ msgstr "Aggiungi regola di deduplicazione"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -25242,7 +25287,6 @@ msgid "Loading potential attendees ..."
 msgstr "Caricamento potenziali partecipanti ..."
 
 #: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
@@ -28758,6 +28802,8 @@ msgid "Case Coordinates"
 msgstr "Coordinate del Caso"
 
 #: corehq/apps/geospatial/reports.py corehq/apps/linked_domain/views.py
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Link"
 msgstr "Link"
@@ -49712,9 +49758,15 @@ msgid "However, we ran into problems with the following users:"
 msgstr "Tuttavia, abbiamo riscontrato problemi con i seguenti utenti:"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Mobile Workers can log into applications in this project space and submit data.\n"
+#| "          "
 msgid ""
 "\n"
-"            Mobile Workers can log into applications in this project space and submit data.\n"
+"            Mobile Workers can log into applications in this project space and\n"
+"            submit data.\n"
 "          "
 msgstr ""
 "\n"
@@ -49722,13 +49774,25 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Their activity and form submissions can be monitored in the Reports section of this %(hq_name)s project space.\n"
+#| "            <br />\n"
+#| "            Read more about managing mobile workers on our\n"
+#| "            <a href=\"https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Help Site</a>.\n"
+#| "          "
 msgid ""
 "\n"
-"            Their activity and form submissions can be monitored in the Reports section of this %(hq_name)s project space.\n"
+"            Their activity and form submissions can be monitored in the Reports\n"
+"            section of this %(hq_name)s project space.\n"
 "            <br />\n"
 "            Read more about managing mobile workers on our\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Help Site</a>.\n"
+"            <a\n"
+"              href=\"https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\"\n"
+"              target=\"_blank\"\n"
+"              >Help Site</a\n"
+"            >.\n"
 "          "
 msgstr ""
 "\n"
@@ -49773,11 +49837,17 @@ msgstr ""
 "                    "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                      You have reached the limit of <strong>%(u)s\n"
+#| "                      Mobile Workers</strong> included with your plan.\n"
+#| "                    "
 msgid ""
 "\n"
-"                      You have reached the limit of <strong>%(u)s\n"
-"                      Mobile Workers</strong> included with your plan.\n"
+"                      You have reached the limit of\n"
+"                      <strong>%(u)s Mobile Workers</strong> included with your\n"
+"                      plan.\n"
 "                    "
 msgstr ""
 "\n"
@@ -49786,10 +49856,16 @@ msgstr ""
 "                    "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Please subscribe to a paid plan in order to add\n"
+#| "                        more Mobile Workers.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Please subscribe to a paid plan in order to add\n"
-"                        more Mobile Workers.\n"
+"                        Please subscribe to a paid plan in order to add more\n"
+"                        Mobile Workers.\n"
 "                      "
 msgstr ""
 "\n"
@@ -49798,10 +49874,16 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Please ask your billing administrator to subscribe\n"
+#| "                        to a paid plan in order to add more Mobile Workers.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Please ask your billing administrator to subscribe\n"
-"                        to a paid plan in order to add more Mobile Workers.\n"
+"                        Please ask your billing administrator to subscribe to a\n"
+"                        paid plan in order to add more Mobile Workers.\n"
 "                      "
 msgstr ""
 "\n"
@@ -49832,9 +49914,18 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              <strong>There are no mobile workers visible to you at this time.</strong>\n"
+#| "              Please contact your project's administrator if this is incorrect.\n"
+#| "            "
 msgid ""
 "\n"
-"              <strong>There are no mobile workers visible to you at this time.</strong>\n"
+"              <strong\n"
+"                >There are no mobile workers visible to you at this\n"
+"                time.</strong\n"
+"              >\n"
 "              Please contact your project's administrator if this is incorrect.\n"
 "            "
 msgstr ""
@@ -49844,9 +49935,17 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  <strong>There are currently no mobile workers in this project.</strong>\n"
+#| "              "
 msgid ""
 "\n"
-"                  <strong>There are currently no mobile workers in this project.</strong>\n"
+"                <strong\n"
+"                  >There are currently no mobile workers in this\n"
+"                  project.</strong\n"
+"                >\n"
 "              "
 msgstr ""
 "\n"
@@ -49854,9 +49953,16 @@ msgstr ""
 "              "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>No mobile users are assigned to your user's location.</strong>\n"
+#| "              "
 msgid ""
 "\n"
-"                <strong>No mobile users are assigned to your user's location.</strong>\n"
+"                <strong\n"
+"                  >No mobile users are assigned to your user's location.</strong\n"
+"                >\n"
 "              "
 msgstr ""
 "\n"
@@ -49874,6 +49980,18 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Trial Status"
+msgid "PersonalID Status"
+msgstr "Stato prova"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Linked"
+msgid "Not Linked"
+msgstr "Collegato"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate"
 msgstr "Riattiva"
 
@@ -49886,28 +50004,56 @@ msgid "Send Confirmation SMS"
 msgstr "Invia SMS di conferma"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Unlink PersonalID"
+msgstr "Scollega PersonalID"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Link PersonalID"
+msgstr "Collega PersonalID"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate Mobile Worker"
 msgstr "Riattiva operatore mobile"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Are you sure you want to <strong>reactivate</strong> this mobile worker?\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Are you sure you want to <strong>reactivate</strong> this mobile worker?\n"
-"                          "
+"                              Are you sure you want to\n"
+"                              <strong>reactivate</strong> this mobile worker?\n"
+"                            "
 msgstr ""
 "\n"
 "                            Sei sicuro di voler <strong>riattivare</strong> questo operatore mobile?\n"
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Deactivated mobile workers are not able to log into new devices.<br />\n"
+#| "                            Read more about\n"
+#| "                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers' target=\"_blank\">\n"
+#| "                              deactivating mobile workers\n"
+#| "                            </a> on our Help Site.\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Deactivated mobile workers are not able to log into new devices.<br />\n"
-"                            Read more about\n"
-"                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers' target=\"_blank\">\n"
-"                              deactivating mobile workers\n"
-"                            </a> on our Help Site.\n"
-"                          "
+"                              Deactivated mobile workers are not able to log\n"
+"                              into new devices.<br />\n"
+"                              Read more about\n"
+"                              <a\n"
+"                                href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers'\n"
+"                                target=\"_blank\"\n"
+"                              >\n"
+"                                deactivating mobile workers\n"
+"                              </a>\n"
+"                              on our Help Site.\n"
+"                            "
 msgstr ""
 "\n"
 "                            Gli operatori mobili disattivati non possono accedere a nuovi dispositivi.<br />\n"
@@ -49922,21 +50068,33 @@ msgid "Deactivate Mobile Worker"
 msgstr "Disattiva operatore mobile"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Are you sure you want to <strong>deactivate</strong> this mobile worker?\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Are you sure you want to <strong>deactivate</strong> this mobile worker?\n"
-"                          "
+"                              Are you sure you want to\n"
+"                              <strong>deactivate</strong> this mobile worker?\n"
+"                            "
 msgstr ""
 "\n"
 "                            Sei sicuro di voler <strong>disattivare</strong> questo operatore mobile?\n"
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account confirmation\n"
+#| "                              email to this account?\n"
+#| "                            "
 msgid ""
 "\n"
-"                              Would you like to send the account confirmation\n"
-"                              email to this account?\n"
-"                            "
+"                                  Would you like to send the account\n"
+"                                  confirmation email to this account?\n"
+"                                "
 msgstr ""
 "\n"
 "                              Vuoi inviare l'email di conferma account\n"
@@ -49944,11 +50102,17 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account confirmation\n"
+#| "                              SMS to this account?\n"
+#| "                            "
 msgid ""
 "\n"
-"                              Would you like to send the account confirmation\n"
-"                              SMS to this account?\n"
-"                            "
+"                                  Would you like to send the account\n"
+"                                  confirmation SMS to this account?\n"
+"                                "
 msgstr ""
 "\n"
 "                              Vuoi inviare l'SMS di conferma account\n"
@@ -49956,11 +50120,18 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent an email with instructions to\n"
+#| "                              set a password and be able to login to this project.\n"
+#| "                            "
 msgid ""
 "\n"
-"                              The user will be sent an email with instructions to\n"
-"                              set a password and be able to login to this project.\n"
-"                            "
+"                                  The user will be sent an email with\n"
+"                                  instructions to set a password and be able to\n"
+"                                  login to this project.\n"
+"                                "
 msgstr ""
 "\n"
 "                              All'utente verrà inviata un'email con le istruzioni per\n"
@@ -49968,11 +50139,18 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with instructions to\n"
+#| "                              set a password and be able to login to this project.\n"
+#| "                            "
 msgid ""
 "\n"
-"                              The user will be sent a SMS with instructions to\n"
-"                              set a password and be able to login to this project.\n"
-"                            "
+"                                  The user will be sent a SMS with instructions\n"
+"                                  to set a password and be able to login to this\n"
+"                                  project.\n"
+"                                "
 msgstr ""
 "\n"
 "                              All'utente verrà inviato un SMS con le istruzioni per\n"
@@ -49990,6 +50168,30 @@ msgstr "Invia SMS di conferma account"
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Loading Workers..."
 msgstr "Caricamento operatori..."
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <strong>There was an issue contacting the server.</strong>\n"
+#| "            Please check your internet connection.\n"
+#| "            If this issue continues, please\n"
+#| "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+#| "          "
+msgid ""
+"\n"
+"            <strong>There was an issue contacting the server.</strong>\n"
+"            Please check your internet connection. If this issue continues,\n"
+"            please\n"
+"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+"          "
+msgstr ""
+"\n"
+"            <strong>Si è verificato un problema nel contattare il server.</strong>\n"
+"            Controlla la tua connessione internet.\n"
+"            Se il problema persiste, per favore\n"
+"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">segnala un problema</a>.\n"
+"          "
 
 #: corehq/apps/users/templates/users/partials/basic_info_form.html
 msgid "CommCare Supply Settings"
@@ -50090,6 +50292,96 @@ msgstr "Verifica (riprova)"
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Mark as primary"
 msgstr "Imposta come principale"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Link PersonalID Account"
+msgstr "Collega account PersonalID"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"            Are you sure you want to <strong>link</strong> the PersonalID\n"
+"            account for this mobile worker?\n"
+"          "
+msgstr ""
+"\n"
+"                          Sei sicurə di voler <strong>eliminare</strong> questa regola?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            After linking, the mobile worker will be able to access this project\n"
+"            using their PersonalID credentials.\n"
+"          "
+msgstr ""
+"\n"
+"            Dopo il collegamento, l'operatore mobile potrà accedere a questo progetto\n"
+"            utilizzando le proprie credenziali PersonalID.\n"
+"          "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Unlink PersonalID Account"
+msgstr "Scollega account PersonalID"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"            Are you sure you want to <strong>unlink</strong> the PersonalID\n"
+"            account for this mobile worker?\n"
+"          "
+msgstr ""
+"\n"
+"                          Sei sicurə di voler <strong>eliminare</strong> questa regola?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            After unlinking, the mobile worker will no longer be able to access\n"
+"            this project using their PersonalID credentials.\n"
+"          "
+msgstr ""
+"\n"
+"            Dopo la scollegamento, l'operatore mobile non potrà più accedere\n"
+"            a questo progetto utilizzando le proprie credenziali PersonalID.\n"
+"          "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid "link"
+msgid "Unlink"
+msgstr "link"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_password_locked_banner.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_password_locked_banner.html
+msgid ""
+"\n"
+"    This user is linked with a PersonalID account, and so the password may not\n"
+"    be reset or changed here.\n"
+"  "
+msgstr ""
+"\n"
+"    Questo utente è collegato a un account PersonalID, quindi la password non può\n"
+"    essere reimpostata o modificata qui.\n"
+"  "
 
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #, python-format

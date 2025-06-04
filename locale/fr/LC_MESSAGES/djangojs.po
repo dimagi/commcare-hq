@@ -242,14 +242,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr ""
 
@@ -309,6 +301,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
