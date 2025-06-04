@@ -18,13 +18,11 @@ experiment = Experiment(
 
 @quickcache(['domain'], timeout=10 * 60)
 def domain_has_submission_in_last_30_days(domain):
-    last_submission = get_last_form_submission_received(domain)
-    # if there have been any submissions in the past 30 days
-    if last_submission:
-        _30_days = datetime.timedelta(days=30)
-        return datetime.datetime.utcnow() <= last_submission + _30_days
-    else:
-        return False
+    thirty_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+    return bool(FormES()
+                .domain(domain)
+                .submitted(gte=thirty_days_ago)
+                .count())
 
 
 def get_number_of_forms_in_domain(domain):
