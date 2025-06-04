@@ -471,14 +471,14 @@ def iter_cases(settlement: Settlement) -> Iterator[CommCareCase]:
     Yields cases owned by settlement
     """
     assert settlement.location_id
-    iter_household_case_ids = (
+    household_case_ids = (
         CaseES()
         .domain(settlement.domain)
         .case_type('household')
         .owner(settlement.location_id)
-        .scroll_ids()
+        .get_ids()
     )
-    for case_id in iter_household_case_ids:
+    for case_id in household_case_ids:
         household = CommCareCase.objects.get_case(case_id, settlement.domain)
         yield household
         for household_member in household.get_subcases():
