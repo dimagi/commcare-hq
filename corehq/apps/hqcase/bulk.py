@@ -39,6 +39,11 @@ def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
 
     Returns counts of number of updates made (not necessarily number of cases update).
     """
+    cases = CommCareCase.objects.iter_cases(case_ids)
+    case_blocks = (
+        case_block for case in cases
+        for case_block in (update_fn(case) or [])
+    )
     form_meta = form_meta or SystemFormMeta()
     count = 0
     with submit_case_block_context(
@@ -47,8 +52,6 @@ def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
         user_id=form_meta.user_id,
         username=form_meta.username,
     ) as submit_case_block:
-        for case in CommCareCase.objects.iter_cases(case_ids):
-            case_blocks = update_fn(case) or []
-            for count, case_block in enumerate(case_blocks, start=1):
-                submit_case_block.send(case_block)
+        for count, case_block in enumerate(case_blocks, start=1):
+            submit_case_block.send(case_block)
     return count
