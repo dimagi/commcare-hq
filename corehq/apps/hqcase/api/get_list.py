@@ -23,18 +23,6 @@ INDEXED_AFTER = 'indexed_on.gte'
 LAST_CASE_ID = 'last_case_id'
 INCLUDE_DEPRECATED = 'include_deprecated'
 
-# This is not how sorting is typically done - sorting by the _id field causes
-# timeouts for reasons we don't quite understand. Until that's resolved,
-# sorting by case_properties.@case_id seems to work fine.
-_SORTING_BLOCK = [{
-    '@indexed_on': {'order': 'asc'},
-    'case_properties.value.exact': {
-        'order': 'asc',
-        'nested_path': 'case_properties',
-        'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
-    }
-}]
-
 
 def _to_boolean(val):
     return not (val == '' or val.lower() in FALSE_STRINGS)
@@ -154,7 +142,7 @@ def _get_query(domain, params):
     query = (case_search.CaseSearchES()
              .domain(domain)
              .size(page_size))
-    query.es_query['sort'] = _SORTING_BLOCK  # unorthodox, see comment above
+    query = query.sort('@indexed_on').sort('doc_id', reset_sort=False)
     for key, val in params.lists():
         if len(val) == 1:
             query = query.filter(_get_filter(domain, key, val[0]))
