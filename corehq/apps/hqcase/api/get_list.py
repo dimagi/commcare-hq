@@ -116,8 +116,8 @@ def get_list(domain, couch_user, params):
     }
 
     cases_in_result = len(hits)
-    # we need to paginate until there are no hits in the result
-    if cases_in_result:
+    limit = query._size or MAX_PAGE_SIZE
+    if cases_in_result == limit:
         last_date, last_id = es_result.raw_hits[-1]['sort']
         params.update({
             INDEXED_AFTER: last_date,
