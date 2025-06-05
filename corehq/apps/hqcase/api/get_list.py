@@ -116,7 +116,8 @@ def get_list(domain, couch_user, params):
     }
 
     cases_in_result = len(hits)
-    if cases_in_result and es_result.total > cases_in_result:
+    # we need to paginate until there are no hits in the result
+    if cases_in_result:
         last_date, last_id = es_result.raw_hits[-1]['sort']
         params.update({
             INDEXED_AFTER: last_date,
