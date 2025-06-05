@@ -795,7 +795,7 @@ class CaseDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         properties = OrderedDict()
         for property in self.case_properties:
             if property in DEFAULT_CASE_PROPERTY_DATATYPES:
-                data_types = DEFAULT_CASE_PROPERTY_DATATYPES[property]
+                data_types = [DEFAULT_CASE_PROPERTY_DATATYPES[property]]
             else:
                 data_types = ["string", "decimal", "datetime"]
 
