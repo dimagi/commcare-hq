@@ -3,6 +3,7 @@ import os
 import re
 from collections import defaultdict
 
+import random  # temporary for testing
 import requests
 
 from django.conf import settings
@@ -39,26 +40,37 @@ def verify_users(kyc_users, config):
 
 
 def verify_user(kyc_user, config):
-    verification_error = None
+    # This is for testing only since we don't have a working testing environment for verification yet
+    testing_outcome = {
+        1: (KycVerificationStatus.PASSED, None),
+        2: (KycVerificationStatus.FAILED, KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value),
+        3: (KycVerificationStatus.ERROR, KycVerificationFailureCause.NETWORK_ERROR.value),
+    }
 
-    try:
-        verification_status = _verify_user(kyc_user, config)
-        if verification_status == KycVerificationStatus.FAILED:
-            verification_error = KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
+    random_number = random.randint(1, 3)
+    return testing_outcome[random_number]
 
-    except jsonschema.exceptions.ValidationError:
-        verification_error = KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
-        verification_status = KycVerificationStatus.ERROR
+    # --------- Real code below ---------
+    # verification_error = None
 
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        verification_error = KycVerificationFailureCause.NETWORK_ERROR.value
-        verification_status = KycVerificationStatus.ERROR
+    # try:
+    #     verification_status = _verify_user(kyc_user, config)
+    #     if verification_status == KycVerificationStatus.FAILED:
+    #         verification_error = KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
+    #
+    # except jsonschema.exceptions.ValidationError:
+    #     verification_error = KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
+    #     verification_status = KycVerificationStatus.ERROR
+    #
+    # except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+    #     verification_error = KycVerificationFailureCause.NETWORK_ERROR.value
+    #     verification_status = KycVerificationStatus.ERROR
+    #
+    # except requests.HTTPError:
+    #     verification_error = KycVerificationFailureCause.API_ERROR.value
+    #     verification_status = KycVerificationStatus.ERROR
 
-    except requests.HTTPError:
-        verification_error = KycVerificationFailureCause.API_ERROR.value
-        verification_status = KycVerificationStatus.ERROR
-
-    return verification_status, verification_error
+    # return verification_status, verification_error
 
 
 def _verify_user(kyc_user, config):
