@@ -1,5 +1,4 @@
 from base64 import b64decode, b64encode
-from datetime import datetime
 
 from django.http import QueryDict
 
@@ -119,12 +118,7 @@ def get_list(domain, couch_user, params):
 
 def _get_cursor_query(domain, params, last_date, last_id):
     query = _get_query(domain, params)
-    timestamp = last_date
-    if not timestamp.isdigit():
-        # this can be removed after this PR is deployed. This ensures backward compatibility
-        timestamp_in_secs = datetime.fromisoformat(last_date.replace("Z", "+00:00")).timestamp()
-        timestamp = int(timestamp_in_secs * 1000)  # ES accepts timestamp in milliseconds
-    query = query.search_after(timestamp, last_id)
+    query = query.search_after(last_date, last_id)
     return query
 
 
