@@ -99,12 +99,17 @@ class TestCaseListAPI(TestCase):
         self.assertIn('last_case_id', cursor)
 
         res = get_list(self.domain, self.couch_user, res['next'])
-        self.assertEqual(res['matching_records'], 2)
+        self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
             ['chaney', 'ned'],
             [c['external_id'] for c in res['cases']]
         )
-        self.assertNotIn('next', res)  # No pages after this one
+        self.assertIn('next', res)  # We need to paginate until results are empty
+
+        res = get_list(self.domain, self.couch_user, res['next'])
+        self.assertEqual(res['matching_records'], 5)
+        self.assertFalse(res['cases'])
+        self.assertNotIn('next', res)  # Now that results are empty, no next value
 
     def test_deprecated_case_type(self):
         self.case_type_obj.is_deprecated = True
