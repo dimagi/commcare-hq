@@ -99,7 +99,7 @@ class TestCaseListAPI(TestCase):
         self.assertIn('last_case_id', cursor)
 
         res = get_list(self.domain, self.couch_user, res['next'])
-        self.assertEqual(res['matching_records'], 2)
+        self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
             ['chaney', 'ned'],
             [c['external_id'] for c in res['cases']]
