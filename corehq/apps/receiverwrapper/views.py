@@ -10,7 +10,11 @@ import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
+from corehq.apps.users.device_rate_limiter import (
+    device_rate_limiter,
+    DEVICE_RATE_LIMIT_ERROR_CODE,
+    DEVICE_RATE_LIMIT_MESSAGE,
+)
 from corehq.apps.users.models import HqPermissions
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY
@@ -60,7 +64,7 @@ from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
-from tastypie.http import HttpNotAcceptable, HttpTooManyRequests
+from tastypie.http import HttpTooManyRequests
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
@@ -152,7 +156,10 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         submitting_user = CouchUser.get_by_user_id(submitting_user_id) if submitting_user_id else None
         should_limit = device_rate_limiter.rate_limit_device(domain, submitting_user, device_id)
         if should_limit:
-            return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+            return HttpResponse(
+                {"error": DEVICE_RATE_LIMIT_ERROR_CODE, "default_response": DEVICE_RATE_LIMIT_MESSAGE},
+                status=406,
+            )
 
     with TimingContext() as timer:
         app_id, build_id = get_app_and_build_ids(domain, app_id)

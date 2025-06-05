@@ -20,7 +20,7 @@ from ddtrace import tracer
 from iso8601 import iso8601
 from looseversion import LooseVersion
 from memoized import memoized
-from tastypie.http import HttpNotAcceptable, HttpTooManyRequests
+from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -60,7 +60,11 @@ from corehq.apps.registry.exceptions import (
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
+from corehq.apps.users.device_rate_limiter import (
+    device_rate_limiter,
+    DEVICE_RATE_LIMIT_ERROR_CODE,
+    DEVICE_RATE_LIMIT_MESSAGE,
+)
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
@@ -324,7 +328,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     user_to_limit_on = as_user_obj if uses_login_as else couch_user
     should_limit = device_rate_limiter.rate_limit_device(domain, user_to_limit_on, device_id)
     if should_limit:
-        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE), None
+        return HttpResponse(
+            {"error": DEVICE_RATE_LIMIT_ERROR_CODE, "default_response": DEVICE_RATE_LIMIT_MESSAGE},
+            status=406,
+        )
 
     is_permitted, message = is_permitted_to_restore(
         domain,
@@ -395,7 +402,10 @@ def heartbeat(request, domain, app_build_id):
         domain, request.couch_user, request.GET.get('device_id')
     )
     if should_limit:
-        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+        return HttpResponse(
+            {"error": DEVICE_RATE_LIMIT_ERROR_CODE, "default_response": DEVICE_RATE_LIMIT_MESSAGE},
+            status=406,
+        ), None
 
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
