@@ -416,7 +416,7 @@ class ESQuery(object):
 
     def search_after(self, *sort_values):
         query = self.clone()
-        query.es_query['search_after'] = sort_values
+        query.es_query['search_after'] = list(sort_values)
         return query
 
     def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True, sort_missing=None):
