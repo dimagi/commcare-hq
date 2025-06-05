@@ -334,7 +334,7 @@ class TestNewWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_NEW_WIDGET},
             is_logged_in=True,
         )
-        assert response.context['htmx_error'].message == "Requested widget type is not supported"
+        assert response.content == b'Requested widget type is not supported'
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types')
