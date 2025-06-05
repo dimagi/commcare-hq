@@ -575,8 +575,8 @@ class TestDeleteWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_DELETE_WIDGET},
         )
 
-        assert response.context['htmx_error'].status_code == 400
-        assert response.context['htmx_error'].message == "Requested widget type is not supported"
+        assert response.status_code == 400
+        assert response.content == b'Requested widget type is not supported'
         assert DashboardMap.objects.filter(pk=map_widget.id).exists() is True
 
 
