@@ -471,6 +471,15 @@ class ESQuery(object):
     def count(self):
         return self.adapter.count(self.raw_query)
 
+    def exists(self):
+        """Checks to see whether any documents match the query"""
+        query = self.size(0)
+        # The "terminate_after" param instructs ES to terminate the query after
+        # finding one matching document per shard
+        # In ES7 this can be switched to use the `count` endpoint
+        query.es_query['terminate_after'] = 1
+        return query.run().total > 0
+
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents
 
