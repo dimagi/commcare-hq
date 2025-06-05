@@ -469,6 +469,9 @@ class ESQuery(object):
     def exists(self):
         """Checks to see whether any documents match the query"""
         query = self.size(0)
+        # The "terminate_after" param instructs ES to terminate the query after
+        # finding one matching document per shard
+        # In ES7 this can be switched to use the `count` endpoint
         query.es_query['terminate_after'] = 1
         return query.run().total > 0
 

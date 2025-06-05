@@ -397,5 +397,5 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             query_created(lt="2025-04-01")
         # No docs returned
         self.assertEqual(ESQuerySet.call_args[0][0]['hits']['hits'], [])
-        # there are two docs, but only 1 was scanned
+        # there are two docs, but only 1 was scanned (per shard)
         self.assertEqual(ESQuerySet.call_args[0][0]['hits']['total'], 1)
