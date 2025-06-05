@@ -26,6 +26,7 @@
     >
       {% csrf_token %}
       <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
+      <input type="hidden" value="{{ is_annual_plan }}" name="is_annual_plan" />
       <input
         type="hidden"
         value=""
