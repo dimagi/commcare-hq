@@ -234,6 +234,9 @@ def is_active(active=True):
 
 
 def has_domain_membership(domain, active=True):
+    """
+    Temporary: By itself this also includes any active user on a different domain.
+    """
     if not active:
         return filters.OR(
             filters.term("is_active", False),
