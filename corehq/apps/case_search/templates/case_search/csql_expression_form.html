@@ -14,8 +14,16 @@
   {% endif %}
   <div class="row pb-3">
     <div class="col-2">{{ form.name }}</div>
-    <div class="col-8">{{ form.csql }}</div>
-    <div class="col-2">
+    <div class="col-7">{{ form.csql }}</div>
+    <div class="col-3">
+      <button
+      type="button"
+      class="btn btn-outline-secondary"
+      data-bs-toggle="modal"
+      data-bs-target="#filterModal{{form.instance.pk}}"
+    >
+      <i class="fa-solid fa-filter"></i>
+    </button>
       <button
         type="submit"
         class="btn btn-outline-primary"
@@ -35,3 +43,13 @@
     </div>
   </div>
 </form>
+
+{% block modals %}
+  <div class="modal fade" id="filterModal{{form.instance.pk}}" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        {{filter_modal_form}}
+      </div>
+    </div>
+  </div>
+{% endblock modals %}

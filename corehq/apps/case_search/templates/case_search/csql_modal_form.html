@@ -1,0 +1,40 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<form
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="save_filter_modal"
+    hx-swap="outerHTML"
+    x-data="{ isUnsaved: false }"
+    @change="isUnsaved = true;"
+    @submit="isUnsaved = false;"
+>
+  {% if form.instance.pk %}
+  <input type="hidden" name="pk" value="{{ form.instance.pk }}" />
+  {% endif %}
+  <div class="modal-header">
+    <h5 class="modal-title">{% trans "Fixture Inclusion in Restore Criteria" %}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body">
+    <div id="csql-criteria-rows{{form.instance.pk}}">
+        {% for form in criteria_forms %}
+            {% include 'case_search/csql_user_data_criteria_fields.html' with form=form %}
+        {% endfor %}
+    </div>
+    <button
+        type="button"
+        class="btn btn-outline-primary"
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="new_criteria"
+        hx-target="#csql-criteria-rows{{form.instance.pk}}"
+        hx-swap="beforeend"
+        >
+        <i class="fa fa-plus"></i> {% trans "Add Criteria" %}
+  </button>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-primary" x-bind:disabled="!isUnsaved">{% trans "Save" %}</button>
+  </div>
+</form>
