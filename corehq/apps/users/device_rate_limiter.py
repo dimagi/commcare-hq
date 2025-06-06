@@ -29,7 +29,7 @@ class DeviceRateLimiter:
         self.client = get_redis_connection()
 
     def device_limit_per_user(self, domain):
-        return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, domain=domain) or DEVICE_LIMIT_PER_USER_DEFAULT
+        return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, DEVICE_LIMIT_PER_USER_DEFAULT, domain=domain)
 
     def rate_limit_device(self, domain, user, device_id):
         """

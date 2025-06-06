@@ -107,12 +107,12 @@ class SystemLimit(models.Model):
     def save(self, *args, **kwargs):
         self._prevent_changing_from_global_to_domain_scope()
         super().save(*args, **kwargs)
-        SystemLimit._get_global_limit.clear(self.key)
+        SystemLimit._get_global_limit.clear(self.key, self.limit)
         SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        SystemLimit._get_global_limit.clear(self.key)
+        SystemLimit._get_global_limit.clear(self.key, self.limit)
         SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
 
     def _prevent_changing_from_global_to_domain_scope(self):
@@ -127,22 +127,20 @@ class SystemLimit(models.Model):
                 )
 
     @classmethod
-    def for_key(cls, key, domain=''):
+    def for_key(cls, key, default, domain=''):
         """
         Return the value associated with the given key, prioritizing the domain specific entry over the general one
         """
         domain_limit = cls._get_domain_specific_limit(key, domain) if domain else None
         if domain_limit is not None:
             return domain_limit
-        return cls._get_global_limit(key)
+        return SystemLimit._get_global_limit(key, default)
 
     @staticmethod
-    @quickcache(['key'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
-    def _get_global_limit(key):
-        try:
-            return SystemLimit.objects.get(key=key, domain='').limit
-        except SystemLimit.DoesNotExist:
-            return None
+    @quickcache(['key', 'default'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
+    def _get_global_limit(key, default):
+        system_limit, _ = SystemLimit.objects.get_or_create(key=key, domain='', defaults={"limit": default})
+        return system_limit.limit
 
     @staticmethod
     @quickcache(['key', 'domain'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
