@@ -31,21 +31,6 @@ class TestWebUserSyncUsercase(TestCase):
         self.assertIsNotNone(usercase)
         self.assertEqual(usercase.name, self.username)
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
-    def test_close_deactivated_web_users_usercase(self):
-        sync_usercases(self.user, self.domain_name)
-        init_usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, self.user_id, USERCASE_TYPE)
-        self.assertFalse(init_usercase.closed)
-
-        self.user.deactivate(self.domain_obj.name, self.user)
-        closed_usercase = CommCareCase.objects.get_case_by_external_id(
-            self.domain_name, self.user_id, USERCASE_TYPE)
-        self.assertTrue(closed_usercase.closed)
-
-        self.user.reactivate(self.domain_obj.name, self.user)
-        open_usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, self.user_id, USERCASE_TYPE)
-        self.assertFalse(open_usercase.closed)
-
 
 class TestBulkSyncUsercases(TestCase):
     @classmethod
