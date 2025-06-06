@@ -531,6 +531,7 @@ def track_periodic_data():
                             .aggregations.domain.counts_by_bucket())
         domains_to_mobile_users = (UserES()
                                    .mobile_users()
+                                   .active_on_any_domain()
                                    .terms_aggregation('domain.exact', 'domain')
                                    .size(0)
                                    .run()

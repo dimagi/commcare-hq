@@ -129,14 +129,14 @@ class EmwfOptionsController(object):
         users = customize_user_query(self.request.couch_user, self.domain, users)
         return [self.utils.user_tuple(u) for u in users.run().hits]
 
-    def active_user_es_query(self, query):
+    def active_user_es_query(self, query, include_inactive=False):
         search_fields = ["first_name", "last_name", "base_username"]
         return (UserES()
-                .domain(self.domain)
+                .domain(self.domain, include_inactive=include_inactive)
                 .search_string_query(query, default_fields=search_fields))
 
     def all_user_es_query(self, query):
-        return self.active_user_es_query(query).show_inactive()
+        return self.active_user_es_query(query, include_inactive=True)
 
     def get_all_users_size(self, query):
         return self.all_user_es_query(query).count()
@@ -310,11 +310,11 @@ class EnterpriseUserOptionsController(EmwfOptionsController):
             (self.get_all_users_size, self.get_all_users),
         ]
 
-    def active_user_es_query(self, query):
+    def active_user_es_query(self, query, include_inactive=False):
         if not self.request.can_access_all_locations:
-            return super().active_user_es_query(query)
+            return super().active_user_es_query(query, include_inactive)
         else:
             search_fields = ["first_name", "last_name", "base_username"]
             return (UserES()
-                    .domains(self.enterprise_domains)
+                    .domain(self.enterprise_domains)
                     .search_string_query(query, default_fields=search_fields))

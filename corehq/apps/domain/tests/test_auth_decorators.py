@@ -174,6 +174,23 @@ class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
         request = _get_request(self.commcare_django_user)
         self.assertEqual(SUCCESS, test(request))
 
+    def test_deactivated_web_user(self):
+        web_test = self._get_test_for_web_user(allow_cc_users=True, allow_sessions=True)
+        web_user = WebUser.create(self.domain_name, 'deactivated@dimagi.com', 'secret', None, None)
+        web_user.is_authenticated = True
+        self.addCleanup(web_user.delete, self.domain_name, deleted_by=None)
+
+        self.assertEqual(SUCCESS, web_test(_get_request(web_user), self.domain_name))
+
+        user_domain_membership = web_user.get_domain_membership(self.domain_name)
+        user_domain_membership.is_active = False
+        web_user.save()
+        self.assertForbidden(web_test(_get_request(web_user), self.domain_name))
+
+        web_user.is_superuser = True
+        web_user.save()
+        self.assertEqual(SUCCESS, web_test(_get_request(web_user), self.domain_name))
+
 
 def _get_auth_mock(succeed=True):
     def mock_auth_decorator(allow_cc_users=False, allow_sessions=True, require_domain=True,
