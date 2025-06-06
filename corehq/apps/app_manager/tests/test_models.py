@@ -19,165 +19,6 @@ class UpdateCaseActionTests(SimpleTestCase):
         self.assertEqual(actions.update['two']['question_path'], 'two')
 
 
-class UpdateCaseAction_WithDiffsTests(SimpleTestCase):
-    def test_empty_diff(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-            'two': {'question_path': 'two'}
-        }})
-
-        result = actions.with_diffs({})
-
-        self.assertEqual(list(result.update.keys()), ['one', 'two'])
-
-    def test_add_value(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-            'two': {'question_path': 'two'}
-        }})
-
-        result = actions.with_diffs({
-            'add': {'three': {'question_path': 'some_path'}},
-        })
-
-        self.assertEqual(list(result.update.keys()), ['one', 'two', 'three'])
-
-    def test_remove_value(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-            'two': {'question_path': 'two'}
-        }})
-
-        result = actions.with_diffs({
-            'del': ['one'],
-        })
-
-        self.assertEqual(list(result.update.keys()), ['two'])
-
-    def test_update_value(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-            'two': {'question_path': 'two'}
-        }})
-
-        result = actions.with_diffs({
-            'update': {
-                'two': {
-                    'original': {'question_path': 'two'},
-                    'updated': {'question_path': 'four'},
-                },
-            },
-        })
-
-        self.assertEqual(result.update['two'].question_path, 'four')
-
-    def test_updating_stale_value_uses_updated_value(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-            'two': {'question_path': 'changed'}
-        }})
-
-        result = actions.with_diffs({
-            'update': {
-                'two': {
-                    'original': {'question_path': 'two'},
-                    'updated': {'question_path': 'four'},
-                },
-            },
-        })
-
-        self.assertEqual(result.update['two'].question_path, 'four')
-
-    def test_adding_existing_property_overwrites_the_property(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-            'two': {'question_path': 'two'}
-        }})
-
-        result = actions.with_diffs({
-            'add': {'one': {'question_path': 'four'}},
-        })
-
-        self.assertEqual(result.update['one'].question_path, 'four')
-
-    def test_updating_a_missing_property_raises_error(self):
-        # If a property was deleted by a different session, updating it shouldn't restore it
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-        }})
-
-        with self.assertRaises(MissingPropertyException):
-            actions.with_diffs({
-                'update': {
-                    'two': {
-                        'original': {'question_path': 'a'},
-                        'updated': {'question_path': 'two'}
-                    }
-                }
-            })
-
-    def test_missing_property_exception_contains_all_missing_properties(self):
-        actions = UpdateCaseAction({'update': {}})
-
-        with self.assertRaises(MissingPropertyException) as context:
-            actions.with_diffs({
-                'update': {
-                    'one': {
-                        'incoming': {'question_path': 'a'},
-                        'updated': {'question_path': 'one'},
-                    },
-                    'two': {
-                        'incoming': {'question_path': 'b'},
-                        'updated': {'question_path': 'two'}
-                    }
-                }
-            })
-
-        self.assertEqual(set(context.exception.missing_properties), {'one', 'two'})
-
-    def test_deleting_a_missing_property_does_nothing(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-        }})
-
-        result = actions.with_diffs({'del': ['two']})
-
-        self.assertEqual(list(result.update.keys()), ['one'])
-
-    def test_multiple_actions_attempting_to_affect_the_same_key_raises_error(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-            'two': {'question_path': 'two'}
-        }})
-
-        with self.assertRaises(DiffConflictException):
-            actions.with_diffs({
-                'update': {'two': {
-                    'original': {'question_path': 'two'},
-                    'updated': {'question_path': 'three'}
-                }},
-                'del': ['two']
-            })
-
-    def test_all_actions_at_once(self):
-        actions = UpdateCaseAction({'update': {
-            'one': {'question_path': 'one'},
-            'two': {'question_path': 'two'}
-        }})
-
-        result = actions.with_diffs({
-            'add': {'three': {'question_path': 'three'}},
-            'del': ['one'],
-            'update': {'two': {
-                'original': {'question_path': 'two'},
-                'updated': {'question_path': 'nine'}
-            }}
-        })
-
-        self.assertEqual(list(result.update.keys()), ['two', 'three'])
-        self.assertEqual(result.update['two'].question_path, 'nine')
-
-
 class FormActionsTests(SimpleTestCase):
     def test_constructor_creates_empty_values(self):
         actions = FormActions()
@@ -231,3 +72,283 @@ class FormActions_UpdateTests(SimpleTestCase):
             actions.update(updates)
 
         self.assertEqual(context.exception.invalid_property, 'malicious_key')
+
+
+class FormActions_WithDiffsTests(SimpleTestCase):
+    def test_empty_diff(self):
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'name'},
+            },
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({})
+
+        self.assertEqual(result['open_case']['name_update']['question_path'], 'name')
+        self.assertEqual(list(result['update_case']['update'].keys()), ['one', 'two'])
+
+    def test_add_value(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({
+            'add': {'three': {'question_path': 'some_path'}},
+        })
+
+        self.assertEqual(list(result['update_case']['update'].keys()), ['one', 'two', 'three'])
+
+    def test_remove_value(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({
+            'del': ['one'],
+        })
+
+        self.assertEqual(list(result['update_case']['update'].keys()), ['two'])
+
+    def test_update_value(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({
+            'update': {
+                'two': {
+                    'original': {'question_path': 'two'},
+                    'updated': {'question_path': 'four'},
+                },
+            },
+        })
+
+        self.assertEqual(result['update_case']['update']['two']['question_path'], 'four')
+
+    def test_update_name_for_registration_form(self):
+        # A registration form will specify the name in the 'open_case' property
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'name'},
+            },
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({
+            'update': {
+                'name': {
+                    'original': {'question_path': 'name'},
+                    'updated': {'question_path': 'new_name'},
+                },
+            },
+        })
+
+        self.assertEqual(result['open_case']['name_update']['question_path'], 'new_name')
+
+    def test_update_name_for_followup_form(self):
+        # Followup forms specify the name field in the 'update_case' property
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'name': {'question_path': 'original_name'}
+                }
+            }
+        })
+
+        result = actions.with_diffs({
+            'update': {
+                'name': {
+                    'original': {'question_path': 'original_name'},
+                    'updated': {'question_path': 'new_name'},
+                },
+            },
+        })
+
+        self.assertEqual(result['update_case']['update']['name']['question_path'], 'new_name')
+
+    def test_updating_stale_value_uses_updated_value(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'updated'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({
+            'update': {
+                'one': {
+                    'original': {'question_path': 'stale'},
+                    'updated': {'question_path': 'four'},
+                },
+            },
+        })
+
+        self.assertEqual(result['update_case']['update']['one']['question_path'], 'four')
+
+    def test_updating_stale_name_uses_updated_name(self):
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'updated'},
+            },
+        })
+
+        result = actions.with_diffs({
+            'update': {
+                'name': {
+                    'original': {'question_path': 'stale'},
+                    'updated': {'question_path': 'new_name'},
+                },
+            },
+        })
+
+        self.assertEqual(result['open_case']['name_update']['question_path'], 'new_name')
+
+    def test_adding_existing_property_overwrites_the_property(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({
+            'add': {'one': {'question_path': 'four'}},
+        })
+
+        self.assertEqual(result['update_case']['update']['one']['question_path'], 'four')
+
+    def test_updating_a_missing_property_raises_error(self):
+        # If a property was deleted by a different session, updating it shouldn't restore it
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                }
+            }
+        })
+
+        with self.assertRaises(MissingPropertyException):
+            actions.with_diffs({
+                'update': {
+                    'two': {
+                        'original': {'question_path': 'a'},
+                        'updated': {'question_path': 'two'}
+                    }
+                }
+            })
+
+    def test_missing_property_exception_contains_all_missing_properties(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {}
+            }
+        })
+
+        with self.assertRaises(MissingPropertyException) as context:
+            actions.with_diffs({
+                'update': {
+                    'one': {
+                        'incoming': {'question_path': 'a'},
+                        'updated': {'question_path': 'one'},
+                    },
+                    'two': {
+                        'incoming': {'question_path': 'b'},
+                        'updated': {'question_path': 'two'}
+                    }
+                }
+            })
+
+        self.assertEqual(set(context.exception.missing_properties), {'one', 'two'})
+
+    def test_deleting_a_missing_property_does_nothing(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({'del': ['two']})
+
+        self.assertEqual(list(result['update_case']['update'].keys()), ['one'])
+
+    def test_multiple_actions_attempting_to_affect_the_same_key_raises_error(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        with self.assertRaises(DiffConflictException):
+            actions.with_diffs({
+                'update': {'two': {
+                    'original': {'question_path': 'two'},
+                    'updated': {'question_path': 'three'}
+                }},
+                'del': ['two']
+            })
+
+    def test_all_actions_at_once(self):
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'form_name'},
+            },
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        result = actions.with_diffs({
+            'add': {'three': {'question_path': 'three'}},
+            'del': ['one'],
+            'update': {
+                'name': {
+                    'original': {'question_path': 'form_name'},
+                    'updated': {'question_path': 'new_name'},
+                },
+                'two': {
+                    'original': {'question_path': 'two'},
+                    'updated': {'question_path': 'nine'}
+                },
+            }
+        })
+
+        self.assertEqual(result['open_case']['name_update']['question_path'], 'new_name')
+        self.assertEqual(list(result['update_case']['update'].keys()), ['two', 'three'])
+        self.assertEqual(result['update_case']['update']['two']['question_path'], 'nine')
