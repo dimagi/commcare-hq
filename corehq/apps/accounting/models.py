@@ -635,24 +635,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return web_users
 
-    def get_web_user_count(self):
-        domains = self.get_domains()
-        count = 0
-        today = datetime.datetime.today()
-        start_date = today - relativedelta(months=1)
-        for domain in domains:
-            user_count = get_web_user_count(domain, include_inactive=False)
-            web_users = get_all_web_users_by_domain(domain)
-            for u in web_users:
-                if not u.is_active_in_domain(domain):
-                    user_history = UserHistory.objects.filter(
-                        by_domain=domain, for_domain=domain, user_type="WebUser", user_id=u.user_id,
-                        changed_at__lte=today, changed_at__gt=start_date, changes__has_key='is_active_in_domain')
-                    if not user_history.exists():
-                        user_count -= 1
-            count += user_count
-        return count
-
     @staticmethod
     def should_show_sms_billable_report(domain):
         account = BillingAccount.get_account_by_domain(domain)

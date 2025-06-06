@@ -103,6 +103,7 @@
                               action: function() { goToPage(1); },
                               placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
         </div>
+        {% if request|toggle_enabled:"DEACTIVATE_WEB_USERS" %}
         <div class="col-sm-6">
           <button type="button" class="btn btn-default pull-right"
                     data-bind="visible: showActiveUsers(), click: function() { showActiveUsers(false); }">
@@ -113,6 +114,7 @@
               {% trans 'Show Active Web Users' %}
           </button>
         </div>
+        {% endif %}
       </div>
       <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
       <div data-bind="visible: showLoadingSpinner">
