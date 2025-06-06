@@ -61,6 +61,7 @@ class UserES(HQESQuery):
             is_active,
             username,
             missing_or_empty_user_data_property,
+            has_domain_membership,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -230,6 +231,18 @@ def role_id(role_id):
 
 def is_active(active=True):
     return filters.term("is_active", active)
+
+
+def has_domain_membership(domain, active=True):
+    if not active:
+        return filters.OR(
+            filters.term("is_active", False),
+            filters.nested('user_domain_memberships', filters.AND(
+                filters.term('user_domain_memberships.domain.exact', domain),
+                filters.term('user_domain_memberships.is_active', False),
+            ))
+        )
+    return filters.NOT(has_domain_membership(domain, active=False))
 
 
 def _user_data(key, filter_):

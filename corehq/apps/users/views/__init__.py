@@ -925,10 +925,7 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
     if active_in_domain is not None:
         assert len(domains) == 1
         domain = domains[0]
-        if active_in_domain is False:
-            user_es = user_es.is_active(False, domain)
-        else:
-            user_es = user_es.is_active(True, domain)
+        user_es = user_es.has_domain_membership(domain, active_in_domain)
     result = user_es.run()
 
     return (
