@@ -12,6 +12,7 @@ class HQGeneratorMethod(GeneratorMethod):
 
     # only overriding this because it is set in GeneratorMethod
     form_path = 'corehq.apps.settings.forms.HQTOTPDeviceForm'
+    # override the default verbose name "Token Generator"
     verbose_name = _("Authenticator App")
 
     def get_setup_forms(self, *args):
