@@ -15,8 +15,7 @@ from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.dbaccessors import delete_all_users, get_all_web_users_by_domain
-from corehq.apps.users.models import UserHistory, WebUser
-from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
+from corehq.apps.users.models import WebUser
 
 
 class TestDomainUserHistory(BaseInvoiceTestCase):

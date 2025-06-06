@@ -5,7 +5,7 @@ from corehq.apps.accounting.models import FeatureType
 from corehq.apps.accounting.utils import count_form_submitting_mobile_workers
 from corehq.apps.es.users import UserES
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser
 
 
 class FeatureUsageCalculator(object):

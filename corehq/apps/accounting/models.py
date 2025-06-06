@@ -1,6 +1,5 @@
 import datetime
 import itertools
-from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -74,12 +73,8 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.dbaccessors import (
-    get_active_web_usernames_by_domain,
-    get_web_user_count,
-    get_all_web_users_by_domain,
-)
-from corehq.apps.users.models import WebUser, UserHistory
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain
+from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
