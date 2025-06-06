@@ -1,0 +1,43 @@
+from django.core.management.base import BaseCommand
+
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.tasks import _refresh_data_dictionary_from_app
+from corehq.apps.data_cleaning.utils.cases import (
+    clear_caches_case_data_cleaning,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.api import (
+    get_migration_complete,
+    set_migration_complete,
+    set_migration_started,
+)
+from corehq.util.log import with_progress_bar
+
+
+class Command(BaseCommand):
+    help = 'Refreshes data dictionary for all domains and their apps. ' \
+           'For specific domains, ./manage.py refresh_data_dictionary domain1 domain2'
+
+    def add_arguments(self, parser):
+        parser.add_argument('domains', nargs='*',
+            help="Domain name(s). If blank, will refresh for all domains")
+
+    def handle(self, **options):
+        domains = options['domains'] or Domain.get_all_names()
+
+        for domain in with_progress_bar(domains):
+            if get_migration_complete(domain, 'refresh_data_dictionary'):
+                continue
+            set_migration_started(domain, 'refresh_data_dictionary')
+            try:
+                apps = get_apps_in_domain(domain)
+                for app in apps:
+                    try:
+                        _refresh_data_dictionary_from_app(domain, app.get_id)
+                    except Exception as e:
+                        print(f'Failed to refresh app {app.get_id} in domain {domain}: {str(e)}')
+                clear_caches_case_data_cleaning(domain)
+
+            except Exception as e:
+                print(f'Failed to get apps in domain {domain}: {str(e)}')
+            set_migration_complete(domain, 'refresh_data_dictionary')
