@@ -346,7 +346,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        # import pdb; pdb.set_trace()
         q = cls._base_user_es_query(domain, request_user)
         q = customize_user_query(request_user, domain, q)
         if (
