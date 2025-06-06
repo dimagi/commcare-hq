@@ -168,7 +168,7 @@ class ItemListsProvider(FixtureProvider):
 
         if not overwrite_cache:
             data = get_cached_fixture_items(key)
-            record_datadog_metric('cache_miss' if data is None else 'cache_hit', key)
+            record_datadog_metric('cache_miss' if data is None else 'cache_hit', domain)
 
         if data is None:
             with CriticalSection([key]):
@@ -176,7 +176,7 @@ class ItemListsProvider(FixtureProvider):
                     # re-check cache to avoid re-computing it
                     data = get_cached_fixture_items(key)
                 if data is None:
-                    record_datadog_metric('generate', key)
+                    record_datadog_metric('generate', domain)
                     items = self._get_global_items(global_type, domain)
                     with write_fixture_items_to_io(items) as io_data:
                         data = io_data.getvalue()

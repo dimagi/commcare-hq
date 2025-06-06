@@ -4,8 +4,8 @@ import uuid
 from django.db import models, transaction
 from django.utils.translation import gettext as _
 
-from corehq.apps.data_cleaning.models.types import EditActionType
 from corehq.apps.data_cleaning.exceptions import UnsupportedActionException
+from corehq.apps.data_cleaning.models.types import EditActionType
 from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 
 
@@ -48,10 +48,10 @@ class BulkEditChangeManager(models.Manager):
 
 
 class BulkEditChange(models.Model):
-    session = models.ForeignKey("data_cleaning.BulkEditSession", related_name="changes", on_delete=models.CASCADE)
+    session = models.ForeignKey('data_cleaning.BulkEditSession', related_name='changes', on_delete=models.CASCADE)
     change_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True)
-    records = models.ManyToManyField("data_cleaning.BulkEditRecord", related_name="changes")
+    records = models.ManyToManyField('data_cleaning.BulkEditRecord', related_name='changes')
     prop_id = models.CharField(max_length=255)  # case property or form question_id
     action_type = models.CharField(
         max_length=12,
@@ -65,14 +65,14 @@ class BulkEditChange(models.Model):
     objects = BulkEditChangeManager()
 
     class Meta:
-        ordering = ["created_on"]
+        ordering = ['created_on']
 
     @property
     def action_title(self):
         """
         Returns a human-readable title of the action.
         """
-        return dict(EditActionType.CHOICES).get(self.action_type, _("Unknown action"))
+        return dict(EditActionType.CHOICES).get(self.action_type, _('Unknown action'))
 
     @property
     def action_detail(self):
@@ -88,13 +88,13 @@ class BulkEditChange(models.Model):
             return _('"{find_string}" with "{replace_string}"{use_regex}.').format(
                 find_string=self.find_string,
                 replace_string=self.replace_string,
-                use_regex=_(" (using regex)") if self.use_regex else "",
+                use_regex=_(' (using regex)') if self.use_regex else '',
             )
         elif self.action_type == EditActionType.COPY_REPLACE:
             return _('from case property "{copy_from_prop_id}".').format(
                 copy_from_prop_id=self.copy_from_prop_id,
             )
-        return ""
+        return ''
 
     @property
     def num_records(self):
@@ -111,7 +111,7 @@ class BulkEditChange(models.Model):
 
         simple_transformations = {
             EditActionType.REPLACE: lambda x: self.replace_string,
-            EditActionType.MAKE_EMPTY: lambda x: "",
+            EditActionType.MAKE_EMPTY: lambda x: '',
             EditActionType.MAKE_NULL: lambda x: None,
         }
 
@@ -119,9 +119,7 @@ class BulkEditChange(models.Model):
             return simple_transformations[self.action_type](old_value)
 
         if self.action_type == EditActionType.COPY_REPLACE:
-            return edited_properties.get(
-                self.copy_from_prop_id, case.get_case_property(self.copy_from_prop_id)
-            )
+            return edited_properties.get(self.copy_from_prop_id, case.get_case_property(self.copy_from_prop_id))
 
         if self.action_type == EditActionType.RESET:
             return case.get_case_property(self.prop_id)
@@ -136,9 +134,7 @@ class BulkEditChange(models.Model):
         old_value = str(old_value)
 
         string_regex_transformations = {
-            EditActionType.FIND_REPLACE: lambda x: re.sub(
-                re.compile(self.find_string), self.replace_string, x
-            ),
+            EditActionType.FIND_REPLACE: lambda x: re.sub(re.compile(self.find_string), self.replace_string, x),
         }
         if self.use_regex and self.action_type in string_regex_transformations:
             return string_regex_transformations[self.action_type](old_value)
@@ -153,4 +149,4 @@ class BulkEditChange(models.Model):
         if self.action_type in string_transformations:
             return string_transformations[self.action_type](old_value)
 
-        raise UnsupportedActionException(f"edited_value did not recognize action_type {self.action_type}")
+        raise UnsupportedActionException(f'edited_value did not recognize action_type {self.action_type}')

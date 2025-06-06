@@ -284,14 +284,6 @@ msgstr ""
 "моніторинг врожаю."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "Не вибирати"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "Вибрати все"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "Потрібна назва застосунку"
 
@@ -354,6 +346,12 @@ msgstr "Назва вкладки"
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
 msgstr "Умова відображення"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -2298,16 +2296,6 @@ msgstr "Закрити вибірник"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "long"
-msgstr "довгий"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "2-digit"
-msgstr "2-значний"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Decrement Hour"
 msgstr "Зменшити годину"
 
@@ -4236,6 +4224,18 @@ msgstr "Помилка! Відповідь: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ не вдалося виконати запит: "
+
+#~ msgid "Select None"
+#~ msgstr "Не вибирати"
+
+#~ msgid "Select All"
+#~ msgstr "Вибрати все"
+
+#~ msgid "long"
+#~ msgstr "довгий"
+
+#~ msgid "2-digit"
+#~ msgstr "2-значний"
 
 #~ msgid "Questions"
 #~ msgstr "Питання"

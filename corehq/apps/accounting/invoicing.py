@@ -285,7 +285,7 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, amount, credit_label, unit_cost, quantity, date_start, date_end):
+    def create_wire_credits_invoice(self, amount, credit_label, unit_cost, quantity, date_due=None):
 
         serializable_amount = simplejson.dumps(amount, use_decimal=True)
         serializable_items = get_serializable_wire_invoice_general_credit(
@@ -297,10 +297,11 @@ class DomainWireInvoiceFactory(object):
             domain_name=self.domain.name,
             amount=serializable_amount,
             invoice_items=serializable_items,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=self.date_start,
+            date_end=self.date_end,
             contact_emails=self.contact_emails,
             cc_emails=self.cc_emails,
+            date_due=date_due,
         )
 
 

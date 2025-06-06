@@ -549,11 +549,13 @@ class InvoiceTemplate(object):
     def _add_credit_card_footer_item(self, items, text_style):
         from corehq.apps.domain.views.accounting import (
             DomainBillingStatementsView,
+            DomainSubscriptionView,
         )
+        billing_view = DomainSubscriptionView if self.is_prepayment else DomainBillingStatementsView
         credit_card = """<strong>Credit or debit card payments (USD)</strong> can be made online here:<br />
                             <link href='{payment_page}' color='blue'>{payment_page}</link><br />""".format(
             payment_page=absolute_reverse(
-                DomainBillingStatementsView.urlname, args=[self.project_name])
+                billing_view.urlname, args=[self.project_name])
         )
         credit_card_text = Paragraph(credit_card, text_style)
         items.append(credit_card_text)

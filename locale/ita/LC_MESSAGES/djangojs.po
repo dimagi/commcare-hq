@@ -281,14 +281,6 @@ msgstr ""
 " o monitoraggio delle colture."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "Nessuna selezione"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "Seleziona tutto"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "Il nome dell'applicazione è obbligatorio"
 
@@ -350,6 +342,15 @@ msgstr "Nome Scheda"
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
 msgstr "Condizione di Visualizzazione"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"Attenzione: La proprietà calcolata utilizzata non è compatibile con la "
+"memorizzazione nella cache e potrebbe causare dati obsoleti nelle proprietà "
+"dell'elenco dei casi"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -2301,16 +2302,6 @@ msgstr "Chiudi il selettore"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "long"
-msgstr "lungo"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "2-digit"
-msgstr "2 cifre"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Decrement Hour"
 msgstr "Diminuisci ora"
 
@@ -4249,6 +4240,18 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Select None"
+#~ msgstr "Nessuna selezione"
+
+#~ msgid "Select All"
+#~ msgstr "Seleziona tutto"
+
+#~ msgid "long"
+#~ msgstr "lungo"
+
+#~ msgid "2-digit"
+#~ msgstr "2 cifre"
 
 #~ msgid "Questions"
 #~ msgstr "Domande"

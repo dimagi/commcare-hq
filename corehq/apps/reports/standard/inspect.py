@@ -1,6 +1,7 @@
 from django.utils.translation import get_language
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -34,6 +35,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                          CompletionOrSubmissionTimeMixin, MultiFormDrilldownMixin,
                          DatespanMixin):
     name = gettext_noop('Submission History')
+    description = gettext_lazy('View all submitted data.')
     slug = 'submit_history'
     fields = [
         'corehq.apps.reports.filters.users.SubmittedByExpandedMobileWorkerFilter',

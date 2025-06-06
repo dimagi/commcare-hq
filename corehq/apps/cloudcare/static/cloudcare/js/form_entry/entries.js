@@ -1,8 +1,8 @@
-hqDefine("cloudcare/js/form_entry/entries", [
+define("cloudcare/js/form_entry/entries", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify',
+    'dompurify',
     'moment',
     'fast-levenshtein/levenshtein',
     'hqwebapp/js/initial_page_data',

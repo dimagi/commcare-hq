@@ -65,7 +65,8 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 @location_safe
 class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsReport):
-    name = gettext_lazy("Application Status")
+    name = gettext_lazy("User Last Activity Report")
+    description = gettext_lazy("View last sync and last submission by user.")
     slug = "app_status"
     emailable = True
     exportable = True

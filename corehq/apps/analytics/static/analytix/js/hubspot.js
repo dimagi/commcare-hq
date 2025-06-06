@@ -2,117 +2,107 @@
 /**
  * Instatiates the Hubspot analytics platform.
  */
-hqDefine('analytix/js/hubspot', [
-    'jquery',
-    'underscore',
-    'analytix/js/initial',
-    'analytix/js/logging',
-    'analytix/js/utils',
-    'analytix/js/kissmetrix',
-    'analytix/js/cta_forms',
-], function (
-    $,
-    _,
-    initialAnalytics,
-    logging,
-    utils,
-    kissmetrics,
-    ctaForms,
-) {
-    var _get = initialAnalytics.getFn('hubspot'),
-        _logger = logging.getLoggerForApi('Hubspot'),
-        _ready = $.Deferred(),
-        _utils = {};
+import $ from "jquery";
+import _ from "underscore";
+import initialAnalytics from "analytix/js/initial";
+import logging from "analytix/js/logging";
+import utils from "analytix/js/utils";
+import kissmetrics from "analytix/js/kissmetrix";
+import ctaForms from "analytix/js/cta_forms";
 
-    var _hsq = window._hsq = window._hsq || [];
+var _get = initialAnalytics.getFn('hubspot'),
+    _logger = logging.getLoggerForApi('Hubspot'),
+    _ready = $.Deferred(),
+    _utils = {};
 
-    $(function () {
-        var apiId = _get('apiId'),
-            scriptUrl = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
+var _hsq = window._hsq = window._hsq || [];
 
-        _logger = logging.getLoggerForApi('Hubspot');
-        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger);
+$(function () {
+    var apiId = _get('apiId'),
+        scriptUrl = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
 
-        // these forms get processed on the backend, so they don't need the hubspot js to be loaded
-        if (_get('isDemoVisible')) {
-            _utils.loadDemoForm();
-        }
+    _logger = logging.getLoggerForApi('Hubspot');
+    _ready = utils.initApi(_ready, apiId, scriptUrl, _logger);
 
+    // these forms get processed on the backend, so they don't need the hubspot js to be loaded
+    if (_get('isDemoVisible')) {
+        _utils.loadDemoForm();
+    }
+
+});
+
+/**
+ * Activates the Hubspot Request Demo form
+ */
+_utils.loadDemoForm = function () {
+    let $modal = $('#cta-form-get-demo'),
+        $form = $('#get-demo-cta-form-content'),
+        hasInteractedWithForm = false,
+        formId = "f6ebf161-fccf-4083-9a72-5839a0c8ac8c",
+        demoForm;
+
+    demoForm = ctaForms.hubspotCtaForm({
+        hubspotFormId: formId,
+        nextButtonText: gettext("Submit Request"),
+        submitCallbackFn: function () {
+            $('#get-demo-cta-success').fadeIn();
+            $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
+
+            kissmetrics.track.event("Demo Workflow - Contact Info Received");
+        },
+    });
+    if ($form.length) {
+        $form.koApplyBindings(demoForm);
+    }
+
+    $modal.on('shown.bs.modal', function () {
+        kissmetrics.track.event("Demo Workflow - Viewed Form");
+    });
+    $modal.on('hide.bs.modal', function () {
+        kissmetrics.track.event("Demo Workflow - Dismissed Form");
     });
 
-    /**
-     * Activates the Hubspot Request Demo form
-     */
-    _utils.loadDemoForm = function () {
-        let $modal = $('#cta-form-get-demo'),
-            $form = $('#get-demo-cta-form-content'),
-            hasInteractedWithForm = false,
-            formId = "f6ebf161-fccf-4083-9a72-5839a0c8ac8c",
-            demoForm;
-
-        demoForm = ctaForms.hubspotCtaForm({
-            hubspotFormId: formId,
-            nextButtonText: gettext("Submit Request"),
-            submitCallbackFn: function () {
-                $('#get-demo-cta-success').fadeIn();
-                $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
-
-                kissmetrics.track.event("Demo Workflow - Contact Info Received");
-            },
-        });
-        if ($form.length) {
-            $form.koApplyBindings(demoForm);
+    $form.find('input').click(function () {
+        if (!hasInteractedWithForm) {
+            kissmetrics.track.event("Demo Workflow - Interacted With Form");
+            hasInteractedWithForm = true;
         }
+    });
+};
 
-        $modal.on('shown.bs.modal', function () {
-            kissmetrics.track.event("Demo Workflow - Viewed Form");
-        });
-        $modal.on('hide.bs.modal', function () {
-            kissmetrics.track.event("Demo Workflow - Dismissed Form");
-        });
+/**
+ * Sends data to Hubspot to identify the current session.
+ * @param {object} data
+ */
+var identify = function (data) {
+    _ready.done(function () {
+        _logger.debug.log(data, "Identify");
+        _hsq.push(['identify', data]);
+    });
+};
 
-        $form.find('input').click(function () {
-            if (!hasInteractedWithForm) {
-                kissmetrics.track.event("Demo Workflow - Interacted With Form");
-                hasInteractedWithForm = true;
-            }
-        });
-    };
+/**
+ * Tracks an event through the Hubspot API
+ * @param {string} eventId - The ID of the event. If you created the event in HubSpot, use the numerical ID of the event.
+ * @param {integer|float} value - This is an optional argument that can be used to track the revenue of an event.
+ */
+var trackEvent = function (eventId, value) {
+    var originalArgs = arguments;
+    _ready.done(function () {
+        _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], originalArgs), 'Track Event');
+        _hsq.push(['trackEvent', {
+            id: eventId,
+            value: value,
+        }]);
+    });
+};
 
-    /**
-     * Sends data to Hubspot to identify the current session.
-     * @param {object} data
-     */
-    var identify = function (data) {
-        _ready.done(function () {
-            _logger.debug.log(data, "Identify");
-            _hsq.push(['identify', data]);
-        });
-    };
+var then = function (successCallback, failureCallback) {
+    _ready.then(successCallback, failureCallback);
+};
 
-    /**
-     * Tracks an event through the Hubspot API
-     * @param {string} eventId - The ID of the event. If you created the event in HubSpot, use the numerical ID of the event.
-     * @param {integer|float} value - This is an optional argument that can be used to track the revenue of an event.
-     */
-    var trackEvent = function (eventId, value) {
-        var originalArgs = arguments;
-        _ready.done(function () {
-            _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], originalArgs), 'Track Event');
-            _hsq.push(['trackEvent', {
-                id: eventId,
-                value: value,
-            }]);
-        });
-    };
-
-    var then = function (successCallback, failureCallback) {
-        _ready.then(successCallback, failureCallback);
-    };
-
-    return {
-        identify: identify,
-        then: then,
-        trackEvent: trackEvent,
-    };
-});
+export default {
+    identify: identify,
+    then: then,
+    trackEvent: trackEvent,
+};
