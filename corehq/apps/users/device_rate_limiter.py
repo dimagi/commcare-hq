@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 
 from django_redis import get_redis_connection
 
-from corehq import toggles
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
 from corehq.project_limits.models import SystemLimit
 from corehq.util.metrics import metrics_counter
@@ -66,12 +65,11 @@ class DeviceRateLimiter:
             self._track_usage(key, device_id)
             return False
 
-        is_enabled = toggles.DEVICE_RATE_LIMITER.enabled(domain, toggles.NAMESPACE_DOMAIN)
         metrics_counter(
             'commcare.devices_per_user.rate_limited',
-            tags={'domain': domain, 'user_id': user.user_id, 'enabled': str(is_enabled)},
+            tags={'domain': domain, 'user_id': user.user_id},
         )
-        return is_enabled
+        return True
 
     def _get_redis_key(self, domain, user_id):
         """
