@@ -15,7 +15,7 @@ DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
 
 DEVICE_LIMIT_PER_USER_KEY = "device_limit_per_user"
-DEVICE_LIMIT_PER_USER_DEFAULT = 50
+DEVICE_LIMIT_PER_USER_DEFAULT = 10
 REDIS_KEY_PREFIX = "device-limiter"
 
 
