@@ -2838,6 +2838,14 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
                'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
+DEACTIVATE_WEB_USERS = StaticToggle(
+    slug='deactivate_web_users',
+    label='USH: Deactivate Web Users',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow domains to deactivate web users just for that domain',
+)
+
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
