@@ -73,22 +73,7 @@ def main():
     try:
         if args.no_make:
             print("Skipping Vellum build")
-            vellum_tar = join(vellum_dir, VELLUM_TAR)
-            if not exists(vellum_tar):
-                sys.exit("{} not found".format(vellum_tar))
-            elif args.mode == "master":
-                print("Using {}".format(vellum_tar))
-                ok = input("Type 'ok' to continue: ")
-                if ok != "ok":
-                    sys.exit("Aborted.")
-            vellum_rev = get_version(vellum_tar)
-            head_rev = get_git(vellum_dir)("rev-parse", "HEAD").strip()
-            if vellum_rev != head_rev:
-                print("{} version ({})\ndiffers from HEAD ({})"
-                      .format(vellum_tar, vellum_rev, head_rev))
-                ok = input("Type 'ok' to continue: ")
-                if ok != "ok":
-                    sys.exit("Aborted.")
+            vellum_rev = get_vellum_build(vellum_dir, args.mode)
         else:
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test, args.dev_mode)
 
@@ -97,6 +82,26 @@ def main():
             fix_staging(hq_dir, args.push)
     except sh.ErrorReturnCode as err:
         print("Aborted due to error: {}".format(err))
+
+
+def get_vellum_build(vellum_dir, mode):
+    vellum_tar = join(vellum_dir, VELLUM_TAR)
+    if not exists(vellum_tar):
+        sys.exit("{} not found".format(vellum_tar))
+    elif mode == "master":
+        print("Using {}".format(vellum_tar))
+        ok = input("Type 'ok' to continue: ")
+        if ok != "ok":
+            sys.exit("Aborted.")
+    vellum_rev = get_version(vellum_tar)
+    head_rev = get_git(vellum_dir)("rev-parse", "HEAD").strip()
+    if vellum_rev != head_rev:
+        print("{} version ({})\ndiffers from HEAD ({})"
+                .format(vellum_tar, vellum_rev, head_rev))
+        ok = input("Type 'ok' to continue: ")
+        if ok != "ok":
+            sys.exit("Aborted.")
+    return vellum_rev
 
 
 def build_vellum(path, branch, test=True, dev_mode=False):
