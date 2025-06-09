@@ -10,10 +10,6 @@ instructions), before using this script to push changes to master.
 
 This script assumes that the vellum-staging branch is in staging.yml.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 import subprocess
 import sys
@@ -23,12 +19,6 @@ from os.path import abspath, dirname, exists, join
 import sh
 
 VELLUM_TAR = "vellum.tar.gz"
-
-
-def get_git(path=None, foreground=False):
-    # see: https://amoffat.github.io/sh/sections/special_arguments.html#fg
-    kwargs = {"_fg" if foreground else "_tty_out": foreground}
-    return sh.git.bake(_cwd=path, **kwargs)
 
 
 def main():
@@ -49,8 +39,6 @@ def main():
              "This does nothing when mode is 'master'.")
     parser.add_argument("--no-make", action="store_true",
         help="Skip Vellum build (mutually exclusive with --no-test).")
-    parser.add_argument("--dev-mode", action="store_true",
-        help="Skip git checks and do not commit anything.")
     parser.add_argument("--no-test", action="store_true",
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
@@ -58,6 +46,8 @@ def main():
             "that it is not possible to push directly to master, so a "
             "pull request must be created to update Vellum. Instructions "
             "will be printed if this option is used on master.")
+    parser.add_argument("--dev-mode", action="store_true",
+        help="Skip git checks and do not commit anything.")
     parser.add_argument("--target", default='vellum',
         help="Directory within corehq/apps/app_manager/static/app_manager/js/ to place "
             "built Vellum. Defaults to 'vellum'.")
@@ -245,6 +235,12 @@ def require_clean_working_tree(git, context="", abort=sys.exit):
         git("diff-index", "--cached", "--quiet", "HEAD", "--ignore-submodules", "--")
     except sh.ErrorReturnCode:
         abort("Aborting. You have uncommitted changes{}.".format(context))
+
+
+def get_git(path=None, foreground=False):
+    # see: https://amoffat.github.io/sh/sections/special_arguments.html#fg
+    kwargs = {"_fg" if foreground else "_tty_out": foreground}
+    return sh.git.bake(_cwd=path, **kwargs)
 
 
 def get_version(vellum_tar):
