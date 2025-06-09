@@ -148,6 +148,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
         git.checkout(branch)
         git.fetch()
 
+    hq_branch = f"vellum-{vellum_rev[:7]}" if branch == "master" else branch
     hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", target)
     if not dev_mode:
         if branch != "master":
@@ -155,7 +156,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
             git.reset("--hard", "origin/" + base_branch)
             assert hq_vellum.startswith(path), (path, hq_vellum)
         else:
-            require_branch_up_to_date(git, "master", context=path)
+            git.checkout("-B", hq_branch, "origin/master")
     old_vellum_rev = get_old_vellum_rev(hq_vellum)
 
     print("Overwriting HQ Vellum with new build")
@@ -170,14 +171,20 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
     git.add("--all", hq_vellum)
 
     message = "{}:{}".format(target, vellum_rev)
-    if branch == 'vellum-staging':
-        message += """
+    if branch == 'master':
+        message += dedent("""
+
+        Run `scripts/vellum-to-hq fix-staging --push` to update the
+        vellum-staging branch after this is merged into master.
+        """)
+    else:
+        message += dedent("""
 
         If you are running rebuildstaging and this commit conflictcs with
         master, run:
 
             scripts/vellum-to-hq fix-staging --push
-        """
+        """)
 
     code = subprocess.call([
         "git", "commit", "--edit", "--no-verify", "--message={}".format(message)
@@ -185,17 +192,14 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
     if code != 0:
         sys.exit(code)
 
-    if branch == "master":
-        print("\nCannot push directly to master. A pull request is required.")
-        print("The steps will involve something like\n")
-        print("  git checkout -b update-vellum master")
-        print("  git branch -f master origin/master")
-        print("  git push origin update-vellum")
-        print("\nThen PR the new 'update-vellum' branch on Github.\n")
-    elif push:
-        assert branch != "master"
-        print("Pushing HQ origin/{}".format(branch))
-        get_git(path, foreground=True).push("origin", branch, "-f")
+    if push:
+        print(f"Pushing HQ origin/{hq_branch}")
+        maybe_force = "" if branch == "master" else "-f"
+        get_git(path, foreground=True).push("origin", hq_branch, maybe_force)
+        # push output will print instructions for creating a PR
+    elif branch == "master":
+        print(f"\nPush '{hq_branch}' to Github, then create a PR:\n")
+        print(f"  git push origin {hq_branch}")
 
     print_vellum_changes(old_vellum_rev, vellum_dir)
 
