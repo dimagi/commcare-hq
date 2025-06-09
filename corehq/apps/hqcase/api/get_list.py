@@ -15,7 +15,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
@@ -87,8 +87,8 @@ def get_list(domain, couch_user, params):
     if 'cursor' in params:
         try:
             params_string = b64decode(params['cursor']).decode('utf-8')
-        except binascii.Error as e:
-            notify_exception(None, message=f"Failed to decode 'cursor' parameter: {params['cursor']}", exec_info=e)
+        except binascii.Error:
+            notify_error(message=f"Failed to decode 'cursor' parameter in case api: {params['cursor']}")
             return JsonResponse({'error': "Failed to decode 'cursor' parameter"}, status=400)
         params = QueryDict(params_string, mutable=True)
         # QueryDict.pop() returns a list
