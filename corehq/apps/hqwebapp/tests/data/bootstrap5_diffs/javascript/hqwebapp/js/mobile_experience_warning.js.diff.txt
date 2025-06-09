@@ -1,59 +1,66 @@
 --- 
 +++ 
-@@ -1,42 +1,40 @@
+@@ -1,47 +1,46 @@
 -
- import $ from "jquery";
- import initialPageData from "hqwebapp/js/initial_page_data";
- import kissmetrix from "analytix/js/kissmetrix";
-+import { Modal } from "bootstrap5";
- import "jquery.cookie/jquery.cookie";
+-define('hqwebapp/js/bootstrap3/mobile_experience_warning', [
++define('hqwebapp/js/bootstrap5/mobile_experience_warning', [
+     "jquery",
+     "hqwebapp/js/initial_page_data",
+     "analytix/js/kissmetrix",
++    "bootstrap5",
+     "jquery.cookie/jquery.cookie",
+ ], function (
+     $,
+     initialPageData,
+     kissmetrix,
++    bootstrap,
+ ) {
+     $(function () {
  
- $(function () {
+         if (initialPageData.get('show_mobile_ux_warning')) {
+-            var reminderUrl = initialPageData.reverse('send_mobile_reminder'),
+-                $modal = $("#mobile-experience-modal"),
+-                $videoModal = $("#mobile-experience-video-modal");
++            let reminderUrl = initialPageData.reverse('send_mobile_reminder'),
++                uxWarningModalElement = document.getElementById('mobile-experience-modal'),
++                videoModalElement = document.getElementById('mobile-experience-video-modal'),
++                uxWarningModal = new bootstrap.Modal(uxWarningModalElement);
  
-     if (initialPageData.get('show_mobile_ux_warning')) {
--        var reminderUrl = initialPageData.reverse('send_mobile_reminder'),
--            $modal = $("#mobile-experience-modal"),
--            $videoModal = $("#mobile-experience-video-modal");
-+        let reminderUrl = initialPageData.reverse('send_mobile_reminder'),
-+            uxWarningModalElement = document.getElementById('mobile-experience-modal'),
-+            videoModalElement = document.getElementById('mobile-experience-video-modal'),
-+            uxWarningModal = new Modal(uxWarningModalElement);
- 
--        var setCookie = function () {
-+        uxWarningModal.show();
-+        let setCookie = function () {
-             $.cookie(initialPageData.get('mobile_ux_cookie_name'), true, {
-                 path: '/',
-                 secure: initialPageData.get('secure_cookies'),
-             });
-         };
+-            var setCookie = function () {
++            uxWarningModal.show();
++            let setCookie = function () {
+                 $.cookie(initialPageData.get('mobile_ux_cookie_name'), true, {
+                     path: '/',
+                     secure: initialPageData.get('secure_cookies'),
+                 });
+             };
 -
--        $modal.find('.close').click(function (e) {
--            e.preventDefault();
--            $modal.removeClass('modal-force-show');
-+        uxWarningModalElement.addEventListener('hidden.bs.modal', function () {
-             setCookie();
-         });
-+        videoModalElement.addEventListener('shown.bs.modal', function () {
-+            uxWarningModal.hide();
-+        });
- 
--        var sendReminder = function (e) {
-+        let sendReminder = function (e) {
-             $.ajax({
-                 dataType: 'json',
-                 url: reminderUrl,
-                 type: 'post',
-             });
--            e.preventDefault();
--            $videoModal.modal();
--            $videoModal.on('shown.bs.modal', function () {
+-            $modal.find('.close').click(function (e) {
+-                e.preventDefault();
 -                $modal.removeClass('modal-force-show');
--            });
-+            let videoModal = new Modal(videoModalElement);
-+            videoModal.show();
-             kissmetrix.track.event('Clicked mobile experience reminder');
--            setCookie();
-         };
++            uxWarningModalElement.addEventListener('hidden.bs.modal', function () {
+                 setCookie();
+             });
++            videoModalElement.addEventListener('shown.bs.modal', function () {
++                uxWarningModal.hide();
++            });
  
-         $("#send-mobile-reminder-button").click(sendReminder);
+-            var sendReminder = function (e) {
++            let sendReminder = function (e) {
+                 $.ajax({
+                     dataType: 'json',
+                     url: reminderUrl,
+                     type: 'post',
+                 });
+-                e.preventDefault();
+-                $videoModal.modal();
+-                $videoModal.on('shown.bs.modal', function () {
+-                    $modal.removeClass('modal-force-show');
+-                });
++                let videoModal = new bootstrap.Modal(videoModalElement);
++                videoModal.show();
+                 kissmetrix.track.event('Clicked mobile experience reminder');
+-                setCookie();
+             };
+ 
+             $("#send-mobile-reminder-button").click(sendReminder);

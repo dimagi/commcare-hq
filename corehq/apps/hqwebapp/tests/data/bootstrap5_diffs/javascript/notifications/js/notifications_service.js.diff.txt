@@ -1,11 +1,18 @@
 --- 
 +++ 
-@@ -9,7 +9,7 @@
- import _ from "underscore";
- import RMI from "jquery.rmi/jquery.rmi";
- import kissmetrics from "analytix/js/kissmetrix";
--import "hqwebapp/js/bootstrap3/hq.helpers";
-+import "hqwebapp/js/bootstrap5/hq.helpers";
+@@ -4,13 +4,13 @@
+  *
+  */
  
- var module = {};
- var _private = {};
+-define('notifications/js/bootstrap3/notifications_service', [
++define('notifications/js/bootstrap5/notifications_service', [
+     'jquery',
+     'knockout',
+     'underscore',
+     'jquery.rmi/jquery.rmi',
+     'analytix/js/kissmetrix',
+-    'hqwebapp/js/bootstrap3/hq.helpers',
++    'hqwebapp/js/bootstrap5/hq.helpers',
+ ], function (
+     $,
+     ko,
