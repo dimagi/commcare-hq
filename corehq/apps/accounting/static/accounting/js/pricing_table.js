@@ -11,7 +11,8 @@ var PricingTable = function (options) {
     assertProperties.assert(options, [
         'editions',
         'planOptions',
-        'currentPlan',
+        'currentEdition',
+        'currentIsAnnualPlan',
         'isRenewal',
         'startDateAfterMinimum',
         'isSubscriptionBelowMin',
@@ -23,28 +24,31 @@ var PricingTable = function (options) {
 
     var self = {};
 
-    self.oCurrentPlan = ko.observable(options.currentPlan);
+    self.oCurrentEdition = ko.observable(options.currentEdition);
     self.oNextSubscription = ko.observable(options.nextSubscriptionEdition);
     self.oStartDateAfterMinimumSubscription = ko.observable(options.startDateAfterMinimum);
     self.oCurrentPrice = ko.observable(options.currentPrice);
     self.oIsPriceDiscounted = ko.observable(options.isPriceDiscounted);
+    self.currentIsAnnualPlan = options.currentIsAnnualPlan;
     self.editions = options.editions;
     self.isRenewal = options.isRenewal;
     self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
     self.invoicingContact = options.invoicingContact;
 
-    self.oSelectedPlan = ko.observable(options.currentPlan);
+    self.oSelectedEdition = ko.observable(options.currentEdition);
 
-    self.oShowAnnualPricing = ko.observable(false);
+    self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
     self.oIsSubmitDisabled = ko.computed(function () {
-        var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription(),
-            isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
-        return !self.oSelectedPlan() || isNextPlan || isCurrentPlan;
+        var isSubscribablePlan = !!self.oSelectedEdition() && !['free', 'enterprise'].includes(self.oSelectedEdition());
+        var isSamePaySchedule = self.currentIsAnnualPlan === self.oShowAnnualPricing();
+        var isCurrentPlan = self.oSelectedEdition() === self.oCurrentEdition() && !self.oNextSubscription() && isSamePaySchedule;
+        var isNextPlan = self.oNextSubscription() && self.oSelectedEdition() === self.oNextSubscription().toLowerCase();
+        return !isSubscribablePlan || isNextPlan || isCurrentPlan;
     });
 
-    self.oIsCurrentPlanFreeEdition = ko.observable(options.currentPlan === 'free');
-    self.oIsCurrentPlanPaused = ko.observable(options.currentPlan === 'paused');
+    self.oIsCurrentPlanFreeEdition = ko.observable(options.currentEdition === 'free');
+    self.oIsCurrentPlanPaused = ko.observable(options.currentEdition === 'paused');
 
     self.oIsNextPlanPaused = ko.computed(function () {
         return self.oNextSubscription() === 'Paused';
@@ -55,14 +59,14 @@ var PricingTable = function (options) {
     });
 
     self.selectPausedPlan = function () {
-        self.oSelectedPlan('paused');
+        self.oSelectedEdition('paused');
     };
     self.isDowngrade = function () {
-        return self.editions.indexOf(self.oSelectedPlan()) < self.editions.indexOf(self.oCurrentPlan());
+        return self.editions.indexOf(self.oSelectedEdition()) < self.editions.indexOf(self.oCurrentEdition());
     };
 
     self.oPausedCss = ko.computed(function () {
-        if (self.oSelectedPlan() === 'paused') {
+        if (self.oSelectedEdition() === 'paused') {
             return "selected-plan";
         }
         return "";
@@ -72,23 +76,19 @@ var PricingTable = function (options) {
         return new PlanOption(opt, self);
     }));
 
-    self.oShowNext = ko.computed(function () {
-        return !self.oShowAnnualPricing();
-    });
-
     self.form = undefined;
     self.openMinimumSubscriptionModal = function (pricingTable, e) {
         self.form = $(e.currentTarget).closest("form");
 
         var invoicingContact = _.escape(self.invoicingContact);
         if (self.isDowngrade() && self.subscriptionBelowMinimum) {
-            var oldPlan = utils.capitalize(self.oCurrentPlan());
-            var newPlan = utils.capitalize(self.oSelectedPlan());
+            var oldPlan = utils.capitalize(self.oCurrentEdition());
+            var newPlan = utils.capitalize(self.oSelectedEdition());
             var newStartDate = self.oStartDateAfterMinimumSubscription();
 
             var message = "",
                 title = gettext("Downgrading?");
-            if (self.oSelectedPlan() === 'paused') {
+            if (self.oSelectedEdition() === 'paused') {
                 title = gettext("Pausing Subscription?");
                 message = _.template(gettext(
                     "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
@@ -165,15 +165,6 @@ var PricingTable = function (options) {
         }
     };
 
-    self.contactSales = function (pricingTable, e) {
-        var $button = $(e.currentTarget);
-        $button.disableButton();
-
-        self.form = $(e.currentTarget).closest("form");
-        self.oCurrentPlan(self.oCurrentPlan() + " - annual pricing");
-        self.form.submit();
-    };
-
     self.init = function () {
         self.form = $("#select-plan-form");
     };
@@ -206,11 +197,11 @@ var PlanOption = function (data, parent) {
     });
 
     self.oIsCurrentPlan = ko.computed(function () {
-        return self.oSlug() === parent.oCurrentPlan();
+        return self.oSlug() === parent.oCurrentEdition();
     });
 
     self.oIsSelectedPlan = ko.computed(function () {
-        return self.oSlug() === parent.oSelectedPlan();
+        return self.oSlug() === parent.oSelectedEdition();
     });
 
     self.oShowDowngradeNotice = ko.computed(function () {
@@ -238,7 +229,7 @@ var PlanOption = function (data, parent) {
     });
 
     self.selectPlan = function () {
-        parent.oSelectedPlan(self.oSlug());
+        parent.oSelectedEdition(self.oSlug());
     };
 
     self.oPricingTypeText = ko.computed(function () {
@@ -276,7 +267,8 @@ $(function () {
     var pricingTable = new PricingTable({
         editions: initialPageData.get('editions'),
         planOptions: initialPageData.get('planOptions'),
-        currentPlan: initialPageData.get('currentPlan'),
+        currentEdition: initialPageData.get('currentEdition'),
+        currentIsAnnualPlan: initialPageData.get('currentIsAnnualPlan'),
         isRenewal: initialPageData.get('is_renewal'),
         startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
         isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),

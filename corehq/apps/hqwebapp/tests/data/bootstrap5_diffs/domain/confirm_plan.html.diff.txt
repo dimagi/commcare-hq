@@ -10,7 +10,7 @@
  
  {% block form_content %}
    {% initial_page_data 'is_annual_plan' is_annual_plan %}
-@@ -58,7 +58,7 @@
+@@ -59,7 +59,7 @@
        <div class="text-center plan-next">
          <a
            href="{% url 'domain_select_plan' domain %}"
@@ -19,7 +19,7 @@
          >
            {% if is_paused %}
              {% trans 'Select different option' %}
-@@ -87,7 +87,8 @@
+@@ -88,7 +88,8 @@
      <div class="modal-dialog">
        <div class="modal-content">
          <div class="modal-header">
@@ -29,7 +29,7 @@
              <span aria-hidden="true">&times;</span>
              <span class="sr-only">{% trans "Close" %}</span>
            </button>
-@@ -119,6 +120,7 @@
+@@ -120,6 +121,7 @@
              {% endif %}
              <select
                multiple="multiple"
@@ -37,7 +37,7 @@
                class="form-control"
                data-bind="selectedOptions: oDowngradeReason,
                           options: downgradeReasonList"
-@@ -130,7 +132,7 @@
+@@ -131,7 +133,7 @@
              {% blocktrans %}
                Do you think your project may start again?
              {% endblocktrans %}
@@ -46,7 +46,7 @@
                <option value="yes">{% trans "Yes" %}</option>
                <option value="no" selected="selected">{% trans "No" %}</option>
              </select>
-@@ -153,6 +155,7 @@
+@@ -154,6 +156,7 @@
              {% endblocktrans %}
              <select
                multiple="multiple"
@@ -54,7 +54,7 @@
                class="form-control"
                data-bind="selectedOptions: oNewToolReason,
                           options: newToolReasonList"
-@@ -193,7 +196,11 @@
+@@ -194,7 +197,11 @@
            </button>
            <!-- /ko -->
            <!-- ko ifnot: oRequiredQuestionsAnswered -->
