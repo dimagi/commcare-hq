@@ -1,0 +1,41 @@
+{% extends "data_cleaning/status/base_modal_body.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block modal-header %}
+  {% trans "This is a completed session" %}
+{% endblock modal-header %}
+
+{% block task-status-progress %}{% endblock task-status-progress %}
+
+{% block modal-body %}
+  <p class="lead">
+    {% blocktrans %}
+      Restart this session with the same columns and filters?
+    {% endblocktrans %}
+  </p>
+  <div class="alert alert-warning">
+    <strong>{% trans "Important" %}:</strong>
+    {% blocktrans %}
+      This will replace your existing active session with a new one.
+    {% endblocktrans %}
+    <br />
+    {% blocktrans %}
+      Any edits you made will be lost.
+    {% endblocktrans %}
+  </div>
+{% endblock modal-body %}
+
+{% block continue-button %}
+  <button
+    type="button"
+    class="btn btn-primary"
+    hx-post="{{ request.path_info }}{% querystring %}"
+    hq-hx-action="resume_session"
+    hx-swap="none"
+    hx-disabled-elt="this"
+    @click="$store.gtm.sendEvent('bulk_edit_restart_session');"
+  >
+    {% trans "Restart this session" %}
+  </button>
+{% endblock continue-button %}

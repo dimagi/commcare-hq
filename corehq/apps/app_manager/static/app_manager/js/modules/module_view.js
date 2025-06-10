@@ -9,6 +9,7 @@ import screenConfig from "app_manager/js/details/screen_config";
 import shadowModuleSettings from "app_manager/js/modules/shadow_module_settings";
 import toggles from "hqwebapp/js/toggles";
 import VisitScheduler from "app_manager/js/visit_scheduler";  // advanced modules only
+import "jquery-textchange/jquery.textchange";
 import "app_manager/js/custom_assertions";
 import "select2/dist/js/select2.full.min";
 import "app_manager/js/nav_menu_media";

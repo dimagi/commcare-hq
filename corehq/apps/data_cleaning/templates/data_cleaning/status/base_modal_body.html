@@ -7,16 +7,19 @@
     </h5>
   </div>
   <div class="modal-body">
-    <div class="alert alert-success">
-      {% include "data_cleaning/status/partial/task_progress_bar.html" %}
-      {% block task-status-text %}{% endblock task-status-text %}
-    </div>
+    {% block task-status-progress %}
+      <div class="alert alert-success">
+        {% include "data_cleaning/status/partial/task_progress_bar.html" %}
+        {% block task-status-text %}{% endblock task-status-text %}
+      </div>
+    {% endblock task-status-progress %}
     {% block modal-body %}{% endblock modal-body %}
   </div>
   <div class="modal-footer">
     <a
       class="btn btn-outline-primary"
       href="{{ exit_url }}"
+      @click="$store.gtm.sendEvent('bulk_edit_exit_session_status');"
     >
       {% trans "Exit session" %}
     </a>
