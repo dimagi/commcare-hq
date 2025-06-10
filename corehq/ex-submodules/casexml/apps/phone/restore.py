@@ -609,7 +609,7 @@ class RestoreConfig(object):
             response = JsonResponse({
                 'error': 'restore.failed.error',
                 'default_response': str(e),
-            })
+            }, status=406)
 
         if not is_async:
             self._record_timing(response.status_code)
