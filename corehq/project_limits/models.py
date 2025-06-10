@@ -137,7 +137,7 @@ class SystemLimit(models.Model):
         return SystemLimit._get_global_limit(key, default)
 
     @staticmethod
-    @quickcache(['key', 'default'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
+    @quickcache(['key'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
     def _get_global_limit(key, default):
         system_limit, _ = SystemLimit.objects.get_or_create(key=key, domain='', defaults={"limit": default})
         return system_limit.limit
