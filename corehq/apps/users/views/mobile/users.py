@@ -247,6 +247,13 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     @memoized
+    def reset_password_form_email(self):
+        from corehq.apps.domain.forms import ConfidentialPasswordResetForm
+
+        return ConfidentialPasswordResetForm({'email': 'jtang@dimagi.com'})
+
+    @property
+    @memoized
     def groups(self):
         if not self.editable_user:
             return []
@@ -312,6 +319,7 @@ class EditCommCareUserView(BaseEditUserView):
             'groups_url': reverse('all_groups', args=[self.domain]),
             'group_form': self.group_form,
             'reset_password_form': self.reset_password_form,
+            'reset_password_form_email': self.reset_password_form_email,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),

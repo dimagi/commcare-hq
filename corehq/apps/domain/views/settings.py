@@ -568,26 +568,26 @@ class CustomPasswordResetEmailView(PasswordResetView):
             print("self.form_invalid", self.form_invalid(form))
             # If invalid, show the form with errors
             return self.form_invalid(form)
-    def post(self, request, *args, **kwargs):
-        from corehq.apps.domain.forms import ConfidentialPasswordResetForm
-        # Handle POST requests for form submission
-        print("in post")
-        email = self.kwargs.get('email')
-        print("email", email)
-        # Instantiate the form with the email
-        form = self.get_form()
-        form.initial['email'] = email  # Set the initial email value
-        form = ConfidentialPasswordResetForm({'email': email})
+    # def post(self, request, *args, **kwargs):
+    #     from corehq.apps.domain.forms import ConfidentialPasswordResetForm
+    #     # Handle POST requests for form submission
+    #     print("in post", request.POST)
+    #     email = self.kwargs.get('email')
+    #     print("email", email)
+    #     # Instantiate the form with the email
+    #     # form = self.get_form()
+    #     # form.initial['email'] = email  # Set the initial email value
+    #     # form = ConfidentialPasswordResetForm({'email': email})
 
-        print("form", form)
-        if form.is_valid():
-            print("form is valid")
-            self.form_valid(form)
-            return HttpResponseRedirect('/')
-        else:
-            print('form .is_bound', form.is_bound)
-            print("form is invalid", form.errors)
-            return self.form_invalid(form)
+    #     # print("form", form)
+    #     # if form.is_valid():
+    #     #     print("form is valid")
+    #     #     # self.form_valid(form)
+    #     #     return HttpResponseRedirect('/')
+    #     # else:
+    #     #     # print('form .is_bound', form.is_bound)
+    #     #     # print("form is invalid", form.errors)
+    #     #     return self.form_invalid(form)
 
     def form_valid(self, form):
         # This method is called when valid form data has been processed.
