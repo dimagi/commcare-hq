@@ -2982,16 +2982,6 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-DEVICE_RATE_LIMITER = FeatureRelease(
-    slug='device_rate_limiter',
-    label='Apply rate limiting to the number of devices a single user can use in a one minute time window.',
-    description='Form submissions, restores, and heartbeat requests count towards usage. View and update in the '
-                'django admin under the SystemLimit table. The key is "device_limit_per_user"',
-    tag=TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Graham Herceg',
-)
-
 KYC_VERIFICATION = StaticToggle(
     slug='kyc_verification',
     label='Enable KYC verification',
