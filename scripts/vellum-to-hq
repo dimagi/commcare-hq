@@ -180,7 +180,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
     else:
         message += dedent("""
 
-        If you are running rebuildstaging and this commit conflictcs with
+        If you are running rebuildstaging and this commit conflicts with
         master, run:
 
             scripts/vellum-to-hq fix-staging --push
