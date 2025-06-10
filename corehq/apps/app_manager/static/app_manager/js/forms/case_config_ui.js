@@ -74,8 +74,10 @@ $(function () {
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
                 var subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
-                const updatedActions = _(HQFormActions.from_case_transaction(
-                    self.caseConfigViewModel.case_transaction)).extend({subcases: subcases});
+                const updatedActions = Object.assign(
+                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
+                    {subcases: subcases},
+                );
                 const diff = getDiff(self.baseline, updatedActions);
 
                 self.saveButton.ajax({
