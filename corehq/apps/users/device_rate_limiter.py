@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 
 from django_redis import get_redis_connection
 
-from corehq import toggles
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
 from corehq.project_limits.models import SystemLimit
 from corehq.util.metrics import metrics_counter
@@ -15,7 +14,7 @@ DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
 
 DEVICE_LIMIT_PER_USER_KEY = "device_limit_per_user"
-DEVICE_LIMIT_PER_USER_DEFAULT = 50
+DEVICE_LIMIT_PER_USER_DEFAULT = 10
 REDIS_KEY_PREFIX = "device-limiter"
 
 
@@ -29,7 +28,7 @@ class DeviceRateLimiter:
         self.client = get_redis_connection()
 
     def device_limit_per_user(self, domain):
-        return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, domain=domain) or DEVICE_LIMIT_PER_USER_DEFAULT
+        return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, DEVICE_LIMIT_PER_USER_DEFAULT, domain=domain)
 
     def rate_limit_device(self, domain, user, device_id):
         """
@@ -66,12 +65,11 @@ class DeviceRateLimiter:
             self._track_usage(key, device_id)
             return False
 
-        is_enabled = toggles.DEVICE_RATE_LIMITER.enabled(domain, toggles.NAMESPACE_DOMAIN)
         metrics_counter(
             'commcare.devices_per_user.rate_limited',
-            tags={'domain': domain, 'user_id': user.user_id, 'enabled': str(is_enabled)},
+            tags={'domain': domain, 'user_id': user.user_id},
         )
-        return is_enabled
+        return True
 
     def _get_redis_key(self, domain, user_id):
         """
