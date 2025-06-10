@@ -1,6 +1,7 @@
-import $ from "jquery";
+
 import ko from "knockout";
 import _ from "underscore";
+import "jquery-textchange/jquery.textchange";
 import caseConfigUtils from "app_manager/js/case_config_utils";
 import { getBaseline, getDiff } from "app_manager/js/forms/form_action_diffs";
 import initialPageData from "hqwebapp/js/initial_page_data";

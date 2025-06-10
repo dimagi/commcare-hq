@@ -128,6 +128,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
     # request. but currently these are too tightly bound to decouple
 
     name = gettext_lazy('Case List')
+    description = gettext_lazy('View all cases within your project space.')
     slug = 'case_list'
     use_bootstrap5 = True
 

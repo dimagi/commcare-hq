@@ -169,7 +169,7 @@ class ProjectReportsTab(UITab):
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
-            'icon': 'icon-tasks fa fa-tasks',
+            'icon': 'fa-solid fa-floppy-disk',
             'show_in_dropdown': True,
         }]
         is_ucr_toggle_enabled = (
@@ -1010,7 +1010,6 @@ class ProjectDataTab(UITab):
     def _can_view_case_data_cleaning(self):
         return (
             bulk_data_cleaning_enabled_for_request(self._request)
-            and toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
         )
 
     def _get_explore_data_views(self):

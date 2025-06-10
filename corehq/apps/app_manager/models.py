@@ -365,6 +365,32 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
+    update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+
+    def make_multi(self):
+        '''
+        Moves any updates from `update` into `update_multi`
+        '''
+        if not (self.update and len(self.update)):
+            # update contains no items, so no changes are necessary
+            return
+
+        self.update_multi = {k: [v] for (k, v) in self.update.items()}
+        self.update = {}
+
+    def normalize_update(self):
+        '''
+        Attempt to move `update_multi` to `update`
+        If `update_multi` contains multiple updates mapped to the same case property, no changes will occur
+        '''
+        multi_question_cases = ((k, v) for (k, v) in self.update_multi.items() if len(v) > 1)
+        if any(multi_question_cases):
+            # must continue to use `update_multi`, as there are multiple questions saving to the same case property
+            return
+
+        normalized_update = {k: v[0] for (k, v) in self.update_multi.items()}
+        self.update = normalized_update
+        self.update_multi = None
 
     DIFF_ACTION_ADD = 'add'
     DIFF_ACTION_DELETE = 'del'
@@ -4636,9 +4662,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
         get_mobile_ucr_count.clear(self.domain)
-        if toggles.DATA_CLEANING_CASES.enabled(self.domain):
-            from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
-            clear_caches_case_data_cleaning(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)

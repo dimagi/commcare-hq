@@ -1,9 +1,9 @@
-import pytest
-from testil import eq
 from unittest import mock
 
+import pytest
 from django.http import QueryDict
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
+from testil import eq
 
 from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.filters import (
@@ -12,14 +12,15 @@ from corehq.apps.data_cleaning.filters import (
 )
 from corehq.apps.data_cleaning.models import (
     BulkEditFilter,
+    BulkEditSession,
     DataType,
     FilterMatchType,
-    BulkEditSession,
     PinnedFilterType,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import CaseSearchES, cases as case_es
+from corehq.apps.es import CaseSearchES
+from corehq.apps.es import cases as case_es
 from corehq.apps.es.case_search import (
     case_property_missing,
     case_search_adapter,
@@ -40,71 +41,82 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.reports.tests.standard.cases.test_utils import BaseCaseOwnersTest
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
-@pytest.mark.parametrize("category, valid_match_types", [
-    (DataType.FILTER_CATEGORY_TEXT, (
-        FilterMatchType.EXACT,
-        FilterMatchType.IS_NOT,
-        FilterMatchType.STARTS,
-        FilterMatchType.STARTS_NOT,
-        FilterMatchType.FUZZY,
-        FilterMatchType.FUZZY_NOT,
-        FilterMatchType.PHONETIC,
-        FilterMatchType.PHONETIC_NOT,
-        FilterMatchType.IS_EMPTY,
-        FilterMatchType.IS_NOT_EMPTY,
-        FilterMatchType.IS_MISSING,
-        FilterMatchType.IS_NOT_MISSING,
-    )),
-    (DataType.FILTER_CATEGORY_NUMBER, (
-        FilterMatchType.EXACT,
-        FilterMatchType.IS_NOT,
-        FilterMatchType.LESS_THAN,
-        FilterMatchType.LESS_THAN_EQUAL,
-        FilterMatchType.GREATER_THAN,
-        FilterMatchType.GREATER_THAN_EQUAL,
-        FilterMatchType.IS_EMPTY,
-        FilterMatchType.IS_NOT_EMPTY,
-        FilterMatchType.IS_MISSING,
-        FilterMatchType.IS_NOT_MISSING,
-    )),
-    (DataType.FILTER_CATEGORY_DATE, (
-        FilterMatchType.EXACT,
-        FilterMatchType.LESS_THAN,
-        FilterMatchType.LESS_THAN_EQUAL,
-        FilterMatchType.GREATER_THAN,
-        FilterMatchType.GREATER_THAN_EQUAL,
-        FilterMatchType.IS_EMPTY,
-        FilterMatchType.IS_NOT_EMPTY,
-        FilterMatchType.IS_MISSING,
-        FilterMatchType.IS_NOT_MISSING,
-    )),
-    (DataType.FILTER_CATEGORY_MULTI_SELECT, (
-        FilterMatchType.IS_ANY,
-        FilterMatchType.IS_NOT_ANY,
-        FilterMatchType.IS_ALL,
-        FilterMatchType.IS_NOT_ALL,
-        FilterMatchType.IS_EMPTY,
-        FilterMatchType.IS_NOT_EMPTY,
-        FilterMatchType.IS_MISSING,
-        FilterMatchType.IS_NOT_MISSING,
-    )),
-])
+@pytest.mark.parametrize(
+    'category, valid_match_types',
+    [
+        (
+            DataType.FILTER_CATEGORY_TEXT,
+            (
+                FilterMatchType.EXACT,
+                FilterMatchType.IS_NOT,
+                FilterMatchType.STARTS,
+                FilterMatchType.STARTS_NOT,
+                FilterMatchType.FUZZY,
+                FilterMatchType.FUZZY_NOT,
+                FilterMatchType.PHONETIC,
+                FilterMatchType.PHONETIC_NOT,
+                FilterMatchType.IS_EMPTY,
+                FilterMatchType.IS_NOT_EMPTY,
+                FilterMatchType.IS_MISSING,
+                FilterMatchType.IS_NOT_MISSING,
+            ),
+        ),
+        (
+            DataType.FILTER_CATEGORY_NUMBER,
+            (
+                FilterMatchType.EXACT,
+                FilterMatchType.IS_NOT,
+                FilterMatchType.LESS_THAN,
+                FilterMatchType.LESS_THAN_EQUAL,
+                FilterMatchType.GREATER_THAN,
+                FilterMatchType.GREATER_THAN_EQUAL,
+                FilterMatchType.IS_EMPTY,
+                FilterMatchType.IS_NOT_EMPTY,
+                FilterMatchType.IS_MISSING,
+                FilterMatchType.IS_NOT_MISSING,
+            ),
+        ),
+        (
+            DataType.FILTER_CATEGORY_DATE,
+            (
+                FilterMatchType.EXACT,
+                FilterMatchType.LESS_THAN,
+                FilterMatchType.LESS_THAN_EQUAL,
+                FilterMatchType.GREATER_THAN,
+                FilterMatchType.GREATER_THAN_EQUAL,
+                FilterMatchType.IS_EMPTY,
+                FilterMatchType.IS_NOT_EMPTY,
+                FilterMatchType.IS_MISSING,
+                FilterMatchType.IS_NOT_MISSING,
+            ),
+        ),
+        (
+            DataType.FILTER_CATEGORY_MULTI_SELECT,
+            (
+                FilterMatchType.IS_ANY,
+                FilterMatchType.IS_NOT_ANY,
+                FilterMatchType.IS_ALL,
+                FilterMatchType.IS_NOT_ALL,
+                FilterMatchType.IS_EMPTY,
+                FilterMatchType.IS_NOT_EMPTY,
+                FilterMatchType.IS_MISSING,
+                FilterMatchType.IS_NOT_MISSING,
+            ),
+        ),
+    ],
+)
 def test_data_and_match_type_validation(category, valid_match_types):
     for data_type in DataType.FILTER_CATEGORY_DATA_TYPES[category]:
         for match_type, _ in FilterMatchType.ALL_CHOICES:
-            is_valid = BulkEditFilter.is_data_and_match_type_valid(
-                match_type, data_type
-            )
+            is_valid = BulkEditFilter.is_data_and_match_type_valid(match_type, data_type)
             if match_type in valid_match_types:
-                eq(is_valid, True,
-                   text=f"FilterMatchType {match_type} should support DataType {data_type}")
+                eq(is_valid, True, text=f'FilterMatchType {match_type} should support DataType {data_type}')
             else:
-                eq(is_valid, False,
-                   text=f"FilterMatchType {match_type} should NOT support DataType {data_type}")
+                eq(is_valid, False, text=f'FilterMatchType {match_type} should NOT support DataType {data_type}')
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -117,17 +129,17 @@ class BulkEditFilterQueryTests(TestCase):
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.delete)
 
-        cls.web_user = WebUser.create(
-            cls.domain, 'tester@datacleaning.org', 'testpwd', None, None
-        )
+        cls.web_user = WebUser.create(cls.domain, 'tester@datacleaning.org', 'testpwd', None, None)
         cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
 
         case_search_es_setup(cls.domain, get_case_blocks())
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
-            self.web_user.get_django_user(), self.domain, 'plants',
+        self.session = BulkEditSession.objects.new_case_session(
+            self.web_user.get_django_user(),
+            self.domain,
+            'plants',
         )
 
     @classmethod
@@ -147,9 +159,9 @@ class BulkEditFilterQueryTests(TestCase):
             filtered_query = active_filter.filter_query(query)
             expected_query = query.filter(exact_case_property_text_query('soil_contents', ''))
             self.assertEqual(
-                filtered_query.es_query, expected_query.es_query,
-                msg=f"{data_type} failed to filter the query "
-                    f"properly for FilterMatchType.IS_EMPTY"
+                filtered_query.es_query,
+                expected_query.es_query,
+                msg=f'{data_type} failed to filter the query properly for FilterMatchType.IS_EMPTY',
             )
 
     def test_filter_query_is_not_empty(self):
@@ -164,9 +176,9 @@ class BulkEditFilterQueryTests(TestCase):
             filtered_query = active_filter.filter_query(query)
             expected_query = query.NOT(exact_case_property_text_query('soil_contents', ''))
             self.assertEqual(
-                filtered_query.es_query, expected_query.es_query,
-                msg=f"{data_type} failed to filter the query "
-                    f"properly for FilterMatchType.IS_NOT_EMPTY"
+                filtered_query.es_query,
+                expected_query.es_query,
+                msg=f'{data_type} failed to filter the query properly for FilterMatchType.IS_NOT_EMPTY',
             )
 
     def test_filter_query_is_missing(self):
@@ -181,9 +193,9 @@ class BulkEditFilterQueryTests(TestCase):
             filtered_query = active_filter.filter_query(query)
             expected_query = query.filter(case_property_missing('soil_contents'))
             self.assertEqual(
-                filtered_query.es_query, expected_query.es_query,
-                msg=f"{data_type} failed to filter the query "
-                    f"properly for FilterMatchType.IS_MISSING"
+                filtered_query.es_query,
+                expected_query.es_query,
+                msg=f'{data_type} failed to filter the query properly for FilterMatchType.IS_MISSING',
             )
 
     def test_filter_query_is_not_missing(self):
@@ -198,9 +210,9 @@ class BulkEditFilterQueryTests(TestCase):
             filtered_query = active_filter.filter_query(query)
             expected_query = query.NOT(case_property_missing('soil_contents'))
             self.assertEqual(
-                filtered_query.es_query, expected_query.es_query,
-                msg=f"{data_type} failed to filter the query "
-                    f"properly for FilterMatchType.IS_NOT_MISSING"
+                filtered_query.es_query,
+                expected_query.es_query,
+                msg=f'{data_type} failed to filter the query properly for FilterMatchType.IS_NOT_MISSING',
             )
 
     def filter_query_remains_unchanged_for_other_match_types(self):
@@ -217,13 +229,13 @@ class BulkEditFilterQueryTests(TestCase):
                 )
                 filtered_query = active_filter.filter_query(query)
                 self.assertEqual(
-                    filtered_query.es_query, query.es_query,
-                    msg=f"filtered query should remain unchanged for {data_type}, {match_type}"
+                    filtered_query.es_query,
+                    query.es_query,
+                    msg=f'filtered query should remain unchanged for {data_type}, {match_type}',
                 )
 
 
 class BulkEditFilterXpathTest(TestCase):
-
     def test_exact_text_xpath(self):
         active_filter = BulkEditFilter(
             prop_id='name',
@@ -231,10 +243,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.EXACT,
             value='Riny Iola',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "name = 'Riny Iola'"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "name = 'Riny Iola'")
 
     def test_single_quote_xpath(self):
         active_filter = BulkEditFilter(
@@ -243,14 +252,8 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.EXACT,
             value="Happy's",
         )
-        self.assertEqual(
-            active_filter.get_quoted_value(active_filter.value),
-            '''"Happy's"'''
-        )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            '''name = "Happy's"'''
-        )
+        self.assertEqual(active_filter.get_quoted_value(active_filter.value), '''"Happy's"''')
+        self.assertEqual(active_filter.get_xpath_expression(), '''name = "Happy's"''')
 
     def test_double_quote_xpath(self):
         active_filter = BulkEditFilter(
@@ -259,21 +262,15 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.EXACT,
             value='Zesty "orange" Flora',
         )
-        self.assertEqual(
-            active_filter.get_quoted_value(active_filter.value),
-            """'Zesty "orange" Flora'"""
-        )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            """name = 'Zesty "orange" Flora'"""
-        )
+        self.assertEqual(active_filter.get_quoted_value(active_filter.value), """'Zesty "orange" Flora'""")
+        self.assertEqual(active_filter.get_xpath_expression(), """name = 'Zesty "orange" Flora'""")
 
     def test_mixed_quote_xpath(self):
         active_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.EXACT,
-            value='''Zesty's "orange" Flora''',
+            value="""Zesty's "orange" Flora""",
         )
         with self.assertRaises(UnsupportedFilterValueException):
             active_filter.get_quoted_value(active_filter.value)
@@ -282,27 +279,15 @@ class BulkEditFilterXpathTest(TestCase):
 
     def test_exact_number_xpath(self):
         active_filter = BulkEditFilter(
-            prop_id='height_cm',
-            data_type=DataType.DECIMAL,
-            match_type=FilterMatchType.EXACT,
-            value='11.2'
+            prop_id='height_cm', data_type=DataType.DECIMAL, match_type=FilterMatchType.EXACT, value='11.2'
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "height_cm = 11.2"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), 'height_cm = 11.2')
 
     def test_exact_date_xpath(self):
         active_filter = BulkEditFilter(
-            prop_id='watered_on',
-            data_type=DataType.DATE,
-            match_type=FilterMatchType.EXACT,
-            value='2024-12-11'
+            prop_id='watered_on', data_type=DataType.DATE, match_type=FilterMatchType.EXACT, value='2024-12-11'
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "watered_on = '2024-12-11'"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "watered_on = '2024-12-11'")
 
     def test_is_not_text_xpath(self):
         active_filter = BulkEditFilter(
@@ -311,10 +296,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.IS_NOT,
             value='11245523233',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "phone_num != '11245523233'"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "phone_num != '11245523233'")
 
     def test_is_not_number_xpath(self):
         active_filter = BulkEditFilter(
@@ -323,10 +305,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.IS_NOT,
             value='5',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "num_leaves != 5"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), 'num_leaves != 5')
 
     def test_less_than_number_xpath(self):
         active_filter = BulkEditFilter(
@@ -335,10 +314,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.LESS_THAN,
             value='12.35',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "height_cm < 12.35"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), 'height_cm < 12.35')
 
     def test_less_than_date_xpath(self):
         active_filter = BulkEditFilter(
@@ -347,10 +323,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.LESS_THAN,
             value='2025-02-03 16:43',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "watered_on < '2025-02-03 16:43'"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "watered_on < '2025-02-03 16:43'")
 
     def test_less_than_equal_number_xpath(self):
         active_filter = BulkEditFilter(
@@ -359,10 +332,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.LESS_THAN_EQUAL,
             value='35.5',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "weight_kg <= 35.5"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), 'weight_kg <= 35.5')
 
     def test_less_than_equal_date_xpath(self):
         active_filter = BulkEditFilter(
@@ -371,10 +341,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.LESS_THAN_EQUAL,
             value='2025-02-20 16:55',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "last_modified <= '2025-02-20 16:55'"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "last_modified <= '2025-02-20 16:55'")
 
     def test_greater_than_number_xpath(self):
         active_filter = BulkEditFilter(
@@ -383,10 +350,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.GREATER_THAN,
             value='15',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "amount > 15"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), 'amount > 15')
 
     def test_greater_than_date_xpath(self):
         active_filter = BulkEditFilter(
@@ -395,10 +359,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.GREATER_THAN,
             value='2025-01-22',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "modified_on > '2025-01-22'"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "modified_on > '2025-01-22'")
 
     def test_greater_than_equal_number_xpath(self):
         active_filter = BulkEditFilter(
@@ -407,10 +368,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.GREATER_THAN_EQUAL,
             value='23',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "num_branches >= 23"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), 'num_branches >= 23')
 
     def test_greater_than_equal_date_xpath(self):
         active_filter = BulkEditFilter(
@@ -419,10 +377,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.GREATER_THAN_EQUAL,
             value='2025-03-03',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "submitted_on >= '2025-03-03'"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "submitted_on >= '2025-03-03'")
 
     def test_starts_with_text_xpath(self):
         active_filter = BulkEditFilter(
@@ -431,10 +386,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.STARTS,
             value='st',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "starts-with(name, 'st')"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "starts-with(name, 'st')")
 
     def test_starts_with_text_single_quote_xpath(self):
         active_filter = BulkEditFilter(
@@ -443,10 +395,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.STARTS,
             value="st's",
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            """starts-with(name, "st's")"""
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), """starts-with(name, "st's")""")
 
     def test_starts_with_text_double_quote_xpath(self):
         active_filter = BulkEditFilter(
@@ -455,17 +404,14 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.STARTS,
             value='st"s',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            """starts-with(name, 'st"s')"""
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), """starts-with(name, 'st"s')""")
 
     def test_starts_text_mixed_quote_xpath(self):
         active_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.STARTS,
-            value='''st"s m'd''',
+            value="""st"s m'd""",
         )
         with self.assertRaises(UnsupportedFilterValueException):
             active_filter.get_xpath_expression()
@@ -477,10 +423,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.STARTS_NOT,
             value='fo',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "not(starts-with(favorite_park, 'fo'))"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "not(starts-with(favorite_park, 'fo'))")
 
     def test_fuzzy_text_xpath(self):
         active_filter = BulkEditFilter(
@@ -489,10 +432,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.FUZZY,
             value='ceremic',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "fuzzy-match(pot_type, 'ceremic')"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "fuzzy-match(pot_type, 'ceremic')")
 
     def test_fuzzy_not_text_xpath(self):
         active_filter = BulkEditFilter(
@@ -501,10 +441,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.FUZZY_NOT,
             value='ceremic',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "not(fuzzy-match(pot_type, 'ceremic'))"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "not(fuzzy-match(pot_type, 'ceremic'))")
 
     def test_phonetic_text_xpath(self):
         active_filter = BulkEditFilter(
@@ -513,10 +450,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.PHONETIC,
             value='hi',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "phonetic-match(light_level, 'hi')"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "phonetic-match(light_level, 'hi')")
 
     def test_phonetic_not_text_xpath(self):
         active_filter = BulkEditFilter(
@@ -525,10 +459,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.PHONETIC_NOT,
             value='hi',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "not(phonetic-match(light_level, 'hi'))"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "not(phonetic-match(light_level, 'hi'))")
 
     def test_is_any_text_xpath(self):
         active_filter = BulkEditFilter(
@@ -538,8 +469,7 @@ class BulkEditFilterXpathTest(TestCase):
             value='yellow_leaves root_rot',
         )
         self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "selected-any(health_issues, 'yellow_leaves root_rot')"
+            active_filter.get_xpath_expression(), "selected-any(health_issues, 'yellow_leaves root_rot')"
         )
 
     def test_is_not_any_text_xpath(self):
@@ -550,8 +480,7 @@ class BulkEditFilterXpathTest(TestCase):
             value='fungus root_rot',
         )
         self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "not(selected-any(health_issues, 'fungus root_rot'))"
+            active_filter.get_xpath_expression(), "not(selected-any(health_issues, 'fungus root_rot'))"
         )
 
     def test_is_all_text_xpath(self):
@@ -561,10 +490,7 @@ class BulkEditFilterXpathTest(TestCase):
             match_type=FilterMatchType.IS_ALL,
             value='bark worm_castings',
         )
-        self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "selected-all(soil_contents, 'bark worm_castings')"
-        )
+        self.assertEqual(active_filter.get_xpath_expression(), "selected-all(soil_contents, 'bark worm_castings')")
 
     def test_is_not_all_text_xpath(self):
         active_filter = BulkEditFilter(
@@ -574,8 +500,7 @@ class BulkEditFilterXpathTest(TestCase):
             value='bark worm_castings',
         )
         self.assertEqual(
-            active_filter.get_xpath_expression(),
-            "not(selected-all(soil_contents, 'bark worm_castings'))"
+            active_filter.get_xpath_expression(), "not(selected-all(soil_contents, 'bark worm_castings'))"
         )
 
     def test_value_match_types_return_none_all_data_types_xpath(self):
@@ -588,7 +513,7 @@ class BulkEditFilterXpathTest(TestCase):
                 )
                 self.assertIsNone(
                     active_filter.get_xpath_expression(),
-                    msg=f"{match_type} for {data_type} should not return an xpath expression"
+                    msg=f'{match_type} for {data_type} should not return an xpath expression',
                 )
 
 
@@ -601,9 +526,7 @@ class TestReportFilterSubclasses(TestCase):
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.delete)
 
-        cls.web_user = WebUser.create(
-            cls.domain, 'tester@datacleaning.org', 'testpwd', None, None
-        )
+        cls.web_user = WebUser.create(cls.domain, 'tester@datacleaning.org', 'testpwd', None, None)
         cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
 
     def setUp(self):
@@ -613,20 +536,18 @@ class TestReportFilterSubclasses(TestCase):
         self.request.can_access_all_locations = True
         self.request.couch_user = self.web_user
         self.request.project = self.domain_obj
-        self.session = BulkEditSession.new_case_session(
-            self.web_user.get_django_user(), self.domain, 'plants',
+        self.session = BulkEditSession.objects.new_case_session(
+            self.web_user.get_django_user(),
+            self.domain,
+            'plants',
         )
 
     def test_case_owners_report_filter_context(self):
-        report_filter = CaseOwnersPinnedFilter(
-            self.session, self.request, self.domain, use_bootstrap5=True
-        )
+        report_filter = CaseOwnersPinnedFilter(self.session, self.request, self.domain, use_bootstrap5=True)
         expected_context = {
             'report_select2_config': {
                 'select': {
-                    'options': [
-                        {'val': 't__0', 'text': '[Active Mobile Workers]'}
-                    ],
+                    'options': [{'val': 't__0', 'text': '[Active Mobile Workers]'}],
                     'default_text': 'Filter by...',
                     'selected': [
                         {'id': 'all_data', 'text': '[All Data]'},
@@ -652,15 +573,11 @@ class TestReportFilterSubclasses(TestCase):
 
     @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
     def test_case_owners_report_filter_context_locations(self):
-        report_filter = CaseOwnersPinnedFilter(
-            self.session, self.request, self.domain, use_bootstrap5=True
-        )
+        report_filter = CaseOwnersPinnedFilter(self.session, self.request, self.domain, use_bootstrap5=True)
         expected_context = {
             'report_select2_config': {
                 'select': {
-                    'options': [
-                        {'val': 't__0', 'text': '[Active Mobile Workers]'}
-                    ],
+                    'options': [{'val': 't__0', 'text': '[Active Mobile Workers]'}],
                     'default_text': 'Filter by...',
                     'selected': [
                         {'id': 'all_data', 'text': '[All Data]'},
@@ -685,21 +602,17 @@ class TestReportFilterSubclasses(TestCase):
                 'specify multiple levels by separating with a "/". For example, '
                 '"Massachusetts/Suffolk/Boston". <a href="https://dimagi.atlassian'
                 '.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data'
-                '+Management#Search-for-Locations"target="_blank">Learn more</a>.'
+                '+Management#Search-for-Locations"target="_blank">Learn more</a>.',
             ],
         }
         self.assertDictEqual(report_filter.filter_context, expected_context)
 
     def test_case_owners_update_stored_value(self):
-        self.request.POST = QueryDict(
-            'case_list_filter=project_data&case_list_filter=t__6&case_list_filter=t__3'
-        )
+        self.request.POST = QueryDict('case_list_filter=project_data&case_list_filter=t__6&case_list_filter=t__3')
         self.request.method = 'POST'
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
         self.assertIsNone(pinned_filter.value)
-        report_filter = CaseOwnersPinnedFilter(
-            self.session, self.request, self.domain, use_bootstrap5=True
-        )
+        report_filter = CaseOwnersPinnedFilter(self.session, self.request, self.domain, use_bootstrap5=True)
         report_filter.update_stored_value()
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
         self.assertEqual(pinned_filter.value, ['project_data', 't__6', 't__3'])
@@ -709,14 +622,11 @@ class TestReportFilterSubclasses(TestCase):
             {'id': 't__3', 'text': '[Unknown Users]'},
         ]
         self.assertEqual(
-            report_filter.filter_context['report_select2_config']['select']['selected'],
-            expected_value
+            report_filter.filter_context['report_select2_config']['select']['selected'], expected_value
         )
 
     def test_case_status_report_filter_context(self):
-        report_filter = CaseStatusPinnedFilter(
-            self.session, self.request, self.domain, use_bootstrap5=True
-        )
+        report_filter = CaseStatusPinnedFilter(self.session, self.request, self.domain, use_bootstrap5=True)
         expected_context = {
             'report_select2_config': {
                 'select': {
@@ -739,22 +649,15 @@ class TestReportFilterSubclasses(TestCase):
         self.assertDictEqual(report_filter.filter_context, expected_context)
 
     def test_case_status_update_stored_value(self):
-        self.request.POST = QueryDict(
-            'is_open=open'
-        )
+        self.request.POST = QueryDict('is_open=open')
         self.request.method = 'POST'
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
         self.assertIsNone(pinned_filter.value)
-        report_filter = CaseStatusPinnedFilter(
-            self.session, self.request, self.domain, use_bootstrap5=True
-        )
+        report_filter = CaseStatusPinnedFilter(self.session, self.request, self.domain, use_bootstrap5=True)
         report_filter.update_stored_value()
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
         self.assertEqual(pinned_filter.value, ['open'])
-        self.assertEqual(
-            report_filter.filter_context['report_select2_config']['select']['selected'],
-            'open'
-        )
+        self.assertEqual(report_filter.filter_context['report_select2_config']['select']['selected'], 'open')
 
 
 @es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
@@ -765,17 +668,12 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.deactivated_user = CommCareUser.create(
-            cls.domain, 'deactivated-user-test', 'Passw0rd!', None, None
-        )
+        cls.deactivated_user = CommCareUser.create(cls.domain, 'deactivated-user-test', 'Passw0rd!', None, None)
         cls.deactivated_user.is_active = False
         user_adapter.index(cls.deactivated_user)
         cls.deactivated_user.save()
 
-        cls.web_location_user = WebUser.create(
-            cls.domain, 'restricted@datacleaning.org', 'Passw0rd!', None, None
-
-        )
+        cls.web_location_user = WebUser.create(cls.domain, 'restricted@datacleaning.org', 'Passw0rd!', None, None)
         cls.web_location_user.set_location(cls.domain, cls.locations['Suffolk'])
         cls.restrict_user_to_assigned_locations(cls.web_location_user)
         cls.web_location_user.save()
@@ -789,11 +687,15 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
-            self.session_user.get_django_user(), self.domain, 'plants',
+        self.session = BulkEditSession.objects.new_case_session(
+            self.session_user.get_django_user(),
+            self.domain,
+            'plants',
         )
-        self.session_location_restricted = BulkEditSession.new_case_session(
-            self.web_location_user.get_django_user(), self.domain, 'plants',
+        self.session_location_restricted = BulkEditSession.objects.new_case_session(
+            self.web_location_user.get_django_user(),
+            self.domain,
+            'plants',
         )
 
     @classmethod
@@ -801,6 +703,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         FormProcessorTestUtils.delete_all_cases()
 
         from couchdbkit import ResourceNotFound
+
         for user in [cls.deactivated_user, cls.web_location_user]:
             try:
                 user.delete(cls.domain, None)
@@ -811,9 +714,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
 
     def test_default(self):
         query = CaseSearchES().domain(self.domain)
-        pinned_filter = self.session.pinned_filters.get(
-            filter_type=PinnedFilterType.CASE_OWNERS
-        )
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
         self.assertIsNone(pinned_filter.value)
         filtered_query = pinned_filter.filter_query(query)
         self.assertDictEqual(filtered_query.es_query, query.es_query)
@@ -830,9 +731,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
 
     def test_all_data(self):
         query = CaseSearchES().domain(self.domain)
-        pinned_filter = self.session.pinned_filters.get(
-            filter_type=PinnedFilterType.CASE_OWNERS
-        )
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
         pinned_filter.value = ['project_data', 'all_data', 't__5']
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
@@ -847,9 +746,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         pinned_filter.value = ['project_data', 'all_data', 't__5']
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query_location_restricted_cases(
-            query, self.domain, self.web_location_user
-        )
+        expected_query = query_location_restricted_cases(query, self.domain, self.web_location_user)
         self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
 
     def test_deactivated(self):
@@ -887,12 +784,15 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
             pinned_filter.value = [user_type]
             pinned_filter.save()
             filtered_query = pinned_filter.filter_query(query)
-            expected_query = query if is_owners_empty else query.OR(case_es.owner(get_case_owners(
-                True, self.domain, pinned_filter.value
-            )))
+            expected_query = (
+                query
+                if is_owners_empty
+                else query.OR(case_es.owner(get_case_owners(True, self.domain, pinned_filter.value)))
+            )
             self.assertDictEqual(
-                filtered_query.es_query, expected_query.es_query,
-                msg=f"expected query did not match for user type {user_type}"
+                filtered_query.es_query,
+                expected_query.es_query,
+                msg=f'expected query did not match for user type {user_type}',
             )
 
     def test_selected_user_types_location_restricted(self):
@@ -912,48 +812,37 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
             pinned_filter.value = [user_type]
             pinned_filter.save()
             filtered_query = pinned_filter.filter_query(query)
-            expected_query = query_location_restricted_cases(
-                query, self.domain, self.web_location_user
-            )
+            expected_query = query_location_restricted_cases(query, self.domain, self.web_location_user)
             self.assertDictEqual(
-                filtered_query.es_query, expected_query.es_query,
-                msg=f"expected query did not match for user type {user_type}"
+                filtered_query.es_query,
+                expected_query.es_query,
+                msg=f'expected query did not match for user type {user_type}',
             )
 
     def test_selected_user_ids(self):
-        selected_user_ids = [
-            self.users[0]._id,
-            self.users[3]._id,
-            self.users[4]._id
-        ]
+        selected_user_ids = [self.users[0]._id, self.users[3]._id, self.users[4]._id]
         query = CaseSearchES().domain(self.domain)
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
-        pinned_filter.value = [f"u__{user_id}" for user_id in selected_user_ids]
+        pinned_filter.value = [f'u__{user_id}' for user_id in selected_user_ids]
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query.OR(case_es.owner(get_case_owners(
-            True, self.domain, pinned_filter.value
-        )))
+        expected_query = query.OR(case_es.owner(get_case_owners(True, self.domain, pinned_filter.value)))
         self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
 
     def test_selected_user_ids_location_restricted(self):
-        selected_user_ids = [
-            self.users[0]._id,
-            self.users[3]._id,
-            self.users[4]._id
-        ]
+        selected_user_ids = [self.users[0]._id, self.users[3]._id, self.users[4]._id]
         query = CaseSearchES().domain(self.domain)
         pinned_filter = self.session_location_restricted.pinned_filters.get(
             filter_type=PinnedFilterType.CASE_OWNERS
         )
-        pinned_filter.value = [f"u__{user_id}" for user_id in selected_user_ids]
+        pinned_filter.value = [f'u__{user_id}' for user_id in selected_user_ids]
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query_location_restricted_cases(query.OR(
-            case_es.owner(get_case_owners(
-                False, self.domain, pinned_filter.value
-            ))
-        ), self.domain, self.web_location_user)
+        expected_query = query_location_restricted_cases(
+            query.OR(case_es.owner(get_case_owners(False, self.domain, pinned_filter.value))),
+            self.domain,
+            self.web_location_user,
+        )
         self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
 
     def test_groups(self):
@@ -962,9 +851,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         pinned_filter.value = [f'g__{self.group1._id}']
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query.OR(case_es.owner(get_case_owners(
-            True, self.domain, pinned_filter.value
-        )))
+        expected_query = query.OR(case_es.owner(get_case_owners(True, self.domain, pinned_filter.value)))
         self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
 
     def test_groups_location_restricted(self):
@@ -975,9 +862,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         pinned_filter.value = [f'g__{self.group1._id}']
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query_location_restricted_cases(
-            query, self.domain, self.web_location_user
-        )
+        expected_query = query_location_restricted_cases(query, self.domain, self.web_location_user)
         self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
 
     def test_location_ids(self):
@@ -987,9 +872,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         pinned_filter.value = [f'l__{location_id}']
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query.OR(case_es.owner(get_case_owners(
-            True, self.domain, pinned_filter.value
-        )))
+        expected_query = query.OR(case_es.owner(get_case_owners(True, self.domain, pinned_filter.value)))
         self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
 
     def test_location_ids_location_restricted(self):
@@ -1001,11 +884,11 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         pinned_filter.value = [f'l__{location_id}']
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query_location_restricted_cases(query.OR(
-            case_es.owner(get_case_owners(
-                False, self.domain, pinned_filter.value
-            ))
-        ), self.domain, self.web_location_user)
+        expected_query = query_location_restricted_cases(
+            query.OR(case_es.owner(get_case_owners(False, self.domain, pinned_filter.value))),
+            self.domain,
+            self.web_location_user,
+        )
         self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
 
 
@@ -1019,9 +902,7 @@ class TestCaseStatusPinnedFilterQuery(TestCase):
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.delete)
 
-        cls.web_user = WebUser.create(
-            cls.domain, 'tester@datacleaning.org', 'testpwd', None, None
-        )
+        cls.web_user = WebUser.create(cls.domain, 'tester@datacleaning.org', 'testpwd', None, None)
         cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
 
         case_search_es_setup(cls.domain, get_case_blocks())
@@ -1033,24 +914,22 @@ class TestCaseStatusPinnedFilterQuery(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
-            self.web_user.get_django_user(), self.domain, 'plants',
+        self.session = BulkEditSession.objects.new_case_session(
+            self.web_user.get_django_user(),
+            self.domain,
+            'plants',
         )
 
     def test_default(self):
         query = CaseSearchES().domain(self.domain)
-        pinned_filter = self.session.pinned_filters.get(
-            filter_type=PinnedFilterType.CASE_STATUS
-        )
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
         self.assertIsNone(pinned_filter.value)
         filtered_query = pinned_filter.filter_query(query)
         self.assertDictEqual(filtered_query.es_query, query.es_query)
 
     def test_open(self):
         query = CaseSearchES().domain(self.domain)
-        pinned_filter = self.session.pinned_filters.get(
-            filter_type=PinnedFilterType.CASE_STATUS
-        )
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
         pinned_filter.value = ['open']
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)
@@ -1059,9 +938,7 @@ class TestCaseStatusPinnedFilterQuery(TestCase):
 
     def test_closed(self):
         query = CaseSearchES().domain(self.domain)
-        pinned_filter = self.session.pinned_filters.get(
-            filter_type=PinnedFilterType.CASE_STATUS
-        )
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
         pinned_filter.value = ['closed']
         pinned_filter.save()
         filtered_query = pinned_filter.filter_query(query)

@@ -1,4 +1,4 @@
-{% extends 'data_cleaning/filters/pinned/base.html' %}
+{% extends "data_cleaning/filters/pinned/base.html" %}
 {% load hq_shared_tags %}
 
 {% block filter_content %}
@@ -14,4 +14,4 @@
   {% for help in filter_help %}
     <div class="help-block">{{ help }}</div>
   {% endfor %}
-{% endblock %}
+{% endblock filter_content %}

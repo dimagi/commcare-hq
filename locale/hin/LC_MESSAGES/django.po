@@ -1154,7 +1154,9 @@ msgstr ""
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -3499,11 +3501,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    You have selected the <strong>%(p)s Edition</strong> subscription.\n"
+#| "  "
 msgid ""
 "\n"
-"    You have selected the <strong>%(p)s Edition</strong> subscription.\n"
-"  "
+"      You have selected the <strong>%(p)s Edition</strong> subscription.\n"
+"    "
 msgstr ""
 "\n"
 "    आपने <strong>%(p)s एडिशन</strong> सदस्यता चुनी है।\n"
@@ -3520,18 +3526,96 @@ msgid "Included each month"
 msgstr "हर महीने शामिल"
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid "Note: Continuing will change your current subscription."
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Thank you for staying with your current subscription.\n"
+#| "        "
+msgid ""
+"\n"
+"        Thank you for staying with your current subscription.\n"
+"      "
+msgstr ""
+"\n"
+"          अपनी वर्तमान सदस्यता के साथ बने रहने के लिए धन्यवाद।\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy
+#| msgid "We're sorry to see you downgrade!"
+msgid ""
+"\n"
+"        We're sorry to see you downgrade!\n"
+"      "
+msgstr "हमें खेद है कि आप डाउनग्रेड कर रहे हैं!"
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy
+#| msgid "Note: Continuing will change your current subscription."
+msgid ""
+"\n"
+"        Note: Continuing will change your current subscription.\n"
+"      "
 msgstr "नोट: जारी रखने से आपकी वर्तमान सदस्यता बदल जाएगी।"
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
+#| "                receive an invoice via email with bank information and\n"
+#| "                instructions for wire payment. Please include the Invoice # in\n"
+#| "                the wire payment memo or note field.\n"
+#| "                <a\n"
+#| "                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+#| "                  target=\"_blank\"\n"
+#| "                  >More information...</a\n"
+#| "                >\n"
+#| "              "
 msgid ""
 "\n"
-"          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.\n"
-"          You should expect your first invoice on %(invoice_date)s, or you can prepay for your\n"
-"          subscription by following the instructions\n"
-"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\">here</a>.\n"
-"        "
+"        By continuing you are subscribing to a Pay Annually plan and will\n"
+"        receive an invoice via email for plan fees due. In case you incur any\n"
+"        on-demand fees for excess users or SMS, you will receive invoices for\n"
+"        these charges on a monthly basis. See\n"
+"        <a\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
+"          >here</a\n"
+"        >\n"
+"        for more information about payment, cancellation, and refunds.\n"
+"      "
+msgstr ""
+"\n"
+"                डिमागी एसीएच और वायर ट्रांसफर के माध्यम से वायर पेमेंट स्वीकार करता है। आपको\n"
+"                बैंक जानकारी और वायर पेमेंट के निर्देशों के साथ ईमेल द्वारा इनवॉइस प्राप्त होगा।\n"
+"                कृपया वायर पेमेंट मेमो या नोट फ़ील्ड में इनवॉइस # शामिल करें।\n"
+"                <a\n"
+"                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+"                  target=\"_blank\"\n"
+"                  >अधिक जानकारी...</a\n"
+"                >\n"
+"              "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.\n"
+#| "          You should expect your first invoice on %(invoice_date)s, or you can prepay for your\n"
+#| "          subscription by following the instructions\n"
+#| "          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\">here</a>.\n"
+#| "        "
+msgid ""
+"\n"
+"        CommCare is billed on a monthly basis, and all subscriptions require a\n"
+"        30 day minimum commitment. You should expect your first invoice on\n"
+"        %(invoice_date)s, or you can prepay for your subscription by following\n"
+"        the instructions\n"
+"        <a\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+"          >here</a\n"
+"        >.\n"
+"      "
 msgstr ""
 "\n"
 "          CommCare मासिक आधार पर बिल किया जाता है, और सभी सदस्यताओं के लिए 30 दिन की न्यूनतम प्रतिबद्धता आवश्यक है।\n"
@@ -3540,11 +3624,18 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Once you subscribe to a paid plan, you will be able to pause your subscription after 30 days,\n"
+#| "          but you will no longer be able to downgrade to the CommCare Free edition.\n"
+#| "        "
 msgid ""
 "\n"
-"          Once you subscribe to a paid plan, you will be able to pause your subscription after 30 days,\n"
-"          but you will no longer be able to downgrade to the CommCare Free edition.\n"
-"        "
+"        Once you subscribe to a paid plan, you will be able to pause your\n"
+"        subscription after 30 days, but you will no longer be able to downgrade\n"
+"        to the CommCare Free edition.\n"
+"      "
 msgstr ""
 "\n"
 "          एक सशुल्क प्लान की सदस्यता लेने के बाद, आप 30 दिनों के बाद अपनी सदस्यता रोक सकते हैं,\n"
@@ -3552,32 +3643,18 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          Continuing will keep you on <strong>%(p)s Edition Software Plan</strong> and any\n"
+#| "          pending subscriptions will be cancelled.\n"
+#| "        "
 msgid ""
 "\n"
-"            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> I understand and wish to continue.\n"
-"          "
-msgstr ""
-"\n"
-"            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> मैं समझता/समझती हूँ और जारी रखना चाहता/चाहती हूँ।\n"
-"          "
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid ""
-"\n"
-"          Thank you for staying with your current subscription.\n"
-"        "
-msgstr ""
-"\n"
-"          अपनी वर्तमान सदस्यता के साथ बने रहने के लिए धन्यवाद।\n"
-"        "
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
-msgid ""
-"\n"
-"          Continuing will keep you on <strong>%(p)s Edition Software Plan</strong> and any\n"
-"          pending subscriptions will be cancelled.\n"
-"        "
+"        Continuing will keep you on\n"
+"        <strong>%(p)s Edition Software Plan</strong> and any pending\n"
+"        subscriptions will be cancelled.\n"
+"      "
 msgstr ""
 "\n"
 "          जारी रखने से आप <strong>%(p)s एडिशन सॉफ़्टवेयर प्लान</strong> पर बने रहेंगे और कोई भी\n"
@@ -3585,18 +3662,22 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid "We're sorry to see you downgrade!"
-msgstr "हमें खेद है कि आप डाउनग्रेड कर रहे हैं!"
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          You’ll have access to the features on your\n"
+#| "          <strong>%(p)s Edition Software Plan </strong> through %(current_subscription_end_date)s.<br />\n"
+#| "          On %(start_date_after_minimum_subscription)s your current subscription will be downgraded\n"
+#| "          to the %(new_plan_edition)s Edition Software Plan.\n"
+#| "        "
 msgid ""
 "\n"
-"          You’ll have access to the features on your\n"
-"          <strong>%(p)s Edition Software Plan </strong> through %(current_subscription_end_date)s.<br />\n"
-"          On %(start_date_after_minimum_subscription)s your current subscription will be downgraded\n"
-"          to the %(new_plan_edition)s Edition Software Plan.\n"
-"        "
+"        You’ll have access to the features on your\n"
+"        <strong>%(p)s Edition Software Plan </strong> through\n"
+"        %(current_subscription_end_date)s.<br />\n"
+"        On %(start_date_after_minimum_subscription)s your current subscription\n"
+"        will be downgraded to the %(new_plan_edition)s Edition Software Plan.\n"
+"      "
 msgstr ""
 "\n"
 "          आपको अपने\n"
@@ -3606,17 +3687,38 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          We're sorry to see you downgrade! You are currently subscribed to the\n"
+#| "          <strong>%(p)s Software Plan.</strong>\n"
+#| "        "
 msgid ""
 "\n"
-"          We're sorry to see you downgrade! You are currently subscribed to the\n"
-"          <strong>%(p)s Software Plan.</strong>\n"
-"        "
+"        We're sorry to see you downgrade! You are currently subscribed to the\n"
+"        <strong>%(p)s Software Plan.</strong>\n"
+"      "
 msgstr ""
 "\n"
 "          हमें खेद है कि आप डाउनग्रेड कर रहे हैं! आप वर्तमान में\n"
 "          <strong>%(p)s सॉफ़्टवेयर प्लान</strong> की सदस्यता लिए हुए हैं।\n"
 "        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> I understand and wish to continue.\n"
+#| "          "
+msgid ""
+"\n"
+"          <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\" /> I\n"
+"          understand and wish to continue.\n"
+"        "
+msgstr ""
+"\n"
+"            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> मैं समझता/समझती हूँ और जारी रखना चाहता/चाहती हूँ।\n"
+"          "
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
@@ -3866,7 +3968,7 @@ msgstr "रिपोर्ट तैयार की जा रही है..."
 
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
@@ -4482,7 +4584,6 @@ msgstr "विफलता पर सूचित करने के लिए 
 #: corehq/apps/app_execution/templates/app_execution/workflow_log.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/messaging/scheduling/views.py
 #: corehq/motech/generic_inbound/models.py
@@ -7617,6 +7718,8 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -12482,23 +12585,24 @@ msgid "Feature Discrepancy"
 msgstr "फीचर असंगति"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            The following features are not turned on in the domain to which you're copying.\n"
+#| "            Select any that you wish to copy along with this application.\n"
+#| "          "
 msgid ""
 "\n"
-"            The following features are not turned on in the domain to which you're copying.\n"
-"            Select any that you wish to copy along with this application.\n"
+"            The following features are not turned on in the domain to which\n"
+"            you're copying. Please enable the necessary feature flags required\n"
+"            for the app to function from\n"
+"            <a id=\"feature-flags-link\" href=\"\" target=\"_blank\">here</a>.\n"
 "          "
 msgstr ""
 "\n"
 "            निम्नलिखित सुविधाएँ उस डोमेन में चालू नहीं हैं जिसमें आप कॉपी कर रहे हैं।\n"
 "            कोई भी चुनें जिसे आप इस एप्लिकेशन के साथ कॉपी करना चाहते हैं।\n"
 "          "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select All"
-msgstr "सभी चुनें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/undo_delete_app.html
 msgid "Oops! This application was deleted."
@@ -14922,6 +15026,12 @@ msgid "Refine search"
 msgstr "खोज को परिष्कृत करें"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Select All"
+msgstr "सभी चुनें"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "क्रमबद्ध करें"
 
@@ -14966,7 +15076,7 @@ msgstr "कोई हाल की क्वेरी नहीं"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_signature.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/sms/templates/sms/chat_contacts.html
@@ -16178,8 +16288,16 @@ msgid "Start a new session and delete the existing session."
 msgstr "नया सत्र शुरू करें और मौजूदा सत्र हटा दें।"
 
 #: corehq/apps/data_cleaning/forms/start_session.py
-msgid "Start Session"
+#, fuzzy
+#| msgid "Start Session"
+msgid "Start New Session"
 msgstr "सत्र शुरू करें"
+
+#: corehq/apps/data_cleaning/forms/start_session.py
+#, fuzzy
+#| msgid "Resume the session."
+msgid "Resume Session"
+msgstr "सत्र फिर से शुरू करें।"
 
 #: corehq/apps/data_cleaning/models/change.py
 msgid "Unknown action"
@@ -16419,14 +16537,10 @@ msgid "Completed On"
 msgstr "पूरा किया गया दिनांक"
 
 #: corehq/apps/data_cleaning/tables.py
-msgid "# Cases Cleaned"
-msgstr "# केस साफ किए गए"
-
-#: corehq/apps/data_cleaning/tables.py
 #, fuzzy
-#| msgid "Session"
-msgid "Open Session"
-msgstr "सत्र"
+#| msgid "# Cases Created"
+msgid "# Cases Edited"
+msgstr "# बनाए गए मामले"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_main.html
 #, fuzzy
@@ -16435,8 +16549,10 @@ msgid "Start a Bulk Edit Session"
 msgstr "सफाई सत्र शुरू करें"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_main.html
-msgid "Recent Tasks"
-msgstr "हाल के कार्य"
+#, fuzzy
+#| msgid "Start a Cleaning Session"
+msgid "Recent Bulk Edit Sessions"
+msgstr "सफाई सत्र शुरू करें"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 msgid "Show Whitespaces"
@@ -16475,9 +16591,21 @@ msgid "System"
 msgstr "सिस्टम"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/selection_read_only.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "This session is read-only."
 msgstr "यह सत्र केवल पढ़ने के लिए है।"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#, fuzzy
+#| msgid "Session"
+msgid "Open Session"
+msgstr "सत्र"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#: corehq/apps/sms/models.py corehq/apps/smsforms/models.py
+#: custom/inddex/filters.py
+msgid "Completed"
+msgstr "पूर्ण"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
 #: corehq/apps/integration/payments/const.py corehq/apps/registry/models.py
@@ -16486,6 +16614,30 @@ msgstr "यह सत्र केवल पढ़ने के लिए है
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
 msgstr "लंबित"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#, fuzzy
+#| msgid "Only dynamic case properties are allowed"
+msgid "Only one active session per case type allowed."
+msgstr "केवल डायनामिक केस प्रॉपर्टी की अनुमति है"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/views/mobile/users.py
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Active"
+msgstr "सक्रिय"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/values/empty.html
 msgid "EMPTY"
@@ -16515,10 +16667,17 @@ msgid "Edit history is too large..."
 msgstr "संपादन इतिहास बहुत बड़ा है..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            The edit history for this session is too large to support new bulk edits.\n"
+#| "            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+#| "          "
 msgid ""
 "\n"
-"            The edit history for this session is too large to support new bulk edits.\n"
-"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"            The edit history for this session is too large to support new bulk\n"
+"            edits. You can either apply the current edits, undo edits, or clear\n"
+"            the edit history to start over.\n"
 "          "
 msgstr ""
 "\n"
@@ -16553,8 +16712,8 @@ msgid ""
 "          data-bs-dismiss=\"offcanvas\"\n"
 "          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
 "        >Configure Columns</a>\n"
-"        to include editible case properties in the column list in\n"
-"        order to edit the selected cases.\n"
+"        to include editable case properties in the column list in order to edit\n"
+"        the selected cases.\n"
 "      "
 msgstr ""
 "\n"
@@ -16578,14 +16737,40 @@ msgstr ""
 #| "  "
 msgid ""
 "\n"
-"    An active bulk edit session already exists for this case type.\n"
-"    Please decide how you would like to proceed.\n"
-"  "
+"      An active bulk edit session already exists for this case type.\n"
+"    "
 msgstr ""
 "\n"
 "    इस केस प्रकार के लिए एक सक्रिय डेटा सफाई सत्र पहले से मौजूद है।\n"
 "    कृपया तय करें कि आप कैसे आगे बढ़ना चाहेंगे।\n"
 "  "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Only one session can be active per case type.\n"
+#| "      Any previewed edits will be lost when starting a new session.\n"
+#| "    "
+msgid ""
+"\n"
+"      Only one session can be active per case type. Any previewed edits will be\n"
+"      lost when starting a new session.\n"
+"    "
+msgstr ""
+"\n"
+"      प्रत्येक केस प्रकार के लिए केवल एक सत्र सक्रिय हो सकता है।\n"
+"      कोई भी पूर्वावलोकित संपादन नया सत्र शुरू करते समय खो जाएगा।\n"
+"    "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+#, fuzzy
+#| msgid "Please specify the value you would like to find."
+msgid ""
+"\n"
+"      Please decide how you would like to proceed...\n"
+"    "
+msgstr "कृपया वह मान निर्दिष्ट करें जिसे आप ढूंढना चाहते हैं।"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 msgid "Confirm Action"
@@ -16611,7 +16796,8 @@ msgstr "आपने वे केस चुने हैं जिन्हे�
 #| "      "
 msgid ""
 "\n"
-"          \"Apply\" will apply all previewed edits in the session, regardless of filters.\n"
+"          \"Apply\" will apply all previewed edits in the session, regardless of\n"
+"          filters.\n"
 "        "
 msgstr ""
 "\n"
@@ -16665,7 +16851,7 @@ msgid "Undo edit for multiple cases?"
 msgstr "कई केसों के लिए संपादन पूर्ववत करें?"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_undo.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/reports/views.py
 msgid "Undo"
 msgstr "पूर्ववत करें"
@@ -16682,10 +16868,15 @@ msgstr ""
 "  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Cannot select or actively edit more than %(max_recorded_limit)s cases in a session.\n"
+#| "      "
 msgid ""
 "\n"
-"        Cannot select or actively edit more than %(max_recorded_limit)s cases in a session.\n"
+"        Cannot select or actively edit more than %(max_recorded_limit)s cases\n"
+"        in a session.\n"
 "      "
 msgstr ""
 "\n"
@@ -16693,9 +16884,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please either apply your previewed edits, or add filters to select fewer cases.\n"
+#| "      "
 msgid ""
 "\n"
-"        Please either apply your previewed edits, or add filters to select fewer cases.\n"
+"        Please either apply your previewed edits, or add filters to select fewer\n"
+"        cases.\n"
 "      "
 msgstr ""
 "\n"
@@ -16740,6 +16937,19 @@ msgstr "कॉलम कॉन्फ़िगर करें"
 msgid "Edit Selected Cases"
 msgstr "चयनित केस"
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/base_modal_body.html
+#, fuzzy
+#| msgid "Extend session"
+msgid "Exit session"
+msgstr "सत्र बढ़ाएँ"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/base_modal_body.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+#, fuzzy
+#| msgid "Connection Settings"
+msgid "Continue editing"
+msgstr "कनेक्शन सेटिंग्स"
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, fuzzy
 #| msgid "Changes saved."
@@ -16750,71 +16960,30 @@ msgstr "परिवर्तन सहेजे गए।"
 #, python-format
 msgid ""
 "\n"
-"      Finished processing changes, updated 1 case.\n"
-"    "
+"    Finished processing changes, updated 1 case.\n"
+"  "
 msgid_plural ""
 "\n"
-"      Finished processing changes, updated %(num_records_changed)s cases.\n"
-"    "
+"    Finished processing changes, updated %(count)s cases.\n"
+"  "
 msgstr[0] ""
 msgstr[1] ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases with the same columns and filters?\n"
+#| "      "
 msgid ""
 "\n"
-"        Resume this session with the same columns and filters?\n"
-"      "
-msgstr ""
-"\n"
-"        क्या आप इसी सत्र को उन्हीं कॉलम और फ़िल्टर के साथ फिर से शुरू करना चाहते हैं?\n"
-"      "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
-#, fuzzy
-#| msgid "Import"
-msgid "Important"
-msgstr "आयात करें"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
-msgid ""
-"\n"
-"        This will replace your existing active session with a new one. Any edits you made will be lost.\n"
-"      "
-msgstr ""
-"\n"
-"        यह आपके मौजूदा सक्रिय सत्र को एक नए सत्र से बदल देगा। आपके द्वारा किए गए सभी संपादन खो जाएंगे।\n"
-"      "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
-#, python-format
-msgid ""
-"\n"
-"        Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases with the same columns and filters?\n"
-"      "
+"      Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases\n"
+"      with the same columns and filters?\n"
+"    "
 msgstr ""
 "\n"
 "        क्या आप उन्हीं कॉलम और फ़िल्टर के साथ <strong class=\"fw-bold\">%(case_type)s</strong> केसों को संपादित करना जारी रखना चाहते हैं?\n"
 "      "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
-#, fuzzy
-#| msgid "Extend session"
-msgid "Exit session"
-msgstr "सत्र बढ़ाएँ"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
-#, fuzzy
-#| msgid "Resume the session."
-msgid "Resume this session"
-msgstr "सत्र फिर से शुरू करें।"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
-#, fuzzy
-#| msgid "Connection Settings"
-msgid "Continue editing"
-msgstr "कनेक्शन सेटिंग्स"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
 msgid "Applying Changes..."
@@ -16828,8 +16997,8 @@ msgstr "परिवर्तन लागू किए जा रहे है�
 #| "          "
 msgid ""
 "\n"
-"            Applying changes, please wait...\n"
-"          "
+"        Applying changes, please wait...\n"
+"      "
 msgstr ""
 "\n"
 "            वहाँ जाएँ।\n"
@@ -16843,12 +17012,81 @@ msgstr ""
 #| "            "
 msgid ""
 "\n"
-"              Database is refreshing...almost there!\n"
-"            "
+"          Database is refreshing...almost there!\n"
+"        "
 msgstr ""
 "\n"
 "            वहाँ जाएँ।\n"
 "            "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/partial/task_progress_bar.html
+#, fuzzy
+#| msgid "In Progress"
+msgid "Task progress"
+msgstr "प्रगति में"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid "This is a deprecated property"
+msgid "This is a completed session"
+msgstr "यह एक अप्रचलित प्रॉपर्टी है"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Resume this session with the same columns and filters?\n"
+#| "      "
+msgid ""
+"\n"
+"      Restart this session with the same columns and filters?\n"
+"    "
+msgstr ""
+"\n"
+"        क्या आप इसी सत्र को उन्हीं कॉलम और फ़िल्टर के साथ फिर से शुरू करना चाहते हैं?\n"
+"      "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid "Import"
+msgid "Important"
+msgstr "आयात करें"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This will replace your existing active session with a new one. Any edits you made will be lost.\n"
+#| "      "
+msgid ""
+"\n"
+"      This will replace your existing active session with a new one.\n"
+"    "
+msgstr ""
+"\n"
+"        यह आपके मौजूदा सक्रिय सत्र को एक नए सत्र से बदल देगा। आपके द्वारा किए गए सभी संपादन खो जाएंगे।\n"
+"      "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      The following edits will be applied...\n"
+#| "    "
+msgid ""
+"\n"
+"      Any edits you made will be lost.\n"
+"    "
+msgstr ""
+"\n"
+"      निम्नलिखित संपादन लागू किए जाएंगे...\n"
+"    "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+#, fuzzy
+#| msgid "Resume the session."
+msgid "Restart this session"
+msgstr "सत्र फिर से शुरू करें।"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
@@ -16858,7 +17096,7 @@ msgid ""
 "    "
 msgid_plural ""
 "\n"
-"      A total of %(num_changes)s edits will be applied.\n"
+"      A total of %(count)s edits will be applied.\n"
 "    "
 msgstr[0] ""
 msgstr[1] ""
@@ -16881,7 +17119,7 @@ msgid ""
 "    "
 msgid_plural ""
 "\n"
-"      A total of %(num_changes)s edits will be cleared.\n"
+"      A total of %(count)s edits will be cleared.\n"
 "    "
 msgstr[0] ""
 msgstr[1] ""
@@ -16923,7 +17161,18 @@ msgstr ""
 "    निम्नलिखित संपादन पूर्ववत किया जाएगा:\n"
 "  "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      No cases were found that match the current filters. Please\n"
+#| "      <a\n"
+#| "        href=\"#\"\n"
+#| "        class=\"fw-bold\"\n"
+#| "        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
+#| "      >adjust your filters</a>\n"
+#| "      and try again.\n"
+#| "    "
 msgid ""
 "\n"
 "      No cases were found that match the current filters. Please\n"
@@ -16931,7 +17180,8 @@ msgid ""
 "        href=\"#\"\n"
 "        class=\"fw-bold\"\n"
 "        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
-"      >adjust your filters</a>\n"
+"        >adjust your filters</a\n"
+"      >\n"
 "      and try again.\n"
 "    "
 msgstr ""
@@ -16945,11 +17195,11 @@ msgstr ""
 "      और पुनः प्रयास करें।\n"
 "    "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Edits"
 msgstr "संपादन"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -16964,11 +17214,11 @@ msgstr ""
 "              लागू किए गए फ़िल्टर: %(num_records)s मेल खाते रिकॉर्ड\n"
 "            "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Clear Filters"
 msgstr "फ़िल्टर साफ़ करें"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -16983,7 +17233,7 @@ msgstr ""
 "            रिकॉर्ड चुने गए\n"
 "          "
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid ""
 "You have selected cases which have been filtered out. New previewed edits "
 "will only apply to selected cases in the current filters, unless you remove "
@@ -16993,9 +17243,39 @@ msgstr ""
 "केवल वर्तमान फ़िल्टर में चुने गए केस पर लागू होंगे, जब तक आप फ़िल्टर नहीं "
 "हटाते।"
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Clear Selection"
 msgstr "चयन साफ़ करें"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/recent_sessions.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          No cases found.\n"
+#| "        "
+msgid ""
+"\n"
+"        No sessions exist.\n"
+"      "
+msgstr ""
+"\n"
+"          कोई मामले नहीं मिले।\n"
+"        "
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/recent_sessions.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please request a new password reset.\n"
+#| "      "
+msgid ""
+"\n"
+"      Please start a new bulk edit session above.\n"
+"    "
+msgstr ""
+"\n"
+"        कृपया नया पासवर्ड रीसेट अनुरोध करें।\n"
+"      "
 
 #: corehq/apps/data_cleaning/templatetags/data_cleaning.py
 msgid "space"
@@ -18399,24 +18679,9 @@ msgstr "डीडुप्लिकेशन नियम जोड़ें"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/users/views/mobile/users.py
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Active"
-msgstr "सक्रिय"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -21044,9 +21309,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.\n"
+#| "          "
 msgid ""
 "\n"
-"            Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.\n"
+"            Clicking the 'Confirm Plan' button below will bring you to a page\n"
+"            where you can confirm your billing information.\n"
 "          "
 msgstr ""
 "\n"
@@ -21087,10 +21358,16 @@ msgstr "डाउनग्रेड कर रहे हैं?"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              We'd love to make CommCare work better for you.\n"
+#| "              Please help us by answering these simple questions.\n"
+#| "            "
 msgid ""
 "\n"
-"              We'd love to make CommCare work better for you.\n"
-"              Please help us by answering these simple questions.\n"
+"              We'd love to make CommCare work better for you. Please help us by\n"
+"              answering these simple questions.\n"
 "            "
 msgstr ""
 "\n"
@@ -21122,10 +21399,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Do you think your project may start again?\n"
+#| "              "
 msgid ""
 "\n"
-"                Do you think your project may start again?\n"
-"              "
+"              Do you think your project may start again?\n"
+"            "
 msgstr ""
 "\n"
 "                क्या आपको लगता है कि आपका प्रोजेक्ट फिर से शुरू हो सकता है?\n"
@@ -21133,10 +21415,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Could you indicate which new tool you’re using?\n"
+#| "              "
 msgid ""
 "\n"
-"                Could you indicate which new tool you’re using?\n"
-"              "
+"              Could you indicate which new tool you’re using?\n"
+"            "
 msgstr ""
 "\n"
 "                क्या आप बता सकते हैं कि आप कौन सा नया टूल इस्तेमाल कर रहे हैं?\n"
@@ -21144,10 +21431,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Why are you switching to a new tool?\n"
+#| "              "
 msgid ""
 "\n"
-"                Why are you switching to a new tool?\n"
-"              "
+"              Why are you switching to a new tool?\n"
+"            "
 msgstr ""
 "\n"
 "                आप नया टूल क्यों अपना रहे हैं?\n"
@@ -21155,10 +21447,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Please specify\n"
+#| "              "
 msgid ""
 "\n"
-"                Please specify\n"
-"              "
+"              Please specify\n"
+"            "
 msgstr ""
 "\n"
 "                कृपया स्पष्ट करें\n"
@@ -23318,10 +23615,15 @@ msgstr ""
 "आपकी परियोजना को सफलतापूर्वक %s एडिशन प्लान के लिए सब्सक्राइब किया गया है।"
 
 #: corehq/apps/domain/views/accounting.py
+#, fuzzy, python-format
+#| msgid ""
+#| "You have already scheduled a downgrade to the %(software_plan_name)s "
+#| "Software Plan on %(downgrade_date)s. If this is a mistake, please reach out "
+#| "to %(contact_email)."
 msgid ""
 "You have already scheduled a downgrade to the %(software_plan_name)s "
 "Software Plan on %(downgrade_date)s. If this is a mistake, please reach out "
-"to %(contact_email)."
+"to %(contact_email)s."
 msgstr ""
 "आपने पहले ही %(downgrade_date)s को %(software_plan_name)s सॉफ़्टवेयर प्लान "
 "में डाउनग्रेड शेड्यूल कर दिया है। यदि यह गलती है, तो कृपया %(contact_email) "
@@ -24604,7 +24906,6 @@ msgid "Loading potential attendees ..."
 msgstr "संभावित प्रतिभागियों को लोड किया जा रहा है ..."
 
 #: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
@@ -28066,6 +28367,8 @@ msgid "Case Coordinates"
 msgstr "मामले के निर्देशांक"
 
 #: corehq/apps/geospatial/reports.py corehq/apps/linked_domain/views.py
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Link"
 msgstr "लिंक"
@@ -41735,11 +42038,6 @@ msgstr "संदेश प्रारूप अमान्य था।"
 msgid "Missed"
 msgstr "छूट गया"
 
-#: corehq/apps/sms/models.py corehq/apps/smsforms/models.py
-#: custom/inddex/filters.py
-msgid "Completed"
-msgstr "पूर्ण"
-
 #: corehq/apps/sms/models.py
 msgid "Email Sent"
 msgstr "ईमेल भेजा गया"
@@ -46058,12 +46356,6 @@ msgid "Rows from the database"
 msgstr "डेटाबेस से पंक्तियाँ"
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-msgid "Populating your report did not complete successfully."
-msgstr "आपकी रिपोर्ट को भरना सफलतापूर्वक पूरा नहीं हुआ।"
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
 msgid "Please note that this data source is being rebuilt."
 msgstr "कृपया ध्यान दें कि यह डेटा स्रोत पुनर्निर्मित किया जा रहा है।"
 
@@ -46120,11 +46412,6 @@ msgstr "कस्टम वेब रिपोर्ट स्रोत JSON"
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Data Source JSON"
 msgstr "डेटा स्रोत JSON"
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-msgid "Resume Build"
-msgstr "बिल्ड फिर से शुरू करें"
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
@@ -46576,6 +46863,10 @@ msgstr ""
 "बनाया/पुनर्निर्मित नहीं किया गया है।"
 
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid "Resume Build"
+msgstr "बिल्ड फिर से शुरू करें"
+
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "This datasource is read only, any changes made can not be saved."
 msgstr ""
 "यह डेटा स्रोत केवल पढ़ने के लिए है, इसमें किए गए कोई भी परिवर्तन सहेजे नहीं "
@@ -46649,18 +46940,20 @@ msgid "Filter Value should not be blank."
 msgstr "फ़िल्टर मान खाली नहीं होना चाहिए।"
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
-msgstr "आप \"एडवांस्ड\" पर क्लिक कर \"रिज़्यूम बिल्ड\" चुनने का प्रयास कर सकते हैं।"
-
-#: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
 msgid "Your report is still being populated."
 msgstr "आपकी रिपोर्ट अभी भी भरी जा रही है।"
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          What you are seeing now is just a preview, and contains some or none of your data.\n"
+#| "        "
 msgid ""
 "\n"
-"          What you are seeing now is just a preview, and contains some or none of your data.\n"
-"        "
+"        What you are seeing now is just a preview, and contains some or none of\n"
+"        your data.\n"
+"      "
 msgstr ""
 "\n"
 "          जो आप अभी देख रहे हैं वह केवल एक पूर्वावलोकन है, और इसमें आपके डेटा में से कुछ या कोई भी डेटा नहीं हो सकता है।\n"
@@ -47286,9 +47579,14 @@ msgstr ""
 "जाएगा।"
 
 #: corehq/apps/userreports/views.py
+#, fuzzy
+#| msgid ""
+#| "CommCare HQ will not perform a data source rebuild for the changes made. "
+#| "Please initiate one manually if needed."
 msgid ""
-"CommCare HQ will not perform a data source rebuild for the changes made. "
-"Please initiate one manually if needed."
+"The data source configuration will be updated but CommCare HQ will not "
+"perform a rebuild for the changes made. Please initiate one manually if "
+"needed."
 msgstr ""
 "CommCare HQ द्वारा किए गए परिवर्तनों के लिए डेटा स्रोत पुनर्निर्माण नहीं "
 "किया जाएगा। यदि आवश्यक हो तो कृपया मैन्युअली आरंभ करें।"
@@ -47329,7 +47627,10 @@ msgid "Data source \"{name}\" not deleted."
 msgstr "डेटा स्रोत \"{name}\" नहीं हटाया गया।"
 
 #: corehq/apps/userreports/views.py
-msgid "Table \"{}\" is now being rebuilt. Data should start showing up soon"
+#, fuzzy
+#| msgid ""
+#| "Table \"{}\" is now being rebuilt. Data should start showing up soon"
+msgid "Table \"{}\" will be rebuilt. Data should start showing up soon"
 msgstr ""
 "तालिका \"{}\" अब पुनर्निर्मित की जा रही है। डेटा जल्द ही दिखना शुरू हो जाएगा"
 
@@ -47353,24 +47654,6 @@ msgstr ""
 "दौरान अपेक्षित रिकॉर्ड की संख्या अधिक है। वर्तमान में संसाधित किए जाने वाले "
 "अपेक्षित रिकॉर्ड {number_of_records} हैं, जो सीमा {rebuild_limit} से अधिक "
 "है। कृपया डेटा स्रोत को असिंक्रोनस प्रोसेसिंग के लिए अपडेट करें।"
-
-#: corehq/apps/userreports/views.py
-msgid "Table \"{}\" has already finished building. Rebuild table to start over."
-msgstr ""
-"तालिका \"{}\" का निर्माण पहले ही पूरा हो चुका है। फिर से शुरू करने के लिए "
-"तालिका को पुनर्निर्मित करें।"
-
-#: corehq/apps/userreports/views.py
-msgid ""
-"Table \"{}\" did not finish building but resume information is not "
-"available. Unfortunately, this means you need to rebuild the table."
-msgstr ""
-"तालिका \"{}\" का निर्माण पूरा नहीं हुआ लेकिन पुनरारंभ जानकारी उपलब्ध नहीं "
-"है। दुर्भाग्यवश, आपको तालिका को पुनर्निर्मित करना होगा।"
-
-#: corehq/apps/userreports/views.py
-msgid "Resuming rebuilding table \"{}\"."
-msgstr "तालिका \"{}\" का पुनर्निर्माण फिर से शुरू किया जा रहा है।"
 
 #: corehq/apps/userreports/views.py
 msgid "Preview Data Source"
@@ -48777,9 +49060,15 @@ msgid "However, we ran into problems with the following users:"
 msgstr "हालांकि, निम्नलिखित यूज़र्स के साथ समस्याएँ आईं:"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Mobile Workers can log into applications in this project space and submit data.\n"
+#| "          "
 msgid ""
 "\n"
-"            Mobile Workers can log into applications in this project space and submit data.\n"
+"            Mobile Workers can log into applications in this project space and\n"
+"            submit data.\n"
 "          "
 msgstr ""
 "\n"
@@ -48787,13 +49076,25 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Their activity and form submissions can be monitored in the Reports section of this %(hq_name)s project space.\n"
+#| "            <br />\n"
+#| "            Read more about managing mobile workers on our\n"
+#| "            <a href=\"https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Help Site</a>.\n"
+#| "          "
 msgid ""
 "\n"
-"            Their activity and form submissions can be monitored in the Reports section of this %(hq_name)s project space.\n"
+"            Their activity and form submissions can be monitored in the Reports\n"
+"            section of this %(hq_name)s project space.\n"
 "            <br />\n"
 "            Read more about managing mobile workers on our\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Help Site</a>.\n"
+"            <a\n"
+"              href=\"https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\"\n"
+"              target=\"_blank\"\n"
+"              >Help Site</a\n"
+"            >.\n"
 "          "
 msgstr ""
 "\n"
@@ -48838,11 +49139,17 @@ msgstr ""
 "                    "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                      You have reached the limit of <strong>%(u)s\n"
+#| "                      Mobile Workers</strong> included with your plan.\n"
+#| "                    "
 msgid ""
 "\n"
-"                      You have reached the limit of <strong>%(u)s\n"
-"                      Mobile Workers</strong> included with your plan.\n"
+"                      You have reached the limit of\n"
+"                      <strong>%(u)s Mobile Workers</strong> included with your\n"
+"                      plan.\n"
 "                    "
 msgstr ""
 "\n"
@@ -48850,10 +49157,16 @@ msgstr ""
 "                    "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Please subscribe to a paid plan in order to add\n"
+#| "                        more Mobile Workers.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Please subscribe to a paid plan in order to add\n"
-"                        more Mobile Workers.\n"
+"                        Please subscribe to a paid plan in order to add more\n"
+"                        Mobile Workers.\n"
 "                      "
 msgstr ""
 "\n"
@@ -48861,10 +49174,16 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Please ask your billing administrator to subscribe\n"
+#| "                        to a paid plan in order to add more Mobile Workers.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Please ask your billing administrator to subscribe\n"
-"                        to a paid plan in order to add more Mobile Workers.\n"
+"                        Please ask your billing administrator to subscribe to a\n"
+"                        paid plan in order to add more Mobile Workers.\n"
 "                      "
 msgstr ""
 "\n"
@@ -48894,9 +49213,18 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              <strong>There are no mobile workers visible to you at this time.</strong>\n"
+#| "              Please contact your project's administrator if this is incorrect.\n"
+#| "            "
 msgid ""
 "\n"
-"              <strong>There are no mobile workers visible to you at this time.</strong>\n"
+"              <strong\n"
+"                >There are no mobile workers visible to you at this\n"
+"                time.</strong\n"
+"              >\n"
 "              Please contact your project's administrator if this is incorrect.\n"
 "            "
 msgstr ""
@@ -48906,9 +49234,17 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  <strong>There are currently no mobile workers in this project.</strong>\n"
+#| "              "
 msgid ""
 "\n"
-"                  <strong>There are currently no mobile workers in this project.</strong>\n"
+"                <strong\n"
+"                  >There are currently no mobile workers in this\n"
+"                  project.</strong\n"
+"                >\n"
 "              "
 msgstr ""
 "\n"
@@ -48916,9 +49252,16 @@ msgstr ""
 "              "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>No mobile users are assigned to your user's location.</strong>\n"
+#| "              "
 msgid ""
 "\n"
-"                <strong>No mobile users are assigned to your user's location.</strong>\n"
+"                <strong\n"
+"                  >No mobile users are assigned to your user's location.</strong\n"
+"                >\n"
 "              "
 msgstr ""
 "\n"
@@ -48936,6 +49279,18 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Trial Status"
+msgid "PersonalID Status"
+msgstr "परीक्षण की स्थिति"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Linked"
+msgid "Not Linked"
+msgstr "लिंक्ड"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate"
 msgstr "पुनः सक्रिय करें"
 
@@ -48948,28 +49303,56 @@ msgid "Send Confirmation SMS"
 msgstr "पुष्टिकरण एसएमएस भेजें"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Unlink PersonalID"
+msgstr "PersonalID अनलिंक करें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Link PersonalID"
+msgstr "PersonalID लिंक करें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate Mobile Worker"
 msgstr "मोबाइल वर्कर पुनः सक्रिय करें"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Are you sure you want to <strong>reactivate</strong> this mobile worker?\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Are you sure you want to <strong>reactivate</strong> this mobile worker?\n"
-"                          "
+"                              Are you sure you want to\n"
+"                              <strong>reactivate</strong> this mobile worker?\n"
+"                            "
 msgstr ""
 "\n"
 "                            क्या आप वाकई इस मोबाइल वर्कर को <strong>पुनः सक्रिय</strong> करना चाहते हैं?\n"
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Deactivated mobile workers are not able to log into new devices.<br />\n"
+#| "                            Read more about\n"
+#| "                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers' target=\"_blank\">\n"
+#| "                              deactivating mobile workers\n"
+#| "                            </a> on our Help Site.\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Deactivated mobile workers are not able to log into new devices.<br />\n"
-"                            Read more about\n"
-"                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers' target=\"_blank\">\n"
-"                              deactivating mobile workers\n"
-"                            </a> on our Help Site.\n"
-"                          "
+"                              Deactivated mobile workers are not able to log\n"
+"                              into new devices.<br />\n"
+"                              Read more about\n"
+"                              <a\n"
+"                                href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers'\n"
+"                                target=\"_blank\"\n"
+"                              >\n"
+"                                deactivating mobile workers\n"
+"                              </a>\n"
+"                              on our Help Site.\n"
+"                            "
 msgstr ""
 "\n"
 "                            निष्क्रिय मोबाइल वर्कर्स नए डिवाइस में लॉग इन नहीं कर सकते।<br />\n"
@@ -48984,21 +49367,33 @@ msgid "Deactivate Mobile Worker"
 msgstr "मोबाइल वर्कर निष्क्रिय करें"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Are you sure you want to <strong>deactivate</strong> this mobile worker?\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Are you sure you want to <strong>deactivate</strong> this mobile worker?\n"
-"                          "
+"                              Are you sure you want to\n"
+"                              <strong>deactivate</strong> this mobile worker?\n"
+"                            "
 msgstr ""
 "\n"
 "                            क्या आप वाकई इस मोबाइल वर्कर को <strong>निष्क्रिय</strong> करना चाहते हैं?\n"
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account confirmation\n"
+#| "                              email to this account?\n"
+#| "                            "
 msgid ""
 "\n"
-"                              Would you like to send the account confirmation\n"
-"                              email to this account?\n"
-"                            "
+"                                  Would you like to send the account\n"
+"                                  confirmation email to this account?\n"
+"                                "
 msgstr ""
 "\n"
 "                              क्या आप इस खाते पर खाता पुष्टि\n"
@@ -49006,11 +49401,17 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account confirmation\n"
+#| "                              SMS to this account?\n"
+#| "                            "
 msgid ""
 "\n"
-"                              Would you like to send the account confirmation\n"
-"                              SMS to this account?\n"
-"                            "
+"                                  Would you like to send the account\n"
+"                                  confirmation SMS to this account?\n"
+"                                "
 msgstr ""
 "\n"
 "                              क्या आप इस खाते पर खाता पुष्टि\n"
@@ -49018,11 +49419,18 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent an email with instructions to\n"
+#| "                              set a password and be able to login to this project.\n"
+#| "                            "
 msgid ""
 "\n"
-"                              The user will be sent an email with instructions to\n"
-"                              set a password and be able to login to this project.\n"
-"                            "
+"                                  The user will be sent an email with\n"
+"                                  instructions to set a password and be able to\n"
+"                                  login to this project.\n"
+"                                "
 msgstr ""
 "\n"
 "                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
@@ -49030,11 +49438,18 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with instructions to\n"
+#| "                              set a password and be able to login to this project.\n"
+#| "                            "
 msgid ""
 "\n"
-"                              The user will be sent a SMS with instructions to\n"
-"                              set a password and be able to login to this project.\n"
-"                            "
+"                                  The user will be sent a SMS with instructions\n"
+"                                  to set a password and be able to login to this\n"
+"                                  project.\n"
+"                                "
 msgstr ""
 "\n"
 "                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
@@ -49052,6 +49467,30 @@ msgstr "खाता पुष्टि एसएमएस भेजें"
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Loading Workers..."
 msgstr "वर्कर्स लोड हो रहे हैं..."
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <strong>There was an issue contacting the server.</strong>\n"
+#| "            Please check your internet connection.\n"
+#| "            If this issue continues, please\n"
+#| "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+#| "          "
+msgid ""
+"\n"
+"            <strong>There was an issue contacting the server.</strong>\n"
+"            Please check your internet connection. If this issue continues,\n"
+"            please\n"
+"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+"          "
+msgstr ""
+"\n"
+"            <strong>सर्वर से संपर्क करने में समस्या आई।</strong>\n"
+"            कृपया अपनी इंटरनेट कनेक्शन जांचें।\n"
+"            यदि यह समस्या बनी रहती है, तो कृपया\n"
+"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">समस्या की रिपोर्ट करें</a>।\n"
+"          "
 
 #: corehq/apps/users/templates/users/partials/basic_info_form.html
 msgid "CommCare Supply Settings"
@@ -49152,6 +49591,95 @@ msgstr "सत्यापित करें (फिर प्रयास क�
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Mark as primary"
 msgstr "मुख्य के रूप में चिह्नित करें"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Link PersonalID Account"
+msgstr "PersonalID खाता लिंक करें"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"            Are you sure you want to <strong>link</strong> the PersonalID\n"
+"            account for this mobile worker?\n"
+"          "
+msgstr ""
+"\n"
+"                          क्या आप वाकई इस नियम को <strong>हटाना</strong> चाहते हैं?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            After linking, the mobile worker will be able to access this project\n"
+"            using their PersonalID credentials.\n"
+"          "
+msgstr ""
+"\n"
+"            लिंक करने के बाद, मोबाइल वर्कर अपने PersonalID क्रेडेंशियल्स का उपयोग करके\n"
+"            इस परियोजना तक पहुंच सकेंगे।\n"
+"          "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Unlink PersonalID Account"
+msgstr "PersonalID खाता अनलिंक करें"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"            Are you sure you want to <strong>unlink</strong> the PersonalID\n"
+"            account for this mobile worker?\n"
+"          "
+msgstr ""
+"\n"
+"                          क्या आप वाकई इस नियम को <strong>हटाना</strong> चाहते हैं?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            After unlinking, the mobile worker will no longer be able to access\n"
+"            this project using their PersonalID credentials.\n"
+"          "
+msgstr ""
+"\n"
+"            अनलिंक करने के बाद, मोबाइल वर्कर अब अपने PersonalID क्रेडेंशियल्स का उपयोग करके\n"
+"            इस परियोजना तक पहुंच नहीं सकेंगे।\n"
+"          "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid "link"
+msgid "Unlink"
+msgstr "link"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_password_locked_banner.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_password_locked_banner.html
+msgid ""
+"\n"
+"    This user is linked with a PersonalID account, and so the password may not\n"
+"    be reset or changed here.\n"
+"  "
+msgstr ""
+"\n"
+"    यह उपयोगकर्ता PersonalID खाते से लिंक है, इसलिए पासवर्ड यहां रीसेट या बदला नहीं जा सकता।\n"
+"  "
 
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #, python-format
@@ -54539,7 +55067,9 @@ msgid "Bulk User Management"
 msgstr "बल्क उपयोगकर्ता प्रबंधन"
 
 #: corehq/privileges.py
-msgid "Bulk Data Cleaning"
+#, fuzzy
+#| msgid "Bulk Data Cleaning"
+msgid "Bulk Data Editing"
 msgstr "बल्क डेटा सफाई"
 
 #: corehq/privileges.py
@@ -55720,6 +56250,33 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "# Cases Cleaned"
+#~ msgstr "# केस साफ किए गए"
+
+#~ msgid "Recent Tasks"
+#~ msgstr "हाल के कार्य"
+
+#~ msgid "Populating your report did not complete successfully."
+#~ msgstr "आपकी रिपोर्ट को भरना सफलतापूर्वक पूरा नहीं हुआ।"
+
+#~ msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
+#~ msgstr "आप \"एडवांस्ड\" पर क्लिक कर \"रिज़्यूम बिल्ड\" चुनने का प्रयास कर सकते हैं।"
+
+#~ msgid "Table \"{}\" has already finished building. Rebuild table to start over."
+#~ msgstr ""
+#~ "तालिका \"{}\" का निर्माण पहले ही पूरा हो चुका है। फिर से शुरू करने के लिए "
+#~ "तालिका को पुनर्निर्मित करें।"
+
+#~ msgid ""
+#~ "Table \"{}\" did not finish building but resume information is not "
+#~ "available. Unfortunately, this means you need to rebuild the table."
+#~ msgstr ""
+#~ "तालिका \"{}\" का निर्माण पूरा नहीं हुआ लेकिन पुनरारंभ जानकारी उपलब्ध नहीं "
+#~ "है। दुर्भाग्यवश, आपको तालिका को पुनर्निर्मित करना होगा।"
+
+#~ msgid "Resuming rebuilding table \"{}\"."
+#~ msgstr "तालिका \"{}\" का पुनर्निर्माण फिर से शुरू किया जा रहा है।"
 
 #~ msgid ""
 #~ "You tried to access a session for \"{}\" that was already completed. Please "

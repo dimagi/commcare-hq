@@ -1,6 +1,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import "jquery-textchange/jquery.textchange";
 import caseConfigUtils from "app_manager/js/case_config_utils";
 import casePropertiesModels from "app_manager/js/forms/advanced/case_properties";
 import actions from "app_manager/js/forms/advanced/actions";

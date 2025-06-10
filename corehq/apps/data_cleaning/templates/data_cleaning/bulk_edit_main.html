@@ -2,15 +2,12 @@
 {% load hq_shared_tags %}
 {% load django_tables2 %}
 {% load i18n %}
-
 {% js_entry "data_cleaning/js/bulk_edit_main" %}
 
 {% block page_content %}
   <div class="card">
     <div class="card-body">
-      <h3 class="card-title">
-        {% trans "Start a Bulk Edit Session" %}
-      </h3>
+      <h3 class="card-title">{% trans "Start a Bulk Edit Session" %}</h3>
       <div
         class="mt-3"
         hx-get="{{ htmx_start_session_form_view_url }}"
@@ -23,9 +20,7 @@
 
   <div class="card mt-4">
     <div class="card-body">
-      <h5 class="card-title">
-        {% trans "Recent Bulk Edit Sessions" %}
-      </h5>
+      <h5 class="card-title">{% trans "Recent Bulk Edit Sessions" %}</h5>
       <div
         class="mt-3"
         hx-get="{{ htmx_recent_sessions_table_view_url }}"
@@ -35,4 +30,4 @@
       </div>
     </div>
   </div>
-{% endblock %}
+{% endblock page_content %}
