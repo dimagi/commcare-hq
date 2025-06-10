@@ -1556,9 +1556,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
             if is_saved:
                 if not request.user.is_superuser:
-                    if self.billing_account_info_form.is_same_edition():
-                        self.send_keep_subscription_email()
-                    elif self.billing_account_info_form.is_downgrade_from_paid_plan():
+                    if self.billing_account_info_form.is_downgrade_from_paid_plan():
                         self.send_downgrade_email()
                 if self.billing_account_info_form.is_same_edition():
                     # Choosing to keep the same subscription
@@ -1618,22 +1616,6 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         )
         send_mail_async.delay(
             '{}Subscription downgrade for {}'.format(
-                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
-                self.request.domain
-            ), message, [settings.GROWTH_EMAIL]
-        )
-
-    def send_keep_subscription_email(self):
-        message = '\n'.join([
-            '{user} decided to keep their subscription for {domain} of {new_plan}',
-        ]).format(
-            user=self.request.couch_user.username,
-            domain=self.request.domain,
-            old_plan=self.request.POST.get('old_plan', 'unknown'),
-        )
-
-        send_mail_async.delay(
-            '{}Subscription kept for {}'.format(
                 '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
                 self.request.domain
             ), message, [settings.GROWTH_EMAIL]
