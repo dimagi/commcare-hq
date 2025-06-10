@@ -74,6 +74,7 @@ from corehq.apps.domain.views.settings import (
     ManageDomainMobileWorkersView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
+    CustomPasswordResetEmailView
 )
 from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -116,6 +117,10 @@ urlpatterns = [
             template_name='login_and_password/password_change_done.html',
             extra_context={'current_page': {'page_name': _('Password Change Complete')}}),
         name='password_change_done'),
+# JT NOTE todo i think i need to make a custom view that takes in an email as a paremeter
+# Then in the view, it populates the form with the email and then submits it?
+    url(r'^accounts/password_reset_email_auto/(?P<email>[^/]+)/$',
+        CustomPasswordResetEmailView.as_view(**PASSWORD_RESET_KWARGS), name='password_reset_email_auto'),
     url(r'^accounts/password_reset_email/$',
         PasswordResetView.as_view(**PASSWORD_RESET_KWARGS), name='password_reset_email'),
     url(r'^accounts/password_reset_email/done/$',

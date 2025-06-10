@@ -50,6 +50,11 @@ def should_send_account_confirmation(couch_user):
 def send_account_confirmation(commcare_user):
     from corehq.apps.hqwebapp.tasks import send_html_email_async
     from corehq.apps.users.views.mobile import CommCareUserConfirmAccountView
+    #JT NOTE this is the email that is sent when creating a mobile worker. CommCareUserConfirmAccountview contains the url
+    #that leads to the view for confirming account
+    # the user's id is used as a token in the url of confirm_account endpoint
+    # for example the url is http://localhost:8000/a/jonathanlocal/settings/users/commcare/confirm_account/b95491417dfc4fc5be3d422f1a9c1e4d/
+
     template_params = _get_account_confirmation_template_params(
         commcare_user, commcare_user.get_id, CommCareUserConfirmAccountView.urlname
     )
@@ -87,6 +92,8 @@ def send_account_confirmation_sms(commcare_user):
 
 def _get_account_confirmation_template_params(commcare_user, message_token, url_name):
     url = absolute_reverse(url_name, args=[commcare_user.domain, message_token])
+    print("url", url)
+    print("message_token", message_token)
     settings_obj = SMSAccountConfirmationSettings.get_settings(commcare_user.domain)
     return {
         'name': commcare_user.full_name,

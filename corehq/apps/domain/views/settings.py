@@ -536,12 +536,71 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
+from django.contrib.auth.views import PasswordResetView
+class CustomPasswordResetEmailView(PasswordResetView):
+    # def get_initial(self):
+    #     initial = super().get_initial()
+    #     # Get the 'email' from the URL query parameters
+    #     initial['email'] = self.kwargs.get('email')
+    #     return initial
 
+    def get(self, request, *args, **kwargs):
+        # Get the email from the URL
+        print("in get")
+        email = self.kwargs.get('email')
+        # JT NOTE all this probably doesn't need to happen in the post. I think ther'es
+        # some other hook to populate the form and then change the success_url
+        # and can just depend on the built in post
+        # Instantiate the form with the email
+        form = self.get_form()
+        form.initial['email'] = email  # Set the initial email value
+
+        # Check if the form is valid
+        print("form is valid", form.is_valid())
+        print("form", form)
+        if form.is_valid():
+            print("form is valid")
+            # If valid, run the success logic from form_valid()
+            return self.form_valid(form)
+        else:
+            print('form .is_bound', form.is_bound)
+            print("form is invalid", form.errors)
+            print("self.form_invalid", self.form_invalid(form))
+            # If invalid, show the form with errors
+            return self.form_invalid(form)
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.domain.forms import ConfidentialPasswordResetForm
+        # Handle POST requests for form submission
+        print("in post")
+        email = self.kwargs.get('email')
+        print("email", email)
+        # Instantiate the form with the email
+        form = self.get_form()
+        form.initial['email'] = email  # Set the initial email value
+        form = ConfidentialPasswordResetForm({'email': email})
+
+        print("form", form)
+        if form.is_valid():
+            print("form is valid")
+            self.form_valid(form)
+            return HttpResponseRedirect('/')
+        else:
+            print('form .is_bound', form.is_bound)
+            print("form is invalid", form.errors)
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        # This method is called when valid form data has been processed.
+        # It should return an HttpResponse.
+        print("Form submitted automatically!")
+        print(form.cleaned_data)
+        return super().form_valid(form)
 
 class CustomPasswordResetView(PasswordResetConfirmView):
     urlname = "password_reset_confirm"
 
     def get_success_url(self):
+        print("in custom password reset view")
         if self.user:
             # redirect mobile worker password reset to a domain-specific login with their username already set
             couch_user = CouchUser.get_by_username(self.user.username)
@@ -559,7 +618,13 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         return super().get_success_url()
 
     def get(self, request, *args, **kwargs):
-
+        print("in get args", args)
+        print("in get kwargs", kwargs)
+        print("self.validlink", self.validlink)
+        print("self.request.session", self.request.session)
+        INTERNAL_RESET_SESSION_TOKEN = "_password_reset_token"
+        session_token = self.request.session.get(INTERNAL_RESET_SESSION_TOKEN)
+        print("session_token", session_token)
         self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         return super().get(request, *args, **kwargs)
 

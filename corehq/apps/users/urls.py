@@ -237,6 +237,7 @@ urlpatterns = [
         ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname
     ),
+    #JT NOTE this is the url that is used to confirm the account
     url(
         r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$',
         CommCareUserConfirmAccountView.as_view(),

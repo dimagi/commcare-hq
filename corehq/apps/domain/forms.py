@@ -1628,16 +1628,20 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     def clean_email(self):
         UserModel = get_user_model()
         email = self.cleaned_data["email"]
+        print("email", email)
         matching_users = UserModel._default_manager.filter(username__iexact=email)
 
         # below here is not modified from the superclass
         if not len(matching_users):
+            print("no matching users")
             raise forms.ValidationError(self.error_messages['unknown'])
         if not any(user.is_active for user in matching_users):
+            print("none of the filtered users are active")
             # none of the filtered users are active
             raise forms.ValidationError(self.error_messages['unknown'])
         if any((user.password == UNUSABLE_PASSWORD_PREFIX)
                for user in matching_users):
+            print("some of the filtered users have a unusable password")
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
 
@@ -1713,6 +1717,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
 
     def clean_email(self):
+        print("in clean_email")
         try:
             return super(ConfidentialPasswordResetForm, self).clean_email()
         except forms.ValidationError:

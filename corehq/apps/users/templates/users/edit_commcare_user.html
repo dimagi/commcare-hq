@@ -109,6 +109,16 @@
           >
             {% crispy reset_password_form %}
           </form>
+          <form
+            action="{% url 'password_reset_email_auto' 'jtang@dimagi.com' %}"
+            method="POST"
+            class="mt-2"
+          >
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning">
+              Send Password Reset Email
+            </button>
+          </form>
         {% endif %}
       </div>
     </div>

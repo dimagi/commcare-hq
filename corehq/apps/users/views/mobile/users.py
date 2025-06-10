@@ -801,6 +801,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             self.create_attendee_for_user(couch_user)
 
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
+            #JT NOTE send_account_confirmation is the checkbox when creating mobile worker
             send_account_confirmation_if_necessary(couch_user)
         if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
@@ -1511,6 +1512,10 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
     @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
     def dispatch(self, request, *args, **kwargs):
+        print("CommCareUserConfirmAccountView dispatch")
+        print("kwargs", kwargs)
+        print("args", args)
+        print("request", request.session)
         return super(CommCareUserConfirmAccountView, self).dispatch(request, *args, **kwargs)
 
     @property
