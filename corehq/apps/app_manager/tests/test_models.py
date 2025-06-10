@@ -104,7 +104,9 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'add': {'three': {'question_path': 'some_path'}},
+            'update_case': {
+                'add': {'three': {'question_path': 'some_path'}},
+            }
         })
 
         self.assertEqual(list(result['update_case']['update'].keys()), ['one', 'two', 'three'])
@@ -120,7 +122,9 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'del': ['one'],
+            'update_case': {
+                'del': ['one'],
+            }
         })
 
         self.assertEqual(list(result['update_case']['update'].keys()), ['two'])
@@ -136,12 +140,14 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'update': {
-                'two': {
-                    'original': {'question_path': 'two'},
-                    'updated': {'question_path': 'four'},
-                },
-            },
+            'update_case': {
+                'update': {
+                    'two': {
+                        'original': {'question_path': 'two'},
+                        'updated': {'question_path': 'four'},
+                    }
+                }
+            }
         })
 
         self.assertEqual(result['update_case']['update']['two']['question_path'], 'four')
@@ -161,12 +167,10 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'update': {
-                'name': {
-                    'original': {'question_path': 'name'},
-                    'updated': {'question_path': 'new_name'},
-                },
-            },
+            'open_case': {
+                'original': {'question_path': 'name'},
+                'updated': {'question_path': 'new_name'}
+            }
         })
 
         self.assertEqual(result['open_case']['name_update']['question_path'], 'new_name')
@@ -182,12 +186,14 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'update': {
-                'name': {
-                    'original': {'question_path': 'original_name'},
-                    'updated': {'question_path': 'new_name'},
+            'update_case': {
+                'update': {
+                    'name': {
+                        'original': {'question_path': 'original_name'},
+                        'updated': {'question_path': 'new_name'},
+                    },
                 },
-            },
+            }
         })
 
         self.assertEqual(result['update_case']['update']['name']['question_path'], 'new_name')
@@ -202,12 +208,14 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'update': {
-                'one': {
-                    'original': {'question_path': 'stale'},
-                    'updated': {'question_path': 'four'},
-                },
-            },
+            'update_case': {
+                'update': {
+                    'one': {
+                        'original': {'question_path': 'stale'},
+                        'updated': {'question_path': 'four'}
+                    }
+                }
+            }
         })
 
         self.assertEqual(result['update_case']['update']['one']['question_path'], 'four')
@@ -220,12 +228,10 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'update': {
-                'name': {
-                    'original': {'question_path': 'stale'},
-                    'updated': {'question_path': 'new_name'},
-                },
-            },
+            'open_case': {
+                'original': {'question_path': 'stale'},
+                'updated': {'question_path': 'new_name'}
+            }
         })
 
         self.assertEqual(result['open_case']['name_update']['question_path'], 'new_name')
@@ -241,7 +247,9 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'add': {'one': {'question_path': 'four'}},
+            'update_case': {
+                'add': {'one': {'question_path': 'four'}},
+            }
         })
 
         self.assertEqual(result['update_case']['update']['one']['question_path'], 'four')
@@ -258,10 +266,12 @@ class FormActions_WithDiffsTests(SimpleTestCase):
 
         with self.assertRaises(MissingPropertyException):
             actions.with_diffs({
-                'update': {
-                    'two': {
-                        'original': {'question_path': 'a'},
-                        'updated': {'question_path': 'two'}
+                'update_case': {
+                    'update': {
+                        'two': {
+                            'original': {'question_path': 'a'},
+                            'updated': {'question_path': 'two'}
+                        }
                     }
                 }
             })
@@ -275,14 +285,16 @@ class FormActions_WithDiffsTests(SimpleTestCase):
 
         with self.assertRaises(MissingPropertyException) as context:
             actions.with_diffs({
-                'update': {
-                    'one': {
-                        'incoming': {'question_path': 'a'},
-                        'updated': {'question_path': 'one'},
-                    },
-                    'two': {
-                        'incoming': {'question_path': 'b'},
-                        'updated': {'question_path': 'two'}
+                'update_case': {
+                    'update': {
+                        'one': {
+                            'incoming': {'question_path': 'a'},
+                            'updated': {'question_path': 'one'},
+                        },
+                        'two': {
+                            'incoming': {'question_path': 'b'},
+                            'updated': {'question_path': 'two'}
+                        }
                     }
                 }
             })
@@ -298,7 +310,9 @@ class FormActions_WithDiffsTests(SimpleTestCase):
             }
         })
 
-        result = actions.with_diffs({'del': ['two']})
+        result = actions.with_diffs({
+            'update_case': {'del': ['two']}
+        })
 
         self.assertEqual(list(result['update_case']['update'].keys()), ['one'])
 
@@ -314,11 +328,13 @@ class FormActions_WithDiffsTests(SimpleTestCase):
 
         with self.assertRaises(DiffConflictException):
             actions.with_diffs({
-                'update': {'two': {
-                    'original': {'question_path': 'two'},
-                    'updated': {'question_path': 'three'}
-                }},
-                'del': ['two']
+                'update_case': {
+                    'update': {'two': {
+                        'original': {'question_path': 'two'},
+                        'updated': {'question_path': 'three'}
+                    }},
+                    'del': ['two']
+                }
             })
 
     def test_all_actions_at_once(self):
@@ -335,20 +351,37 @@ class FormActions_WithDiffsTests(SimpleTestCase):
         })
 
         result = actions.with_diffs({
-            'add': {'three': {'question_path': 'three'}},
-            'del': ['one'],
-            'update': {
-                'name': {
-                    'original': {'question_path': 'form_name'},
-                    'updated': {'question_path': 'new_name'},
-                },
-                'two': {
-                    'original': {'question_path': 'two'},
-                    'updated': {'question_path': 'nine'}
-                },
+            'open_case': {
+                'original': {'question_path': 'form_name'},
+                'updated': {'question_path': 'new_name'}
+            },
+            'update_case': {
+                'add': {'three': {'question_path': 'three'}},
+                'del': ['one'],
+                'update': {
+                    'two': {
+                        'original': {'question_path': 'two'},
+                        'updated': {'question_path': 'nine'}
+                    }
+                }
             }
         })
 
         self.assertEqual(result['open_case']['name_update']['question_path'], 'new_name')
         self.assertEqual(list(result['update_case']['update'].keys()), ['two', 'three'])
         self.assertEqual(result['update_case']['update']['two']['question_path'], 'nine')
+
+    def test_invalid_name_value_raises_exception(self):
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'name'}
+            }
+        })
+
+        with self.assertRaises(Exception):
+            actions.with_diffs({
+                'open_case': {
+                    'original': {'question_path': 'name'},
+                    'updated': 'bad_value'
+                }
+            })

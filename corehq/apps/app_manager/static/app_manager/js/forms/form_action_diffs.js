@@ -1,6 +1,32 @@
 import _ from 'underscore';
 
-export function getDiff(original, incoming) {
+
+export function getBaseline(formActions) {
+    return {
+        'open_case': formActions.open_case,
+        'update_case': formActions.update_case,
+    };
+}
+
+export function getDiff(baseline, incoming) {
+    const updateDiff = getUpdateDiff(baseline.update_case.update, incoming.update_case.update);
+    const diff = {};
+    if (Object.keys(updateDiff).length) {
+        diff['update_case'] = updateDiff;
+    }
+
+    if (incoming.open_case.name_update) {
+        const nameDiff = getNameDiff(baseline.open_case.name_update, incoming.open_case.name_update);
+        if (nameDiff) {
+            diff['open_case'] = nameDiff;
+        }
+    }
+
+    return diff;
+}
+
+
+function getUpdateDiff(original, incoming) {
     const additions = {};
     const deletions = [];
     const updates = {};
@@ -12,9 +38,7 @@ export function getDiff(original, incoming) {
         } else if (!(key in incoming)) {
             deletions.push(key);
         } else {
-            // The server sends the raw data from couch. Ideally, the client would never have to deal with
-            // extraneous keys like 'doc_type', so remove them to make comparison simple
-            const normalizedOriginal = _.omit(original[key], 'doc_type');
+            const normalizedOriginal = normalizeUpdateObject(original[key]);
             if (!_.isEqual(incoming[key], normalizedOriginal)) {
                 updates[key] = {
                     original: normalizedOriginal,
@@ -40,6 +64,28 @@ export function getDiff(original, incoming) {
     return diff;
 }
 
+
+function getNameDiff(original, incoming) {
+    const normalizedOriginal = normalizeUpdateObject(original);
+    if (!_.isEqual(incoming, normalizedOriginal)) {
+        return {
+            original: normalizedOriginal,
+            updated: incoming,
+        };
+    }
+
+    return null;
+}
+
+function normalizeUpdateObject(updateObject) {
+    // The server sends the raw data from couch that includes keys not used in our javascript representation.
+    // Ideally, the server would strip would these values for us, but because that doesn't happen,
+    // remove these extraneous keys here
+    return _.omit(updateObject, 'doc_type');
+}
+
+
 export default {
+    getBaseline,
     getDiff,
 };

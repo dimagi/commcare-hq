@@ -456,37 +456,32 @@ class FormActions(DocumentSchema):
             self.set_raw_value(key, value)
 
     def with_diffs(self, diffs):
-        self.check_for_duplicate_keys(diffs)
-        self.check_for_invalid_updates(diffs)
-
         dest = {
             'open_case': self.open_case.to_json(),
             'update_case': self.update_case.to_json()
         }
 
-        if 'add' in diffs:
-            for (key, value) in diffs['add'].items():
-                dest['update_case']['update'][key] = value
+        if 'update_case' in diffs:
+            self.check_for_duplicate_keys(diffs['update_case'])
+            self.check_for_invalid_updates(diffs['update_case'])
 
-        if 'del' in diffs:
-            for key in diffs['del']:
-                if key in dest['update_case']['update']:
-                    del dest['update_case']['update'][key]
+            if 'add' in diffs['update_case']:
+                for (key, value) in diffs['update_case']['add'].items():
+                    dest['update_case']['update'][key] = value
 
-        if 'update' in diffs:
-            for (key, value) in diffs['update'].items():
-                incoming_value = value['updated']
-                if key == 'name' and self._is_registration_form_actions():
-                    dest['open_case']['name_update'] = incoming_value
-                else:
-                    dest['update_case']['update'][key] = incoming_value
+            if 'del' in diffs['update_case']:
+                for key in diffs['update_case']['del']:
+                    if key in dest['update_case']['update']:
+                        del dest['update_case']['update'][key]
+
+            if 'update' in diffs['update_case']:
+                for (key, value) in diffs['update_case']['update'].items():
+                    dest['update_case']['update'][key] = value['updated']
+
+        if 'open_case' in diffs:
+            dest['open_case']['name_update'] = diffs['open_case']['updated']
 
         return dest
-
-    def _is_registration_form_actions(self):
-        # unlike followup forms, registration forms open a case, and thus fill out the 'open_case'
-        # property. Opening a case requires a name, which would be specified in the 'question_path'
-        return bool(self.open_case.name_update.question_path)
 
     def check_for_duplicate_keys(self, diffs):
         addition_keys = set(diffs.get('add', {}).keys())
@@ -504,9 +499,6 @@ class FormActions(DocumentSchema):
         missing_keys = []
         if 'update' in diffs:
             for key in diffs['update'].keys():
-                if key == 'name':
-                    # name is never an invalid update
-                    continue
                 if key not in self.update_case.update:
                     missing_keys.append(key)
 

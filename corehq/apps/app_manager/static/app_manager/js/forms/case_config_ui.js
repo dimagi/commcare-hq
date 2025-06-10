@@ -2,7 +2,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import caseConfigUtils from "app_manager/js/case_config_utils";
-import { getDiff } from "app_manager/js/forms/form_action_diffs";
+import { getBaseline, getDiff } from "app_manager/js/forms/form_action_diffs";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import privileges from "hqwebapp/js/privileges";
 import toggles from "hqwebapp/js/toggles";
@@ -67,7 +67,7 @@ $(function () {
         self.descriptionDict = params.propertyDescriptions;
         self.deprecatedPropertiesDict = params.deprecatedProperties;
 
-        self.updateCaseBaseline = params.actions.update_case.update;
+        self.baseline = getBaseline(params.actions);
 
         self.saveButton = main.initSaveButton({
             unsavedMessage: gettext("You have unchanged case settings"),
@@ -76,11 +76,7 @@ $(function () {
                 var subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
                 const updatedActions = _(HQFormActions.from_case_transaction(
                     self.caseConfigViewModel.case_transaction)).extend({subcases: subcases});
-
-                const diff = getDiff(
-                    self.updateCaseBaseline,
-                    updatedActions.update_case.update,
-                );
+                const diff = getDiff(self.baseline, updatedActions);
 
                 self.saveButton.ajax({
                     type: 'post',
@@ -97,7 +93,7 @@ $(function () {
                         self.setPropertiesMap(data.propertiesMap);
                         // update the "original" state so that subsequent changes prior to a reload
                         // can generate a correct diff
-                        self.updateCaseBaseline = updatedActions.update_case.update;
+                        self.baseline = getBaseline(updatedActions);
 
                         if (_(data.propertiesMap).has(self.caseType)) {
                             kissmetrix.track.event("Saved question as a Case Property", {
