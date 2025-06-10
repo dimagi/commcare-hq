@@ -228,10 +228,14 @@ def fix_staging(path, push):
        (rebase vellum-staging on master)
     2. Update Vellum on staging to match the version on master.
        (reset vellum-staging to master)
+    3. Cancel.
     """))
-    while answer not in ["1", "2"]:
-        answer = input("Please choose 1 or 2: ")
+    while answer not in ["1", "2", "3"]:
+        answer = input("Please choose 1, 2, or 3: ")
 
+    if answer == "3":
+        print("Conflict between vellum-staging and master not resolved.")
+        return
     if answer == "1":
         print("Rebasing vellum-staging on master...")
         code = subprocess.call([
