@@ -30,9 +30,6 @@ def main():
              "any unpushed commits on the local vellum-staging branch.")
     parser.add_argument("--branch", default="",
         help="Alternative Vellum branch from which to build.")
-    parser.add_argument("--fix-staging",
-        action="store_true",
-        help="This option is obsolete. Use 'fix-staging' mode instead.")
     parser.add_argument("--hq-base", metavar="BRANCH", default="master",
         help="Reset to BRANCH before updating HQ (default: master). "
              "This does nothing when mode is 'master'.")
@@ -66,8 +63,6 @@ def main():
         sys.exit("Please use --vellum-dir=... or set VELLUM_DIR in your environment")
     if args.no_make and args.no_test:
         sys.exit("--no-make and --no-test options are mutually exclusive. Pick one.")
-    if args.fix_staging:
-        print("WARNING: --fix-staging option is obsolete and does nothing.")
 
     if args.mode == "fix-staging":
         if args.dev_mode:
