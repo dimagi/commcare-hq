@@ -35,9 +35,6 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    # remove after change propagates from Dockerfile
-    unset UV_PROJECT; rm /vendor/{pyproject.toml,uv.lock} || true
-
     uv sync --locked --group=test --no-dev --no-progress
 
     python_preheat  # preheat the python libs
