@@ -254,8 +254,8 @@ def _get_updates(existing_actions, data):
     if 'update_diff' in data:
         update_diff = json.loads(data['update_diff'])
         diff = existing_actions.with_diffs(update_diff)
-        updates['open_case'] = diff['open_case']
-        updates['update_case'] = diff['update_case']
+        updates['open_case'] = diff.open_case.to_json()
+        updates['update_case'] = diff.update_case.to_json()
 
     return updates
 

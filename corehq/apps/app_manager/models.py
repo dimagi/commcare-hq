@@ -366,6 +366,45 @@ class ConditionalCaseUpdate(DocumentSchema):
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
 
+    def apply_diffs(self, diffs):
+        self.check_for_duplicate_keys(diffs)
+        self.check_for_invalid_updates(diffs)
+
+        if 'add' in diffs:
+            for (key, value) in diffs['add'].items():
+                self.update[key] = ConditionalCaseUpdate(value)
+
+        if 'del' in diffs:
+            for key in diffs['del']:
+                if key in self.update:
+                    del self.update[key]
+
+        if 'update' in diffs:
+            for (key, value) in diffs['update'].items():
+                self.update[key] = ConditionalCaseUpdate(value['updated'])
+
+    def check_for_duplicate_keys(self, diffs):
+        addition_keys = set(diffs.get('add', {}).keys())
+        deletion_keys = set(diffs.get('del', []))
+        update_keys = set(diffs.get('update', {}).keys())
+
+        overlapping_addition_keys = addition_keys & (deletion_keys | update_keys)
+        overlapping_deletion_keys = deletion_keys & update_keys
+        overlapping_keys = overlapping_addition_keys | overlapping_deletion_keys
+
+        if overlapping_keys:
+            raise DiffConflictException(*overlapping_keys)
+
+    def check_for_invalid_updates(self, diffs):
+        missing_keys = []
+        if 'update' in diffs:
+            for key in diffs['update'].keys():
+                if key not in self.update:
+                    missing_keys.append(key)
+
+            if missing_keys:
+                raise MissingPropertyException(*missing_keys)
+
 
 class PreloadAction(FormAction):
 
@@ -396,6 +435,10 @@ class OpenCaseAction(FormAction):
 
     name_update = SchemaProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
+
+    def apply_diffs(self, diffs):
+        if 'updated' in diffs:
+            self.name_update = ConditionalCaseUpdate(diffs['updated'])
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
@@ -456,54 +499,15 @@ class FormActions(DocumentSchema):
             self.set_raw_value(key, value)
 
     def with_diffs(self, diffs):
-        dest = {
-            'open_case': self.open_case.to_json(),
-            'update_case': self.update_case.to_json()
-        }
+        dest = FormActions(self.to_json())  # clone object
 
         if 'update_case' in diffs:
-            self.check_for_duplicate_keys(diffs['update_case'])
-            self.check_for_invalid_updates(diffs['update_case'])
-
-            if 'add' in diffs['update_case']:
-                for (key, value) in diffs['update_case']['add'].items():
-                    dest['update_case']['update'][key] = value
-
-            if 'del' in diffs['update_case']:
-                for key in diffs['update_case']['del']:
-                    if key in dest['update_case']['update']:
-                        del dest['update_case']['update'][key]
-
-            if 'update' in diffs['update_case']:
-                for (key, value) in diffs['update_case']['update'].items():
-                    dest['update_case']['update'][key] = value['updated']
+            dest.update_case.apply_diffs(diffs['update_case'])
 
         if 'open_case' in diffs:
-            dest['open_case']['name_update'] = diffs['open_case']['updated']
+            dest.open_case.apply_diffs(diffs['open_case'])
 
         return dest
-
-    def check_for_duplicate_keys(self, diffs):
-        addition_keys = set(diffs.get('add', {}).keys())
-        deletion_keys = set(diffs.get('del', []))
-        update_keys = set(diffs.get('update', {}).keys())
-
-        overlapping_addition_keys = addition_keys & (deletion_keys | update_keys)
-        overlapping_deletion_keys = deletion_keys & update_keys
-        overlapping_keys = overlapping_addition_keys | overlapping_deletion_keys
-
-        if overlapping_keys:
-            raise DiffConflictException(*overlapping_keys)
-
-    def check_for_invalid_updates(self, diffs):
-        missing_keys = []
-        if 'update' in diffs:
-            for key in diffs['update'].keys():
-                if key not in self.update_case.update:
-                    missing_keys.append(key)
-
-            if missing_keys:
-                raise MissingPropertyException(*missing_keys)
 
 
 class CaseIndex(DocumentSchema):
