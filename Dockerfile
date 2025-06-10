@@ -46,15 +46,17 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-COPY pyproject.toml uv.lock package.json /vendor/
+COPY .python-version pyproject.toml uv.lock /tmp-project/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-  UV_PROJECT=/vendor uv sync --locked --group=test --no-dev --no-install-project \
-  && rm /vendor/pyproject.toml /vendor/uv.lock
+  uv sync --locked --group=test --no-dev --project=/tmp-project --no-install-project \
+  && rm -rf /tmp-project
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'
 ENV PUPPETEER_SKIP_DOWNLOAD true
+
+COPY package.json /vendor/
 
 RUN npm -g install \
     yarn \
