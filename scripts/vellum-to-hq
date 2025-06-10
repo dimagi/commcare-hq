@@ -199,7 +199,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
         # push output will print instructions for creating a PR
     elif branch == "master":
         print(f"\nPush '{hq_branch}' to Github, then create a PR:\n")
-        print(f"  git push origin {hq_branch}")
+        print(f"  git push origin {hq_branch}\n")
 
     print_vellum_changes(old_vellum_rev, vellum_dir)
 
