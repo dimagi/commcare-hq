@@ -84,7 +84,7 @@ var MapItem = function (item, index, mappingContext) {
         var defaultIconPath = actualPath || self.generateIconPath();
         import('app_manager/js/app_manager_media').then(function (appManager) {
             import('app_manager/js/nav_menu_media_common').then(function (uploaders) {
-                self.iconManager = appManager.appMenuMediaManager({
+                self.iconManager = appManager.default.appMenuMediaManager({
                     ref: {
                         "path": actualPath,
                         "icon_type": "icon-picture",
@@ -94,7 +94,7 @@ var MapItem = function (item, index, mappingContext) {
                         "alt_text": altText,
                     },
                     objectMap: mappingContext.multimedia,
-                    uploadController: uploaders.iconUploader,
+                    uploadController: uploaders.default.iconUploader,
                     defaultPath: defaultIconPath,
                     inputElement: $("#" + self.cssId()),
                 });
