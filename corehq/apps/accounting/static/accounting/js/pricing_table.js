@@ -40,10 +40,11 @@ var PricingTable = function (options) {
     self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
     self.oIsSubmitDisabled = ko.computed(function () {
+        var isSubscribablePlan = !!self.oSelectedEdition() && !['free', 'enterprise'].includes(self.oSelectedEdition());
         var isSamePaySchedule = self.currentIsAnnualPlan === self.oShowAnnualPricing();
         var isCurrentPlan = self.oSelectedEdition() === self.oCurrentEdition() && !self.oNextSubscription() && isSamePaySchedule;
         var isNextPlan = self.oNextSubscription() && self.oSelectedEdition() === self.oNextSubscription().toLowerCase();
-        return !self.oSelectedEdition() || self.oSelectedEdition() === 'free' || isNextPlan || isCurrentPlan;
+        return !isSubscribablePlan || isNextPlan || isCurrentPlan;
     });
 
     self.oIsCurrentPlanFreeEdition = ko.observable(options.currentEdition === 'free');
