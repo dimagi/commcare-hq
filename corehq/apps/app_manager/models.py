@@ -366,27 +366,33 @@ class ConditionalCaseUpdate(DocumentSchema):
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
 
+    DIFF_ACTION_ADD = 'add'
+    DIFF_ACTION_DELETE = 'del'
+    DIFF_ACTION_UPDATE = 'update'
+
+    DIFF_VALUE_UPDATED = 'updated'
+
     def apply_diffs(self, diffs):
         self.check_for_duplicate_keys(diffs)
         self.check_for_invalid_updates(diffs)
 
-        if 'add' in diffs:
-            for (key, value) in diffs['add'].items():
+        if self.DIFF_ACTION_ADD in diffs:
+            for (key, value) in diffs[self.DIFF_ACTION_ADD].items():
                 self.update[key] = ConditionalCaseUpdate(value)
 
-        if 'del' in diffs:
-            for key in diffs['del']:
+        if self.DIFF_ACTION_DELETE in diffs:
+            for key in diffs[self.DIFF_ACTION_DELETE]:
                 if key in self.update:
                     del self.update[key]
 
-        if 'update' in diffs:
-            for (key, value) in diffs['update'].items():
-                self.update[key] = ConditionalCaseUpdate(value['updated'])
+        if self.DIFF_ACTION_UPDATE in diffs:
+            for (key, value) in diffs[self.DIFF_ACTION_UPDATE].items():
+                self.update[key] = ConditionalCaseUpdate(value[self.DIFF_VALUE_UPDATED])
 
     def check_for_duplicate_keys(self, diffs):
-        addition_keys = set(diffs.get('add', {}).keys())
-        deletion_keys = set(diffs.get('del', []))
-        update_keys = set(diffs.get('update', {}).keys())
+        addition_keys = set(diffs.get(self.DIFF_ACTION_ADD, {}).keys())
+        deletion_keys = set(diffs.get(self.DIFF_ACTION_DELETE, []))
+        update_keys = set(diffs.get(self.DIFF_ACTION_UPDATE, {}).keys())
 
         overlapping_addition_keys = addition_keys & (deletion_keys | update_keys)
         overlapping_deletion_keys = deletion_keys & update_keys
@@ -397,8 +403,8 @@ class UpdateCaseAction(FormAction):
 
     def check_for_invalid_updates(self, diffs):
         missing_keys = []
-        if 'update' in diffs:
-            for key in diffs['update'].keys():
+        if self.DIFF_ACTION_UPDATE in diffs:
+            for key in diffs[self.DIFF_ACTION_UPDATE].keys():
                 if key not in self.update:
                     missing_keys.append(key)
 
@@ -436,9 +442,11 @@ class OpenCaseAction(FormAction):
     name_update = SchemaProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
 
+    DIFF_VALUE_UPDATED = 'updated'
+
     def apply_diffs(self, diffs):
-        if 'updated' in diffs:
-            self.name_update = ConditionalCaseUpdate(diffs['updated'])
+        if self.DIFF_VALUE_UPDATED in diffs:
+            self.name_update = ConditionalCaseUpdate(diffs[self.DIFF_VALUE_UPDATED])
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
