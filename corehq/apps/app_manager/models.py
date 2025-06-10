@@ -493,12 +493,21 @@ class FormActions(DocumentSchema):
         return Counter([action.repeat_context for action in self.subcases])
 
     def update(self, updates):
+        '''
+        Apply all 'updates' to the current object.
+        'updates' is expected to be a collection of valid properties within
+        FormActions (such as 'open_case', 'subcases', etc) in a json object form
+        '''
         for key, value in updates.items():
             if key not in self:
                 raise InvalidPropertyException(key)
             self.set_raw_value(key, value)
 
     def with_diffs(self, diffs):
+        '''
+        Produce a new FormActions object containing potentially updated
+        'open_case' and 'update_case' properties reflecting the diffs.
+        '''
         dest = FormActions(self.to_json())  # clone object
 
         if 'update_case' in diffs:
