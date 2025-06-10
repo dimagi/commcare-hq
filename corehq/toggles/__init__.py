@@ -1022,19 +1022,6 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     """
 )
 
-CASE_SEARCH_INDEXED_METADATA = StaticToggle(
-    'CASE_SEARCH_INDEXED_METADATA',
-    "Case Search: Search against indexed system metadata fields when possible",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This is a performance optimization. When creating filters from CSQL
-    expressions and the property being queried is a standard system metadata
-    property, query against the top-level location of that property rather than
-    the nested document inside case_properties.
-    """
-)
-
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
@@ -1202,6 +1189,14 @@ SAAS_PROTOTYPE = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
     description='Use this for rapid prototypes developed by the SaaS product team.',
+)
+
+FORMBUILDER_SAVE_TO_CASE = StaticToggle(
+    'saas_formbuilder_save_to_case',
+    'Form Builder - Save Questions to Case Properties',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Allows users to save questions to case properties within the Form Builder'
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(

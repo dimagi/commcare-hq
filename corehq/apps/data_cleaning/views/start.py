@@ -5,8 +5,8 @@ from django.views.generic import TemplateView
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.forms.start_session import (
-    SelectCaseTypeForm,
     ResumeOrRestartCaseSessionForm,
+    SelectCaseTypeForm,
 )
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.domain.decorators import LoginAndDomainMixin
@@ -15,22 +15,27 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
-@method_decorator([
-    use_bootstrap5,
-    require_bulk_data_cleaning_cases,
-], name='dispatch')
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_bulk_data_cleaning_cases,
+    ],
+    name='dispatch',
+)
 class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
-    urlname = "start_bulk_edit_case_session"
-    template_name = "data_cleaning/forms/next_action_form.html"
-    container_id = "start-case-session"
+    urlname = 'start_bulk_edit_case_session'
+    template_name = 'data_cleaning/forms/next_action_form.html'
+    container_id = 'start-case-session'
 
     def get_context_data(self, form=None, next_action=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({
-            "form": form or SelectCaseTypeForm(self.domain),
-            "container_id": self.container_id,
-            "next_action": next_action or 'validate_session',
-        })
+        context.update(
+            {
+                'form': form or SelectCaseTypeForm(self.domain),
+                'container_id': self.container_id,
+                'next_action': next_action or 'validate_session',
+            }
+        )
         return context
 
     @hq_hx_action('post')
@@ -39,16 +44,15 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
         next_action = 'validate_session'
         if form.is_valid():
             case_type = form.cleaned_data['case_type']
-            active_session = BulkEditSession.objects.active_case_session(
-                request.user, self.domain, case_type
-            )
+            active_session = BulkEditSession.objects.active_case_session(request.user, self.domain, case_type)
             if not active_session:
-                new_session = BulkEditSession.objects.new_case_session(
-                    request.user, self.domain, case_type
-                )
+                new_session = BulkEditSession.objects.new_case_session(request.user, self.domain, case_type)
                 return self.render_session_redirect(new_session, 'fresh')
             form = ResumeOrRestartCaseSessionForm(
-                self.domain, self.container_id, request.path_info, {
+                self.domain,
+                self.container_id,
+                request.path_info,
+                {
                     'case_type': case_type,
                     'next_step': 'resume',
                 },
@@ -58,9 +62,7 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
 
     @hq_hx_action('post')
     def resume_or_restart(self, request, *args, **kwargs):
-        form = ResumeOrRestartCaseSessionForm(
-            self.domain, self.container_id, request.path_info, request.POST
-        )
+        form = ResumeOrRestartCaseSessionForm(self.domain, self.container_id, request.path_info, request.POST)
         next_action = 'resume_or_restart'
         if form.is_valid():
             case_type = form.cleaned_data['case_type']
@@ -69,9 +71,7 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
                 'resume': lambda: BulkEditSession.objects.active_case_session(
                     request.user, self.domain, case_type
                 ),
-                'new': lambda: BulkEditSession.objects.restart_case_session(
-                    request.user, self.domain, case_type
-                ),
+                'new': lambda: BulkEditSession.objects.restart_case_session(request.user, self.domain, case_type),
             }[next_step]
             if get_session:
                 return self.render_session_redirect(get_session(), next_step)
@@ -79,15 +79,22 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
 
     def render_session_redirect(self, session, creation_method):
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
+
         response = self.render_htmx_redirect(
-            reverse(BulkEditCasesSessionView.urlname, args=(self.domain, session.session_id, )),
-            response_message=_("Starting Bulk Edit Session...")
+            reverse(
+                BulkEditCasesSessionView.urlname,
+                args=(
+                    self.domain,
+                    session.session_id,
+                ),
+            ),
+            response_message=_('Starting Bulk Edit Session...'),
         )
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_session_started",
+            'bulk_edit_session_started',
             {
-                "creation_method": creation_method,
-                "session_type": session.session_type,
-            }
+                'creation_method': creation_method,
+                'session_type': session.session_type,
+            },
         )

@@ -10,7 +10,6 @@ from corehq.apps.case_search.const import (
     INDEXED_METADATA_BY_KEY,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.case_search.utils import get_case_id_sort_block
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -122,11 +121,6 @@ class CaseListExplorer(
             column = self.headers.header[column_id]
             try:
                 meta_property = INDEXED_METADATA_BY_KEY[column.prop_name]
-                if meta_property.key == '@case_id':
-                    # This condition is added because ES 5 does not allow sorting on _id.
-                    #  When we will have case_id in root of the document, this should be removed.
-                    query.es_query['sort'] = get_case_id_sort_block(descending)
-                    return query
                 query = query.sort(meta_property.es_field_name, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)

@@ -248,6 +248,7 @@ case_search
  0013_casesearchconfig_fuzzy_prefix_length
  0014_casesearchconfig_index_name
  0015_csqlfixtureexpression_csqlfixtureexpressionlog
+ 0016_csqlfixtureexpression_user_data_criteria
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -1324,7 +1325,8 @@ users
  0078_sqluserdata_deleted_on
  0079_alter_sqluserdata_managers
  0080_connectiduserlink_is_active
- 0081_connectidmessagingkey_unique_active_messaging_key_per_user_and_domain
+ 0081_rm_orphaned_user_data
+ 0082_connectidmessagingkey_unique_active_messaging_key_per_user_and_domain
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

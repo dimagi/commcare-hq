@@ -27,7 +27,7 @@ def remove_duplicates(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0080_connectiduserlink_is_active'),
+        ('users', '0081_rm_orphaned_user_data'),
     ]
 
     operations = [

@@ -1,8 +1,10 @@
 import json
 
+from dimagi.utils.logging import notify_exception
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
 
 from corehq.apps.data_cleaning.columns import EditableHtmxColumn
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
@@ -15,41 +17,55 @@ from corehq.apps.data_cleaning.tasks import commit_data_cleaning
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.es.exceptions import ESError
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import (
     HtmxInvalidPageRedirectMixin,
     SelectablePaginatedTableView,
 )
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.htmx_action import HqHtmxActionMixin, HtmxResponseException, hq_hx_action
 
 
-@method_decorator([
-    use_bootstrap5,
-    require_bulk_data_cleaning_cases,
-], name='dispatch')
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_bulk_data_cleaning_cases,
+    ],
+    name='dispatch',
+)
 class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, SelectablePaginatedTableView):
     pass
 
 
-class EditCasesTableView(BulkEditSessionViewMixin,
-                         HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
-    urlname = "bulk_edit_cases_table"
+class EditCasesTableView(
+    BulkEditSessionViewMixin, HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView
+):
+    urlname = 'bulk_edit_cases_table'
     table_class = EditCasesTable
 
     def get_host_url(self):
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
-        return reverse(BulkEditCasesSessionView.urlname, args=(self.domain, self.session_id,))
+
+        return reverse(
+            BulkEditCasesSessionView.urlname,
+            args=(
+                self.domain,
+                self.session_id,
+            ),
+        )
 
     def get_table_kwargs(self):
-        extra_columns = [(
-            "selection",
-            self.table_class.get_select_column(
-                self.session,
-                self.request,
-                select_record_action="select_record",
-                select_page_action="select_page",
+        extra_columns = [
+            (
+                'selection',
+                self.table_class.get_select_column(
+                    self.session,
+                    self.request,
+                    select_record_action='select_record',
+                    select_page_action='select_page',
+                ),
             )
-        )]
+        ]
         extra_columns.extend(self.table_class.get_columns_from_session(self.session))
         return {
             'extra_columns': extra_columns,
@@ -62,23 +78,42 @@ class EditCasesTableView(BulkEditSessionViewMixin,
     def get_queryset(self):
         return self.session.get_queryset()
 
+    def get(self, request, *args, **kwargs):
+        try:
+            return super().get(request, *args, **kwargs)
+        except ESError as err:
+            notify_exception(
+                request,
+                'Ran into ESError in bulk edit cases table.',
+                details={
+                    'error': str(err),
+                },
+            )
+            raise HtmxResponseException(
+                message=_('We are having trouble connecting to the server. Please try again in a few minutes.'),
+                status_code=503,
+                retry_after=1000,
+            )
+
     @hq_hx_action('post')
     def clear_filters(self, request, *args, **kwargs):
         self.session.reset_filtering()
         response = self.get(request, *args, **kwargs)
-        response['HX-Trigger'] = json.dumps({
-            'dcPinnedFilterRefresh': {
-                'target': '#hq-hx-pinned-filters',
-            },
-            'dcFilterRefresh': {
-                'target': '#hq-hx-active-filters',
-            },
-        })
+        response['HX-Trigger'] = json.dumps(
+            {
+                'dcPinnedFilterRefresh': {
+                    'target': '#hq-hx-pinned-filters',
+                },
+                'dcFilterRefresh': {
+                    'target': '#hq-hx-active-filters',
+                },
+            }
+        )
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_clear_filters",
+            'bulk_edit_clear_filters',
             {
-                "session_type": self.session.session_type,
+                'session_type': self.session.session_type,
             },
         )
 
@@ -96,10 +131,10 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         response = self.render_htmx_no_response(request, *args, **kwargs)
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_select_record",
+            'bulk_edit_select_record',
             {
-                "session_type": self.session.session_type,
-                "is_selected": is_selected,
+                'session_type': self.session.session_type,
+                'is_selected': is_selected,
             },
         )
 
@@ -117,11 +152,11 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         response = self.render_htmx_no_response(request, *args, **kwargs)
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_select_page",
+            'bulk_edit_select_page',
             {
-                "session_type": self.session.session_type,
-                "selected": select_page,
-                "num_records": len(doc_ids),
+                'session_type': self.session.session_type,
+                'selected': select_page,
+                'num_records': len(doc_ids),
             },
         )
 
@@ -145,10 +180,10 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         response = self.get(request, *args, **kwargs)
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_deselect_all_records",
+            'bulk_edit_deselect_all_records',
             {
-                "session_type": self.session.session_type,
-                "num_records": self._get_record_count_from_response(response),
+                'session_type': self.session.session_type,
+                'num_records': self._get_record_count_from_response(response),
             },
         )
 
@@ -159,33 +194,33 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         """
         response = self.get(request, *args, **kwargs)
         num_records = self._get_record_count_from_response(response)
-        if self.session.can_select_all(
-            table_num_records=num_records
-        ):
+        if self.session.can_select_all(table_num_records=num_records):
             self.session.select_all_records_in_queryset()
             return self.include_gtm_event_with_response(
                 response,
-                "bulk_edit_select_all_records",
+                'bulk_edit_select_all_records',
                 {
-                    "session_type": self.session.session_type,
-                    "num_records": num_records,
+                    'session_type': self.session.session_type,
+                    'num_records': num_records,
                 },
             )
-        response['HX-Trigger'] = json.dumps({
-            'showDataCleaningModal': {
-                'target': '#select-all-not-possible-modal',
-            },
-        })
+        response['HX-Trigger'] = json.dumps(
+            {
+                'showDataCleaningModal': {
+                    'target': '#select-all-not-possible-modal',
+                },
+            }
+        )
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_select_all_records_not_possible",
+            'bulk_edit_select_all_records_not_possible',
             {
-                "session_type": self.session.session_type,
-                "num_records": num_records,
+                'session_type': self.session.session_type,
+                'num_records': num_records,
             },
         )
 
-    @hq_hx_action("post")
+    @hq_hx_action('post')
     def apply_all_changes(self, request, *args, **kwargs):
         # even if a user hacks their way to more edits in this session, they can never apply those edits
         if not self.session.is_read_only:
@@ -193,53 +228,53 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             self.session.save()
             commit_data_cleaning.delay(self.session.session_id)
         response = self.render_htmx_no_response(request, *args, **kwargs)
-        response['HX-Trigger'] = json.dumps({
-            'dcRefreshStatusModal': {
-                'target': '#session-status-modal-body',
-            },
-        })
+        response['HX-Trigger'] = json.dumps(
+            {
+                'dcRefreshStatusModal': {
+                    'target': '#session-status-modal-body',
+                },
+            }
+        )
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_apply_all_changes",
+            'bulk_edit_apply_all_changes',
             {
-                "session_type": self.session.session_type,
+                'session_type': self.session.session_type,
             },
         )
 
-    @hq_hx_action("post")
+    @hq_hx_action('post')
     def undo_last_change(self, request, *args, **kwargs):
         self.session.undo_last_change()
-        response = self._trigger_clean_form_refresh(
-            self.get(request, *args, **kwargs)
-        )
+        response = self._trigger_clean_form_refresh(self.get(request, *args, **kwargs))
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_undo_last_change",
+            'bulk_edit_undo_last_change',
             {
-                "session_type": self.session.session_type,
+                'session_type': self.session.session_type,
             },
         )
 
-    @hq_hx_action("post")
+    @hq_hx_action('post')
     def clear_all_changes(self, request, *args, **kwargs):
         self.session.clear_all_changes()
-        response = self._trigger_clean_form_refresh(
-            self.get(request, *args, **kwargs)
-        )
+        response = self._trigger_clean_form_refresh(self.get(request, *args, **kwargs))
         return self.include_gtm_event_with_response(
             response,
-            "bulk_edit_clear_all_changes",
+            'bulk_edit_clear_all_changes',
             {
-                "session_type": self.session.session_type,
+                'session_type': self.session.session_type,
             },
         )
 
     def _trigger_clean_form_refresh(self, response):
-        response['HX-Trigger'] = json.dumps({
-            'dcEditFormRefresh': {
-                'target': '#hq-hx-edit-selected-records-form',
-            },
-        })
+        response['HX-Trigger'] = json.dumps(
+            {
+                'dcEditFormRefresh': {
+                    'target': '#hq-hx-edit-selected-records-form',
+                },
+            }
+        )
         return response
 
     def _render_table_cell_response(self, doc_id, column, request, *args, **kwargs):
@@ -258,25 +293,25 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             record,
             table,
         )
-        response = self.render_htmx_partial_response(
-            request, EditableHtmxColumn.template_name, context
+        response = self.render_htmx_partial_response(request, EditableHtmxColumn.template_name, context)
+        response['HX-Trigger'] = json.dumps(
+            {
+                'updateChanges': {
+                    'hasChanges': self.session.has_changes(),
+                },
+            }
         )
-        response['HX-Trigger'] = json.dumps({
-            "updateChanges": {
-                "hasChanges": self.session.has_changes(),
-            },
-        })
         return response
 
     def _get_cell_request_details(self, request):
         """
         Returns the details of the cell request.
         """
-        doc_id = request.POST["record_id"]
-        column = self.session.columns.get(column_id=request.POST["column_id"])
+        doc_id = request.POST['record_id']
+        column = self.session.columns.get(column_id=request.POST['column_id'])
         return doc_id, column
 
-    @hq_hx_action("post")
+    @hq_hx_action('post')
     def cell_reset_changes(self, request, *args, **kwargs):
         """
         Effectively resets/removes any changes made to a record's prop_id.
@@ -284,25 +319,21 @@ class EditCasesTableView(BulkEditSessionViewMixin,
         doc_id, column = self._get_cell_request_details(request)
         edit_record = self.session.records.get(doc_id=doc_id)
         edit_record.reset_changes(column.prop_id)
-        return self._render_table_cell_response(
-            doc_id, column, request, *args, **kwargs
-        )
+        return self._render_table_cell_response(doc_id, column, request, *args, **kwargs)
 
-    @hq_hx_action("post")
+    @hq_hx_action('post')
     def cell_inline_edit(self, request, *args, **kwargs):
         """
         Commits the inline edit action for a cell.
         """
         doc_id, column = self._get_cell_request_details(request)
-        value = request.POST["newValue"]
+        value = request.POST['newValue']
         self.session.apply_inline_edit(doc_id, column.prop_id, value)
-        return self._render_table_cell_response(
-            doc_id, column, request, *args, **kwargs
-        )
+        return self._render_table_cell_response(doc_id, column, request, *args, **kwargs)
 
 
 class RecentCaseSessionsTableView(BaseDataCleaningTableView):
-    urlname = "recent_bulk_edit_case_sessions_table"
+    urlname = 'recent_bulk_edit_case_sessions_table'
     table_class = RecentCaseSessionsTable
 
     def get_queryset(self):
@@ -313,25 +344,26 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
 
     def _get_session_url(self, session):
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
+
         return reverse(BulkEditCasesSessionView.urlname, args=(session.domain, session.session_id))
 
     def _get_record(self, session):
         return {
-            "is_active": False,
-            "committed_on": session.committed_on,
-            "completed_on": session.completed_on,
-            "case_type": session.identifier,
-            "case_count": session.num_changed_records,
-            "percent": session.percent_complete,
-            "form_ids_url": reverse('download_form_ids', args=(session.domain, session.session_id)),
-            "has_form_ids": bool(len(session.form_ids)),
-            "session_url": self._get_session_url(session),
+            'is_active': False,
+            'committed_on': session.committed_on,
+            'completed_on': session.completed_on,
+            'case_type': session.identifier,
+            'case_count': session.num_changed_records,
+            'percent': session.percent_complete,
+            'form_ids_url': reverse('download_form_ids', args=(session.domain, session.session_id)),
+            'has_form_ids': bool(len(session.form_ids)),
+            'session_url': self._get_session_url(session),
         }
 
     def _get_active_record(self, session):
         return {
-            "is_active": True,
-            "case_type": session.identifier,
-            "percent": 0,
-            "session_url": self._get_session_url(session),
+            'is_active': True,
+            'case_type': session.identifier,
+            'percent': 0,
+            'session_url': self._get_session_url(session),
         }

@@ -1,15 +1,15 @@
 import json
 
-from django import forms
-from django.utils.translation import gettext as _, gettext_lazy
-
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
+from django import forms
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.data_cleaning.models import (
-    DataType,
     BulkEditColumn,
+    DataType,
 )
 from corehq.apps.data_cleaning.utils.cases import (
     get_case_property_details,
@@ -26,19 +26,11 @@ class AddColumnForm(forms.Form):
     with the same id is invalid HTML. Additionally, this scenario will result in select2s being
     applied to only ONE field.
     """
-    column_prop_id = forms.ChoiceField(
-        label=gettext_lazy("Case Property"),
-        required=False
-    )
-    column_label = forms.CharField(
-        label=gettext_lazy("Label"),
-        required=False
-    )
+
+    column_prop_id = forms.ChoiceField(label=gettext_lazy('Case Property'), required=False)
+    column_label = forms.CharField(label=gettext_lazy('Label'), required=False)
     column_data_type = forms.ChoiceField(
-        label=gettext_lazy("Data Type"),
-        widget=AlpineSelect,
-        choices=DataType.CASE_CHOICES,
-        required=False
+        label=gettext_lazy('Data Type'), widget=AlpineSelect, choices=DataType.CASE_CHOICES, required=False
     )
 
     def __init__(self, session, *args, **kwargs):
@@ -52,27 +44,21 @@ class AddColumnForm(forms.Form):
         ]
 
         initial_prop_id = self.data.get('column_prop_id')
-        is_initial_editable = (
-            property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
-        )
-        default_label = (
-            property_details[initial_prop_id]['label'] if initial_prop_id else ""
-        )
+        is_initial_editable = property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
+        default_label = property_details[initial_prop_id]['label'] if initial_prop_id else ''
         initial_label = self.data.get('column_label', default_label)
 
-        offcanvas_selector = "#offcanvas-configure-columns"
+        offcanvas_selector = '#offcanvas-configure-columns'
 
         alpine_data_model = {
-            "propId": initial_prop_id,
-            "dataType": self.data.get(
-                'data_type', DataType.CASE_CHOICES[0][0]
-            ),
+            'propId': initial_prop_id,
+            'dataType': self.data.get('data_type', DataType.CASE_CHOICES[0][0]),
             'label': initial_label,
-            "casePropertyDetails": property_details,
-            "isEditable": is_initial_editable,
+            'casePropertyDetails': property_details,
+            'isEditable': is_initial_editable,
             # todo: for now, don't show data type to user since we don't use it in the table UI (yet)
             # we will implement this in the future, so we want to store it in the db
-            "isDataTypeVisible": False,
+            'isDataTypeVisible': False,
         }
 
         self.helper = FormHelper()
@@ -81,35 +67,39 @@ class AddColumnForm(forms.Form):
             crispy.Div(
                 crispy.Field(
                     'column_prop_id',
-                    x_select2=json.dumps({
-                        "placeholder": _("Select a Case Property"),
-                        "dropdownParent": offcanvas_selector,
-                    }),
-                    **({
-                        "@select2change": "propId = $event.detail; "
-                                          "dataType = casePropertyDetails[$event.detail].data_type; "
-                                          "label = casePropertyDetails[$event.detail].label; "
-                                          "isEditable = casePropertyDetails[$event.detail].is_editable;",
-                    })
+                    x_select2=json.dumps(
+                        {
+                            'placeholder': _('Select a Case Property'),
+                            'dropdownParent': offcanvas_selector,
+                        }
+                    ),
+                    **(
+                        {
+                            '@select2change': 'propId = $event.detail; '
+                            'dataType = casePropertyDetails[$event.detail].data_type; '
+                            'label = casePropertyDetails[$event.detail].label; '
+                            'isEditable = casePropertyDetails[$event.detail].is_editable;',
+                        }
+                    ),
                 ),
                 crispy.Div(
                     crispy.Field(
                         'column_label',
-                        x_model="label",
+                        x_model='label',
                     ),
                     crispy.Div(
                         crispy.Field(
                             'column_data_type',
-                            x_model="dataType",
+                            x_model='dataType',
                         ),
-                        x_show="isEditable && isDataTypeVisible",
+                        x_show='isEditable && isDataTypeVisible',
                     ),
                     twbscrispy.StrictButton(
-                        _("Add Column"),
-                        type="submit",
-                        css_class="btn-primary",
+                        _('Add Column'),
+                        type='submit',
+                        css_class='btn-primary',
                     ),
-                    x_show="propId",
+                    x_show='propId',
                 ),
                 x_data=json.dumps(alpine_data_model),
             )
@@ -118,21 +108,21 @@ class AddColumnForm(forms.Form):
     def clean_column_label(self):
         column_label = self.cleaned_data.get('column_label')
         if not column_label:
-            raise forms.ValidationError(_("Please specify a label for the column."))
+            raise forms.ValidationError(_('Please specify a label for the column.'))
         return column_label
 
     def clean_column_data_type(self):
         data_type = self.cleaned_data.get('column_data_type')
         if not data_type:
-            raise forms.ValidationError(_("Please specify a data type."))
+            raise forms.ValidationError(_('Please specify a data type.'))
         return data_type
 
     def clean_column_prop_id(self):
         prop_id = self.cleaned_data.get('column_prop_id')
         if not prop_id:
-            raise forms.ValidationError(_("Please specify a case property."))
+            raise forms.ValidationError(_('Please specify a case property.'))
         if prop_id in self.existing_columns:
-            raise forms.ValidationError(_("This case property is already a column."))
+            raise forms.ValidationError(_('This case property is already a column.'))
         return prop_id
 
     def clean(self):
@@ -146,9 +136,8 @@ class AddColumnForm(forms.Form):
                 self.add_error(
                     'column_data_type',
                     _("Incorrect data type for '{prop_id}', should be '{expected_data_type}'").format(
-                        prop_id=prop_id,
-                        expected_data_type=expected_data_type
-                    )
+                        prop_id=prop_id, expected_data_type=expected_data_type
+                    ),
                 )
         return cleaned_data
 
@@ -156,5 +145,5 @@ class AddColumnForm(forms.Form):
         self.session.add_column(
             self.cleaned_data['column_prop_id'],
             self.cleaned_data['column_label'],
-            self.cleaned_data['column_data_type']
+            self.cleaned_data['column_data_type'],
         )
