@@ -14,6 +14,7 @@ from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import (
     ConfidentialPasswordResetForm,
     HQSetPasswordForm,
+    HQPasswordResetFormByUserId,
 )
 from corehq.apps.domain.views.accounting import (
     BillingStatementPdfView,
@@ -74,7 +75,7 @@ from corehq.apps.domain.views.settings import (
     ManageDomainMobileWorkersView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
-    CustomPasswordResetEmailView
+    CustomPasswordResetByUserIDView
 )
 from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -90,6 +91,13 @@ from corehq.motech.repeaters.views import (
 PASSWORD_RESET_KWARGS = {
     'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
+    'from_email': settings.DEFAULT_FROM_EMAIL,
+    'extra_context': {'current_page': {'page_name': _('Password Reset')}}
+}
+
+PASSWORD_RESET_BY_USER_ID_KWARGS = {
+    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
+    'form_class': HQPasswordResetFormByUserId,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')}}
 }
@@ -119,8 +127,8 @@ urlpatterns = [
         name='password_change_done'),
 # JT NOTE todo i think i need to make a custom view that takes in an email as a paremeter
 # Then in the view, it populates the form with the email and then submits it?
-    url(r'^accounts/password_reset_email_auto/(?P<email>[^/]+)/$',
-        CustomPasswordResetEmailView.as_view(**PASSWORD_RESET_KWARGS), name='password_reset_email_auto'),
+    url(r'^accounts/password_reset_email_by_user_id/$',
+        CustomPasswordResetByUserIDView.as_view(**PASSWORD_RESET_BY_USER_ID_KWARGS), name='password_reset_email_by_user_id'),
     url(r'^accounts/password_reset_email/$',
         PasswordResetView.as_view(**PASSWORD_RESET_KWARGS), name='password_reset_email'),
     url(r'^accounts/password_reset_email/done/$',

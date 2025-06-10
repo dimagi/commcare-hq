@@ -1606,6 +1606,103 @@ class NoAutocompleteMixin(object):
             for field in self.fields.values():
                 field.widget.attrs.update({'autocomplete': 'off'})
 
+class HQPasswordResetFormByUserId(forms.Form):
+    """
+    Only finds users and emails forms where the USERNAME is equal to the
+    email specified (preventing Mobile Workers from using this form to submit).
+
+    This small change is why we can't use the default PasswordReset form.
+    """
+
+    def __init__(self, user_id=None, *args, **kwargs):
+        # JT NOTE todo haven't figured out how to get the user_id direclty
+        # PasswordResetView takes a class, not an instance so self.user_id is not available
+        self.user_id = user_id  # Store the user_id as an instance variable
+        print("in form user id is", self.user_id)
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Send Password Reset Email"),
+                    type="submit",
+                    css_class='btn btn-warning',
+                ),
+            ),
+        )
+        super(HQPasswordResetFormByUserId, self).__init__(*args, **kwargs)
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None, **kwargs):
+        """
+        Generates a one-use only link for resetting password and sends to the
+        user.
+        """
+
+        if settings.IS_SAAS_ENVIRONMENT:
+            subject_template_name = 'registration/email/password_reset_subject_hq.txt'
+            email_template_name = 'registration/email/password_reset_email_hq.html'
+
+
+        # this is the line that we couldn't easily override in PasswordForm where
+        # we specifically filter for the username, not the email, so that
+        # mobile workers who have the same email set as a web worker don't
+        # get a password reset email.
+        print("self.user_id", self.user_id)
+        couch_user = CouchUser.get_by_user_id(self.user_id)
+        user = couch_user.get_django_user()
+
+        print("domain override", domain_override)
+        # the code below is copied from default PasswordForm
+        # Make sure that no email is sent to a user that actually has
+        # a password marked as unusable
+        if not user.has_usable_password():
+            return
+        if not domain_override:
+            current_site = get_current_site(request)
+            site_name = current_site.name
+            domain = current_site.domain
+        else:
+            site_name = domain = domain_override
+        current_site = get_current_site(request)
+        print("current_site", current_site)
+        print("current_site.domain", current_site.domain)
+        print("current_site.name", current_site.name)
+        couch_user = CouchUser.from_django_user(user)
+        if not couch_user:
+            return
+
+        user_email = couch_user.get_email()
+        if not user_email:
+            return
+
+        c = {
+            'email': user_email,
+            'domain': domain,
+            'site_name': site_name,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'user': user,
+            'token': token_generator.make_token(user),
+            'protocol': 'https' if use_https else 'http',
+        }
+        c.update(project_logo_emails_context(None, couch_user=couch_user))
+        subject = render_to_string(subject_template_name, c)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+
+        message_plaintext = render_to_string('registration/password_reset_email.html', c)
+        message_html = render_to_string(email_template_name, c)
+
+        send_html_email_async.delay(
+            subject, user_email, message_html,
+            text_content=message_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL
+        )
 
 class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
@@ -1668,7 +1765,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
         # mobile workers who have the same email set as a web worker don't
         # get a password reset email.
         active_users = get_active_users_by_email(email)
-
+        print("domain override", domain_override)
         # the code below is copied from default PasswordForm
         for user in active_users:
             # Make sure that no email is sent to a user that actually has
@@ -1681,7 +1778,10 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 domain = current_site.domain
             else:
                 site_name = domain = domain_override
-
+            current_site = get_current_site(request)
+            print("current_site", current_site)
+            print("current_site.domain", current_site.domain)
+            print("current_site.name", current_site.name)
             couch_user = CouchUser.from_django_user(user)
             if not couch_user:
                 continue

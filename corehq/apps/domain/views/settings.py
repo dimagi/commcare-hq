@@ -568,6 +568,11 @@ class CustomPasswordResetEmailView(PasswordResetView):
             print("self.form_invalid", self.form_invalid(form))
             # If invalid, show the form with errors
             return self.form_invalid(form)
+    def post(self, request, *args, **kwargs):
+        print("in post", request.POST)
+        print("in post args", args)
+        print("in post kwargs", kwargs)
+        return super().post(request, *args, **kwargs)
     # def post(self, request, *args, **kwargs):
     #     from corehq.apps.domain.forms import ConfidentialPasswordResetForm
     #     # Handle POST requests for form submission

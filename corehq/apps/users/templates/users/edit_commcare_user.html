@@ -110,23 +110,12 @@
             {% crispy reset_password_form %}
           </form>
           <form
-            action="{% url 'password_reset_email_auto' 'jtang@dimagi.com' %}"
+            action="{% url 'password_reset_email_by_user_id'%}"
             method="POST"
             class="mt-2"
           >
             {% csrf_token %}
-            <fieldset>
-              {% for field in reset_password_form_email.visible_fields %}
-                <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
-                  <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
-                  <div>
-                    {{ field }}
-                </div>
-              {% endfor %}
-            </fieldset>
-            <button type="submit" class="btn btn-warning">
-              Send Password Reset Email
-            </button>
+            {% crispy reset_password_form_email %}
           </form>
         {% endif %}
       </div>

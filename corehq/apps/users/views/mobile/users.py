@@ -248,9 +248,10 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     @memoized
     def reset_password_form_email(self):
-        from corehq.apps.domain.forms import ConfidentialPasswordResetForm
+        from corehq.apps.domain.forms import HQPasswordResetFormByUserId
+        print("self.editable_user_id", self.editable_user_id)
 
-        return ConfidentialPasswordResetForm({'email': 'jtang@dimagi.com'})
+        return HQPasswordResetFormByUserId(user_id= self.editable_user_id)
 
     @property
     @memoized
