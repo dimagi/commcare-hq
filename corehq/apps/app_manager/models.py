@@ -418,7 +418,29 @@ class OpenReferralAction(UpdateReferralAction):
 class OpenCaseAction(FormAction):
 
     name_update = SchemaProperty(ConditionalCaseUpdate)
+    name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
+
+    def make_multi(self):
+        '''
+        Moves any updates from `name_update` into `name_update_multi`
+        '''
+        if not (self.name_update):
+            return
+
+        self.name_update_multi = [self.name_update]
+        self.name_update = None
+
+    def normalize_name_update(self):
+        '''
+        Attempt to move `name_update_multi` to `name_update`
+        If `name_update_multi` contains multiple updates, no changes will occur
+        '''
+        if len(self.name_update_multi) > 1:
+            return
+
+        self.name_update = self.name_update_multi[0]
+        self.name_update_multi = []
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
