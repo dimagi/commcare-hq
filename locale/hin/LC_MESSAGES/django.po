@@ -14476,6 +14476,10 @@ msgid "{param} must be a string"
 msgstr "{param} एक स्ट्रिंग होना चाहिए"
 
 #: corehq/apps/case_search/models.py
+msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+msgstr ""
+
+#: corehq/apps/case_search/models.py
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
@@ -17419,6 +17423,17 @@ msgstr "सफाई सत्र शुरू करें"
 #: corehq/apps/data_cleaning/views/summary.py
 msgid "Cannot retrieve summary, session was not found."
 msgstr "सारांश प्राप्त नहीं कर सके, सत्र नहीं मिला।"
+
+#: corehq/apps/data_cleaning/views/tables.py
+#, fuzzy
+#| msgid ""
+#| "Error fetching multimedia from remote server. Please try again later."
+msgid ""
+"We are having trouble connecting to the server. Please try again in a few "
+"minutes."
+msgstr ""
+"रिमोट सर्वर से मल्टीमीडिया प्राप्त करने में त्रुटि। कृपया बाद में पुनः "
+"प्रयास करें।"
 
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
@@ -31078,7 +31093,9 @@ msgid "Errors"
 msgstr "त्रुटियाँ"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "HTMX Request: Server Error Encountered"
+#, fuzzy
+#| msgid "HTMX Request: Server Error Encountered"
+msgid "Server Error Encountered"
 msgstr "HTMX अनुरोध: सर्वर त्रुटि आई"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
@@ -32293,6 +32310,12 @@ msgstr ""
 msgctxt "twilio_locale"
 msgid "en"
 msgstr "en"
+
+#: corehq/apps/hqwebapp/two_factor_methods.py
+#, fuzzy
+#| msgid "Authentication Code"
+msgid "Authenticator App"
+msgstr "प्रमाणीकरण कोड"
 
 #: corehq/apps/hqwebapp/views.py
 #, python-format
@@ -37852,6 +37875,12 @@ msgid "Project Reports"
 msgstr "परियोजना रिपोर्ट्स"
 
 #: corehq/apps/reports/standard/cases/basic.py
+#, fuzzy
+#| msgid "Make this an upstream project space"
+msgid "View all cases within your project space."
+msgstr "इसे एक अपस्ट्रीम प्रोजेक्ट स्पेस बनाएं"
+
+#: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
 #: corehq/apps/reports/standard/cases/data_sources.py
 msgid "View Case"
@@ -38089,8 +38118,16 @@ msgid "Sensitive Date"
 msgstr "संवेदनशील तिथि"
 
 #: corehq/apps/reports/standard/deployments.py
-msgid "Application Status"
-msgstr "आवेदन की स्थिति"
+#, fuzzy
+#| msgid "Last Activity"
+msgid "User Last Activity Report"
+msgstr "अंतिम गतिविधि"
+
+#: corehq/apps/reports/standard/deployments.py
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "View last sync and last submission by user."
+msgstr "हाल की सबमिशन देखें"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Assigned Location(s)"
@@ -38255,6 +38292,10 @@ msgid "Raw Forms, Errors & Duplicates"
 msgstr "कच्चे फॉर्म, त्रुटियाँ और डुप्लिकेट"
 
 #: corehq/apps/reports/standard/forms/reports.py
+msgid "View all submissions, including errors and archived forms."
+msgstr "सभी सबमिशन देखें, जिनमें त्रुटियाँ और संग्रहित फॉर्म शामिल हैं।"
+
+#: corehq/apps/reports/standard/forms/reports.py
 msgid "Submit Time"
 msgstr "सबमिट समय"
 
@@ -38306,6 +38347,10 @@ msgstr "केस देखने में असमर्थ"
 #: corehq/apps/reports/standard/inspect.py
 msgid "Submission History"
 msgstr "सबमिशन इतिहास"
+
+#: corehq/apps/reports/standard/inspect.py
+msgid "View all submitted data."
+msgstr "सभी सबमिट किए गए डेटा देखें।"
 
 #: corehq/apps/reports/standard/inspect.py
 msgid "Sync Log"
@@ -55574,10 +55619,6 @@ msgstr "सभी इवेंट्स देखें"
 msgid "Manage Attendance Tracking Events"
 msgstr "उपस्थिति ट्रैकिंग इवेंट्स का प्रबंधन करें"
 
-#: corehq/trans_override.py
-msgid "Token generator"
-msgstr "टोकन जनरेटर"
-
 #: corehq/util/jsonattrs.py
 #, python-format
 msgid "'%(field)s' field value has an invalid format: %(exc)s"
@@ -56250,6 +56291,12 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "Application Status"
+#~ msgstr "आवेदन की स्थिति"
+
+#~ msgid "Token generator"
+#~ msgstr "टोकन जनरेटर"
 
 #~ msgid "# Cases Cleaned"
 #~ msgstr "# केस साफ किए गए"

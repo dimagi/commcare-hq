@@ -15102,6 +15102,10 @@ msgid "{param} must be a string"
 msgstr "يجب أن يكون {param} نصًا"
 
 #: corehq/apps/case_search/models.py
+msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+msgstr ""
+
+#: corehq/apps/case_search/models.py
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
@@ -18105,6 +18109,16 @@ msgstr "بدء جلسة تنظيف"
 #: corehq/apps/data_cleaning/views/summary.py
 msgid "Cannot retrieve summary, session was not found."
 msgstr "تعذر استرجاع الملخص، لم يتم العثور على الجلسة."
+
+#: corehq/apps/data_cleaning/views/tables.py
+#, fuzzy
+#| msgid ""
+#| "Error fetching multimedia from remote server. Please try again later."
+msgid ""
+"We are having trouble connecting to the server. Please try again in a few "
+"minutes."
+msgstr ""
+"حدث خطأ أثناء جلب الوسائط المتعددة من الخادم البعيد. يرجى المحاولة لاحقًا."
 
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
@@ -32349,7 +32363,9 @@ msgid "Errors"
 msgstr "أخطاء"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "HTMX Request: Server Error Encountered"
+#, fuzzy
+#| msgid "HTMX Request: Server Error Encountered"
+msgid "Server Error Encountered"
 msgstr "طلب HTMX: تم مواجهة خطأ في الخادم"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
@@ -33666,6 +33682,12 @@ msgstr ""
 msgctxt "twilio_locale"
 msgid "en"
 msgstr "en"
+
+#: corehq/apps/hqwebapp/two_factor_methods.py
+#, fuzzy
+#| msgid "Authentication Code"
+msgid "Authenticator App"
+msgstr "رمز المصادقة"
 
 #: corehq/apps/hqwebapp/views.py
 #, python-format
@@ -39372,6 +39394,12 @@ msgid "Project Reports"
 msgstr "تقارير المشروع"
 
 #: corehq/apps/reports/standard/cases/basic.py
+#, fuzzy
+#| msgid "Make this an upstream project space"
+msgid "View all cases within your project space."
+msgstr "اجعل هذه مساحة مشروع أصلية"
+
+#: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
 #: corehq/apps/reports/standard/cases/data_sources.py
 msgid "View Case"
@@ -39609,8 +39637,16 @@ msgid "Sensitive Date"
 msgstr "تاريخ حساس"
 
 #: corehq/apps/reports/standard/deployments.py
-msgid "Application Status"
-msgstr "حالة التطبيق"
+#, fuzzy
+#| msgid "Last Activity"
+msgid "User Last Activity Report"
+msgstr "آخر نشاط"
+
+#: corehq/apps/reports/standard/deployments.py
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "View last sync and last submission by user."
+msgstr "عرض الإرسالات الأخيرة"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Assigned Location(s)"
@@ -39767,6 +39803,10 @@ msgid "Raw Forms, Errors & Duplicates"
 msgstr "النماذج الخام، الأخطاء والتكرارات"
 
 #: corehq/apps/reports/standard/forms/reports.py
+msgid "View all submissions, including errors and archived forms."
+msgstr ""
+
+#: corehq/apps/reports/standard/forms/reports.py
 msgid "Submit Time"
 msgstr "وقت الإرسال"
 
@@ -39818,6 +39858,10 @@ msgstr "غير قادر على عرض الحالة"
 #: corehq/apps/reports/standard/inspect.py
 msgid "Submission History"
 msgstr "سجل الإرسال"
+
+#: corehq/apps/reports/standard/inspect.py
+msgid "View all submitted data."
+msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
 msgid "Sync Log"
@@ -57466,10 +57510,6 @@ msgstr "عرض جميع الأحداث"
 msgid "Manage Attendance Tracking Events"
 msgstr "إدارة أحداث تتبع الحضور"
 
-#: corehq/trans_override.py
-msgid "Token generator"
-msgstr "مولد الرموز"
-
 #: corehq/util/jsonattrs.py
 #, python-format
 msgid "'%(field)s' field value has an invalid format: %(exc)s"
@@ -58139,6 +58179,12 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "Application Status"
+#~ msgstr "حالة التطبيق"
+
+#~ msgid "Token generator"
+#~ msgstr "مولد الرموز"
 
 #~ msgid "# Cases Cleaned"
 #~ msgstr "# الحالات التي تم تنظيفها"

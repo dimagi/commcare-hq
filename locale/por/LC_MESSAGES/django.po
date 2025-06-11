@@ -14716,6 +14716,10 @@ msgid "{param} must be a string"
 msgstr "{param} deve ser uma string"
 
 #: corehq/apps/case_search/models.py
+msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+msgstr "Operador inválido \"{criteria[\"operator\"]}\". Os valores permitidos são "
+
+#: corehq/apps/case_search/models.py
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
@@ -17691,6 +17695,17 @@ msgstr "Iniciar uma Sessão de Limpeza"
 #: corehq/apps/data_cleaning/views/summary.py
 msgid "Cannot retrieve summary, session was not found."
 msgstr "Não é possível recuperar o resumo, sessão não encontrada."
+
+#: corehq/apps/data_cleaning/views/tables.py
+#, fuzzy
+#| msgid ""
+#| "Error fetching multimedia from remote server. Please try again later."
+msgid ""
+"We are having trouble connecting to the server. Please try again in a few "
+"minutes."
+msgstr ""
+"Erro ao buscar multimídia do servidor remoto. Por favor, tente novamente "
+"mais tarde."
 
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
@@ -31490,7 +31505,9 @@ msgid "Errors"
 msgstr "Erros"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "HTMX Request: Server Error Encountered"
+#, fuzzy
+#| msgid "HTMX Request: Server Error Encountered"
+msgid "Server Error Encountered"
 msgstr "Requisição HTMX: Erro de servidor encontrado"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
@@ -32719,6 +32736,12 @@ msgstr ""
 msgctxt "twilio_locale"
 msgid "en"
 msgstr "pt"
+
+#: corehq/apps/hqwebapp/two_factor_methods.py
+#, fuzzy
+#| msgid "Authentication Code"
+msgid "Authenticator App"
+msgstr "Código de autenticação"
 
 #: corehq/apps/hqwebapp/views.py
 #, python-format
@@ -38340,6 +38363,12 @@ msgid "Project Reports"
 msgstr "Relatórios do Projecto"
 
 #: corehq/apps/reports/standard/cases/basic.py
+#, fuzzy
+#| msgid "Make this an upstream project space"
+msgid "View all cases within your project space."
+msgstr "Tornar este um espaço de projeto upstream"
+
+#: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
 #: corehq/apps/reports/standard/cases/data_sources.py
 msgid "View Case"
@@ -38578,8 +38607,16 @@ msgid "Sensitive Date"
 msgstr "Data Sensível"
 
 #: corehq/apps/reports/standard/deployments.py
-msgid "Application Status"
-msgstr "Estado da Aplicação"
+#, fuzzy
+#| msgid "Last Activity"
+msgid "User Last Activity Report"
+msgstr "Última Atividade"
+
+#: corehq/apps/reports/standard/deployments.py
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "View last sync and last submission by user."
+msgstr "Ver envios recentes"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Assigned Location(s)"
@@ -38745,6 +38782,10 @@ msgid "Raw Forms, Errors & Duplicates"
 msgstr "Formulários Brutos, Erros e Duplicatas"
 
 #: corehq/apps/reports/standard/forms/reports.py
+msgid "View all submissions, including errors and archived forms."
+msgstr "Ver todas as submissões, incluindo erros e formulários arquivados."
+
+#: corehq/apps/reports/standard/forms/reports.py
 msgid "Submit Time"
 msgstr "Hora do Envio"
 
@@ -38796,6 +38837,10 @@ msgstr "Não foi possível visualizar o caso"
 #: corehq/apps/reports/standard/inspect.py
 msgid "Submission History"
 msgstr "Histórico de Submissão"
+
+#: corehq/apps/reports/standard/inspect.py
+msgid "View all submitted data."
+msgstr "Ver todos os dados enviados."
 
 #: corehq/apps/reports/standard/inspect.py
 msgid "Sync Log"
@@ -56256,10 +56301,6 @@ msgstr "Visualizar Todos os Eventos"
 msgid "Manage Attendance Tracking Events"
 msgstr "Gerenciar Eventos de Rastreamento de Presença"
 
-#: corehq/trans_override.py
-msgid "Token generator"
-msgstr "Gerador de Token"
-
 #: corehq/util/jsonattrs.py
 #, python-format
 msgid "'%(field)s' field value has an invalid format: %(exc)s"
@@ -56944,6 +56985,12 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#~ msgid "Application Status"
+#~ msgstr "Estado da Aplicação"
+
+#~ msgid "Token generator"
+#~ msgstr "Gerador de Token"
 
 #~ msgid "# Cases Cleaned"
 #~ msgstr "# Casos Limpos"
