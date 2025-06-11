@@ -1937,15 +1937,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
+                new_sub_date_start, new_sub_date_end = self.new_subscription_start_end_dates()
                 if (
                     self.is_downgrade_from_paid_plan()
                     and self.current_subscription.is_below_minimum_subscription
                 ):
-                    new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
-                    new_sub_date_end = (
-                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-                        if self.is_annual_plan_selected() else None
-                    )
                     self.current_subscription.update_subscription(
                         date_start=self.current_subscription.date_start,
                         date_end=new_sub_date_start
@@ -1963,11 +1959,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         funding_source=FundingSource.CLIENT,
                     )
                 else:
-                    new_sub_date_start = datetime.date.today()
-                    new_sub_date_end = (
-                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-                        if self.is_annual_plan_selected() else None
-                    )
                     self.current_subscription.change_plan(
                         self.plan_version,
                         date_end=new_sub_date_end,
@@ -2011,6 +2002,25 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         invoice_factory.create_wire_credits_invoice(
             amount, label, monthly_fee, num_months, date_due
         )
+
+    def new_subscription_start_end_dates(self):
+        if self.is_downgrade_from_paid_plan() and self.current_subscription.is_below_minimum_subscription:
+            new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
+        else:
+            new_sub_date_start = datetime.date.today()
+
+        if self.is_annual_plan_selected():
+            if self.current_is_annual_plan() and self.current_subscription.date_end is not None:
+                new_sub_date_end = self.current_subscription.date_end
+            else:
+                new_sub_date_end = new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+        else:
+            new_sub_date_end = None
+
+        return new_sub_date_start, new_sub_date_end
+
+    def current_is_annual_plan(self):
+        return self.current_subscription.plan_version.plan.is_annual_plan
 
     def is_annual_plan_selected(self):
         return self.plan_version.plan.is_annual_plan
