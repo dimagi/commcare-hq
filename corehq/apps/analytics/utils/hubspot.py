@@ -320,6 +320,12 @@ def is_hubspot_js_allowed_for_request(request):
     :param request: HttpRequest
     :return: boolean (True if Hubspot javascript is allowed)
     """
+
+    if getattr(request, 'couch_user', None):
+        # This is a blanket restriction to prevent hubspot js
+        # from being on any page after login
+        return False
+
     if not settings.IS_SAAS_ENVIRONMENT:
         return False
 
