@@ -65,12 +65,12 @@ function getUpdateDiff(original, incoming) {
 }
 
 
-function getNameDiff(original, incoming) {
+function getNameDiff(original, updated) {
     const normalizedOriginal = normalizeUpdateObject(original);
-    if (!_.isEqual(incoming, normalizedOriginal)) {
+    if (!_.isEqual(updated, normalizedOriginal)) {
         return {
             original: normalizedOriginal,
-            updated: incoming,
+            updated: updated,
         };
     }
 

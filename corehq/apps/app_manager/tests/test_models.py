@@ -221,11 +221,11 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
             actions.apply_diffs({
                 'update': {
                     'one': {
-                        'incoming': {'question_path': 'a'},
+                        'original': {'question_path': 'a'},
                         'updated': {'question_path': 'one'},
                     },
                     'two': {
-                        'incoming': {'question_path': 'b'},
+                        'original': {'question_path': 'b'},
                         'updated': {'question_path': 'two'}
                     }
                 }
