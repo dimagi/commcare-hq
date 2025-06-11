@@ -1022,19 +1022,6 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     """
 )
 
-CASE_SEARCH_INDEXED_METADATA = StaticToggle(
-    'CASE_SEARCH_INDEXED_METADATA',
-    "Case Search: Search against indexed system metadata fields when possible",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This is a performance optimization. When creating filters from CSQL
-    expressions and the property being queried is a standard system metadata
-    property, query against the top-level location of that property rather than
-    the nested document inside case_properties.
-    """
-)
-
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
@@ -2985,16 +2972,6 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
           'the location no matter if it is their primary location or not.',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-DEVICE_RATE_LIMITER = FeatureRelease(
-    slug='device_rate_limiter',
-    label='Apply rate limiting to the number of devices a single user can use in a one minute time window.',
-    description='Form submissions, restores, and heartbeat requests count towards usage. View and update in the '
-                'django admin under the SystemLimit table. The key is "device_limit_per_user"',
-    tag=TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Graham Herceg',
 )
 
 KYC_VERIFICATION = StaticToggle(

@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import connection, models, router
+from django.db import connection, models, router, IntegrityError
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -3340,9 +3340,20 @@ class ConnectIDUserLink(models.Model):
     @cached_property
     def messaging_key(self):
         key = generate_aes_key().decode("utf-8")
-        messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
-            connectid_user_link=self, domain=self.domain, active=True, defaults={"key": key}
-        )
+        try:
+            messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
+                connectid_user_link=self,
+                domain=self.domain,
+                active=True,
+                defaults={"key": key}
+            )
+        except IntegrityError:
+            # Another process might have created it, so fetch it
+            messaging_key = ConnectIDMessagingKey.objects.get(
+                connectid_user_link=self,
+                domain=self.domain,
+                active=True
+            )
         return messaging_key
 
     @cached_property
@@ -3361,3 +3372,12 @@ class ConnectIDMessagingKey(models.Model):
     key = models.CharField(max_length=44, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['connectid_user_link', 'domain'],
+                condition=models.Q(active=True),
+                name='unique_active_messaging_key_per_user_and_domain'
+            )
+        ]

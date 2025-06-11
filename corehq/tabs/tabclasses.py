@@ -169,7 +169,7 @@ class ProjectReportsTab(UITab):
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
-            'icon': 'icon-tasks fa fa-tasks',
+            'icon': 'fa-solid fa-floppy-disk',
             'show_in_dropdown': True,
         }]
         is_ucr_toggle_enabled = (

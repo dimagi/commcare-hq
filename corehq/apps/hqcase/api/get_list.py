@@ -1,14 +1,14 @@
 from base64 import b64decode, b64encode
+from datetime import datetime
 
 from django.http import QueryDict
 
 from corehq.apps.api.util import make_date_filter
-from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.case_search.filter_dsl import (
     build_filter_from_xpath,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.es import case_search, filters, queries
+from corehq.apps.es import case_search, filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
@@ -22,18 +22,6 @@ MAX_PAGE_SIZE = 5000
 INDEXED_AFTER = 'indexed_on.gte'
 LAST_CASE_ID = 'last_case_id'
 INCLUDE_DEPRECATED = 'include_deprecated'
-
-# This is not how sorting is typically done - sorting by the _id field causes
-# timeouts for reasons we don't quite understand. Until that's resolved,
-# sorting by case_properties.@case_id seems to work fine.
-_SORTING_BLOCK = [{
-    '@indexed_on': {'order': 'asc'},
-    'case_properties.value.exact': {
-        'order': 'asc',
-        'nested_path': 'case_properties',
-        'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
-    }
-}]
 
 
 def _to_boolean(val):
@@ -116,10 +104,12 @@ def get_list(domain, couch_user, params):
     }
 
     cases_in_result = len(hits)
-    if cases_in_result and es_result.total > cases_in_result:
+    limit = query._size or MAX_PAGE_SIZE
+    if cases_in_result == limit:
+        last_date, last_id = es_result.raw_hits[-1]['sort']
         params.update({
-            INDEXED_AFTER: hits[-1]["@indexed_on"],
-            LAST_CASE_ID: hits[-1]["_id"],
+            INDEXED_AFTER: last_date,
+            LAST_CASE_ID: last_id
         })
         cursor = params.urlencode()
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
@@ -129,22 +119,13 @@ def get_list(domain, couch_user, params):
 
 def _get_cursor_query(domain, params, last_date, last_id):
     query = _get_query(domain, params)
-    id_filter = queries.nested(
-        CASE_PROPERTIES_PATH,
-        filters.AND(
-            filters.term(case_search.PROPERTY_KEY, '@case_id'),
-            filters.range_filter(case_search.PROPERTY_VALUE_EXACT, gt=last_id),
-        )
-    )
-    return query.filter(
-        filters.OR(
-            filters.AND(
-                filters.term('@indexed_on', last_date),
-                id_filter,
-            ),
-            case_search.indexed_on(gt=last_date),
-        )
-    )
+    timestamp = last_date
+    if not timestamp.isdigit():
+        # this can be removed after this PR is deployed. This ensures backward compatibility
+        timestamp_in_secs = datetime.fromisoformat(last_date.replace("Z", "+00:00")).timestamp()
+        timestamp = int(timestamp_in_secs * 1000)  # ES accepts timestamp in milliseconds
+    query = query.search_after(timestamp, last_id)
+    return query
 
 
 def _get_query(domain, params):
@@ -154,7 +135,7 @@ def _get_query(domain, params):
     query = (case_search.CaseSearchES()
              .domain(domain)
              .size(page_size))
-    query.es_query['sort'] = _SORTING_BLOCK  # unorthodox, see comment above
+    query = query.sort('@indexed_on').sort('doc_id', reset_sort=False)
     for key, val in params.lists():
         if len(val) == 1:
             query = query.filter(_get_filter(domain, key, val[0]))

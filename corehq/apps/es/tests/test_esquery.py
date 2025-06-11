@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.test import SimpleTestCase
 
@@ -375,3 +375,27 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         real_scroll = query.scroll
         with patch.object(query, "scroll", scroll_then_delete_one):
             self.assertEqual([doc1], list(query.scroll_ids_to_disk_and_iter_docs()))
+
+    def test_exists_query(self):
+
+        docs = [
+            {"_id": "123", "doc_type": "Something", "created_on": "2025-01-01", "username": "1"},
+            {"_id": "456", "doc_type": "Something", "created_on": "2025-01-01", "username": "1"},
+        ]
+        for doc in docs:
+            with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+                users.user_adapter.index(doc, refresh=True)
+                self.addCleanup(users.user_adapter.delete, doc['_id'])
+
+        def query_created(**params):
+            return users.UserES().remove_default_filters().created(**params).exists()
+
+        self.assertFalse(query_created(gt="2025-04-01"))
+        self.assertTrue(query_created(lt="2025-04-01"))
+
+        with patch('corehq.apps.es.es_query.ESQuerySet', return_value=MagicMock(total=1)) as ESQuerySet:
+            query_created(lt="2025-04-01")
+        # No docs returned
+        self.assertEqual(ESQuerySet.call_args[0][0]['hits']['hits'], [])
+        # there are two docs, but only 1 was scanned (per shard)
+        self.assertEqual(ESQuerySet.call_args[0][0]['hits']['total'], 1)
