@@ -92,3 +92,12 @@ class TestIsHubspotJsAllowedForRequest(TestCase):
         is_hubspot_js_allowed_for_request returns False
         """
         self.assertFalse(is_hubspot_js_allowed_for_request(self.request))
+
+    @override_settings(IS_SAAS_ENVIRONMENT=True)
+    def test_returns_false_if_post_login(self):
+        """
+        Ensures that if the request has a user (i.e. is post-login),
+        is_hubspot_js_allowed_for_request returns False
+        """
+        self.request.couch_user = object()
+        self.assertFalse(is_hubspot_js_allowed_for_request(self.request))
