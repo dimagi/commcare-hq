@@ -15,12 +15,6 @@ def get_meta(request):
     }
 
 
-def analytics_enabled_for_email(email_address):
-    from corehq.apps.users.models import CouchUser
-    user = CouchUser.get_by_username(email_address)
-    return user.analytics_enabled if user else True
-
-
 def get_instance_string():
     instance = settings.ANALYTICS_CONFIG.get('HQ_INSTANCE', '')
     env = '' if instance == 'www' else instance + '_'
