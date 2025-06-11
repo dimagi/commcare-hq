@@ -16,6 +16,8 @@ from corehq.apps.domain_migration_flags.api import (
 from corehq.apps.domain_migration_flags.models import MigrationStatus
 from corehq.util.log import with_progress_bar
 
+MIGRATION_SLUG = "refresh_data_dictionary"
+
 
 class Command(BaseCommand):
     help = 'Refreshes data dictionary for all domains and their apps. ' \
@@ -26,20 +28,20 @@ class Command(BaseCommand):
             help="Domain name(s). If blank, will refresh for all domains")
 
     def handle(self, **options):
-        if get_migration_complete(ALL_DOMAINS, 'refresh_data_dictionary'):
+        if get_migration_complete(ALL_DOMAINS, MIGRATION_SLUG):
             print("Migration already complete")
             return
 
-        if get_migration_status(ALL_DOMAINS, 'refresh_data_dictionary') == MigrationStatus.NOT_STARTED:
-            set_migration_started(ALL_DOMAINS, 'refresh_data_dictionary')
+        if get_migration_status(ALL_DOMAINS, MIGRATION_SLUG) == MigrationStatus.NOT_STARTED:
+            set_migration_started(ALL_DOMAINS, MIGRATION_SLUG)
 
         domains = options['domains'] or Domain.get_all_names()
         success = True
 
         for domain in with_progress_bar(domains):
-            if get_migration_complete(domain, 'refresh_data_dictionary'):
+            if get_migration_complete(domain, MIGRATION_SLUG):
                 continue
-            set_migration_started(domain, 'refresh_data_dictionary')
+            set_migration_started(domain, MIGRATION_SLUG)
             try:
                 apps = get_apps_in_domain(domain)
                 for app in apps:
@@ -53,8 +55,8 @@ class Command(BaseCommand):
             except Exception as e:
                 print(f'Failed to get apps in domain {domain}: {str(e)}')
                 success = False
-            set_migration_complete(domain, 'refresh_data_dictionary')
+            set_migration_complete(domain, MIGRATION_SLUG)
 
         if success:
-            set_migration_complete(ALL_DOMAINS, 'refresh_data_dictionary')
+            set_migration_complete(ALL_DOMAINS, MIGRATION_SLUG)
             print("All domains and apps processed successfully!")
