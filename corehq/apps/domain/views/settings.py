@@ -537,7 +537,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
 from django.contrib.auth.views import PasswordResetView
-class CustomPasswordResetEmailView(PasswordResetView):
+class CustomPasswordResetByUserIDView(PasswordResetView):
     # def get_initial(self):
     #     initial = super().get_initial()
     #     # Get the 'email' from the URL query parameters

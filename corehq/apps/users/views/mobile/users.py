@@ -251,7 +251,7 @@ class EditCommCareUserView(BaseEditUserView):
         from corehq.apps.domain.forms import HQPasswordResetFormByUserId
         print("self.editable_user_id", self.editable_user_id)
 
-        return HQPasswordResetFormByUserId(user_id= self.editable_user_id)
+        return HQPasswordResetFormByUserId(user_id=self.editable_user_id)
 
     @property
     @memoized
