@@ -59,7 +59,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
-from corehq.util.dates import unix_time, unix_time_in_micros
+from corehq.util.dates import unix_time_in_micros
 from corehq.util.decorators import analytics_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
@@ -414,41 +414,9 @@ def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
 
 
 def track_workflow(email, event, properties=None):
-    """
-    Record an event in KISSmetrics.
-    :param email: The email address by which to identify the user.
-    :param event: The name of the event.
-    :param properties: A dictionary or properties to set on the user.
-    :return:
-    """
-    try:
-        if analytics_enabled_for_email(email):
-            timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-            _track_workflow_task.delay(email, event, properties, timestamp)
-    except Exception:
-        notify_exception(None, "Error tracking kissmetrics workflow")
-
-
-@analytics_task()
-def _track_workflow_task(email, event, properties=None, timestamp=0):
-    def _no_nonascii_unicode(value):
-        if isinstance(value, str):
-            return value.encode('utf-8')
-        return value
-
-    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key:
-        km = KISSmetrics.Client(key=api_key)
-        res = km.record(
-            email,
-            event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()}
-            if properties else {},
-            timestamp
-        )
-        log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
-        # TODO: Consider adding some better error handling for bad/failed requests.
-        _raise_for_urllib3_response(res)
+    # This method does nothing and is just a way
+    # to label conceptual events throughout the codebase
+    pass
 
 
 @analytics_task()
