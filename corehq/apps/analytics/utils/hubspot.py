@@ -108,9 +108,6 @@ def get_blocked_hubspot_accounts():
     ]
 
 
-
-
-
 def _delete_hubspot_contact(vid, retry_num=0):
     """
     Permanently deletes a Hubspot contact.
