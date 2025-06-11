@@ -57,6 +57,6 @@ class Command(BaseCommand):
                 success = False
             set_migration_complete(domain, MIGRATION_SLUG)
 
-        if success:
+        if success and not options['domains']:
             set_migration_complete(ALL_DOMAINS, MIGRATION_SLUG)
             print("All domains and apps processed successfully!")
