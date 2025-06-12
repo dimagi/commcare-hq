@@ -778,6 +778,7 @@ def get_form_view_context(
         'reserved_words': load_case_reserved_words(),
         'usercasePropertiesMap': usercase_properties_map,
     }
+    case_property_count = len(case_properties_map.get(case_config_options['caseType'], []))
     context = {
         'nav_form': form,
         'xform_languages': languages,
@@ -811,6 +812,11 @@ def get_form_view_context(
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
+        'case_property_warning': {
+            'count': case_property_count,
+            'show': case_property_count > _get_case_property_limit(domain),
+            'type': case_config_options['caseType'],
+        }
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
