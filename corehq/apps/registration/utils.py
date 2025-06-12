@@ -41,7 +41,6 @@ from corehq.toggles import USE_LOGO_IN_SYSTEM_EMAILS
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
-APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
 
 _soft_assert_registration_issues = soft_assert(
     to=[

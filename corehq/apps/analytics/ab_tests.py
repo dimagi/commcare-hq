@@ -127,16 +127,6 @@ class SessionAbTest(object):
         return context
 
 
-APPCUES_TEMPLATE_APP_VARIANT_A = 'Variant A'
-APPCUES_TEMPLATE_APP_VARIANT_B = 'Variant B'
-
-APPCUES_V3_APP = SessionAbTestConfig(
-    'Appcues Template App',
-    'appcues_template_app_december2018',
-    (APPCUES_TEMPLATE_APP_VARIANT_A, APPCUES_TEMPLATE_APP_VARIANT_B)
-)
-
-
 DEMO_WORKFLOW_V2_CONTROL = 'control'
 DEMO_WORKFLOW_V2_VARIANT = 'variant'
 

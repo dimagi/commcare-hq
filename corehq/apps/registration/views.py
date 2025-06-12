@@ -155,26 +155,15 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
         reg_form = RegisterWebUserForm(data['data'], is_sso=idp is not None)
         if reg_form.is_valid():
-            ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
-            appcues_ab_test = ab_test.context['version']
-
             if idp:
-                signup_request = AsyncSignupRequest.create_from_registration_form(
-                    reg_form,
-                    additional_hubspot_data={
-                        "appcues_test": appcues_ab_test,
-                    }
-                )
+                signup_request = AsyncSignupRequest.create_from_registration_form(reg_form)
                 return {
                     'success': True,
-                    'appcues_ab_test': appcues_ab_test,
                     'ssoLoginUrl': idp.get_login_url(signup_request.username),
                     'ssoIdpName': idp.name,
                 }
 
-            self._create_new_account(reg_form, additional_hubspot_data={
-                "appcues_test": appcues_ab_test,
-            })
+            self._create_new_account(reg_form)
             try:
                 request_new_domain(
                     self.request,
@@ -201,7 +190,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 }
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
