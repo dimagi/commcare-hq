@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
 # intentionally set to > 1 minute to allow for a buffer at minute boundaries
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
-DEVICE_LIMIT_PER_USER_DEFAULT = 10
 REDIS_KEY_PREFIX = "device-limiter"
 
 
@@ -27,7 +26,7 @@ class DeviceRateLimiter:
         self.client = get_redis_connection()
 
     def device_limit_per_user(self, domain):
-        return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, DEVICE_LIMIT_PER_USER_DEFAULT, domain=domain)
+        return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, 10, domain=domain)
 
     def rate_limit_device(self, domain, user, device_id):
         """
