@@ -44,18 +44,25 @@ class Command(BaseCommand):
             set_migration_started(domain, MIGRATION_SLUG)
             try:
                 apps = get_apps_in_domain(domain)
-                for app in apps:
-                    try:
-                        _refresh_data_dictionary_from_app(domain, app.get_id)
-                    except Exception as e:
-                        print(f'Failed to refresh app {app.get_id} in domain {domain}: {str(e)}')
-                        success = False
-                clear_caches_case_data_cleaning(domain)
-
             except Exception as e:
                 print(f'Failed to get apps in domain {domain}: {str(e)}')
                 success = False
-            set_migration_complete(domain, MIGRATION_SLUG)
+                continue
+
+            domain_success = True
+            for app in apps:
+                try:
+                    _refresh_data_dictionary_from_app(domain, app.get_id)
+                except Exception as e:
+                    print(f'Failed to refresh app {app.get_id} in domain {domain}: {str(e)}')
+                    success = False
+                    domain_success = False
+                    # No need to continue if one app fails, we will have to restart the migration for this domain
+                    break
+
+            clear_caches_case_data_cleaning(domain)
+            if domain_success:
+                set_migration_complete(domain, MIGRATION_SLUG)
 
         if success and not options['domains']:
             set_migration_complete(ALL_DOMAINS, MIGRATION_SLUG)
