@@ -490,13 +490,19 @@ def create_wire_credits_invoice(domain_name,
         general_credit_cost = item['unit_cost']
         general_credit_qty = item['quantity']
         general_credit_amount = item['amount']
+        general_credit_prepaid = item['applied_credit']
+        general_credit_total = item['total']
         deserialized_credit_amount = deserialize_decimal(general_credit_amount)
         deserialized_credit_cost = deserialize_decimal(general_credit_cost)
+        deserialized_prepaid_credit = deserialize_decimal(general_credit_prepaid)
+        deserialized_total = deserialize_decimal(general_credit_total)
         deserialized_items.append({
             'type': item['type'],
             'amount': deserialized_credit_amount,
             'unit_cost': deserialized_credit_cost,
             'quantity': general_credit_qty,
+            'applied_credit': deserialized_prepaid_credit,
+            'total': deserialized_total,
         })
 
     wire_invoice.items = deserialized_items
