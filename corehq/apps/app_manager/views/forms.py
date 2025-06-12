@@ -121,7 +121,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.project_limits.const import CASE_PROPERTIES_PER_CASE_KEY
+from corehq.project_limits.const import CASE_PROPERTIES_PER_CASE_KEY, DEFAULT_CASE_PROPERTIES_PER_CASE
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
 
@@ -778,6 +778,7 @@ def get_form_view_context(
         'reserved_words': load_case_reserved_words(),
         'usercasePropertiesMap': usercase_properties_map,
     }
+    case_property_count = len(case_properties_map.get(case_config_options['caseType'], []))
     context = {
         'nav_form': form,
         'xform_languages': languages,
@@ -811,6 +812,11 @@ def get_form_view_context(
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
+        'case_property_warning': {
+            'count': case_property_count,
+            'show': case_property_count > _get_case_property_limit(domain),
+            'type': case_config_options['caseType'],
+        }
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
@@ -875,7 +881,9 @@ def get_form_view_context(
 
 
 def _get_case_property_limit(domain):
-    return SystemLimit.get_limit_for_key(CASE_PROPERTIES_PER_CASE_KEY, 250, domain=domain)
+    return SystemLimit.get_limit_for_key(
+        CASE_PROPERTIES_PER_CASE_KEY, DEFAULT_CASE_PROPERTIES_PER_CASE, domain=domain
+    )
 
 
 def _get_form_link_context(app, module, form, langs):
