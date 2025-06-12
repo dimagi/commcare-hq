@@ -287,6 +287,9 @@ class LocationQueriesMixin(object):
 class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
 
     def accessible_to_user(self, domain, user):
+        if user.has_permission(domain, 'access_all_locations'):
+            return self.filter(domain=domain)
+
         ids_query = super(LocationQuerySet, self).accessible_to_user(domain, user)
         return self.filter(id__in=ids_query)
 
