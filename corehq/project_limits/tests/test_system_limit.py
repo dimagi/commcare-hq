@@ -1,5 +1,5 @@
-from django.test import TestCase
 from django.db import IntegrityError
+from django.test import TestCase
 
 from corehq.project_limits.exceptions import SystemLimitIllegalScopeChange
 from corehq.project_limits.models import SystemLimit
