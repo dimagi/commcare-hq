@@ -170,6 +170,15 @@ $(function () {
     // Case Management > Data dictionary descriptions for case properties
     $('.property-description').popover();
 
+    $('#performance-warning-toggle').on('click', function () {
+        let $icon = $(this).find('i');
+        if ($icon.hasClass('fa-chevron-down')) {
+            $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        } else {
+            $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        }
+    });
+
     // Advanced > XForm > Upload
     $("#xform_file_input").change(function () {
         if ($(this).val()) {
