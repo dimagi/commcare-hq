@@ -28,11 +28,11 @@ class Command(BaseCommand):
             help="Domain name(s). If blank, will refresh for all domains")
 
     def handle(self, **options):
-        if get_migration_complete(ALL_DOMAINS, MIGRATION_SLUG):
+        migration_status = get_migration_status(ALL_DOMAINS, MIGRATION_SLUG)
+        if migration_status == MigrationStatus.COMPLETE:
             print("Migration already complete")
             return
-
-        if get_migration_status(ALL_DOMAINS, MIGRATION_SLUG) == MigrationStatus.NOT_STARTED:
+        elif migration_status == MigrationStatus.NOT_STARTED:
             set_migration_started(ALL_DOMAINS, MIGRATION_SLUG)
 
         domains = options['domains'] or Domain.get_all_names()
