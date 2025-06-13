@@ -425,28 +425,6 @@ def track_workflow_noop(email, event, properties=None):
 
 
 @analytics_task()
-def _track_workflow_task(email, event, properties=None, timestamp=0):
-    def _no_nonascii_unicode(value):
-        if isinstance(value, str):
-            return value.encode('utf-8')
-        return value
-
-    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key:
-        km = KISSmetrics.Client(key=api_key)
-        res = km.record(
-            email,
-            event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()}
-            if properties else {},
-            timestamp
-        )
-        log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
-        # TODO: Consider adding some better error handling for bad/failed requests.
-        _raise_for_urllib3_response(res)
-
-
-@analytics_task()
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
