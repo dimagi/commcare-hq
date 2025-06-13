@@ -35,16 +35,5 @@ $(function () {
         $('#user-login-form').koApplyBindings(loginController);
         loginController.init();
     }
-
-    kissmetrics.whenReadyAlways(function () {
-
-        $('#cta-form-get-demo-button-body').click(function () {
-            kissmetrics.track.event("Demo Workflow - Body Button Clicked");
-        });
-
-        $('#cta-form-get-demo-button-header').click(function () {
-            kissmetrics.track.event("Demo Workflow - Header Button Clicked");
-        });
-    });
 });
 

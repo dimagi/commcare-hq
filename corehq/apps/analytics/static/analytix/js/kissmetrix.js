@@ -167,15 +167,6 @@ define('analytix/js/kissmetrix', [
     };
 
     /**
-     * Run some code once all data and scripts are loaded.
-     * @param callback
-     * @returns Nothing
-     */
-    var whenReadyAlways = function (callback) {
-        _ready.always(callback);
-    };
-
-    /**
     * Global events present on base.html
     */
     _ready.done(function () {
@@ -192,6 +183,5 @@ define('analytix/js/kissmetrix', [
             outboundLink: trackOutboundLink,
         },
         getAbTest: getAbTest,
-        whenReadyAlways: whenReadyAlways,
     };
 });
