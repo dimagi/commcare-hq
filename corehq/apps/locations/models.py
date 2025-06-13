@@ -3,15 +3,15 @@ from datetime import datetime
 from functools import partial
 
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import Exists, Q
 
 import jsonfield
 from django_bulk_update.helper import bulk_update as bulk_update_helper
-from django_cte import CTEQuerySet
+from django_cte import CTEQuerySet, CTE, with_cte
 from memoized import memoized
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
+from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel, SubQueryset
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -275,7 +275,22 @@ class LocationQueriesMixin(object):
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
 
-        return SQLLocation.objects.get_locations_and_children(assigned_location_ids)
+        def parents_query(cte):
+            # select location and its parents
+            return (
+                SQLLocation.objects
+                .values("location_id", "parent_id")
+                .filter(id=models.OuterRef('id'))
+                .union(cte.join(SQLLocation, id=cte.col.parent_id), all=True)
+            )
+
+        parents = CTE.recursive(parents_query, name='parents')
+        return self.alias(
+            _is_accessible=Exists(SubQueryset(
+                with_cte(parents, select=parents)
+                .filter(location_id__in=assigned_location_ids),
+            )),
+        ).filter(_is_accessible=True)
 
     def delete(self, *args, **kwargs):
         from .document_store import publish_location_saved
@@ -286,12 +301,7 @@ class LocationQueriesMixin(object):
 
 class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
 
-    def accessible_to_user(self, domain, user):
-        if user.has_permission(domain, 'access_all_locations'):
-            return self.filter(domain=domain)
-
-        ids_query = super(LocationQuerySet, self).accessible_to_user(domain, user)
-        return self.filter(id__in=ids_query)
+    pass
 
 
 class LocationManager(LocationQueriesMixin, AdjListManager):

@@ -163,6 +163,16 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             [loc.name for loc in middlesex_locs]
         )
 
+        r_locs = (
+            SQLLocation.objects
+            .filter_by_user_input(self.domain, "r")
+            .accessible_to_user(self.domain, self.web_user)
+        )
+        self.assertEqual(
+            {'Cambridge', 'Somerville'},
+            {loc.name for loc in r_locs},
+        )
+
         # User searching for a branch they don't have access to get nothing
         no_locs = (
             SQLLocation.objects
