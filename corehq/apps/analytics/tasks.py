@@ -10,7 +10,6 @@ from django.conf import settings
 from django.core.validators import ValidationError, validate_email
 
 import boto3
-import KISSmetrics
 import requests
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -30,7 +29,6 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
 )
 from corehq.apps.analytics.utils import (
-    analytics_enabled_for_email,
     get_client_ip_from_meta,
     get_instance_string,
     get_meta,
@@ -424,23 +422,6 @@ def track_workflow_noop(email, event, properties=None):
     pass
 
 
-@analytics_task()
-def identify(email, properties):
-    """
-    Set the given properties on a KISSmetrics user.
-    :param email: The email address by which to identify the user.
-    :param properties: A dictionary or properties to set on the user.
-    :return:
-    """
-    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key and analytics_enabled_for_email(email):
-        km = KISSmetrics.Client(key=api_key)
-        res = km.set(email, properties)
-        log_response("KM", {'email': email, 'properties': properties}, res)
-        # TODO: Consider adding some better error handling for bad/failed requests.
-        _raise_for_urllib3_response(res)
-
-
 @memoized
 def _get_export_count(domain):
     from corehq.apps.export.dbaccessors import get_export_count_by_domain
@@ -729,8 +710,6 @@ def update_subscription_properties_by_domain(domain):
 
 @analytics_task()
 def update_subscription_properties_by_user(web_user_id, properties):
-    web_user = WebUser.get_by_user_id(web_user_id)
-    identify(web_user.username, properties)
     update_hubspot_properties(web_user_id, properties)
 
 
