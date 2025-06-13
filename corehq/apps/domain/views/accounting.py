@@ -1190,17 +1190,6 @@ class SelectPlanView(PlanViewBase):
     urlname = 'domain_select_plan'
     step_title = gettext_lazy("Select Plan")
 
-    def dispatch(self, request, *args, **kwargs):
-        if not self.can_change_subscription:
-            raise Http404()
-        return super().dispatch(request, *args, **kwargs)
-
-    @property
-    def can_change_subscription(self):
-        subscription = self.current_subscription
-        is_annual_plan = subscription.plan_version.plan.is_annual_plan
-        return not is_annual_plan
-
     @property
     def page_context(self):
         context = super().page_context
