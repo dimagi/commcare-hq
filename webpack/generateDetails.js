@@ -155,6 +155,11 @@ if (require.main === module) {
         isProductionMode
     );
 
+    // Directly copy the default entry point into B3.
+    // This makes it available to all B3 pages that inherit from hqwebapp/base.html,
+    // which uses js_entry and not js_entry_b3
+    b3Details.entries["hqwebapp/js/base"] = defaultDetails.entries["hqwebapp/js/base"];
+
     fs.writeFileSync(
         path.join(appPaths.BUILD_ARTIFACTS_DIR, 'details.json'),
         JSON.stringify({

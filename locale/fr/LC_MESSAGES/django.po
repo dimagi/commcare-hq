@@ -12649,6 +12649,10 @@ msgid "{param} must be a string"
 msgstr ""
 
 #: corehq/apps/case_search/models.py
+msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+msgstr ""
+
+#: corehq/apps/case_search/models.py
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
@@ -15172,6 +15176,12 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/views/summary.py
 msgid "Cannot retrieve summary, session was not found."
+msgstr ""
+
+#: corehq/apps/data_cleaning/views/tables.py
+msgid ""
+"We are having trouble connecting to the server. Please try again in a few "
+"minutes."
 msgstr ""
 
 #: corehq/apps/data_dictionary/bulk.py
@@ -27197,7 +27207,7 @@ msgid "Errors"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "HTMX Request: Server Error Encountered"
+msgid "Server Error Encountered"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
@@ -28238,6 +28248,10 @@ msgstr ""
 #: corehq/apps/hqwebapp/two_factor_gateways.py
 msgctxt "twilio_locale"
 msgid "en"
+msgstr ""
+
+#: corehq/apps/hqwebapp/two_factor_methods.py
+msgid "Authenticator App"
 msgstr ""
 
 #: corehq/apps/hqwebapp/views.py
@@ -33210,6 +33224,10 @@ msgid "Project Reports"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/basic.py
+msgid "View all cases within your project space."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
 #: corehq/apps/reports/standard/cases/data_sources.py
 msgid "View Case"
@@ -33425,7 +33443,11 @@ msgid "Sensitive Date"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
-msgid "Application Status"
+msgid "User Last Activity Report"
+msgstr ""
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "View last sync and last submission by user."
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
@@ -33575,6 +33597,10 @@ msgid "Raw Forms, Errors & Duplicates"
 msgstr ""
 
 #: corehq/apps/reports/standard/forms/reports.py
+msgid "View all submissions, including errors and archived forms."
+msgstr ""
+
+#: corehq/apps/reports/standard/forms/reports.py
 msgid "Submit Time"
 msgstr ""
 
@@ -33625,6 +33651,10 @@ msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
 msgid "Submission History"
+msgstr ""
+
+#: corehq/apps/reports/standard/inspect.py
+msgid "View all submitted data."
 msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
@@ -48916,10 +48946,6 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
-msgstr ""
-
-#: corehq/trans_override.py
-msgid "Token generator"
 msgstr ""
 
 #: corehq/util/jsonattrs.py
