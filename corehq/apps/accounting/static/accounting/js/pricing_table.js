@@ -44,6 +44,10 @@ const PricingTable = function (options) {
     self.oSelectedEdition = ko.observable(options.currentEdition);
     self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
+    self.oIsAnnualPlanSelected = ko.computed(function () {
+        return self.oShowAnnualPricing() && self.oSelectedEdition() !== 'paused';
+    });
+
     self.oIsSameEdition = ko.computed(function () {
         return self.oSelectedEdition() === self.currentEdition;
     });
