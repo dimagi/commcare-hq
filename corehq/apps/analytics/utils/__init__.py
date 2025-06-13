@@ -46,11 +46,13 @@ def log_response(target, data, response):
     try:
         response_text = json.dumps(response.json(), indent=2, sort_keys=True)
     except Exception:
-        response_text = status_code
+        response_text = getattr(response, 'text', str(status_code))
 
-    message = 'Sent this data to {target}: {data} \nreceived: {response}'.format(
+    message = 'Sent this data to {target}: {data} \nreceived: status code: {status_code} response: {response}'
+    message = message.format(
         target=target,
         data=json.dumps(data, indent=2, sort_keys=True),
+        status_code=status_code,
         response=response_text
     )
 
