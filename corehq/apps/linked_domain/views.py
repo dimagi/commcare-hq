@@ -12,7 +12,7 @@ from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_app_docs_in_domain,
@@ -328,14 +328,14 @@ class DomainLinkView(BaseProjectSettingsView):
         linked_status = None
         if upstream_link:
             linked_status = 'downstream'
-            track_workflow(
+            track_workflow_noop(
                 self.request.couch_user.username,
                 'Lands on feature page (downstream)',
                 {'domain': self.domain}
             )
         elif linked_domains:
             linked_status = 'upstream'
-            track_workflow(
+            track_workflow_noop(
                 self.request.couch_user.username,
                 'Lands on feature page (upstream)',
                 {'domain': self.domain}
@@ -397,7 +397,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         metric_name = "Linked domain: pulled and overwrote data model" \
             if overwrite else "Linked domain: pulled data model"
-        track_workflow(
+        track_workflow_noop(
             self.request.couch_user.username,
             metric_name,
             {
@@ -419,7 +419,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         link.deleted = True
         link.save()
 
-        track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
+        track_workflow_noop(self.request.couch_user.username, "Linked domain: domain link deleted")
 
         return {
             'success': True,
@@ -448,7 +448,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         metric_name = "Linked domain: pushed and overwrote data models" \
             if overwrite else "Linked domain: pushed data models"
 
-        track_workflow(self.request.couch_user.username, metric_name, metric_args)
+        track_workflow_noop(self.request.couch_user.username, metric_name, metric_args)
 
         return {
             'success': True,
@@ -467,7 +467,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         except (DomainDoesNotExist, DomainLinkAlreadyExists, DomainLinkNotAllowed, DomainLinkError) as e:
             return {'success': False, 'message': str(e)}
 
-        track_workflow(self.request.couch_user.username, "Linked domain: domain link created")
+        track_workflow_noop(self.request.couch_user.username, "Linked domain: domain link created")
 
         domain_link_view_model = build_domain_link_view_model(domain_link, get_timezone_for_request())
         return {'success': True, 'domain_link': domain_link_view_model}

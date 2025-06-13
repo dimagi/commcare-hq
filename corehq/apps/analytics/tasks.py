@@ -413,7 +413,7 @@ def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
         )
 
 
-def track_workflow(email, event, properties=None):
+def track_workflow_noop(email, event, properties=None):
     """
     Record a logical event that is not actually sent to any analytics backend
     :param email: The email address by which to identify the user.

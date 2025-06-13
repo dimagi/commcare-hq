@@ -40,7 +40,7 @@ from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
 from corehq.apps.data_dictionary.models import CaseProperty
@@ -400,7 +400,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 @require_GET
 def download_case_history(request, domain, case_id):
     case = safely_get_case(request, domain, case_id)
-    track_workflow(request.couch_user.username, "Case Data Page: Case History csv Downloaded")
+    track_workflow_noop(request.couch_user.username, "Case Data Page: Case History csv Downloaded")
     history = get_case_history(case)
     properties = set()
     for f in history:
