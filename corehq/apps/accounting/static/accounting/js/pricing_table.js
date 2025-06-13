@@ -24,11 +24,11 @@ const PricingTable = function (options) {
 
     const self = {};
 
-    self.oCurrentEdition = ko.observable(options.currentEdition);
-    self.oNextSubscription = ko.observable(options.nextSubscriptionEdition);
-    self.oStartDateAfterMinimumSubscription = ko.observable(options.startDateAfterMinimum);
-    self.oCurrentPrice = ko.observable(options.currentPrice);
-    self.oIsPriceDiscounted = ko.observable(options.isPriceDiscounted);
+    self.currentEdition = options.currentEdition;
+    self.nextSubscription = options.nextSubscriptionEdition;
+    self.startDateAfterMinimumSubscription = options.startDateAfterMinimum;
+    self.currentPrice = options.currentPrice;
+    self.isPriceDiscounted = options.isPriceDiscounted;
     self.currentIsAnnualPlan = options.currentIsAnnualPlan;
     self.editions = options.editions;
     self.isRenewal = options.isRenewal;
@@ -36,33 +36,27 @@ const PricingTable = function (options) {
     self.invoicingContact = options.invoicingContact;
 
     self.oSelectedEdition = ko.observable(options.currentEdition);
-
     self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
     self.oIsSubmitDisabled = ko.computed(function () {
         const isSubscribablePlan = !!self.oSelectedEdition() && !['free', 'enterprise'].includes(self.oSelectedEdition());
         const isSamePaySchedule = self.currentIsAnnualPlan === self.oShowAnnualPricing();
-        const isCurrentPlan = self.oSelectedEdition() === self.oCurrentEdition() && !self.oNextSubscription() && isSamePaySchedule;
-        const isNextPlan = self.oNextSubscription() && self.oSelectedEdition() === self.oNextSubscription().toLowerCase();
+        const isCurrentPlan = self.oSelectedEdition() === self.currentEdition && !self.nextSubscription && isSamePaySchedule;
+        const isNextPlan = self.nextSubscription && self.oSelectedEdition() === self.nextSubscription.toLowerCase();
         return !isSubscribablePlan || isNextPlan || isCurrentPlan;
     });
 
-    self.oIsCurrentPlanFreeEdition = ko.observable(options.currentEdition === 'free');
-    self.oIsCurrentPlanPaused = ko.observable(options.currentEdition === 'paused');
+    self.isCurrentPlanFreeEdition = options.currentEdition === 'free';
+    self.isCurrentPlanPaused = options.currentEdition === 'paused';
 
-    self.oIsNextPlanPaused = ko.computed(function () {
-        return self.oNextSubscription() === 'Paused';
-    });
-
-    self.oIsNextPlanDowngrade = ko.computed(function () {
-        return self.oNextSubscription() && !self.oIsNextPlanPaused();
-    });
+    self.isNextPlanPaused = self.nextSubscription === 'Paused';
+    self.isNextPlanDowngrade = self.nextSubscription && !self.isNextPlanPaused;
 
     self.selectPausedPlan = function () {
         self.oSelectedEdition('paused');
     };
     self.isDowngrade = function () {
-        return self.editions.indexOf(self.oSelectedEdition()) < self.editions.indexOf(self.oCurrentEdition());
+        return self.editions.indexOf(self.oSelectedEdition()) < self.editions.indexOf(self.currentEdition);
     };
 
     self.oPausedCss = ko.computed(function () {
@@ -82,9 +76,9 @@ const PricingTable = function (options) {
 
         const invoicingContact = _.escape(self.invoicingContact);
         if (self.isDowngrade() && self.subscriptionBelowMinimum) {
-            const oldPlan = utils.capitalize(self.oCurrentEdition());
+            const oldPlan = utils.capitalize(self.currentEdition);
             const newPlan = utils.capitalize(self.oSelectedEdition());
-            const newStartDate = self.oStartDateAfterMinimumSubscription();
+            const newStartDate = self.startDateAfterMinimumSubscription;
 
             let message = "",
                 title = gettext("Downgrading?");
@@ -102,7 +96,7 @@ const PricingTable = function (options) {
                     oldPlan: oldPlan,
                     invoicingContact: invoicingContact,
                 });
-            } else if (self.oIsNextPlanPaused()) {
+            } else if (self.isNextPlanPaused) {
                 message = _.template(gettext(
                     "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                     "<p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to be paused " +
@@ -118,7 +112,7 @@ const PricingTable = function (options) {
                     newPlan: newPlan,
                     invoicingContact: invoicingContact,
                 });
-            } else if (self.oIsNextPlanDowngrade()) {
+            } else if (self.isNextPlanDowngrade) {
                 message = _.template(gettext(
                     "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                     "<p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to be downgraded " +
@@ -130,7 +124,7 @@ const PricingTable = function (options) {
                     "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>",
                 ))({
                     oldPlan: oldPlan,
-                    nextSubscription: self.oNextSubscription(),
+                    nextSubscription: self.nextSubscription,
                     date: newStartDate,
                     newPlan: newPlan,
                     invoicingContact: invoicingContact,
@@ -185,43 +179,28 @@ const planDisplayName = function (name) {
 const PlanOption = function (data, parent) {
     const self = this;
 
-    self.oName = ko.observable(planDisplayName(data.name));
-    self.oSlug = ko.observable(data.name.toLowerCase());
+    self.name = planDisplayName(data.name);
+    self.slug = data.name.toLowerCase();
 
-    self.oMonthlyPrice = ko.observable(data.monthly_price);
-    self.oAnnualPrice = ko.observable(data.annual_price);
-    self.oDescription = ko.observable(data.description);
+    self.monthlyPrice = data.monthly_price;
+    self.annualPrice = data.annual_price;
+    self.description = data.description;
 
-    self.oIsFreeEdition = ko.computed(function () {
-        return self.oSlug() === 'free';
-    });
-
-    self.oIsCurrentPlan = ko.computed(function () {
-        return self.oSlug() === parent.oCurrentEdition();
-    });
+    self.isFreeEdition = self.slug === 'free';
+    self.isCurrentPlan = self.slug === parent.currentEdition;
 
     self.oIsSelectedPlan = ko.computed(function () {
-        return self.oSlug() === parent.oSelectedEdition();
+        return self.slug === parent.oSelectedEdition();
     });
 
-    self.oShowDowngradeNotice = ko.computed(function () {
-        return self.oIsCurrentPlan() && parent.oIsNextPlanDowngrade();
-    });
+    self.nextPlan = parent.nextSubscription;
+    self.nextDate = parent.startDateAfterMinimumSubscription;
 
-    self.oNextPlan = ko.computed(function () {
-        return parent.oNextSubscription();
-    });
-
-    self.oNextDate = ko.computed(function () {
-        return parent.oStartDateAfterMinimumSubscription();
-    });
-
-    self.oShowPausedNotice = ko.computed(function () {
-        return parent.oIsNextPlanPaused() && self.oIsCurrentPlan();
-    });
+    self.showPausedNotice = parent.isNextPlanPaused && self.isCurrentPlan;
+    self.showDowngradeNotice = self.isCurrentPlan && parent.isNextPlanDowngrade;
 
     self.oCssClass = ko.computed(function () {
-        let cssClass = "tile-" + self.oSlug();
+        let cssClass = "tile-" + self.slug;
         if (self.oIsSelectedPlan()) {
             cssClass = cssClass + " selected-plan";
         }
@@ -229,7 +208,7 @@ const PlanOption = function (data, parent) {
     });
 
     self.selectPlan = function () {
-        parent.oSelectedEdition(self.oSlug());
+        parent.oSelectedEdition(self.slug);
     };
 
     self.oPricingTypeText = ko.computed(function () {
@@ -247,17 +226,17 @@ const PlanOption = function (data, parent) {
     });
 
     self.oDisplayDiscountNotice = ko.computed(function () {
-        return self.oIsCurrentPlan() && parent.oIsPriceDiscounted() && !parent.oShowAnnualPricing();
+        return self.isCurrentPlan && parent.isPriceDiscounted && !parent.oShowAnnualPricing();
     });
 
     self.oDisplayPrice = ko.computed(function () {
         if (self.oDisplayDiscountNotice()) {
-            return parent.oCurrentPrice();
+            return parent.currentPrice;
         }
         if (parent.oShowAnnualPricing()) {
-            return self.oAnnualPrice();
+            return self.annualPrice;
         }
-        return self.oMonthlyPrice();
+        return self.monthlyPrice;
     });
 
 };

@@ -67,7 +67,7 @@
           class="tile"
           data-bind="css: oCssClass, click: selectPlan"
         >
-          <h3 data-bind="text: oName"></h3>
+          <h3 data-bind="text: name"></h3>
 
           {% comment %}
           We could hide this text block for Free edition, but instead just make
@@ -78,7 +78,7 @@
             data-bind="
                 css: oPricingTypeCssClass,
                 text: oPricingTypeText,
-                attr: { 'aria-hidden': oIsFreeEdition() }
+                attr: { 'aria-hidden': isFreeEdition }
             "
           ></p>
 
@@ -93,7 +93,7 @@
           {% endcomment %}
           <p
             class="plan-monthly-label"
-            data-bind="attr: { 'aria-hidden': oIsFreeEdition() }"
+            data-bind="attr: { 'aria-hidden': isFreeEdition }"
           >
             {% trans "monthly" %}
             <span data-bind="visible: oDisplayDiscountNotice"
@@ -102,42 +102,42 @@
           </p>
           <p
             class="plan-desc"
-            data-bind="text: oDescription"
+            data-bind="text: description"
           ></p>
 
           <p
             class="plan-downgrade-notice text-warning"
-            data-bind="visible: oShowDowngradeNotice"
+            data-bind="visible: showDowngradeNotice"
           >
             <i class="fa fa-warning"></i>
             {% blocktrans %}
               This plan will be downgrading to
-              <span data-bind="text: oNextPlan"></span> on
-              <span data-bind="text: oNextDate"></span>.
+              <span data-bind="text: nextPlan"></span> on
+              <span data-bind="text: nextDate"></span>.
             {% endblocktrans %}
           </p>
 
           <p
             class="plan-downgrade-notice text-warning"
-            data-bind="visible: oShowPausedNotice"
+            data-bind="visible: showPausedNotice"
           >
             <i class="fa fa-warning"></i>
             {% blocktrans %}
               This plan will be pausing on<br />
-              <span data-bind="text: oNextDate"></span>.
+              <span data-bind="text: nextDate"></span>.
             {% endblocktrans %}
           </p>
 
           <div
             class="btn btn-current"
-            data-bind="visible: oIsCurrentPlan"
+            data-bind="visible: isCurrentPlan"
           >
             {% trans "Current Plan" %}
           </div>
 
           <div
             class="btn btn-select"
-            data-bind="visible: !oIsCurrentPlan()"
+            data-bind="visible: !isCurrentPlan"
           >
             {% trans "Select Plan" %}
           </div>
@@ -147,7 +147,7 @@
     </div>
 
     <div
-      data-bind="visible: !oIsCurrentPlanFreeEdition() && !oIsNextPlanPaused() && !oIsCurrentPlanPaused()"
+      data-bind="visible: !isCurrentPlanFreeEdition && !isNextPlanPaused && !isCurrentPlanPaused"
     >
       <a
         href="#"
@@ -182,7 +182,7 @@
 
     <div
       class="alert {% if can_domain_unpause %}alert-info{% else %}alert-danger{% endif %} text-center"
-      data-bind="visible: oIsCurrentPlanPaused"
+      data-bind="visible: isCurrentPlanPaused"
     >
       <p class="lead">
         {% if can_domain_unpause %}
@@ -208,12 +208,12 @@
 
     <div
       class="alert alert-warning text-center"
-      data-bind="visible: oIsNextPlanPaused"
+      data-bind="visible: isNextPlanPaused"
     >
       <i class="fa fa-warning"></i>
       {% blocktrans %}
         Your subscription will be pausing on
-        <span data-bind="text: oStartDateAfterMinimumSubscription"></span>
+        <span data-bind="text: startDateAfterMinimumSubscription"></span>
         unless you select a different plan above.
       {% endblocktrans %}
     </div>
@@ -221,13 +221,13 @@
     <div
       class="alert alert-warning text-center"
       style="margin-top: 20px;"
-      data-bind="visible: oIsNextPlanDowngrade"
+      data-bind="visible: isNextPlanDowngrade"
     >
       <i class="fa fa-warning"></i>
       {% blocktrans %}
         Your subscription will be downgrading to
-        <span data-bind="text: oNextSubscription"></span> on
-        <span data-bind="text: oStartDateAfterMinimumSubscription"></span>
+        <span data-bind="text: nextSubscription"></span> on
+        <span data-bind="text: startDateAfterMinimumSubscription"></span>
         unless you select a different plan above.
       {% endblocktrans %}
     </div>
