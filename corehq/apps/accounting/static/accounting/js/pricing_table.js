@@ -35,6 +35,12 @@ const PricingTable = function (options) {
     self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
     self.invoicingContact = options.invoicingContact;
 
+    self.isCurrentPlanFreeEdition = options.currentEdition === 'free';
+    self.isCurrentPlanPaused = options.currentEdition === 'paused';
+
+    self.isNextPlanPaused = self.nextSubscription === 'Paused';
+    self.isNextPlanDowngrade = self.nextSubscription && !self.isNextPlanPaused;
+
     self.oSelectedEdition = ko.observable(options.currentEdition);
     self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
@@ -46,19 +52,6 @@ const PricingTable = function (options) {
         return !isSubscribablePlan || isNextPlan || isCurrentPlan;
     });
 
-    self.isCurrentPlanFreeEdition = options.currentEdition === 'free';
-    self.isCurrentPlanPaused = options.currentEdition === 'paused';
-
-    self.isNextPlanPaused = self.nextSubscription === 'Paused';
-    self.isNextPlanDowngrade = self.nextSubscription && !self.isNextPlanPaused;
-
-    self.selectPausedPlan = function () {
-        self.oSelectedEdition('paused');
-    };
-    self.isDowngrade = function () {
-        return self.editions.indexOf(self.oSelectedEdition()) < self.editions.indexOf(self.currentEdition);
-    };
-
     self.oPausedCss = ko.computed(function () {
         if (self.oSelectedEdition() === 'paused') {
             return "selected-plan";
@@ -69,6 +62,14 @@ const PricingTable = function (options) {
     self.oPlanOptions = ko.observableArray(_.map(options.planOptions, function (opt) {
         return new PlanOption(opt, self);
     }));
+
+    self.selectPausedPlan = function () {
+        self.oSelectedEdition('paused');
+    };
+
+    self.isDowngrade = function () {
+        return self.editions.indexOf(self.oSelectedEdition()) < self.editions.indexOf(self.currentEdition);
+    };
 
     self.form = undefined;
     self.openMinimumSubscriptionModal = function (pricingTable, e) {
@@ -189,15 +190,15 @@ const PlanOption = function (data, parent) {
     self.isFreeEdition = self.slug === 'free';
     self.isCurrentPlan = self.slug === parent.currentEdition;
 
-    self.oIsSelectedPlan = ko.computed(function () {
-        return self.slug === parent.oSelectedEdition();
-    });
-
     self.nextPlan = parent.nextSubscription;
     self.nextDate = parent.startDateAfterMinimumSubscription;
 
     self.showPausedNotice = parent.isNextPlanPaused && self.isCurrentPlan;
     self.showDowngradeNotice = self.isCurrentPlan && parent.isNextPlanDowngrade;
+
+    self.oIsSelectedPlan = ko.computed(function () {
+        return self.slug === parent.oSelectedEdition();
+    });
 
     self.oCssClass = ko.computed(function () {
         let cssClass = "tile-" + self.slug;
@@ -206,10 +207,6 @@ const PlanOption = function (data, parent) {
         }
         return cssClass;
     });
-
-    self.selectPlan = function () {
-        parent.oSelectedEdition(self.slug);
-    };
 
     self.oPricingTypeText = ko.computed(function () {
         if (parent.oShowAnnualPricing()) {
@@ -239,6 +236,9 @@ const PlanOption = function (data, parent) {
         return self.monthlyPrice;
     });
 
+    self.selectPlan = function () {
+        parent.oSelectedEdition(self.slug);
+    };
 };
 
 
