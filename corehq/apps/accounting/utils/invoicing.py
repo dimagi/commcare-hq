@@ -1,5 +1,7 @@
+import calendar
 import datetime
 from dateutil.relativedelta import relativedelta
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.db.models import Q, Sum
 
@@ -145,3 +147,23 @@ def get_flagged_pay_annually_prepay_invoice(invoice):
     ).first()
 
     return past_due_prepay_invoice
+
+
+def get_prorated_software_plan_cost(date_start, date_end, monthly_fee):
+    total_cost = Decimal('0.00')
+    current = date_start
+
+    while current < date_end:
+        days_in_month = calendar.monthrange(current.year, current.month)[1]
+        month_end = current.replace(day=days_in_month)
+        segment_end = min(month_end + datetime.timedelta(days=1), date_end)
+
+        days_active = (segment_end - current).days
+        daily_fee = (monthly_fee / days_in_month)
+
+        total_cost += (daily_fee * days_active)
+        current = segment_end
+
+    return total_cost.quantize(
+        Decimal('0.01'), rounding=ROUND_HALF_UP,
+    )
