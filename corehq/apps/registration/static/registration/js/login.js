@@ -1,6 +1,6 @@
 import "commcarehq";
 import $ from "jquery";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import userLoginForm from "registration/js/user_login_form";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "hqwebapp/js/captcha";  // shows captcha

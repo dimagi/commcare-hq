@@ -11,7 +11,7 @@ define("cloudcare/js/formplayer/app", [
     'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/utils',
     'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/constants',

@@ -1,4 +1,4 @@
-define('analytix/js/kissmetrix', [], function () {
+define('analytix/js/noopMetrics', [], function () {
     /**
      * Records an event and its properties
      * @param {string} name - Name of event to be tracked

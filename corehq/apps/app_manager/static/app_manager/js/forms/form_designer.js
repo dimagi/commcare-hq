@@ -2,7 +2,7 @@
 import $ from "jquery";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import appManager from "app_manager/js/app_manager";
 import editDetails from "app_manager/js/forms/edit_form_details";
 import "jquery-ui/ui/widgets/sortable";
@@ -57,14 +57,14 @@ $(function () {
             appManager.updateDOM(data.update);
             $('.js-preview-toggle').removeAttr('disabled');
             if (initialPageData.get("days_since_created") === 0) {
-                kissmetrics.track.event('Saved the Form Builder within first 24 hours');
+                noopMetrics.track.event('Saved the Form Builder within first 24 hours');
             }
         },
         onReady: function () {
             var kissmetrixTrack = function () {};
             if (initialPageData.get('days_since_created') === 0) {
                 kissmetrixTrack = function () {
-                    kissmetrics.track.event(
+                    noopMetrics.track.event(
                         'Added question in Form Builder within first 24 hours',
                     );
                 };
@@ -90,7 +90,7 @@ $(function () {
     } else {
         require(["jquery", "jquery.vellum.prod"], initVellum);
     }
-    kissmetrics.track.event('Entered the Form Builder');
+    noopMetrics.track.event('Entered the Form Builder');
 
     appManager.setPrependedPageTitle("\u270E ", true);
     appManager.setAppendedPageTitle(gettext("Edit Form"));
@@ -136,6 +136,6 @@ $(function () {
     });
     $('#edit-form-name-modal').koApplyBindings(editDetails);
     $("#edit-form-name-modal button[type='submit']").click(function () {
-        kissmetrics.track.event("Renamed form from form builder");
+        noopMetrics.track.event("Renamed form from form builder");
     });
 });

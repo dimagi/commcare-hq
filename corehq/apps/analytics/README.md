@@ -50,7 +50,7 @@ You can also add the `.track-usage-link` class to a link to track it in Google A
 
 Used primarily by product team.
 
-Most A/B tests are tracked using client side Kissmetrics code, so [kissmetrix.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/kissmetrix.js) includes test setup.
+Most A/B tests are tracked using client side Kissmetrics code, so [kissmetrix.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/noopMetrics.js) includes test setup.
 
 There is documentation for setting up A/B tests with kissmetrics via [SessionABTest](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/ab_tests.py).
 

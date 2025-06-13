@@ -1,7 +1,7 @@
 import "commcarehq";
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import kissmetricsAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import utils from "hqwebapp/js/bootstrap5/main";
 import createModels from "export/js/create_export";
 import listModels from "export/js/export_list";
@@ -25,27 +25,27 @@ $(function () {
             },
         }));
         $('#createExportOptionsModal').on('show.bs.modal', function () {
-            kissmetricsAnalytics.track.event("Clicked New Export");
+            noopMetrics.track.event("Clicked New Export");
 
             if (isOData) {
-                kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Odata Feed button");
+                noopMetrics.track.event("[BI Integration] Clicked + Add Odata Feed button");
             }
 
             const exportAction = getExportAction();
             const metricsMessage = `${exportAction} Export - Clicked Add Export Button`;
-            kissmetricsAnalytics.track.event(metricsMessage, {
+            noopMetrics.track.event(metricsMessage, {
                 domain: initialPageData.get('domain'),
             });
         });
     }
 
     if (isOData) {
-        kissmetricsAnalytics.track.event("[BI Integration] Visited feature page");
-        kissmetricsAnalytics.track.outboundLink(
+        noopMetrics.track.event("[BI Integration] Visited feature page");
+        noopMetrics.track.outboundLink(
             '#js-odata-track-learn-more',
             "[BI Integration] Clicked Learn More-Wiki",
         );
-        kissmetricsAnalytics.track.outboundLink(
+        noopMetrics.track.outboundLink(
             '#js-odata-track-learn-more-preview',
             "[BI Integration] Clicked Learn More-Feature Preview",
         );
@@ -74,14 +74,14 @@ $(function () {
     }));
 
     if (modelType === 'form') {
-        kissmetricsAnalytics.track.event('Visited Export Forms Page');
+        noopMetrics.track.event('Visited Export Forms Page');
     } else if (modelType === 'case') {
-        kissmetricsAnalytics.track.event('Visited Export Cases Page');
+        noopMetrics.track.event('Visited Export Cases Page');
     }
 
     // Analytics: Send Kissmetrics event when user closes alert bubble
     $('#alert-export-deep-links').on('click', function () {
-        kissmetricsAnalytics.track.event("Dismissed alert bubble - Deep links in exports");
+        noopMetrics.track.event("Dismissed alert bubble - Deep links in exports");
     });
 });
 
