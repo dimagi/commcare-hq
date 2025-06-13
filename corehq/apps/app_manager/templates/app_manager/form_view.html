@@ -5,7 +5,6 @@
 {% load i18n %}
 
 {% block title %}{# controlled by app_manager/js/forms/form_view.js #}{% endblock %}
-
 {% js_entry_b3 "app_manager/js/forms/form_view" %}
 
 {% block stylesheets %}
@@ -166,6 +165,31 @@
     <div class="tab-content appmanager-tab-content">
       {% if form.uses_cases %}
         <div class="tab-pane" id="case-configuration">
+          {% if case_property_warning.show %}
+            <div class="alert alert-warning">
+              <button
+                id="performance-warning-btn"
+                type="button"
+                class="close"
+                data-toggle="collapse"
+                data-target="#warningContent"
+              >
+                <i class="fa fa-chevron-down"></i>
+              </button>
+              <i class="fa fa-exclamation-circle"></i>
+              {% trans "Performance warning" %}
+              <div id="warningContent" class="collapse">
+                <p>
+                  {% blocktrans with type=case_property_warning.type count=case_property_warning.count %}
+                    The '{{ type }}' case has {{ count }} properties. We
+                    recommend keeping case properties per case type to a
+                    minimum, otherwise you may run into performance issues at
+                    the time of data collection and analysis.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
+          {% endif %}
           {% if xform_validation_missing %}
             <p class="alert alert-warning">
               {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
