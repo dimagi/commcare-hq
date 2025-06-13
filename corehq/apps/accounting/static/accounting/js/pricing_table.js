@@ -44,10 +44,16 @@ const PricingTable = function (options) {
     self.oSelectedEdition = ko.observable(options.currentEdition);
     self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
+    self.oIsSamePaySchedule = ko.computed(function () {
+        return self.currentIsAnnualPlan === self.oShowAnnualPricing();
+    });
+
     self.oIsSubmitDisabled = ko.computed(function () {
         const isSubscribablePlan = !!self.oSelectedEdition() && !['free', 'enterprise'].includes(self.oSelectedEdition());
-        const isSamePaySchedule = self.currentIsAnnualPlan === self.oShowAnnualPricing();
-        const isCurrentPlan = self.oSelectedEdition() === self.currentEdition && !self.nextSubscription && isSamePaySchedule;
+        const isCurrentPlan = (
+            self.oSelectedEdition() === self.currentEdition
+            && self.oIsSamePaySchedule() && !self.nextSubscription
+        );
         const isNextPlan = self.nextSubscription && self.oSelectedEdition() === self.nextSubscription.toLowerCase();
         return !isSubscribablePlan || isNextPlan || isCurrentPlan;
     });
@@ -196,6 +202,10 @@ const PlanOption = function (data, parent) {
     self.showPausedNotice = parent.isNextPlanPaused && self.isCurrentEdition;
     self.showDowngradeNotice = self.isCurrentEdition && parent.isNextPlanDowngrade;
 
+    self.oIsCurrentPlan = ko.computed(function () {
+        return self.isCurrentEdition && parent.oIsSamePaySchedule();
+    });
+
     self.oIsSelectedPlan = ko.computed(function () {
         return self.slug === parent.oSelectedEdition();
     });
@@ -223,7 +233,7 @@ const PlanOption = function (data, parent) {
     });
 
     self.oDisplayDiscountNotice = ko.computed(function () {
-        return self.isCurrentEdition && parent.isPriceDiscounted && !parent.oShowAnnualPricing();
+        return self.oIsCurrentPlan() && parent.isPriceDiscounted && !parent.oShowAnnualPricing();
     });
 
     self.oDisplayPrice = ko.computed(function () {
