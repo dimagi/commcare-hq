@@ -85,7 +85,6 @@ HUBSPOT_THRESHOLD = 300
 
 
 HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', False)
-KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
 
 
 def _raise_for_urllib3_response(response):
@@ -444,7 +443,7 @@ def track_periodic_data():
     """
     # Start by getting a list of web users mapped to their domains
 
-    if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
+    if not HUBSPOT_ENABLED:
         return
 
     time_started = datetime.utcnow()
