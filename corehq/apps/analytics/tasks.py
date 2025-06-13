@@ -87,7 +87,6 @@ HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', False)
 def _raise_for_urllib3_response(response):
     '''
     this mimics the behavior of requests.response.raise_for_status so we can
-    treat kissmetrics requests and hubspot requests interchangeably in our retry code
     '''
     if 400 <= response.status < 600:
         raise requests.exceptions.HTTPError(response=response)
@@ -435,7 +434,7 @@ def _get_report_count(domain):
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
-    Sync data that is neither event or page based with hubspot/Kissmetrics
+    Sync data that is neither event or page based with hubspot
     :return:
     """
     # Start by getting a list of web users mapped to their domains
@@ -675,7 +674,7 @@ def get_subscription_properties_by_user(couch_user):
                 and plan_version.plan.edition != SoftwarePlanEdition.FREE)
 
     # Note: using "yes" and "no" instead of True and False because spec calls
-    # for using these values. (True is just converted to "True" in KISSmetrics)
+    # for using these values.
     all_subscriptions = []
     paying_subscribed_editions = []
     subscribed_editions = []
@@ -778,7 +777,7 @@ def record_event(event_name, couch_user, event_properties=None):
 
     event_properties = event_properties or {}
 
-    timestamp = unix_time_in_micros(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+    timestamp = unix_time_in_micros(datetime.utcnow())
 
     event_body = {
         # The client_id is meant to represent a unique user/device pairing, but we don't have access to that
