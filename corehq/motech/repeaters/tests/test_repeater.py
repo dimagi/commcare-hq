@@ -1306,10 +1306,6 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         )
         cls.repeater.save()
 
-    def setUp(self):
-        self.repeater.repeat_records.all().delete()
-        DataSourceUpdate.objects.all().delete()
-
     def test_datasource_is_subscribed_to(self):
         assert self.repeater.datasource_is_subscribed_to(
             self.domain,
