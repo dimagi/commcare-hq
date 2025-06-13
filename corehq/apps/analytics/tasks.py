@@ -1,15 +1,12 @@
-import csv
 import json
 import logging
 import math
-import os
 import time
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.core.validators import ValidationError, validate_email
 
-import boto3
 import requests
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -590,7 +587,7 @@ def track_periodic_data():
             submit.append(user_json)
 
         submit_json = json.dumps(submit)
-        submit_data_to_hub_and_kiss(submit_json)
+        submit_data_to_hubspot(submit_json)
 
     metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users_processed,
         multiprocess_mode=MPM_LIVESUM)
@@ -622,69 +619,15 @@ def _email_is_valid(email):
     return True
 
 
-def submit_data_to_hub_and_kiss(submit_json):
-    hubspot_dispatch = (batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
-    kissmetrics_dispatch = (
-        _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
-    )
-
-    for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
-        try:
-            dispatcher(submit_json)
-        except requests.exceptions.HTTPError as e:
-            notify_error("Error submitting periodic analytics data to Hubspot or Kissmetrics",
-                         details=e.response.content.decode('utf-8'))
-        except Exception as e:
-            notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
-
-
-def _track_periodic_data_on_kiss(submit_json):
-    """
-    Transform periodic data into a format that is kissmetric submission friendly, then call identify
-    csv format: Identity (email), timestamp (epoch), Prop:<Property name>, etc...
-    :param submit_json: Example Json below, this function assumes
-    [
-      {
-        email: <>,
-        properties: [
-          {
-            property: <>,
-            value: <>
-          }, (can have more than one)
-        ]
-      }
-    ]
-    :return: none
-    """
-    periodic_data_list = json.loads(submit_json)
-
-    headers = [
-        'Identity',
-        'Timestamp',
-    ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
-
-    filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
-    with open(filename, 'w') as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(headers)
-
-        for webuser in periodic_data_list:
-            row = [
-                webuser['email'],
-                int(time.time())
-            ] + [prop['value'] for prop in webuser['properties']]
-            csvwriter.writerow(row)
-
-    if settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
-        s3 = boto3.client(
-            's3',
-            aws_access_key_id=settings.S3_ACCESS_KEY,
-            aws_secret_access_key=settings.S3_SECRET_KEY,
-        )
-        with open(filename, 'rb') as f:
-            s3.upload_fileobj(f, 'kiss-uploads', filename)
-
-    os.remove(filename)
+def submit_data_to_hubspot(submit_json):
+    try:
+        batch_track_on_hubspot(submit_json)
+    except requests.exceptions.HTTPError as e:
+        notify_error("Error submitting periodic analytics data to Hubspot",
+                     details=e.response.content.decode('utf-8'))
+    except Exception as e:
+        notify_exception(None, "{msg}: {exc}".format(
+            msg="Error submitting periodic analytics data to Hubspot", exc=e))
 
 
 def get_ab_test_properties(user):
