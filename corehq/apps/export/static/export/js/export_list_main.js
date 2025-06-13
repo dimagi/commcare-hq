@@ -79,7 +79,7 @@ $(function () {
         noopMetrics.track.event('Visited Export Cases Page');
     }
 
-    // Analytics: Send Kissmetrics event when user closes alert bubble
+    // Analytics: Send noopMetrics event when user closes alert bubble
     $('#alert-export-deep-links').on('click', function () {
         noopMetrics.track.event("Dismissed alert bubble - Deep links in exports");
     });

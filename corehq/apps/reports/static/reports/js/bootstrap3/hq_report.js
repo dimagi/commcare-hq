@@ -270,9 +270,6 @@ var hqReport = function (options) {
         };
     }
 
-    /**
-     * Send a Kissmetrics event, depending on report page slug
-     */
     function trackReportPageEnter() {
         switch (self.slug) {
             case 'submit_history':

@@ -33,7 +33,7 @@ define("cloudcare/js/formplayer/app", [
     bootstrap,
     initialPageData,
     GGAnalytics,
-    Kissmetrics,
+    noopMetrics,
     CloudcareUtils,
     AppsAPI,
     Const,
@@ -227,7 +227,7 @@ define("cloudcare/js/formplayer/app", [
                 CloudcareUtils.showError(message, $("#cloudcare-notifications"), resp.reportToHq);
             }
         };
-        Kissmetrics.track.event('Viewed Form', {
+        noopMetrics.track.event('Viewed Form', {
             domain: data.domain,
             name: data.title,
         });
@@ -249,7 +249,7 @@ define("cloudcare/js/formplayer/app", [
                                 _.each(analyticsLinks, function (link) {
                                     if (href.match(RegExp(link.url))) {
                                         $target.attr("target", "_blank");
-                                        Kissmetrics.track.event(link.text);
+                                        noopMetrics.track.event(link.text);
                                     }
                                 });
                             }
@@ -273,10 +273,10 @@ define("cloudcare/js/formplayer/app", [
                 }
 
                 if (user.isAppPreview) {
-                    Kissmetrics.track.event("[app-preview] User submitted a form");
+                    noopMetrics.track.event("[app-preview] User submitted a form");
                     GGAnalytics.track.event("App Preview", "User submitted a form");
                 } else if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
-                    Kissmetrics.track.event("[web apps] User submitted a form");
+                    noopMetrics.track.event("[web apps] User submitted a form");
                     GGAnalytics.track.event("Web Apps", "User submitted a form");
                 }
 

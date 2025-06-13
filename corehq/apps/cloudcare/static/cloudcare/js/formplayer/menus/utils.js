@@ -216,11 +216,10 @@ define("cloudcare/js/formplayer/menus/utils", [
                 eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
             }
 
-            var kissmetricsEventData = _.extend(eventData, {
+            noopMetrics.track.event("Viewed Case List", _.extend(eventData, {
                 domain: UsersModels.getCurrentUser().domain,
                 name: menuResponse.title,
-            });
-            noopMetrics.track.event("Viewed Case List", kissmetricsEventData);
+            }));
             gtx.logCaseList(menuResponse);
 
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {

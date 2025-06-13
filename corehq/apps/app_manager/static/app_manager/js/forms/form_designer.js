@@ -61,16 +61,16 @@ $(function () {
             }
         },
         onReady: function () {
-            var kissmetrixTrack = function () {};
+            var noopMetricsTrack = function () {};
             if (initialPageData.get('days_since_created') === 0) {
-                kissmetrixTrack = function () {
+                noopMetricsTrack = function () {
                     noopMetrics.track.event(
                         'Added question in Form Builder within first 24 hours',
                     );
                 };
             }
             $("#formdesigner").vellum("get").data.core.form.on("question-create", function () {
-                kissmetrixTrack();
+                noopMetricsTrack();
             });
         },
     });
