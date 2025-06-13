@@ -562,10 +562,13 @@ class RepeaterLock:
 )
 def purge_old_datasourceupdates():
     table_name_format = f'{DataSourceUpdate.Meta.db_table}_y%Ym%m'
-    max_age = datetime.utcnow() - DataSourceUpdate.MAX_AGE
-    table_name = (max_age - timedelta(days=1)).strftime(table_name_format)
-    with connection.cursor() as cursor:
-        cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
+    oldest_date = DataSourceUpdate.objects.get_oldest_date()
+    oldest_allowed = datetime.today() - DataSourceUpdate.MAX_AGE
+    while oldest_date and oldest_date < oldest_allowed:
+        table_name = oldest_date.strftime(table_name_format)
+        with connection.cursor() as cursor:
+            cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
+        oldest_date += timedelta(days=31)
 
 
 metrics_gauge_task(

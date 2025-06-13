@@ -77,6 +77,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.db import models, router
+from django.db.models import Min
 from django.db.models.base import Deferred
 from django.dispatch import receiver
 from django.utils import timezone
@@ -928,6 +929,12 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+class DataSourceUpdateManager(models.Manager):
+
+    def get_oldest_date(self):
+        return self.aggregate(Min('modified_at'))['modified_at__min']
+
+
 @architect.install(
     'partition',
     type='range',
@@ -946,6 +953,8 @@ class DataSourceUpdate(models.Model):
     doc_ids = JSONField(default=list)
     rows = JSONField(default=list, blank=True, null=True)
     modified_at = models.DateTimeField(auto_now=True)
+
+    objects = DataSourceUpdateManager()
 
     class Meta:
         db_table = 'repeaters_datasourceupdate'
