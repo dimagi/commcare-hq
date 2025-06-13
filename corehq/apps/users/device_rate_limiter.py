@@ -9,6 +9,7 @@ from corehq.util.metrics import metrics_counter
 
 logger = logging.getLogger(__name__)
 
+DEVICE_RATE_LIMIT_ERROR_CODE = "restore.failed.device_rate_limit"
 DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
 # intentionally set to > 1 minute to allow for a buffer at minute boundaries
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
