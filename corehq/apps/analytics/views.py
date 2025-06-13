@@ -4,6 +4,7 @@ import json
 import requests
 
 from gettext import gettext
+from urllib.parse import quote_plus
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
@@ -75,12 +76,13 @@ def submit_hubspot_cta_form(request):
     page_name = form_data.pop('page_name')
 
     hubspot_cookie = request.COOKIES.get(HUBSPOT_COOKIE)
-    form_data['hs_context'] = json.dumps({
+    # HubSpot expects it to be a URL-encoded JSON string
+    form_data['hs_context'] = quote_plus(json.dumps({
         "hutk": hubspot_cookie,
         "ipAddress": get_client_ip_from_request(request),
         "pageUrl": page_url,
         "pageName": page_name,
-    })
+    }))
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     if not hubspot_id:
