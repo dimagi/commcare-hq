@@ -521,6 +521,9 @@
                 <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
                 that references a missing form endpoint: <code>{{ column.header|trans:langs }}</code>.
               {% endblocktrans %}
+            {% case "conflicting questions" %}
+              Multiple questions are attempting to save to case property "{{ error.property }}"
+              {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
             {% case "error" %}
               Details: {{ error.message }}
             {% else %}
