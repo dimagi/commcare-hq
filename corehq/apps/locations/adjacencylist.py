@@ -145,7 +145,7 @@ class AdjListManager(models.Manager):
                 ),
                 name="xdups"
             )
-            query = query.annotate(
+            query = query.alias(
                 _exclude_dups=Exists(SubQueryset(xdups.queryset().filter(
                     id=OuterRef("id"),
                     _cte_ordering=OuterRef("_cte_ordering"),
