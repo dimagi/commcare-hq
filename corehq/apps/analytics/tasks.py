@@ -59,7 +59,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
-from corehq.util.dates import unix_time, unix_time_in_micros
+from corehq.util.dates import unix_time_in_micros
 from corehq.util.decorators import analytics_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
@@ -415,18 +415,13 @@ def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
 
 def track_workflow(email, event, properties=None):
     """
-    Record an event in KISSmetrics.
+    Record a logical event that is not actually sent to any analytics backend
     :param email: The email address by which to identify the user.
     :param event: The name of the event.
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
-    try:
-        if analytics_enabled_for_email(email):
-            timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-            _track_workflow_task.delay(email, event, properties, timestamp)
-    except Exception:
-        notify_exception(None, "Error tracking kissmetrics workflow")
+    pass
 
 
 @analytics_task()
