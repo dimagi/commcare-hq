@@ -188,13 +188,13 @@ const PlanOption = function (data, parent) {
     self.description = data.description;
 
     self.isFreeEdition = self.slug === 'free';
-    self.isCurrentPlan = self.slug === parent.currentEdition;
+    self.isCurrentEdition = self.slug === parent.currentEdition;
 
     self.nextPlan = parent.nextSubscription;
     self.nextDate = parent.startDateAfterMinimumSubscription;
 
-    self.showPausedNotice = parent.isNextPlanPaused && self.isCurrentPlan;
-    self.showDowngradeNotice = self.isCurrentPlan && parent.isNextPlanDowngrade;
+    self.showPausedNotice = parent.isNextPlanPaused && self.isCurrentEdition;
+    self.showDowngradeNotice = self.isCurrentEdition && parent.isNextPlanDowngrade;
 
     self.oIsSelectedPlan = ko.computed(function () {
         return self.slug === parent.oSelectedEdition();
@@ -223,7 +223,7 @@ const PlanOption = function (data, parent) {
     });
 
     self.oDisplayDiscountNotice = ko.computed(function () {
-        return self.isCurrentPlan && parent.isPriceDiscounted && !parent.oShowAnnualPricing();
+        return self.isCurrentEdition && parent.isPriceDiscounted && !parent.oShowAnnualPricing();
     });
 
     self.oDisplayPrice = ko.computed(function () {
