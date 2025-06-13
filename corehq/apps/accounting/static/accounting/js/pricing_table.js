@@ -7,7 +7,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import utils from "hqwebapp/js/bootstrap3/main";
 import assertProperties from "hqwebapp/js/assert_properties";
 
-var PricingTable = function (options) {
+const PricingTable = function (options) {
     assertProperties.assert(options, [
         'editions',
         'planOptions',
@@ -22,7 +22,7 @@ var PricingTable = function (options) {
         'currentPrice',
     ]);
 
-    var self = {};
+    const self = {};
 
     self.oCurrentEdition = ko.observable(options.currentEdition);
     self.oNextSubscription = ko.observable(options.nextSubscriptionEdition);
@@ -40,10 +40,10 @@ var PricingTable = function (options) {
     self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
     self.oIsSubmitDisabled = ko.computed(function () {
-        var isSubscribablePlan = !!self.oSelectedEdition() && !['free', 'enterprise'].includes(self.oSelectedEdition());
-        var isSamePaySchedule = self.currentIsAnnualPlan === self.oShowAnnualPricing();
-        var isCurrentPlan = self.oSelectedEdition() === self.oCurrentEdition() && !self.oNextSubscription() && isSamePaySchedule;
-        var isNextPlan = self.oNextSubscription() && self.oSelectedEdition() === self.oNextSubscription().toLowerCase();
+        const isSubscribablePlan = !!self.oSelectedEdition() && !['free', 'enterprise'].includes(self.oSelectedEdition());
+        const isSamePaySchedule = self.currentIsAnnualPlan === self.oShowAnnualPricing();
+        const isCurrentPlan = self.oSelectedEdition() === self.oCurrentEdition() && !self.oNextSubscription() && isSamePaySchedule;
+        const isNextPlan = self.oNextSubscription() && self.oSelectedEdition() === self.oNextSubscription().toLowerCase();
         return !isSubscribablePlan || isNextPlan || isCurrentPlan;
     });
 
@@ -80,13 +80,13 @@ var PricingTable = function (options) {
     self.openMinimumSubscriptionModal = function (pricingTable, e) {
         self.form = $(e.currentTarget).closest("form");
 
-        var invoicingContact = _.escape(self.invoicingContact);
+        const invoicingContact = _.escape(self.invoicingContact);
         if (self.isDowngrade() && self.subscriptionBelowMinimum) {
-            var oldPlan = utils.capitalize(self.oCurrentEdition());
-            var newPlan = utils.capitalize(self.oSelectedEdition());
-            var newStartDate = self.oStartDateAfterMinimumSubscription();
+            const oldPlan = utils.capitalize(self.oCurrentEdition());
+            const newPlan = utils.capitalize(self.oSelectedEdition());
+            const newStartDate = self.oStartDateAfterMinimumSubscription();
 
-            var message = "",
+            let message = "",
                 title = gettext("Downgrading?");
             if (self.oSelectedEdition() === 'paused') {
                 title = gettext("Pausing Subscription?");
@@ -150,7 +150,7 @@ var PricingTable = function (options) {
                     invoicingContact: invoicingContact,
                 });
             }
-            var $modal = $("#modal-minimum-subscription");
+            const $modal = $("#modal-minimum-subscription");
             $modal.find('.modal-body')[0].innerHTML = message;
             $modal.find('.modal-title')[0].innerHTML = title;
             $modal.modal('show');
@@ -172,7 +172,7 @@ var PricingTable = function (options) {
     return self;
 };
 
-var planDisplayName = function (name) {
+const planDisplayName = function (name) {
     const plans = {
         'Free': gettext('Free edition'),
         'Standard': 'Standard',
@@ -182,8 +182,8 @@ var planDisplayName = function (name) {
     return plans[name] || '';
 };
 
-var PlanOption = function (data, parent) {
-    var self = this;
+const PlanOption = function (data, parent) {
+    const self = this;
 
     self.oName = ko.observable(planDisplayName(data.name));
     self.oSlug = ko.observable(data.name.toLowerCase());
@@ -221,7 +221,7 @@ var PlanOption = function (data, parent) {
     });
 
     self.oCssClass = ko.computed(function () {
-        var cssClass = "tile-" + self.oSlug();
+        let cssClass = "tile-" + self.oSlug();
         if (self.oIsSelectedPlan()) {
             cssClass = cssClass + " selected-plan";
         }
@@ -264,7 +264,7 @@ var PlanOption = function (data, parent) {
 
 
 $(function () {
-    var pricingTable = new PricingTable({
+    const pricingTable = new PricingTable({
         editions: initialPageData.get('editions'),
         planOptions: initialPageData.get('planOptions'),
         currentEdition: initialPageData.get('currentEdition'),
