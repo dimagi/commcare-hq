@@ -7,7 +7,7 @@ import hqLayout from "hqwebapp/js/layout";
 import toggles from "hqwebapp/js/toggles";
 import uiElementLangcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";
 import google from "analytix/js/google";
-import kissmetrix from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import main from "hqwebapp/js/bootstrap3/main";
 import menu from "app_manager/js/menu";
@@ -531,7 +531,7 @@ var _initNewModuleOptionClicks = function () {
         } else {
             if (moduleType === "survey") {
                 google.track.event("Added Surveys Menu");
-                kissmetrix.track.event("Added Surveys Menu");
+                noopMetrics.track.event("Added Surveys Menu");
             }
             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
             $('#add-new-module-modal').modal('hide');
@@ -621,7 +621,7 @@ var _initNewModuleOptionClicks = function () {
     // Handle "Create Application" button click
     $('#case-type-create-btn').on('click', function () {
         google.track.event("Added Case List Menu");
-        kissmetrix.track.event("Added Case List Menu");
+        noopMetrics.track.event("Added Case List Menu");
 
         var $caseTypeInput = $('#new-case-type-dropdown');
         var value = $caseTypeInput.val();

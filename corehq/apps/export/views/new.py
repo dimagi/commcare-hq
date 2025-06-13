@@ -20,7 +20,7 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -237,7 +237,7 @@ class BaseExportView(BaseProjectDataView):
         if not export._rev:
             # This is a new export
 
-            track_workflow(
+            track_workflow_noop(
                 request.user.username,
                 f'{self.metric_name} - Created Export',
                 properties={'domain': self.domain}
@@ -279,7 +279,7 @@ class BaseExportView(BaseProjectDataView):
                 event_title = "[BI Integration] Clicked Save button for feed copy"
             else:
                 event_title = "[BI Integration] Clicked Save button for feed creation"
-            track_workflow(request.user.username, event_title, {
+            track_workflow_noop(request.user.username, event_title, {
                 "Feed Type": export.type,
                 "Number of additional nodes": num_nodes,
             })
@@ -364,7 +364,7 @@ class CreateNewCustomFormExportView(BaseExportView):
     def create_new_export_instance(self, schema, username, export_settings=None):
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
-        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+        track_workflow_noop(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
             'domain': self.domain
         })
 
@@ -406,7 +406,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
             load_deprecated=load_deprecated
         )
 
-        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+        track_workflow_noop(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
             'domain': self.domain
         })
 

@@ -4,7 +4,7 @@ import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import tempusDominus from "hqwebapp/js/tempus_dominus";
 import moment from "moment";
 import "hqwebapp/js/bootstrap5/hq.helpers";
@@ -269,7 +269,7 @@ $(function () {
         dateRangeModal,
     );
 
-    kissmetrics.track.event(`[${metricType}] Visited page`);
+    noopMetrics.track.event(`[${metricType}] Visited page`);
     $(".js-report-panel").each(function () {
         var $element = $(this),
             slug = $element.data("slug");
@@ -277,7 +277,7 @@ $(function () {
         updateDisplayTotal($element);
 
         $element.find(".js-email-report").click(function () {
-            kissmetrics.track.event(`[${metricType}] Clicked Email Report for ` + slug);
+            noopMetrics.track.event(`[${metricType}] Clicked Email Report for ` + slug);
             var $button = $(this);
             $button.disableButton();
             const requestParams = {

@@ -29,7 +29,7 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.casegroups.dbaccessors import (
     get_case_groups_in_domain,
@@ -1237,7 +1237,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         subscription = Subscription.get_active_subscription_by_domain(rule.domain)
         managed_by_saas = bool(subscription and subscription.service_type == SubscriptionType.PRODUCT)
 
-        track_workflow(
+        track_workflow_noop(
             username,
             'Created Dedupe Rule',
             {

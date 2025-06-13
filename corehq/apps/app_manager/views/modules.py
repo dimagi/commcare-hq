@@ -25,7 +25,7 @@ from looseversion import LooseVersion
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
@@ -817,9 +817,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
                 resp['redirect'] = reverse('view_module', args=[domain, app_id, module_unique_id])
 
         if not old_root and module['root_module_id']:
-            track_workflow(request.couch_user.username, "User associated module with a parent")
+            track_workflow_noop(request.couch_user.username, "User associated module with a parent")
         elif old_root and not module['root_module_id']:
-            track_workflow(request.couch_user.username, "User orphaned a child module")
+            track_workflow_noop(request.couch_user.username, "User orphaned a child module")
 
     if should_edit('additional_case_types'):
         module.search_config.additional_case_types = list(set(request.POST.getlist('additional_case_types')))

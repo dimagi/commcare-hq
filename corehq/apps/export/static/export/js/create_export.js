@@ -14,7 +14,7 @@ import ko from "knockout";
 import _ from "underscore";
 import assertProperties from "hqwebapp/js/assert_properties";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import kissmetricsAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import "select2/dist/js/select2.full.min";
 
 var createExportModel = function (options) {
@@ -259,7 +259,7 @@ var createExportModel = function (options) {
     self.handleSubmitForm = function () {
         self.isSubmitting(true);
         if (self.isOData) {
-            kissmetricsAnalytics.track.event(
+            noopMetrics.track.event(
                 "[BI Integration] Clicked Add Odata Feed button",
                 {
                     "Feed Type": self.modelType(),

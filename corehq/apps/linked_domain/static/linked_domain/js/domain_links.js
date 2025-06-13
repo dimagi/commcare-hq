@@ -5,7 +5,7 @@ import _ from "underscore";
 import ko from "knockout";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import multiselectUtils from "hqwebapp/js/multiselect_utils";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
 import "hqwebapp/js/select2_knockout_bindings.ko";  // selects2 for fields
@@ -206,7 +206,7 @@ var DomainLinksViewModel = function (data) {
     };
 
     self.addDownstreamProjectSpace = function () {
-        kissmetrics.track.event("Clicked Add Downstream Project Space button", {
+        noopMetrics.track.event("Clicked Add Downstream Project Space button", {
             domain: self.domain,
         });
     };

@@ -2,7 +2,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import RMI from "jquery.rmi/jquery.rmi";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import intlTelInput from "intl-tel-input/build/js/intlTelInput.min";
 import "jquery-ui/ui/effect";
@@ -23,7 +23,7 @@ module.resetEmailFeedback = function (isValidating) {
         "Expects boolean isValidating. " + isValidating);
 };
 module.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
-    kissmetrics.track.event("Clicked Create Account");
+    noopMetrics.track.event("Clicked Create Account");
 };
 module.getPhoneNumberFn = function () {
     // number to return phone number
@@ -85,7 +85,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
                             {
                                 success: function (result) {
                                     if (result.restrictedByDomain) {
-                                        kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
+                                        noopMetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
                                         self.deniedEmail(val);
                                     }
 
@@ -215,7 +215,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
 
     self.currentStep.subscribe(function (newValue) {
         if (newValue === 1) {
-            kissmetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
+            noopMetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
         }
     });
 

@@ -4,7 +4,7 @@
 -
  import $ from "jquery";
  import initialPageData from "hqwebapp/js/initial_page_data";
- import kissmetrix from "analytix/js/kissmetrix";
+ import noopMetrics from "analytix/js/noopMetrics";
 +import { Modal } from "bootstrap5";
  import "jquery.cookie/jquery.cookie";
  
@@ -52,7 +52,7 @@
 -            });
 +            let videoModal = new Modal(videoModalElement);
 +            videoModal.show();
-             kissmetrix.track.event('Clicked mobile experience reminder');
+             noopMetrics.track.event('Clicked mobile experience reminder');
 -            setCookie();
          };
  

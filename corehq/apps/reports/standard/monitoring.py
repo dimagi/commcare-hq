@@ -16,7 +16,7 @@ from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
 from corehq import toggles
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import UserES
 from corehq.apps.es import cases as case_es
@@ -1419,11 +1419,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @memoized
     def view_by_groups(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            track_workflow(self.request.couch_user.username,
+            track_workflow_noop(self.request.couch_user.username,
                            "Worker Activity Report: view_by_groups disabled by EMWF_WORKER_ACTIVITY_REPORT")
             return False
         view_by_groups = self.get_request_param('view_by', None) == 'groups'
-        track_workflow(self.request.couch_user.username,
+        track_workflow_noop(self.request.couch_user.username,
                        "Worker Activity Report: view_by_groups == {}".format(view_by_groups))
         return view_by_groups
 

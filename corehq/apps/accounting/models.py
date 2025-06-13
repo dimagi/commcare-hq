@@ -1500,7 +1500,7 @@ class Subscription(models.Model):
         subscription. The current subscription will always end immediately
         (today) and the date_start of the new subscription will always be today.
         """
-        from corehq.apps.analytics.tasks import track_workflow
+        from corehq.apps.analytics.tasks import track_workflow_noop
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -1572,9 +1572,9 @@ class Subscription(models.Model):
         upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
         if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
             if change_status_result.adjustment_reason in upgrade_reasons:
-                track_workflow(web_user, 'Changed Plan: Upgrade')
+                track_workflow_noop(web_user, 'Changed Plan: Upgrade')
             if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
-                track_workflow(web_user, 'Changed Plan: Downgrade')
+                track_workflow_noop(web_user, 'Changed Plan: Downgrade')
 
         return new_subscription
 

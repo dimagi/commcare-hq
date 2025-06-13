@@ -1,7 +1,7 @@
 --- 
 +++ 
 @@ -12,7 +12,7 @@
- import kissmetrics from "analytix/js/kissmetrix";
+ import noopMetrics from "analytix/js/noopMetrics";
  import initialPageData from "hqwebapp/js/initial_page_data";
  import "reports/v2/js/datagrid/binding_handlers";  // for custom ko bindingHandlers
 -import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // for modal bindings

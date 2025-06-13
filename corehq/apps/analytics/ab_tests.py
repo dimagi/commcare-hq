@@ -108,12 +108,9 @@ class SessionAbTest(object):
         USAGE IN TEMPLATE:
         {% analytics_ab_test '<api>.<slug>' <context_variable> %}
 
-        <api> - the api name (e.g. kissmetrics)
+        <api> - the api name (e.g. hubspot)
         <slug> - is a unique slug (can be different from the slug in AbTestConfig
         <context_variable> - the context variable you assign this property to
-
-        kissmetrics is already set up to auto detect analytics_ab_test tags and
-        send the results on page load. Please do not manually do this!
 
         :return: dict
         """

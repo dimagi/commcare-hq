@@ -46,7 +46,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import (
     HUBSPOT_SAVED_UCR_FORM_ID,
     send_hubspot_form,
-    track_workflow,
+    track_workflow_noop,
     update_hubspot_properties,
 )
 from corehq.apps.api.decorators import api_throttle
@@ -459,7 +459,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
 
-            track_workflow(
+            track_workflow_noop(
                 request.user.email,
                 "Successfully submitted the first part of the Report Builder "
                 "wizard where you give your report a name and choose a data source"

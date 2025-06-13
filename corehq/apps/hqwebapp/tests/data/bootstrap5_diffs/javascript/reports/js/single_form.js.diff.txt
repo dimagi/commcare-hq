@@ -7,7 +7,7 @@
 -import hqMain from "hqwebapp/js/bootstrap3/main";
 +import hqMain from "hqwebapp/js/bootstrap5/main";
  import googleAnalytics from "analytix/js/google";
- import kissAnalytics from "analytix/js/kissmetrix";
+ import noopMetrics from "analytix/js/noopMetrics";
 -import readableForm from "reports/js/bootstrap3/readable_form";
 -import dataCorrections from "reports/js/bootstrap3/data_corrections";
 +import readableForm from "reports/js/bootstrap5/readable_form";

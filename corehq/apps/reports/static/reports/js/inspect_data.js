@@ -1,6 +1,6 @@
 import $ from "jquery";
 import _ from "underscore";
-import kissAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 var generateFiltersForAnalytics = function (selector, userTypes, dataLookup) {
@@ -26,7 +26,7 @@ $(function () {
     var userTypes = initialPageData.get('user_types');
     if (document.location.href.match(/reports\/case_list/)) {
         $(document).on('click', 'td.case-name-link', function () {
-            kissAnalytics.track.event("Clicked Case Name in Case List Report");
+            noopMetrics.track.event("Clicked Case Name in Case List Report");
         });
         var caseListFilterSelector = "#paramSelectorForm select[name='case_list_filter']",
             originalCaseListSelection = {};
@@ -39,7 +39,7 @@ $(function () {
         });
 
         $(document).on('click', '#apply-filters', function () {
-            kissAnalytics.track.event("[Case List Report] Clicked Apply", {
+            noopMetrics.track.event("[Case List Report] Clicked Apply", {
                 "filters": generateFiltersForAnalytics(caseListFilterSelector, userTypes, originalCaseListSelection),
             });
         });
@@ -47,7 +47,7 @@ $(function () {
 
     if (document.location.href.match(/reports\/submit_history/)) {
         $(document).on('click', 'td.view-form-link', function () {
-            kissAnalytics.track.event("Clicked View Form in Submission History Report");
+            noopMetrics.track.event("Clicked View Form in Submission History Report");
         });
         var submitHistoryFilterSelector = "#paramSelectorForm select[name='emw']",
             originalSubmitHistorySelection = {};
@@ -58,7 +58,7 @@ $(function () {
         });
 
         $(document).on('click', '#apply-filters', function () {
-            kissAnalytics.track.event("[Submission History Report] Clicked Apply", {
+            noopMetrics.track.event("[Submission History Report] Clicked Apply", {
                 "filters": generateFiltersForAnalytics(submitHistoryFilterSelector, userTypes, originalSubmitHistorySelection),
             });
         });

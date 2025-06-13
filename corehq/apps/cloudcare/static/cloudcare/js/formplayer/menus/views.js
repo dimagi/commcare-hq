@@ -7,7 +7,7 @@ define("cloudcare/js/formplayer/menus/views", [
     'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/apps/api',
@@ -28,7 +28,7 @@ define("cloudcare/js/formplayer/menus/views", [
     bootstrap,
     initialPageData,
     toggles,
-    kissmetrics,
+    noopMetrics,
     constants,
     FormplayerFrontend,
     AppsAPI,
@@ -959,7 +959,7 @@ define("cloudcare/js/formplayer/menus/views", [
         paginateAction: function (e) {
             const pageSelection = $(e.currentTarget).data("id");
             FormplayerFrontend.trigger("menu:paginate", pageSelection, this.selectedCaseIds);
-            kissmetrics.track.event("Accessibility Tracking - Pagination Interaction");
+            noopMetrics.track.event("Accessibility Tracking - Pagination Interaction");
         },
 
         onPerPageLimitChange: function (e) {
@@ -973,7 +973,7 @@ define("cloudcare/js/formplayer/menus/views", [
             const goText = Number(this.ui.paginationGoText.val());
             const pageNo = formplayerUtils.paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
-            kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
+            noopMetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
 
         paginateKeyAction: function (e) {
@@ -1028,7 +1028,7 @@ define("cloudcare/js/formplayer/menus/views", [
         continueAction: function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
-                kissmetrics.track.event('Completed Case Search', {
+                noopMetrics.track.event('Completed Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
@@ -1714,7 +1714,7 @@ define("cloudcare/js/formplayer/menus/views", [
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
                 if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
-                    kissmetrics.track.event('Completed Case Search', {
+                    noopMetrics.track.event('Completed Case Search', {
                         'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                     });
                 }

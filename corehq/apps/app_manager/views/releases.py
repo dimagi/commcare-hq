@@ -30,7 +30,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     track_built_app_on_hubspot,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.app_manager.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.app_manager.dbaccessors import (
@@ -393,7 +393,7 @@ def make_app_build(app, comment, user_id):
 
 
 def _track_build_for_app_preview(domain, couch_user, app_id, message):
-    track_workflow(couch_user.username, message, properties={
+    track_workflow_noop(couch_user.username, message, properties={
         'domain': domain,
         'app_id': app_id,
         'is_dimagi': couch_user.is_dimagi,

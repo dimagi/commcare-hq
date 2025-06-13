@@ -10,7 +10,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import assertProperties from "hqwebapp/js/assert_properties";
 import hqLayout from "hqwebapp/js/layout";
 import widgets from "app_manager/js/widgets";  // version dropdown
-import kissmetricsAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import DOMPurify from "dompurify";
 
 var menuItemModel = function (options) {
@@ -249,7 +249,7 @@ var controlModel = function (options) {
     });
     self.changeVersions = function () {
         if (self.firstAppId && self.secondAppId()) {
-            kissmetricsAnalytics.track.event("Compare App Versions: Change Version Using Dropdown");
+            noopMetrics.track.event("Compare App Versions: Change Version Using Dropdown");
             window.location.href =  initialPageData.reverse(options.versionUrlName, self.firstAppId(), self.secondAppId());
         } else {
             window.location.href = initialPageData.reverse(options.versionUrlName, self.firstAppId());

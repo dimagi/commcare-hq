@@ -15,7 +15,7 @@ import assertProperties from "hqwebapp/js/assert_properties";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hqTempusDominus from "hqwebapp/js/tempus_dominus";
 import googleAnalytics from "analytix/js/google";
-import kissmetricsAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import reportFilters from "reports/js/filters/bootstrap5/main";
 import reportUtils from "reports/js/util";
 import exportUtils from "export/js/utils";
@@ -135,7 +135,7 @@ var downloadFormModel = function (options) {
             }).join();
         }
 
-        kissmetricsAnalytics.track.event("Clicked Prepare Export", {
+        noopMetrics.track.event("Clicked Prepare Export", {
             "Export type": self.exportType,
             "filters": getFilterString(),
         });
@@ -296,7 +296,7 @@ var downloadProgressModel = function (options) {
 
     self.sendAnalytics = function () {
         googleAnalytics.track.event("Download Export", exportUtils.capitalize(self.exportType), "Saved");
-        kissmetricsAnalytics.track.event("Clicked Download button");
+        noopMetrics.track.event("Clicked Download button");
     };
 
     self._checkDownloadProgress = function () {

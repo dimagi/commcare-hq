@@ -2,7 +2,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import google from "analytix/js/google";
-import kissmetrix from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import downloadAsyncModal from "app_manager/js/download_async_modal";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManager from "app_manager/js/app_manager";
@@ -160,7 +160,7 @@ function savedAppModel(appData, releasesMain) {
     self.click_app_code = function () {
         self.get_app_code();
         google.track.event('App Manager', 'Initiate Install', 'Get App Code');
-        kissmetrix.track.event('Initiate Installation Method');
+        noopMetrics.track.event('Initiate Installation Method');
     };
 
     self.get_app_code = function () {
@@ -210,7 +210,7 @@ function savedAppModel(appData, releasesMain) {
 
     self.clickDeploy = function () {
         google.track.event('App Manager', 'Deploy Button', self.id());
-        kissmetrix.track.event('Clicked Deploy');
+        noopMetrics.track.event('Clicked Deploy');
         $.post(releasesMain.reverse('hubspot_click_deploy'));
         if (self.short_odk_url_is_available()) {
             self.get_short_odk_url();
@@ -235,7 +235,7 @@ function savedAppModel(appData, releasesMain) {
 
     self.trackScan = function () {
         google.track.event('App Manager', 'Initiate Install', 'Show Bar Code');
-        kissmetrix.track.event('Initiate Installation Method');
+        noopMetrics.track.event('Initiate Installation Method');
     };
 
     return self;
@@ -364,7 +364,7 @@ function releasesMainModel(o) {
     });
 
     self.trackClick = function (message) {
-        kissmetrix.track.event(message);
+        noopMetrics.track.event(message);
         return true;
     };
 

@@ -1,11 +1,11 @@
 import $ from "jquery";
 import googleAnalytics from "analytix/js/google";
-import kissmetricsAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 
 var trackReportBuilder = googleAnalytics.trackCategory("Report Builder v2");
 $(function () {
     $('#js-click-preview-subscribe').click(function () {
-        kissmetricsAnalytics.track.event("RBv2 - Clicks on Subscribe Link in Preview Message Bar");
+        noopMetrics.track.event("RBv2 - Clicks on Subscribe Link in Preview Message Bar");
     });
 
     $('#create-new-report-left-nav').click(function () {

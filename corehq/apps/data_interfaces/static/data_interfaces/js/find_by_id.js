@@ -4,7 +4,7 @@ import _ from "underscore";
 import ko from "knockout";
 import assertProperties from "hqwebapp/js/assert_properties";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 
 var findModel = function (options) {
     assertProperties.assert(options, ['errorMessage', 'eventName', 'header', 'help', 'placeholder', 'successMessage']);
@@ -31,7 +31,7 @@ var findModel = function (options) {
         self.loading(true);
         self.link('');
         self.error('');
-        kissmetrics.track.event(options.eventName);
+        noopMetrics.track.event(options.eventName);
         $.ajax({
             method: 'GET',
             url: initialPageData.reverse('global_quick_find'),
@@ -54,7 +54,7 @@ var findModel = function (options) {
 };
 
 $(function () {
-    kissmetrics.track.event("[Find data by ID] Visited page");
+    noopMetrics.track.event("[Find data by ID] Visited page");
 
     $("#find-case").koApplyBindings(findModel({
         header: gettext('Find Case'),

@@ -4,7 +4,7 @@ define('cloudcare/js/debugger/debugger', [
     'underscore',
     'clipboard/dist/clipboard',
     'ace-builds/src-min-noconflict/ace',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'reports/js/bootstrap5/readable_form',
     'hqwebapp/js/atwho',    // $.atwho
     'ace-builds/src-min-noconflict/mode-json',
@@ -16,7 +16,7 @@ define('cloudcare/js/debugger/debugger', [
     _,
     Clipboard,
     ace,
-    kissmetrics,
+    noopMetrics,
     readableForm,
 ) {
     /**
@@ -103,7 +103,7 @@ define('cloudcare/js/debugger/debugger', [
                 self.updating(true);
                 self.onUpdate();
             }
-            kissmetrics.track.event('[app-preview] User toggled CloudCare debugger');
+            noopMetrics.track.event('[app-preview] User toggled CloudCare debugger');
         };
 
 
@@ -384,7 +384,7 @@ define('cloudcare/js/debugger/debugger', [
                     self.recentXPathQueries.slice(0, 6),
                 );
             });
-            kissmetrics.track.event('[app-preview] User evaluated XPath');
+            noopMetrics.track.event('[app-preview] User evaluated XPath');
         };
 
         self.onMouseUp = function () {

@@ -9,7 +9,7 @@ import assertProperties from "hqwebapp/js/assert_properties";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hqMain from "hqwebapp/js/bootstrap3/main";
 import googleAnalytics from "analytix/js/google";
-import kissAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import readableForm from "reports/js/bootstrap3/readable_form";
 import dataCorrections from "reports/js/bootstrap3/data_corrections";
 import Clipboard from "clipboard/dist/clipboard";
@@ -35,7 +35,7 @@ var initSingleForm = function (options) {
 
     $('#edit-form', $container).click(function () {
         analyticsUsage('Edit Form Submission');
-        kissAnalytics.track.event("Clicked Edit Form Submission");
+        noopMetrics.track.event("Clicked Edit Form Submission");
     });
 
     readableForm.init();
@@ -69,7 +69,7 @@ var initSingleForm = function (options) {
             document.getElementById('archive-form').submit();
         });
         analyticsUsage('Archive Form Submission', analyticsCallback);
-        kissAnalytics.track.event("Clicked on Archive Form", {}, analyticsCallback);
+        noopMetrics.track.event("Clicked on Archive Form", {}, analyticsCallback);
 
         return false;
     });
