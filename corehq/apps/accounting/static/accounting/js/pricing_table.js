@@ -44,18 +44,24 @@ const PricingTable = function (options) {
     self.oSelectedEdition = ko.observable(options.currentEdition);
     self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
 
+    self.oIsSameEdition = ko.computed(function () {
+        return self.oSelectedEdition() === self.currentEdition;
+    });
+
     self.oIsSamePaySchedule = ko.computed(function () {
         return self.currentIsAnnualPlan === self.oShowAnnualPricing();
     });
 
+    self.oIsDowngrade = ko.computed(function () {
+        return self.editions.indexOf(self.oSelectedEdition()) < self.editions.indexOf(self.currentEdition);
+    });
+
     self.oIsSubmitDisabled = ko.computed(function () {
         const isSubscribablePlan = !!self.oSelectedEdition() && !['free', 'enterprise'].includes(self.oSelectedEdition());
-        const isCurrentPlan = (
-            self.oSelectedEdition() === self.currentEdition
-            && self.oIsSamePaySchedule() && !self.nextSubscription
-        );
+        const isCurrentPlan = self.oIsSameEdition() && self.oIsSamePaySchedule() && !self.nextSubscription;
+        const isDisallowedPayAnnuallyChange = self.currentIsAnnualPlan && (self.oIsDowngrade() || self.oIsSameEdition());
         const isNextPlan = self.nextSubscription && self.oSelectedEdition() === self.nextSubscription.toLowerCase();
-        return !isSubscribablePlan || isNextPlan || isCurrentPlan;
+        return !isSubscribablePlan || isCurrentPlan || isDisallowedPayAnnuallyChange || isNextPlan;
     });
 
     self.oPausedCss = ko.computed(function () {
@@ -73,16 +79,12 @@ const PricingTable = function (options) {
         self.oSelectedEdition('paused');
     };
 
-    self.isDowngrade = function () {
-        return self.editions.indexOf(self.oSelectedEdition()) < self.editions.indexOf(self.currentEdition);
-    };
-
     self.form = undefined;
     self.openMinimumSubscriptionModal = function (pricingTable, e) {
         self.form = $(e.currentTarget).closest("form");
 
         const invoicingContact = _.escape(self.invoicingContact);
-        if (self.isDowngrade() && self.subscriptionBelowMinimum) {
+        if (self.oIsDowngrade() && self.subscriptionBelowMinimum) {
             const oldPlan = utils.capitalize(self.currentEdition);
             const newPlan = utils.capitalize(self.oSelectedEdition());
             const newStartDate = self.startDateAfterMinimumSubscription;
