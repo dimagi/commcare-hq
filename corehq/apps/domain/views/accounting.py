@@ -1264,34 +1264,6 @@ class SelectedEnterprisePlanView(ContactFormViewBase):
         return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
 
 
-class SelectedAnnualPlanView(ContactFormViewBase):
-    urlname = 'annual_plan_request_quote'
-    request_type = 'Annual Plan Request'
-
-    @property
-    def on_annual_plan(self):
-        if self.current_subscription is None:
-            return False
-        else:
-            return self.current_subscription.plan_version.plan.is_annual_plan
-
-    @property
-    @memoized
-    def edition(self):
-        if self.on_annual_plan:
-            return self.current_subscription.plan_version.plan.edition
-        edition = self.request.GET.get('plan_edition').title()
-        if edition not in [e[0] for e in SoftwarePlanEdition.CHOICES]:
-            raise Http404()
-        return edition
-
-    @property
-    def back_button(self):
-        if self.on_annual_plan:
-            return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-        return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
-
-
 class SelectedCustomPlanView(ContactFormViewBase):
     urlname = 'custom_plan_request_quote'
     request_type = 'Custom Plan Request'
