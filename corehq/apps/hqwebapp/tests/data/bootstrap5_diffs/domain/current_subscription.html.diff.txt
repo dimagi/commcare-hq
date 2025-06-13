@@ -28,27 +28,16 @@
              <div class="{{ plan.css_class }}">
                <h4>
                  {% if plan.is_paused %}
-@@ -55,8 +55,8 @@
+@@ -54,7 +54,7 @@
+             {% endif %}
              {% if can_change_subscription %}
-               {% if plan.is_annual_plan %}
-                 <form action="{% url 'annual_plan_request_quote' domain %}">
--                  <div style="margin-top:10px;">
--                    <label class="control-label">{% trans "Got questions about your plan?" %}</label>
-+                  <div style="margin-top:10px;">  {# todo B5: inline-style #}
-+                    <label class="form-label">{% trans "Got questions about your plan?" %}</label>
-                     <button class="btn btn-primary btn-lg">
-                       {% trans 'Talk to Sales' %}
-                     </button>
-@@ -64,7 +64,7 @@
-                 </form>
-               {% else %}
-                 <p>
--                  <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
-+                  <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">  {# todo B5: inline-style #}
-                     {% if plan.is_paused %}
-                       {% trans "Subscribe to Plan" %}
-                     {% else %}
-@@ -95,17 +95,17 @@
+               <p>
+-                <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
++                <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">  {# todo B5: inline-style #}
+                   {% if plan.is_paused %}
+                     {% trans "Subscribe to Plan" %}
+                   {% else %}
+@@ -84,17 +84,17 @@
          </div>
          {% if not plan.is_trial and not plan.is_paused %}
            {% if plan.date_start %}
@@ -72,7 +61,7 @@
                  <p class="form-control-text">{{ plan.date_end }}</p>
                  {% if plan.next_subscription.can_renew %}
                    <a href="{{ plan.next_subscription.renew_url }}"
-@@ -117,9 +117,9 @@
+@@ -106,9 +106,9 @@
              </div>
            {% endif %}
            <div data-bind="foreach: products">
@@ -85,7 +74,7 @@
                  <p class="form-control-text"
                     data-bind="text: monthlyFee"></p>
                </div>
-@@ -127,31 +127,31 @@
+@@ -116,31 +116,31 @@
            </div>
          {% endif %}
          {% if plan.next_subscription.exists and not plan.next_subscription.is_paused %}
@@ -126,7 +115,7 @@
                <p class="form-control-text">
                  {{ plan.next_subscription.price }}
                </p>
-@@ -164,50 +164,50 @@
+@@ -153,50 +153,50 @@
          <div class="form form-horizontal">
            {% if plan.has_credits_in_non_general_credit_line %}
              <div data-bind="foreach: products">
@@ -191,7 +180,7 @@
                                          <i class="fa fa-info-circle"></i>
                                          {% trans "Not Billing Admin, Can't Add Credit" %}
                                      </span>
-@@ -220,8 +220,8 @@
+@@ -209,8 +209,8 @@
            <legend>{% trans 'Account Credit' %}</legend>
            <div class="form form-horizontal">
              <div data-bind="foreach: products">
@@ -202,7 +191,7 @@
                    {% trans 'Plan Credit' %}
                    <div class="hq-help">
                      <a href="#"
-@@ -234,14 +234,14 @@
+@@ -223,14 +223,14 @@
                      </a>
                    </div>
                  </label>
@@ -220,7 +209,7 @@
                    {% trans 'General Credit' %}
                    <div class="hq-help">
                      <a href="#"
-@@ -255,7 +255,7 @@
+@@ -244,7 +244,7 @@
                      </a>
                    </div>
                  </label>
@@ -229,7 +218,7 @@
                    <p class="form-control-text">{{ plan.account_general_credit.amount }}</p>
                  </div>
                </div>
-@@ -323,5 +323,5 @@
+@@ -312,5 +312,5 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
