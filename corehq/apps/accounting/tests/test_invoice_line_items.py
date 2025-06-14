@@ -1,6 +1,7 @@
 import datetime
 import random
 from decimal import Decimal
+from unittest import mock
 
 from dateutil.relativedelta import relativedelta
 
@@ -347,15 +348,10 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
-        def num_users():
-            return random.randint(0, self.web_user_rate.monthly_limit)
-        num_active = num_users()
-        generator.arbitrary_webusers_for_domain(self.domain.name, num_active)
+        num_active = random.randint(0, self.web_user_rate.monthly_limit)
+        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+            self.create_invoices(invoice_date, calculate_web_users=True)
 
-        num_inactive = num_users()
-        generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
-
-        self.create_invoices(invoice_date, calculate_web_users=True)
         invoice = self.subscription.invoice_set.latest('date_created')
         web_user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).get()
 
@@ -380,15 +376,10 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
-        def num_users():
-            return random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
-        num_active = num_users()
-        generator.arbitrary_webusers_for_domain(self.domain.name, num_active)
+        num_active = random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
+        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+            self.create_invoices(invoice_date, calculate_web_users=True)
 
-        num_inactive = num_users()
-        generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
-
-        self.create_invoices(invoice_date, calculate_web_users=True)
         invoice = self.subscription.invoice_set.latest('date_created')
         web_user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).get()
 
@@ -414,15 +405,10 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
-        def num_users():
-            return random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
-        num_active = num_users()
-        generator.arbitrary_webusers_for_domain(self.domain.name, num_active)
+        num_active = random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
+        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+            self.create_invoices(invoice_date, calculate_web_users=True)
 
-        num_inactive = num_users()
-        generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
-
-        self.create_invoices(invoice_date, calculate_web_users=True)
         invoice = self.subscription.invoice_set.latest('date_created')
         self.assertEqual(invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).count(), 0)
 

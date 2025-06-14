@@ -73,10 +73,7 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.dbaccessors import (
-    get_active_web_usernames_by_domain,
-    get_web_user_count,
-)
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
@@ -632,13 +629,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
             web_users.update(get_active_web_usernames_by_domain(domain))
 
         return web_users
-
-    def get_web_user_count(self):
-        domains = self.get_domains()
-        count = 0
-        for domain in domains:
-            count += get_web_user_count(domain, include_inactive=False)
-        return count
 
     @staticmethod
     def should_show_sms_billable_report(domain):
