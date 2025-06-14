@@ -10,5 +10,6 @@
             }
         }
     ],
+    "proseWrap": "always",
     "tabWidth": 2
 }
