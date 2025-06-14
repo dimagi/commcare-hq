@@ -69,18 +69,22 @@ import traceback
 import uuid
 from collections import defaultdict
 from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.db import models, router
+from django.db.models import Min
 from django.db.models.base import Deferred
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property, classproperty
 from django.utils.translation import gettext_lazy as _
 
+import architect
 from couchdbkit.exceptions import ResourceNotFound
 from jsonfield import JSONField
 from memoized import memoized
@@ -944,6 +948,43 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+class DataSourceUpdateManager(models.Manager):
+
+    def get_oldest_date(self):
+        return self.aggregate(Min('modified_at'))['modified_at__min']
+
+
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='month',
+    column='modified_at',
+)
+class DataSourceUpdate(models.Model):
+    """
+    ``DataSourceUpdate`` is the payload for ``DataSourceRepeater`` (as
+    ``XFormInstance`` is the payload for ``FormRepeater``).
+    """
+    id = models.BigAutoField(primary_key=True)
+    domain = CharIdField(max_length=126, db_index=True)
+    data_source_id = models.UUIDField()
+    doc_ids = JSONField(default=list)
+    rows = JSONField(default=list, blank=True, null=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    objects = DataSourceUpdateManager()
+
+    class Meta:
+        db_table = 'repeaters_datasourceupdate'
+
+    MAX_AGE = timedelta(days=93)
+
+    @property
+    def get_id(self):
+        return self.id
+
+
 class DataSourceRepeater(Repeater):
     """
     Forwards the UCR data source rows that are updated by a form
@@ -960,31 +1001,45 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
-    def allowed_to_forward(
-        self,
-        payload,  # type DataSourceUpdateLog
-    ):
-        return payload.data_source_id == self.data_source_id
+    def allowed_to_forward(self, payload):
+        return payload.data_source_id == uuid.UUID(self.data_source_id)
 
     def payload_doc(self, repeat_record):
         from corehq.apps.userreports.models import get_datasource_config
-        from corehq.apps.userreports.util import (
-            DataSourceUpdateLog,
-            get_indicator_adapter,
-        )
+        from corehq.apps.userreports.util import get_indicator_adapter
+
+        Row = dict[str, Any]
+
+        @dataclass
+        class DataSourceUpdateLog:
+            domain: str
+            data_source_id: str
+            doc_id: str
+            rows: Optional[list[Row]] = None
 
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
-        return DataSourceUpdateLog(
-            domain=self.domain,
-            data_source_id=self.data_source_id,
-            doc_id=repeat_record.payload_id,
-            rows=rows,
-        )
+        try:
+            datasource_update = DataSourceUpdate.objects.get(pk=repeat_record.payload_id)
+            datasource_update.rows = [
+                row for doc_id in datasource_update.doc_ids
+                for row in datasource_adapter.get_rows_by_doc_id(doc_id)
+            ]
+            return datasource_update
+        except DataSourceUpdate.DoesNotExist:
+            # repeat_record.payload_id is not a DataSourceUpdate ID. It
+            # must an old repeat record. `payload_id` is a form/case ID.
+            # TODO: Drop this block after old repeat records are sent.
+            rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+            return DataSourceUpdateLog(
+                domain=self.domain,
+                data_source_id=self.data_source_id,
+                doc_id=repeat_record.payload_id,
+                rows=rows,
+            )
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
