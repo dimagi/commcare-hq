@@ -177,6 +177,22 @@ class TestWebUserAuthorizationFunctions(BaseAuthorizationTest):
             created_via=None,
         )
 
+    def test_inactive_no_permissions(self):
+        dm = self.user.get_domain_membership(self.domain)
+        with (
+                patch.object(dm, 'is_active', False),
+                self._set_role(self.domain, self.user)
+        ):
+            self.assertFalse(self.user.has_permission(self.domain, 'edit_web_users'))
+
+    def test_inactive_admin_no_permissions(self):
+        dm = self.user.get_domain_membership(self.domain)
+        with (
+                patch.object(dm, 'is_active', False),
+                self._set_role(self.domain, self.user, is_admin=True)
+        ):
+            self.assertFalse(self.user.has_permission(self.domain, 'edit_web_users'))
+
 
 class TestSuperUserAuthorizationFunctions(BaseAuthorizationTest):
     @classmethod
