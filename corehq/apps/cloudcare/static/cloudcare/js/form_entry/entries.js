@@ -7,7 +7,7 @@ define("cloudcare/js/form_entry/entries", [
     'fast-levenshtein/levenshtein',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/utils',
@@ -26,7 +26,7 @@ define("cloudcare/js/form_entry/entries", [
     Levenshtein,
     initialPageData,
     toggles,
-    kissmetrics,
+    noopMetrics,
     cloudcareUtils,
     constants,
     formEntryUtils,
@@ -302,10 +302,10 @@ define("cloudcare/js/form_entry/entries", [
         $(function () {
             let entry = $(`#${self.entryId}`);
             entry.on("change", function () {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
+                noopMetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
             });
         });
-        kissmetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
+        noopMetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
             "Required": isRequired,
         });
         // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
@@ -1339,12 +1339,12 @@ define("cloudcare/js/form_entry/entries", [
                     });
                     if (!hideLabel) {
                         let isRequired = entry.question.required() ? "Yes" : "No";
-                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                        noopMetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
                             "Required": isRequired,
                         });
                         $(function () {
                             $(".q.form-group").on("change", function () {
-                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                                noopMetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
                             });
                         });
 
@@ -1368,12 +1368,12 @@ define("cloudcare/js/form_entry/entries", [
                     });
                     if (!hideLabel) {
                         let isRequired = entry.question.required() ? "Yes" : "No";
-                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                        noopMetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
                             "Required": isRequired,
                         });
                         $(function () {
                             $(".q.form-group").on("change", function () {
-                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                                noopMetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
                             });
                         });
                     }

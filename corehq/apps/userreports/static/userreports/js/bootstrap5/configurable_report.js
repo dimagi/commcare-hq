@@ -1,7 +1,7 @@
 import "commcarehq";
 import $ from "jquery";
 import _ from "underscore";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import hqMain from "hqwebapp/js/bootstrap5/main";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import reportConfigModels from "reports/js/bootstrap5/report_config_models";
@@ -23,7 +23,7 @@ $(function () {
         });
         analytics.track.event("Loaded Report Builder Report");
         $("#edit-report-link").click(function () {
-            kissmetrics.track.event("RBv2 - Click Edit Report");
+            noopMetrics.track.event("RBv2 - Click Edit Report");
         });
     }
 
