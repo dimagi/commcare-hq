@@ -464,7 +464,9 @@ class DomainMembership(Membership):
         return None
 
     def has_permission(self, permission, data=None):
-        return self.is_admin or self.permissions.has(permission, data)
+        return self.is_active and (
+            self.is_admin or self.permissions.has(permission, data)
+        )
 
     def viewable_reports(self):
         return self.permissions.view_report_list
@@ -657,8 +659,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
-            return True
-        elif self.is_domain_admin(domain):
             return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
