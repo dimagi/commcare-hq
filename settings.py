@@ -799,8 +799,6 @@ ANALYTICS_IDS = {
     'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
-    'APPCUES_ID': '',
-    'APPCUES_KEY': '',
 }
 
 ANALYTICS_CONFIG = {
