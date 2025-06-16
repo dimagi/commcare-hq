@@ -142,6 +142,20 @@ def clear_domain_names(*domain_names):
             domain.delete()
 
 
+def get_serializable_wire_invoice_prepaid_item(prepaid_total, prepaid_label, prepaid_credits):
+    if prepaid_total < 0:
+        return [{
+            'type': prepaid_label,
+            'unit_cost': "0.00",
+            'quantity': 0,
+            'amount': "0.00",
+            'applied_credit': simplejson.dumps(prepaid_credits, use_decimal=True),
+            'total': simplejson.dumps(prepaid_total, use_decimal=True),
+        }]
+
+    return []
+
+
 def get_serializable_wire_invoice_general_credit(credit_total, credit_label, unit_cost, quantity):
     if credit_total > 0:
         return [{
@@ -149,6 +163,8 @@ def get_serializable_wire_invoice_general_credit(credit_total, credit_label, uni
             'unit_cost': simplejson.dumps(unit_cost, use_decimal=True),
             'quantity': quantity,
             'amount': simplejson.dumps(credit_total, use_decimal=True),
+            'applied_credit': "0.00",
+            'total': simplejson.dumps(credit_total, use_decimal=True),
         }]
 
     return []
