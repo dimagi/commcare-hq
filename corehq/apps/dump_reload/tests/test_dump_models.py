@@ -97,6 +97,10 @@ IGNORE_MODELS = {
     "registry.RegistryGrant",
     "registry.RegistryInvitation",
 
+    # RepeatRecords are just queue tokens. RequestLog records what is sent.
+    'repeaters.RepeatRecord',
+    'repeaters.RepeatRecordAttempt',
+
     "sessions.Session",
     "sites.Site",
     "tastypie.ApiAccess",  # not tagged by domain
