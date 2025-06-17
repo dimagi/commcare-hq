@@ -156,7 +156,8 @@ class HqHtmxActionMixin:
                         'domain': request.domain if hasattr(request, 'domain') else None,
                     },
                 )
-                capture_exception(err)
+                with _py313_framelocalsproxy_error_workaround():
+                    capture_exception(err)
             raise
         return response
 
@@ -221,3 +222,26 @@ class HtmxResponseException(Exception):
         self.show_details = show_details
         self.max_retries = max_retries
         super().__init__(*args, **kwargs)
+
+
+def _py313_framelocalsproxy_error_workaround():
+    import sys
+    from unittest.mock import patch
+    from sentry_sdk.utils import serialize_frame
+
+    def _serialize_frame(*args, include_local_variables=True, **kw):
+        try:
+            rv = serialize_frame(
+                *args, include_local_variables=include_local_variables, **kw)
+        except TypeError as err:
+            if (
+                not include_local_variables
+                or sys.version_info[:2] != (3, 13)
+                or str(err) != "cannot pickle 'FrameLocalsProxy' object"
+            ):
+                raise
+            rv = serialize_frame(*args, include_local_variables=False, **kw)
+            rv["vars"] = {"Sentry SDK error": str(err)}
+        return rv
+
+    return patch("sentry_sdk.utils.serialize_frame", _serialize_frame)
