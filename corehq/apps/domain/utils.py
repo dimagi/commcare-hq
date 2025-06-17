@@ -142,6 +142,10 @@ def clear_domain_names(*domain_names):
 
 
 def get_serializable_wire_invoice_prepaid_item(prepaid_total, prepaid_label, prepaid_credits):
+    """
+    Returns a JSON serializable representation of a previously-paid item to be credited to the customer on a
+    prepayment invoice, or an empty list if not negative. Used with celery task `create_wire_credits_invoice`.
+    """
     if prepaid_total < 0:
         return [{
             'type': prepaid_label,
@@ -156,6 +160,10 @@ def get_serializable_wire_invoice_prepaid_item(prepaid_total, prepaid_label, pre
 
 
 def get_serializable_wire_invoice_general_credit(credit_total, credit_label, unit_cost, quantity):
+    """
+    Returns a JSON serializable representation of an item to be paid by the customer to purchase credits on a
+    prepayment invoice, or an empty list if not positive. Used with celery task `create_wire_credits_invoice`.
+    """
     if credit_total > 0:
         return [{
             'type': credit_label,
