@@ -1270,27 +1270,12 @@ class SelectedAnnualPlanView(ContactFormViewBase):
     request_type = 'Annual Plan Request'
 
     @property
-    def on_annual_plan(self):
-        if self.current_subscription is None:
-            return False
-        else:
-            return self.current_subscription.plan_version.plan.is_annual_plan
-
-    @property
-    @memoized
     def edition(self):
-        if self.on_annual_plan:
-            return self.current_subscription.plan_version.plan.edition
-        edition = self.request.GET.get('plan_edition').title()
-        if edition not in [e[0] for e in SoftwarePlanEdition.CHOICES]:
-            raise Http404()
-        return edition
+        return self.current_subscription.plan_version.plan.edition
 
     @property
     def back_button(self):
-        if self.on_annual_plan:
-            return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-        return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
+        return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
 
 
 class SelectedCustomPlanView(ContactFormViewBase):
@@ -1421,6 +1406,8 @@ class ConfirmSelectedPlanView(PlanViewBase):
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
+            'current_is_annual_plan': (self.current_subscription.plan_version.plan.is_annual_plan
+                                       if self.current_subscription is not None else False),
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'new_plan_edition': self.edition,
