@@ -53,20 +53,20 @@
               </div>
             {% endif %}
             {% if can_change_subscription %}
-              {% if plan.is_annual_plan %}
-                <form action="{% url 'annual_plan_request_quote' domain %}">
-                  <div style="margin-top:10px;">
-                    <label class="control-label">{% trans "Got questions about your plan?" %}</label>
-                    <button class="btn btn-primary btn-lg">
-                      {% trans 'Talk to Sales' %}
-                    </button>
-                  </div>
-                </form>
+              {% if plan.is_annual_plan and not plan.upgrade_available %}
+                <div style="margin-top: 10px;">
+                  {% trans "Questions about your plan?" %}
+                  <a
+                    href="{% url "annual_plan_request_quote" domain %}"
+                  >{% trans "Contact us" %}</a>.
+                </div>
               {% else %}
                 <p>
                   <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
                     {% if plan.is_paused %}
                       {% trans "Subscribe to Plan" %}
+                    {% elif plan.is_annual_plan and plan.upgrade_available %}
+                      {% trans "Upgrade Plan" %}
                     {% else %}
                       {% trans "Change Plan" %}
                     {% endif %}
