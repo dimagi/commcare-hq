@@ -166,10 +166,3 @@ def encrypt_account_confirmation_info(commcare_user):
 def is_domain_in_use(domain_name):
     domain_obj = Domain.get_by_name(domain_name)
     return domain_obj and not domain_obj.doc_type.endswith('-Deleted')
-
-
-def show_deactivated_notice(request, domain):
-    return TemplateResponse(request=request,
-                            template='domain/bootstrap3/deactivated_notice.html',
-                            status=403,
-                            context={'domain': domain})
