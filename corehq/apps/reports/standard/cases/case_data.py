@@ -42,13 +42,10 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
-from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_dictionary.util import is_case_type_deprecated
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
-from corehq.apps.export.models import CaseExportDataSchema
-from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.hqcase.utils import (
     EDIT_FORM_XMLNS,
     resave_case,
@@ -453,18 +450,10 @@ def case_xml(request, domain, case_id):
 @require_GET
 def case_property_names(request, domain, case_id):
     case = safely_get_case(request, domain, case_id)
-
-    # We need to look at the export schema in order to remove any case properties that
-    # have been deleted from the app. When the data dictionary is fully public, we can use that
-    # so that users may deprecate those properties manually
-    export_schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case.type,
-                                                                     is_identifier_case_type=True)
-    property_schema = export_schema.group_schemas[0]
-    last_app_ids = get_latest_app_ids_and_versions(domain)
-    all_property_names = {
-        item.path[-1].name for item in property_schema.items
-        if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
-    }
+    case_type = CaseType.objects.get(domain=domain, name=case.type)
+    all_property_names = set(
+        CaseProperty.objects.filter(case_type=case_type, deprecated=False).values_list('name', flat=True)
+    )
     all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES) | {"case_name"}
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
