@@ -7,8 +7,6 @@ import "hqwebapp/js/bootstrap3/sticky_tabs";
 import "hqwebapp/js/bootstrap3/main";
 import "hqwebapp/js/bootstrap3/inactivity";
 import "notifications/js/bootstrap3/notifications_service_main";
-import "analytix/js/appcues";
-import "analytix/js/drift";
 import "analytix/js/google";
 import "analytix/js/hubspot";
 import "analytix/js/kissmetrix";

@@ -1,11 +1,10 @@
 --- 
 +++ 
-@@ -1,44 +1,97 @@
+@@ -1,43 +1,96 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
 -@import "_hq/alerts.less";
--@import "_hq/appcues.less";
 -@import "_hq/ace_cle.less";
 -@import "_hq/backgrounds.less";
 -@import "_hq/breadcrumbs.less";
@@ -113,7 +112,6 @@
 +
 +// Custom Widgets
 +@import "commcarehq/ace_cle";
-+@import "commcarehq/appcues";
 +@import "commcarehq/backgrounds";
 +@import "commcarehq/datagrid";
 +@import "commcarehq/datatables";

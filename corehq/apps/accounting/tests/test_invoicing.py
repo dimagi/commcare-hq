@@ -1,6 +1,6 @@
 import datetime
 import random
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.core import mail
@@ -518,7 +518,7 @@ class TestGetProratedSoftwarePlanCost(SimpleTestCase):
             Decimal('50.00')  # half of June
             + Decimal('100.00')  # all of July
             + monthly_fee / 31 * 3  # 3 days of August
-        ).quantize(Decimal('0.00'))
+        ).quantize(Decimal('0.00'), ROUND_HALF_UP)
         result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
         self.assertEqual(result, expected)
 

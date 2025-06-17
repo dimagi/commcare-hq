@@ -151,18 +151,18 @@ def get_flagged_pay_annually_prepay_invoice(invoice):
 
 def get_prorated_software_plan_cost(date_start, date_end, monthly_fee):
     total_cost = Decimal('0.00')
-    current = date_start
+    billing_range_start = date_start
 
-    while current < date_end:
-        days_in_month = calendar.monthrange(current.year, current.month)[1]
-        month_end = current.replace(day=days_in_month)
-        segment_end = min(month_end + datetime.timedelta(days=1), date_end)
+    while billing_range_start < date_end:
+        days_in_month = calendar.monthrange(billing_range_start.year, billing_range_start.month)[1]
+        last_day_of_month = billing_range_start.replace(day=days_in_month)
+        billing_range_end = min(last_day_of_month + datetime.timedelta(days=1), date_end)
 
-        days_active = (segment_end - current).days
+        days_active = (billing_range_end - billing_range_start).days
         daily_fee = (monthly_fee / days_in_month)
 
         total_cost += (daily_fee * days_active)
-        current = segment_end
+        billing_range_start = billing_range_end
 
     return total_cost.quantize(
         Decimal('0.01'), rounding=ROUND_HALF_UP,

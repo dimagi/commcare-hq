@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,18 +1,18 @@
+@@ -1,16 +1,16 @@
 -import "hqwebapp/js/bootstrap3/downgrade_modal";
 -import "hqwebapp/js/bootstrap3/prepaid_modal";
 -import "hqwebapp/js/bootstrap3/hq.helpers";
@@ -18,8 +18,6 @@
 +import "hqwebapp/js/bootstrap5/main";
 +import "hqwebapp/js/bootstrap5/inactivity";
 +import "notifications/js/bootstrap5/notifications_service_main";
- import "analytix/js/appcues";
- import "analytix/js/drift";
  import "analytix/js/google";
  import "analytix/js/hubspot";
  import "analytix/js/kissmetrix";
