@@ -9,7 +9,6 @@ from collections import Counter
 import simplejson
 from decorator import contextmanager
 from django.conf import settings
-from django.template.response import TemplateResponse
 
 from memoized import memoized
 
