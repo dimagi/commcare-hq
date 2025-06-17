@@ -132,6 +132,7 @@
   {% registerurl 'data_dictionary' domain %}
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
+  {% initial_page_data 'casePropertyLimit' case_property_limit %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
   {% url 'geospatial_settings' domain as geospatial_settings_url %}
   <div id="case-type-error" class="alert alert-danger" hidden>
@@ -149,6 +150,23 @@
       <div>
         <h3 data-bind="text: $root.activeCaseType()" style="display: inline-block;"></h3>
         <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="deprecate-case-type hidden label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
+      </div>
+      <div class="alert alert-warning" data-bind="visible: showPerformanceWarning()">
+        <button
+          id="performance-warning-btn"
+          type="button"
+          class="close"
+          data-toggle="collapse"
+          data-target="#warningContent"
+          data-bind="click: togglePerformanceWarningDetails"
+        >
+          <i class="fa fa-chevron-down"></i>
+        </button>
+        <i class="fa fa-exclamation-triangle"></i>
+        {% trans "Performance warning" %}
+        <div id="warningContent" class="collapse">
+          <p data-bind="text: performanceWarningContent()"></p>
+        </div>
       </div>
       {% if fhir_integration_enabled %}
         <div id="fhir-resource-type-form" class="form-inline" data-bind="visible: fhirResourceTypes().length">
