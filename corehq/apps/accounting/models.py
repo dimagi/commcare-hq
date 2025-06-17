@@ -3339,14 +3339,13 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                     )
 
         if invoice.is_wire and invoice.is_prepayment:
-            applied_credit = 0
             for item in invoice.items:
                 template.add_item(item['type'],
                                   item['quantity'],
                                   item['unit_cost'],
                                   item['amount'],
-                                  applied_credit,
-                                  item['amount'])
+                                  item['applied_credit'],
+                                  item['total'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)
