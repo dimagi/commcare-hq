@@ -229,6 +229,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     # Repeat Records might foreign key to deleted repeaters, override default manager to include deleted repeaters
     FilteredModelIteratorBuilder('repeaters.Repeater', SimpleFilter('domain'), use_all_objects=True),
+    FilteredModelIteratorBuilder('repeaters.DataSourceUpdate', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.RequestLog', SimpleFilter('domain')),
     # NH (2021-01-08): Including RepeatRecord because we dump (Couch)
