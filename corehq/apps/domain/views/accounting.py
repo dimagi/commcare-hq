@@ -1190,17 +1190,6 @@ class SelectPlanView(PlanViewBase):
     urlname = 'domain_select_plan'
     step_title = gettext_lazy("Select Plan")
 
-    def dispatch(self, request, *args, **kwargs):
-        if not self.can_change_subscription:
-            raise Http404()
-        return super().dispatch(request, *args, **kwargs)
-
-    @property
-    def can_change_subscription(self):
-        subscription = self.current_subscription
-        is_annual_plan = subscription.plan_version.plan.is_annual_plan
-        return not is_annual_plan
-
     @property
     def page_context(self):
         context = super().page_context
@@ -1272,34 +1261,6 @@ class SelectedEnterprisePlanView(ContactFormViewBase):
 
     @property
     def back_button(self):
-        return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
-
-
-class SelectedAnnualPlanView(ContactFormViewBase):
-    urlname = 'annual_plan_request_quote'
-    request_type = 'Annual Plan Request'
-
-    @property
-    def on_annual_plan(self):
-        if self.current_subscription is None:
-            return False
-        else:
-            return self.current_subscription.plan_version.plan.is_annual_plan
-
-    @property
-    @memoized
-    def edition(self):
-        if self.on_annual_plan:
-            return self.current_subscription.plan_version.plan.edition
-        edition = self.request.GET.get('plan_edition').title()
-        if edition not in [e[0] for e in SoftwarePlanEdition.CHOICES]:
-            raise Http404()
-        return edition
-
-    @property
-    def back_button(self):
-        if self.on_annual_plan:
-            return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
 
 
