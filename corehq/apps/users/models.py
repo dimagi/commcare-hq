@@ -744,6 +744,9 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
+    def is_active_in_domain(self, domain):
+        return self.is_active
+
 
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
