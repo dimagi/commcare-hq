@@ -60,7 +60,7 @@
         </div>
         <form class="form-horizontal" id="create-case-type-form"
                 style="margin: 0; padding: 0"
-                action="{% url "create_case_type" domain %}"
+                action="{% url 'create_case_type' domain %}"
                 method="post"
                 data-bind="submit: submitCreate"
         >
@@ -350,7 +350,7 @@
                 </div>
               {% if fhir_integration_enabled %}
                 <div class="row-item fhir-path">
-                  <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
+                  <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath">
                   <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
                   <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa-solid fa-xmark"></button>
                   <!-- /ko -->
