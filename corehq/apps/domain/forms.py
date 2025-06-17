@@ -1607,7 +1607,7 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
-class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
+class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     Only finds users and emails forms where the USERNAME is equal to the
     email specified (preventing Mobile Workers from using this form to submit).
@@ -1641,7 +1641,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
 
-    def save(self, domain_override=None,
+    def save(self, active_users, domain_override=None,
              subject_template_name='registration/password_reset_subject.txt',
              email_template_name='registration/password_reset_email.html',
              # WARNING: Django 1.7 passes this in automatically. do not remove
@@ -1652,18 +1652,9 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
         Generates a one-use only link for resetting password and sends to the
         user.
         """
-
         if settings.IS_SAAS_ENVIRONMENT:
             subject_template_name = 'registration/email/password_reset_subject_hq.txt'
             email_template_name = 'registration/email/password_reset_email_hq.html'
-
-        email = self.cleaned_data["email"]
-
-        # this is the line that we couldn't easily override in PasswordForm where
-        # we specifically filter for the username, not the email, so that
-        # mobile workers who have the same email set as a web worker don't
-        # get a password reset email.
-        active_users = get_active_users_by_email(email)
 
         # the code below is copied from default PasswordForm
         for user in active_users:
@@ -1708,6 +1699,31 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 text_content=message_plaintext,
                 email_from=settings.DEFAULT_FROM_EMAIL
             )
+
+
+class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None, **kwargs):
+        """
+        Generates a one-use only link for resetting password and sends to the
+        user.
+        """
+        email = self.cleaned_data["email"]
+
+        # this is the line that we couldn't easily override in PasswordForm where
+        # we specifically filter for the username, not the email, so that
+        # mobile workers who have the same email set as a web worker don't
+        # get a password reset email.
+        active_users = get_active_users_by_email(email)
+
+        super().save(active_users, domain_override, subject_template_name,
+                     email_template_name, html_email_template_name, use_https,
+                     token_generator, from_email, request, **kwargs)
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
