@@ -286,6 +286,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 subscription.previous_subscription.plan_version.plan.edition
                 if subscription.previous_subscription else ""
             ),
+            'upgrade_available': plan_version.plan.edition in SoftwarePlanEdition.SELF_SERVICE_ORDER[:-1],
         }
         info['has_account_level_credit'] = (
             any(

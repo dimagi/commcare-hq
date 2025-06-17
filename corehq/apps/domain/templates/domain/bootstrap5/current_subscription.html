@@ -53,15 +53,26 @@
               </div>
             {% endif %}
             {% if can_change_subscription %}
-              <p>
-                <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">  {# todo B5: inline-style #}
-                  {% if plan.is_paused %}
-                    {% trans "Subscribe to Plan" %}
-                  {% else %}
-                    {% trans "Change Plan" %}
-                  {% endif %}
-                </a>
-              </p>
+              {% if plan.is_annual_plan and not plan.upgrade_available %}
+                <div class="mt-3">
+                  {% trans "Questions about your plan?" %}
+                  <a
+                    href="{% url "annual_plan_request_quote" domain %}"
+                  >{% trans "Contact us" %}</a>.
+                </div>
+              {% else %}
+                <p>
+                  <a class="btn btn-primary mt-3" href="{{ change_plan_url }}">
+                    {% if plan.is_paused %}
+                      {% trans "Subscribe to Plan" %}
+                    {% elif plan.is_annual_plan and plan.upgrade_available %}
+                      {% trans "Upgrade Plan" %}
+                    {% else %}
+                      {% trans "Change Plan" %}
+                    {% endif %}
+                  </a>
+                </p>
+              {% endif %}
               {% if plan.next_subscription.exists and plan.next_subscription.is_paused %}
                 <div class="alert alert-warning">
                   <i class="fa fa-warning"></i>
