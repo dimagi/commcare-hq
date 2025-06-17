@@ -1,10 +1,10 @@
 import datetime
 import random
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.core import mail
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
 
@@ -37,6 +37,7 @@ from corehq.apps.accounting.tests.base_tests import (
 )
 from corehq.apps.accounting.utils.invoicing import (
     get_flagged_pay_annually_prepay_invoice,
+    get_prorated_software_plan_cost,
 )
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_previous_month_date_range
@@ -489,3 +490,42 @@ class TestFlaggedPayAnnuallyPrepayInvoice(BaseInvoiceTestCase):
         )
         result = get_flagged_pay_annually_prepay_invoice(self.invoice)
         self.assertEqual(result, prepay_invoice)
+
+
+class TestGetProratedSoftwarePlanCost(SimpleTestCase):
+
+    def test_full_month(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 7, 1)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('100.00')
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_partial_month(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 6, 16)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('50.00')  # 15 days is half of June
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_multiple_months(self):
+        date_start = datetime.date(2025, 6, 16)
+        date_end = datetime.date(2025, 8, 4)
+        monthly_fee = Decimal('100.00')
+        expected = (
+            Decimal('50.00')  # half of June
+            + Decimal('100.00')  # all of July
+            + monthly_fee / 31 * 3  # 3 days of August
+        ).quantize(Decimal('0.00'), ROUND_HALF_UP)
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_zero_days(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 6, 1)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('0.00')
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
