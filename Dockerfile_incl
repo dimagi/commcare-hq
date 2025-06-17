@@ -4,7 +4,7 @@
 # for running a simple but complete CommCare HQ environment that
 # includes Pillowtop and Celery containers.
 
-FROM ghcr.io/astral-sh/uv:0.7.2-python3.9-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \
@@ -48,8 +48,11 @@ RUN groupadd -r cchq && \
     chown cchq:cchq /vendor /sharedfiles
 USER cchq:cchq
 
+COPY .python-version pyproject.toml uv.lock /tmp-project/
+
 RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --locked --group=prod --no-dev --no-install-project
+  uv sync --locked --group=prod --no-dev --project=/tmp-project --no-install-project \
+  && rm -rf /tmp-project
 
 COPY --chown=cchq:cchq package.json /vendor/
 RUN npm shrinkwrap && \
