@@ -8,7 +8,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import RMI from "jquery.rmi/jquery.rmi";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import "hqwebapp/js/bootstrap3/hq.helpers";
 
 var module = {};
@@ -45,7 +45,7 @@ var Notification = function (data) {
         _private.RMI("mark_as_read", {id: self.id()})
             .done(function (data) {
                 if (self.isFeature()) {
-                    kissmetrics.track.event("Notifications tab - Clicked notifications tab - " +
+                    noopMetrics.track.event("Notifications tab - Clicked notifications tab - " +
                         "Clicked on Case Sharing text link",
                     {email: data.email, domain: data.domain});
                 }
@@ -115,7 +115,7 @@ var NotificationsServiceModel = function () {
             .done(function (data) {
                 self.lastSeenNotificationDate(data.activated);
                 if (self.hasUnreadFeatureNotification()) {
-                    kissmetrics.track.event("Notifications tab - Clicked notifications tab",
+                    noopMetrics.track.event("Notifications tab - Clicked notifications tab",
                         {email: data.email, domain: data.domain});
                 }
             })

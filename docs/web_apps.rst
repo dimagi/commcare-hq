@@ -31,7 +31,7 @@ Ways in which web apps is a typical piece of HQ code:
    * The Log In As action works via HQ
    * HQ provides some system information, like the current user's username and the mapbox API key, via the original context and initial page data
    * HQ directly serves multimedia files
-   * Web apps calls HQ analytics code (Google Analytics, Kissmetrics, etc.)
+   * Web apps calls HQ analytics code (Google Analytics, etc.)
 
 However, in most ways, once you move into an app, web apps only interacts with formplayer and is just a thin UI layer.
 
