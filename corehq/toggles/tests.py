@@ -7,6 +7,7 @@ from django.test import TestCase, SimpleTestCase, override_settings
 from django.test.client import RequestFactory
 
 from corehq.toggles import (
+    ALL_TAGS,
     NAMESPACE_USER,
     NAMESPACE_DOMAIN,
     TAG_CUSTOM,
@@ -19,6 +20,7 @@ from corehq.toggles import (
 )
 from .models import generate_toggle_id, Toggle
 from .shortcuts import (
+    get_editable_toggle_tags_for_user,
     namespaced_item,
     find_users_with_toggle_enabled,
     find_domains_with_toggle_enabled,
@@ -27,6 +29,7 @@ from .shortcuts import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.toggles.sql_models import ToggleEditPermission
 
 
 class ToggleTestCase(TestCase):
@@ -256,7 +259,7 @@ class PredictablyRandomToggleTests(TestCase):
         self.assertFalse(toggle.enabled('darkhorse', namespace=NAMESPACE_DOMAIN))
 
 
-class DyanmicPredictablyRandomToggleTests(TestCase):
+class DynamicPredictablyRandomToggleTests(TestCase):
 
     def test_default_randomness_no_doc(self):
         for randomness in [0, .5, 1]:
@@ -424,3 +427,23 @@ class NamespaceTests(TestCase):
         self.assertFalse(user_toggle.enabled(self.second_user.username))
         self.assertTrue(user_toggle.enabled_for_request(self.request))
         self.assertFalse(user_toggle.enabled_for_request(self.second_request))
+
+
+class TestToggleEditPermissionShortcuts(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.users = ['arthur', 'diane']
+        cls.tag_custom_edit_permission = ToggleEditPermission.objects.create(
+            tag_slug=TAG_CUSTOM.slug,
+            enabled_users=['arthur']
+        )
+        cls.addClassCleanup(cls.tag_custom_edit_permission.delete)
+
+    def test_get_tags_with_edit_permission(self):
+        allowed_tags = get_editable_toggle_tags_for_user('arthur')
+        assert allowed_tags == [TAG_CUSTOM]
+
+        allowed_tags = get_editable_toggle_tags_for_user('diane')
+        assert allowed_tags == []
