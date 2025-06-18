@@ -1,12 +1,7 @@
-from functools import partial
-
 from django.conf import settings
 
 import requests
 from requests import HTTPError
-
-
-BITLY_CONFIGURED = False
 
 
 class BitlyError(Exception):
@@ -19,9 +14,12 @@ class BitlyError(Exception):
         return "Bitly Error %s: %s" % (self.status_code, self.status_txt)
 
 
-def shorten_v4(url, oauth_token):
+def shorten(url):
+    if not getattr(settings, 'BITLY_OAUTH_TOKEN', None):
+        return None
+
     response = requests.post("https://api-ssl.bitly.com/v4/shorten", json={"long_url": url}, headers={
-        'Authorization': f'Bearer {oauth_token}',
+        'Authorization': f'Bearer {settings.BITLY_OAUTH_TOKEN}',
         'Content-Type': 'application/json'
     })
     data = response.json()
@@ -30,11 +28,3 @@ def shorten_v4(url, oauth_token):
     except HTTPError:
         raise BitlyError(response.status_code, data.get('description', 'unknown'))
     return data['link']
-
-
-if getattr(settings, 'BITLY_OAUTH_TOKEN', None):
-    shorten = partial(shorten_v4, oauth_token=settings.BITLY_OAUTH_TOKEN)
-    BITLY_CONFIGURED = True
-else:
-    def shorten(url):
-        return url
