@@ -189,7 +189,7 @@ test = [
     'coverage',
 ]
 # Developer-specific requirements
-nhooper = [
+dev-nhooper = [
     "celery-stubs",
     {include-group = "dev"}
 ]
