@@ -23,7 +23,7 @@ var caseType = function (
     isSafeToDelete,
     changeSaveButton,
     resetSaveButton,
-    dataUrl
+    dataUrl,
 ) {
     var self = {};
     self.name = name || gettext("No Name");
@@ -71,7 +71,7 @@ var caseType = function (
                     group.name,
                     group.description,
                     group.deprecated,
-                    self.changeSaveButton
+                    self.changeSaveButton,
                 );
                 self.groups.push(groupObj);
             }
@@ -89,7 +89,7 @@ var caseType = function (
                     self.name,
                     isGeoCaseProp,
                     groupObj.name(),
-                    self.changeSaveButton
+                    self.changeSaveButton,
                 );
                 groupObj.properties.push(propObj);
             }
@@ -105,7 +105,7 @@ var groupsViewModel = function (
     name,
     description,
     deprecated,
-    changeSaveButton
+    changeSaveButton,
 ) {
     var self = {};
     self.id = id;
@@ -145,7 +145,7 @@ var groupsViewModel = function (
                 self.caseType,
                 false,
                 self.name(),
-                changeSaveButton
+                changeSaveButton,
             );
             self.newPropertyName(undefined);
             self.properties.push(propObj);
@@ -167,7 +167,7 @@ var propertyListItem = function (
     caseType,
     isGeoCaseProp,
     loadedGroup,
-    changeSaveButton
+    changeSaveButton,
 ) {
     var self = {};
     self.id = prop.id;
@@ -222,7 +222,7 @@ var propertyListItem = function (
         interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
         subTitle, /* subTitle */
         {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
-        10 /* maxDisplay */
+        10, /* maxDisplay */
     );
     self.allowedValues.val(prop.allowed_values);
     if (initialPageData.get('read_only_mode')) {
@@ -305,7 +305,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.newPropertyName = ko.observable();
     self.newGroupName = ko.observable();
     self.showAll = ko.observable(false);
-    self.showCasePropertyWarning= ko.observable(false);
+    self.showCasePropertyWarning = ko.observable(false);
     self.casePropertyWarningContent = ko.observable();
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
@@ -412,7 +412,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.is_safe_to_delete,
                         changeSaveButton,
                         resetSaveButton,
-                        dataUrl
+                        dataUrl,
                     );
                     self.caseTypes.push(caseTypeObj);
                 });
@@ -591,7 +591,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 self.newGroupName(),
                 '',
                 false,
-                changeSaveButton
+                changeSaveButton,
             );
             let groupsObs = self.getCaseTypeGroupsObservable();
             groupsObs.push(group);  // TODO: Broken for computed value
