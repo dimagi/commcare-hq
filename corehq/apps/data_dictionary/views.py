@@ -52,6 +52,8 @@ from corehq.motech.fhir.utils import (
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
+from corehq.project_limits.const import CASE_PROPERTIES_PER_CASE_KEY, DEFAULT_CASE_PROPERTIES_PER_CASE
+from corehq.project_limits.models import SystemLimit
 
 from .bulk import (
     ALLOWED_VALUES_SHEET_SUFFIX,
@@ -508,6 +510,11 @@ class DataDictionaryView(BaseProjectDataView):
                                for t in CaseProperty.DataType
                                if t != CaseProperty.DataType.UNDEFINED],
             'fhir_integration_enabled': fhir_integration_enabled,
+            'case_property_limit': SystemLimit.get_limit_for_key(
+                CASE_PROPERTIES_PER_CASE_KEY,
+                DEFAULT_CASE_PROPERTIES_PER_CASE,
+                domain=self.domain
+            )
         })
         return main_context
 
