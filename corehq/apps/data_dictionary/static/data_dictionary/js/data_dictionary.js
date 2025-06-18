@@ -617,8 +617,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         let caseType = self.getActiveCaseType();
         if (caseType.propertyCount > self.casePropertyLimit) {
             let content = gettext(
-                "The '" + caseType.name + "' case has " + caseType.propertyCount + " properties. " +
-                "We recommend keeping case properties below " + self.casePropertyLimit + ", " +
+                "The '" + caseType.name + "' case has a total of " + caseType.propertyCount + " custom properties. " +
+                "We recommend at most " + self.casePropertyLimit + " custom properties per case type, " +
                 "otherwise you may run into performance issues at the time of data collection and analysis."
             );
             self.casePropertyWarningContent(content);

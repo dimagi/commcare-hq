@@ -181,8 +181,8 @@
               <div id="warningContent" class="collapse">
                 <p>
                   {% blocktrans with type=case_property_warning.type count=case_property_warning.count limit=case_property_warning.limit %}
-                    The '{{ type }}' case has {{ count }} properties. We
-                    recommend keeping case properties below {{ limit }}, otherwise
+                    The '{{ type }}' case has a total of {{ count }} custom properties. We
+                    recommend at most {{ limit }} custom properties per case type, otherwise
                     you may run into performance issues at the time of data
                     collection and analysis.
                 </p>
