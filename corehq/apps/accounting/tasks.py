@@ -74,6 +74,7 @@ from corehq.apps.accounting.utils.unpaid_invoice import (
     Downgrade,
     InvoiceReminder,
 )
+from corehq.apps.accounting.usage import get_web_user_usage
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
@@ -864,7 +865,7 @@ def calculate_web_users_in_all_billing_accounts(today=None):
     today = today or datetime.date.today()
     for account in BillingAccount.objects.all():
         record_date = today - relativedelta(days=1)
-        num_users = account.get_web_user_count()
+        num_users = get_web_user_usage(account.get_domains())
         try:
             BillingAccountWebUserHistory.objects.create(
                 billing_account=account,

@@ -88,6 +88,8 @@ def check_headers(user_specs, domain, upload_couch_user, is_web_upload=False):
                 ))
             headers.discard(old_name)
 
+    if is_web_upload:
+        conditionally_allowed_headers.add('is_active_in_domain')
     if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         conditionally_allowed_headers.add('domain')
 
@@ -728,6 +730,7 @@ class WebUserRow(BaseUserRow):
             'username': self.row.get('username'),
             'role': self.row.get('role'),
             'status': self.row.get('status'),
+            'is_active_in_domain': self.row.get('is_active_in_domain'),
             'location_codes': format_location_codes(self.row.get('location_code')),
             'remove': spec_value_to_boolean_or_none(self.row, 'remove'),
             "data": self.row.get('data', {}),
@@ -815,6 +818,13 @@ class WebUserRow(BaseUserRow):
             cv["data"], cv["uncategorized_data"], cv["profile_name"],
             self.domain_info.profiles_by_name
         )
+
+        imported_is_active = cv['is_active_in_domain']
+        if str(current_user.is_active_in_domain(self.domain)) != imported_is_active:
+            if imported_is_active == 'True':
+                current_user.reactivate(self.domain, changed_by=web_user_importer.upload_user)
+            elif imported_is_active == 'False':
+                current_user.deactivate(self.domain, changed_by=web_user_importer.upload_user)
 
         # Try saving
         try:
