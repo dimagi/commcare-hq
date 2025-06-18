@@ -129,7 +129,7 @@ define("hqwebapp/js/bootstrap5/hq.helpers", [
             throw new Error("Multiple elements passed to koApplyBindings");
         }
         ko.applyBindings(context, this.get(0));
-        this.removeClass('ko-template');
+        this.find('.ko-template').addBack().removeClass('ko-template');
     };
 
     $.ajaxSetup({
