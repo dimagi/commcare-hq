@@ -4,6 +4,7 @@ import ipaddress
 import json
 import logging
 import uuid
+import re
 
 from django import forms
 from django.conf import settings
@@ -1615,7 +1616,7 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
     This small change is why we can't use the default PasswordReset form.
     """
     email = forms.EmailField(label=gettext_lazy("Email"), max_length=254,
-                             widget=forms.TextInput(attrs={'class': 'form-control'}))
+                            widget=forms.TextInput(attrs={'class': 'form-control'}))
     if settings.RECAPTCHA_PRIVATE_KEY:
         captcha = ReCaptchaField(label="")
     error_messages = {
@@ -1701,7 +1702,25 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
             )
 
 
+class UsernameAwareEmailField(forms.EmailField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget = forms.TextInput(attrs={'class': 'form-control'})
+
+    def validate(self, value):
+        if value and '@' not in value:
+            raise ValidationError(
+                gettext_lazy(
+                    "This looks like a username. "
+                    "Please check your URL to be sure you are at your project's URL"
+                )
+            )
+        super().validate(value)
+
+
 class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
+    email = UsernameAwareEmailField(label=gettext_lazy("Email"), max_length=254)
+
     def save(self, domain_override=None,
              subject_template_name='registration/password_reset_subject.txt',
              email_template_name='registration/password_reset_email.html',
