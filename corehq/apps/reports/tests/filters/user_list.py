@@ -9,7 +9,13 @@ dummy_user_list = [
         'email': 'activeworker@commcarehq.com',
         'uuid': 'active1',
         'is_active': True,
-        'doc_type': 'CommcareUser'
+        'doc_type': 'CommcareUser',
+        'user_domain_memberships': [
+            {
+                'domain': 'emwf-filter-output-test',
+                'is_active': True,
+            }
+        ]
     },
     {
         'domain': 'emwf-filter-output-test',
@@ -20,7 +26,13 @@ dummy_user_list = [
         'email': 'activeworker2@commcarehq.com',
         'uuid': 'active2',
         'is_active': True,
-        'doc_type': 'CommcareUser'
+        'doc_type': 'CommcareUser',
+        'user_domain_memberships': [
+            {
+                'domain': 'emwf-filter-output-test',
+                'is_active': True,
+            }
+        ]
     },
     {
         'domain': 'emwf-filter-output-test',
@@ -31,7 +43,13 @@ dummy_user_list = [
         'email': 'deactiveworker1@commcarehq.com',
         'uuid': 'deactive1',
         'is_active': False,
-        'doc_type': 'CommcareUser'
+        'doc_type': 'CommcareUser',
+        'user_domain_memberships': [
+            {
+                'domain': 'emwf-filter-output-test',
+                'is_active': False,
+            }
+        ]
     },
     {
         'domain': 'emwf-filter-output-test',
@@ -42,7 +60,13 @@ dummy_user_list = [
         'email': 'deactiveworker2@commcarehq.com',
         'uuid': 'deactive2',
         'is_active': False,
-        'doc_type': 'CommcareUser'
+        'doc_type': 'CommcareUser',
+        'user_domain_memberships': [
+            {
+                'domain': 'emwf-filter-output-test',
+                'is_active': False,
+            }
+        ]
     },
     {
         'domain': 'emwf-filter-output-test',
@@ -54,6 +78,12 @@ dummy_user_list = [
         'uuid': 'web1',
         'is_active': True,
         "timezone": "UTC",
-        'doc_type': 'WebUser'
+        'doc_type': 'WebUser',
+        'user_domain_memberships': [
+            {
+                'domain': 'emwf-filter-output-test',
+                'is_active': True,
+            }
+        ]
     },
 ]
