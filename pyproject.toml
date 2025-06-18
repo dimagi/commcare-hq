@@ -188,6 +188,11 @@ test = [
     'pytest-unmagic',
     'coverage',
 ]
+# Developer-specific requirements
+nhooper = [
+    "celery-stubs",
+    {include-group = "dev"}
+]
 
 [tool.pytest.ini_options]
 minversion = '8.1'
