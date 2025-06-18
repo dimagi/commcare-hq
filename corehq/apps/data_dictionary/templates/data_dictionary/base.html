@@ -58,7 +58,7 @@
         </div>
         <form class="form-horizontal" id="create-case-type-form"
                 style="margin: 0; padding: 0"
-                action="{% url "create_case_type" domain %}"
+                action="{% url 'create_case_type' domain %}"
                 method="post"
                 data-bind="submit: submitCreate"
         >
@@ -132,6 +132,7 @@
   {% registerurl 'data_dictionary' domain %}
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
+  {% initial_page_data 'casePropertyLimit' case_property_limit %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
   {% url 'geospatial_settings' domain as geospatial_settings_url %}
   <div id="case-type-error" class="alert alert-danger" hidden>
@@ -149,6 +150,28 @@
       <div>
         <h3 data-bind="text: $root.activeCaseType()" style="display: inline-block;"></h3>
         <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="deprecate-case-type hidden label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
+      </div>
+      <div class="alert alert-warning" data-bind="visible: showCasePropertyWarning()">
+        <button
+          id="performance-warning-toggle"
+          type="button"
+          class="close"
+          data-toggle="collapse"
+          data-target="#warningContent"
+          data-bind="click: toggleCasePropertyWarning"
+        >
+          <i class="fa fa-chevron-down"></i>
+        </button>
+        <i class="fa fa-exclamation-triangle"></i>
+        {% trans "Performance warning" %}
+        <div id="warningContent" class="collapse">
+          <p data-bind="text: casePropertyWarningContent()"></p>
+          <p>
+          {% blocktrans %}
+          See <a target="_blank" href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947182/Case+Configuration">case configuration</a> documentation for more information.
+          {% endblocktrans %}
+          </p>
+        </div>
       </div>
       {% if fhir_integration_enabled %}
         <div id="fhir-resource-type-form" class="form-inline" data-bind="visible: fhirResourceTypes().length">
@@ -324,7 +347,7 @@
               </div>
             {% if fhir_integration_enabled %}
               <div class="row-item fhir-path">
-                <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
+                <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath">
                 <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
                 <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa-solid fa-xmark"></button>
                 <!-- /ko -->

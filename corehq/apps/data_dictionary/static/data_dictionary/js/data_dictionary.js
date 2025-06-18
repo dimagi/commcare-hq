@@ -18,6 +18,7 @@ var caseType = function (
     fhirResourceType,
     deprecated,
     moduleCount,
+    propertiesCount,
     geoCaseProp,
     isSafeToDelete,
     changeSaveButton,
@@ -28,6 +29,7 @@ var caseType = function (
     self.name = name || gettext("No Name");
     self.deprecated = deprecated;
     self.appCount = moduleCount;  // The number of application modules using this case type
+    self.propertyCount = propertiesCount;
     self.url = "#" + name;
     self.fhirResourceType = ko.observable(fhirResourceType);
     self.groups = ko.observableArray();
@@ -293,8 +295,9 @@ var propertyListItem = function (
     return self;
 };
 
-var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes) {
+var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit) {
     var self = {};
+    self.casePropertyLimit = casePropertyLimit;
     self.caseTypes = ko.observableArray();
     self.activeCaseType = ko.observable();
     self.fhirResourceType = ko.observable();
@@ -302,6 +305,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.newPropertyName = ko.observable();
     self.newGroupName = ko.observable();
     self.showAll = ko.observable(false);
+    self.showCasePropertyWarning= ko.observable(false);
+    self.casePropertyWarningContent = ko.observable();
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
 
@@ -402,6 +407,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.fhir_resource_type,
                         caseTypeData.is_deprecated,
                         caseTypeData.module_count,
+                        caseTypeData.properties_count,
                         data.geo_case_property,
                         caseTypeData.is_safe_to_delete,
                         changeSaveButton,
@@ -523,6 +529,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         self.activeCaseType(caseType.name);
         self.fhirResourceType(caseType.fhirResourceType());
         self.removefhirResourceType(false);
+        self.showCasePropertyWarningIfNeeded();
         self.saveButton.setState('saved');
     };
 
@@ -606,6 +613,33 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         }
     };
 
+    self.showCasePropertyWarningIfNeeded = function () {
+        let caseType = self.getActiveCaseType();
+        if (caseType.propertyCount > self.casePropertyLimit) {
+            let content = gettext(
+                "The '" + caseType.name + "' case has " + caseType.propertyCount + " properties. " +
+                "We recommend keeping case properties below " + self.casePropertyLimit + ", " +
+                "otherwise you may run into performance issues at the time of data collection and analysis."
+            );
+            self.casePropertyWarningContent(content);
+            self.showCasePropertyWarning(true);
+        } else {
+            self.showCasePropertyWarning(false);
+        }
+    };
+
+    self.toggleCasePropertyWarning = function () {
+        let toggle = document.getElementById("performance-warning-toggle");
+        let icon = toggle.querySelector('i');
+        if (icon.classList.contains('fa-chevron-down')) {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        } else {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        }
+    };
+
     self.showDeprecated = function () {
         self.showAll(true);
     };
@@ -681,7 +715,8 @@ $(function () {
         casePropertyUrl = initialPageData.reverse('update_case_property'),
         typeChoices = initialPageData.get('typeChoices'),
         fhirResourceTypes = initialPageData.get('fhirResourceTypes'),
-        viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes);
+        casePropertyLimit = initialPageData.get('casePropertyLimit'),
+        viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit);
 
     function doHashNavigation() {
         let caseType = viewModel.getHashNavigationCaseType();
