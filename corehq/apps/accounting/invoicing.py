@@ -14,6 +14,9 @@ from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
 from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
+from corehq.apps.accounting.emails import (
+    send_flagged_pay_annually_subscription_alert,
+)
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -50,9 +53,14 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     months_from_date,
 )
+from corehq.apps.accounting.utils.invoicing import (
+    get_flagged_pay_annually_prepay_invoice,
+    get_prorated_software_plan_cost,
+)
 from corehq.apps.domain.dbaccessors import deleted_domain_exists, domain_exists
 from corehq.apps.domain.utils import (
     get_serializable_wire_invoice_general_credit,
+    get_serializable_wire_invoice_prepaid_item,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
@@ -147,6 +155,10 @@ class DomainInvoiceFactory(object):
                 if not self.logged_throttle_error:
                     log_accounting_error(str(e))
                     self.logged_throttle_error = True
+
+            flagged_prepay_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
+            if flagged_prepay_invoice:
+                send_flagged_pay_annually_subscription_alert(subscription, invoice, flagged_prepay_invoice)
         else:
             record.skipped_email = True
             record.save()
@@ -297,6 +309,39 @@ class DomainWireInvoiceFactory(object):
             domain_name=self.domain.name,
             amount=serializable_amount,
             invoice_items=serializable_items,
+            date_start=self.date_start,
+            date_end=self.date_end,
+            contact_emails=self.contact_emails,
+            cc_emails=self.cc_emails,
+            date_due=date_due,
+        )
+
+    def create_prorated_subscription_change_credits_invoice(self, old_date_start, new_date_start, date_end,
+                                                            old_plan_version, new_plan_version, date_due):
+        old_monthly_fee = old_plan_version.product_rate.monthly_fee
+        new_monthly_fee = new_plan_version.product_rate.monthly_fee
+        old_sub_prepaid = get_prorated_software_plan_cost(old_date_start, date_end, old_monthly_fee)
+        old_sub_cost = get_prorated_software_plan_cost(old_date_start, new_date_start, old_monthly_fee)
+        new_sub_cost = get_prorated_software_plan_cost(new_date_start, date_end, new_monthly_fee)
+
+        new_plan_label = f"{new_plan_version.plan.name} (Prorated for term)"
+        new_plan_line_item = get_serializable_wire_invoice_general_credit(
+            new_sub_cost, new_plan_label, new_sub_cost, 1)
+
+        old_plan_label = f"{old_plan_version.plan.name} (Prepaid credit applied)"
+        old_plan_total = old_sub_cost - old_sub_prepaid
+        old_plan_line_item = get_serializable_wire_invoice_prepaid_item(
+            old_plan_total, old_plan_label, old_plan_total)
+
+        items = new_plan_line_item + old_plan_line_item
+        amount = new_sub_cost + old_plan_total
+        serializable_amount = simplejson.dumps(amount, use_decimal=True)
+
+        from corehq.apps.accounting.tasks import create_wire_credits_invoice
+        create_wire_credits_invoice.delay(
+            domain_name=self.domain.name,
+            amount=serializable_amount,
+            invoice_items=items,
             date_start=self.date_start,
             date_end=self.date_end,
             contact_emails=self.contact_emails,

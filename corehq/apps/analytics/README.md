@@ -92,10 +92,6 @@ To start testing, run Celery and update `HUBSPOT_ACCESS_TOKEN` and `HUBSPOT_ID` 
 
 When troubleshooting in Hubspot's portal, it's often useful to create lists based on key events.
 
-### Drift
-
-This is the live chat feature available for new users. There's a [drift.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/drift.js) HQ module, though it doesn't do much. No server component.
-
 ### Facebook Pixel
 
 Their script is included in [signup](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/registration/templates/registration/register_new_user.html), but we don't do any event tracking or other interaction with it. Very little related code, just the script inclusion.

@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import connection, models, router
+from django.db import connection, models, router, IntegrityError
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -464,7 +464,9 @@ class DomainMembership(Membership):
         return None
 
     def has_permission(self, permission, data=None):
-        return self.is_admin or self.permissions.has(permission, data)
+        return self.is_active and (
+            self.is_admin or self.permissions.has(permission, data)
+        )
 
     def viewable_reports(self):
         return self.permissions.view_report_list
@@ -658,8 +660,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
         # is_admin is the same as having all the permissions set
         if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
-        elif self.is_domain_admin(domain):
-            return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
@@ -743,6 +743,9 @@ class SingleMembershipMixin(_AuthorizableMixin):
 
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
+
+    def is_active_in_domain(self, domain):
+        return self.is_active
 
 
 class MultiMembershipMixin(_AuthorizableMixin):
@@ -3372,9 +3375,20 @@ class ConnectIDUserLink(models.Model):
     @cached_property
     def messaging_key(self):
         key = generate_aes_key().decode("utf-8")
-        messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
-            connectid_user_link=self, domain=self.domain, active=True, defaults={"key": key}
-        )
+        try:
+            messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
+                connectid_user_link=self,
+                domain=self.domain,
+                active=True,
+                defaults={"key": key}
+            )
+        except IntegrityError:
+            # Another process might have created it, so fetch it
+            messaging_key = ConnectIDMessagingKey.objects.get(
+                connectid_user_link=self,
+                domain=self.domain,
+                active=True
+            )
         return messaging_key
 
     @cached_property
@@ -3393,3 +3407,12 @@ class ConnectIDMessagingKey(models.Model):
     key = models.CharField(max_length=44, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['connectid_user_link', 'domain'],
+                condition=models.Q(active=True),
+                name='unique_active_messaging_key_per_user_and_domain'
+            )
+        ]

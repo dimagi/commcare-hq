@@ -1873,6 +1873,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
+    is_annual_plan = forms.CharField(
+        widget=forms.HiddenInput,
+    )
 
     def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None,
                  *args, **kwargs):
@@ -1882,12 +1885,14 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                                                          *args, **kwargs)
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
+        self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'plan_edition',
+            'is_annual_plan',
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -1932,15 +1937,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
+                new_sub_date_start, new_sub_date_end = self.new_subscription_start_end_dates()
                 if (
                     self.is_downgrade_from_paid_plan()
                     and self.current_subscription.is_below_minimum_subscription
                 ):
-                    new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
-                    new_sub_date_end = (
-                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-                        if self.is_annual_plan else None
-                    )
                     self.current_subscription.update_subscription(
                         date_start=self.current_subscription.date_start,
                         date_end=new_sub_date_start
@@ -1958,11 +1959,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         funding_source=FundingSource.CLIENT,
                     )
                 else:
-                    new_sub_date_start = datetime.date.today()
-                    new_sub_date_end = (
-                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-                        if self.is_annual_plan else None
-                    )
                     self.current_subscription.change_plan(
                         self.plan_version,
                         date_end=new_sub_date_end,
@@ -1973,7 +1969,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         do_not_invoice=False,
                         no_invoice_reason='',
                     )
-                if self.plan_version.plan.is_annual_plan:
+                if self.is_annual_plan_selected():
                     self.send_prepayment_invoice(new_sub_date_start, new_sub_date_end)
                 if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
                     self_signup.complete_workflow(self.plan_version.plan.edition)
@@ -1986,29 +1982,52 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             )
             return False
 
-    def send_prepayment_invoice(self, date_start, date_end):
-        label = f"One month of {self.plan_version.plan.name}"
-        monthly_fee = self.plan_version.product_rate.monthly_fee
-        duration = relativedelta(date_end, date_start)
-        num_months = getattr(duration, 'years', 0) * 12  # todo: support other subscription lengths
-        amount = monthly_fee * num_months
-        date_due = max(date_start,
-                       datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
-
+    def send_prepayment_invoice(self, new_date_start, date_end):
         email_list = self.cleaned_data['email_list']
         contact_emails = [email_list[0]]
         cc_emails = [email for email in email_list[1:]]
-
         invoice_factory = DomainWireInvoiceFactory(
-            self.domain, date_start=date_start, date_end=date_end,
+            self.domain, date_start=new_date_start, date_end=date_end,
             contact_emails=contact_emails, cc_emails=cc_emails
         )
-        invoice_factory.create_wire_credits_invoice(
-            amount, label, monthly_fee, num_months, date_due
-        )
+        date_due = max(new_date_start,
+                       datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
 
-    @property
-    def is_annual_plan(self):
+        if self.current_is_annual_plan():
+            invoice_factory.create_prorated_subscription_change_credits_invoice(
+                self.current_subscription.date_start, new_date_start, date_end,
+                self.current_subscription.plan_version, self.plan_version, date_due,
+            )
+        else:
+            label = f"One month of {self.plan_version.plan.name}"
+            monthly_fee = self.plan_version.product_rate.monthly_fee
+            duration = relativedelta(date_end, new_date_start)
+            num_months = duration.years * 12 + duration.months
+            amount = monthly_fee * num_months
+            invoice_factory.create_wire_credits_invoice(
+                amount, label, monthly_fee, num_months, date_due
+            )
+
+    def new_subscription_start_end_dates(self):
+        if self.is_downgrade_from_paid_plan() and self.current_subscription.is_below_minimum_subscription:
+            new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
+        else:
+            new_sub_date_start = datetime.date.today()
+
+        if self.is_annual_plan_selected():
+            if self.current_is_annual_plan() and self.current_subscription.date_end is not None:
+                new_sub_date_end = self.current_subscription.date_end
+            else:
+                new_sub_date_end = new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+        else:
+            new_sub_date_end = None
+
+        return new_sub_date_start, new_sub_date_end
+
+    def current_is_annual_plan(self):
+        return self.current_subscription.plan_version.plan.is_annual_plan
+
+    def is_annual_plan_selected(self):
         return self.plan_version.plan.is_annual_plan
 
     def is_same_edition(self):

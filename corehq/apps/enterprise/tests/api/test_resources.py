@@ -161,7 +161,6 @@ class TestWebUserResourceMapping(SimpleTestCase):
             'last_login': 'Last Login [UTC]',
             'last_access_date': 'Last Access Date [UTC]',
             'status': 'Status',
-            'is_active_in_domain': 'Active in Project',
             'domain': 'Project Space Name',
         }
 

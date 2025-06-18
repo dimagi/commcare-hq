@@ -58,6 +58,7 @@ from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.toggles import (
+    DEACTIVATE_WEB_USERS,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -1641,8 +1642,9 @@ class UserFilterForm(forms.Form):
                 ),
                 data_bind="slideVisible: !isCrossDomain() && location_id",
             ),
-            "user_active_status",
         ]
+        if DEACTIVATE_WEB_USERS.enabled(self.domain):
+            fields += ["user_active_status"]
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:

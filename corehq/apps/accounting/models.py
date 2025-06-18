@@ -1,6 +1,5 @@
 import datetime
 import itertools
-from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -74,12 +73,8 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.dbaccessors import (
-    get_active_web_usernames_by_domain,
-    get_web_user_count,
-    get_all_web_users_by_domain,
-)
-from corehq.apps.users.models import WebUser, UserHistory
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain
+from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
@@ -634,24 +629,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
             web_users.update(get_active_web_usernames_by_domain(domain))
 
         return web_users
-
-    def get_web_user_count(self):
-        domains = self.get_domains()
-        count = 0
-        today = datetime.datetime.today()
-        start_date = today - relativedelta(months=1)
-        for domain in domains:
-            user_count = get_web_user_count(domain, include_inactive=False)
-            web_users = get_all_web_users_by_domain(domain)
-            for u in web_users:
-                if not u.is_active_in_domain(domain):
-                    user_history = UserHistory.objects.filter(
-                        by_domain=domain, for_domain=domain, user_type="WebUser", user_id=u.user_id,
-                        changed_at__lte=today, changed_at__gt=start_date, changes__has_key='is_active_in_domain')
-                    if not user_history.exists():
-                        user_count -= 1
-            count += user_count
-        return count
 
     @staticmethod
     def should_show_sms_billable_report(domain):
@@ -3362,14 +3339,13 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                     )
 
         if invoice.is_wire and invoice.is_prepayment:
-            applied_credit = 0
             for item in invoice.items:
                 template.add_item(item['type'],
                                   item['quantity'],
                                   item['unit_cost'],
                                   item['amount'],
-                                  applied_credit,
-                                  item['amount'])
+                                  item['applied_credit'],
+                                  item['total'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)

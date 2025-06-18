@@ -83,7 +83,6 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             "email": _("email"),
             DOMAIN_FIELD: _("project"),
             "is_active": _("is active"),
-            "is_active_in_domain": _("is active in domain"),
             "language": _("language"),
             PHONE_NUMBERS_FIELD: _("phone numbers"),
             LOCATION_FIELD: _("primary location"),

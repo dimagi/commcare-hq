@@ -362,6 +362,32 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
+    update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+
+    def make_multi(self):
+        '''
+        Moves any updates from `update` into `update_multi`
+        '''
+        if not (self.update and len(self.update)):
+            # update contains no items, so no changes are necessary
+            return
+
+        self.update_multi = {k: [v] for (k, v) in self.update.items()}
+        self.update = {}
+
+    def normalize_update(self):
+        '''
+        Attempt to move `update_multi` to `update`
+        If `update_multi` contains multiple updates mapped to the same case property, no changes will occur
+        '''
+        multi_question_cases = ((k, v) for (k, v) in self.update_multi.items() if len(v) > 1)
+        if any(multi_question_cases):
+            # must continue to use `update_multi`, as there are multiple questions saving to the same case property
+            return
+
+        normalized_update = {k: v[0] for (k, v) in self.update_multi.items()}
+        self.update = normalized_update
+        self.update_multi = None
 
 
 class PreloadAction(FormAction):
@@ -391,8 +417,34 @@ class OpenReferralAction(UpdateReferralAction):
 
 class OpenCaseAction(FormAction):
 
+    # `name_update` is the "official" version, while `name_update_multi` is intended as a temporary option
+    # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
+    # buildable state, where `name_update` is specified, or conflicts are waiting to be resolved, where
+    # `name_updatd_multi` will hold the updates.
     name_update = SchemaProperty(ConditionalCaseUpdate)
+    name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
+
+    def make_multi(self):
+        '''
+        Moves any updates from `name_update` into `name_update_multi`
+        '''
+        if not (self.name_update):
+            return
+
+        self.name_update_multi = [self.name_update]
+        self.name_update = None
+
+    def normalize_name_update(self):
+        '''
+        Attempt to move `name_update_multi` to `name_update`
+        If `name_update_multi` contains multiple updates, no changes will occur
+        '''
+        if len(self.name_update_multi) > 1:
+            return
+
+        self.name_update = self.name_update_multi[0]
+        self.name_update_multi = []
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):

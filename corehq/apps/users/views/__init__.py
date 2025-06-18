@@ -883,7 +883,8 @@ def paginate_web_users(request, domain):
             'reactivateUrl': '',
         }
         # Omit option to deactivate/reactivate for a domain if user access is controlled by an IdentityProvider
-        if IdentityProvider.get_required_identity_provider(u.username) is None:
+        if (IdentityProvider.get_required_identity_provider(u.username) is None
+                and toggles.DEACTIVATE_WEB_USERS.enabled(domain)):
             if u.is_active_in_domain(domain):
                 user.update({
                     'deactivateUrl': (
@@ -930,6 +931,10 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
         assert len(domains) == 1
         domain = domains[0]
         user_es = filter_user_query_by_locations_accessible_to_user(user_es, domain, request.couch_user)
+    if active_in_domain is not None:
+        assert len(domains) == 1
+        domain = domains[0]
+        user_es = user_es.has_domain_membership(domain, active_in_domain)
     result = user_es.run()
 
     return (
@@ -989,6 +994,7 @@ def undo_remove_web_user(request, domain, record_id):
 
 @always_allow_project_access
 @require_can_edit_web_users
+@toggles.DEACTIVATE_WEB_USERS.required_decorator()
 @require_POST
 @location_safe
 def deactivate_web_user(request, domain, couch_user_id):
@@ -1003,6 +1009,7 @@ def deactivate_web_user(request, domain, couch_user_id):
 
 @always_allow_project_access
 @require_can_edit_web_users
+@toggles.DEACTIVATE_WEB_USERS.required_decorator()
 @require_POST
 @location_safe
 def reactivate_web_user(request, domain, couch_user_id):

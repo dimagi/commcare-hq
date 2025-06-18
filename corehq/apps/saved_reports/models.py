@@ -62,7 +62,7 @@ from corehq.apps.userreports.util import \
     default_language as ucr_default_language
 from corehq.apps.userreports.util import localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser
 from corehq.elastic import ESError
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
@@ -732,9 +732,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:
-            web_user = WebUser.get_by_username(email)
-            if web_user and not web_user.is_active_in_domain(self.domain):
-                continue
             language = user_languages.get(email, fallback_language) or fallback_language
             recipients[language].append(email)
         return immutabledict(recipients)

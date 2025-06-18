@@ -284,14 +284,6 @@ msgstr ""
 "ufuatiliaji wa mazao."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "Chagua Hakuna"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "Chagua Zote"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "Jina la programu linahitajika"
 
@@ -353,6 +345,14 @@ msgstr "Jina la Tab"
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
 msgstr "Hali ya Kuonyesha"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"Onyo: Mali iliyohesabiwa inayotumika haitangamani na uhifadhi wa akiba na "
+"inaweza kusababisha data iliyopitwa na wakati kwenye mali za orodha ya kesi"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -4227,6 +4227,12 @@ msgstr "Imeshindikana! Majibu ni: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
+
+#~ msgid "Select None"
+#~ msgstr "Chagua Hakuna"
+
+#~ msgid "Select All"
+#~ msgstr "Chagua Zote"
 
 #~ msgid "long"
 #~ msgstr "ndefu"

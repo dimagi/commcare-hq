@@ -9,7 +9,6 @@ from collections import Counter
 import simplejson
 from decorator import contextmanager
 from django.conf import settings
-from django.template.response import TemplateResponse
 
 from memoized import memoized
 
@@ -142,13 +141,37 @@ def clear_domain_names(*domain_names):
             domain.delete()
 
 
+def get_serializable_wire_invoice_prepaid_item(prepaid_total, prepaid_label, prepaid_credits):
+    """
+    Returns a JSON serializable representation of a previously-paid item to be credited to the customer on a
+    prepayment invoice, or an empty list if not negative. Used with celery task `create_wire_credits_invoice`.
+    """
+    if prepaid_total < 0:
+        return [{
+            'type': prepaid_label,
+            'unit_cost': "0.00",
+            'quantity': 0,
+            'amount': "0.00",
+            'applied_credit': simplejson.dumps(prepaid_credits, use_decimal=True),
+            'total': simplejson.dumps(prepaid_total, use_decimal=True),
+        }]
+
+    return []
+
+
 def get_serializable_wire_invoice_general_credit(credit_total, credit_label, unit_cost, quantity):
+    """
+    Returns a JSON serializable representation of an item to be paid by the customer to purchase credits on a
+    prepayment invoice, or an empty list if not positive. Used with celery task `create_wire_credits_invoice`.
+    """
     if credit_total > 0:
         return [{
             'type': credit_label,
             'unit_cost': simplejson.dumps(unit_cost, use_decimal=True),
             'quantity': quantity,
             'amount': simplejson.dumps(credit_total, use_decimal=True),
+            'applied_credit': "0.00",
+            'total': simplejson.dumps(credit_total, use_decimal=True),
         }]
 
     return []
@@ -166,10 +189,3 @@ def encrypt_account_confirmation_info(commcare_user):
 def is_domain_in_use(domain_name):
     domain_obj = Domain.get_by_name(domain_name)
     return domain_obj and not domain_obj.doc_type.endswith('-Deleted')
-
-
-def show_deactivated_notice(request, domain):
-    return TemplateResponse(request=request,
-                            template='domain/bootstrap3/deactivated_notice.html',
-                            status=403,
-                            context={'domain': domain})

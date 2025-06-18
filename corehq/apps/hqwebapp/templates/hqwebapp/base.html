@@ -1,6 +1,6 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
-{% js_entry %}
+{% js_entry "hqwebapp/js/base" %}{# Do not change. See special handling of this module in webpack/generateDetails.js #}
 <!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
 <!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
 <!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
@@ -56,87 +56,6 @@
     <script>
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>
-
-    {# Everything in this `if not use_js_bundler`-block below this line can be removed once all of app manager, including form builder, is on webpack. #}
-    {% if not use_js_bundler %}
-      <script src="{% static 'underscore/underscore-min.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/lib/modernizr.js' %}"></script>
-      <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-      {% compress js %}
-          <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
-          <script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
-      {% endcompress %}
-      {% if use_bootstrap5 %}
-        <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
-      {% else %}
-        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-      {% endif %}
-      <!-- Required for inline edit widget -->
-      <script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
-
-      {% compress js %}
-        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-      {% endcompress %}
-
-      {% compress js %}
-        {# analytix is purposely the dir name because some adblockers regex* against *analytics* #}
-        <script src="{% static 'analytix/js/initial.js' %}"></script>
-        <script src="{% static 'analytix/js/utils.js' %}"></script>
-        <script src="{% static 'analytix/js/logging.js' %}"></script>
-        <script src="{% static 'analytix/js/google.js' %}"></script>
-        {# kissmetrix is the filename because some adblockers regex *kissmetrics* #}
-        <script src="{% static 'analytix/js/kissmetrix.js' %}"></script>
-        <script src="{% static 'analytix/js/hubspot.js' %}"></script>
-        <script src="{% static 'analytix/js/drift.js' %}"></script>
-        <script src="{% static 'analytix/js/appcues.js' %}"></script>
-        {# gtx is the filename because some adblockers blocks 'gtm.js' #}
-        <script src="{% static 'analytix/js/gtx.js' %}"></script>
-      {% endcompress %}
-
-      <script src="{% static 'knockout/build/output/knockout-latest.js' %}"></script>{# already minified #}
-      {% if use_bootstrap5 %}
-        {% compress js %}
-          <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/knockout_bindings.ko.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components.ko.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/inline_edit.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/pagination.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/search_box.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/select_toggle.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/bootstrap5/feedback.js' %}"></script>
-        {% endcompress %}
-      {% else %}
-        {% compress js %}
-          <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/knockout_bindings.ko.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components.ko.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/inline_edit.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/pagination.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/search_box.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/select_toggle.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/components/bootstrap3/feedback.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
-
-      {% if use_bootstrap5 %}
-        {% compress js %}
-          <script src="{% static 'hqwebapp/js/bootstrap5/sticky_tabs.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/hq.helpers.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/inactivity.js' %}"></script>
-        {% endcompress %}
-      {% else %}
-        {% compress js %}
-            <script src="{% static 'hqwebapp/js/bootstrap3/sticky_tabs.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/bootstrap3/hq.helpers.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/bootstrap3/inactivity.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
-    {% endif %}
 
     {% block head %}
     {% endblock %}
@@ -270,7 +189,6 @@
     </div>
 
     {% include 'analytics/initial/all.html' %}
-    {% include 'analytics/initial/drift.html' %}
 
     <div class="initial-analytics-data hide">
       {% block initial_analytics_data %}
@@ -312,67 +230,6 @@
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
     {% include "hqwebapp/partials/webpack.html" %} {# must come after statici18n above #}
-
-    {# HQ Specific Libraries #}
-    {% if not use_js_bundler %}
-      {% if use_bootstrap5 %}
-        {% compress js %}
-          <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/email-request.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/alert_user.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/main.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/mobile_experience_warning.js' %}"></script>
-        {% endcompress %}
-      {% else %}
-        {% compress js %}
-          <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/email-request.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/alert_user.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/main.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/mobile_experience_warning.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
-    {% endif %}
-
-    {# JavaScript Display Logic Libaries #}
-
-    {% if request.couch_user and not use_js_bundler %}
-      {% if use_bootstrap5 %}
-        <script src="{% static 'notifications/js/bootstrap5/notifications_service.js' %}"></script>
-        <script src="{% static 'notifications/js/bootstrap5/notifications_service_main.js' %}"></script>
-      {% else %}
-        <script src="{% static 'notifications/js/bootstrap3/notifications_service.js' %}"></script>
-        <script src="{% static 'notifications/js/bootstrap3/notifications_service_main.js' %}"></script>
-      {% endif %}
-    {% endif %}
-
-    {% if not use_js_bundler %}
-      {% compress js %}
-        <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if show_overdue_invoice_modal and not use_js_bundler %}
-      {% if use_bootstrap5 %}
-        <script src="{% static 'hqwebapp/js/bootstrap5/downgrade_modal.js' %}"></script>
-      {% else %}
-        <script src="{% static 'hqwebapp/js/bootstrap3/downgrade_modal.js' %}"></script>
-      {% endif %}
-    {% endif %}
-
-    {% if show_prepaid_modal and not use_js_bundler %}
-      {% if use_bootstrap5 %}
-        <script src="{% static 'hqwebapp/js/bootstrap5/prepaid_modal.js' %}"></script>
-      {% else %}
-        <script src="{% static 'hqwebapp/js/bootstrap3/prepaid_modal.js' %}"></script>
-      {% endif %}
-    {% endif %}
 
     {% if show_status_page %}
       <script src="https://p3s9fvl6gvhr.statuspage.io/embed/script.js"></script>

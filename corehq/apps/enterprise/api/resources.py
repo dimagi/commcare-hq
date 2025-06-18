@@ -274,8 +274,7 @@ class WebUserResource(ODataEnterpriseReportResource):
         'last_login': 3,
         'last_access_date': 4,
         'status': 5,
-        'is_active_in_domain': 6,
-        'domain': 7,
+        'domain': 6,
     }
 
     def dehydrate(self, bundle):

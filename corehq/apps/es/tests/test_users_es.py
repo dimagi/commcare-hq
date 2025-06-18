@@ -149,7 +149,7 @@ class TestIsActiveOnDomain(TestCase):
 
     def test_get_all(self):
         self.assertItemsEqual(
-            UserES().values_list('username', flat=True),
+            UserES().show_inactive().values_list('username', flat=True),
             [
                 'cc_user_active',
                 'cc_user_inactive',
@@ -168,7 +168,8 @@ class TestIsActiveOnDomain(TestCase):
 
     def test_get_active_in_domain(self):
         self.assertItemsEqual(
-            UserES().domain(self.domain).values_list('username', flat=True),
+            UserES().domain(self.domain).has_domain_membership(self.domain, active=True)
+            .values_list('username', flat=True),
             [
                 'cc_user_active',
                 'web_user_active',
@@ -179,7 +180,10 @@ class TestIsActiveOnDomain(TestCase):
 
     def test_get_inactive_in_domain(self):
         self.assertItemsEqual(
-            UserES().domain(self.domain, include_inactive=True, include_active=False)
+            UserES()
+            .domain(self.domain)
+            .show_inactive()
+            .has_domain_membership(self.domain, active=False)
             .values_list('username', flat=True),
             [
                 'cc_user_inactive',
@@ -191,7 +195,7 @@ class TestIsActiveOnDomain(TestCase):
 
     def test_get_all_in_domain(self):
         self.assertItemsEqual(
-            UserES().domain(self.domain, include_inactive=True).values_list('username', flat=True),
+            UserES().domain(self.domain).show_inactive().values_list('username', flat=True),
             [
                 'cc_user_active',
                 'cc_user_inactive',

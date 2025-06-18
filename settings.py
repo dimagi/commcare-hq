@@ -799,9 +799,6 @@ ANALYTICS_IDS = {
     'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
-    'DRIFT_ID': '',
-    'APPCUES_ID': '',
-    'APPCUES_KEY': '',
 }
 
 ANALYTICS_CONFIG = {
@@ -2041,7 +2038,8 @@ DOMAIN_MODULE_MAP = {
 
     'epic-integration-test': 'custom.mgh_epic',
     'sudcare-dev': 'custom.mgh_epic',
-    'sudcare': 'custom.mgh_epic',
+    # Temporarily disabled SUDCare integration (paused 2025-06-13)
+    #'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

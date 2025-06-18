@@ -1143,7 +1143,9 @@ msgstr ""
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -8171,6 +8173,8 @@ msgstr "Встановити CommCare"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -13486,24 +13490,28 @@ msgid "Feature Discrepancy"
 msgstr "Відмінність функцій"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            The following features are not turned on in the domain to "
+#| "which you're copying.\n"
+#| "            Select any that you wish to copy along with this "
+#| "application.\n"
+#| "          "
 msgid ""
 "\n"
-"            The following features are not turned on in the domain to which "
-"you're copying.\n"
-"            Select any that you wish to copy along with this application.\n"
+"            The following features are not turned on in the domain to which\n"
+"            you're copying. Please enable the necessary feature flags "
+"required\n"
+"            for the app to function from\n"
+"            <a id=\"feature-flags-link\" href=\"\" target=\"_blank\">here</"
+"a>.\n"
 "          "
 msgstr ""
 "\n"
 "            У домені, до якого ви копіюєте, не увімкнені такі функції.\n"
 "            Виберіть ті, які бажаєте скопіювати разом із цією програмою.\n"
 "          "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select All"
-msgstr "Вибрати все"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/undo_delete_app.html
 msgid "Oops! This application was deleted."
@@ -15430,6 +15438,10 @@ msgid "{param} must be a string"
 msgstr "{param} має бути рядком"
 
 #: corehq/apps/case_search/models.py
+msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+msgstr ""
+
+#: corehq/apps/case_search/models.py
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
@@ -16019,6 +16031,12 @@ msgstr "Сховати карту"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "Уточнити пошук"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Select All"
+msgstr "Вибрати все"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
@@ -17693,6 +17711,7 @@ msgstr "Дозволені лише динамічні властивості с
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -17738,9 +17757,10 @@ msgstr "Історія змін занадто велика..."
 msgid ""
 "\n"
 "            The edit history for this session is too large to support new "
-"bulk edits.\n"
-"            You can either apply the current edits, undo edits, or clear the "
-"edit history to start over.\n"
+"bulk\n"
+"            edits. You can either apply the current edits, undo edits, or "
+"clear\n"
+"            the edit history to start over.\n"
 "          "
 msgstr ""
 "\n"
@@ -17778,8 +17798,9 @@ msgid ""
 "          data-bs-dismiss=\"offcanvas\"\n"
 "          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
 "        >Configure Columns</a>\n"
-"        to include editible case properties in the column list in\n"
-"        order to edit the selected cases.\n"
+"        to include editable case properties in the column list in order to "
+"edit\n"
+"        the selected cases.\n"
 "      "
 msgstr ""
 "\n"
@@ -17814,8 +17835,9 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
 msgid ""
 "\n"
-"      Only one session can be active per case type.\n"
-"      Any previewed edits will be lost when starting a new session.\n"
+"      Only one session can be active per case type. Any previewed edits will "
+"be\n"
+"      lost when starting a new session.\n"
 "    "
 msgstr ""
 
@@ -17854,7 +17876,8 @@ msgstr ""
 msgid ""
 "\n"
 "          \"Apply\" will apply all previewed edits in the session, "
-"regardless of filters.\n"
+"regardless of\n"
+"          filters.\n"
 "        "
 msgstr ""
 "\n"
@@ -17926,11 +17949,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Cannot select or actively edit more than %(max_recorded_limit)s "
+#| "cases in a session.\n"
+#| "      "
 msgid ""
 "\n"
 "        Cannot select or actively edit more than %(max_recorded_limit)s "
-"cases in a session.\n"
+"cases\n"
+"        in a session.\n"
 "      "
 msgstr ""
 "\n"
@@ -17939,10 +17968,17 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please either apply your previewed edits, or add filters to "
+#| "select fewer cases.\n"
+#| "      "
 msgid ""
 "\n"
 "        Please either apply your previewed edits, or add filters to select "
-"fewer cases.\n"
+"fewer\n"
+"        cases.\n"
 "      "
 msgstr ""
 "\n"
@@ -18027,7 +18063,8 @@ msgstr[3] ""
 msgid ""
 "\n"
 "      Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> "
-"cases with the same columns and filters?\n"
+"cases\n"
+"      with the same columns and filters?\n"
 "    "
 msgstr ""
 
@@ -18192,6 +18229,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      No cases were found that match the current filters. Please\n"
+#| "      <a\n"
+#| "        href=\"#\"\n"
+#| "        class=\"fw-bold\"\n"
+#| "        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
+#| "      >adjust your filters</a>\n"
+#| "      and try again.\n"
+#| "    "
 msgid ""
 "\n"
 "      No cases were found that match the current filters. Please\n"
@@ -18199,7 +18247,8 @@ msgid ""
 "        href=\"#\"\n"
 "        class=\"fw-bold\"\n"
 "        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
-"      >adjust your filters</a>\n"
+"        >adjust your filters</a\n"
+"      >\n"
 "      and try again.\n"
 "    "
 msgstr ""
@@ -18434,6 +18483,17 @@ msgstr "Почати сесію очищення"
 #: corehq/apps/data_cleaning/views/summary.py
 msgid "Cannot retrieve summary, session was not found."
 msgstr "Не вдалося отримати підсумок, сесію не знайдено."
+
+#: corehq/apps/data_cleaning/views/tables.py
+#, fuzzy
+#| msgid ""
+#| "Error fetching multimedia from remote server. Please try again later."
+msgid ""
+"We are having trouble connecting to the server. Please try again in a few "
+"minutes."
+msgstr ""
+"Помилка отримання мультимедіа з віддаленого сервера. Будь ласка, спробуйте "
+"пізніше."
 
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
@@ -19792,6 +19852,7 @@ msgstr "Додати правило дедуплікації"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -26364,7 +26425,6 @@ msgid "Loading potential attendees ..."
 msgstr "Завантаження потенційних учасників ..."
 
 #: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
@@ -30061,6 +30121,8 @@ msgid "Case Coordinates"
 msgstr "Координати випадку"
 
 #: corehq/apps/geospatial/reports.py corehq/apps/linked_domain/views.py
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Link"
 msgstr "Посилання"
@@ -32951,7 +33013,9 @@ msgid "Errors"
 msgstr "Помилки"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "HTMX Request: Server Error Encountered"
+#, fuzzy
+#| msgid "HTMX Request: Server Error Encountered"
+msgid "Server Error Encountered"
 msgstr "HTMX-запит: Виявлено помилку сервера"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
@@ -34286,6 +34350,12 @@ msgstr ""
 msgctxt "twilio_locale"
 msgid "en"
 msgstr "uk"
+
+#: corehq/apps/hqwebapp/two_factor_methods.py
+#, fuzzy
+#| msgid "Authentication Code"
+msgid "Authenticator App"
+msgstr "Код автентифікації"
 
 #: corehq/apps/hqwebapp/views.py
 #, python-format
@@ -40108,6 +40178,12 @@ msgid "Project Reports"
 msgstr "Звіти про проєкт"
 
 #: corehq/apps/reports/standard/cases/basic.py
+#, fuzzy
+#| msgid "Make this an upstream project space"
+msgid "View all cases within your project space."
+msgstr "Зробити цей простір проєкту простором-джерелом"
+
+#: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
 #: corehq/apps/reports/standard/cases/data_sources.py
 msgid "View Case"
@@ -40345,8 +40421,16 @@ msgid "Sensitive Date"
 msgstr "Чутлива дата"
 
 #: corehq/apps/reports/standard/deployments.py
-msgid "Application Status"
-msgstr "Статус заявки"
+#, fuzzy
+#| msgid "Last Activity"
+msgid "User Last Activity Report"
+msgstr "Остання активність"
+
+#: corehq/apps/reports/standard/deployments.py
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "View last sync and last submission by user."
+msgstr "Переглянути останні надходження"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Assigned Location(s)"
@@ -40507,6 +40591,10 @@ msgid "Raw Forms, Errors & Duplicates"
 msgstr "Сирі форми, помилки та дублікати"
 
 #: corehq/apps/reports/standard/forms/reports.py
+msgid "View all submissions, including errors and archived forms."
+msgstr ""
+
+#: corehq/apps/reports/standard/forms/reports.py
 msgid "Submit Time"
 msgstr "Час відправки"
 
@@ -40558,6 +40646,10 @@ msgstr "Не вдалося переглянути кейс"
 #: corehq/apps/reports/standard/inspect.py
 msgid "Submission History"
 msgstr "Історія відправок"
+
+#: corehq/apps/reports/standard/inspect.py
+msgid "View all submitted data."
+msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
 msgid "Sync Log"
@@ -51765,10 +51857,17 @@ msgid "However, we ran into problems with the following users:"
 msgstr "Однак виникли проблеми з такими користувачами:"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Mobile Workers can log into applications in this project "
+#| "space and submit data.\n"
+#| "          "
 msgid ""
 "\n"
 "            Mobile Workers can log into applications in this project space "
-"and submit data.\n"
+"and\n"
+"            submit data.\n"
 "          "
 msgstr ""
 "\n"
@@ -51777,16 +51876,30 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Their activity and form submissions can be monitored in the "
+#| "Reports section of this %(hq_name)s project space.\n"
+#| "            <br />\n"
+#| "            Read more about managing mobile workers on our\n"
+#| "            <a href=\"https://confluence.dimagi.com/display/"
+#| "commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" "
+#| "target=\"_blank\">Help Site</a>.\n"
+#| "          "
 msgid ""
 "\n"
 "            Their activity and form submissions can be monitored in the "
-"Reports section of this %(hq_name)s project space.\n"
+"Reports\n"
+"            section of this %(hq_name)s project space.\n"
 "            <br />\n"
 "            Read more about managing mobile workers on our\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Help Site</"
-"a>.\n"
+"            <a\n"
+"              href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Create+and+Manage+CommCare+Mobile+Workers\"\n"
+"              target=\"_blank\"\n"
+"              >Help Site</a\n"
+"            >.\n"
 "          "
 msgstr ""
 "\n"
@@ -51835,11 +51948,18 @@ msgstr ""
 "                    "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                      You have reached the limit of <strong>%(u)s\n"
+#| "                      Mobile Workers</strong> included with your plan.\n"
+#| "                    "
 msgid ""
 "\n"
-"                      You have reached the limit of <strong>%(u)s\n"
-"                      Mobile Workers</strong> included with your plan.\n"
+"                      You have reached the limit of\n"
+"                      <strong>%(u)s Mobile Workers</strong> included with "
+"your\n"
+"                      plan.\n"
 "                    "
 msgstr ""
 "\n"
@@ -51849,10 +51969,17 @@ msgstr ""
 "                    "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Please subscribe to a paid plan in order to add\n"
+#| "                        more Mobile Workers.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Please subscribe to a paid plan in order to add\n"
-"                        more Mobile Workers.\n"
+"                        Please subscribe to a paid plan in order to add "
+"more\n"
+"                        Mobile Workers.\n"
 "                      "
 msgstr ""
 "\n"
@@ -51861,10 +51988,19 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Please ask your billing administrator to "
+#| "subscribe\n"
+#| "                        to a paid plan in order to add more Mobile "
+#| "Workers.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Please ask your billing administrator to subscribe\n"
-"                        to a paid plan in order to add more Mobile Workers.\n"
+"                        Please ask your billing administrator to subscribe "
+"to a\n"
+"                        paid plan in order to add more Mobile Workers.\n"
 "                      "
 msgstr ""
 "\n"
@@ -51897,10 +52033,20 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              <strong>There are no mobile workers visible to you at this "
+#| "time.</strong>\n"
+#| "              Please contact your project's administrator if this is "
+#| "incorrect.\n"
+#| "            "
 msgid ""
 "\n"
-"              <strong>There are no mobile workers visible to you at this "
-"time.</strong>\n"
+"              <strong\n"
+"                >There are no mobile workers visible to you at this\n"
+"                time.</strong\n"
+"              >\n"
 "              Please contact your project's administrator if this is "
 "incorrect.\n"
 "            "
@@ -51912,10 +52058,18 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  <strong>There are currently no mobile workers in this "
+#| "project.</strong>\n"
+#| "              "
 msgid ""
 "\n"
-"                  <strong>There are currently no mobile workers in this "
-"project.</strong>\n"
+"                <strong\n"
+"                  >There are currently no mobile workers in this\n"
+"                  project.</strong\n"
+"                >\n"
 "              "
 msgstr ""
 "\n"
@@ -51924,10 +52078,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>No mobile users are assigned to your user's "
+#| "location.</strong>\n"
+#| "              "
 msgid ""
 "\n"
-"                <strong>No mobile users are assigned to your user's location."
-"</strong>\n"
+"                <strong\n"
+"                  >No mobile users are assigned to your user's location.</"
+"strong\n"
+"                >\n"
 "              "
 msgstr ""
 "\n"
@@ -51947,6 +52109,18 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Trial Status"
+msgid "PersonalID Status"
+msgstr "Статус пробного періоду"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Linked"
+msgid "Not Linked"
+msgstr "Пов’язано"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate"
 msgstr "Реактивувати"
 
@@ -51959,15 +52133,30 @@ msgid "Send Confirmation SMS"
 msgstr "Надіслати SMS-підтвердження"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Unlink PersonalID"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Link PersonalID"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate Mobile Worker"
 msgstr "Реактивувати мобільного працівника"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Are you sure you want to <strong>reactivate</"
+#| "strong> this mobile worker?\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Are you sure you want to <strong>reactivate</"
-"strong> this mobile worker?\n"
-"                          "
+"                              Are you sure you want to\n"
+"                              <strong>reactivate</strong> this mobile "
+"worker?\n"
+"                            "
 msgstr ""
 "\n"
 "                            Ви впевнені, що хочете <strong>реактивувати</"
@@ -51975,18 +52164,37 @@ msgstr ""
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Deactivated mobile workers are not able to "
+#| "log into new devices.<br />\n"
+#| "                            Read more about\n"
+#| "                            <a href='https://confluence.dimagi.com/"
+#| "display/commcarepublic/"
+#| "Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-"
+#| "D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers' "
+#| "target=\"_blank\">\n"
+#| "                              deactivating mobile workers\n"
+#| "                            </a> on our Help Site.\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Deactivated mobile workers are not able to log "
-"into new devices.<br />\n"
-"                            Read more about\n"
-"                            <a href='https://confluence.dimagi.com/display/"
+"                              Deactivated mobile workers are not able to "
+"log\n"
+"                              into new devices.<br />\n"
+"                              Read more about\n"
+"                              <a\n"
+"                                href='https://confluence.dimagi.com/display/"
 "commcarepublic/"
 "Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-"
-"D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers' target=\"_blank\">\n"
-"                              deactivating mobile workers\n"
-"                            </a> on our Help Site.\n"
-"                          "
+"D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers'\n"
+"                                target=\"_blank\"\n"
+"                              >\n"
+"                                deactivating mobile workers\n"
+"                              </a>\n"
+"                              on our Help Site.\n"
+"                            "
 msgstr ""
 "\n"
 "                            Деактивовані мобільні працівники не можуть "
@@ -52005,11 +52213,18 @@ msgid "Deactivate Mobile Worker"
 msgstr "Деактивувати мобільного працівника"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Are you sure you want to <strong>deactivate</"
+#| "strong> this mobile worker?\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Are you sure you want to <strong>deactivate</"
-"strong> this mobile worker?\n"
-"                          "
+"                              Are you sure you want to\n"
+"                              <strong>deactivate</strong> this mobile "
+"worker?\n"
+"                            "
 msgstr ""
 "\n"
 "                            Ви впевнені, що хочете <strong>деактивувати</"
@@ -52017,12 +52232,18 @@ msgstr ""
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account "
+#| "confirmation\n"
+#| "                              email to this account?\n"
+#| "                            "
 msgid ""
 "\n"
-"                              Would you like to send the account "
-"confirmation\n"
-"                              email to this account?\n"
-"                            "
+"                                  Would you like to send the account\n"
+"                                  confirmation email to this account?\n"
+"                                "
 msgstr ""
 "\n"
 "                              Бажаєте надіслати лист-підтвердження на цю "
@@ -52030,12 +52251,18 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account "
+#| "confirmation\n"
+#| "                              SMS to this account?\n"
+#| "                            "
 msgid ""
 "\n"
-"                              Would you like to send the account "
-"confirmation\n"
-"                              SMS to this account?\n"
-"                            "
+"                                  Would you like to send the account\n"
+"                                  confirmation SMS to this account?\n"
+"                                "
 msgstr ""
 "\n"
 "                              Бажаєте надіслати SMS-підтвердження на цей "
@@ -52043,13 +52270,21 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent an email with "
+#| "instructions to\n"
+#| "                              set a password and be able to login to this "
+#| "project.\n"
+#| "                            "
 msgid ""
 "\n"
-"                              The user will be sent an email with "
-"instructions to\n"
-"                              set a password and be able to login to this "
-"project.\n"
-"                            "
+"                                  The user will be sent an email with\n"
+"                                  instructions to set a password and be able "
+"to\n"
+"                                  login to this project.\n"
+"                                "
 msgstr ""
 "\n"
 "                              Користувач отримає лист з інструкціями щодо\n"
@@ -52058,13 +52293,22 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with "
+#| "instructions to\n"
+#| "                              set a password and be able to login to this "
+#| "project.\n"
+#| "                            "
 msgid ""
 "\n"
-"                              The user will be sent a SMS with instructions "
-"to\n"
-"                              set a password and be able to login to this "
-"project.\n"
-"                            "
+"                                  The user will be sent a SMS with "
+"instructions\n"
+"                                  to set a password and be able to login to "
+"this\n"
+"                                  project.\n"
+"                                "
 msgstr ""
 "\n"
 "                              Користувач отримає SMS з інструкціями щодо\n"
@@ -52083,6 +52327,33 @@ msgstr "Надіслати SMS-підтвердження облікового �
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Loading Workers..."
 msgstr "Завантаження працівників..."
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <strong>There was an issue contacting the server.</strong>\n"
+#| "            Please check your internet connection.\n"
+#| "            If this issue continues, please\n"
+#| "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an "
+#| "issue</a>.\n"
+#| "          "
+msgid ""
+"\n"
+"            <strong>There was an issue contacting the server.</strong>\n"
+"            Please check your internet connection. If this issue continues,\n"
+"            please\n"
+"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an "
+"issue</a>.\n"
+"          "
+msgstr ""
+"\n"
+"            <strong>Виникла проблема з підключенням до сервера.</strong>\n"
+"            Будь ласка, перевірте ваше інтернет-з'єднання.\n"
+"            Якщо проблема не зникне, будь ласка\n"
+"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">повідомте "
+"про проблему</a>.\n"
+"          "
 
 #: corehq/apps/users/templates/users/partials/basic_info_form.html
 msgid "CommCare Supply Settings"
@@ -52187,6 +52458,91 @@ msgstr "Підтвердити (повторно)"
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Mark as primary"
 msgstr "Позначити як основний"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Link PersonalID Account"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</"
+#| "strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"            Are you sure you want to <strong>link</strong> the PersonalID\n"
+"            account for this mobile worker?\n"
+"          "
+msgstr ""
+"\n"
+"                          Ви впевнені, що хочете <strong>видалити</strong> "
+"це правило?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            After linking, the mobile worker will be able to access this "
+"project\n"
+"            using their PersonalID credentials.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Unlink PersonalID Account"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</"
+#| "strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"            Are you sure you want to <strong>unlink</strong> the PersonalID\n"
+"            account for this mobile worker?\n"
+"          "
+msgstr ""
+"\n"
+"                          Ви впевнені, що хочете <strong>видалити</strong> "
+"це правило?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            After unlinking, the mobile worker will no longer be able to "
+"access\n"
+"            this project using their PersonalID credentials.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#, fuzzy
+#| msgid "link"
+msgid "Unlink"
+msgstr "link"
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_password_locked_banner.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_password_locked_banner.html
+msgid ""
+"\n"
+"    This user is linked with a PersonalID account, and so the password may "
+"not\n"
+"    be reset or changed here.\n"
+"  "
+msgstr ""
 
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #, python-format
@@ -58334,10 +58690,6 @@ msgstr "Переглянути всі події"
 msgid "Manage Attendance Tracking Events"
 msgstr "Керувати подіями відстеження відвідуваності"
 
-#: corehq/trans_override.py
-msgid "Token generator"
-msgstr "Генератор токенів"
-
 #: corehq/util/jsonattrs.py
 #, python-format
 msgid "'%(field)s' field value has an invalid format: %(exc)s"
@@ -59011,6 +59363,12 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Application Status"
+#~ msgstr "Статус заявки"
+
+#~ msgid "Token generator"
+#~ msgstr "Генератор токенів"
 
 #~ msgid "# Cases Cleaned"
 #~ msgstr "# Очищено справ"
