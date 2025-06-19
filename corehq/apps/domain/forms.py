@@ -2003,13 +2003,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 self.current_subscription.plan_version, self.plan_version, date_due,
             )
         else:
-            label = f"One month of {self.plan_version.plan.name}"
-            monthly_fee = self.plan_version.product_rate.monthly_fee
-            duration = relativedelta(date_end, new_date_start)
-            num_months = duration.years * 12 + duration.months
-            amount = monthly_fee * num_months
-            invoice_factory.create_wire_credits_invoice(
-                amount, label, monthly_fee, num_months, date_due
+            invoice_factory.create_subscription_credits_invoice(
+                self.plan_version, new_date_start, date_end, date_due
             )
 
     def new_subscription_start_end_dates(self):
@@ -2143,13 +2138,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         )
         date_due = max(date_start,
                        datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
-        label = f"One month of {self.plan_version.plan.name}"
-        monthly_fee = self.plan_version.product_rate.monthly_fee
-        duration = relativedelta(date_end, date_start)
-        num_months = duration.years * 12 + duration.months
-        amount = monthly_fee * num_months
-        invoice_factory.create_wire_credits_invoice(
-            amount, label, monthly_fee, num_months, date_due
+        invoice_factory.create_subscription_credits_invoice(
+            self.renewed_version, date_start, date_end, date_due
         )
 
 

@@ -316,6 +316,14 @@ class DomainWireInvoiceFactory(object):
             date_due=date_due,
         )
 
+    def create_subscription_credits_invoice(self, plan_version, date_start, date_end, date_due):
+        label = f"One month of {plan_version.plan.name}"
+        monthly_fee = plan_version.product_rate.monthly_fee
+        duration = relativedelta(date_end, date_start)
+        num_months = duration.years * 12 + duration.months
+        amount = monthly_fee * num_months
+        self.create_wire_credits_invoice(amount, label, monthly_fee, num_months, date_due=date_due)
+
     def create_prorated_subscription_change_credits_invoice(self, old_date_start, new_date_start, date_end,
                                                             old_plan_version, new_plan_version, date_due):
         old_monthly_fee = old_plan_version.product_rate.monthly_fee
