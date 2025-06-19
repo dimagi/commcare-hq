@@ -91,7 +91,8 @@ PASSWORD_RESET_KWARGS = {
     'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
-    'extra_context': {'current_page': {'page_name': _('Password Reset')}}
+    'extra_context': {'current_page': {'page_name': _('Password Reset')},
+                      'form_submit_url_name': 'password_reset_email'}
 }
 
 PASSWORD_RESET_DONE_KWARGS = {
