@@ -57,8 +57,8 @@ class UserES(HQESQuery):
             is_practice_user,
             is_admin,
             role_id,
-            # TODO remove
             is_active,
+            is_inactive,
             username,
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
@@ -66,11 +66,11 @@ class UserES(HQESQuery):
     # TODO remove
     def show_inactive(self):
         """Include inactive users, which would normally be filtered out."""
-        return self
+        raise NotImplementedError()
 
     # TODO remove
     def show_only_inactive(self):
-        return self.is_active(False)
+        raise NotImplementedError()
 
 
 class ElasticUser(ElasticDocumentAdapter):
@@ -146,17 +146,17 @@ def domain(domain, *, include_active=True, include_inactive=False):
     if include_active and not include_inactive:  # only active
         return filters.AND(
             domain_filter,
-            _is_active(domain),
+            is_active(domain),
         )
     if not include_active and include_inactive:  # only inactive
         return filters.AND(
             domain_filter,
-            _is_inactive(domain),
+            is_inactive(domain),
         )
     return filters.match_none()
 
 
-def _is_active(domain):
+def is_active(domain):
     return filters.AND(
         filters.term("is_active", True),
         filters.nested('user_domain_memberships', filters.AND(
@@ -166,7 +166,7 @@ def _is_active(domain):
     )
 
 
-def _is_inactive(domain):
+def is_inactive(domain):
     return filters.OR(
         filters.term("is_active", False),
         filters.nested('user_domain_memberships', filters.AND(
@@ -274,11 +274,6 @@ def role_id(role_id):
         filters.term("domain_membership.role_id", role_id),     # mobile users
         filters.term("domain_memberships.role_id", role_id)     # web users
     )
-
-
-# TODO remove
-def is_active(active=True):
-    return filters.term("is_active", active)
 
 
 def _user_data(key, filter_):
