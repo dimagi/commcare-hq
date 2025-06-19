@@ -2111,7 +2111,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, self.current_subscription.date_start, self.creating_user)
-                self.current_subscription.renew_subscription(
+                renewed_subscription = self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,
                     service_type=SubscriptionType.PRODUCT,
@@ -2119,6 +2119,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,
                 )
+                if self.renewed_version.plan.is_annual_plan:
+                    self.send_prepayment_invoice(renewed_subscription.date_start, renewed_subscription.date_end)
                 return True
         except SubscriptionRenewalError as e:
             log_accounting_error(
@@ -2128,6 +2130,25 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 }
             )
             return False
+
+    def send_prepayment_invoice(self, date_start, date_end):
+        email_list = self.cleaned_data['email_list']
+        contact_emails = [email_list[0]]
+        cc_emails = [email for email in email_list[1:]]
+        invoice_factory = DomainWireInvoiceFactory(
+            self.domain, date_start=date_start, date_end=date_end,
+            contact_emails=contact_emails, cc_emails=cc_emails
+        )
+        date_due = max(date_start,
+                       datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
+        label = f"One month of {self.plan_version.plan.name}"
+        monthly_fee = self.plan_version.product_rate.monthly_fee
+        duration = relativedelta(date_end, date_start)
+        num_months = duration.years * 12 + duration.months
+        amount = monthly_fee * num_months
+        invoice_factory.create_wire_credits_invoice(
+            amount, label, monthly_fee, num_months, date_due
+        )
 
 
 class ProBonoForm(forms.Form):
