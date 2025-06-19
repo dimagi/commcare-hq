@@ -203,3 +203,40 @@ class TestIsActiveOnDomain(TestCase):
                 'web_user_inactive_active_other',
             ]
         )
+
+    def test_get_active_in_domains(self):
+        domains = [self.domain, self.other_domain]
+        self.assertItemsEqual(
+            UserES()
+            .domain(domains)
+            .has_domain_membership(domains, active=True)
+            .values_list('username', flat=True),
+            [
+                'cc_user_active',
+                'cc_user_active_other_domain',
+                'web_user_active',
+                'web_user_active_other_domain',
+                'web_user_active_both_domains',
+                'web_user_active_inactive_other',
+                'web_user_inactive_active_other',
+            ]
+        )
+
+    def test_get_inactive_in_domains(self):
+        domains = [self.domain, self.other_domain]
+        self.assertItemsEqual(
+            UserES()
+            .domain(domains)
+            .show_inactive()
+            .has_domain_membership(domains, active=False)
+            .values_list('username', flat=True),
+            [
+                'cc_user_inactive',
+                'cc_user_inactive_other_domain',
+                'web_user_inactive',
+                'web_user_inactive_other_domain',
+                'web_user_inactive_both_domains',
+                'web_user_active_inactive_other',
+                'web_user_inactive_active_other',
+            ]
+        )

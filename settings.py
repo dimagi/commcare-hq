@@ -1255,7 +1255,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('eu', 'production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings
