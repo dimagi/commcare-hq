@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
@@ -353,7 +353,7 @@ class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
     def setUp(self):
         super().setUp()
         self.subscription = generator.generate_domain_subscription(
-            self.account, self.domain, datetime.today(), datetime.today() + timedelta(days=7), is_active=True
+            self.account, self.domain, date.today(), date.today() + timedelta(days=7), is_active=True
         )
 
     def create_form(self, new_plan_version, **kwargs):
