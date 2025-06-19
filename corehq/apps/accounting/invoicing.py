@@ -13,7 +13,10 @@ import simplejson
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
-from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
+from corehq.apps.accounting.const import (
+    SMALL_INVOICE_THRESHOLD,
+    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
+)
 from corehq.apps.accounting.emails import (
     send_flagged_pay_annually_subscription_alert,
 )
@@ -316,16 +319,17 @@ class DomainWireInvoiceFactory(object):
             date_due=date_due,
         )
 
-    def create_subscription_credits_invoice(self, plan_version, date_start, date_end, date_due):
+    def create_subscription_credits_invoice(self, plan_version, date_start, date_end):
         label = f"One month of {plan_version.plan.name}"
         monthly_fee = plan_version.product_rate.monthly_fee
         duration = relativedelta(date_end, date_start)
         num_months = duration.years * 12 + duration.months
         amount = monthly_fee * num_months
+        date_due = self.date_due(date_start)
         self.create_wire_credits_invoice(amount, label, monthly_fee, num_months, date_due=date_due)
 
     def create_prorated_subscription_change_credits_invoice(self, old_date_start, new_date_start, date_end,
-                                                            old_plan_version, new_plan_version, date_due):
+                                                            old_plan_version, new_plan_version):
         old_monthly_fee = old_plan_version.product_rate.monthly_fee
         new_monthly_fee = new_plan_version.product_rate.monthly_fee
         old_sub_prepaid = get_prorated_software_plan_cost(old_date_start, date_end, old_monthly_fee)
@@ -344,6 +348,7 @@ class DomainWireInvoiceFactory(object):
         items = new_plan_line_item + old_plan_line_item
         amount = new_sub_cost + old_plan_total
         serializable_amount = simplejson.dumps(amount, use_decimal=True)
+        date_due = self.date_due(new_date_start)
 
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
@@ -356,6 +361,11 @@ class DomainWireInvoiceFactory(object):
             cc_emails=self.cc_emails,
             date_due=date_due,
         )
+
+    @staticmethod
+    def date_due(date_start):
+        return max(date_start,
+                   datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
 
 
 class CustomerAccountInvoiceFactory(object):

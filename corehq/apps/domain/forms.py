@@ -47,10 +47,7 @@ from memoized import memoized
 from PIL import Image
 
 from corehq import privileges
-from corehq.apps.accounting.const import (
-    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
-    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
-)
+from corehq.apps.accounting.const import PAY_ANNUALLY_SUBSCRIPTION_MONTHS
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
@@ -1994,18 +1991,13 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             self.domain, date_start=new_date_start, date_end=date_end,
             contact_emails=contact_emails, cc_emails=cc_emails
         )
-        date_due = max(new_date_start,
-                       datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
-
         if self.current_is_annual_plan():
             invoice_factory.create_prorated_subscription_change_credits_invoice(
                 self.current_subscription.date_start, new_date_start, date_end,
-                self.current_subscription.plan_version, self.plan_version, date_due,
+                self.current_subscription.plan_version, self.plan_version,
             )
         else:
-            invoice_factory.create_subscription_credits_invoice(
-                self.plan_version, new_date_start, date_end, date_due
-            )
+            invoice_factory.create_subscription_credits_invoice(self.plan_version, new_date_start, date_end)
 
     def new_subscription_start_end_dates(self):
         if self.is_downgrade_from_paid_plan() and self.current_subscription.is_below_minimum_subscription:
@@ -2136,11 +2128,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
             self.domain, date_start=date_start, date_end=date_end,
             contact_emails=contact_emails, cc_emails=cc_emails
         )
-        date_due = max(date_start,
-                       datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
-        invoice_factory.create_subscription_credits_invoice(
-            self.renewed_version, date_start, date_end, date_due
-        )
+        invoice_factory.create_subscription_credits_invoice(self.renewed_version, date_start, date_end)
 
 
 class ProBonoForm(forms.Form):
