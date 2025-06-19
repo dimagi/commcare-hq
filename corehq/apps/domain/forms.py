@@ -1745,6 +1745,44 @@ class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form
                      token_generator, from_email, request, **kwargs)
 
 
+class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
+    email = UsernameAwareEmailField(label=gettext_lazy("Email"), max_length=254)
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None, **kwargs):
+        """
+        Generates a one-use only link for resetting password and sends to the
+        user.
+        """
+        email = self.cleaned_data["email"]
+
+        # this is the line that we couldn't easily override in PasswordForm where
+        # we specifically filter for the username, not the email, so that
+        # mobile workers who have the same email set as a web worker don't
+        # get a password reset email.
+        active_users = get_active_users  # TODO
+
+        super().save(active_users, domain_override, subject_template_name,
+                     email_template_name, html_email_template_name, use_https,
+                     token_generator, from_email, request, **kwargs)
+
+
+class ConfidentialDomainPasswordResetForm(DomainPasswordResetForm):
+
+    def clean_email(self):
+        try:
+            return super(ConfidentialDomainPasswordResetForm, self).clean_email()
+        except forms.ValidationError:
+            # The base class throws various emails that give away information about the user;
+            # we can pretend all is well since the save() method is safe for missing users.
+            return self.cleaned_data['email']
+
+
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
 
     def clean_email(self):

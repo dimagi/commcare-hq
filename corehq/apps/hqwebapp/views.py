@@ -404,11 +404,13 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'next': req_params.get('next', '/a/%s/' % domain_name),
             'allow_domain_requests': domain_obj.allow_domain_requests,
             'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
+            'default_password_reset_link': reverse('domain_password_reset_email', kwargs={'domain': domain_name}),
         })
     else:
         commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
         context.update({
             'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
+            'default_password_reset_link': reverse('password_reset_email'),
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView

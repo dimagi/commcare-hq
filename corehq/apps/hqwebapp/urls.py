@@ -1,9 +1,13 @@
 from django.urls import include, re_path as url
+from django.contrib.auth.views import PasswordResetView
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from two_factor.urls import urlpatterns as tf_urls
 
 from corehq.apps.cloudcare.views import session_endpoint
+from corehq.apps.domain.forms import ConfidentialDomainPasswordResetForm
 from corehq.apps.domain.views.sms import PublicSMSRatesView
 from corehq.apps.hqwebapp.session_details_endpoint.views import (
     SessionDetailsView,
@@ -48,6 +52,12 @@ from corehq.apps.settings.views import (
     TwoFactorSetupView,
 )
 
+PASSWORD_RESET_KWARGS = {
+    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
+    'form_class': ConfidentialDomainPasswordResetForm,
+    'from_email': settings.DEFAULT_FROM_EMAIL,
+    'extra_context': {'current_page': {'page_name': _('Password Reset')}}
+}
 
 urlpatterns = [
     url(r'^$', redirect_to_default),
@@ -109,6 +119,8 @@ domain_specific = [
     url(r'^$', redirect_to_default, name='domain_homepage'),
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/iframe/$', iframe_domain_login, name='iframe_domain_login'),
+    url(r'^accounts/password_reset_email/$', PasswordResetView.as_view(**PASSWORD_RESET_KWARGS),
+        name='domain_password_reset_email'),
     url(r'^retreive_download/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         retrieve_download, {'template': 'hqwebapp/includes/bootstrap3/file_download.html'},
         name='hq_soil_download'),
