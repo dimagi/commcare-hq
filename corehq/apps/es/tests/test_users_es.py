@@ -209,7 +209,6 @@ class TestIsActiveOnDomain(TestCase):
         self.assertItemsEqual(
             UserES()
             .domain(domains)
-            .has_domain_membership(domains, active=True)
             .values_list('username', flat=True),
             [
                 'cc_user_active',
@@ -226,9 +225,7 @@ class TestIsActiveOnDomain(TestCase):
         domains = [self.domain, self.other_domain]
         self.assertItemsEqual(
             UserES()
-            .domain(domains)
-            .show_inactive()
-            .has_domain_membership(domains, active=False)
+            .domain(domains, include_active=False, include_inactive=True)
             .values_list('username', flat=True),
             [
                 'cc_user_inactive',

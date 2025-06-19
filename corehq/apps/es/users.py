@@ -61,7 +61,6 @@ class UserES(HQESQuery):
             is_active,
             username,
             missing_or_empty_user_data_property,
-            has_domain_membership,
         ] + super(UserES, self).builtin_filters
 
     # TODO remove
@@ -149,12 +148,12 @@ def domain(domain, *, allow_enterprise=False, include_active=True, include_inact
     if include_active and not include_inactive:  # only active
         return filters.AND(
             domain_filter,
-            filters.NOT(_inactive(domain)),
+            _is_active(domain),
         )
     if not include_active and include_inactive:  # only inactive
         return filters.AND(
             domain_filter,
-            _inactive(domain),
+            _is_inactive(domain),
         )
     return filters.match_none()
 
@@ -167,7 +166,17 @@ def _get_enterprise_domains(domains):
             yield source_domain
 
 
-def _inactive(domain):
+def _is_active(domain):
+    return filters.AND(
+        filters.term("is_active", True),
+        filters.nested('user_domain_memberships', filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.NOT(filters.term('user_domain_memberships.is_active', False)),
+        ))
+    )
+
+
+def _is_inactive(domain):
     return filters.OR(
         filters.term("is_active", False),
         filters.nested('user_domain_memberships', filters.AND(
@@ -280,25 +289,6 @@ def role_id(role_id):
 # TODO remove
 def is_active(active=True):
     return filters.term("is_active", active)
-
-
-def has_domain_membership(domain, active=True):
-    if active:
-        return filters.AND(
-            filters.term("is_active", True),
-            filters.nested('user_domain_memberships', filters.AND(
-                filters.term('user_domain_memberships.domain.exact', domain),
-                filters.NOT(filters.term('user_domain_memberships.is_active', False)),
-            ))
-        )
-    else:
-        return filters.OR(
-            filters.term("is_active", False),
-            filters.nested('user_domain_memberships', filters.AND(
-                filters.term('user_domain_memberships.domain.exact', domain),
-                filters.term('user_domain_memberships.is_active', False),
-            ))
-        )
 
 
 def _user_data(key, filter_):
