@@ -999,6 +999,7 @@ class SoftwarePlanVersion(models.Model):
                        'included': 'Infinite' if r.monthly_limit == UNLIMITED_FEATURE_USAGE else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
+            'is_annual_plan': self.plan.is_annual_plan,
         })
         return desc
 
