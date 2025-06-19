@@ -57,8 +57,8 @@ class UserES(HQESQuery):
             is_practice_user,
             is_admin,
             role_id,
-            # TODO remove
             is_active,
+            is_inactive,
             username,
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
@@ -131,7 +131,8 @@ user_adapter = create_document_adapter(
 )
 
 
-def domain(domain, *, allow_enterprise=False, include_active=True, include_inactive=False):
+def domain(domain, *, allow_enterprise=False, include_inactive=False):
+    """Filters out inactive users by default"""
     domains = [domain] if isinstance(domain, str) else domain
     if allow_enterprise:
         domains += list(_get_enterprise_domains(domains))
@@ -143,19 +144,9 @@ def domain(domain, *, allow_enterprise=False, include_active=True, include_inact
         )
     )
 
-    if include_active and include_inactive:  # all
-        return domain_filter
-    if include_active and not include_inactive:  # only active
-        return filters.AND(
-            domain_filter,
-            _is_active(domain),
-        )
-    if not include_active and include_inactive:  # only inactive
-        return filters.AND(
-            domain_filter,
-            _is_inactive(domain),
-        )
-    return filters.match_none()
+    if not include_inactive:
+        return filters.AND(domain_filter, is_active(domain))
+    return domain_filter
 
 
 def _get_enterprise_domains(domains):
@@ -166,7 +157,7 @@ def _get_enterprise_domains(domains):
             yield source_domain
 
 
-def _is_active(domain):
+def is_active(domain):
     return filters.AND(
         filters.term("is_active", True),
         filters.nested('user_domain_memberships', filters.AND(
@@ -176,7 +167,7 @@ def _is_active(domain):
     )
 
 
-def _is_inactive(domain):
+def is_inactive(domain):
     return filters.OR(
         filters.term("is_active", False),
         filters.nested('user_domain_memberships', filters.AND(
@@ -284,11 +275,6 @@ def role_id(role_id):
         filters.term("domain_membership.role_id", role_id),     # mobile users
         filters.term("domain_memberships.role_id", role_id)     # web users
     )
-
-
-# TODO remove
-def is_active(active=True):
-    return filters.term("is_active", active)
 
 
 def _user_data(key, filter_):

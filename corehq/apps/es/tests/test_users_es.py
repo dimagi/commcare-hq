@@ -179,7 +179,8 @@ class TestIsActiveOnDomain(TestCase):
 
     def test_get_inactive_in_domain(self):
         self.assertItemsEqual(
-            UserES().domain(self.domain, include_inactive=True, include_active=False)
+            UserES().domain(self.domain, include_inactive=True)
+            .is_inactive(self.domain)
             .values_list('username', flat=True),
             [
                 'cc_user_inactive',
@@ -225,7 +226,8 @@ class TestIsActiveOnDomain(TestCase):
         domains = [self.domain, self.other_domain]
         self.assertItemsEqual(
             UserES()
-            .domain(domains, include_active=False, include_inactive=True)
+            .domain(domains, include_inactive=True)
+            .is_inactive(domains)
             .values_list('username', flat=True),
             [
                 'cc_user_inactive',
