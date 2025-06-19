@@ -122,7 +122,10 @@ class EmwfUtils(object):
         uid = "u__%s" % user.user_id
         is_active = False
         if u['doc_type'] == 'WebUser':
-            name = "%s [Web User]" % user.username_in_report
+            if WebUser.get_by_user_id(user.user_id).is_active_in_domain(self.domain):
+                name = "%s [Active Web User]" % user.username_in_report
+            else:
+                name = "%s [Deactivated Web User]" % user.username_in_report
         elif user.is_active:
             is_active = True
             name = "%s [Active Mobile Worker]" % user.username_in_report
@@ -152,7 +155,7 @@ class EmwfUtils(object):
     @property
     @memoized
     def static_options(self):
-        types = ['ACTIVE', 'DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
+        types = ['ACTIVE', 'DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'DEACTIVATED_WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         return [self.user_type_tuple(getattr(HQUserType, t)) for t in types]
@@ -276,7 +279,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
             self.utils.user_type_tuple(HQUserType.WEB),
+            self.utils.user_type_tuple(HQUserType.DEACTIVATED_WEB)
         ]
+
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -479,7 +484,10 @@ class EnterpriseUsersUtils(EmwfUtils):
         is_active = False
         report_username = user_obj.username_in_report
         if user['doc_type'] == 'WebUser':
-            name = f"{report_username} [Web User]"
+            if WebUser.get_by_user_id(user_obj.user_id).is_active_in_domain(self.domain):
+                name = f"{report_username} [Active Web User]"
+            else:
+                name = f"{report_username} [Deactivated Web User]"
         elif user_obj.is_active:
             is_active = True
             name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
@@ -501,6 +509,7 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
             self.utils.user_type_tuple(HQUserType.WEB),
+            self.utils.user_type_tuple(HQUserType.DEACTIVATED_WEB),
         ]
 
     @property
@@ -533,7 +542,8 @@ class ChangedByUserFilter(EnterpriseUserFilter):
     label = gettext_lazy("Modified by User(s)")
 
     def get_default_selections(self):
-        return [self.utils.user_type_tuple(HQUserType.WEB)]
+        return [self.utils.user_type_tuple(HQUserType.WEB),
+        self.utils.user_type_tuple(HQUserType.DEACTIVATED_WEB)]
 
 
 class UserPropertyFilter(BaseSingleOptionFilter):
