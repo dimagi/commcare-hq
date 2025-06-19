@@ -131,10 +131,8 @@ user_adapter = create_document_adapter(
 )
 
 
-def domain(domain, *, allow_enterprise=False, include_active=True, include_inactive=False):
+def domain(domain, *, include_active=True, include_inactive=False):
     domains = [domain] if isinstance(domain, str) else domain
-    if allow_enterprise:
-        domains += list(_get_enterprise_domains(domains))
     domain_filter = filters.OR(
         filters.term("domain.exact", domains),
         filters.nested(
@@ -156,14 +154,6 @@ def domain(domain, *, allow_enterprise=False, include_active=True, include_inact
             _is_inactive(domain),
         )
     return filters.match_none()
-
-
-def _get_enterprise_domains(domains):
-    from corehq.apps.enterprise.models import EnterprisePermissions
-    for domain in domains:
-        source_domain = EnterprisePermissions.get_source_domain(domain)
-        if source_domain:
-            yield source_domain
 
 
 def _is_active(domain):

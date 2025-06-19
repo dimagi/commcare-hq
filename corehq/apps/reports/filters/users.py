@@ -351,7 +351,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        q = cls._base_user_es_query(domain, request_user)
+        es_domains = cls._es_query_domains(domain, request_user)
+        q = user_es.UserES().domain(es_domains, include_inactive=True)
         q = customize_user_query(request_user, domain, q)
         if (
             ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
@@ -373,7 +374,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         elif HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
             user_type_filters.append(filters.AND(
                 user_es.domain(
-                    domain,
+                    es_domains,
                     include_active=(HQUserType.ACTIVE in user_types),
                     include_inactive=(HQUserType.DEACTIVATED in user_types),
                 ),
@@ -384,10 +385,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
         if HQUserType.WEB in user_types:
-            user_type_filters.append(filters.AND(user_es.domain(domain), user_es.web_users()))
+            user_type_filters.append(filters.AND(user_es.domain(es_domains), user_es.web_users()))
         if HQUserType.DEACTIVATED_WEB in user_types:
             user_type_filters.append(filters.AND(user_es.domain(
-                domain, include_active=False, include_inactive=True), user_es.web_users()))
+                es_domains, include_active=False, include_inactive=True), user_es.web_users()))
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 
@@ -438,8 +439,18 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return q.filter(id_filter)
 
     @classmethod
-    def _base_user_es_query(cls, domain, request_user):
-        return user_es.UserES().domain(domain, allow_enterprise=True, include_inactive=True)
+    def _es_query_domains(cls, domain, request_user):
+        domains = [domain] if isinstance(domain, str) else domain
+        domains += list(cls._get_enterprise_domains(domains))
+        return domains
+
+    @classmethod
+    def _get_enterprise_domains(cls, domains):
+        from corehq.apps.enterprise.models import EnterprisePermissions
+        for domain in domains:
+            source_domain = EnterprisePermissions.get_source_domain(domain)
+            if source_domain:
+                yield source_domain
 
     @staticmethod
     def _verify_users_are_accessible(domain, request_user, user_ids):
@@ -525,12 +536,10 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
         return context
 
     @classmethod
-    def _base_user_es_query(cls, domain, request_user):
+    def _es_query_domains(cls, domain, request_user):
         if not request_user.has_permission(domain, 'access_all_locations'):
-            return super()._base_user_es_query(domain, request_user)
-
-        domains = list(set(EnterprisePermissions.get_domains(domain)) | {domain})
-        return user_es.UserES().domain(domains)
+            return super()._es_query_domains(domain, request_user)
+        return list(set(EnterprisePermissions.get_domains(domain)) | {domain})
 
 
 class AffectedUserFilter(EnterpriseUserFilter):
