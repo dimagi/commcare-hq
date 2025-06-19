@@ -17,6 +17,7 @@ from . import (  # noqa: F401
     apps,
     case_search,
     case_search_bha,
+    case_search_cc_perf,
     cases,
     domains,
     forms,
@@ -34,7 +35,7 @@ GroupES = groups.GroupES
 UserES = users.UserES
 CaseSearchES = case_search.CaseSearchES
 CaseSearchBhaES = case_search_bha.CaseSearchBhaES
-
+CaseSearchCCPerfES = case_search_cc_perf.CaseSearchCCPerfES
 
 app_adapter = apps.app_adapter
 case_adapter = cases.case_adapter
@@ -45,6 +46,7 @@ group_adapter = groups.group_adapter
 sms_adapter = sms.sms_adapter
 user_adapter = users.user_adapter
 case_search_bha_adapter = case_search_bha.case_search_bha_adapter
+case_search_cc_perf_adapter = case_search_cc_perf.case_search_cc_perf_adapter
 
 
 @memoized
@@ -64,4 +66,5 @@ def canonical_name_adapter_map():
     }
     if settings.IS_SAAS_ENVIRONMENT:
         adapter_map[case_search_bha_adapter.canonical_name] = case_search_bha_adapter
+        adapter_map[case_search_cc_perf_adapter.canonical_name] = case_search_cc_perf_adapter
     return adapter_map
