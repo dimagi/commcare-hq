@@ -1856,6 +1856,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     def clean_email_list(self):
         return self.data.getlist('email_list')
 
+    def get_email_lists(self):
+        email_list = self.clean_email_list()
+        contact_email = email_list[:1]
+        cc_emails = email_list[1:]
+        return contact_email, cc_emails
+
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
     @transaction.atomic
@@ -1983,9 +1989,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             return False
 
     def send_prepayment_invoice(self, new_date_start, date_end):
-        email_list = self.cleaned_data['email_list']
-        contact_emails = [email_list[0]]
-        cc_emails = [email for email in email_list[1:]]
+        contact_emails, cc_emails = self.get_email_lists()
         invoice_factory = DomainWireInvoiceFactory(
             self.domain, date_start=new_date_start, date_end=date_end,
             contact_emails=contact_emails, cc_emails=cc_emails
@@ -2132,9 +2136,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
             return False
 
     def send_prepayment_invoice(self, date_start, date_end):
-        email_list = self.cleaned_data['email_list']
-        contact_emails = [email_list[0]]
-        cc_emails = [email for email in email_list[1:]]
+        contact_emails, cc_emails = self.get_email_lists()
         invoice_factory = DomainWireInvoiceFactory(
             self.domain, date_start=date_start, date_end=date_end,
             contact_emails=contact_emails, cc_emails=cc_emails
