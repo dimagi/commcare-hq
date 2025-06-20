@@ -31,9 +31,8 @@ codebase. These guidelines apply in the following circumstances:
 
 ## Tech Stack
 
-- Backend: Python 3.9, Django 4.2
-- Frontend: JavaScript (ECMAScript 2015 (ES6)), HTMX, Alpine.js, Knockout.js
-  (legacy)
+- Backend: Python, Django
+- Frontend: JavaScript, HTMX, Alpine.js, Knockout.js (legacy)
 - Databases: PostgreSQL, Elasticsearch, CouchDB (legacy)
 - Asynchronous task queue: Celery
 - Cache & message broker: Redis
