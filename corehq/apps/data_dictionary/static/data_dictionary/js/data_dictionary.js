@@ -633,9 +633,9 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     };
 
     self.toggleCasePropertyWarning = function () {
-        let toggle = document.getElementById("performance-warning-toggle");
-        let icon = toggle.querySelector('i');
-        if (icon.classList.contains('fa-chevron-down')) {
+        const toggle = document.getElementById("performance-warning-toggle");
+        const icon = toggle.querySelector('i');
+        if (toggle.classList.contains('collapsed')) {
             icon.classList.remove('fa-chevron-down');
             icon.classList.add('fa-chevron-up');
         } else {

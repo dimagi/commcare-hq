@@ -172,7 +172,7 @@ $(function () {
 
     $('#performance-warning-toggle').on('click', function () {
         let $icon = $(this).find('i');
-        if ($icon.hasClass('fa-chevron-down')) {
+        if (this.classList.contains('collapsed')) {
             $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
         } else {
             $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
