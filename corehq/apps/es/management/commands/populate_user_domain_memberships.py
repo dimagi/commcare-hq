@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
 @once_off_migration("populate_user_domain_memberships")
 def _run_migration():
-    query_set = UserES().show_inactive()
+    query_set = UserES()
     for user in with_progress_bar(query_set.scroll_ids_to_disk_and_iter_docs(), query_set.count()):
         if 'user_domain_memberships' not in user:
             memberships = get_user_domain_memberships(user)
