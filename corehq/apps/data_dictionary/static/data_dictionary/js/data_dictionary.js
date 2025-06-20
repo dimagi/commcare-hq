@@ -18,16 +18,18 @@ var caseType = function (
     fhirResourceType,
     deprecated,
     moduleCount,
+    propertiesCount,
     geoCaseProp,
     isSafeToDelete,
     changeSaveButton,
     resetSaveButton,
-    dataUrl
+    dataUrl,
 ) {
     var self = {};
     self.name = name || gettext("No Name");
     self.deprecated = deprecated;
     self.appCount = moduleCount;  // The number of application modules using this case type
+    self.propertyCount = propertiesCount;
     self.url = "#" + name;
     self.fhirResourceType = ko.observable(fhirResourceType);
     self.groups = ko.observableArray();
@@ -69,7 +71,7 @@ var caseType = function (
                     group.name,
                     group.description,
                     group.deprecated,
-                    self.changeSaveButton
+                    self.changeSaveButton,
                 );
                 self.groups.push(groupObj);
             }
@@ -87,7 +89,7 @@ var caseType = function (
                     self.name,
                     isGeoCaseProp,
                     groupObj.name(),
-                    self.changeSaveButton
+                    self.changeSaveButton,
                 );
                 groupObj.properties.push(propObj);
             }
@@ -103,7 +105,7 @@ var groupsViewModel = function (
     name,
     description,
     deprecated,
-    changeSaveButton
+    changeSaveButton,
 ) {
     var self = {};
     self.id = id;
@@ -143,7 +145,7 @@ var groupsViewModel = function (
                 self.caseType,
                 false,
                 self.name(),
-                changeSaveButton
+                changeSaveButton,
             );
             self.newPropertyName(undefined);
             self.properties.push(propObj);
@@ -165,7 +167,7 @@ var propertyListItem = function (
     caseType,
     isGeoCaseProp,
     loadedGroup,
-    changeSaveButton
+    changeSaveButton,
 ) {
     var self = {};
     self.id = prop.id;
@@ -220,7 +222,7 @@ var propertyListItem = function (
         interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
         subTitle, /* subTitle */
         {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
-        10 /* maxDisplay */
+        10, /* maxDisplay */
     );
     self.allowedValues.val(prop.allowed_values);
     if (initialPageData.get('read_only_mode')) {
@@ -293,8 +295,9 @@ var propertyListItem = function (
     return self;
 };
 
-var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes) {
+var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit) {
     var self = {};
+    self.casePropertyLimit = casePropertyLimit;
     self.caseTypes = ko.observableArray();
     self.activeCaseType = ko.observable();
     self.fhirResourceType = ko.observable();
@@ -302,6 +305,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.newPropertyName = ko.observable();
     self.newGroupName = ko.observable();
     self.showAll = ko.observable(false);
+    self.showCasePropertyWarning = ko.observable(false);
+    self.casePropertyWarningContent = ko.observable();
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
 
@@ -402,11 +407,12 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.fhir_resource_type,
                         caseTypeData.is_deprecated,
                         caseTypeData.module_count,
+                        caseTypeData.properties_count,
                         data.geo_case_property,
                         caseTypeData.is_safe_to_delete,
                         changeSaveButton,
                         resetSaveButton,
-                        dataUrl
+                        dataUrl,
                     );
                     self.caseTypes.push(caseTypeObj);
                 });
@@ -523,6 +529,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         self.activeCaseType(caseType.name);
         self.fhirResourceType(caseType.fhirResourceType());
         self.removefhirResourceType(false);
+        self.showCasePropertyWarningIfNeeded();
         self.saveButton.setState('saved');
     };
 
@@ -584,7 +591,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 self.newGroupName(),
                 '',
                 false,
-                changeSaveButton
+                changeSaveButton,
             );
             let groupsObs = self.getCaseTypeGroupsObservable();
             groupsObs.push(group);  // TODO: Broken for computed value
@@ -603,6 +610,33 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
             next.toggle();
             i++;
             next = self.casePropertyList()[i];
+        }
+    };
+
+    self.showCasePropertyWarningIfNeeded = function () {
+        let caseType = self.getActiveCaseType();
+        if (caseType.propertyCount > self.casePropertyLimit) {
+            let content = gettext(
+                "The '" + caseType.name + "' case has a total of " + caseType.propertyCount + " custom properties. " +
+                "We recommend at most " + self.casePropertyLimit + " custom properties per case type, " +
+                "otherwise you may run into performance issues at the time of data collection and analysis."
+            );
+            self.casePropertyWarningContent(content);
+            self.showCasePropertyWarning(true);
+        } else {
+            self.showCasePropertyWarning(false);
+        }
+    };
+
+    self.toggleCasePropertyWarning = function () {
+        let toggle = document.getElementById("performance-warning-toggle");
+        let icon = toggle.querySelector('i');
+        if (icon.classList.contains('fa-chevron-down')) {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        } else {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
         }
     };
 
@@ -681,7 +715,8 @@ $(function () {
         casePropertyUrl = initialPageData.reverse('update_case_property'),
         typeChoices = initialPageData.get('typeChoices'),
         fhirResourceTypes = initialPageData.get('fhirResourceTypes'),
-        viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes);
+        casePropertyLimit = initialPageData.get('casePropertyLimit'),
+        viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit);
 
     function doHashNavigation() {
         let caseType = viewModel.getHashNavigationCaseType();
