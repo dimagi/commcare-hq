@@ -1,7 +1,7 @@
 
 import $ from "jquery";
 import googleAnalytics from "analytix/js/google";
-import kissAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import appManagerUtils from "app_manager/js/app_manager_utils";
 import layoutController from "hqwebapp/js/layout";
 
@@ -42,7 +42,7 @@ _private.showAppPreview = function (triggerAnalytics) {
     $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
 
     if (triggerAnalytics) {
-        kissAnalytics.track.event("[app-preview] Clicked Show App Preview");
+        noopMetrics.track.event("[app-preview] Clicked Show App Preview");
         googleAnalytics.track.event("App Preview", "Clicked Show App Preview");
     }
 
@@ -64,7 +64,7 @@ _private.hideAppPreview = function (triggerAnalytics) {
     }
 
     if (triggerAnalytics) {
-        kissAnalytics.track.event("[app-preview] Clicked Hide App Preview");
+        noopMetrics.track.event("[app-preview] Clicked Hide App Preview");
         googleAnalytics.track.event("App Preview", "Clicked Hide App Preview");
     }
 };
@@ -76,7 +76,7 @@ _private.tabletView = function (triggerAnalytics) {
     _private.triggerPreviewEvent('tablet-view');
 
     if (triggerAnalytics) {
-        kissAnalytics.track.event('[app-preview] User turned on tablet mode');
+        noopMetrics.track.event('[app-preview] User turned on tablet mode');
     }
 };
 
@@ -87,7 +87,7 @@ _private.phoneView = function (triggerAnalytics) {
     _private.triggerPreviewEvent('phone-view');
 
     if (triggerAnalytics) {
-        kissAnalytics.track.event('[app-preview] User turned off tablet mode');
+        noopMetrics.track.event('[app-preview] User turned off tablet mode');
     }
 };
 
@@ -223,7 +223,7 @@ module.initPreviewWindow = function () {
     $('.js-preview-refresh').click(function () {
         $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
         _private.triggerPreviewEvent('refresh');
-        kissAnalytics.track.event("[app-preview] Clicked Refresh App Preview");
+        noopMetrics.track.event("[app-preview] Clicked Refresh App Preview");
         googleAnalytics.track.event("App Preview", "Clicked Refresh App Preview");
     });
     appManagerUtils.handleAjaxAppChange(function () {
