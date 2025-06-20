@@ -122,7 +122,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.project_limits.const import CASE_PROPERTIES_PER_CASE_KEY, DEFAULT_CASE_PROPERTIES_PER_CASE
+from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
 
@@ -884,7 +884,7 @@ def get_form_view_context(
 
 def _get_case_property_limit(domain):
     return SystemLimit.get_limit_for_key(
-        CASE_PROPERTIES_PER_CASE_KEY, DEFAULT_CASE_PROPERTIES_PER_CASE, domain=domain
+        CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE, domain=domain
     )
 
 
