@@ -32,7 +32,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import assertProperties from "hqwebapp/js/assert_properties";
-import kissAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
 import "select2/dist/js/select2.full.min";
@@ -264,12 +264,12 @@ var DataCorrectionsModel = function (options) {
     self.analyticsDescriptor = options.analyticsDescriptor;
     self.trackOpen = function () {
         if (self.analyticsDescriptor) {
-            kissAnalytics.track.event("Clicked " + self.analyticsDescriptor + " Button");
+            noopMetrics.track.event("Clicked " + self.analyticsDescriptor + " Button");
         }
     };
     self.trackSave = function () {
         if (self.analyticsDescriptor) {
-            kissAnalytics.track.event("Clicked Save on " + self.analyticsDescriptor + " Modal");
+            noopMetrics.track.event("Clicked Save on " + self.analyticsDescriptor + " Modal");
         }
     };
 

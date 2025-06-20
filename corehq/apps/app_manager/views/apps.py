@@ -26,7 +26,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_APP_TEMPLATE_FORM_ID,
     send_hubspot_form,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.app_manager import add_ons, id_strings
 from corehq.apps.app_manager.commcare_settings import (
@@ -150,7 +150,7 @@ def default_new_app(request, domain):
     annoying for the Dashboard.
     """
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow(request.couch_user.username, "User created a new blank application")
+    track_workflow_noop(request.couch_user.username, "User created a new blank application")
 
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
@@ -505,7 +505,7 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow(request.couch_user.username, "User created an application from a template")
+    track_workflow_noop(request.couch_user.username, "User created an application from a template")
     clear_app_cache(request, domain)
 
     build = load_app_from_slug(domain, request.user.username, slug)
@@ -1056,5 +1056,5 @@ def pull_upstream_app(request, domain, app_id):
             messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
-    track_workflow(request.couch_user.username, "Linked domain: upstream app pulled")
+    track_workflow_noop(request.couch_user.username, "Linked domain: upstream app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

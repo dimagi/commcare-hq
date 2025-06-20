@@ -18,7 +18,7 @@ import assertProperties from "hqwebapp/js/assert_properties";
 import { Modal } from "bootstrap5";
 import Clipboard from "clipboard/dist/clipboard";
 import googleAnalytics from "analytix/js/google";
-import kissmetricsAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import utils from "export/js/utils";
 import "hqwebapp/js/bootstrap5/validators.ko";  // needed for validation of startDate and endDate
 import "hqwebapp/js/components/inline_edit";
@@ -103,9 +103,9 @@ var exportModel = function (options, pageOptions) {
         });
         self.sendAnalyticsOpenAdditionalFeeds = function () {
             if (options.exportType === 'form') {
-                kissmetricsAnalytics.track.event("[BI Integration] Clicked Repeat Group Feeds");
+                noopMetrics.track.event("[BI Integration] Clicked Repeat Group Feeds");
             } else {
-                kissmetricsAnalytics.track.event("[BI Integration] Clicked Parent Feeds");
+                noopMetrics.track.event("[BI Integration] Clicked Parent Feeds");
             }
         };
         self.sendAnalyticsCloseAdditionalFeeds = function () {
@@ -113,16 +113,16 @@ var exportModel = function (options, pageOptions) {
                 "Number of feeds": self.odataAdditionalFeedUrls().length,
             };
             if (options.exportType === 'form') {
-                kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Repeat Group Feeds modal", eventData);
+                noopMetrics.track.event("[BI Integration] Clicked Close on Repeat Group Feeds modal", eventData);
             } else {
-                kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Parent Feeds modal", eventData);
+                noopMetrics.track.event("[BI Integration] Clicked Close on Parent Feeds modal", eventData);
             }
         };
     }
 
     self.editExport = function () {
         if (options.isOData) {
-            kissmetricsAnalytics.track.event("[BI Integration] Clicked Copy OData Feed Link");
+            noopMetrics.track.event("[BI Integration] Clicked Copy OData Feed Link");
             setTimeout(function () {
                 window.location.href = self.editUrl();
             }, 250);
@@ -133,7 +133,7 @@ var exportModel = function (options, pageOptions) {
 
     self.deleteExport = function (observable, event) {
         if (options.isOData) {
-            kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
+            noopMetrics.track.event("[BI Integration] Deleted Feed");
             setTimeout(function () {
                 $(event.currentTarget).closest('form').submit();
             }, 250);
@@ -435,7 +435,7 @@ var exportListModel = function (options) {
     });
 
     self.sendExportAnalytics = function () {
-        kissmetricsAnalytics.track.event("Clicked Export button");
+        noopMetrics.track.event("Clicked Export button");
         return true;
     };
 
@@ -495,7 +495,7 @@ var exportListModel = function (options) {
             });
         };
         if (options.isOData) {
-            kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
+            noopMetrics.track.event("[BI Integration] Deleted Feed");
             setTimeout(function () {
                 bulkDelete();
             }, 250);
@@ -536,7 +536,7 @@ var exportListModel = function (options) {
     if (options.isOData) {
         self.filterModalExportId.subscribe(function (value) {
             if (value) {
-                kissmetricsAnalytics.track.event("[BI Integration] Clicked Edit Filters button");
+                noopMetrics.track.event("[BI Integration] Clicked Edit Filters button");
             }
         });
     }
@@ -620,7 +620,7 @@ var exportListModel = function (options) {
             self.emwfFormFilter(null);
         }
 
-        kissmetricsAnalytics.track.event(
+        noopMetrics.track.event(
             "[BI Integration] Clicked Save Filters button",
             {
                 "Date Range": self.dateRange(),

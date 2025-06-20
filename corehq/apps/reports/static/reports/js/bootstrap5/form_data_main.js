@@ -2,7 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import singleForm from "reports/js/bootstrap5/single_form";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 
 $(function () {
     singleForm.initSingleForm({
@@ -12,4 +12,4 @@ $(function () {
     });
 });
 
-kissmetrics.track.event('Viewed Form Submission');
+noopMetrics.track.event('Viewed Form Submission');

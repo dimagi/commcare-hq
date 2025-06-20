@@ -5,7 +5,7 @@ from corehq.apps.domain.models import Domain
 
 
 class Command(BaseCommand):
-    help = ("Send KISSmetrics data on subscriptions for all domains")
+    help = ("Send Hubspot data on subscriptions for all domains")
 
     def handle(self, **options):
         for domain in Domain.get_all():

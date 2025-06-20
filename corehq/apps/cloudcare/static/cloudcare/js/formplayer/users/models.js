@@ -1,12 +1,12 @@
 define("cloudcare/js/formplayer/users/models", [
     "underscore",
     "backbone",
-    "analytix/js/kissmetrix",
+    "analytix/js/noopMetrics",
     "cloudcare/js/formplayer/constants",
 ], function (
     _,
     Backbone,
-    kissmetrics,
+    noopMetrics,
     Const,
 ) {
     var self = {};
@@ -33,7 +33,7 @@ define("cloudcare/js/formplayer/users/models", [
         },
 
         trackVersionChange: function (model) {
-            kissmetrics.track.event(
+            noopMetrics.track.event(
                 '[app-preview] App version changed',
                 {
                     previousVersion: model.previous('versionInfo'),

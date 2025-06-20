@@ -3,7 +3,7 @@ define("cloudcare/js/formplayer/apps/views", [
     'underscore',
     'backbone.marionette',
     'analytix/js/google',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/apps/api',
@@ -12,7 +12,7 @@ define("cloudcare/js/formplayer/apps/views", [
     _,
     Marionette,
     googleAnalytics,
-    kissmetrics,
+    noopMetrics,
     constants,
     FormplayerFrontend,
     AppsAPI,
@@ -173,7 +173,7 @@ define("cloudcare/js/formplayer/apps/views", [
         },
         startApp: function (e) {
             e.preventDefault();
-            kissmetrics.track.event("[app-preview] User clicked Start App");
+            noopMetrics.track.event("[app-preview] User clicked Start App");
             googleAnalytics.track.event("App Preview", "User clicked Start App");
             FormplayerFrontend.trigger("app:select", this.appId);
         },

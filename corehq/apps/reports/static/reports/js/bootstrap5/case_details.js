@@ -4,7 +4,7 @@ import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import googleAnalytics from "analytix/js/google";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import casePropertyModal from "case/js/case_property_modal";
 import dataCorrections from "reports/js/bootstrap5/data_corrections";
 import singleForm from "reports/js/bootstrap5/single_form";
@@ -268,7 +268,7 @@ $(function () {
 
     // Analytics
     $('.view-related-case-link').on('click', function () {
-        kissmetrics.track.event("Case Data Report: Related case link clicked");
+        noopMetrics.track.event("Case Data Report: Related case link clicked");
     });
 
 });
@@ -305,4 +305,4 @@ $(function () {
 });
 
 
-kissmetrics.track.event('Viewed Case');
+noopMetrics.track.event('Viewed Case');
