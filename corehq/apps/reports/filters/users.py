@@ -358,7 +358,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
             and request_user.has_permission(domain, 'access_all_locations')
         ):
-            return q.show_inactive()
+            return q
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)

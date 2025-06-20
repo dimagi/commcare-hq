@@ -63,11 +63,6 @@ class UserES(HQESQuery):
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
 
-    # TODO remove
-    def show_inactive(self):
-        """Include inactive users, which would normally be filtered out."""
-        raise NotImplementedError()
-
 
 class ElasticUser(ElasticDocumentAdapter):
 
