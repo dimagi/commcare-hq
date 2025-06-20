@@ -65,7 +65,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
 from corehq.apps.domain.utils import guess_domain_language_for_sms
 from corehq.apps.domain.views.base import DomainViewMixin
-from corehq.apps.es import FormES
+from corehq.apps.es import FormES, UserES
 from corehq.apps.events.models import (
     get_attendee_case_type,
     mobile_worker_attendees_enabled,
@@ -93,7 +93,6 @@ from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
     send_account_confirmation_sms_if_necessary,
 )
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.bulk_download import (
     get_domains_from_user_filters,
@@ -977,28 +976,27 @@ def paginate_mobile_workers(request, domain):
     query = request.GET.get('query')
     deactivated_only = json.loads(request.GET.get('showDeactivatedUsers', "false"))
 
-    def _user_query(search_string, page, limit):
-        user_es = get_search_users_in_domain_es_query(
-            domain=domain, search_string=search_string,
-            offset=page * limit, limit=limit)
-        return filter_user_query_by_locations_accessible_to_user(user_es,
-            domain, request.couch_user).mobile_users()
+    query = (UserES()
+             .domain(domain, include_inactive=True)
+             .mobile_users()
+             .search_string_query(query, ["base_username", "last_name", "first_name"]))
+    query = query.is_inactive(domain) if deactivated_only else query.is_active(domain)
+    query = (filter_user_query_by_locations_accessible_to_user(query, domain, request.couch_user)
+             .source([
+                 '_id',
+                 'first_name',
+                 'last_name',
+                 'base_username',
+                 'created_on',
+                 'is_active',
+                 'is_account_confirmed',
+             ])
+             .start((page - 1) * limit)  # backend pages start at 0
+             .size(limit)
+             .sort('username.exact'))
 
-    # backend pages start at 0
-    users_query = _user_query(query, page - 1, limit)
-    # run with a blank query to fetch total records with same scope as in search
-    if deactivated_only:
-        users_query = users_query.show_only_inactive()
-    users_data = users_query.source([
-        '_id',
-        'first_name',
-        'last_name',
-        'base_username',
-        'created_on',
-        'is_active',
-        'is_account_confirmed',
-    ]).run()
-    users = users_data.hits
+    result = query.run()
+    users = result.hits
 
     def _status_string(user_data):
         if user_data['is_active']:
@@ -1042,7 +1040,7 @@ def paginate_mobile_workers(request, domain):
 
     return JsonResponse({
         'users': users,
-        'total': users_data.total,
+        'total': result.total,
     })
 
 

@@ -7,23 +7,24 @@ from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
+
 from dimagi.utils.logging import notify_exception
 from phonelog.models import DeviceReportEntry
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import LoginAndDomainMixin
+from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.controllers import (
     CaseListFilterOptionsController,
     EmwfOptionsController,
+    EnterpriseUserOptionsController,
     MobileWorkersOptionsController,
     ReassignCaseOptionsController,
-    EnterpriseUserOptionsController,
 )
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 
 logger = logging.getLogger(__name__)
 
@@ -189,16 +190,19 @@ class DeviceLogUsers(DeviceLogFilter):
 
     def get(self, request, domain):
         q = self.request.GET.get('q', None)
-        users_query = (get_search_users_in_domain_es_query(domain, q, self._page_limit(), self._offset())
-            .show_inactive()
-            .remove_default_filter("not_deleted")
-            .source("username")
-        )
-        values = [x['username'].split("@")[0] for x in users_query.run().hits]
-        count = users_query.count()
+        results = (UserES()
+                   .remove_default_filter("not_deleted")
+                   .domain(domain, include_inactive=True)
+                   .search_string_query(q, ["base_username", "last_name", "first_name"])
+                   .source("username")
+                   .start(self._offset())
+                   .size(self._page_limit())
+                   .sort('username.exact')
+                   .run())
+        values = [x['username'].split("@")[0] for x in results.hits]
         return self.render_json_response({
             'results': [{'id': v, 'text': v} for v in values],
-            'total': count,
+            'total': results.total,
         })
 
 
