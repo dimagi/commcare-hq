@@ -55,6 +55,14 @@
       >
         <i class="fa-regular fa-rectangle-list"></i> {% trans 'App Summary' %}
       </a>
+      {% if form_submit_history_url %}
+        <a
+          class="btn btn-form-action custom-button-style"
+          href="{{ form_submit_history_url }}"
+        >
+          <i class="fa-solid fa-magnifying-glass-chart"></i> {% trans 'View Submissions' %}
+        </a>
+      {% endif %}
       <a
         class="btn btn-form-action track-usage-link custom-button-style"
         href="{% url 'view_form' domain app.id form.unique_id %}"
