@@ -28,7 +28,7 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.es.client import BulkActionItem
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.permissions import has_permission_to_view_report
+from corehq.apps.users.permissions import VIEW_SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstance
@@ -205,8 +205,7 @@ class SubmissionPost(object):
         from corehq.apps.reports.standard.cases.case_data import CaseDataView
         from corehq.apps.reports.views import FormDataView
         form_link = case_link = form_export_link = case_export_link = None
-        form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
-        if has_permission_to_view_report(user, instance.domain, form_view):
+        if has_permission_to_view_report(user, instance.domain, VIEW_SUBMISSION_HISTORY_PERMISSION):
             form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
         case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
         if cases and has_permission_to_view_report(user, instance.domain, case_view):

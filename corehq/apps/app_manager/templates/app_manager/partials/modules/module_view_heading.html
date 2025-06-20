@@ -4,6 +4,7 @@
 
 <div class="appmanager-page-actions">
   {% include 'app_manager/partials/app_summary_button.html' %}
+  {% include 'app_manager/partials/view_submissions_button_on_white_bg.html' %}
 </div>
 <div class="appmanager-edit-title">
   {% with disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true"%}

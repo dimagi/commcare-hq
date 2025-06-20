@@ -23,6 +23,7 @@ from corehq.apps.app_manager.views.apps import (
     get_app_view_context,
     get_apps_base_context,
 )
+from corehq.apps.app_manager.views.formdesigner import get_form_submit_history_url_for_last_30_days
 from corehq.apps.app_manager.views.forms import (
     get_form_view_context,
 )
@@ -168,7 +169,14 @@ def view_generic(
             request.couch_user.username
         ),
         'show_release_mode':
-            AppReleaseModeSetting.get_settings(domain).is_visible
+            AppReleaseModeSetting.get_settings(domain).is_visible,
+        'form_submit_history_url': get_form_submit_history_url_for_last_30_days(
+            request,
+            domain,
+            app,
+            module,
+            form,
+        ),
     })
 
     response = render(request, template, context)

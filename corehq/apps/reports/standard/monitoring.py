@@ -69,8 +69,14 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.util import format_datatables_data, friendly_timedelta, DatatablesServerSideParams
+from corehq.apps.reports.util import (
+    format_datatables_data,
+    friendly_timedelta,
+    DatatablesServerSideParams,
+    make_url,
+)
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.permissions import VIEW_SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
@@ -107,10 +113,10 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         return self.table_cell(name)
 
     def _has_form_view_permission(self):
-        return self.request.couch_user.has_permission(
+        return has_permission_to_view_report(
+            self.request.couch_user,
             self.request.domain,
-            'view_report',
-            data='corehq.apps.reports.standard.inspect.SubmitHistory'
+            VIEW_SUBMISSION_HISTORY_PERMISSION
         )
 
     def get_raw_row_link(self, row_obj):
@@ -1557,20 +1563,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         })
 
         return util.numcell(
-            self._html_anchor_tag(self._make_url(base_url, params), value),
+            self._html_anchor_tag(make_url(base_url, params), value),
             value,
         )
 
     @staticmethod
     def _html_anchor_tag(href, value):
         return format_html('<a href="{}" target="_blank">{}</a>', href, value)
-
-    @staticmethod
-    def _make_url(base_url, params):
-        return '{base_url}?{params}'.format(
-            base_url=base_url,
-            params=urlencode(params, True),
-        )
 
     @staticmethod
     def _case_query(case_type):
@@ -1591,7 +1590,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def _case_list_url(self, query, owner_id):
         params = WorkerActivityReport._case_list_url_params(query, owner_id)
-        return self._make_url(self._case_list_base_url, params)
+        return make_url(self._case_list_base_url, params)
 
     def _case_list_url_cases_opened_by(self, owner_id):
         return self._case_list_url_cases_by(owner_id, is_closed=False)
@@ -1644,7 +1643,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             "enddate": end_date,
         }
 
-        url = self._make_url(base_url, params)
+        url = make_url(base_url, params)
 
         return util.format_datatables_data(
             self._html_anchor_tag(url, group_name),
