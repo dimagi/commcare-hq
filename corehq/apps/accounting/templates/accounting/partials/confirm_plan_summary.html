@@ -58,11 +58,22 @@
 
   {% if is_annual_plan %}
     <p class="alert-subscription-text">
+      {% if current_is_annual_plan %}
+        {% blocktrans %}
+          By continuing you are subscribing to a new Pay Annually plan. The new
+          subscription will have the same end date as your existing
+          subscription. You will receive a prorated invoice via email for the
+          difference in plan fees due.
+        {% endblocktrans %}
+      {% else %}
+        {% blocktrans %}
+          By continuing you are subscribing to a Pay Annually plan and will
+          receive an invoice via email for plan fees due.
+        {% endblocktrans %}
+      {% endif %}
       {% blocktrans %}
-        By continuing you are subscribing to a Pay Annually plan and will
-        receive an invoice via email for plan fees due. In case you incur any
-        on-demand fees for excess users or SMS, you will receive invoices for
-        these charges on a monthly basis. See
+        In case you incur any on-demand fees for excess users or SMS, you
+        will receive invoices for these charges on a monthly basis. See
         <a
           href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription"
           >here</a
@@ -83,6 +94,15 @@
         >.
       {% endblocktrans %}
     </p>
+    {% if current_is_annual_plan %}
+      <p class="alert-subscription-text">
+        {% blocktrans %}
+          By continuing you are moving from a Pay Annually to a Pay Monthly
+          plan. Any prepaid plan fees will be automatically applied to future
+          monthly invoices.
+        {% endblocktrans %}
+      </p>
+    {% endif %}
     <p class="alert-subscription-text">
       {% blocktrans %}
         Once you subscribe to a paid plan, you will be able to pause your
