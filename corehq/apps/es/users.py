@@ -68,10 +68,6 @@ class UserES(HQESQuery):
         """Include inactive users, which would normally be filtered out."""
         raise NotImplementedError()
 
-    # TODO remove
-    def show_only_inactive(self):
-        raise NotImplementedError()
-
 
 class ElasticUser(ElasticDocumentAdapter):
 
