@@ -101,7 +101,7 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
     return _get_form_designer_view(request, domain, app, module, form)
 
 
-def _get_form_submit_history_url(request, domain, app, module, form):
+def get_form_submit_history_url_for_last_30_days(request, domain, app, module, form):
     submission_history_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
     if not has_permission_to_view_report(request.couch_user, domain, submission_history_view):
         return None
@@ -112,9 +112,9 @@ def _get_form_submit_history_url(request, domain, app, module, form):
     base_url = reverse('project_report_dispatcher', args=[domain, 'submit_history'])
     params = {
         'form_status': 'active',
-        'form_app_id': app.id,
-        'form_module': module.id,
-        'form_xmlns': form.xmlns,
+        'form_app_id': app.id if app else '',
+        'form_module': module.id if module else '',
+        'form_xmlns': form.xmlns if form else '',
         'startdate': start_date.strftime('%Y-%m-%d'),
         'enddate': end_date.strftime('%Y-%m-%d'),
     }
@@ -179,7 +179,13 @@ def _get_form_designer_view(request, domain, app, module, form):
             app,
             request.couch_user.username,
         ),
-        'form_submit_history_url': _get_form_submit_history_url(request, domain, app, module, form),
+        'form_submit_history_url': get_form_submit_history_url_for_last_30_days(
+            request,
+            domain,
+            app,
+            module,
+            form,
+        ),
     })
 
     response = render(request, "app_manager/form_designer.html", context)
