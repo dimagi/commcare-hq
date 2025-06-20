@@ -157,7 +157,7 @@ class QueryHelper:
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
         _CaseSearchES = self.profiler.get_profiled_search_class(slug)
-        # See case_search_bha.py docstring for context on index_name
+        # See case_search_sub.py docstring for context on index_name
         return _CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False):
