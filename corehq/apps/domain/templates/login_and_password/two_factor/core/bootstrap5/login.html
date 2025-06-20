@@ -4,6 +4,14 @@
   <h2 class="text-center">
     {{ current_page.page_name }}
   </h2>
+  {% if server_display %}
+    <p class="lead text-center">
+      {{ server_display.flag }}
+      {% blocktrans with server_display.location_code as server_location %}
+        {{ server_location }} Server
+      {% endblocktrans %}
+    </p>
+  {% endif %}
 
   {% if messages %}
     {% for message in messages %}

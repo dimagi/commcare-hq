@@ -97,6 +97,16 @@
             {% trans 'Sign Out' %}
           </a>
         </li>
+        {% if server_display %}
+          <li><hr class="dropdown-divider"></li>
+          <li class="dropdown-header nav-header">{% trans 'Server Location' %}</li>
+          <li class="dropdown-item-text">
+            {{ server_display.flag }}
+            {% blocktrans with server_display.location_code as server_location %}
+              {{ server_location }} Server
+            {% endblocktrans %}
+          </li>
+        {% endif %}
       </ul>
     </li>
     {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
