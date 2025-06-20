@@ -175,6 +175,27 @@ def commcare_hq_names(request=None):
     }
 
 
+def server_location_display(request):
+    SERVER_LOCATION_DISPLAY = {
+        'production': {
+            'flag': "🇺🇸",
+            'location_code': "US",
+        },
+        'india': {
+            'flag': "🇮🇳",
+            'location_code': "IN",
+        },
+        'eu': {
+            'flag': "🇪🇺",
+            'location_code': "EU",
+        },
+    }
+    context = {}
+    if env := settings.SERVER_ENVIRONMENT in SERVER_LOCATION_DISPLAY.keys():
+        context = {'server_display': SERVER_LOCATION_DISPLAY[env]}
+    return context
+
+
 def emails(request=None):
     """
     Emails commonly referenced in user-facing templates.
