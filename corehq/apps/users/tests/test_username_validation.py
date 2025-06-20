@@ -9,6 +9,7 @@ from corehq.apps.users.validation import (
 )
 
 
+@override_settings(HQ_ACCOUNT_ROOT="commcarehq.org")
 class TestMobileUsernameValidation(TestCase):
 
     @classmethod
@@ -67,6 +68,7 @@ class TestMobileUsernameValidation(TestCase):
                          "Username 'retired@test-domain.commcarehq.org' is already taken or reserved.")
 
 
+@override_settings(HQ_ACCOUNT_ROOT="commcarehq.org")
 class TestValidateCompleteUsername(SimpleTestCase):
 
     def test_no_exception_raised_if_valid_email(self):
