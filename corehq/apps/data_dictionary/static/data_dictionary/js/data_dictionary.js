@@ -616,11 +616,15 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.showCasePropertyWarningIfNeeded = function () {
         let caseType = self.getActiveCaseType();
         if (caseType.propertyCount > self.casePropertyLimit) {
-            let content = gettext(
-                "The '" + caseType.name + "' case has a total of " + caseType.propertyCount + " custom properties. " +
-                "We recommend at most " + self.casePropertyLimit + " custom properties per case type, " +
+            let content = _.template(gettext(
+                "The '<%- type %>' case has a total of <%- count %> custom properties. " +
+                "We recommend at most <%- limit %> custom properties per case type, " +
                 "otherwise you may run into performance issues at the time of data collection and analysis."
-            );
+            ))({
+                type: caseType.name,
+                count:caseType.propertyCount,
+                limit: self.casePropertyLimit,
+            });
             self.casePropertyWarningContent(content);
             self.showCasePropertyWarning(true);
         } else {
