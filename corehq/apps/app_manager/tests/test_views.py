@@ -744,7 +744,7 @@ class TestViewGeneric(ViewsBase):
         'secure_cookies', 'langs', 'None', 'CUSTOM_LOGO_URL', 'allow_form_copy', 'selected_form', 'slug',
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
-        'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class',
+        'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'case_property_warning',
     }
 
 
