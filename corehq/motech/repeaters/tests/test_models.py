@@ -26,6 +26,7 @@ from ..const import (
 )
 from ..models import (
     HTTP_STATUS_BACK_OFF,
+    DataSourceUpdate,
     FormRepeater,
     Repeater,
     RepeatRecord,
@@ -1041,3 +1042,26 @@ class TestIsSuccessResponse(SimpleTestCase):
 
     def test_none_response(self):
         self.assertFalse(is_success_response(None))
+
+
+class TestDataSourceUpdateManager(TestCase):
+
+    def test_get_oldest_date(self):
+        ten_days_ago = datetime.today() - timedelta(days=10)
+        with freeze_time(ten_days_ago):
+            DataSourceUpdate.objects.create(
+                domain='test-domain',
+                data_source_id=uuid4(),
+                doc_ids=['doc_1']
+            )
+        DataSourceUpdate.objects.create(
+            domain='test-domain',
+            data_source_id=uuid4(),
+            doc_ids=['doc_2']
+        )
+        oldest_date = DataSourceUpdate.objects.get_oldest_date()
+        assert oldest_date.date() == ten_days_ago.date()
+
+    def test_get_oldest_date_none(self):
+        oldest_date = DataSourceUpdate.objects.get_oldest_date()
+        assert oldest_date is None
