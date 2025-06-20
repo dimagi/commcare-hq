@@ -16,8 +16,7 @@ from . import (  # noqa: F401
     # "model" modules
     apps,
     case_search,
-    case_search_bha,
-    case_search_cc_perf,
+    case_search_sub,
     cases,
     domains,
     forms,
@@ -34,8 +33,8 @@ FormES = forms.FormES
 GroupES = groups.GroupES
 UserES = users.UserES
 CaseSearchES = case_search.CaseSearchES
-CaseSearchBhaES = case_search_bha.CaseSearchBhaES
-CaseSearchCCPerfES = case_search_cc_perf.CaseSearchCCPerfES
+CaseSearchBhaES = case_search_sub.CaseSearchBhaES
+CaseSearchCCPerfES = case_search_sub.CaseSearchCCPerfES
 
 app_adapter = apps.app_adapter
 case_adapter = cases.case_adapter
@@ -45,8 +44,8 @@ form_adapter = forms.form_adapter
 group_adapter = groups.group_adapter
 sms_adapter = sms.sms_adapter
 user_adapter = users.user_adapter
-case_search_bha_adapter = case_search_bha.case_search_bha_adapter
-case_search_cc_perf_adapter = case_search_cc_perf.case_search_cc_perf_adapter
+case_search_bha_adapter = case_search_sub.case_search_bha_adapter
+case_search_cc_perf_adapter = case_search_sub.case_search_cc_perf_adapter
 
 
 @memoized

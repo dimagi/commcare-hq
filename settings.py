@@ -1095,7 +1095,7 @@ ES_SETTINGS = None
 #         'multiplex_writes': True,
 #     }
 # }
-# See case_search_bha.py docstring for context
+# See case_search_sub.py docstring for context
 CASE_SEARCH_SUB_INDICES = {}
 
 PHI_API_KEY = None
