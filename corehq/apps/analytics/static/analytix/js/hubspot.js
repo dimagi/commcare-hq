@@ -3,7 +3,6 @@
  * Instatiates the Hubspot analytics platform.
  */
 import $ from "jquery";
-import _ from "underscore";
 import initialAnalytics from "analytix/js/initial";
 import logging from "analytix/js/logging";
 import utils from "analytix/js/utils";
