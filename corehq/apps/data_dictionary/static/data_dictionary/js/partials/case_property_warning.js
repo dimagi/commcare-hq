@@ -19,12 +19,12 @@ function casePropertyWarningViewModel (propertyLimit) {
 
     self.updateWarningText = function() {
         let content = _.template(gettext(
-            "The '<%- type %>' case has a total of <%- count %> custom properties. " +
-            "We recommend at most <%- limit %> custom properties per case type, " +
+            "You've saved <%- count %> case properties to the '<%- type %>' case. " +
+            "We recommend at most <%- limit %> case properties per case type, " +
             "otherwise you may run into performance issues at the time of data collection and analysis."
         ))({
-            type: self.caseType,
             count: self.propertyCount,
+            type: self.caseType,
             limit: self.propertyLimit,
         });
         self.warningContent(content);
