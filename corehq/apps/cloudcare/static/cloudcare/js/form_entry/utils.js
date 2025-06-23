@@ -62,7 +62,7 @@ define("cloudcare/js/form_entry/utils", [
         ).done(function (Debugger, FormUI) {
             var form = FormUI.Form(formJSON),
                 $debug = $('#cloudcare-debugger'),
-                CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry,
+                CloudCareDebugger = Debugger.default.CloudCareDebuggerFormEntry,
                 cloudCareDebugger;
             module.resourceMap = resourceMap;
             ko.cleanNode($div[0]);

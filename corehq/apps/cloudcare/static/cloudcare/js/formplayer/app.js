@@ -403,8 +403,8 @@ define("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.on('configureDebugger', function () {
         import("cloudcare/js/debugger/debugger").then(function (Debugger) {
-            var CloudCareDebugger = Debugger.CloudCareDebuggerMenu,
-                TabIDs = Debugger.TabIDs,
+            var CloudCareDebugger = Debugger.default.CloudCareDebuggerMenu,
+                TabIDs = Debugger.default.TabIDs,
                 user = UsersModels.getCurrentUser(),
                 cloudCareDebugger,
                 $debug = $('#cloudcare-debugger');
