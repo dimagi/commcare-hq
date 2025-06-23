@@ -5,7 +5,6 @@
 {% load i18n %}
 
 {% block title %}{# controlled by app_manager/js/forms/form_view.js #}{% endblock %}
-
 {% js_entry_b3 "app_manager/js/forms/form_view" %}
 
 {% block stylesheets %}
@@ -99,6 +98,7 @@
   {% initial_page_data 'is_release_notes_form' form.is_release_notes_form %}
   {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
   {% initial_page_data 'is_training_module' is_training_module %}
+  {% initial_page_data 'case_property_warning' case_property_warning %}
   {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
     {% initial_page_data 'apps_modules' apps_modules %}
   {% endif %}
@@ -167,6 +167,7 @@
     <div class="tab-content appmanager-tab-content">
       {% if form.uses_cases %}
         <div class="tab-pane" id="case-configuration">
+          {% include "data_dictionary/partials/case_property_warning.html" %}
           {% if xform_validation_missing %}
             <p class="alert alert-warning">
               {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}

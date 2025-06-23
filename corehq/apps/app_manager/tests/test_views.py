@@ -745,6 +745,7 @@ class TestViewGeneric(ViewsBase):
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
         'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'form_submit_history_url',
+        'case_property_warning',
     }
 
 
