@@ -138,7 +138,6 @@ class EnterpriseUserFilterTest(BaseEnterpriseUserFilterTest):
             mobile_user_and_group_slugs,
             user,
         )
-        print(user_query.dumps())
         usernames = user_query.values_list('username', flat=True)
         self.assertCountEqual(usernames, expected_usernames)
 

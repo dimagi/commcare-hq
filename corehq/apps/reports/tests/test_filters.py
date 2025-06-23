@@ -23,7 +23,7 @@ from corehq.apps.reports.filters.forms import (
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
-from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import generate_cases, has_permissions
 
 
@@ -353,4 +353,4 @@ def test_restricted_user_es_query(self, slugs, expected_ids):
 def test_restricted_user_es_query_errors(self, slugs):
     with has_permissions(access_all_locations=False):
         with self.assertRaises(PermissionDenied):
-            user_query = ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
+            ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
