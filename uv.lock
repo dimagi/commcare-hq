@@ -650,7 +650,6 @@ dependencies = [
     { name = "psycogreen" },
     { name = "psycopg2-binary" },
     { name = "pulp" },
-    { name = "py-kissmetrics" },
     { name = "pycryptodome" },
     { name = "pyjwt" },
     { name = "pyphonetics" },
@@ -832,7 +831,6 @@ requires-dist = [
     { name = "psycogreen" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pulp" },
-    { name = "py-kissmetrics" },
     { name = "pycryptodome", specifier = ">=3.6.6" },
     { name = "pyjwt" },
     { name = "pyphonetics" },
@@ -3326,18 +3324,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/97/5a/0bc937c25d3ce4e0a74335222aee05455d6afa2888032185f8ab50cdf6fd/pure_eval-0.2.2.tar.gz", hash = "sha256:2b45320af6dfaa1750f543d714b6d1c520a1688dec6fd24d339063ce0aaa9ac3", size = 19395, upload-time = "2022-01-22T15:41:29.465Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2b/27/77f9d5684e6bce929f5cfe18d6cfbe5133013c06cb2fbf5933670e60761d/pure_eval-0.2.2-py3-none-any.whl", hash = "sha256:01eaab343580944bc56080ebe0a674b39ec44a945e6d09ba7db3cb8cec289350", size = 11693, upload-time = "2022-01-22T15:41:27.814Z" },
-]
-
-[[package]]
-name = "py-kissmetrics"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "urllib3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/4d/d8e940c168de8d5bdd5d213a94d72d086df15398ef6130760cfbc3b6d6d1/py-KISSmetrics-1.1.0.tar.gz", hash = "sha256:b92a8dbb8827a5e77d41772d774211322ea986175393f59d5ad4b17a35a73fd4", size = 5715, upload-time = "2020-06-17T21:14:46.703Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a1/bd/aba64cccf15899187a648f4849124c44605bdfd2c7355db510bbcaa75abc/py_KISSmetrics-1.1.0-py2.py3-none-any.whl", hash = "sha256:0b1faa2a87ee251caddd6f633584d9f82451e36f2e4dd8c540e243cd69076d9d", size = 8025, upload-time = "2020-06-17T21:14:45.651Z" },
 ]
 
 [[package]]

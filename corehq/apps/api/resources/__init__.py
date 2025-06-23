@@ -9,7 +9,7 @@ from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortEr
 from tastypie.resources import Resource, convert_post_to_patch
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.api.cors import add_cors_headers_to_response
 from corehq.apps.api.util import get_obj
 from corehq.apps.users.util import is_dimagi_email
@@ -139,7 +139,7 @@ class HqBaseResource(ApiVersioningMixin, CorsResourceMixin, JsonResourceMixin, R
                 status=401))
         if request.user.is_superuser or domain_has_privilege(request.domain, self.get_required_privilege()):
             if isinstance(self, DomainSpecificResourceMixin):
-                track_workflow(request.user.username, "API Request", properties={
+                track_workflow_noop(request.user.username, "API Request", properties={
                     'domain': request.domain,
                     'is_dimagi': is_dimagi_email(request.user.username),
                 })
