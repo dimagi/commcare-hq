@@ -1,4 +1,5 @@
 import "commcarehq";
+import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 
@@ -34,17 +35,17 @@ function casePropertyWarningViewModel (propertyLimit) {
         self.showWarning(shouldShow);
     };
 
-    self.toggleWarningCollapse = function () {
-        const toggle = document.getElementById("performance-warning-toggle");
-        const icon = toggle.querySelector('i');
-        if (toggle.classList.contains('collapsed')) {
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-up');
-        } else {
-            icon.classList.remove('fa-chevron-up');
-            icon.classList.add('fa-chevron-down');
-        }
-    };
+    $('#performance-warning-content').on('show.bs.collapse', function () {
+        $('#performance-warning-toggle i')
+            .removeClass('fa-chevron-down')
+            .addClass('fa-chevron-up');
+    });
+
+    $('#performance-warning-content').on('hide.bs.collapse', function () {
+        $('#performance-warning-toggle i')
+            .removeClass('fa-chevron-up')
+            .addClass('fa-chevron-down');
+    });
 
     self.updateViewModel(self.caseType, self.propertyCount);
 
