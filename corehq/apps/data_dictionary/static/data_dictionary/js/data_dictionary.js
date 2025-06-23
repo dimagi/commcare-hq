@@ -12,6 +12,7 @@ import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
 import "data_interfaces/js/make_read_only";
 import "hqwebapp/js/select2_knockout_bindings.ko";
 import "knockout-sortable/build/knockout-sortable";
+import casePropertyWarningViewModel from "data_dictionary/js/partials/case_property_warning";
 
 var caseType = function (
     name,
@@ -297,7 +298,6 @@ var propertyListItem = function (
 
 var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit) {
     var self = {};
-    self.casePropertyLimit = casePropertyLimit;
     self.caseTypes = ko.observableArray();
     self.activeCaseType = ko.observable();
     self.fhirResourceType = ko.observable();
@@ -305,10 +305,10 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.newPropertyName = ko.observable();
     self.newGroupName = ko.observable();
     self.showAll = ko.observable(false);
-    self.showCasePropertyWarning = ko.observable(false);
-    self.casePropertyWarningContent = ko.observable();
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+
+    self.casePropertyWarningViewModel = new casePropertyWarningViewModel(casePropertyLimit);
 
     const params = new URLSearchParams(document.location.search);
     self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
@@ -529,7 +529,6 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         self.activeCaseType(caseType.name);
         self.fhirResourceType(caseType.fhirResourceType());
         self.removefhirResourceType(false);
-        self.showCasePropertyWarningIfNeeded();
         self.saveButton.setState('saved');
     };
 
@@ -613,36 +612,10 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         }
     };
 
-    self.showCasePropertyWarningIfNeeded = function () {
+    self.activeCaseType.subscribe( function () {
         let caseType = self.getActiveCaseType();
-        if (caseType.propertyCount > self.casePropertyLimit) {
-            let content = _.template(gettext(
-                "The '<%- type %>' case has a total of <%- count %> custom properties. " +
-                "We recommend at most <%- limit %> custom properties per case type, " +
-                "otherwise you may run into performance issues at the time of data collection and analysis."
-            ))({
-                type: caseType.name,
-                count:caseType.propertyCount,
-                limit: self.casePropertyLimit,
-            });
-            self.casePropertyWarningContent(content);
-            self.showCasePropertyWarning(true);
-        } else {
-            self.showCasePropertyWarning(false);
-        }
-    };
-
-    self.toggleCasePropertyWarning = function () {
-        const toggle = document.getElementById("performance-warning-toggle");
-        const icon = toggle.querySelector('i');
-        if (toggle.classList.contains('collapsed')) {
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-up');
-        } else {
-            icon.classList.remove('fa-chevron-up');
-            icon.classList.add('fa-chevron-down');
-        }
-    };
+        self.casePropertyWarningViewModel.updateViewModel(caseType.name, caseType.propertyCount);
+    })
 
     self.showDeprecated = function () {
         self.showAll(true);

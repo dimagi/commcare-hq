@@ -816,7 +816,6 @@ def get_form_view_context(
         'case_property_warning': {
             'count': case_property_count,
             'limit': _get_case_property_limit(domain),
-            'show': case_property_count > _get_case_property_limit(domain),
             'type': case_config_options['caseType'],
         }
     }

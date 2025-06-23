@@ -1,7 +1,7 @@
 import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
-import _ from "underscore";
+import _, { initial } from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManagerUtils from "app_manager/js/app_manager";
 import kissmetrix from "analytix/js/kissmetrix";
@@ -18,6 +18,7 @@ import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable binding
+import casePropertyWarningViewModel from "data_dictionary/js/partials/case_property_warning";
 
 appManagerUtils.setPrependedPageTitle("\u2699 ", true);
 appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
@@ -170,14 +171,13 @@ $(function () {
     // Case Management > Data dictionary descriptions for case properties
     $('.property-description').popover();
 
-    $('#performance-warning-toggle').on('click', function () {
-        let $icon = $(this).find('i');
-        if (this.classList.contains('collapsed')) {
-            $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-        } else {
-            $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-        }
-    });
+
+    var $casePropertyWarning = $('#case-property-warning');
+    const initialWarningData = initialPageData.get('case_property_warning');
+    const warningViewModel= new casePropertyWarningViewModel(initialWarningData.limit);
+    warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count)
+    $casePropertyWarning.koApplyBindings(warningViewModel);
+
 
     // Advanced > XForm > Upload
     $("#xform_file_input").change(function () {

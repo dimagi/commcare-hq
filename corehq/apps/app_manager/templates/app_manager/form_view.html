@@ -97,6 +97,7 @@
   {% initial_page_data 'is_release_notes_form' form.is_release_notes_form %}
   {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
   {% initial_page_data 'is_training_module' is_training_module %}
+  {% initial_page_data 'case_property_warning' case_property_warning %}
   {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
     {% initial_page_data 'apps_modules' apps_modules %}
   {% endif %}
@@ -165,38 +166,7 @@
     <div class="tab-content appmanager-tab-content">
       {% if form.uses_cases %}
         <div class="tab-pane" id="case-configuration">
-          {% if case_property_warning.show %}
-            <div class="alert alert-warning">
-              <i class="fa fa-exclamation-triangle"></i>
-              {% trans "Performance warning" %}
-              <button
-                id="performance-warning-toggle"
-                type="button"
-                class="close collapsed"
-                data-toggle="collapse"
-                data-target="#performance-warning-content"
-              >
-                <i class="fa fa-chevron-down"></i>
-              </button>
-              <div id="performance-warning-content" class="collapse">
-                <p>
-                  {% blocktrans with type=case_property_warning.type count=case_property_warning.count limit=case_property_warning.limit %}
-                    The '{{ type }}' case has a total of {{ count }} custom properties. We
-                    recommend at most {{ limit }} custom properties per case type, otherwise
-                    you may run into performance issues at the time of data
-                    collection and analysis.
-                </p>
-                <p>
-                    See
-                    <a target="_blank"
-                      href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947182/Case+Configuration"
-                      >case configuration</a>
-                    documentation for more information.
-                  {% endblocktrans %}
-                </p>
-              </div>
-            </div>
-          {% endif %}
+          {% include "data_dictionary/partials/case_property_warning.html" %}
           {% if xform_validation_missing %}
             <p class="alert alert-warning">
               {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}

@@ -154,27 +154,8 @@
           <h3 data-bind="text: $root.activeCaseType()" style="display: inline-block;"></h3>
           <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="deprecate-case-type hidden label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
         </div>
-        <div class="alert alert-warning" data-bind="visible: showCasePropertyWarning()">
-          <i class="fa fa-exclamation-triangle"></i>
-          {% trans "Performance warning" %}
-          <button
-            id="performance-warning-toggle"
-            type="button"
-            class="close collapsed"
-            data-toggle="collapse"
-            data-target="#performance-warning-content"
-            data-bind="click: toggleCasePropertyWarning"
-          >
-            <i class="fa fa-chevron-down"></i>
-          </button>
-          <div id="performance-warning-content" class="collapse">
-            <p data-bind="text: casePropertyWarningContent()"></p>
-            <p>
-            {% blocktrans %}
-            See <a target="_blank" href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947182/Case+Configuration">case configuration</a> documentation for more information.
-            {% endblocktrans %}
-            </p>
-          </div>
+        <div data-bind="with: casePropertyWarningViewModel">
+        {% include "data_dictionary/partials/case_property_warning.html" %}
         </div>
         {% if fhir_integration_enabled %}
           <div id="fhir-resource-type-form" class="form-inline" data-bind="visible: fhirResourceTypes().length">
