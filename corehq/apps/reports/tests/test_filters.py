@@ -20,6 +20,7 @@ from corehq.apps.reports.filters.forms import (
     FormsByApplicationFilterParams,
 )
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
 from corehq.apps.users.models import (
     CommCareUser,
@@ -295,13 +296,22 @@ class TestEMWFilterOutput(TestCase):
             cls.addClassCleanup(user_obj.delete, None, None)
 
 
+ACTIVE = f't__{HQUserType.ACTIVE}'
+DEMO_USER = f't__{HQUserType.DEMO_USER}'
+ADMIN = f't__{HQUserType.ADMIN}'
+UNKNOWN = f't__{HQUserType.UNKNOWN}'
+COMMTRACK = f't__{HQUserType.COMMTRACK}'
+DEACTIVATED = f't__{HQUserType.DEACTIVATED}'
+WEB = f't__{HQUserType.WEB}'
+
+
 @generate_cases([
-    (['t__0'], ['active1', 'active2']),
-    (['t__5'], ['deactive2', 'deactive1']),
-    (['t__6'], ['web1']),
-    (['t__0', 'u__deactive1'], ['active1', 'active2', 'deactive1']),
-    (['t__5', 'u__active1'], ['deactive1', 'deactive2', 'active1']),
-    (['t__6', 'u__active1', 'u__deactive1'], ['web1', 'active1', 'deactive1']),
+    ([ACTIVE], ['active1', 'active2']),
+    ([DEACTIVATED], ['deactive2', 'deactive1']),
+    ([WEB], ['web1']),
+    ([ACTIVE, 'u__deactive1'], ['active1', 'active2', 'deactive1']),
+    ([DEACTIVATED, 'u__active1'], ['deactive1', 'deactive2', 'active1']),
+    ([WEB, 'u__active1', 'u__deactive1'], ['web1', 'active1', 'deactive1']),
 ], TestEMWFilterOutput)
 def test_user_es_query(self, slugs, expected_ids):
     user_query = ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
