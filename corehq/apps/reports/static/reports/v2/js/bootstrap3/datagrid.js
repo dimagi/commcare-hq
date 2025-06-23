@@ -9,7 +9,7 @@ import assertProperties from "hqwebapp/js/assert_properties";
 import dataModels from "reports/v2/js/datagrid/data_models";
 import columns from "reports/v2/js/datagrid/columns";
 import reportFilters from "reports/v2/js/datagrid/report_filters";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "reports/v2/js/datagrid/binding_handlers";  // for custom ko bindingHandlers
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // for modal bindings
@@ -96,13 +96,13 @@ var datagridController = function (options) {
                 }
             });
             self.columns(replacementCols);
-            kissmetrics.track.event(
+            noopMetrics.track.event(
                 "Clicked Update button on Add Column modal",
                 self._getColumnAnalyticsData(column),
             );
         } else {
             self.columns.push(columns.columnModel(column.unwrap()));
-            kissmetrics.track.event(
+            noopMetrics.track.event(
                 "Clicked Add button on Add Column modal",
                 self._getColumnAnalyticsData(column),
             );
@@ -110,14 +110,14 @@ var datagridController = function (options) {
 
         if (self.columns().length > 1 && !self._analyticsAddColumn) {
             self._analyticsAddColumn = true;
-            kissmetrics.track.event("Feature Used - Add Column", {
+            noopMetrics.track.event("Feature Used - Add Column", {
                 "Domain": initialPageData.get('domain'),
             });
         }
 
         if (column.appliedFilters().length > 0 && !self._analyticsAddFilter) {
             self._analyticsAddFilter = true;
-            kissmetrics.track.event("Feature Used - Column Filter", {
+            noopMetrics.track.event("Feature Used - Column Filter", {
                 "Domain": initialPageData.get('domain'),
             });
         }
@@ -167,14 +167,14 @@ var datagridController = function (options) {
 
     self.saveFilters = function () {
         self.unsupportedTaskName(gettext("Save Filters"));
-        kissmetrics.track.event("Clicked Fake Save button", {
+        noopMetrics.track.event("Clicked Fake Save button", {
             "Domain": initialPageData.get('domain'),
         });
     };
 
     self.exportData = function () {
         self.unsupportedTaskName(gettext("Export Data"));
-        kissmetrics.track.event("Clicked Export Data button", {
+        noopMetrics.track.event("Clicked Export Data button", {
             "Domain": initialPageData.get('domain'),
         });
     };

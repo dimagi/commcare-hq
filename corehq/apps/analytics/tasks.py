@@ -1,16 +1,12 @@
-import csv
 import json
 import logging
 import math
-import os
 import time
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.core.validators import ValidationError, validate_email
 
-import boto3
-import KISSmetrics
 import requests
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -30,7 +26,6 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
 )
 from corehq.apps.analytics.utils import (
-    analytics_enabled_for_email,
     get_client_ip_from_meta,
     get_instance_string,
     get_meta,
@@ -59,7 +54,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
-from corehq.util.dates import unix_time, unix_time_in_micros
+from corehq.util.dates import unix_time_in_micros
 from corehq.util.decorators import analytics_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
@@ -87,13 +82,11 @@ HUBSPOT_THRESHOLD = 300
 
 
 HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', False)
-KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
 
 
 def _raise_for_urllib3_response(response):
     '''
     this mimics the behavior of requests.response.raise_for_status so we can
-    treat kissmetrics requests and hubspot requests interchangeably in our retry code
     '''
     if 400 <= response.status < 600:
         raise requests.exceptions.HTTPError(response=response)
@@ -413,59 +406,15 @@ def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
         )
 
 
-def track_workflow(email, event, properties=None):
+def track_workflow_noop(email, event, properties=None):
     """
-    Record an event in KISSmetrics.
+    Record a logical event that is not actually sent to any analytics backend
     :param email: The email address by which to identify the user.
     :param event: The name of the event.
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
-    try:
-        if analytics_enabled_for_email(email):
-            timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-            _track_workflow_task.delay(email, event, properties, timestamp)
-    except Exception:
-        notify_exception(None, "Error tracking kissmetrics workflow")
-
-
-@analytics_task()
-def _track_workflow_task(email, event, properties=None, timestamp=0):
-    def _no_nonascii_unicode(value):
-        if isinstance(value, str):
-            return value.encode('utf-8')
-        return value
-
-    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key:
-        km = KISSmetrics.Client(key=api_key)
-        res = km.record(
-            email,
-            event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()}
-            if properties else {},
-            timestamp
-        )
-        log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
-        # TODO: Consider adding some better error handling for bad/failed requests.
-        _raise_for_urllib3_response(res)
-
-
-@analytics_task()
-def identify(email, properties):
-    """
-    Set the given properties on a KISSmetrics user.
-    :param email: The email address by which to identify the user.
-    :param properties: A dictionary or properties to set on the user.
-    :return:
-    """
-    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key and analytics_enabled_for_email(email):
-        km = KISSmetrics.Client(key=api_key)
-        res = km.set(email, properties)
-        log_response("KM", {'email': email, 'properties': properties}, res)
-        # TODO: Consider adding some better error handling for bad/failed requests.
-        _raise_for_urllib3_response(res)
+    pass
 
 
 @memoized
@@ -485,12 +434,12 @@ def _get_report_count(domain):
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
-    Sync data that is neither event or page based with hubspot/Kissmetrics
+    Sync data that is neither event or page based with hubspot
     :return:
     """
     # Start by getting a list of web users mapped to their domains
 
-    if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
+    if not HUBSPOT_ENABLED:
         return
 
     time_started = datetime.utcnow()
@@ -637,7 +586,7 @@ def track_periodic_data():
             submit.append(user_json)
 
         submit_json = json.dumps(submit)
-        submit_data_to_hub_and_kiss(submit_json)
+        submit_data_to_hubspot(submit_json)
 
     metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users_processed,
         multiprocess_mode=MPM_LIVESUM)
@@ -669,69 +618,15 @@ def _email_is_valid(email):
     return True
 
 
-def submit_data_to_hub_and_kiss(submit_json):
-    hubspot_dispatch = (batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
-    kissmetrics_dispatch = (
-        _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
-    )
-
-    for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
-        try:
-            dispatcher(submit_json)
-        except requests.exceptions.HTTPError as e:
-            notify_error("Error submitting periodic analytics data to Hubspot or Kissmetrics",
-                         details=e.response.content.decode('utf-8'))
-        except Exception as e:
-            notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
-
-
-def _track_periodic_data_on_kiss(submit_json):
-    """
-    Transform periodic data into a format that is kissmetric submission friendly, then call identify
-    csv format: Identity (email), timestamp (epoch), Prop:<Property name>, etc...
-    :param submit_json: Example Json below, this function assumes
-    [
-      {
-        email: <>,
-        properties: [
-          {
-            property: <>,
-            value: <>
-          }, (can have more than one)
-        ]
-      }
-    ]
-    :return: none
-    """
-    periodic_data_list = json.loads(submit_json)
-
-    headers = [
-        'Identity',
-        'Timestamp',
-    ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
-
-    filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
-    with open(filename, 'w') as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(headers)
-
-        for webuser in periodic_data_list:
-            row = [
-                webuser['email'],
-                int(time.time())
-            ] + [prop['value'] for prop in webuser['properties']]
-            csvwriter.writerow(row)
-
-    if settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
-        s3 = boto3.client(
-            's3',
-            aws_access_key_id=settings.S3_ACCESS_KEY,
-            aws_secret_access_key=settings.S3_SECRET_KEY,
-        )
-        with open(filename, 'rb') as f:
-            s3.upload_fileobj(f, 'kiss-uploads', filename)
-
-    os.remove(filename)
+def submit_data_to_hubspot(submit_json):
+    try:
+        batch_track_on_hubspot(submit_json)
+    except requests.exceptions.HTTPError as e:
+        notify_error("Error submitting periodic analytics data to Hubspot",
+                     details=e.response.content.decode('utf-8'))
+    except Exception as e:
+        notify_exception(None, "{msg}: {exc}".format(
+            msg="Error submitting periodic analytics data to Hubspot", exc=e))
 
 
 def get_ab_test_properties(user):
@@ -756,8 +651,6 @@ def update_subscription_properties_by_domain(domain):
 
 @analytics_task()
 def update_subscription_properties_by_user(web_user_id, properties):
-    web_user = WebUser.get_by_user_id(web_user_id)
-    identify(web_user.username, properties)
     update_hubspot_properties(web_user_id, properties)
 
 
@@ -781,7 +674,7 @@ def get_subscription_properties_by_user(couch_user):
                 and plan_version.plan.edition != SoftwarePlanEdition.FREE)
 
     # Note: using "yes" and "no" instead of True and False because spec calls
-    # for using these values. (True is just converted to "True" in KISSmetrics)
+    # for using these values.
     all_subscriptions = []
     paying_subscribed_editions = []
     subscribed_editions = []
@@ -884,7 +777,7 @@ def record_event(event_name, couch_user, event_properties=None):
 
     event_properties = event_properties or {}
 
-    timestamp = unix_time_in_micros(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+    timestamp = unix_time_in_micros(datetime.utcnow())
 
     event_body = {
         # The client_id is meant to represent a unique user/device pairing, but we don't have access to that

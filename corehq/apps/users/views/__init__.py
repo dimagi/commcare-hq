@@ -53,7 +53,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_INVITATION_SENT_FORM,
     send_hubspot_form,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.domain.decorators import (
@@ -604,7 +604,7 @@ class ListWebUsersView(BaseRoleAccessView):
 @require_can_edit_or_view_web_users
 @location_safe
 def download_web_users(request, domain):
-    track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
+    track_workflow_noop(request.couch_user.get_email(), 'Bulk download web users selected')
     from corehq.apps.users.views.mobile.users import download_users
     return download_users(request, domain, user_type=WEB_USER_TYPE)
 
@@ -1322,9 +1322,9 @@ class InviteWebUserView(BaseManageWebUserView):
                                          )
                 messages.success(request, "%s added." % data["email"])
             else:
-                track_workflow(request.couch_user.get_email(),
+                track_workflow_noop(request.couch_user.get_email(),
                                "Sent a project invitation",
-                               {"Sent a project invitation": "yes"})
+                                    {"Sent a project invitation": "yes"})
                 send_hubspot_form(HUBSPOT_INVITATION_SENT_FORM, request)
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
@@ -1552,7 +1552,7 @@ class UploadWebUsers(BaseUploadUser):
         return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
 
     def post(self, request, *args, **kwargs):
-        track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')
+        track_workflow_noop(request.couch_user.get_email(), 'Bulk upload web users selected')
         return super(UploadWebUsers, self).post(request, *args, **kwargs)
 
 
