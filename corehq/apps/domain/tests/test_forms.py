@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
@@ -353,7 +353,7 @@ class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
     def setUp(self):
         super().setUp()
         self.subscription = generator.generate_domain_subscription(
-            self.account, self.domain, datetime.today(), datetime.today() + timedelta(days=7), is_active=True
+            self.account, self.domain, date.today(), date.today() + timedelta(days=7), is_active=True
         )
 
     def create_form(self, new_plan_version, **kwargs):
@@ -387,3 +387,20 @@ class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
         self.assertTrue(form.is_valid())
         self.assertTrue(self.subscription.is_renewed)
         self.assertEqual(self.subscription.next_subscription.plan_version, next_plan_version)
+
+    def test_pay_annually_creates_prepayment_invoice(self):
+        next_plan_version = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.STANDARD, is_annual_plan=True
+        )
+        form = self.create_form_for_submission(next_plan_version)
+        form.save()
+        self.assertTrue(form.is_valid())
+
+        prepayment_invoice = WirePrepaymentInvoice.objects.get(domain=self.domain.name)
+        next_subscription = self.subscription.next_subscription
+        self.assertEqual(prepayment_invoice.date_start, next_subscription.date_start)
+        self.assertEqual(prepayment_invoice.date_end, next_subscription.date_end)
+        self.assertEqual(prepayment_invoice.date_due,
+                         date.today() + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
+        self.assertEqual(prepayment_invoice.balance,
+                         next_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
