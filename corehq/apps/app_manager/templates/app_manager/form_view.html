@@ -29,6 +29,7 @@
 {% block pre_form_content %}
   <div class="appmanager-page-actions">
     {% include 'app_manager/partials/app_summary_button.html' %}
+    {% include 'app_manager/partials/view_submissions_button_on_white_bg.html' %}
     <a
       class="btn btn-default"
       href="{% url "form_source" domain app.id form.unique_id %}"
