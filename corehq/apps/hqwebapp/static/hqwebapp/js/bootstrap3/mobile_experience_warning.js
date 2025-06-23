@@ -1,7 +1,7 @@
 
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import kissmetrix from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import "jquery.cookie/jquery.cookie";
 
 $(function () {
@@ -35,12 +35,12 @@ $(function () {
             $videoModal.on('shown.bs.modal', function () {
                 $modal.removeClass('modal-force-show');
             });
-            kissmetrix.track.event('Clicked mobile experience reminder');
+            noopMetrics.track.event('Clicked mobile experience reminder');
             setCookie();
         };
 
         $("#send-mobile-reminder-button").click(sendReminder);
-        kissmetrix.track.event('Saw mobile experience warning');
+        noopMetrics.track.event('Saw mobile experience warning');
     }
 
 });

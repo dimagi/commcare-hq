@@ -1,7 +1,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import constants from "userreports/js/constants";
 import analytics from "userreports/js/report_analytix";
 import utils from "userreports/js/utils";
@@ -260,7 +260,7 @@ var propertyList = function (options) {
         self.columns.push(self._createListItem());
         if (!_.isEmpty(self.analyticsAction) && !_.isEmpty(self.analyticsLabel)) {
             analytics.track.event(self.analyticsAction, self.analyticsLabel);
-            kissmetrics.track.event("Clicked " + self.analyticsAction + " in Report Builder");
+            noopMetrics.track.event("Clicked " + self.analyticsAction + " in Report Builder");
         }
         if (_.isFunction(self.addItemCallback)) {
             self.addItemCallback();

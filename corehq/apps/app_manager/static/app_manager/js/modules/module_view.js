@@ -2,7 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import kissmetrix from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManager from "app_manager/js/app_manager";
 import screenConfig from "app_manager/js/details/screen_config";
@@ -29,7 +29,7 @@ $(function () {
 
     $('.case-type-dropdown').select2();
     $('.overwrite-danger').on("click", function () {
-        kissmetrix.track.event("Overwrite Case Lists/Case Details");
+        noopMetrics.track.event("Overwrite Case Lists/Case Details");
     });
     var moduleBrief = initialPageData.get('module_brief'),
         moduleType = moduleBrief.module_type,
