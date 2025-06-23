@@ -3,25 +3,25 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 
-function casePropertyWarningViewModel (propertyLimit) {
+function casePropertyWarningViewModel(propertyLimit) {
     self.caseType = '';
     self.propertyCount = 0;
     self.propertyLimit = propertyLimit;
     self.showWarning = ko.observable(false);
     self.warningContent = ko.observable();
 
-    self.updateViewModel = function(caseType, propertyCount) {
+    self.updateViewModel = function (caseType, propertyCount) {
         self.caseType = caseType;
         self.propertyCount = propertyCount;
         self.updateWarningText();
         self.showWarningIfNecessary();
     };
 
-    self.updateWarningText = function() {
+    self.updateWarningText = function () {
         let content = _.template(gettext(
             "You've saved <%- count %> case properties to the '<%- type %>' case. " +
             "We recommend at most <%- limit %> case properties per case type, " +
-            "otherwise you may run into performance issues at the time of data collection and analysis."
+            "otherwise you may run into performance issues at the time of data collection and analysis.",
         ))({
             count: self.propertyCount,
             type: self.caseType,
@@ -30,7 +30,7 @@ function casePropertyWarningViewModel (propertyLimit) {
         self.warningContent(content);
     };
 
-    self.showWarningIfNecessary = function() {
+    self.showWarningIfNecessary = function () {
         const shouldShow = self.propertyCount > self.propertyLimit;
         self.showWarning(shouldShow);
     };
@@ -50,6 +50,6 @@ function casePropertyWarningViewModel (propertyLimit) {
     self.updateViewModel(self.caseType, self.propertyCount);
 
     return self;
-};
+}
 
 export default casePropertyWarningViewModel;

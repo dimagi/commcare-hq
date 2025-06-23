@@ -612,10 +612,10 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         }
     };
 
-    self.activeCaseType.subscribe( function () {
+    self.activeCaseType.subscribe(function () {
         let caseType = self.getActiveCaseType();
         self.casePropertyWarningViewModel.updateViewModel(caseType.name, caseType.propertyCount);
-    })
+    });
 
     self.showDeprecated = function () {
         self.showAll(true);

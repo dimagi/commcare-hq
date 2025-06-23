@@ -1,7 +1,7 @@
 import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
-import _, { initial } from "underscore";
+import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManagerUtils from "app_manager/js/app_manager";
 import kissmetrix from "analytix/js/kissmetrix";
@@ -174,8 +174,8 @@ $(function () {
 
     var $casePropertyWarning = $('#case-property-warning');
     const initialWarningData = initialPageData.get('case_property_warning');
-    const warningViewModel= new casePropertyWarningViewModel(initialWarningData.limit);
-    warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count)
+    const warningViewModel = new casePropertyWarningViewModel(initialWarningData.limit);
+    warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count);
     $casePropertyWarning.koApplyBindings(warningViewModel);
 
 
