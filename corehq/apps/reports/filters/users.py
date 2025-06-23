@@ -372,23 +372,34 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if has_user_ids and not can_access_all_locations:
             cls._verify_users_are_accessible(domain, request_user, user_ids)
         elif HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
-            user_type_filters.append(filters.AND(
+            mobile_user_filters = [
                 user_es.domain(
                     es_domains,
                     include_active=(HQUserType.ACTIVE in user_types),
                     include_inactive=(HQUserType.DEACTIVATED in user_types),
                 ),
                 user_es.mobile_users()
-            ))
+            ]
+            if not can_access_all_locations:
+                query = user_es.location(list(
+                    SQLLocation.objects
+                    .accessible_to_user(domain, request_user)
+                    .location_ids()
+                ))
+                mobile_user_filters.append(query)
+            user_type_filters.append(filters.AND(mobile_user_filters))
         if HQUserType.ADMIN in user_types:
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
-        if HQUserType.WEB in user_types:
-            user_type_filters.append(filters.AND(user_es.domain(es_domains), user_es.web_users()))
-        if HQUserType.DEACTIVATED_WEB in user_types:
-            user_type_filters.append(filters.AND(user_es.domain(
-                es_domains, include_active=False, include_inactive=True), user_es.web_users()))
+        if HQUserType.WEB in user_types or HQUserType.DEACTIVATED in user_types:
+            user_type_filters.append(filters.AND(
+                user_es.domain(
+                    es_domains,
+                    include_active=HQUserType.WEB in user_types,
+                    include_inactive=HQUserType.DEACTIVATED_WEB in user_types),
+                user_es.web_users()
+            ))
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 
@@ -396,15 +407,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             if has_user_ids:
                 return q.OR(*user_type_filters, filters.OR(filters.term("_id", user_ids)))
             else:
-                if not can_access_all_locations:
-                    query = user_es.location(list(
-                        SQLLocation.objects
-                        .accessible_to_user(domain, request_user)
-                        .location_ids()
-                    ))
-                    return q.OR(*user_type_filters, query)
-                else:
-                    return q.OR(*user_type_filters)
+                return q.OR(*user_type_filters)
 
         # return matching user types and exact matches
         location_query = SQLLocation.active_objects.get_locations_and_children(location_ids)
