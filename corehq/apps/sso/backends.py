@@ -215,6 +215,7 @@ class SsoBackend(ModelBackend):
                 "New User Accepted a project invitation with SSO",
                 {"New User Accepted a project invitation": "yes"}
             )
+        if settings.ANALYTICS_IDS.get("HUBSPOT_API_ID") and is_new_user:
             send_hubspot_form(
                 HUBSPOT_NEW_USER_INVITE_FORM,
                 request,
