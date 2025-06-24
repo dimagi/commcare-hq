@@ -9,7 +9,7 @@ import "hqwebapp/js/bootstrap3/inactivity";
 import "notifications/js/bootstrap3/notifications_service_main";
 import "analytix/js/google";
 import "analytix/js/hubspot";
-import "analytix/js/kissmetrix";
+import "analytix/js/noopMetrics";
 import "analytix/js/gtx";
 import "hqwebapp/js/bootstrap3/mobile_experience_warning";
 

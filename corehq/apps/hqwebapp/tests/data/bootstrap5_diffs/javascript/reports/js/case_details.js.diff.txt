@@ -2,7 +2,7 @@
 +++ 
 @@ -6,11 +6,11 @@
  import googleAnalytics from "analytix/js/google";
- import kissmetrics from "analytix/js/kissmetrix";
+ import noopMetrics from "analytix/js/noopMetrics";
  import casePropertyModal from "case/js/case_property_modal";
 -import dataCorrections from "reports/js/bootstrap3/data_corrections";
 -import singleForm from "reports/js/bootstrap3/single_form";
