@@ -1,7 +1,7 @@
 /*
     To use, include this file on a page that also includes hqwebapp/downgrade_modal.html
 */
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import $ from "jquery";
 import "jquery.cookie/jquery.cookie";
@@ -37,9 +37,9 @@ $(function () {
 
 $(function () {
     $("#overdue-invoice-link").on('click', function () {
-        kissmetrics.track.event('[Overdue Notification] Clicked Pay invoice now');
+        noopMetrics.track.event('[Overdue Notification] Clicked Pay invoice now');
     });
     $("#overdue-invoice-snooze").on('click', function () {
-        kissmetrics.track.event('[Overdue Notification] Clicked Remind me later');
+        noopMetrics.track.event('[Overdue Notification] Clicked Remind me later');
     });
 });

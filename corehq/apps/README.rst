@@ -118,7 +118,7 @@ These apps may be useful parts of the system but don't have as much active devel
 aggregate_ucrs
    An experimental framework for creating more complex reporting pipelines based off the UCR framework.
 analytics
-   Integrations with third-party analytics tools such as Google Analytics and Kissmetrics.
+   Integrations with third-party analytics tools such as Google Analytics.
    Also contains internal product-focused tools such as AB testing functionality.
 builds
    Models relating to CommCare Mobile builds, so that app builders can control which mobile version their apps use.

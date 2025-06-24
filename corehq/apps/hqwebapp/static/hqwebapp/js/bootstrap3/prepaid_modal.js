@@ -1,7 +1,7 @@
 /*
     To use, include this file on a page that also includes hqwebapp/downgrade_modal.html
 */
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import $ from "jquery";
 import "jquery.cookie/jquery.cookie";
@@ -37,10 +37,10 @@ $(function () {
 
 $(function () {
     $("#prepaid-link").on('click', function () {
-        kissmetrics.track.event(
+        noopMetrics.track.event(
             '[Credit Running Out Notification] Clicked Add Credits or Modify Subscription button');
     });
     $("#prepaid-snooze").on('click', function () {
-        kissmetrics.track.event('[Credit Running Out Notification] Clicked Remind me later');
+        noopMetrics.track.event('[Credit Running Out Notification] Clicked Remind me later');
     });
 });

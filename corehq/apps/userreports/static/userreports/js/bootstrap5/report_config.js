@@ -1,7 +1,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import hqMain from "hqwebapp/js/bootstrap5/main";
 import charts from "reports_core/js/charts";
 import maps from "reports_core/js/bootstrap5/maps";
@@ -19,7 +19,7 @@ export default {
         var propertyListItem = builderViewModels.propertyListItem;
 
         var _kmqTrackClick = function (action) {
-            kissmetrics.track.event("RBv2 - " + action);
+            noopMetrics.track.event("RBv2 - " + action);
         };
 
         var columnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {

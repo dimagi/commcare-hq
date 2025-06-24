@@ -1,6 +1,6 @@
 import "commcarehq";
 import $ from "jquery";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import userLoginForm from "registration/js/user_login_form";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "hqwebapp/js/captcha";  // shows captcha
@@ -35,16 +35,5 @@ $(function () {
         $('#user-login-form').koApplyBindings(loginController);
         loginController.init();
     }
-
-    kissmetrics.whenReadyAlways(function () {
-
-        $('#cta-form-get-demo-button-body').click(function () {
-            kissmetrics.track.event("Demo Workflow - Body Button Clicked");
-        });
-
-        $('#cta-form-get-demo-button-header').click(function () {
-            kissmetrics.track.event("Demo Workflow - Header Button Clicked");
-        });
-    });
 });
 
