@@ -92,7 +92,8 @@ PASSWORD_RESET_KWARGS = {
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')},
-                      'form_submit_url_name': 'password_reset_email'}
+                      'form_submit_url_name': 'password_reset_email',
+                      'login_url_name': 'login'}
 }
 
 PASSWORD_RESET_DONE_KWARGS = {
