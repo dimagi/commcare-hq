@@ -85,9 +85,9 @@ HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', False)
 
 
 def _raise_for_urllib3_response(response):
-    '''
-    this mimics the behavior of requests.response.raise_for_status so we can
-    '''
+    """
+    this mimics the behavior of requests.response.raise_for_status
+    """
     if 400 <= response.status < 600:
         raise requests.exceptions.HTTPError(response=response)
 
