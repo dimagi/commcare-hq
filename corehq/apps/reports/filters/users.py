@@ -371,7 +371,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         can_access_all_locations = request_user.has_permission(domain, 'access_all_locations')
         if has_user_ids and not can_access_all_locations:
             cls._verify_users_are_accessible(domain, request_user, user_ids)
-        elif HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
+        if HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
             mobile_user_filters = [
                 user_es.domain(
                     es_domains,

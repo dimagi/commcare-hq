@@ -339,6 +339,7 @@ def test_user_es_query(self, slugs, expected_ids):
     (['u__deactive_accessible'], ['deactive_accessible']),
     ([WEB], ['web', 'web_accessible', 'web_inaccessible']),  # This is definitely wrong
     # (['u__web_accessible'], ['web_accessible']),  # This fails hard
+    ([ACTIVE, 'u__deactive_accessible'], ['active_accessible', 'deactive_accessible']),
 ], TestEMWFilterOutput)
 def test_restricted_user_es_query(self, slugs, expected_ids):
     with has_permissions(access_all_locations=False):
