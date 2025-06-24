@@ -136,24 +136,28 @@ $appicon-icon-height-xs: $appicon-height-xs - 30px;
 }
 
 .appicon-start {
-  background-color: $cc-att-pos-mid;
-  .appicon-icon-fg { color: $cc-att-pos-hi; }
-  .appicon-icon-bg { color: $cc-att-pos-low; }
+  background-color: $dimagi-lime-green;
+  .appicon-icon { color: $white; }
   &:hover {
-    background-color: darken($cc-att-pos-mid, 5);
-    .appicon-icon-fg { color: lighten($cc-att-pos-hi, 5); }
-    .appicon-icon-bg { color: darken($cc-att-pos-low, 10); }
+    background-color: darken($dimagi-lime-green, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($dimagi-lime-green, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-incomplete {
-  background-color: $cc-dark-warm-accent-mid;
-  .appicon-icon-fg { color: $cc-dark-warm-accent-hi; }
-  .appicon-icon-bg { color: $cc-dark-warm-accent-low; }
+  background-color: $dimagi-sunset;
+  .appicon-icon { color: $white; }
   &:hover {
-    background-color: darken($cc-dark-warm-accent-mid, 7);
-    .appicon-icon-fg { color: lighten($cc-dark-warm-accent-hi, 5); }
-    .appicon-icon-bg { color: darken($cc-dark-warm-accent-low, 10); }
+    background-color: darken($dimagi-sunset, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($dimagi-sunset, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
@@ -161,33 +165,45 @@ $appicon-icon-height-xs: $appicon-height-xs - 30px;
   background-color: $cc-brand-mid;
   .appicon-icon {
     top: 2px;
-    color: $cc-brand-hi;
+    color: $white;
   }
   &:hover {
     background-color: darken($cc-brand-mid, 10);
-    .appicon-icon { color: lighten($cc-brand-hi, 5); }
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($cc-brand-mid, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-restore-as {
-  background-color: $cc-dark-cool-accent-mid;
+  background-color: $dimagi-deep-lavender;
   .appicon-icon {
-    color: $cc-dark-cool-accent-hi;
+    color: $white;
   }
   &:hover {
-    background-color: darken($cc-dark-cool-accent-mid, 5);
-    .appicon-icon { color: lighten($cc-dark-cool-accent-hi, 5); }
+    background-color: darken($dimagi-deep-lavender, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($dimagi-deep-lavender, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-settings {
   background-color: $cc-neutral-low;
   .appicon-icon {
-    color: $cc-neutral-hi;
+    color: $white;
   }
   &:hover {
     background-color: darken($cc-neutral-low, 5);
-    .appicon-icon { color: lighten($cc-neutral-hi, 5); }
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($cc-neutral-low, 10);
+    .appicon-icon { color: $white; }
   }
 }
 
