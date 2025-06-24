@@ -4452,18 +4452,15 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
-            if bitly.BITLY_CONFIGURED:
-                view_url = reverse(view_name, args=[self.domain, self._id])
-                if build_profile_id is not None:
-                    long_url = urljoin(
-                        self.url_base,
-                        f'{view_url}?profile={build_profile_id}'
-                    )
-                else:
-                    long_url = urljoin(self.url_base, view_url)
-                shortened_url = bitly.shorten(long_url)
+            view_url = reverse(view_name, args=[self.domain, self._id])
+            if build_profile_id is not None:
+                long_url = urljoin(
+                    self.url_base,
+                    f'{view_url}?profile={build_profile_id}'
+                )
             else:
-                shortened_url = None
+                long_url = urljoin(self.url_base, view_url)
+            shortened_url = bitly.shorten(long_url)
         except Exception:
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
         else:
