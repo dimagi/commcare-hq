@@ -95,24 +95,34 @@ $(function () {
     appManager.setPrependedPageTitle("\u270E ", true);
     appManager.setAppendedPageTitle(gettext("Edit Form"));
 
+    // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
+    var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
+        attempts = attempts || 0;
+        if ($(selector).length) {
+            var $toggleParent = $(selector);
+            $toggleParent.prepend(layout);
+            callback();
+        } else if (attempts <= 30) {
+            // give up appending element after waiting 30 seconds to load
+            setTimeout(function () {
+                _prependTemplateToSelector(selector, layout, attempts++, callback);
+            }, 1000);
+        }
+    };
+
     if (initialPageData.get('form_uses_cases')) {
-        // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
-        var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
-            attempts = attempts || 0;
-            if ($(selector).length) {
-                var $toggleParent = $(selector);
-                $toggleParent.prepend(layout);
-                callback();
-            } else if (attempts <= 30) {
-                // give up appending element after waiting 30 seconds to load
-                setTimeout(function () {
-                    _prependTemplateToSelector(selector, layout, attempts++, callback);
-                }, 1000);
-            }
-        };
+        // Show all 3 buttons for forms that use cases
         _prependTemplateToSelector(
             '.fd-form-actions',
             $('#js-fd-form-actions').html(),
+            0,
+            function () { },
+        );
+    } else {
+        // Show only View Submissions button for survey forms
+        _prependTemplateToSelector(
+            '.fd-form-actions',
+            $('#js-fd-view-submissions-only').html(),
             0,
             function () { },
         );
