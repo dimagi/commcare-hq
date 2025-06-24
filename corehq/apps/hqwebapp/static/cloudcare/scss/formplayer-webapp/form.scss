@@ -172,6 +172,18 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
     color: #52616f !important;
     font-size: 14px;
   }
+
+  .form-check-input:checked {
+    background-color: $primary !important;
+
+    &[type="checkbox"] {
+      background-image: #{escape-svg($form-check-input-checked-bg-image)} !important;
+    }
+
+    &[type="radio"] {
+      background-image: #{escape-svg($form-check-radio-checked-bg-image)} !important;
+    }
+  }
 }
 
 .question-tile-row:has(div.q) {
