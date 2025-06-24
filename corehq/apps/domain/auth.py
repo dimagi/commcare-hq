@@ -235,7 +235,7 @@ class ApiKeyFallbackBackend(object):
             return user
 
 
-def get_active_users_by_email(email):
+def get_active_users_by_email(email, domain=None):
     UserModel = get_user_model()
     possible_users = UserModel._default_manager.filter(
         Q(username__iexact=email) | Q(email__iexact=email),
@@ -250,7 +250,8 @@ def get_active_users_by_email(email):
             couch_user = CouchUser.get_by_username(user.username, strict=True)
             if (couch_user
                     and couch_user.is_commcare_user()
-                    and TWO_STAGE_USER_PROVISIONING.enabled(couch_user.domain)):
+                    and TWO_STAGE_USER_PROVISIONING.enabled(couch_user.domain)
+                    and (domain is None or couch_user.domain == domain)):
                 yield user
             # intentionally excluded:
             # - WebUsers who have changed their email address from their login (though could revisit this)

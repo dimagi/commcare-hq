@@ -4,7 +4,6 @@ import ipaddress
 import json
 import logging
 import uuid
-import re
 
 from django import forms
 from django.conf import settings
@@ -131,6 +130,7 @@ from corehq.apps.registration.models import SelfSignupWorkflow
 from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.util import generate_mobile_username
 from corehq.toggles import (
     COMMCARE_CONNECT,
     EXPORTS_APPS_USE_ELASTICSEARCH,
@@ -1745,8 +1745,35 @@ class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form
                      token_generator, from_email, request, **kwargs)
 
 
+class UsernameOrEmailField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget = forms.TextInput(attrs={'class': 'form-control'})
+
+    def validate(self, value):
+        if value and '@' in value:
+            email_field = forms.EmailField()
+            try:
+                email_field.run_validators(value)
+            except ValidationError as e:
+                raise ValidationError(e)
+        super().validate(value)
+
+
 class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
-    email = UsernameAwareEmailField(label=gettext_lazy("Email"), max_length=254)
+    email = UsernameOrEmailField(label=gettext_lazy("Email or Username"), max_length=254)
+
+    def __init__(self, *args, domain, **kwargs):
+        self.domain = domain
+        super().__init__(*args, **kwargs)
+
+    def clean_email(self):
+        email_or_username = self.cleaned_data["email"]
+        if email_or_username and '@' in email_or_username:
+            return email_or_username
+        mobile_username_email = generate_mobile_username(email_or_username, self.domain, False)
+        self.cleaned_data["email"] = mobile_username_email
+        return super().clean_email()
 
     def save(self, domain_override=None,
              subject_template_name='registration/password_reset_subject.txt',
@@ -1765,7 +1792,7 @@ class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.
         # we specifically filter for the username, not the email, so that
         # mobile workers who have the same email set as a web worker don't
         # get a password reset email.
-        active_users = get_active_users  # TODO
+        active_users = get_active_users_by_email(email, self.domain)
 
         super().save(active_users, domain_override, subject_template_name,
                      email_template_name, html_email_template_name, use_https,
