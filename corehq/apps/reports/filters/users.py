@@ -392,7 +392,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
-        if HQUserType.WEB in user_types or HQUserType.DEACTIVATED in user_types:
+        if HQUserType.WEB in user_types or HQUserType.DEACTIVATED_WEB in user_types:
             user_type_filters.append(filters.AND(
                 user_es.domain(
                     es_domains,

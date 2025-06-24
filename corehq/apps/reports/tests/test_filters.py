@@ -285,6 +285,7 @@ class TestEMWFilterOutput(TestCase):
                 (WebUser, 'web', True, None),
                 (WebUser, 'web_accessible', True, cls.accessible_location),
                 (WebUser, 'web_inaccessible', True, cls.inaccessible_location),
+                (WebUser, 'web_deactive', False, cls.accessible_location),
         ]:
             user_obj = UserClass.create(
                 domain=cls.domain,
@@ -317,12 +318,14 @@ UNKNOWN = f't__{HQUserType.UNKNOWN}'
 COMMTRACK = f't__{HQUserType.COMMTRACK}'
 DEACTIVATED = f't__{HQUserType.DEACTIVATED}'
 WEB = f't__{HQUserType.WEB}'
+DEACTIVATED_WEB = f't__{HQUserType.DEACTIVATED_WEB}'
 
 
 @generate_cases([
     ([ACTIVE], ['active', 'active_accessible', 'active_inaccessible']),
     ([DEACTIVATED], ['deactive', 'deactive_accessible', 'deactive_inaccessible']),
     ([WEB], ['web', 'web_accessible', 'web_inaccessible']),
+    ([DEACTIVATED_WEB], ['web_deactive']),
     ([ACTIVE, 'u__deactive'], ['active', 'active_accessible', 'active_inaccessible', 'deactive']),
     ([DEACTIVATED, 'u__active'], ['deactive', 'deactive_accessible', 'deactive_inaccessible', 'active']),
     ([WEB, 'u__active', 'u__deactive'], ['web', 'web_accessible', 'web_inaccessible', 'active', 'deactive']),
