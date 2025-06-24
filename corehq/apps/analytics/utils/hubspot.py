@@ -326,7 +326,7 @@ def is_hubspot_js_allowed_for_request(request):
         # from being on any page after login
         return False
 
-    if not settings.IS_SAAS_ENVIRONMENT:
+    if not settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
         return False
 
     is_hubspot_js_allowed = True

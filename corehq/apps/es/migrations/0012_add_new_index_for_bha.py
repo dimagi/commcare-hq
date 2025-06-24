@@ -12,7 +12,7 @@ from corehq.apps.es.utils import index_runtime_name
 
 
 def _create_bha_index_on_saas_envs(apps, schema_editor):
-    if settings.IS_SAAS_ENVIRONMENT:
+    if settings.ENABLE_BHA_CASE_SEARCH_ADAPTER:
         CreateIndex(
             name=index_runtime_name('case-search-bha-2024-05-10'),
             type_='case',
@@ -27,7 +27,7 @@ def _create_bha_index_on_saas_envs(apps, schema_editor):
 
 
 def _reverse(apps, schema_editor):
-    if settings.IS_SAAS_ENVIRONMENT:
+    if settings.ENABLE_BHA_CASE_SEARCH_ADAPTER:
         DeleteOnlyIfIndexExists(index_runtime_name('case-search-bha-2024-05-10')).run()
 
 
