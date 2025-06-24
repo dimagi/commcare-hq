@@ -18,6 +18,7 @@ import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable binding
+import casePropertyWarningViewModel from "data_dictionary/js/partials/case_property_warning";
 
 appManagerUtils.setPrependedPageTitle("\u2699 ", true);
 appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
@@ -169,6 +170,14 @@ $(function () {
 
     // Case Management > Data dictionary descriptions for case properties
     $('.property-description').popover();
+
+
+    var $casePropertyWarning = $('#case-property-warning');
+    const initialWarningData = initialPageData.get('case_property_warning');
+    const warningViewModel = new casePropertyWarningViewModel(initialWarningData.limit);
+    warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count);
+    $casePropertyWarning.koApplyBindings(warningViewModel);
+
 
     // Advanced > XForm > Upload
     $("#xform_file_input").change(function () {
