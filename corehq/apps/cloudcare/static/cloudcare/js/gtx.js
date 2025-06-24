@@ -46,12 +46,13 @@ define('cloudcare/js/gtx', [
         }
     };
 
-    const logCaseList = function (menuResponse) {
+    const logCaseList = function (menuResponse, searchFieldData) {
         const selections = extractSelections(menuResponse);
-        const gtxEventData = {
+        let gtxEventData = {
             selections: selections,
             moduleName: menuResponse.title,
         };
+        gtxEventData = Object.assign(gtxEventData, searchFieldData);
         if (selections !== lastCaseListSelections) {
             lastCaseListSelections = selections;
             lastCaseListTimeMs = Date.now();
