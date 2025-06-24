@@ -1323,7 +1323,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 messages.success(request, "%s added." % data["email"])
             else:
                 track_workflow_noop(request.couch_user.get_email(),
-                               "Sent a project invitation",
+                                    "Sent a project invitation",
                                     {"Sent a project invitation": "yes"})
                 send_hubspot_form(HUBSPOT_INVITATION_SENT_FORM, request)
                 messages.success(request, "Invitation sent to %s" % data["email"])

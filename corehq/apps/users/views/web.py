@@ -136,7 +136,7 @@ class UserInvitationView(object):
                     change_messages=UserChangeMessage.domain_addition(invitation.domain)
                 )
                 track_workflow_noop(request.couch_user.get_email(),
-                               "Current user accepted a project invitation",
+                                    "Current user accepted a project invitation",
                                     {"Current user accepted a project invitation": "yes"})
                 send_hubspot_form(HUBSPOT_EXISTING_USER_INVITE_FORM, request)
                 return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
@@ -195,7 +195,7 @@ class UserInvitationView(object):
                     if authenticated is not None and authenticated.is_active:
                         login(request, authenticated)
                     track_workflow_noop(request.POST['email'],
-                                   "New User Accepted a project invitation",
+                                        "New User Accepted a project invitation",
                                         {"New User Accepted a project invitation": "yes"})
                     send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
