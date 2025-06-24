@@ -14,25 +14,19 @@ codebase. These guidelines apply in the following circumstances:
 
 ## Communication
 
-### For the AI Assistant
-
-- The AI Assistant should maintain professional, focused communication.
 - The AI Assistant should ask clarifying questions whenever details are unclear,
   or choices are not obvious.
 - When appropriate, the AI Assistant should make recommendations on how the
   Developer can improve their prompt to get a more effective response.
 
-### For the Developer
-
-- The Developer should provide feedback to the AI Assistant to improve future
-  responses.
-- The Developer should update this document to assist the AI Assistant across
-  sessions, and to improve the interactions of other Developers.
-
 ## Tech Stack
 
 - Backend: Python, Django
-- Frontend: JavaScript, HTMX, Alpine.js, Knockout.js (legacy)
+- Python dependency management: uv
+- Testing: pytest
+- Linting & formatting: Flake8, isort, YAPF
+- Frontend: JavaScript, HTMX, Alpine.js, Knockout.js (legacy), Bootstrap
+- JavaScript bundling & dependency management: Webpack, Yarn
 - Databases: PostgreSQL, Elasticsearch, CouchDB (legacy)
 - Asynchronous task queue: Celery
 - Cache & message broker: Redis
@@ -43,17 +37,20 @@ codebase. These guidelines apply in the following circumstances:
 
 ### Code Clarity
 
-- Is the code readable and well-structured?
-- Does it follow codebase conventions?
-- Are there any potential bugs or edge cases?
+- Code should be readable and well-structured.
+- Code should follow the conventions used in the rest of the module.
+- When writing or reviewing code, consider any potential bugs or edge cases.
 - Keep functions and methods focused on a single responsibility. Break up
   longer functions where appropriate.
 
 ### Performance
 
-- Are there any potential performance bottlenecks?
-- For database operations, are queries optimized?
-- For front-end code, are there rendering or loading concerns?
+- Consider potential performance bottlenecks.
+- For database operations, queries should be optimized. In rare instances this
+  could require the Developer to test the performance of the query in an
+  environment similar to production. If the AI Assistant is writing code, then
+  notify the Developer when this would be beneficial.
+- For front-end code, be mindful of rendering or loading concerns.
 
 ### Maintainability
 
@@ -70,19 +67,19 @@ codebase. These guidelines apply in the following circumstances:
 
 ### Security
 
-- Are there any security vulnerabilities?
-- Is user input properly validated and sanitized?
-- Are permissions and access controls properly implemented?
+- Always consider security vulnerabilities.
+- Ensure that user input is properly validated and sanitized.
+- Ensure that permissions and access controls are properly implemented.
 
 ### Testing
 
-- Are there appropriate tests for the changes?
-- Do the tests cover edge cases and failure scenarios?
-- Are the tests clear and maintainable?
-- Are doctests tested?
-- Run the test suite before submitting changes
+- Changes must be covered by appropriate tests.
+- Tests need to cover edge cases and failure scenarios.
+- Tests should be clear and maintainable.
+- Doctests should be tested.
+- Run the tests that cover the changes before considering any changes complete.
 - Use pytest features and pytest conventions, like Pythonic `assert`
-  statements, and parametrized tests for repetitive parameter values.
+  statements, and parametrized tests for repetitive test cases.
 - Use [pytest-unmagic][1] for explicit test fixtures.
 
 [1]: https://github.com/dimagi/pytest-unmagic/blob/main/README.md#usage
