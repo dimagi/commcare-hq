@@ -6,7 +6,7 @@ define('analytix/js/noopMetrics', [], function () {
      * @param {function} callbackFn - (optional) Function to be called after the event is tracked.
      * @param {integer} timeout - (optional) Timeout for safe callback
      */
-    var trackEvent = function (name, properties, callbackFn, timeout) {
+    var trackEvent = function () {
         // leave as noop
     };
 
@@ -16,7 +16,7 @@ define('analytix/js/noopMetrics', [], function () {
      * @param {string} name - The name of the event to record.
      * @param {object} properties - optional Properties related to the event being recorded.
      */
-    var internalClick = function (selector, name, properties) {
+    var internalClick = function () {
         // leave as noop
     };
 
@@ -26,7 +26,7 @@ define('analytix/js/noopMetrics', [], function () {
      * @param {string} name - The name of the event to record.
      * @param {object} properties - optional Properties related to the event being recorded.
      */
-    var trackOutboundLink = function (selector, name, properties) {
+    var trackOutboundLink = function () {
         // leave as noop
     };
 
