@@ -1254,7 +1254,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('eu', 'production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -2037,7 +2037,8 @@ DOMAIN_MODULE_MAP = {
 
     'epic-integration-test': 'custom.mgh_epic',
     'sudcare-dev': 'custom.mgh_epic',
-    'sudcare': 'custom.mgh_epic',
+    # Temporarily disabled SUDCare integration (paused 2025-06-13)
+    #'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

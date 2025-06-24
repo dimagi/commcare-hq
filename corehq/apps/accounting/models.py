@@ -1,5 +1,6 @@
 import datetime
 import itertools
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -30,6 +31,7 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
     EXCHANGE_RATE_DECIMAL_PLACES,
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
     SMALL_INVOICE_THRESHOLD,
 )
 from corehq.apps.accounting.emails import (
@@ -73,10 +75,7 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.dbaccessors import (
-    get_active_web_usernames_by_domain,
-    get_web_user_count,
-)
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
@@ -633,13 +632,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return web_users
 
-    def get_web_user_count(self):
-        domains = self.get_domains()
-        count = 0
-        for domain in domains:
-            count += get_web_user_count(domain, include_inactive=False)
-        return count
-
     @staticmethod
     def should_show_sms_billable_report(domain):
         account = BillingAccount.get_account_by_domain(domain)
@@ -1009,6 +1001,7 @@ class SoftwarePlanVersion(models.Model):
                        'included': 'Infinite' if r.monthly_limit == UNLIMITED_FEATURE_USAGE else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
+            'is_annual_plan': self.plan.is_annual_plan,
         })
         return desc
 
@@ -1634,7 +1627,7 @@ class Subscription(models.Model):
             )
 
         if new_version.plan.is_annual_plan:
-            new_date_end = self.date_end.replace(year=self.date_end.year + 1)
+            new_date_end = self.date_end + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
         else:
             new_date_end = None
 
@@ -3349,14 +3342,13 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                     )
 
         if invoice.is_wire and invoice.is_prepayment:
-            applied_credit = 0
             for item in invoice.items:
                 template.add_item(item['type'],
                                   item['quantity'],
                                   item['unit_cost'],
                                   item['amount'],
-                                  applied_credit,
-                                  item['amount'])
+                                  item['applied_credit'],
+                                  item['total'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)

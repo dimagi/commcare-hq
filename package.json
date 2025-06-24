@@ -134,5 +134,20 @@
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
         "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"
+    },
+    "prettier": {
+        "plugins": ["prettier-plugin-jinja-template"],
+        "overrides": [
+            {
+                "files": [
+                    "*.html"
+                ],
+                "options": {
+                    "parser": "jinja-template"
+                }
+            }
+        ],
+        "proseWrap": "always",
+        "tabWidth": 2
     }
 }

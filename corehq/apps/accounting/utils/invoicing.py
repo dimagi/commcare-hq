@@ -1,15 +1,20 @@
+import calendar
 import datetime
+from dateutil.relativedelta import relativedelta
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.db.models import Q, Sum
 
 from corehq.apps.accounting.const import (
     DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
     DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE,
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
 )
 from corehq.apps.accounting.models import (
     CustomerInvoice,
     Invoice,
     SubscriptionType,
+    WirePrepaymentInvoice,
 )
 
 UNPAID_INVOICE_THRESHOLD = 1
@@ -120,3 +125,45 @@ def _get_accounts_over_threshold_in_daterange(date_start, date_end):
             if total_unpaid_to_date >= UNPAID_INVOICE_THRESHOLD:
                 accounts.add((account, plan))
                 yield unpaid_invoice, total_unpaid_to_date
+
+
+def get_flagged_pay_annually_prepay_invoice(invoice):
+    plan = invoice.subscription.plan_version.plan
+    if not plan.is_annual_plan:
+        return None
+
+    product_line_item = invoice.lineitem_set.get_products().first()
+    if (
+        product_line_item is None
+        or product_line_item.applied_credit >= product_line_item.subtotal
+    ):
+        return None
+
+    past_due_prepay_invoice = WirePrepaymentInvoice.objects.filter(
+        domain=invoice.get_domain(),
+        date_due__lt=datetime.date.today(),
+        date_due__gte=datetime.date.today() - relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS),
+        balance=product_line_item.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS
+    ).first()
+
+    return past_due_prepay_invoice
+
+
+def get_prorated_software_plan_cost(date_start, date_end, monthly_fee):
+    total_cost = Decimal('0.00')
+    billing_range_start = date_start
+
+    while billing_range_start < date_end:
+        days_in_month = calendar.monthrange(billing_range_start.year, billing_range_start.month)[1]
+        last_day_of_month = billing_range_start.replace(day=days_in_month)
+        billing_range_end = min(last_day_of_month + datetime.timedelta(days=1), date_end)
+
+        days_active = (billing_range_end - billing_range_start).days
+        daily_fee = (monthly_fee / days_in_month)
+
+        total_cost += (daily_fee * days_active)
+        billing_range_start = billing_range_end
+
+    return total_cost.quantize(
+        Decimal('0.01'), rounding=ROUND_HALF_UP,
+    )

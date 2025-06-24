@@ -33,7 +33,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.metrics import metrics_counter, metrics_histogram
+from corehq.util.metrics import metrics_counter, metrics_histogram, limit_domains
 from corehq.util.timer import TimingContext
 
 from .checksum import CaseStateHash
@@ -806,6 +806,7 @@ class RestoreConfig(object):
             'status_code': status,
             'device_type': 'webapps' if self.params.is_webapps else 'other',
             'domain': self.domain,
+            'domain_limited': limit_domains(self.domain),
         }
         timer_buckets = (1, 5, 20, 60, 120, 300, 600)
         for timer in timing.to_list(exclude_root=True):

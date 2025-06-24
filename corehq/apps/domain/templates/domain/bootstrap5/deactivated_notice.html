@@ -1,0 +1,8 @@
+{% extends "hqwebapp/bootstrap5/base_page.html" %}
+{% load i18n %}
+
+{% block page_content %}
+  <h1>{% block title %}{% blocktrans %}You have been deactivated from {{ domain }}{% endblocktrans %}{% endblock %}</h1>
+
+  <p>{% blocktrans %}If you believe this is an error, please contact your project administrator or support.{% endblocktrans %}</p>
+{% endblock %}
