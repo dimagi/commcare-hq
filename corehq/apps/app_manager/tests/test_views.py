@@ -687,7 +687,7 @@ class TestViewGeneric(ViewsBase):
         'restrict_domain_creation', 'login_template', 'enterprise_mode', 'mobile_ux_cookie_name',
         'commcare_hq_names', 'langs', 'title_context_block', 'timezone', 'has_mobile_workers',
         'multimedia_state', 'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
-        'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'form_submit_history_url',
+        'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'form_submit_history_url', 'btn_style',
     }
 
     expected_keys_module = {
@@ -716,6 +716,7 @@ class TestViewGeneric(ViewsBase):
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
         'formats_supporting_case_list_optimizations', 'module_type', 'icon_class', 'form_submit_history_url',
+        'btn_style',
     }
 
     expected_keys_form = {
@@ -745,7 +746,7 @@ class TestViewGeneric(ViewsBase):
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
         'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'case_property_warning',
-        'form_submit_history_url',
+        'form_submit_history_url', 'btn_style',
     }
 
 
