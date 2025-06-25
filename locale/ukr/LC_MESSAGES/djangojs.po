@@ -1637,6 +1637,17 @@ msgstr ""
 "У вас є незбережені зміни для цього типу справи. Ви впевнені, що хочете "
 "продовжити?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+"Ви зберегли <%- count %> властивостей справи до справи типу «<%- type %>». "
+"Ми рекомендуємо не більше <%- limit %> властивостей справи для кожного типу "
+"справи, інакше під час збору та аналізу даних можуть виникнути проблеми з "
+"продуктивністю."
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
