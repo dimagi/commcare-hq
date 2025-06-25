@@ -42,7 +42,8 @@ const PricingTable = function (options) {
     self.isNextPlanDowngrade = self.nextSubscription && !self.isNextPlanPaused;
 
     self.oSelectedEdition = ko.observable(options.currentEdition);
-    self.oShowAnnualPricing = ko.observable(options.currentIsAnnualPlan);
+    self.oShowAnnualPricing = ko.observable(
+        self.currentIsAnnualPlan || self.isCurrentPlanFreeEdition || self.isCurrentPlanPaused);
 
     self.oIsAnnualPlanSelected = ko.computed(function () {
         return self.oShowAnnualPricing() && self.oSelectedEdition() !== 'paused';
