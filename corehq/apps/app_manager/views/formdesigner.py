@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import json
 import logging
 from looseversion import LooseVersion
-from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -102,13 +101,14 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
 
 
 def get_form_submit_history_url_for_last_30_days(request, domain, app, module, form):
+    from corehq.util.view_utils import reverse
+
     if not has_permission_to_view_report(request.couch_user, domain, VIEW_SUBMISSION_HISTORY_PERMISSION):
         return None
 
     end_date = datetime.now()
     start_date = end_date - timedelta(days=30)
 
-    base_url = reverse('project_report_dispatcher', args=[domain, 'submit_history'])
     params = {
         'form_status': 'active',
         'form_app_id': app.id if app else '',
@@ -117,14 +117,8 @@ def get_form_submit_history_url_for_last_30_days(request, domain, app, module, f
         'startdate': start_date.strftime('%Y-%m-%d'),
         'enddate': end_date.strftime('%Y-%m-%d'),
     }
-    return _make_url(base_url, params)
 
-
-def _make_url(base_url, params):
-    return '{base_url}?{params}'.format(
-        base_url=base_url,
-        params=urlencode(params, True),
-    )
+    return reverse('project_report_dispatcher', args=[domain, 'submit_history'], params=params)
 
 
 def _get_form_designer_view(request, domain, app, module, form):
