@@ -1458,10 +1458,10 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
         if not self.user.is_staff:
             self.fields['auto_case_update_limit'].disabled = True
-            self.fields['auto_case_update_limit'].help_text = (
+            self.fields['auto_case_update_limit'].help_text = _(
                 'Case update rule limits are only modifiable by Dimagi admins. '
-                'Please reach out to support@dimagi.com if you wish to update this setting.'
-            )
+                'Please reach out to {support_email} if you wish to update this setting.'
+            ).format(support_email=settings.SUPPORT_EMAIL)
 
     @property
     def current_values(self):
