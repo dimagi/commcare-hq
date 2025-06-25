@@ -55,7 +55,7 @@
       >
         <i class="fa-regular fa-rectangle-list"></i> {% trans 'App Summary' %}
       </a>
-      {% include "app_manager/partials/view_submissions_button_on_dark_bg.html" %}
+      {% include "app_manager/partials/view_submissions_button.html" with btn_style='btn-form-action custom-button-style' %}
       <a
         class="btn btn-form-action track-usage-link custom-button-style"
         href="{% url 'view_form' domain app.id form.unique_id %}"
@@ -70,7 +70,7 @@
 
   <script type="text/html" id="js-fd-view-submissions-only">
     <div class="pull-right">
-      {% include "app_manager/partials/view_submissions_button_on_dark_bg.html" %}
+      {% include "app_manager/partials/view_submissions_button.html" with btn_style='btn-form-action custom-button-style' %}
     </div>
   </script>
 

@@ -1,7 +1,10 @@
 {% load i18n %}
 
 {% if form_submit_history_url %}
-  <a class="btn btn-default" href="{{ form_submit_history_url }}">
+  <a
+    class="btn {{ btn_style }}"
+    href="{{ form_submit_history_url }}"
+  >
     <i class="fa-solid fa-magnifying-glass-chart"></i>
     {% trans 'View Submissions' %}
   </a>
