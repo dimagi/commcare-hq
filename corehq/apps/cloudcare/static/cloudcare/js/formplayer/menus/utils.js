@@ -213,18 +213,17 @@ define("cloudcare/js/formplayer/menus/utils", [
             var eventData = {};
             let searchFieldData = {};
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
+            var searchFieldList = []
             if (!_.isEmpty(fields)) {
-                let searchFieldList = _.sortBy(_.keys(fields));
+                searchFieldList = _.sortBy(_.keys(fields));
                 eventData.searchFields = searchFieldList.join(",");
-                searchFieldData = formatSearchFieldData(searchFieldList);
-                searchFieldData.searchFieldsLength = eventData.searchFields.length;
             }
 
             noopMetrics.track.event("Viewed Case List", _.extend(eventData, {
                 domain: UsersModels.getCurrentUser().domain,
                 name: menuResponse.title,
             }));
-            gtx.logCaseList(menuResponse, searchFieldData);
+            gtx.logCaseList(menuResponse, searchFieldList);
 
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 noopMetrics.track.event('Started Case Search', {
@@ -234,35 +233,6 @@ define("cloudcare/js/formplayer/menus/utils", [
             var caseListView = getCaseListView(menuResponse);
             return caseListView(menuData);
         }
-    };
-
-    var formatSearchFieldData = function (searchFields) {
-        const concatFields = {};
-        const maxFields = 3;
-        let currentField = 1;
-        let currentString = '';
-        for (var i = 0; i < searchFields.length; i++) {
-            const field = searchFields[i];
-            if (currentField < maxFields) {
-                if (currentString.length === 0) {
-                    currentString = field;
-                } else if (currentString.length + 1 + field.length <= 100) {
-                    currentString += "," + field;
-                } else {
-                    concatFields['searchFields' + String(currentField)] = currentString;
-                    currentField += 1;
-                    currentString = field;
-                }
-            } else {
-                const remainingFields = searchFields.slice(i - 1).join(",");
-                concatFields['searchFields3'] = remainingFields;
-                return concatFields;
-            }
-        }
-        if (currentString.length > 0) {
-            concatFields['searchFields' + String(currentField)] = currentString;
-        }
-        return concatFields;
     };
 
     return {
