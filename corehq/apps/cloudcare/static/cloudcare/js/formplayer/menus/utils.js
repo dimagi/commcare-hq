@@ -214,7 +214,7 @@ define("cloudcare/js/formplayer/menus/utils", [
             let searchFieldData = {};
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
             if (!_.isEmpty(fields)) {
-                searchFieldList = _.sortBy(_.keys(fields));
+                let searchFieldList = _.sortBy(_.keys(fields));
                 eventData.searchFields = searchFieldList.join(",");
                 searchFieldData = formatSearchFieldData(searchFieldList);
                 searchFieldData.searchFieldsLength = eventData.searchFields.length;
@@ -236,12 +236,12 @@ define("cloudcare/js/formplayer/menus/utils", [
         }
     };
 
-    var formatSearchFieldData = function(searchFields) {
+    var formatSearchFieldData = function (searchFields) {
         const concatFields = {};
         const maxFields = 3;
         let currentField = 1;
         let currentString = '';
-        for (var i=0; i < searchFields.length; i++) {
+        for (var i = 0; i < searchFields.length; i++) {
             const field = searchFields[i];
             if (currentField < maxFields) {
                 if (currentString.length === 0) {
@@ -249,21 +249,21 @@ define("cloudcare/js/formplayer/menus/utils", [
                 } else if (currentString.length + 1 + field.length <= 100) {
                     currentString += "," + field;
                 } else {
-                    concatFields['searchFields' + String(currentField)] = currentString
+                    concatFields['searchFields' + String(currentField)] = currentString;
                     currentField += 1;
                     currentString = field;
                 }
             } else {
-                const remainingFields = searchFields.slice(i-1).join(",");
+                const remainingFields = searchFields.slice(i - 1).join(",");
                 concatFields['searchFields3'] = remainingFields;
-                return concatFields
+                return concatFields;
             }
         }
-        if (current.length > 0) {
-            concatFields['searchFields' + String(currentField)] = current;
+        if (currentString.length > 0) {
+            concatFields['searchFields' + String(currentField)] = currentString;
         }
         return concatFields;
-    }
+    };
 
     return {
         getMenuView: getMenuView,
