@@ -6,7 +6,7 @@ from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import IntegerField
 from django.utils.functional import cached_property
 
-from django_cte import With
+from django_cte import CTE, with_cte
 from django_cte.raw import raw_cte_sql
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -84,7 +84,7 @@ class UserLocations:
 
 
 def _location_queryset_helper(domain, location_pks):
-    fixture_ids = With(raw_cte_sql(
+    fixture_ids = CTE(raw_cte_sql(
         """
         SELECT "id", "path", "depth"
         FROM get_location_fixture_ids(%s::TEXT, %s)
@@ -93,13 +93,13 @@ def _location_queryset_helper(domain, location_pks):
         {"id": int_field, "path": int_array, "depth": int_field},
     ))
 
-    return fixture_ids.join(
+    return with_cte(fixture_ids, select=fixture_ids.join(
         SQLLocation.objects.all(),
         id=fixture_ids.col.id,
-    ).annotate(
+    )).annotate(
         path=fixture_ids.col.path,
         depth=fixture_ids.col.depth,
-    ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
+    ).prefetch_related('location_type', 'parent')
 
 
 def _app_has_changed(last_sync, app_id):

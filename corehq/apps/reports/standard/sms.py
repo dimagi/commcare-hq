@@ -871,14 +871,13 @@ class MessageEventDetailReport(BaseMessagingEventReport):
         EMAIL_ADDRRESS = _('Email Address')
         PHONE_NUMBER = _('Phone Number')
         CONNECT_ID = _('ConnectID')
+        contact_column = PHONE_NUMBER
         if self.messaging_event:
             if self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
                 contact_column = EMAIL_ADDRRESS
             elif self.messaging_event.content_type in (MessagingEvent.CONTENT_CONNECT,
                                                        MessagingEvent.CONTENT_CONNECT_SURVEY):
                 contact_column = CONNECT_ID
-        else:
-            contact_column = PHONE_NUMBER
         return DataTablesHeader(
             DataTablesColumn(_('Date')),
             DataTablesColumn(_('Recipient')),

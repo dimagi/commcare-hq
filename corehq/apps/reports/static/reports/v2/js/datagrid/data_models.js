@@ -5,7 +5,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "hqwebapp/js/components/pagination";
 
@@ -67,7 +67,7 @@ var scrollingDataModel = function (endpoint) {
         self.hasLimitBeenModified(true);
 
         if (self.hasInitialLoadFinished()) {
-            kissmetrics.track.event("Changed page size", {
+            noopMetrics.track.event("Changed page size", {
                 "Domain": initialPageData.get('domain'),
                 "Page Size Selected": newLimit,
             });
@@ -109,7 +109,7 @@ var scrollingDataModel = function (endpoint) {
         self.thresholdTimer += self.thresholdInterval;
         if (_.has(self.thresholds, self.thresholdTimer)) {
             var eventTitle = "ECD Initial Load Threshold - " + self.thresholds[self.thresholdTimer];
-            kissmetrics.track.event(eventTitle, {
+            noopMetrics.track.event(eventTitle, {
                 "Domain": initialPageData.get('domain'),
             });
         }
@@ -161,7 +161,7 @@ var scrollingDataModel = function (endpoint) {
 
                 if (data.isTimeout) {
                     self.showTimeoutError(true);
-                    kissmetrics.track.event("ECD Timeout Error After 5 Attempts", {
+                    noopMetrics.track.event("ECD Timeout Error After 5 Attempts", {
                         "Domain": initialPageData.get('domain'),
                     });
                 } else {
@@ -171,7 +171,7 @@ var scrollingDataModel = function (endpoint) {
                     if (!self.hasInitialLoadFinished()) {
                         timeEventTitle = timeEventTitle + " - Initial";
                     }
-                    kissmetrics.track.event(timeEventTitle, {
+                    noopMetrics.track.event(timeEventTitle, {
                         "Domain": initialPageData.get('domain'),
                         "Time": data.took,
                     });

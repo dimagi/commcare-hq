@@ -245,7 +245,7 @@
 -        throw new Error("Multiple elements passed to koApplyBindings");
 -    }
 -    ko.applyBindings(context, this.get(0));
--    this.removeClass('ko-template');
+-    this.find('.ko-template').addBack().removeClass('ko-template');
 -};
 +    $.fn.koApplyBindings = function (context) {
 +        if (!this.length) {
@@ -255,7 +255,7 @@
 +            throw new Error("Multiple elements passed to koApplyBindings");
 +        }
 +        ko.applyBindings(context, this.get(0));
-+        this.removeClass('ko-template');
++        this.find('.ko-template').addBack().removeClass('ko-template');
 +    };
  
 -$.ajaxSetup({

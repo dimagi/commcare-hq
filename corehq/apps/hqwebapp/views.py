@@ -562,8 +562,9 @@ def logout(req, default_domain_redirect='domain_login'):
     LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
-        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
-        return HttpResponseRedirect('%s' % domain_login_url)
+        if not (req.couch_user.is_web_user() and not req.couch_user.is_active_in_domain(domain)):
+            domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
+            return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
 

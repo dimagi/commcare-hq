@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.case_search.const import (
     COMPUTED_METADATA,
     DOCS_LINK_CASE_LIST_EXPLORER,
@@ -39,7 +39,7 @@ class XpathCaseSearchFilterMixin(object):
             try:
                 query = query.xpath_query(self.domain, xpath)
             except CaseFilterError as e:
-                track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
+                track_workflow_noop(self.request.couch_user.username, f"{self.name}: Query Error")
 
                 error = "<p>{}.</p>".format(escape(e))
                 bad_part = "<p>{} <strong>{}</strong></p>".format(
@@ -49,7 +49,7 @@ class XpathCaseSearchFilterMixin(object):
                 raise BadRequestError("{}{}".format(error, bad_part))
 
             if '/' in xpath:
-                track_workflow(self.request.couch_user.username, f"{self.name}: Related case search")
+                track_workflow_noop(self.request.couch_user.username, f"{self.name}: Related case search")
         return query
 
 
@@ -189,7 +189,7 @@ class CaseListExplorer(
         return self._get_rows(data)
 
     def track_search(self):
-        track_workflow(
+        track_workflow_noop(
             self.request.couch_user.username,
             f"{self.name}: Search Performed",
             self.get_tracked_search_properties()
@@ -223,5 +223,5 @@ class CaseListExplorer(
     @property
     def export_table(self):
         self._is_exporting = True
-        track_workflow(self.request.couch_user.username, f"{self.name}: Export button clicked")
+        track_workflow_noop(self.request.couch_user.username, f"{self.name}: Export button clicked")
         return super(CaseListExplorer, self).export_table
