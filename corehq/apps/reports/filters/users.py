@@ -14,7 +14,6 @@ from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.reports.extension_points import customize_user_query
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.cases import get_wrapped_owner
@@ -354,10 +353,13 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         es_domains = cls._es_query_domains(domain, request_user)
         q = user_es.UserES().domain(es_domains, include_inactive=True)
         q = customize_user_query(request_user, domain, q)
-        if (
-            ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
-            and request_user.has_permission(domain, 'access_all_locations')
-        ):
+        if not request_user.has_permission(domain, 'access_all_locations'):
+            q = q.location(list(
+                SQLLocation.objects
+                .accessible_to_user(domain, request_user)
+                .location_ids()
+            ))
+        if ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs):
             return q
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
@@ -368,37 +370,27 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_type_filters = []
         has_user_ids = bool(user_ids)
 
-        can_access_all_locations = request_user.has_permission(domain, 'access_all_locations')
-        if has_user_ids and not can_access_all_locations:
-            cls._verify_users_are_accessible(domain, request_user, user_ids)
         if HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
-            mobile_user_filters = [
+            user_type_filters.append(filters.AND(
+                user_es.mobile_users(),
                 user_es.domain(
                     es_domains,
                     include_active=(HQUserType.ACTIVE in user_types),
                     include_inactive=(HQUserType.DEACTIVATED in user_types),
                 ),
-                user_es.mobile_users()
-            ]
-            if not can_access_all_locations:
-                query = user_es.location(list(
-                    SQLLocation.objects
-                    .accessible_to_user(domain, request_user)
-                    .location_ids()
-                ))
-                mobile_user_filters.append(query)
-            user_type_filters.append(filters.AND(mobile_user_filters))
+            ))
         if HQUserType.ADMIN in user_types:
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
         if HQUserType.WEB in user_types or HQUserType.DEACTIVATED_WEB in user_types:
             user_type_filters.append(filters.AND(
+                user_es.web_users(),
                 user_es.domain(
                     es_domains,
                     include_active=HQUserType.WEB in user_types,
-                    include_inactive=HQUserType.DEACTIVATED_WEB in user_types),
-                user_es.web_users()
+                    include_inactive=HQUserType.DEACTIVATED_WEB in user_types
+                ),
             ))
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
@@ -411,7 +403,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         # return matching user types and exact matches
         location_query = SQLLocation.active_objects.get_locations_and_children(location_ids)
-        if not can_access_all_locations:
+        if not request_user.has_permission(domain, 'access_all_locations'):
             location_query = location_query.accessible_to_user(domain, request_user)
         location_ids = list(location_query.location_ids())
 
@@ -454,14 +446,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             source_domain = EnterprisePermissions.get_source_domain(domain)
             if source_domain:
                 yield source_domain
-
-    @staticmethod
-    def _verify_users_are_accessible(domain, request_user, user_ids):
-        # This function would be very slow if called with many user ids
-        for user_id in user_ids:
-            other_user = CommCareUser.get(user_id)
-            if not user_can_access_other_user(domain, request_user, other_user):
-                raise PermissionDenied("One or more users are not accessible")
 
     @property
     def options(self):
