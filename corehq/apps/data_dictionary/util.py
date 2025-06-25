@@ -107,7 +107,7 @@ def create_properties_for_case_types(domain, case_type_to_prop):
                     case_type=case_type_obj, name=prop
                 ))
 
-    CaseProperty.objects.bulk_create(new_case_properties)
+    CaseProperty.objects.bulk_create(new_case_properties, ignore_conflicts=True)
 
     for case_type, props in case_type_to_prop.items():
         if case_type:
