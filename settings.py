@@ -795,7 +795,6 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'GOOGLE_ANALYTICS_SECRET': '',
     'GOOGLE_ANALYTICS_MEASUREMENT_ID': '',
-    'KISSMETRICS_KEY': '',
     'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
@@ -1044,6 +1043,8 @@ RESTRICT_DOMAIN_CREATION = False
 
 CUSTOM_LANDING_PAGE = False
 
+ENABLE_BHA_CASE_SEARCH_ADAPTER = False
+
 SENTRY_DSN = None
 SENTRY_REPOSITORY = 'dimagi/commcare-hq'
 SENTRY_ORGANIZATION_SLUG = 'dimagi'
@@ -1255,7 +1256,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('eu', 'production', 'staging')
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('eu', 'india', 'production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings

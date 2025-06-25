@@ -1,5 +1,6 @@
 import datetime
 import itertools
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -30,6 +31,7 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
     EXCHANGE_RATE_DECIMAL_PLACES,
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
     SMALL_INVOICE_THRESHOLD,
 )
 from corehq.apps.accounting.emails import (
@@ -999,6 +1001,7 @@ class SoftwarePlanVersion(models.Model):
                        'included': 'Infinite' if r.monthly_limit == UNLIMITED_FEATURE_USAGE else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
+            'is_annual_plan': self.plan.is_annual_plan,
         })
         return desc
 
@@ -1490,7 +1493,7 @@ class Subscription(models.Model):
         subscription. The current subscription will always end immediately
         (today) and the date_start of the new subscription will always be today.
         """
-        from corehq.apps.analytics.tasks import track_workflow
+        from corehq.apps.analytics.tasks import track_workflow_noop
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -1562,9 +1565,9 @@ class Subscription(models.Model):
         upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
         if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
             if change_status_result.adjustment_reason in upgrade_reasons:
-                track_workflow(web_user, 'Changed Plan: Upgrade')
+                track_workflow_noop(web_user, 'Changed Plan: Upgrade')
             if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
-                track_workflow(web_user, 'Changed Plan: Downgrade')
+                track_workflow_noop(web_user, 'Changed Plan: Downgrade')
 
         return new_subscription
 
@@ -1624,7 +1627,7 @@ class Subscription(models.Model):
             )
 
         if new_version.plan.is_annual_plan:
-            new_date_end = self.date_end.replace(year=self.date_end.year + 1)
+            new_date_end = self.date_end + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
         else:
             new_date_end = None
 

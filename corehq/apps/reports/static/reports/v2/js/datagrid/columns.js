@@ -5,7 +5,7 @@
 import ko from "knockout";
 import _ from "underscore";
 import columnFilters from "reports/v2/js/datagrid/column_filters";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 var columnModel = function (data) {
@@ -201,7 +201,7 @@ var editColumnController = function (options) {
             self.hasFilterUpdate(false);
         }
 
-        kissmetrics.track.event("Clicked Add Column", {
+        noopMetrics.track.event("Clicked Add Column", {
             "Domain": initialPageData.get('domain'),
         });
     };

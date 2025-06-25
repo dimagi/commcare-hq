@@ -63,7 +63,7 @@ def canonical_name_adapter_map():
         sms_adapter.canonical_name: sms_adapter,
         user_adapter.canonical_name: user_adapter,
     }
-    if settings.IS_SAAS_ENVIRONMENT:
+    if settings.ENABLE_BHA_CASE_SEARCH_ADAPTER:
         adapter_map[case_search_bha_adapter.canonical_name] = case_search_bha_adapter
         adapter_map[case_search_cc_perf_adapter.canonical_name] = case_search_cc_perf_adapter
     return adapter_map
