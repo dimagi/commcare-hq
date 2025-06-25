@@ -242,6 +242,7 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
         user=user,
         record_form_callback=None,
         throttle=True,
+        form_name="Case Reassignment (via HQ)",
     )
     for idx, case_id in enumerate(case_ids):
         submission_handler.add_caseblock(
