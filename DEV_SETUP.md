@@ -290,7 +290,18 @@ needs of most developers.
     chmod 0644 ./docker/files/elasticsearch*.yml
     ```
 
-5. Bring up the docker containers.
+    If the elasticsearch container fails to start, complaining about permissions for `/usr/share/elasticsearch/data`, you'll need to update your local folder's permissions:
+   ```sh
+   chown -R 1000:root ~/.local/share/dockerhq/elasticsearch6
+   ```
+   If the above local path does not exist, you can determine where the volume is mounted via:
+   ```sh
+   docker inspect <elasticsearch6 container id> | grep /usr/share/elasticsearch/data | head -1
+   ```
+   
+   
+
+6. Bring up the docker containers.
 
     In either of the following commands, omit the `-d` option to keep the
     containers attached in the foreground.
@@ -305,7 +316,7 @@ needs of most developers.
    We recommend visiting the Docker section in the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
-6. If you are planning on running Formplayer from a binary or source, stop the
+7. If you are planning on running Formplayer from a binary or source, stop the
    formplayer container to avoid port collisions.
 
     ```sh
