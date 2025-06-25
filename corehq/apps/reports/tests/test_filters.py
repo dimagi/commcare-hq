@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-from django.core.exceptions import PermissionDenied
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
@@ -329,6 +328,7 @@ DEACTIVATED_WEB = f't__{HQUserType.DEACTIVATED_WEB}'
     ([ACTIVE, 'u__deactive'], ['active', 'active_accessible', 'active_inaccessible', 'deactive']),
     ([DEACTIVATED, 'u__active'], ['deactive', 'deactive_accessible', 'deactive_inaccessible', 'active']),
     ([WEB, 'u__active', 'u__deactive'], ['web', 'web_accessible', 'web_inaccessible', 'active', 'deactive']),
+    (['u__active_inaccessible'], ['active_inaccessible']),
 ], TestEMWFilterOutput)
 def test_user_es_query(self, slugs, expected_ids):
     user_query = ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
@@ -340,21 +340,12 @@ def test_user_es_query(self, slugs, expected_ids):
     ([DEACTIVATED], ['deactive_accessible']),
     (['u__active_accessible'], ['active_accessible']),
     (['u__deactive_accessible'], ['deactive_accessible']),
-    ([WEB], ['web', 'web_accessible', 'web_inaccessible']),  # This is definitely wrong
-    # (['u__web_accessible'], ['web_accessible']),  # This fails hard
+    ([WEB], ['web_accessible']),
+    (['u__web_accessible'], ['web_accessible']),
     ([ACTIVE, 'u__deactive_accessible'], ['active_accessible', 'deactive_accessible']),
+    (['u__active_inaccessible'], []),
 ], TestEMWFilterOutput)
 def test_restricted_user_es_query(self, slugs, expected_ids):
     with has_permissions(access_all_locations=False):
         user_query = ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
         self.assertCountEqual(user_query.values_list('_id', flat=True), expected_ids)
-
-
-@generate_cases([
-    (['u__active'],),
-    # (['u__web_inaccessible'],),  # This fails hard
-], TestEMWFilterOutput)
-def test_restricted_user_es_query_errors(self, slugs):
-    with has_permissions(access_all_locations=False):
-        with self.assertRaises(PermissionDenied):
-            ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
