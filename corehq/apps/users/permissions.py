@@ -5,7 +5,7 @@ from django.utils.translation import gettext_noop
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 
-VIEW_SUBMISSION_HISTORY_PERMISSION = 'corehq.apps.reports.standard.inspect.SubmitHistory'
+SUBMISSION_HISTORY_PERMISSION = 'corehq.apps.reports.standard.inspect.SubmitHistory'
 
 FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
 DEID_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.DeidExportReport'

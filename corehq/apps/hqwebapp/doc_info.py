@@ -4,7 +4,7 @@ from django.utils.translation import gettext as _
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.locations.permissions import can_edit_form_location, user_can_access_case
 from corehq.apps.users.models import HqPermissions
-from corehq.apps.users.permissions import VIEW_SUBMISSION_HISTORY_PERMISSION
+from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION
 from corehq.apps.users.util import raw_username
 from corehq.form_processor.models import XFormInstance
 from dimagi.ext.jsonobject import BooleanProperty, JsonObject, StringProperty
@@ -293,7 +293,7 @@ def get_object_url(domain, doc_type, doc_id):
 def _check_form_permissions(domain, user, form):
     return (
         user.has_permission(
-            domain, HqPermissions.view_report, VIEW_SUBMISSION_HISTORY_PERMISSION
+            domain, HqPermissions.view_report, SUBMISSION_HISTORY_PERMISSION
         )
         and can_edit_form_location(domain, user, form)
     )

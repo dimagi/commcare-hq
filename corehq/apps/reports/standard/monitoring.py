@@ -71,7 +71,7 @@ from corehq.apps.reports.standard import (
 )
 from corehq.apps.reports.util import format_datatables_data, friendly_timedelta, DatatablesServerSideParams
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.permissions import VIEW_SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
+from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
@@ -111,7 +111,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         return has_permission_to_view_report(
             self.request.couch_user,
             self.request.domain,
-            VIEW_SUBMISSION_HISTORY_PERMISSION
+            SUBMISSION_HISTORY_PERMISSION
         )
 
     def get_raw_row_link(self, row_obj):

@@ -55,7 +55,7 @@ from corehq.apps.app_manager.views.utils import (
 from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.users.permissions import VIEW_SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
+from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
 def get_form_submit_history_url_for_last_30_days(request, domain, app, module, form):
     from corehq.util.view_utils import reverse
 
-    if not has_permission_to_view_report(request.couch_user, domain, VIEW_SUBMISSION_HISTORY_PERMISSION):
+    if not has_permission_to_view_report(request.couch_user, domain, SUBMISSION_HISTORY_PERMISSION):
         return None
 
     end_date = datetime.now()
