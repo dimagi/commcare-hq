@@ -271,7 +271,7 @@ def get_demo(request):
     is_user_logged_in = getattr(request, 'user', None) and request.user.is_authenticated
     is_hubspot_enabled = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     context = {}
-    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and not is_user_logged_in:
+    if is_hubspot_enabled and not is_user_logged_in:
         context.update({
             'is_demo_visible': True,
         })
