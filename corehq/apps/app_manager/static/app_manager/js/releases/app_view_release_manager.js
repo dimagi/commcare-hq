@@ -7,7 +7,7 @@ import appManager from "app_manager/js/app_manager";
 import releases from "app_manager/js/releases/releases";
 import languageProfiles from "app_manager/js/releases/language_profiles";
 import previewApp from "app_manager/js/preview_app";
-import kissmetrix from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import google from "analytix/js/google";
 import "app_manager/js/releases/update_prompt";
 import "hqwebapp/js/bootstrap3/widgets";
@@ -135,7 +135,7 @@ $(function () {
         previewApp.forceShowPreview();
     }
 
-    kissmetrix.track.event('Visited the Release Manager');
+    noopMetrics.track.event('Visited the Release Manager');
     if (initialPageData.get('confirm')) {
         google.track.event('User actions', 'User created login', window.location.pathname);
         google.track.event('User actions', 'Forms', 'Name Your First Project');

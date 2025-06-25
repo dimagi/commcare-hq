@@ -3,7 +3,7 @@ import ko from "knockout";
 import _ from "underscore";
 import Clipboard from "clipboard/dist/clipboard";
 import ace from "ace-builds/src-min-noconflict/ace";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import readableForm from "reports/js/bootstrap5/readable_form";
 import "hqwebapp/js/atwho";  // $.atwho
 import "ace-builds/src-min-noconflict/mode-json";
@@ -94,7 +94,7 @@ var CloudCareDebugger = function (options) {
             self.updating(true);
             self.onUpdate();
         }
-        kissmetrics.track.event('[app-preview] User toggled CloudCare debugger');
+        noopMetrics.track.event('[app-preview] User toggled CloudCare debugger');
     };
 
 
@@ -375,7 +375,7 @@ var EvaluateXPath = function (options) {
                 self.recentXPathQueries.slice(0, 6),
             );
         });
-        kissmetrics.track.event('[app-preview] User evaluated XPath');
+        noopMetrics.track.event('[app-preview] User evaluated XPath');
     };
 
     self.onMouseUp = function () {
