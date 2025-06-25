@@ -317,8 +317,8 @@ class BaseUserInfoForm(forms.Form):
             "<i class=\"fa fa-info-circle\"></i> "
             "Changes the default language seen in Web Apps and reports (if supported). "
             "CommCare HQ supports <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>these langauges</a>. "  # noqa: E501
-            f"Please reach out to {settings.SUPPORT_EMAIL} if you notice any mistakes in our translations."
-        ),
+            "Please reach out to {support_email} if you notice any mistakes in our translations."
+        ).format(support_email=settings.SUPPORT_EMAIL),
     )
 
     def load_language(self, language_choices=None):
