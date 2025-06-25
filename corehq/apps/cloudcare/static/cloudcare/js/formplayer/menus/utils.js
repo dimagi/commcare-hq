@@ -211,16 +211,19 @@ define("cloudcare/js/formplayer/menus/utils", [
                 menuData.sidebarEnabled = true;
             }
             var eventData = {};
+            let searchFieldData = {};
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
+            var searchFieldList = []
             if (!_.isEmpty(fields)) {
-                eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
+                searchFieldList = _.sortBy(_.keys(fields));
+                eventData.searchFields = searchFieldList.join(",");
             }
 
             noopMetrics.track.event("Viewed Case List", _.extend(eventData, {
                 domain: UsersModels.getCurrentUser().domain,
                 name: menuResponse.title,
             }));
-            gtx.logCaseList(menuResponse);
+            gtx.logCaseList(menuResponse, searchFieldList);
 
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 noopMetrics.track.event('Started Case Search', {
