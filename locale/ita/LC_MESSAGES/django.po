@@ -1053,6 +1053,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -3625,6 +3626,34 @@ msgid ""
 msgstr "Nota: Continuando cambierai il tuo abbonamento attuale."
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a new Pay Annually plan. The new\n"
+"          subscription will have the same end date as your existing\n"
+"          subscription. You will receive a prorated invoice via email for the\n"
+"          difference in plan fees due.\n"
+"        "
+msgstr ""
+"\n"
+"          Continuando ti abboni a un nuovo piano Pagamento Annuale. La nuova\n"
+"          sottoscrizione avrà la stessa data di fine della tua sottoscrizione\n"
+"          attuale. Riceverai una fattura proporzionata via email per la\n"
+"          differenza delle tariffe dovute del piano.\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a Pay Annually plan and will\n"
+"          receive an invoice via email for plan fees due.\n"
+"        "
+msgstr ""
+"\n"
+"          Continuando ti abboni a un piano Pagamento Annuale e riceverai\n"
+"          una fattura via email per le tariffe dovute del piano.\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -3640,10 +3669,8 @@ msgstr "Nota: Continuando cambierai il tuo abbonamento attuale."
 #| "              "
 msgid ""
 "\n"
-"        By continuing you are subscribing to a Pay Annually plan and will\n"
-"        receive an invoice via email for plan fees due. In case you incur any\n"
-"        on-demand fees for excess users or SMS, you will receive invoices for\n"
-"        these charges on a monthly basis. See\n"
+"        In case you incur any on-demand fees for excess users or SMS, you\n"
+"        will receive invoices for these charges on a monthly basis. See\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >here</a\n"
@@ -3689,6 +3716,20 @@ msgstr ""
 "          Dovresti aspettarti la tua prima fattura il %(invoice_date)s, oppure puoi prepagare il tuo\n"
 "          abbonamento seguendo le istruzioni\n"
 "          <a href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\">qui</a>.\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are moving from a Pay Annually to a Pay Monthly\n"
+"          plan. Any prepaid plan fees will be automatically applied to future\n"
+"          monthly invoices.\n"
+"        "
+msgstr ""
+"\n"
+"          Continuando passi da un piano Pagamento Annuale a un piano Pagamento Mensile.\n"
+"          Eventuali tariffe prepagate verranno automaticamente applicate alle\n"
+"          future fatture mensili.\n"
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
@@ -3857,6 +3898,7 @@ msgstr ""
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -4270,6 +4312,7 @@ msgstr "Utenti aggiunti:"
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -4774,6 +4817,7 @@ msgstr "Ultime 10 esecuzioni"
 #: corehq/apps/case_search/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -7809,6 +7853,7 @@ msgstr "Installa CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -15329,6 +15374,16 @@ msgstr "Configurazione Fixture CSQL"
 msgid "Add Expression"
 msgstr "Aggiungi espressione"
 
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+msgid "Fixture Inclusion in Restore Criteria"
+msgstr "Inclusione delle fixture nei criteri di ripristino"
+
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#, fuzzy
+#| msgid "Add filter"
+msgid "Add Criteria"
+msgstr "Aggiungi filtro"
+
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
 msgstr "La ricerca ha troppi risultati. Prova una ricerca più specifica."
@@ -18286,10 +18341,15 @@ msgid "Create Case Type"
 msgstr "Crea tipo di caso"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        There was an error processing the request. Please try again.\n"
+#| "      "
 msgid ""
 "\n"
-"        There was an error processing the request. Please try again.\n"
-"      "
+"          There was an error processing the request. Please try again.\n"
+"        "
 msgstr ""
 "\n"
 "        Si è verificato un errore durante l'elaborazione della richiesta. Per favore riprova.\n"
@@ -18329,10 +18389,15 @@ msgid "FHIR Resource Property Path"
 msgstr "Percorso proprietà risorsa FHIR"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+#| "            "
 msgid ""
 "\n"
-"            <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
-"            "
+"              <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+"              "
 msgstr ""
 "\n"
 "            Le proprietà del gruppo <b data-bind=\"text: name()\"></b> saranno spostate in <b>Nessun gruppo</b>\n"
@@ -18373,12 +18438,19 @@ msgid "Deprecate"
 msgstr "Depreca"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        A case property with this name already exists.\n"
+#| "                        If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+#| "                        properties.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        A case property with this name already exists.\n"
-"                        If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                        properties.\n"
-"                      "
+"                          A case property with this name already exists.\n"
+"                          If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                          properties.\n"
+"                        "
 msgstr ""
 "\n"
 "                        Esiste già una proprietà di caso con questo nome.\n"
@@ -18398,12 +18470,19 @@ msgid "Add Case Property Group"
 msgstr "Aggiungi gruppo proprietà caso"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  A case property group with this name already exists.\n"
+#| "                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+#| "                  groups.\n"
+#| "                "
 msgid ""
 "\n"
-"                  A case property group with this name already exists.\n"
-"                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                  groups.\n"
-"                "
+"                    A case property group with this name already exists.\n"
+"                    If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                    groups.\n"
+"                  "
 msgstr ""
 "\n"
 "                  Esiste già un gruppo di proprietà di caso con questo nome.\n"
@@ -18421,6 +18500,33 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add a new Case Type"
 msgstr "Aggiungi un nuovo tipo di caso"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+msgid "Performance warning"
+msgstr "Avviso sulle prestazioni"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945812/CommCare+Messaging+Reports#Messaging-Dashboard\">Click here</a>\n"
+#| "      for more information about this dashboard.\n"
+#| "    "
+msgid ""
+"\n"
+"        See\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947182/Case+Configuration\"\n"
+"          >case configuration</a\n"
+"        >\n"
+"        documentation for more information.\n"
+"      "
+msgstr ""
+"\n"
+"      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945812/CommCare+Messaging+Reports#Messaging-Dashboard\">Clicca qui</a>\n"
+"      per maggiori informazioni su questa dashboard.\n"
+"    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
@@ -19459,6 +19565,7 @@ msgstr "Attiva"
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Deactivate"
@@ -22311,6 +22418,49 @@ msgstr ""
 "        <p>Il nuovo piano entrerà in vigore il <strong>%(start_date)s</strong> e costerà <strong>%(monthly_fee)s</strong>/mese.</p>\n"
 "      "
 
+#: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
+#: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
+#| "                receive an invoice via email with bank information and\n"
+#| "                instructions for wire payment. Please include the Invoice # in\n"
+#| "                the wire payment memo or note field.\n"
+#| "                <a\n"
+#| "                  href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+#| "                  target=\"_blank\"\n"
+#| "                  >More information...</a\n"
+#| "                >\n"
+#| "              "
+msgid ""
+"\n"
+"          <p>\n"
+"            By continuing you are renewing to a Pay Annually plan and will\n"
+"            receive an invoice via email for plan fees due. <br />\n"
+"            In case you incur any on-demand fees for excess users or SMS, you\n"
+"            will receive invoices for these charges on a monthly basis. <br />\n"
+"            See\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
+"              >here</a\n"
+"            >\n"
+"            for more information about payment, cancellation, and refunds.\n"
+"          </p>\n"
+"        "
+msgstr ""
+"\n"
+"                Dimagi accetta pagamenti tramite bonifico ACH e bonifico bancario. Riceverai\n"
+"                una fattura via email con le informazioni bancarie e\n"
+"                le istruzioni per il pagamento tramite bonifico. Includi il numero della fattura\n"
+"                nel campo memo o note del pagamento tramite bonifico.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+"                  target=\"_blank\"\n"
+"                  >Maggiori informazioni...</a\n"
+"                >\n"
+"              "
+
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
@@ -22381,15 +22531,24 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid "Got questions about your plan?"
+#, fuzzy
+#| msgid "Got questions about your plan?"
+msgid "Questions about your plan?"
 msgstr "Hai domande sul tuo piano?"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
-msgid "Talk to Sales"
-msgstr "Parla con il reparto vendite"
+#, fuzzy
+#| msgid "Contacts"
+msgid "Contact us"
+msgstr "Contatti"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, fuzzy
+#| msgid "Change Plan"
+msgid "Upgrade Plan"
+msgstr "Cambia piano"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -22550,6 +22709,34 @@ msgstr ""
 "La pagina richiesta non è attualmente disponibile a causa di una\n"
 "    migrazione dei dati. Per favore riprova più tardi."
 
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    You've been added to %(domain)s.\n"
+#| "  "
+msgid "You have been deactivated from %(domain)s"
+msgstr ""
+"\n"
+"    Sei statə aggiunto/a a %(domain)s.\n"
+"  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      If you believe this to be in error, please contact support.\n"
+#| "    "
+msgid ""
+"If you believe this is an error, please contact your project administrator "
+"or support."
+msgstr ""
+"\n"
+"      Se ritieni che questo sia un errore, contatta il supporto.\n"
+"    "
+
 #: corehq/apps/domain/templates/domain/bootstrap3/insufficient_privilege_notification.html
 #: corehq/apps/domain/templates/domain/bootstrap5/insufficient_privilege_notification.html
 #, python-format
@@ -22663,6 +22850,11 @@ msgstr ""
 "      Stai rinnovando il tuo abbonamento a <strong>%(p)s</strong>.\n"
 "    "
 
+#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
+msgid "Talk to Sales"
+msgstr "Parla con il reparto vendite"
+
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
 #: corehq/apps/settings/views.py
@@ -22716,11 +22908,18 @@ msgstr "scontato"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              This plan will be downgrading to\n"
+#| "              <span data-bind=\"text: oNextPlan\"></span> on\n"
+#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
+#| "            "
 msgid ""
 "\n"
 "              This plan will be downgrading to\n"
-"              <span data-bind=\"text: oNextPlan\"></span> on\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextPlan\"></span> on\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 "\n"
@@ -22731,10 +22930,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              This plan will be pausing on<br />\n"
+#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
+#| "            "
 msgid ""
 "\n"
 "              This plan will be pausing on<br />\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 "\n"
@@ -22840,10 +23045,17 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Your subscription will be pausing on\n"
+#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+#| "        unless you select a different plan above.\n"
+#| "      "
 msgid ""
 "\n"
 "        Your subscription will be pausing on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -22855,11 +23067,19 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Your subscription will be downgrading to\n"
+#| "        <span data-bind=\"text: oNextSubscription\"></span> on\n"
+#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+#| "        unless you select a different plan above.\n"
+#| "      "
 msgid ""
 "\n"
 "        Your subscription will be downgrading to\n"
-"        <span data-bind=\"text: oNextSubscription\"></span> on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+"        <span data-bind=\"text: nextSubscription\"></span> on\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -50509,6 +50729,7 @@ msgid "Not Linked"
 msgstr "Collegato"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Reactivate"
 msgstr "Riattiva"
 
@@ -51463,6 +51684,18 @@ msgid "Current Users"
 msgstr "Utenti Attuali"
 
 #: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Show Deactivated Web Users"
+msgstr "Mostra operatori mobili disattivati"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Show Active Web Users"
+msgstr "# Utenti attivi"
+
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Loading Users..."
 msgstr "Caricamento Utenti..."
 
@@ -51485,6 +51718,104 @@ msgstr "Sei sicuro di voler rimuovere l'appartenenza di questo utente?"
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Membership"
 msgstr "Appartenenza"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Distance from current location"
+msgid "Deactivate from the current project: "
+msgstr "Distanza dalla posizione attuale"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>deactivate</strong> this web user?\n"
+"                            "
+msgstr ""
+"\n"
+"                          Sei sicurə di voler <strong>eliminare</strong> questa regola?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
+msgid ""
+"\n"
+"                              Deactivated web users will not be able to log into the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+"\n"
+"                                Nota: L'installazione offline installa automaticamente tutti i multimedia\n"
+"                                inclusi nel tuo modulo. Tutti gli aggiornamenti remoti successivi includeranno anche i multimedia, che potrebbero richiedere molti dati. Consulta il\n"
+"                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+"                                  Sito di Supporto\n"
+"                                </a> per maggiori informazioni.\n"
+"                              "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Activate your CommCare project"
+msgid "Reactivate in the current project: "
+msgstr "Attiva il tuo progetto CommCare"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>reactivate</strong> this web user?\n"
+"                            "
+msgstr ""
+"\n"
+"                          Sei sicurə di voler <strong>eliminare</strong> questa regola?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
+msgid ""
+"\n"
+"                              Deactivated web users are not able to log into the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+"\n"
+"                                Nota: L'installazione offline installa automaticamente tutti i multimedia\n"
+"                                inclusi nel tuo modulo. Tutti gli aggiornamenti remoti successivi includeranno anche i multimedia, che potrebbero richiedere molti dati. Consulta il\n"
+"                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+"                                  Sito di Supporto\n"
+"                                </a> per maggiori informazioni.\n"
+"                              "
 
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Pending Invitations"

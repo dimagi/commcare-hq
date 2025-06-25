@@ -1059,6 +1059,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -3559,6 +3560,33 @@ msgid ""
 msgstr "नोट: जारी रखने से आपकी वर्तमान सदस्यता बदल जाएगी।"
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a new Pay Annually plan. The new\n"
+"          subscription will have the same end date as your existing\n"
+"          subscription. You will receive a prorated invoice via email for the\n"
+"          difference in plan fees due.\n"
+"        "
+msgstr ""
+"\n"
+"          जारी रखने पर आप नए 'पे एनुअली' प्लान की सदस्यता ले रहे हैं। नई\n"
+"          सदस्यता की समाप्ति तिथि आपकी मौजूदा सदस्यता के समान होगी। आपको\n"
+"          प्लान शुल्क के अंतर के लिए प्रोराटा इनवॉइस ईमेल द्वारा प्राप्त होगा।\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a Pay Annually plan and will\n"
+"          receive an invoice via email for plan fees due.\n"
+"        "
+msgstr ""
+"\n"
+"          जारी रखने पर आप 'पे एनुअली' प्लान की सदस्यता ले रहे हैं और\n"
+"          प्लान शुल्क के लिए आपको ईमेल द्वारा इनवॉइस प्राप्त होगा।\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -3574,10 +3602,8 @@ msgstr "नोट: जारी रखने से आपकी वर्तम
 #| "              "
 msgid ""
 "\n"
-"        By continuing you are subscribing to a Pay Annually plan and will\n"
-"        receive an invoice via email for plan fees due. In case you incur any\n"
-"        on-demand fees for excess users or SMS, you will receive invoices for\n"
-"        these charges on a monthly basis. See\n"
+"        In case you incur any on-demand fees for excess users or SMS, you\n"
+"        will receive invoices for these charges on a monthly basis. See\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >here</a\n"
@@ -3621,6 +3647,18 @@ msgstr ""
 "          CommCare मासिक आधार पर बिल किया जाता है, और सभी सदस्यताओं के लिए 30 दिन की न्यूनतम प्रतिबद्धता आवश्यक है।\n"
 "          आपको अपना पहला चालान %(invoice_date)s को मिलने की उम्मीद करनी चाहिए, या आप अपनी सदस्यता के लिए\n"
 "          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\">यहाँ</a> दिए गए निर्देशों का पालन करके अग्रिम भुगतान कर सकते हैं।\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are moving from a Pay Annually to a Pay Monthly\n"
+"          plan. Any prepaid plan fees will be automatically applied to future\n"
+"          monthly invoices.\n"
+"        "
+msgstr ""
+"\n"
+"          जारी रखने पर आप 'पे एनुअली' से 'पे मंथली' प्लान में जा रहे हैं। कोई भी प्रीपेड प्लान शुल्क स्वचालित रूप से भविष्य की मासिक इनवॉइस में समायोजित हो जाएगा।\n"
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
@@ -3788,6 +3826,7 @@ msgstr ""
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -4198,6 +4237,7 @@ msgstr "जोड़े गए उपयोगकर्ता:"
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -4700,6 +4740,7 @@ msgstr "अंतिम 10 रन"
 #: corehq/apps/case_search/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -7669,6 +7710,7 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -14923,7 +14965,7 @@ msgstr "{param} एक स्ट्रिंग होना चाहिए"
 
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr ""
+msgstr "अमान्य ऑपरेटर \"{criteria[\"operator\"]}\"। अनुमत मान हैं "
 
 #: corehq/apps/case_search/models.py
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -15068,6 +15110,16 @@ msgstr "CSQL फिक्स्चर कॉन्फ़िगरेशन"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Add Expression"
 msgstr "अभिव्यक्ति जोड़ें"
+
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+msgid "Fixture Inclusion in Restore Criteria"
+msgstr "फिक्स्चर समावेशन पुनर्स्थापना मानदंड में"
+
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#, fuzzy
+#| msgid "Add filter"
+msgid "Add Criteria"
+msgstr "फ़िल्टर जोड़ें"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -18001,10 +18053,15 @@ msgid "Create Case Type"
 msgstr "केस प्रकार बनाएँ"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        There was an error processing the request. Please try again.\n"
+#| "      "
 msgid ""
 "\n"
-"        There was an error processing the request. Please try again.\n"
-"      "
+"          There was an error processing the request. Please try again.\n"
+"        "
 msgstr ""
 "\n"
 "        अनुरोध संसाधित करने में त्रुटि हुई। कृपया पुनः प्रयास करें।\n"
@@ -18044,10 +18101,15 @@ msgid "FHIR Resource Property Path"
 msgstr "FHIR संसाधन प्रॉपर्टी पथ"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+#| "            "
 msgid ""
 "\n"
-"            <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
-"            "
+"              <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+"              "
 msgstr ""
 "\n"
 "            <b data-bind=\"text: name()\"></b> समूह की विशेषताएँ <b>कोई समूह नहीं</b> में स्थानांतरित कर दी जाएँगी\n"
@@ -18087,12 +18149,19 @@ msgid "Deprecate"
 msgstr "अप्रचलित करें"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        A case property with this name already exists.\n"
+#| "                        If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+#| "                        properties.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        A case property with this name already exists.\n"
-"                        If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                        properties.\n"
-"                      "
+"                          A case property with this name already exists.\n"
+"                          If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                          properties.\n"
+"                        "
 msgstr ""
 "\n"
 "                        इस नाम की एक केस प्रॉपर्टी पहले से मौजूद है।\n"
@@ -18113,12 +18182,19 @@ msgid "Add Case Property Group"
 msgstr "केस प्रॉपर्टी समूह जोड़ें"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  A case property group with this name already exists.\n"
+#| "                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+#| "                  groups.\n"
+#| "                "
 msgid ""
 "\n"
-"                  A case property group with this name already exists.\n"
-"                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                  groups.\n"
-"                "
+"                    A case property group with this name already exists.\n"
+"                    If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                    groups.\n"
+"                  "
 msgstr ""
 "\n"
 "                  इस नाम का एक केस प्रॉपर्टी समूह पहले से मौजूद है।\n"
@@ -18137,6 +18213,33 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add a new Case Type"
 msgstr "एक नया केस प्रकार जोड़ें"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+msgid "Performance warning"
+msgstr "प्रदर्शन चेतावनी"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945812/CommCare+Messaging+Reports#Messaging-Dashboard\">Click here</a>\n"
+#| "      for more information about this dashboard.\n"
+#| "    "
+msgid ""
+"\n"
+"        See\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947182/Case+Configuration\"\n"
+"          >case configuration</a\n"
+"        >\n"
+"        documentation for more information.\n"
+"      "
+msgstr ""
+"\n"
+"      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945812/CommCare+Messaging+Reports#Messaging-Dashboard\">यहाँ क्लिक करें</a>\n"
+"      इस डैशबोर्ड के बारे में अधिक जानकारी के लिए।\n"
+"    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
@@ -19172,6 +19275,7 @@ msgstr "सक्रिय करें"
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Deactivate"
@@ -21976,6 +22080,48 @@ msgstr ""
 "        <p>नया प्लान <strong>%(start_date)s</strong> से प्रभावी होगा और इसकी लागत <strong>%(monthly_fee)s</strong>/माह होगी।</p>\n"
 "      "
 
+#: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
+#: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
+#| "                receive an invoice via email with bank information and\n"
+#| "                instructions for wire payment. Please include the Invoice # in\n"
+#| "                the wire payment memo or note field.\n"
+#| "                <a\n"
+#| "                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+#| "                  target=\"_blank\"\n"
+#| "                  >More information...</a\n"
+#| "                >\n"
+#| "              "
+msgid ""
+"\n"
+"          <p>\n"
+"            By continuing you are renewing to a Pay Annually plan and will\n"
+"            receive an invoice via email for plan fees due. <br />\n"
+"            In case you incur any on-demand fees for excess users or SMS, you\n"
+"            will receive invoices for these charges on a monthly basis. <br />\n"
+"            See\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
+"              >here</a\n"
+"            >\n"
+"            for more information about payment, cancellation, and refunds.\n"
+"          </p>\n"
+"        "
+msgstr ""
+"\n"
+"                डिमागी एसीएच और वायर ट्रांसफर के माध्यम से वायर पेमेंट स्वीकार करता है। आपको\n"
+"                बैंक जानकारी और वायर पेमेंट के निर्देशों के साथ ईमेल द्वारा इनवॉइस प्राप्त होगा।\n"
+"                कृपया वायर पेमेंट मेमो या नोट फ़ील्ड में इनवॉइस # शामिल करें।\n"
+"                <a\n"
+"                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+"                  target=\"_blank\"\n"
+"                  >अधिक जानकारी...</a\n"
+"                >\n"
+"              "
+
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
@@ -22046,15 +22192,24 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid "Got questions about your plan?"
+#, fuzzy
+#| msgid "Got questions about your plan?"
+msgid "Questions about your plan?"
 msgstr "अपने प्लान के बारे में सवाल हैं?"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
-msgid "Talk to Sales"
-msgstr "सेल्स से बात करें"
+#, fuzzy
+#| msgid "Contacts"
+msgid "Contact us"
+msgstr "संपर्क"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, fuzzy
+#| msgid "Change Plan"
+msgid "Upgrade Plan"
+msgstr "प्लान बदलें"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -22214,6 +22369,34 @@ msgstr ""
 "आपके द्वारा अनुरोधित पृष्ठ वर्तमान में डेटा माइग्रेशन के कारण अनुपलब्ध है। "
 "कृपया बाद में पुनः प्रयास करें।"
 
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    You've been added to %(domain)s.\n"
+#| "  "
+msgid "You have been deactivated from %(domain)s"
+msgstr ""
+"\n"
+"    आपको %(domain)s में जोड़ा गया है।\n"
+"  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      If you believe this to be in error, please contact support.\n"
+#| "    "
+msgid ""
+"If you believe this is an error, please contact your project administrator "
+"or support."
+msgstr ""
+"\n"
+"      यदि आपको लगता है कि यह गलती है, तो कृपया सहायता से संपर्क करें।\n"
+"    "
+
 #: corehq/apps/domain/templates/domain/bootstrap3/insufficient_privilege_notification.html
 #: corehq/apps/domain/templates/domain/bootstrap5/insufficient_privilege_notification.html
 #, python-format
@@ -22326,6 +22509,11 @@ msgstr ""
 "      आप अपनी <strong>%(p)s</strong> सब्सक्रिप्शन का नवीनीकरण कर रहे हैं।\n"
 "    "
 
+#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
+msgid "Talk to Sales"
+msgstr "सेल्स से बात करें"
+
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
 #: corehq/apps/settings/views.py
@@ -22379,11 +22567,18 @@ msgstr "डिस्काउंटेड"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              This plan will be downgrading to\n"
+#| "              <span data-bind=\"text: oNextPlan\"></span> on\n"
+#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
+#| "            "
 msgid ""
 "\n"
 "              This plan will be downgrading to\n"
-"              <span data-bind=\"text: oNextPlan\"></span> on\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextPlan\"></span> on\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 "\n"
@@ -22394,10 +22589,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              This plan will be pausing on<br />\n"
+#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
+#| "            "
 msgid ""
 "\n"
 "              This plan will be pausing on<br />\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 "\n"
@@ -22501,10 +22702,17 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Your subscription will be pausing on\n"
+#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+#| "        unless you select a different plan above.\n"
+#| "      "
 msgid ""
 "\n"
 "        Your subscription will be pausing on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -22516,11 +22724,19 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Your subscription will be downgrading to\n"
+#| "        <span data-bind=\"text: oNextSubscription\"></span> on\n"
+#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+#| "        unless you select a different plan above.\n"
+#| "      "
 msgid ""
 "\n"
 "        Your subscription will be downgrading to\n"
-"        <span data-bind=\"text: oNextSubscription\"></span> on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+"        <span data-bind=\"text: nextSubscription\"></span> on\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -49808,6 +50024,7 @@ msgid "Not Linked"
 msgstr "लिंक्ड"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Reactivate"
 msgstr "पुनः सक्रिय करें"
 
@@ -50762,6 +50979,18 @@ msgid "Current Users"
 msgstr "वर्तमान उपयोगकर्ता"
 
 #: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Show Deactivated Web Users"
+msgstr "निष्क्रिय मोबाइल वर्कर्स दिखाएँ"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Show Active Web Users"
+msgstr "# सक्रिय उपयोगकर्ता"
+
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Loading Users..."
 msgstr "उपयोगकर्ता लोड हो रहे हैं..."
 
@@ -50784,6 +51013,104 @@ msgstr "क्या आप वाकई इस उपयोगकर्ता �
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Membership"
 msgstr "सदस्यता"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Distance from current location"
+msgid "Deactivate from the current project: "
+msgstr "वर्तमान स्थान से दूरी"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>deactivate</strong> this web user?\n"
+"                            "
+msgstr ""
+"\n"
+"                          क्या आप वाकई इस नियम को <strong>हटाना</strong> चाहते हैं?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
+msgid ""
+"\n"
+"                              Deactivated web users will not be able to log into the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+"\n"
+"                                नोट: ऑफ़लाइन इंस्टॉल अपने आप आपके फ़ॉर्म में शामिल सभी मल्टीमीडिया इंस्टॉल करता है। सभी बाद के रिमोट अपडेट्स में भी\n"
+"                                मल्टीमीडिया शामिल होगा, जिससे अधिक डेटा की आवश्यकता हो सकती है। अधिक जानकारी के लिए देखें\n"
+"                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+"                                  सहायता साइट\n"
+"                                </a>.\n"
+"                              "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Activate your CommCare project"
+msgid "Reactivate in the current project: "
+msgstr "अपने CommCare प्रोजेक्ट को सक्रिय करें"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>reactivate</strong> this web user?\n"
+"                            "
+msgstr ""
+"\n"
+"                          क्या आप वाकई इस नियम को <strong>हटाना</strong> चाहते हैं?\n"
+"                        "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
+msgid ""
+"\n"
+"                              Deactivated web users are not able to log into the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+"\n"
+"                                नोट: ऑफ़लाइन इंस्टॉल अपने आप आपके फ़ॉर्म में शामिल सभी मल्टीमीडिया इंस्टॉल करता है। सभी बाद के रिमोट अपडेट्स में भी\n"
+"                                मल्टीमीडिया शामिल होगा, जिससे अधिक डेटा की आवश्यकता हो सकती है। अधिक जानकारी के लिए देखें\n"
+"                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+"                                  सहायता साइट\n"
+"                                </a>.\n"
+"                              "
 
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Pending Invitations"

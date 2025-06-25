@@ -1638,6 +1638,16 @@ msgstr ""
 "इस केस प्रकार में आपके असहेजे गए परिवर्तन हैं। क्या आप वाकई जारी रखना चाहते "
 "हैं?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+"आपने '<%- type %>' केस में <%- count %> केस प्रॉपर्टीज़ सेव की हैं। हम सलाह "
+"देते हैं कि प्रति केस टाइप अधिकतम <%- limit %> केस प्रॉपर्टीज़ ही रखें, "
+"अन्यथा डेटा संग्रहण और विश्लेषण के समय प्रदर्शन संबंधी समस्याएँ आ सकती हैं।"
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
