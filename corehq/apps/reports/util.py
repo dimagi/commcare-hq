@@ -2,7 +2,6 @@ import json
 import logging
 import math
 from typing import List
-from urllib.parse import urlencode
 import warnings
 from collections import defaultdict, namedtuple
 from datetime import datetime
@@ -1071,10 +1070,3 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
         date_of_use = DateTimeProperty.deserialize(date_of_use)
 
     return version_in_use, date_of_use
-
-
-def make_url(base_url, params):
-    return '{base_url}?{params}'.format(
-        base_url=base_url,
-        params=urlencode(params, True),
-    )

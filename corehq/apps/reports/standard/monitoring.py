@@ -69,12 +69,7 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.util import (
-    format_datatables_data,
-    friendly_timedelta,
-    DatatablesServerSideParams,
-    make_url,
-)
+from corehq.apps.reports.util import format_datatables_data, friendly_timedelta, DatatablesServerSideParams
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import VIEW_SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -1563,13 +1558,20 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         })
 
         return util.numcell(
-            self._html_anchor_tag(make_url(base_url, params), value),
+            self._html_anchor_tag(self._make_url(base_url, params), value),
             value,
         )
 
     @staticmethod
     def _html_anchor_tag(href, value):
         return format_html('<a href="{}" target="_blank">{}</a>', href, value)
+
+    @staticmethod
+    def _make_url(base_url, params):
+        return '{base_url}?{params}'.format(
+            base_url=base_url,
+            params=urlencode(params, True),
+        )
 
     @staticmethod
     def _case_query(case_type):
@@ -1590,7 +1592,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def _case_list_url(self, query, owner_id):
         params = WorkerActivityReport._case_list_url_params(query, owner_id)
-        return make_url(self._case_list_base_url, params)
+        return self._make_url(self._case_list_base_url, params)
 
     def _case_list_url_cases_opened_by(self, owner_id):
         return self._case_list_url_cases_by(owner_id, is_closed=False)
@@ -1643,7 +1645,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             "enddate": end_date,
         }
 
-        url = make_url(base_url, params)
+        url = self._make_url(base_url, params)
 
         return util.format_datatables_data(
             self._html_anchor_tag(url, group_name),

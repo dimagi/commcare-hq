@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 import logging
 from looseversion import LooseVersion
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -55,7 +56,6 @@ from corehq.apps.app_manager.views.utils import (
 from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.reports.util import make_url
 from corehq.apps.users.permissions import VIEW_SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 
 logger = logging.getLogger(__name__)
@@ -117,7 +117,14 @@ def get_form_submit_history_url_for_last_30_days(request, domain, app, module, f
         'startdate': start_date.strftime('%Y-%m-%d'),
         'enddate': end_date.strftime('%Y-%m-%d'),
     }
-    return make_url(base_url, params)
+    return _make_url(base_url, params)
+
+
+def _make_url(base_url, params):
+    return '{base_url}?{params}'.format(
+        base_url=base_url,
+        params=urlencode(params, True),
+    )
 
 
 def _get_form_designer_view(request, domain, app, module, form):
