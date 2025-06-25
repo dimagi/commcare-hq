@@ -310,7 +310,7 @@ towards the end of the results set.
 Get individual case
 ~~~~~~~~~~~~~~~~~~~
 
-Interface - ``GET /a/<domain>/api/case/v1/<case_id>``
+Interface - ``GET /a/<domain>/api/case/v2/<case_id>``
 
 This API takes no additional parameters.  The return value is a single
 case serialized as described in "`Single Case Serialization Format`_".
@@ -318,7 +318,7 @@ case serialized as described in "`Single Case Serialization Format`_".
 Get Case's index information (parent/child or host/extension)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Interface - ``GET /a/<domain>/api/case/v1/?indices.parent=<parent_case_id>``
+Interface - ``GET /a/<domain>/api/case/v2/?indices.parent=<parent_case_id>``
 
 Indices are included in the serialization of individual cases, so to
 find a case’s parent, you need only look at indices.parent.case_id in
@@ -369,7 +369,7 @@ Get cases in bulk
 1. GET request using Case IDs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Interface - ``GET /a/<domain>/api/case/v1/<case_id>,<case_id>,<case_id>``
+Interface - ``GET /a/<domain>/api/case/v2/<case_id>,<case_id>,<case_id>``
 
 Limitations
 ~~~~~~~~~~~
@@ -382,7 +382,7 @@ endpoint.
 2. POST request using Case IDs or External IDs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Interface - ``POST /a/<domain>/api/case/v1/bulk_fetch/``
+Interface - ``POST /a/<domain>/api/case/v2/bulk_fetch/``
 
 A more flexible approach to fetching cases in bulk is to use a POST
 request where the case IDs are supplied in the POST body.  You may also
@@ -444,7 +444,7 @@ Response format (cases truncated for clarity)
 Create Case
 ~~~~~~~~~~~
 
-Interface - ``POST /a/<domain>/api/case/v1/``
+Interface - ``POST /a/<domain>/api/case/v2/``
 
 The body of the request should contain the case update format described
 in "`Case Create / Update Format`_"
@@ -465,7 +465,7 @@ available.
 Update Existing Case
 ~~~~~~~~~~~~~~~~~~~~
 
-Interface - ``PUT /a/<domain>/api/case/v1/<case_id>``
+Interface - ``PUT /a/<domain>/api/case/v2/<case_id>``
 
 The body of the request should contain the case update format described
 in "`Case Create / Update Format`_"
@@ -481,7 +481,7 @@ case      Serialized version of the new state of the case
 Bulk Create/Update Cases
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Interface - ``POST /a/<domain>/api/case/v1/``
+Interface - ``POST /a/<domain>/api/case/v2/``
 
 The body of the request should contain a list of case updates in the
 format described in "`Case Create / Update Format`_".

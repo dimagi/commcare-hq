@@ -8,7 +8,7 @@ from corehq.pillows.utils import get_all_expected_es_indices
 
 
 @es_test
-@override_settings(IS_SAAS_ENVIRONMENT=True)
+@override_settings(ENABLE_BHA_CASE_SEARCH_ADAPTER=True)
 class ProdIndexManagementTest(SimpleTestCase):
 
     maxDiff = None  # show the entire diff for test failures

@@ -697,6 +697,21 @@ class CaseRepeater(Repeater):
 
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
+    def register(self, payload, fire_synchronously=False):
+        if repeat_record := (
+            self.repeat_records_ready
+            .filter(payload_id=payload.get_id)
+            .first()
+        ):
+            # There is already a repeat record for this payload waiting
+            # to be sent. We pull the case from the database just before
+            # forwarding it. This means that any updates made to that
+            # case since the repeat record was created will be reflected
+            # when that attempt to forward is made, regardless of when
+            # that repeat record was created.
+            return repeat_record
+        return super().register(payload, fire_synchronously)
+
     @property
     def form_class_name(self):
         """
@@ -734,6 +749,11 @@ class CreateCaseRepeater(CaseRepeater):
         proxy = True
 
     friendly_name = _("Forward Cases on Creation Only")
+
+    def register(self, payload, fire_synchronously=False):
+        # `CaseRepeater.register()` skips duplicate payloads, but
+        # `CreateCaseRepeater` will never have duplicates.
+        return Repeater.register(self, payload, fire_synchronously)
 
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
@@ -965,6 +985,17 @@ class DataSourceUpdate(models.Model):
     def get_id(self):
         return self.id
 
+    def to_json(self):
+        """
+        Used by DataSourcePayloadGenerator.get_payload()
+        """
+        return {
+            "data": self.rows,
+            "data_source_id": self.data_source_id.hex,
+            "doc_id": "",  # CCA `DataSetChange` expects this key
+            "doc_ids": self.doc_ids,
+        }
+
 
 class DataSourceRepeater(Repeater):
     """
@@ -1024,10 +1055,20 @@ class DataSourceRepeater(Repeater):
 
         @dataclass
         class DataSourceUpdateLog:
+            # Legacy payload format
+            # TODO: Drop after old repeat records are sent
             domain: str
             data_source_id: str
             doc_id: str
             rows: Optional[list[Row]] = None
+
+            def to_json(self):
+                # Used by DataSourcePayloadGenerator.get_payload()
+                return {
+                    "data": self.rows,
+                    "data_source_id": self.data_source_id,
+                    "doc_id": self.doc_id,
+                }
 
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
@@ -1035,13 +1076,8 @@ class DataSourceRepeater(Repeater):
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
         try:
-            datasource_update = DataSourceUpdate.objects.get(pk=repeat_record.payload_id)
-            datasource_update.rows = [
-                row for doc_id in datasource_update.doc_ids
-                for row in datasource_adapter.get_rows_by_doc_id(doc_id)
-            ]
-            return datasource_update
-        except DataSourceUpdate.DoesNotExist:
+            datasource_update_id = int(repeat_record.payload_id)
+        except ValueError:
             # repeat_record.payload_id is not a DataSourceUpdate ID. It
             # must an old repeat record. `payload_id` is a form/case ID.
             # TODO: Drop this block after old repeat records are sent.
@@ -1052,6 +1088,12 @@ class DataSourceRepeater(Repeater):
                 doc_id=repeat_record.payload_id,
                 rows=rows,
             )
+        datasource_update = DataSourceUpdate.objects.get(pk=datasource_update_id)
+        datasource_update.rows = [
+            row for doc_id in datasource_update.doc_ids
+            for row in datasource_adapter.get_rows_by_doc_id(doc_id)
+        ]
+        return datasource_update
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)

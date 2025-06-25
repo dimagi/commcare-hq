@@ -1,8 +1,8 @@
-hqDefine("cloudcare/js/form_entry/form_ui", [
+define("cloudcare/js/form_entry/form_ui", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify',
+    'dompurify',
     'hqwebapp/js/toggles',
     'bootstrap5',
     'cloudcare/js/markdown',

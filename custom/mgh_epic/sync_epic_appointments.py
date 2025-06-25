@@ -235,13 +235,15 @@ def sync_all_appointments_domain(domain):
             if appointment_resource is not None:
                 new_appointment_dict = _get_appointment_resource_values(appointment_resource)
             host_case_id = patient.get_case_property('case_id')
+            owner_id = patient.get_case_property('owner_id')
             appointment_fhir_timestamp = new_appointment_dict.get("appointment_fhir_timestamp")
             appointment_description = new_appointment_dict.get("appointment_description")
             appointment_case_data = {
+                'owner_id': owner_id,
                 'case_name': f'[{appointment_fhir_timestamp}]: {appointment_description}',
                 'case_type': 'appointment',
                 'indices': {
-                    'patient': {
+                    'parent': {
                         'case_id': host_case_id,
                         'case_type': 'patient',
                         'relationship': 'extension',
@@ -255,7 +257,7 @@ def sync_all_appointments_domain(domain):
                     'patient_fhir_id': patient_fhir_id,
                     'fhir_id': new_appointment_dict.get("appointment_fhir_id"),
                     'reason': new_appointment_dict.get("reason"),
-                    'practitioner': new_appointment_dict.get("practitioner")
+                    'appointment_provider': new_appointment_dict.get("practitioner")
                 }
             }
             appointment_create_helper.create_case(appointment_case_data)
@@ -270,7 +272,7 @@ def sync_all_appointments_domain(domain):
                 epic_properties_map.update({
                     'appointment_description': update_appointment_dict.get("appointment_description"),
                     'appointment_fhir_timestamp': update_appointment_dict.get("appointment_fhir_timestamp"),
-                    'practitioner': update_appointment_dict.get("practitioner"),
+                    'appointment_provider': update_appointment_dict.get("practitioner"),
                     'reason': update_appointment_dict.get("reason")
                 })
             appointment_case = appointment_map.get(update_appointment_dict.get("appointment_fhir_id"))

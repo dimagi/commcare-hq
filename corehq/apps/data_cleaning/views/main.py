@@ -1,85 +1,75 @@
-from memoized import memoized
-
 from django.contrib import messages
-from django.shortcuts import redirect
 from django.http import StreamingHttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET
-from django.utils.translation import gettext_lazy, gettext as _
+from memoized import memoized
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
-from corehq.apps.data_cleaning.exceptions import SessionAccessClosedException
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+from corehq.apps.data_cleaning.views.bulk_edit import EditSelectedRecordsFormView
+from corehq.apps.data_cleaning.views.columns import ManageColumnsFormView
+from corehq.apps.data_cleaning.views.filters import ManageFiltersView, ManagePinnedFiltersView
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
+from corehq.apps.data_cleaning.views.start import StartCaseSessionView
+from corehq.apps.data_cleaning.views.status import BulkEditSessionStatusView
+from corehq.apps.data_cleaning.views.tables import EditCasesTableView, RecentCaseSessionsTableView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.util.view_utils import set_file_download
 
 
-@method_decorator([
-    use_bootstrap5,
-    require_bulk_data_cleaning_cases,
-], name='dispatch')
-class CleanCasesMainView(BaseProjectDataView):
-    page_title = gettext_lazy("Bulk Edit Case Data")
-    urlname = "data_cleaning_cases"
-    template_name = "data_cleaning/clean_cases_main.html"
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_bulk_data_cleaning_cases,
+    ],
+    name='dispatch',
+)
+class BulkEditCasesMainView(BaseProjectDataView):
+    page_title = gettext_lazy('Bulk Edit Case Data')
+    urlname = 'bulk_edit_cases_main'
+    template_name = 'data_cleaning/bulk_edit_main.html'
 
     @property
     def page_context(self):
-        from corehq.apps.data_cleaning.views.setup import SetupCaseSessionFormView
-        from corehq.apps.data_cleaning.views.tables import CaseCleaningTasksTableView
         return {
-            "setup_case_session_form_url": reverse(SetupCaseSessionFormView.urlname, args=(self.domain,)),
-            "tasks_table_url": reverse(CaseCleaningTasksTableView.urlname, args=(self.domain, )),
+            'htmx_start_session_form_view_url': reverse(
+                StartCaseSessionView.urlname,
+                args=(self.domain,),
+            ),
+            'htmx_recent_sessions_table_view_url': reverse(
+                RecentCaseSessionsTableView.urlname,
+                args=(self.domain,),
+            ),
         }
 
 
-@method_decorator([
-    use_bootstrap5,
-    require_bulk_data_cleaning_cases,
-], name='dispatch')
-class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
-    page_title = gettext_lazy("Bulk Edit Case Type")
-    urlname = "data_cleaning_cases_session"
-    template_name = "data_cleaning/clean_cases_session.html"
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_bulk_data_cleaning_cases,
+    ],
+    name='dispatch',
+)
+class BulkEditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
+    """
+    This view is a "host" view of several HTMX views that handle
+    different parts of the Bulk Editing feature.
+    """
 
-    def get(self, request, *args, **kwargs):
-        try:
-            return super().get(request, *args, **kwargs)
-        except SessionAccessClosedException:
-            return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
-        except BulkEditSession.DoesNotExist:
-            messages.error(request, _("That session does not exist. Please start a new session."))
-            return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
+    page_title = gettext_lazy('Bulk Edit Case Type')
+    urlname = 'bulk_edit_cases_session'
+    template_name = 'data_cleaning/bulk_edit_session.html'
+    redirect_on_missing_session = True
 
-    @property
-    @memoized
-    def session(self):
-        # overriding mixin so that DoesNotExist can be raised in self.get() and we can redirect
-        session = BulkEditSession.objects.get(
-            user=self.request.user,
-            domain=self.domain,
-            session_id=self.session_id
-        )
-        if session.completed_on:
-            messages.warning(
-                self.request,
-                _("You tried to access a session for \"{}\" that was already completed. "
-                  "Please start a new session.").format(session.identifier)
-            )
-            raise SessionAccessClosedException()
-        elif session.committed_on:
-            messages.warning(
-                self.request,
-                _("You tried to access a session for \"{}\" that is currently applying changes. "
-                  "Please wait for that task to complete, then start a new session.").format(session.identifier)
-            )
-            raise SessionAccessClosedException()
-        return session
+    def get_redirect_url(self):
+        return reverse(BulkEditCasesMainView.urlname, args=(self.domain,))
 
     @property
     def case_type(self):
@@ -93,19 +83,50 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     @memoized
     def page_url(self):
         if self.urlname:
-            return reverse(self.urlname, args=(self.domain, self.session_id,))
+            return reverse(
+                self.urlname,
+                args=(
+                    self.domain,
+                    self.session_id,
+                ),
+            )
 
     @property
     def parent_pages(self):
-        return [{
-            'title': CleanCasesMainView.page_title,
-            'url': reverse(CleanCasesMainView.urlname, args=(self.domain,)),
-        }]
+        return [
+            {
+                'title': BulkEditCasesMainView.page_title,
+                'url': reverse(BulkEditCasesMainView.urlname, args=(self.domain,)),
+            }
+        ]
 
     @property
     def page_context(self):
         return {
-            "session_id": self.session_id,
+            'htmx_primary_view_url': reverse(
+                EditCasesTableView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            'htmx_pinned_filters_view_url': reverse(
+                ManagePinnedFiltersView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            'htmx_filters_view_url': reverse(
+                ManageFiltersView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            'htmx_columns_view_url': reverse(
+                ManageColumnsFormView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            'htmx_edit_selected_records_view_url': reverse(
+                EditSelectedRecordsFormView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            'htmx_session_status_view_url': reverse(
+                BulkEditSessionStatusView.urlname,
+                args=(self.domain, self.session_id),
+            ),
         }
 
 
@@ -114,8 +135,8 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
 def clear_session_caches(request, domain, session_id):
     session = BulkEditSession.objects.get(session_id=session_id)
     clear_caches_case_data_cleaning(session.domain, session.identifier)
-    messages.success(request, _("Caches successfully cleared."))
-    return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
+    messages.success(request, _('Caches successfully cleared.'))
+    return redirect(reverse(BulkEditCasesMainView.urlname, args=(domain,)))
 
 
 @require_GET
@@ -126,6 +147,6 @@ def download_form_ids(request, domain, session_id):
 
     ids_stream = ('{}\n'.format(form_id) for form_id in session.form_ids)
     response = StreamingHttpResponse(ids_stream, content_type='text/plain')
-    set_file_download(response, f"{domain}-data_cleaning-form_ids.txt")
+    set_file_download(response, f'{domain}-data_cleaning-form_ids.txt')
 
     return response

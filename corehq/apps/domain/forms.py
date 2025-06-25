@@ -47,7 +47,9 @@ from memoized import memoized
 from PIL import Image
 
 from corehq import privileges
+from corehq.apps.accounting.const import PAY_ANNUALLY_SUBSCRIPTION_MONTHS
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
+from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -1851,6 +1853,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     def clean_email_list(self):
         return self.data.getlist('email_list')
 
+    def get_email_lists(self):
+        email_list = self.clean_email_list()
+        contact_email = email_list[:1]
+        cc_emails = email_list[1:]
+        return contact_email, cc_emails
+
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
     @transaction.atomic
@@ -1868,6 +1876,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
+    is_annual_plan = forms.CharField(
+        widget=forms.HiddenInput,
+    )
 
     def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None,
                  *args, **kwargs):
@@ -1877,12 +1888,14 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                                                          *args, **kwargs)
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
+        self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'plan_edition',
+            'is_annual_plan',
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -1927,51 +1940,43 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
-                if self.current_subscription is not None:
-                    if self.is_same_edition():
-                        self.current_subscription.update_subscription(
-                            date_start=self.current_subscription.date_start,
-                            date_end=None
-                        )
-                    elif self.is_downgrade_from_paid_plan() and \
-                            self.current_subscription.is_below_minimum_subscription:
-                        self.current_subscription.update_subscription(
-                            date_start=self.current_subscription.date_start,
-                            date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
-                        )
-                        Subscription.new_domain_subscription(
-                            account=self.account,
-                            domain=self.domain,
-                            plan_version=self.plan_version,
-                            date_start=self.current_subscription.date_start + datetime.timedelta(days=30),
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                            funding_source=FundingSource.CLIENT,
-                        )
-                    else:
-                        self.current_subscription.change_plan(
-                            self.plan_version,
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                            do_not_invoice=False,
-                            no_invoice_reason='',
-                        )
-                    if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
-                        self_signup.complete_workflow(self.plan_version.plan.edition)
-                else:
+                new_sub_date_start, new_sub_date_end = self.new_subscription_start_end_dates()
+                if (
+                    self.is_downgrade_from_paid_plan()
+                    and self.current_subscription.is_below_minimum_subscription
+                ):
+                    self.current_subscription.update_subscription(
+                        date_start=self.current_subscription.date_start,
+                        date_end=new_sub_date_start
+                    )
                     Subscription.new_domain_subscription(
-                        self.account, self.domain, self.plan_version,
+                        account=self.account,
+                        domain=self.domain,
+                        plan_version=self.plan_version,
+                        date_start=new_sub_date_start,
+                        date_end=new_sub_date_end,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT,
                     )
-                return True
+                else:
+                    self.current_subscription.change_plan(
+                        self.plan_version,
+                        date_end=new_sub_date_end,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.PRODUCT,
+                        pro_bono_status=ProBonoStatus.NO,
+                        do_not_invoice=False,
+                        no_invoice_reason='',
+                    )
+                if self.is_annual_plan_selected():
+                    self.send_prepayment_invoice(new_sub_date_start, new_sub_date_end)
+                if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
+                    self_signup.complete_workflow(self.plan_version.plan.edition)
+            return True
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
@@ -1979,6 +1984,42 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 show_stack_trace=True,
             )
             return False
+
+    def send_prepayment_invoice(self, new_date_start, date_end):
+        contact_emails, cc_emails = self.get_email_lists()
+        invoice_factory = DomainWireInvoiceFactory(
+            self.domain, date_start=new_date_start, date_end=date_end,
+            contact_emails=contact_emails, cc_emails=cc_emails
+        )
+        if self.current_is_annual_plan():
+            invoice_factory.create_prorated_subscription_change_credits_invoice(
+                self.current_subscription.date_start, new_date_start, date_end,
+                self.current_subscription.plan_version, self.plan_version,
+            )
+        else:
+            invoice_factory.create_subscription_credits_invoice(self.plan_version, new_date_start, date_end)
+
+    def new_subscription_start_end_dates(self):
+        if self.is_downgrade_from_paid_plan() and self.current_subscription.is_below_minimum_subscription:
+            new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
+        else:
+            new_sub_date_start = datetime.date.today()
+
+        if self.is_annual_plan_selected():
+            if self.current_is_annual_plan() and self.current_subscription.date_end is not None:
+                new_sub_date_end = self.current_subscription.date_end
+            else:
+                new_sub_date_end = new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+        else:
+            new_sub_date_end = None
+
+        return new_sub_date_start, new_sub_date_end
+
+    def current_is_annual_plan(self):
+        return self.current_subscription.plan_version.plan.is_annual_plan
+
+    def is_annual_plan_selected(self):
+        return self.plan_version.plan.is_annual_plan
 
     def is_same_edition(self):
         return self.current_subscription.plan_version.plan.edition == self.plan_version.plan.edition
@@ -2061,7 +2102,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, self.current_subscription.date_start, self.creating_user)
-                self.current_subscription.renew_subscription(
+                renewed_subscription = self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,
                     service_type=SubscriptionType.PRODUCT,
@@ -2069,6 +2110,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,
                 )
+                if self.renewed_version.plan.is_annual_plan:
+                    self.send_prepayment_invoice(renewed_subscription.date_start, renewed_subscription.date_end)
                 return True
         except SubscriptionRenewalError as e:
             log_accounting_error(
@@ -2078,6 +2121,14 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 }
             )
             return False
+
+    def send_prepayment_invoice(self, date_start, date_end):
+        contact_emails, cc_emails = self.get_email_lists()
+        invoice_factory = DomainWireInvoiceFactory(
+            self.domain, date_start=date_start, date_end=date_end,
+            contact_emails=contact_emails, cc_emails=cc_emails
+        )
+        invoice_factory.create_subscription_credits_invoice(self.renewed_version, date_start, date_end)
 
 
 class ProBonoForm(forms.Form):

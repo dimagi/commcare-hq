@@ -316,5 +316,5 @@ class EnterpriseUserOptionsController(EmwfOptionsController):
         else:
             search_fields = ["first_name", "last_name", "base_username"]
             return (UserES()
-                    .domains(self.enterprise_domains)
+                    .domain(self.enterprise_domains)
                     .search_string_query(query, default_fields=search_fields))

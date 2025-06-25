@@ -244,7 +244,7 @@ mkdir sharedfiles
 
 Once you have completed the above steps, you can use Docker to build and run all
 of the service containers. There are detailed instructions for setting up Docker
-in the [docker folder](docker/README.md). But the following should cover the
+in the [docker folder](docker/README.rst). But the following should cover the
 needs of most developers.
 
 
@@ -828,7 +828,7 @@ files from Vellum directly, do the following.
   `localsettings.py`:
 
     ```python
-    VELLUM_DEBUG = "dev"
+    VELLUM_DEBUG = True
     ```
 
 - Clone (or symlink to repo elsewhere on disk) the Vellum repostory into/at the

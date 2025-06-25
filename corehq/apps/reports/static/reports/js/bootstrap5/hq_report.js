@@ -1,7 +1,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "hqwebapp/js/bootstrap5/widgets";  // multi-emails
 
@@ -270,16 +270,13 @@ var hqReport = function (options) {
         };
     }
 
-    /**
-     * Send a Kissmetrics event, depending on report page slug
-     */
     function trackReportPageEnter() {
         switch (self.slug) {
             case 'submit_history':
-                kissmetrics.track.event('Visited Submission History Page');
+                noopMetrics.track.event('Visited Submission History Page');
                 break;
             case 'case_list':
-                kissmetrics.track.event('Visited Case List Page');
+                noopMetrics.track.event('Visited Case List Page');
                 break;
             default:
                 break;

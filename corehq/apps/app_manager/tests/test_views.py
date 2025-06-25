@@ -3,7 +3,6 @@ import doctest
 import json
 import re
 from contextlib import contextmanager
-from unittest import mock
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -559,11 +558,9 @@ class TestViews(ViewsBase):
             'name': 'Copy App',
             'toggles': 'test_toggle',
         }
-        with patch('corehq.toggles.all_toggles_by_name', return_value={'test_toggle': TEST_TOGGLE}), \
-             mock.patch('corehq.apps.toggle_ui.views.clear_toggle_cache_by_namespace') as mock_clear_cache:
+        with patch('corehq.toggles.all_toggles_by_name', return_value={'test_toggle': TEST_TOGGLE}):
             self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
-            mock_clear_cache.assert_called_once_with(NAMESPACE_DOMAIN, other_domain.name)
-        self.assertTrue(TEST_TOGGLE.enabled(other_domain.name))
+        self.assertFalse(TEST_TOGGLE.enabled(other_domain.name))
 
 
 @contextmanager
@@ -674,7 +671,7 @@ class TestViewGeneric(ViewsBase):
         'selected_form', 'module', 'MINIMUM_PASSWORD_LENGTH', 'MINIMUM_ZXCVBN_SCORE',
         'SUPPORT_EMAIL', 'app_view_options', 'show_advanced', 'role_version', 'custom_assertions',
         'is_app_settings_page', 'domain_names', 'latest_version_for_build_profiles', 'ANALYTICS_CONFIG',
-        'csrf_token', 'LANGUAGE_CODE', 'app_name', 'sub', 'is_saas_environment', 'use_js_bundler', 'js_entry',
+        'csrf_token', 'LANGUAGE_CODE', 'app_name', 'sub', 'is_saas_environment', 'js_entry',
         'selected_module', 'add_ons_layout', 'is_dimagi_environment', 'TIME_ZONE', 'env', 'add_ons',
         'show_shadow_forms', 'can_edit_apps', 'ANALYTICS_IDS', 'active_tab', 'current_url_name',
         'show_release_mode', 'application_profile_url', 'linkable_domains', 'domain_links',
@@ -699,7 +696,7 @@ class TestViewGeneric(ViewsBase):
         'nav_menu_media_specifics', 'user', 'TIME_ZONE', 'domain', 'metrics_domain', 'module_brief', 'timezone',
         'active_tab', 'data_registry_enabled', 'confirm', 'messages', 'releases_active', 'show_status_page',
         'show_search_workflow', 'data_registries', 'label', 'forloop', 'show_shadow_modules',
-        'SUPPORT_EMAIL', 'valid_parents_for_child_module', 'parent_case_modules', 'use_js_bundler', 'js_entry',
+        'SUPPORT_EMAIL', 'valid_parents_for_child_module', 'parent_case_modules', 'js_entry',
         'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules',
         'app_id', 'request', 'MINIMUM_PASSWORD_LENGTH', 'type', 'is_saas_environment', 'show_all_projects_link',
         'enterprise_mode', 'csrf_token', 'is_dimagi_environment', 'domain_names',
@@ -736,7 +733,7 @@ class TestViewGeneric(ViewsBase):
         'module_icon', 'custom_instances', 'SALES_EMAIL', 'app', 'domain_links', 'form_errors', 'app_subset',
         'show_biometric', 'MINIMUM_ZXCVBN_SCORE', 'ICON_LABEL', 'app_name', 'linkable_domains', 'alerts',
         'show_shadow_forms', 'use_bootstrap5', 'form_icon', 'title_block', 'login_template', 'base_template',
-        'MEDIA_URL', 'lang', 'show_live_preview', 'latest_version_for_build_profiles', 'use_js_bundler',
+        'MEDIA_URL', 'lang', 'show_live_preview', 'latest_version_for_build_profiles',
         'edit_name_url', 'privileges', 'settings_active', 'commcare_hq_names', 'add_ons_layout',
         'limit_to_linked_domains', 'module', 'is_case_list_form', 'True', 'multimedia', 'MAPBOX_ACCESS_TOKEN',
         'xform_validation_missing', 'LANGUAGES', 'mobile_ux_cookie_name', 'allow_report_an_issue',
@@ -747,7 +744,7 @@ class TestViewGeneric(ViewsBase):
         'secure_cookies', 'langs', 'None', 'CUSTOM_LOGO_URL', 'allow_form_copy', 'selected_form', 'slug',
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
-        'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class',
+        'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'case_property_warning',
     }
 
 

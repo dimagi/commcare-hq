@@ -6,28 +6,31 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import hqMain from "hqwebapp/js/bootstrap3/main";
 import googleAnalytics from "analytix/js/google";
 import uiElementKeyValueList from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list";
-import DOMPurify from "DOMPurify";
+import DOMPurify from "dompurify";
 import toggles from "hqwebapp/js/toggles";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
 import "data_interfaces/js/make_read_only";
 import "hqwebapp/js/select2_knockout_bindings.ko";
 import "knockout-sortable/build/knockout-sortable";
+import casePropertyWarningViewModel from "data_dictionary/js/partials/case_property_warning";
 
 var caseType = function (
     name,
     fhirResourceType,
     deprecated,
     moduleCount,
+    propertiesCount,
     geoCaseProp,
     isSafeToDelete,
     changeSaveButton,
     resetSaveButton,
-    dataUrl
+    dataUrl,
 ) {
     var self = {};
     self.name = name || gettext("No Name");
     self.deprecated = deprecated;
     self.appCount = moduleCount;  // The number of application modules using this case type
+    self.propertyCount = propertiesCount;
     self.url = "#" + name;
     self.fhirResourceType = ko.observable(fhirResourceType);
     self.groups = ko.observableArray();
@@ -69,7 +72,7 @@ var caseType = function (
                     group.name,
                     group.description,
                     group.deprecated,
-                    self.changeSaveButton
+                    self.changeSaveButton,
                 );
                 self.groups.push(groupObj);
             }
@@ -87,7 +90,7 @@ var caseType = function (
                     self.name,
                     isGeoCaseProp,
                     groupObj.name(),
-                    self.changeSaveButton
+                    self.changeSaveButton,
                 );
                 groupObj.properties.push(propObj);
             }
@@ -103,7 +106,7 @@ var groupsViewModel = function (
     name,
     description,
     deprecated,
-    changeSaveButton
+    changeSaveButton,
 ) {
     var self = {};
     self.id = id;
@@ -143,7 +146,7 @@ var groupsViewModel = function (
                 self.caseType,
                 false,
                 self.name(),
-                changeSaveButton
+                changeSaveButton,
             );
             self.newPropertyName(undefined);
             self.properties.push(propObj);
@@ -165,7 +168,7 @@ var propertyListItem = function (
     caseType,
     isGeoCaseProp,
     loadedGroup,
-    changeSaveButton
+    changeSaveButton,
 ) {
     var self = {};
     self.id = prop.id;
@@ -220,7 +223,7 @@ var propertyListItem = function (
         interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
         subTitle, /* subTitle */
         {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
-        10 /* maxDisplay */
+        10, /* maxDisplay */
     );
     self.allowedValues.val(prop.allowed_values);
     if (initialPageData.get('read_only_mode')) {
@@ -293,7 +296,7 @@ var propertyListItem = function (
     return self;
 };
 
-var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes) {
+var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit) {
     var self = {};
     self.caseTypes = ko.observableArray();
     self.activeCaseType = ko.observable();
@@ -304,6 +307,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.showAll = ko.observable(false);
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+
+    self.casePropertyWarningViewModel = new casePropertyWarningViewModel(casePropertyLimit);
 
     const params = new URLSearchParams(document.location.search);
     self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
@@ -402,11 +407,12 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.fhir_resource_type,
                         caseTypeData.is_deprecated,
                         caseTypeData.module_count,
+                        caseTypeData.properties_count,
                         data.geo_case_property,
                         caseTypeData.is_safe_to_delete,
                         changeSaveButton,
                         resetSaveButton,
-                        dataUrl
+                        dataUrl,
                     );
                     self.caseTypes.push(caseTypeObj);
                 });
@@ -584,7 +590,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 self.newGroupName(),
                 '',
                 false,
-                changeSaveButton
+                changeSaveButton,
             );
             let groupsObs = self.getCaseTypeGroupsObservable();
             groupsObs.push(group);  // TODO: Broken for computed value
@@ -605,6 +611,11 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
             next = self.casePropertyList()[i];
         }
     };
+
+    self.activeCaseType.subscribe(function () {
+        let caseType = self.getActiveCaseType();
+        self.casePropertyWarningViewModel.updateViewModel(caseType.name, caseType.propertyCount);
+    });
 
     self.showDeprecated = function () {
         self.showAll(true);
@@ -681,7 +692,8 @@ $(function () {
         casePropertyUrl = initialPageData.reverse('update_case_property'),
         typeChoices = initialPageData.get('typeChoices'),
         fhirResourceTypes = initialPageData.get('fhirResourceTypes'),
-        viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes);
+        casePropertyLimit = initialPageData.get('casePropertyLimit'),
+        viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit);
 
     function doHashNavigation() {
         let caseType = viewModel.getHashNavigationCaseType();

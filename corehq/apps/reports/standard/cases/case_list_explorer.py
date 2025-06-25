@@ -3,14 +3,13 @@ from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.case_search.const import (
     COMPUTED_METADATA,
     DOCS_LINK_CASE_LIST_EXPLORER,
     INDEXED_METADATA_BY_KEY,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.case_search.utils import get_case_id_sort_block
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -40,7 +39,7 @@ class XpathCaseSearchFilterMixin(object):
             try:
                 query = query.xpath_query(self.domain, xpath)
             except CaseFilterError as e:
-                track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
+                track_workflow_noop(self.request.couch_user.username, f"{self.name}: Query Error")
 
                 error = "<p>{}.</p>".format(escape(e))
                 bad_part = "<p>{} <strong>{}</strong></p>".format(
@@ -50,7 +49,7 @@ class XpathCaseSearchFilterMixin(object):
                 raise BadRequestError("{}{}".format(error, bad_part))
 
             if '/' in xpath:
-                track_workflow(self.request.couch_user.username, f"{self.name}: Related case search")
+                track_workflow_noop(self.request.couch_user.username, f"{self.name}: Related case search")
         return query
 
 
@@ -122,11 +121,6 @@ class CaseListExplorer(
             column = self.headers.header[column_id]
             try:
                 meta_property = INDEXED_METADATA_BY_KEY[column.prop_name]
-                if meta_property.key == '@case_id':
-                    # This condition is added because ES 5 does not allow sorting on _id.
-                    #  When we will have case_id in root of the document, this should be removed.
-                    query.es_query['sort'] = get_case_id_sort_block(descending)
-                    return query
                 query = query.sort(meta_property.es_field_name, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)
@@ -195,7 +189,7 @@ class CaseListExplorer(
         return self._get_rows(data)
 
     def track_search(self):
-        track_workflow(
+        track_workflow_noop(
             self.request.couch_user.username,
             f"{self.name}: Search Performed",
             self.get_tracked_search_properties()
@@ -229,5 +223,5 @@ class CaseListExplorer(
     @property
     def export_table(self):
         self._is_exporting = True
-        track_workflow(self.request.couch_user.username, f"{self.name}: Export button clicked")
+        track_workflow_noop(self.request.couch_user.username, f"{self.name}: Export button clicked")
         return super(CaseListExplorer, self).export_table

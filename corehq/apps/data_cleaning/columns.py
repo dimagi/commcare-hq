@@ -1,21 +1,21 @@
+from couchexport.writers import render_to_string
 from django_tables2.columns import (
-    TemplateColumn,
-    CheckBoxColumn,
     BoundColumn,
+    CheckBoxColumn,
+    TemplateColumn,
 )
 from django_tables2.utils import AttributeDict
 
 from corehq.toggles import mark_safe
-from couchexport.writers import render_to_string
 
 
-class DataCleaningHtmxColumn(TemplateColumn):
-    template_name = "data_cleaning/columns/column_main.html"
+class EditableHtmxColumn(TemplateColumn):
+    template_name = 'data_cleaning/columns/column_main.html'
 
     def __init__(self, column_spec, *args, **kwargs):
         """
         Defines the django_tables2 compatible column object
-        for the bulk data cleaning feature.
+        for the bulk data editing feature.
 
         :param column_spec: BulkEditColumn
         """
@@ -23,7 +23,8 @@ class DataCleaningHtmxColumn(TemplateColumn):
             template_name=self.template_name,
             accessor=column_spec.prop_id,
             verbose_name=column_spec.label,
-            *args, **kwargs
+            *args,
+            **kwargs,
         )
         self.column_spec = column_spec
 
@@ -31,31 +32,32 @@ class DataCleaningHtmxColumn(TemplateColumn):
     def get_htmx_partial_response_context(cls, column_spec, record, table):
         """
         Returns the context needed for rendering the
-        `DataCleaningHtmxColumn` template as an HTMX partial response.
+        `EditableHtmxColumn` template as an HTMX partial response.
 
         :param column_spec: BulkEditColumn
         :param record: EditableCaseSearchElasticRecord (or similar)
-        :param table: CleanCaseTable (or similar)
+        :param table: EditCasesTable (or similar)
         """
         column = cls(column_spec)
         bound_column = BoundColumn(table, column, column_spec.slug)
         value = record[column_spec.prop_id]
         return {
-            "column": bound_column,
-            "record": record,
-            "value": value,
+            'column': bound_column,
+            'record': record,
+            'value': value,
         }
 
 
-class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
-    template_column = "data_cleaning/columns/selection.html"
-    template_header = "data_cleaning/columns/selection_header.html"
-    select_page_checkbox_id = "id-select-page-checkbox"
+class SelectableHtmxColumn(CheckBoxColumn):
+    template_column = 'data_cleaning/columns/selection.html'
+    template_header = 'data_cleaning/columns/selection_header.html'
+    template_read_only = 'data_cleaning/columns/selection_read_only.html'
+    select_page_checkbox_id = 'id-select-page-checkbox'
 
     def __init__(self, session, request, select_record_action, select_page_action, *args, **kwargs):
         """
         Defines a django_tables2 compatible column that handles selecting
-        records in a data cleaning session.
+        records in a data editing session.
 
         :param session: BulkEditSession instance
         :param request: a django request object from the session view
@@ -75,10 +77,21 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
     def get_selected_record_checkbox_id(self, value):
         return f'id-selected-record-{value}'
 
+    def read_only_response(self):
+        return mark_safe(  # nosec: render_to_string below will handle escaping
+            render_to_string(
+                self.template_read_only,
+                {},
+                request=self.request,
+            )
+        )
+
     @property
     def header(self):
-        general = self.attrs.get("input")
-        specific = self.attrs.get("th__input")
+        if self.session.is_read_only:
+            return self.read_only_response()
+        general = self.attrs.get('input')
+        specific = self.attrs.get('th__input')
         attrs = AttributeDict(specific or general or {})
         return mark_safe(  # nosec: render_to_string below will handle escaping
             render_to_string(
@@ -93,8 +106,10 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
         )
 
     def render(self, value, bound_column, record):
-        general = self.attrs.get("input")
-        specific = self.attrs.get("td__input")
+        if self.session.is_read_only:
+            return self.read_only_response()
+        general = self.attrs.get('input')
+        specific = self.attrs.get('td__input')
         attrs = AttributeDict(specific or general or {})
         return mark_safe(  # nosec: render_to_string below will handle escaping
             render_to_string(

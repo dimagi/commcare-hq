@@ -29,19 +29,19 @@ const userMarkerColors = {
     'selected': "#0b940d", // Dark Green
 };
 
-var MissingGPSModel = function () {
+export const MissingGPSModel = function () {
     this.casesWithoutGPS = ko.observable([]);
     this.usersWithoutGPS = ko.observable([]);
 };
 
-var SavedPolygon = function (polygon) {
+export const SavedPolygon = function (polygon) {
     var self = this;
     self.text = polygon.name;
     self.id = polygon.id;
     self.geoJson = polygon.geo_json;
 };
 
-var MapItem = function (data, mapModel) {
+export const MapItem = function (data, mapModel) {
     let self = this;
     self.itemId = data.id;
     self.name = data.name;
@@ -105,7 +105,7 @@ var MapItem = function (data, mapModel) {
     };
 };
 
-var GroupedCaseMapItem = function (itemId, itemData, link) {
+export const GroupedCaseMapItem = function (itemId, itemData, link) {
     let self = this;
     self.itemId = itemId;
     self.itemData = itemData;
@@ -129,7 +129,7 @@ var GroupedCaseMapItem = function (itemId, itemData, link) {
     };
 };
 
-var Map = function (usesClusters, usesStreetsLayers) {
+export const Map = function (usesClusters, usesStreetsLayers) {
     var self = this;
 
     self.userLayerName = 'user-points';
@@ -607,7 +607,7 @@ var Map = function (usesClusters, usesStreetsLayers) {
     };
 };
 
-var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter, requiresPageRefresh) {
+export const PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter, requiresPageRefresh) {
     var self = this;
 
     self.mapObj = mapObj;
@@ -950,7 +950,7 @@ var AssignmentRow = function (caseName, caseId, userId, userName, userPrimaryLoc
     return self;
 };
 
-var AssignmentManager = function (mapModel, disbursementModel) {
+export const AssignmentManager = function (mapModel, disbursementModel) {
     let self = this;
 
     const emptyColStr = '---';
@@ -1154,11 +1154,11 @@ var AssignmentManager = function (mapModel, disbursementModel) {
 };
 
 export default {
-    MissingGPSModel: MissingGPSModel,
-    SavedPolygon: SavedPolygon,
-    MapItem: MapItem,
-    GroupedCaseMapItem: GroupedCaseMapItem,
-    Map: Map,
-    PolygonFilter: PolygonFilter,
-    AssignmentManager: AssignmentManager,
+    MissingGPSModel,
+    SavedPolygon,
+    MapItem,
+    GroupedCaseMapItem,
+    Map,
+    PolygonFilter,
+    AssignmentManager,
 };

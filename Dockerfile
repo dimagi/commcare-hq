@@ -45,11 +45,12 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-COPY package.json /vendor/
+COPY pyproject.toml uv.lock package.json /vendor/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv venv --allow-existing /vendor \
-  && uv sync --locked --group=test --no-dev --no-install-project
+  && UV_PROJECT=/vendor uv sync --locked --group=test --no-dev --no-install-project \
+  && rm /vendor/pyproject.toml /vendor/uv.lock
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'

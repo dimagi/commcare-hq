@@ -49,7 +49,7 @@ dependencies = [
     "django-tables2",
     "django-tastypie",
     "django-transfer",
-    "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae",  # waiting for next release after 1.16.0
+    "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
     "django-user-agents",
     "django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl",
     "django>=4.2.16,<5.0",
@@ -88,8 +88,7 @@ dependencies = [
     "polib",
     "prometheus-client",
     "psycogreen",
-    "psycopg2>=2.9.10",
-    "py-KISSmetrics",
+    "psycopg2-binary>=2.9.10",
     "pycryptodome>=3.6.6", # security update
     "python-dateutil",
     "python-imap",
@@ -136,6 +135,7 @@ Repository = "https://github.com/dimagi/commcare-hq"
 
 [tool.uv]
 default-groups = ["dev", "sso"]
+required-version = ">=0.7.0"
 
 [dependency-groups]
 dev = [
@@ -176,7 +176,6 @@ test = [
     'fakecouch',
     'testil',
     'requests-mock',
-    'sqlalchemy-postgres-copy',
     'Faker',
     'flaky>=3.8', # required for pytest 8.2 (and possibly earlier versions)
     'freezegun',
