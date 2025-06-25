@@ -113,7 +113,7 @@ def get_form_submit_history_url_for_last_30_days(request, domain, app, module, f
         'form_status': 'active',
         'form_app_id': app.id if app else '',
         'form_module': module.id if module else '',
-        'form_xmlns': form.xmlns if form else '',
+        'form_xmlns': form.xmlns if form and form.xmlns else '',
         'startdate': start_date.strftime('%Y-%m-%d'),
         'enddate': end_date.strftime('%Y-%m-%d'),
     }
