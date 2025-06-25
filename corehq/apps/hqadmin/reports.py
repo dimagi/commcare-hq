@@ -130,20 +130,23 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @property
     def rows(self):
+        # Either domain or user must be has a value
+        if not (self.selected_domain or self.selected_user):
+            return []
+
         rows = []
         events = navigation_events_by_user(
-            self.selected_user, self.datespan.startdate, self.datespan.enddate
+            self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate
         )
         for event in events:
-            if not self.selected_domain or self.selected_domain == event.domain:
-                rows.append([
-                    event.event_date,
-                    event.user,
-                    event.domain or '',
-                    event.ip_address,
-                    event.request_method,
-                    event.request_path
-                ])
+            rows.append([
+                event.event_date,
+                event.user,
+                event.domain or '',
+                event.ip_address,
+                event.request_method,
+                event.request_path
+            ])
         return rows
 
 
