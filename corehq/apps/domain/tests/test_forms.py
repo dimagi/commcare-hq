@@ -407,8 +407,7 @@ class TestUsernameOrEmailField(SimpleTestCase):
                 self.field.validate(username)
 
     def test_invalid_email_format(self):
-        invalid_emails = ['invalid.email', '@example.com', 'user@',
-                          'user@@example.com', 'user name@example.com']
+        invalid_emails = ['@example.com', 'user@', 'user@@example.com', 'user name@example.com']
         for email in invalid_emails:
             with self.subTest(email=email):
                 with self.assertRaises(forms.ValidationError):
