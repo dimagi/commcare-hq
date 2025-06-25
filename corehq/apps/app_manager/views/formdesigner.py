@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json
 import logging
 from looseversion import LooseVersion
@@ -54,6 +55,7 @@ from corehq.apps.app_manager.views.utils import (
 from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,27 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
         return bail(request, domain, app_id, not_found="form")
 
     return _get_form_designer_view(request, domain, app, module, form)
+
+
+def get_form_submit_history_url_for_last_30_days(request, domain, app, module, form):
+    from corehq.util.view_utils import reverse
+
+    if not has_permission_to_view_report(request.couch_user, domain, SUBMISSION_HISTORY_PERMISSION):
+        return None
+
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+
+    params = {
+        'form_status': 'active',
+        'form_app_id': app.id if app else '',
+        'form_module': module.id if module else '',
+        'form_xmlns': form.xmlns if form and form.xmlns else '',
+        'startdate': start_date.strftime('%Y-%m-%d'),
+        'enddate': end_date.strftime('%Y-%m-%d'),
+    }
+
+    return reverse('project_report_dispatcher', args=[domain, 'submit_history'], params=params)
 
 
 def _get_form_designer_view(request, domain, app, module, form):
@@ -148,6 +171,13 @@ def _get_form_designer_view(request, domain, app, module, form):
             request,
             app,
             request.couch_user.username,
+        ),
+        'form_submit_history_url': get_form_submit_history_url_for_last_30_days(
+            request,
+            domain,
+            app,
+            module,
+            form,
         ),
     })
 
