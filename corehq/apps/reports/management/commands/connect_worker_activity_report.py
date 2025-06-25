@@ -12,7 +12,7 @@ from django.conf import settings
 
 class Command(BaseCommand):
     help = """
-    Generate a worker activity report for a given month.
+    Generate a worker activity report for the given months.
     """
 
     def add_arguments(self, parser):
