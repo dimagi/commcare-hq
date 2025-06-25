@@ -1,3 +1,6 @@
+from io import BytesIO
+from openpyxl import Workbook
+
 from datetime import datetime, date
 from django.core.management import BaseCommand
 from django.db.models import Count
@@ -16,8 +19,10 @@ class Command(BaseCommand):
 
     def handle(self, months, limit):
         months_activity = self.collect_worker_activity_data(months, limit)
-        # total_number_of_workers_by_domain = 
-        # report it
+        months_activity = self.augment_total_app_users(months_activity)
+
+        csv_workbook = self.generate_csv_report(months_activity)
+        self.send_email_report(csv_workbook)
 
     def collect_worker_activity_data(self, months=None, limit=None):
         """Collects user activity data across domains for ConnectID rollout planning."""
@@ -31,7 +36,7 @@ class Command(BaseCommand):
 
         months_activity = {}
         for month in range(1, months + 1):
-            months_activity[f"month_{month}"] = list(self.get_activity_for_timeframe(month, domain_names, limit))
+            months_activity[f"{month}_months"] = list(self.get_activity_for_timeframe(month, domain_names, limit))
 
         return months_activity
 
@@ -55,6 +60,53 @@ class Command(BaseCommand):
             .annotate(user_count=Count("user_id", distinct=True))  # count distinct users for each app in the domain
             .order_by("-user_count")[:limit]  # sorted by user count and limited to the top results
         )
+    
+    def augment_total_app_users(self, months_activity):
+        """Augment the activity data with total users per app on a domain."""
+        for _, activity_list in months_activity.items():
+            for activity in activity_list:
+                domain_name = activity.get('domain_name')
+                app_id = activity.get('app_id')
+
+                total_users = (
+                    MALTRow.objects.filter(
+                        domain_name=domain_name,
+                        app_id=app_id,
+                    )
+                    .values("user_id")
+                    .distinct()
+                    .count()
+                )
+                activity['total_app_users'] = total_users
+        return months_activity
+
+    def generate_csv_report(self, months_activity):
+        wb = Workbook()
+        # Remove the default sheet created by openpyxl
+        default_sheet = wb.active
+        wb.remove(default_sheet)
+
+        for month, activity_list in months_activity.items():
+            ws = wb.create_sheet(title=month)
+            # Write header
+            ws.append(['Domain Name', 'App ID', 'User Count', 'Total Users'])
+            # Write data rows
+            for row in activity_list:
+                ws.append([
+                    row.get('domain_name', ''),
+                    row.get('app_id', ''),
+                    row.get('user_count', 0),
+                    row.get('total_users', 0)
+                ])
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        return output.getvalue()
+
+
+    def send_email_report(csv_workbook):
+        pass
+
 
 def add_months(year, months, offset):
     """
