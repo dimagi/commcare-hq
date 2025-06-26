@@ -112,7 +112,7 @@ class TestBillingAccountWebUserHistory(TestCase):
             for user in get_all_web_users_by_domain(domain_obj.name):
                 if is_first:
                     is_first = False
-                    user.get_domain_membership(domain_obj.name).is_active = False
+                    user.set_is_active(domain_obj.name, False)
                     user.save()
                 user_adapter.index(user)
                 cls.addClassCleanup(user_adapter.delete, user._id)

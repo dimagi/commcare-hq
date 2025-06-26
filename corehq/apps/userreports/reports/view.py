@@ -720,6 +720,6 @@ def ucr_download_job_poll(request, domain,
 def _has_permission(domain, user, config_id):
     if domain is None:
         return False
-    if not user.is_active:
+    if not user.is_active_in_domain(domain):
         return False
     return user.can_view_report(domain, get_ucr_class_name(config_id))

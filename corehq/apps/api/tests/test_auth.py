@@ -133,9 +133,9 @@ class LoginAuthenticationTest(AuthenticationTestBase):
 
     def test_login_with_deactivated_user(self):
         def reactivate_user():
-            self.user.is_active = True
+            self.user.set_is_active(self.domain, True)
             self.user.save()
-        self.user.is_active = False
+        self.user.set_is_active(self.domain, False)
         self.user.save()
         self.addCleanup(reactivate_user)
         self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())

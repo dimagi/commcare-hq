@@ -1015,7 +1015,7 @@ class TestUserESAccessors(TestCase):
         super(TestUserESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, is_active=True):
-        self.user.is_active = is_active
+        self.user.set_is_active(self.domain, is_active)
         user_adapter.index(self.user, refresh=True)
 
     def test_active_user_query(self):
