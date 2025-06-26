@@ -770,6 +770,11 @@ class MultiMembershipMixin(_AuthorizableMixin):
             raise AssertionError(f"User is not a member of {domain}")
         domain_membership.is_active = is_active
 
+    def is_active_in_any_domain(self):
+        return self.is_active and [
+            dm.is_active for dm in self.domain_memberships
+        ]
+
 
 class LowercaseStringProperty(StringProperty):
     """
