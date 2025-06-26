@@ -232,28 +232,9 @@ def task_generate_ids_and_operate_on_payloads(
 @task
 def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url):
     task = bulk_case_reassign_async
-    case_ids = DownloadBase.get(download_id).get_content()
-    DownloadBase.set_progress(task, 0, len(case_ids))
     user = CouchUser.get_by_user_id(user_id)
-    submission_handler = SubmitCaseBlockHandler(
-        domain,
-        import_results=None,
-        case_type=None,
-        user=user,
-        record_form_callback=None,
-        throttle=True,
-        form_name="Case Reassignment (via HQ)",
-    )
-    for idx, case_id in enumerate(case_ids):
-        submission_handler.add_caseblock(
-            RowAndCase(idx, CaseBlock(case_id, owner_id=owner_id))
-        )
-        DownloadBase.set_progress(task, idx, len(case_ids))
-    submission_handler.commit_caseblocks()
-    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
-    result = submission_handler.results.to_json()
-    result['success'] = True
-    result['case_count'] = len(case_ids)
+    case_ids = DownloadBase.get(download_id).get_content()
+    result = reassign_cases(domain, user, owner_id, case_ids, task=task)
     result['report_url'] = report_url
 
     def _send_email():
@@ -279,6 +260,30 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
 
     _send_email()
     return {"messages": result}
+
+
+def reassign_cases(domain, user, owner_id, case_ids, task=None):
+    DownloadBase.set_progress(task, 0, len(case_ids))
+    submission_handler = SubmitCaseBlockHandler(
+        domain,
+        import_results=None,
+        case_type=None,
+        user=user,
+        record_form_callback=None,
+        throttle=True,
+        form_name="Case Reassignment (via HQ)",
+    )
+    for idx, case_id in enumerate(case_ids):
+        submission_handler.add_caseblock(
+            RowAndCase(idx, CaseBlock(case_id, owner_id=owner_id))
+        )
+        DownloadBase.set_progress(task, idx, len(case_ids))
+    submission_handler.commit_caseblocks()
+    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
+    result = submission_handler.results.to_json()
+    result['success'] = True
+    result['case_count'] = len(case_ids)
+    return result
 
 
 @task
