@@ -87,7 +87,7 @@ define('cloudcare/js/gtx', [
                 }
             } else {
                 const remainingFields = searchFields.slice(i - 1).join(",");
-                concatFields['searchFields3'] = remainingFields;
+                concatFields['searchFields' + maxFields] = remainingFields;
                 return concatFields;
             }
         }
