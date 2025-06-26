@@ -7,10 +7,12 @@
 
 {% block stylesheets %}{{ block.super }}
   {% compress css %}
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'data_dictionary/less/data_dictionary.less' %}" />
+    <link
+      type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'data_dictionary/less/data_dictionary.less' %}"
+    />
   {% endcompress %}
 {% endblock %}
 
@@ -22,8 +24,12 @@
       <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
         {# navigation handle by URL hash #}
         <a data-bind="attr: {href: $data.url}">
-          <span data-bind="text: $data.name" style="display: inline-block"></span>
-          <span data-bind="visible: $data.deprecated" class="hidden deprecate-case-type label label-warning">{% trans "deprecated" %}</span>
+          <span data-bind="text: $data.name" style="display: inline-block">
+          </span>
+          <span
+            data-bind="visible: $data.deprecated"
+            class="hidden deprecate-case-type label label-warning"
+          >{% trans "deprecated" %}</span>
         </a>
       </li>
       <!-- /ko -->
@@ -35,14 +41,17 @@
           </a>
         </li>
         <li>
-          <a class="hidden deprecate-case-type" data-bind="click: $root.toggleShowDeprecatedCaseTypes">
-              <i class="fa fa-archive"></i>
-              <span data-bind="hidden: $root.showDeprecatedCaseTypes">
-                {% trans 'Show Deprecated Case Types' %}
-              </span>
-              <span data-bind="visible: $root.showDeprecatedCaseTypes">
-                {% trans 'Hide Deprecated Case Types' %}
-              </span>
+          <a
+            class="hidden deprecate-case-type"
+            data-bind="click: $root.toggleShowDeprecatedCaseTypes"
+          >
+            <i class="fa fa-archive"></i>
+            <span data-bind="hidden: $root.showDeprecatedCaseTypes">
+              {% trans 'Show Deprecated Case Types' %}
+            </span>
+            <span data-bind="visible: $root.showDeprecatedCaseTypes">
+              {% trans 'Hide Deprecated Case Types' %}
+            </span>
           </a>
         </li>
       {% endif %}
@@ -58,72 +67,111 @@
           </button>
           <h4 class="modal-title">{% trans "Create a new Case Type" %}</h4>
         </div>
-        <form class="form-horizontal" id="create-case-type-form"
-                style="margin: 0; padding: 0"
-                action="{% url 'create_case_type' domain %}"
-                method="post"
-                data-bind="submit: submitCreate"
+        <form
+          class="form-horizontal"
+          id="create-case-type-form"
+          style="margin: 0; padding: 0"
+          action="{% url 'create_case_type' domain %}"
+          method="post"
+          data-bind="submit: submitCreate"
         >
-            {% csrf_token %}
-            <div class="modal-body">
-              <fieldset>
-                <div class="form-group" data-bind="css: {'has-error': nameChecked() && (!nameValid() || !nameUnique())}">
-                  <label for="name" class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
-                    {% trans "Name" %}
-                  </label>
-                  <i class="fa" data-bind="
-                     visible: nameChecked(),
-                     css: {
-                         'fa-check': nameValid() && nameUnique(),
-                         'text-success': nameValid() && nameUnique(),
-                         'fa-remove': !nameValid() || !nameUnique(),
-                         'text-danger': !nameValid() || !nameUnique(),
-                     }
-                  "></i>
-                  <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
-                    <input type="text" name="name" class="form-control" required data-bind="textInput: name"/>
-                    <span class='help-block' data-bind="visible: nameChecked() && !nameUnique()">
-                      {% trans "A case type with this name already exists." %}
-                    </span>
-                    <span class="help-block" data-bind="visible: nameChecked() && !nameValid()">
-                      {% trans "Invalid case type name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
-                    </span>
-                  </div>
+          {% csrf_token %}
+          <div class="modal-body">
+            <fieldset>
+              <div
+                class="form-group"
+                data-bind="css: {
+                    'has-error': nameChecked() && (!nameValid() || !nameUnique())
+                }"
+              >
+                <label
+                  for="name"
+                  class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label"
+                >
+                  {% trans "Name" %}
+                </label>
+                <i
+                  class="fa"
+                  data-bind="
+                    visible: nameChecked(),
+                    css: {
+                        'fa-check': nameValid() && nameUnique(),
+                        'text-success': nameValid() && nameUnique(),
+                        'fa-remove': !nameValid() || !nameUnique(),
+                        'text-danger': !nameValid() || !nameUnique(),
+                    }"
+                ></i>
+                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
+                  <input
+                    type="text"
+                    name="name"
+                    class="form-control"
+                    required
+                    data-bind="textInput: name"
+                  />
+                  <span
+                    class='help-block'
+                    data-bind="visible: nameChecked() && !nameUnique()"
+                  >
+                    {% trans "A case type with this name already exists." %}
+                  </span>
+                  <span
+                    class="help-block"
+                    data-bind="visible: nameChecked() && !nameValid()"
+                  >
+                    {% trans "Invalid case type name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
+                  </span>
                 </div>
-                <div class="form-group">
-                  <label for="description" class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
-                      {% trans "Description" %}
-                  </label>
-                  <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
-                    <textarea name="description"
-                              class="form-control std-height vertical-resize"></textarea>
-                  </div>
+              </div>
+              <div class="form-group">
+                <label
+                  for="description"
+                  class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label"
+                >
+                  {% trans "Description" %}
+                </label>
+                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
+                  <textarea
+                    name="description"
+                    class="form-control std-height vertical-resize"
+                  ></textarea>
                 </div>
-              </fieldset>
-            </div>
-            <div class="modal-footer">
-              <a href="#" data-dismiss="modal" class="btn btn-default" data-bind="
+              </div>
+            </fieldset>
+          </div>
+          <div class="modal-footer">
+            <a
+              href="#"
+              data-dismiss="modal"
+              class="btn btn-default"
+              data-bind="
                 css: {disabled: formCreateCaseTypeSent()},
-                attr: {disabled: formCreateCaseTypeSent()}
-              ">{% trans 'Cancel' %}</a>
-              <button type="submit" class="btn btn-primary" id="gtm-create-case-type-btn" data-bind="
+                attr: {disabled: formCreateCaseTypeSent()}"
+            >{% trans 'Cancel' %}</a>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              id="gtm-create-case-type-btn"
+              data-bind="
                 css: {disabled: formCreateCaseTypeSent() || !nameValid() || !nameUnique()},
-                attr: {disabled: formCreateCaseTypeSent() || !nameValid() || !nameUnique()}
-              ">
-                <i class="fa fa-plus" data-bind="
-                   css: {
-                       'fa-plus': !formCreateCaseTypeSent(),
-                       'fa-refresh': formCreateCaseTypeSent,
-                       'fa-spin': formCreateCaseTypeSent
-                   }
-                "></i>
-                {% trans "Create Case Type" %}
-              </button>
-            </div>
-          </form>
+                attr: {disabled: formCreateCaseTypeSent() || !nameValid() || !nameUnique()}"
+            >
+              <i
+                class="fa fa-plus"
+                data-bind="
+                  css: {
+                      'fa-plus': !formCreateCaseTypeSent(),
+                      'fa-refresh': formCreateCaseTypeSent,
+                      'fa-spin': formCreateCaseTypeSent
+                  }"
+              ></i>
+              {% trans "Create Case Type" %}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
-</script>
+  </script>
 {% endblock %}
 
 {% block page_content %}
@@ -146,64 +194,107 @@
       </p>
     </div>
     {% if not request.is_view_only %}
-      <div id="gtm-save-btn" data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
+      <div
+        id="gtm-save-btn"
+        data-bind="saveButton: saveButton, visible: $root.activeCaseType()"
+      ></div>
     {% endif %}
     <div class="row">
       <div class="col-md-12">
         <div>
-          <h3 data-bind="text: $root.activeCaseType()" style="display: inline-block;"></h3>
-          <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="deprecate-case-type hidden label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
+          <h3
+            data-bind="text: $root.activeCaseType()"
+            style="display: inline-block;"
+          ></h3>
+          <span
+            data-bind="visible: $root.isActiveCaseTypeDeprecated()"
+            class="deprecate-case-type hidden label label-warning"
+            style="display: inline-block;"
+          >{% trans "deprecated" %}</span>
         </div>
         <div data-bind="with: casePropertyWarningViewModel">
-        {% include "data_dictionary/partials/case_property_warning.html" %}
+          {% include "data_dictionary/partials/case_property_warning.html" %}
         </div>
         {% if fhir_integration_enabled %}
-          <div id="fhir-resource-type-form" class="form-inline" data-bind="visible: fhirResourceTypes().length">
+          <div
+            id="fhir-resource-type-form" class="form-inline"
+            data-bind="visible: fhirResourceTypes().length"
+          >
             {% trans "FHIR Resource Type" %}
-            <select id="fhir-resource-types"
-                    class="form-control"
-                    data-bind="select2: fhirResourceTypes,
-                              optionsCaption: '{% trans_html_attr 'Select a resource type' %}',
-                              value: fhirResourceType,
-                              disable: removefhirResourceType,
-                              ">
-            </select>
+            <select
+              id="fhir-resource-types"
+              class="form-control"
+              data-bind="
+                select2: fhirResourceTypes,
+                optionsCaption: '{% trans_html_attr 'Select a resource type' %}',
+                value: fhirResourceType,
+                disable: removefhirResourceType,"
+            ></select>
             <!-- ko if: fhirResourceType() && !removefhirResourceType() -->
-            <button data-bind="click: removeResourceType" class="btn btn-danger btn-sm">{% trans "Clear" %}
-            </button>
+            <button
+              data-bind="click: removeResourceType"
+              class="btn btn-danger btn-sm"
+            >{% trans "Clear" %}</button>
             <!-- /ko -->
             <!-- ko if: removefhirResourceType() -->
-            <button data-bind="click: restoreResourceType" class="btn btn-default btn-sm">{% trans "Restore" %}
-            </button>
+            <button
+              data-bind="click: restoreResourceType"
+              class="btn btn-default btn-sm"
+            >{% trans "Restore" %}</button>
             <!-- /ko -->
           </div>
           <br />
         {% endif %}
-        <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">
-          <i class="fa-solid fa-cloud-arrow-down"></i>
+        <a
+          class="btn btn-info"
+          id="download-dict"
+          href="{% url "export_data_dictionary" domain %}"
+        ><i class="fa-solid fa-cloud-arrow-down"></i>
           {% trans "Export to Excel" %}
         </a>
         {% if not request.is_view_only %}
-          <a class="btn btn-default" id="gtm-upload-dict" href="{% url "upload_data_dict" domain %}">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
+          <a
+            class="btn btn-default"
+            id="gtm-upload-dict"
+            href="{% url "upload_data_dict" domain %}"
+          ><i class="fa-solid fa-cloud-arrow-up"></i>
             {% trans "Import from Excel" %}
           </a>
-          <a class="btn btn-default" href="#" data-bind="openModal: 'deprecate-case-type', visible: !$root.isActiveCaseTypeDeprecated()">
-            <i class="fa fa-archive"></i>
+          <a
+            class="btn btn-default"
+            href="#"
+            data-bind="
+              openModal: 'deprecate-case-type',
+              visible: !$root.isActiveCaseTypeDeprecated()"
+          ><i class="fa fa-archive"></i>
             {% trans "Deprecate Case Type" %}
           </a>
-          <button class="btn btn-default" data-bind="click: restoreCaseType, visible: $root.isActiveCaseTypeDeprecated()">
-            <i class="fa fa-undo"></i>
+          <button
+            class="btn btn-default"
+            data-bind="
+              click: restoreCaseType,
+              visible: $root.isActiveCaseTypeDeprecated()"
+          ><i class="fa fa-undo"></i>
             {% trans "Restore Case Type" %}
           </button>
-          <a class="btn btn-danger" href="#" data-bind="openModal: 'delete-case-type-modal', visible: $root.canDeleteActiveCaseType()">
-            <i class="fa fa-trash"></i>
+          <a
+            class="btn btn-danger"
+            href="#" data-bind="
+              openModal: 'delete-case-type-modal',
+              visible: $root.canDeleteActiveCaseType()"
+          ><i class="fa fa-trash"></i>
             {% trans "Delete Case Type" %}
           </a>
         {% endif %}
         <div data-bind="visible: $root.activeCaseType()">
-          <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated" %}</button>
-          <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated" %}</button>
+          <button
+            data-bind="click: $root.showDeprecated, visible: !showAll()"
+            class="btn btn-default pull-right"
+          >{% trans "Show Deprecated" %}</button>
+          <button
+            data-bind="click: $root.hideDeprecated, visible: showAll"
+            class="btn btn-default pull-right"
+          >{% trans "Hide Deprecated" %}</button>
           <div id="data-dictionary-table">
             <div class="table-row table-header">
             <div class="row-item-small"></div>
@@ -214,237 +305,347 @@
             {% endif %}
             <div class="row-item-big">{% trans "Description" %}</div>
             {% if fhir_integration_enabled %}
-              <div class="row-item">{% trans "FHIR Resource Property Path" %}</div>
+              <div class="row-item">
+                {% trans "FHIR Resource Property Path" %}
+              </div>
             {% endif %}
             {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
-              <div class="row-item">{% include "data_dictionary/partials/valid_values_th_content.html" %}</div>
+              <div class="row-item">
+                {% include "data_dictionary/partials/valid_values_th_content.html" %}
+              </div>
             {% endif %}
             {% if not request.is_view_only %}
               <div class="row-item-small"></div>
               <div class="row-item-small"></div>
             {% endif %}
             </div>
-            <div data-bind="sortable: {
-                              data: activeCaseTypeData(),
-                              connectClass: 'groups',
-                              options: { handle: 'i.sortable-handle' }
-                            }">
-            <div>
-            <div class="group-deprecated" data-bind="visible: showGroupPropertyTransferWarning" style="display: none;">
-              {% blocktrans %}
-              <b data-bind="text: name()"></b> group's properties will be moved to <b>No Group</b>
-              {% endblocktrans %}
-            </div>
-            <div class="table-row group" data-bind="css: { 'group-deprecated': toBeDeprecated() }, visible: !deprecated || $root.showAll()">
-              <div class="row-item-small">
-                {% if not request.is_view_only %}
-                <i class="sortable-handle fa-solid fa-up-down"></i>
-                {% endif %}
-                <i class="fa-solid ms-2 fa-lg"
-                  data-bind="css: { 'fa-square-plus': !expanded(), 'fa-square-minus': expanded() }, click: toggleExpanded"></i>
-              </div>
-              <div class="row-item">
-                <!-- ko if: name() == '' -->
-                <span>{% trans 'No Group' %}</span>
-                <!-- /ko -->
-                <!-- ko if: name() !== '' -->
-                <input class="form-control" data-bind="value: name,
-                              attr: {'placeholder': name}" id="group-name" />
-                <!-- /ko -->
-              </div>
-              <div class="row-item">
-                &nbsp;{# Empty cell where "Label" is in case property rows #}
-              </div>
-              {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
-                <div class="row-item">{% trans "Case Property Group" %}</div>
-              {% endif %}
-              <div class="row-item-big">
-                <!-- ko if: name() !== ''-->
-                <textarea class="form-control std-height vertical-resize"
-                          data-bind="value: $data.description, rows: 1"
-                          placeholder='{% trans "Click here to add a description" %}'></textarea>
-                <!-- /ko -->
-              </div>
-              {% if fhir_integration_enabled %}
-                <div class="row-item"></div>
-              {% endif %}
-              {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
-                <div class="row-item"></div>
-              {% endif %}
-              {% if not request.is_view_only %}
-              <div class="row-item-small">
-                <!-- ko if: name() !== '' && !toBeDeprecated() -->
-                <button title="{% trans_html_attr 'Deprecate Group' %}"  data-bind="click: deprecateGroup" class="fa fa-archive"></button>
-                <!-- /ko -->
-                <!-- ko if: name() !== '' && toBeDeprecated() -->
-                <button title="{% trans_html_attr 'Restore Group' %}" data-bind="click: restoreGroup" class="fa fa-undo"></button>
-                <!-- /ko -->
-              </div>
-              <div class="row-item-small"></div>
-              {% endif %}
-            </div>
-            <div data-bind="sortable: { data: properties, connectClass: 'properties', options: { handle: 'i.sortable-handle' } }, visible: expanded() && (!deprecated || $root.showAll())">
-              <div class="table-row" data-bind="visible: expanded() && (!deprecated() || $root.showAll()) && !deleted()">
-                <div class="row-item-small">
-                {% if not request.is_view_only %}
-                  <i class="sortable-handle fa-solid fa-up-down"></i>
-                {% endif %}
+            <div
+              data-bind="
+                sortable: {
+                    data: activeCaseTypeData(),
+                    connectClass: 'groups',
+                    options: { handle: 'i.sortable-handle' }
+                }"
+            >
+              <div>
+                <div
+                  class="group-deprecated"
+                  data-bind="visible: showGroupPropertyTransferWarning"
+                  style="display: none;"
+                >
+                  {% blocktrans %}
+                    <b data-bind="text: name()"></b> group's properties will be moved to <b>No Group</b>
+                  {% endblocktrans %}
                 </div>
-                <div class="row-item">
-                  <div class="w-100">
-                  <span data-bind="text: name"></span>
+                <div
+                  class="table-row group"
+                  data-bind="
+                    css: { 'group-deprecated': toBeDeprecated() },
+                    visible: !deprecated || $root.showAll()"
+                >
+                  <div class="row-item-small">
+                    {% if not request.is_view_only %}
+                      <i class="sortable-handle fa-solid fa-up-down"></i>
+                    {% endif %}
+                    <i
+                      class="fa-solid ms-2 fa-lg"
+                      data-bind="
+                        css: {
+                            'fa-square-plus': !expanded(),
+                            'fa-square-minus': expanded()
+                        },
+                        click: toggleExpanded"
+                    ></i>
                   </div>
+                  <div class="row-item">
+                    <!-- ko if: name() == '' -->
+                    <span>{% trans 'No Group' %}</span>
+                    <!-- /ko -->
+                    <!-- ko if: name() !== '' -->
+                    <input
+                      class="form-control"
+                      data-bind="
+                        value: name,
+                        attr: {'placeholder': name}" id="group-name"
+                    />
+                    <!-- /ko -->
+                  </div>
+                  <div class="row-item">
+                    &nbsp;{# Empty cell where "Label" is in case property rows #}
+                  </div>
+                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                    <div class="row-item">
+                      {% trans "Case Property Group" %}
+                    </div>
+                  {% endif %}
+                  <div class="row-item-big">
+                    <!-- ko if: name() !== ''-->
+                    <textarea
+                      class="form-control std-height vertical-resize"
+                      data-bind="value: $data.description, rows: 1"
+                      placeholder='{% trans "Click here to add a description" %}'
+                    ></textarea>
+                    <!-- /ko -->
+                  </div>
+                  {% if fhir_integration_enabled %}
+                    <div class="row-item"></div>
+                  {% endif %}
+                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                    <div class="row-item"></div>
+                  {% endif %}
+                  {% if not request.is_view_only %}
+                    <div class="row-item-small">
+                      <!-- ko if: name() !== '' && !toBeDeprecated() -->
+                      <button
+                        title="{% trans_html_attr 'Deprecate Group' %}"
+                        data-bind="click: deprecateGroup"
+                        class="fa fa-archive"
+                      ></button>
+                      <!-- /ko -->
+                      <!-- ko if: name() !== '' && toBeDeprecated() -->
+                      <button
+                        title="{% trans_html_attr 'Restore Group' %}"
+                        data-bind="click: restoreGroup"
+                        class="fa fa-undo"
+                      ></button>
+                      <!-- /ko -->
+                    </div>
+                    <div class="row-item-small"></div>
+                  {% endif %}
                 </div>
-                <div class="row-item">
-                  <input class="form-control"
+                <div
+                  data-bind="
+                    sortable: {
+                        data: properties,
+                        connectClass: 'properties',
+                        options: { handle: 'i.sortable-handle' }
+                    },
+                    visible: expanded() && (!deprecated || $root.showAll())"
+                >
+                  <div
+                    class="table-row"
+                    data-bind="visible: expanded() && (!deprecated() || $root.showAll()) && !deleted()"
+                  >
+                    <div class="row-item-small">
+                    {% if not request.is_view_only %}
+                      <i class="sortable-handle fa-solid fa-up-down"></i>
+                    {% endif %}
+                    </div>
+                    <div class="row-item">
+                      <div class="w-100">
+                        <span data-bind="text: name"></span>
+                      </div>
+                    </div>
+                    <div class="row-item">
+                      <input
+                        class="form-control"
                         id="prop-label"
                         data-bind="
                           value: $data.label,
-                          attr: {'placeholder': 'Click here to add a label'}" />
-                </div>
-                {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
-                  <div class="row-item main-form">
-                    <select class="form-control"
-                            data-bind="
-                              options: $root.availableDataTypes,
-                              optionsCaption: 'Select a data type',
-                              optionsText: 'display',
-                              optionsValue: 'value',
-                              value: dataType,
-                              disable: isGeoCaseProp,">
-                    </select>
-                    <span class="hq-help" style="height: fit-content"
+                          attr: {'placeholder': 'Click here to add a label'}"
+                      />
+                    </div>
+                    {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                      <div class="row-item main-form">
+                        <select
+                          class="form-control"
+                          data-bind="
+                            options: $root.availableDataTypes,
+                            optionsCaption: 'Select a data type',
+                            optionsText: 'display',
+                            optionsValue: 'value',
+                            value: dataType,
+                            disable: isGeoCaseProp,"
+                        ></select>
+                        <span
+                          class="hq-help"
+                          style="height: fit-content"
                           data-bind="
                             popover: {
                               content: '{% blocktrans %}This GPS case property is currently being used to store the geolocation for cases, so the data type cannot be changed.{% endblocktrans %}',
-                              trigger: 'hover' },
-                            visible: isGeoCaseProp">
-                      <i class="fa fa-question-circle icon-question-sign"></i>
-                    </span>
-                  </div>
-                {% endif %}
-                <div class="row-item-big main-form">
-                  <textarea class="form-control std-height vertical-resize"
-                            placeholder="{% trans 'Click here to add a description' %}"
-                            data-bind=" value: $data.description, rows: 1">
-                  </textarea>
-                </div>
-              {% if fhir_integration_enabled %}
-                <div class="row-item fhir-path">
-                  <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath">
-                  <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
-                  <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa-solid fa-xmark"></button>
-                  <!-- /ko -->
-                  <!-- ko if: removeFHIRResourcePropertyPath() -->
-                  <button title="{% trans_html_attr 'Restore Path' %}" data-bind="click: restorePath" class="fa fa-undo"></button>
-                  <!-- /ko -->
-                </div>
-              {% endif %}
-              {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
-                <div class="row-item">
-                  <div data-bind="visible: canHaveAllowedValues()">
-                    <div data-bind="jqueryElement: $allowedValues"></div>
-                  </div>
-                  <div data-bind="visible: dataType() === 'date'" class="help-block">
-                    {% trans "YYYY-MM-DD" %}
-                  </div>
-                </div>
-              {% endif %}
-              {% if not request.is_view_only %}
-                <div class="row-item-small m-auto">
-                  <button title="{% trans_html_attr 'Delete Property' %}"
-                          data-bind="click: confirmDeleteProperty, visible: isSafeToDelete"
-                          class="btn btn-danger">
-                    <i class="fa fa-trash"></i>
-                    {% trans 'Delete' %}
-                  </button>
-                </div>
-                <div class="row-item-small m-auto">
-                  <!-- ko if: !deprecated() -->
-                  <button id="gtm-deprecate-case-property" title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="btn btn-default">
-                    <i class="fa fa-archive"></i>
-                    {% trans 'Deprecate' %}
-                  </button>
-                  <!-- /ko -->
-                  <!-- ko if: deprecated() -->
-                  <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="btn btn-default">
-                    <i class="fa fa-undo"></i>
-                    {% trans 'Restore' %}
-                  </button>
-                  <!-- /ko -->
-                </div>
-              {% endif %}
-              </div>
-            </div>
-
-            {% if not request.is_view_only %}
-              <div class="table-row"
-                  data-bind="visible: !deprecated">
-                <div class="row-item">
-                  <form class="form-inline"
-                        data-bind="css: {
-                                    'has-error': !$root.newPropertyNameUnique(newPropertyName())
-                                                  || !$root.newPropertyNameValid(newPropertyName())
-                                  }">
-                    <input class="form-control"
-                          placeholder="Case Property"
-                          data-bind="value: newPropertyName">
-                    <button class="btn btn-default"
-                            id="gtm-add-case-property"
-                            data-bind="click: newCaseProperty,
-                                      enable: $root.newPropertyNameUnique(newPropertyName())
-                                              && $root.newPropertyNameValid(newPropertyName())">
-                      <i class="fa fa-plus"></i>
-                      {% trans "Add Case Property" %}
-                    </button>
-                    <div class="help-block">
-                      <span class="text-danger"
-                            data-bind="visible: !$root.newPropertyNameUnique(newPropertyName())">
-                        {% blocktrans %}
-                          A case property with this name already exists.
-                          If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated
-                          properties.
-                        {% endblocktrans %}
-                      </span>
-                      <span class="text-danger" data-bind="visible: !$root.newPropertyNameValid(newPropertyName())">
-                        {% trans "Invalid case property name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
-                      </span>
+                              trigger: 'hover'
+                            },
+                            visible: isGeoCaseProp"
+                        >
+                          <i class="fa fa-question-circle icon-question-sign"></i>
+                        </span>
+                      </div>
+                    {% endif %}
+                    <div class="row-item-big main-form">
+                      <textarea
+                        class="form-control std-height vertical-resize"
+                        placeholder="{% trans 'Click here to add a description' %}"
+                        data-bind=" value: $data.description, rows: 1"
+                      ></textarea>
                     </div>
-
-                  </form>
+                  {% if fhir_integration_enabled %}
+                    <div class="row-item fhir-path">
+                      <input
+                        class="form-control"
+                        data-bind="
+                          value: $data.fhirResourcePropPath,
+                          disable: removeFHIRResourcePropertyPath"
+                      >
+                      <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
+                      <button
+                        title="{% trans_html_attr 'Remove Path' %}"
+                        data-bind="click: removePath"
+                        class="fa-solid fa-xmark"
+                      ></button>
+                      <!-- /ko -->
+                      <!-- ko if: removeFHIRResourcePropertyPath() -->
+                      <button
+                        title="{% trans_html_attr 'Restore Path' %}"
+                        data-bind="click: restorePath"
+                        class="fa fa-undo"
+                      ></button>
+                      <!-- /ko -->
+                    </div>
+                  {% endif %}
+                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                    <div class="row-item">
+                      <div data-bind="visible: canHaveAllowedValues()">
+                        <div data-bind="jqueryElement: $allowedValues"></div>
+                      </div>
+                      <div
+                        data-bind="visible: dataType() === 'date'"
+                        class="help-block"
+                      >
+                        {% trans "YYYY-MM-DD" %}
+                      </div>
+                    </div>
+                  {% endif %}
+                  {% if not request.is_view_only %}
+                    <div class="row-item-small m-auto">
+                      <button
+                        title="{% trans_html_attr 'Delete Property' %}"
+                        data-bind="click: confirmDeleteProperty, visible: isSafeToDelete"
+                        class="btn btn-danger"
+                      ><i class="fa fa-trash"></i>
+                        {% trans 'Delete' %}
+                      </button>
+                    </div>
+                    <div class="row-item-small m-auto">
+                      <!-- ko if: !deprecated() -->
+                      <button
+                        id="gtm-deprecate-case-property"
+                        title="{% trans_html_attr 'Deprecate Property' %}"
+                        data-bind="click: deprecateProperty" class="btn btn-default"
+                      ><i class="fa fa-archive"></i>
+                        {% trans 'Deprecate' %}
+                      </button>
+                      <!-- /ko -->
+                      <!-- ko if: deprecated() -->
+                      <button
+                        title="{% trans_html_attr 'Restore Property' %}"
+                        data-bind="click: restoreProperty"
+                        class="btn btn-default"
+                      ><i class="fa fa-undo"></i>
+                        {% trans 'Restore' %}
+                      </button>
+                      <!-- /ko -->
+                    </div>
+                  {% endif %}
                 </div>
               </div>
-            {% endif %}
 
-            </div>
+              {% if not request.is_view_only %}
+                <div class="table-row" data-bind="visible: !deprecated">
+                  <div class="row-item">
+                    <form
+                      class="form-inline"
+                      data-bind="
+                        css: {
+                          'has-error': !$root.newPropertyNameUnique(newPropertyName())
+                                       || !$root.newPropertyNameValid(newPropertyName())
+                        }"
+                    >
+                      <input
+                        class="form-control"
+                        placeholder="Case Property"
+                        data-bind="value: newPropertyName"
+                      />
+                      <button
+                        class="btn btn-default"
+                        id="gtm-add-case-property"
+                        data-bind="
+                          click: newCaseProperty,
+                          enable: $root.newPropertyNameUnique(newPropertyName())
+                                  && $root.newPropertyNameValid(newPropertyName())"
+                      >
+                        <i class="fa fa-plus"></i>
+                        {% trans "Add Case Property" %}
+                      </button>
+                      <div class="help-block">
+                        <span
+                          class="text-danger"
+                          data-bind="visible: !$root.newPropertyNameUnique(newPropertyName())"
+                        >
+                          {% blocktrans %}
+                            A case property with this name already exists.
+                            If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated
+                            properties.
+                          {% endblocktrans %}
+                        </span>
+                        <span
+                          class="text-danger"
+                          data-bind="visible: !$root.newPropertyNameValid(newPropertyName())"
+                        >
+                          {% trans "Invalid case property name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
+                        </span>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              {% endif %}
             </div>
           </div>
 
           {% if not request.is_view_only %}
-            <form class="form-inline" data-bind="css: {'has-error': !newGroupNameUnique() || !newGroupNameValid()}">
-              <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
-              <button class="btn btn-default" id="gtm-add-case-property-group" data-bind="click: $root.newGroup, enable: newGroupNameUnique() && newGroupNameValid()">
-                <i class="fa fa-plus"></i>
+            <form
+              class="form-inline"
+              data-bind="
+                css: {'has-error': !newGroupNameUnique() || !newGroupNameValid()}"
+            >
+              <input
+                class="form-control"
+                placeholder="Group Name"
+                data-bind="value: newGroupName">
+              <button
+                class="btn btn-default"
+                id="gtm-add-case-property-group"
+                data-bind="click: $root.newGroup, enable: newGroupNameUnique() && newGroupNameValid()"
+              ><i class="fa fa-plus"></i>
                 {% trans "Add Case Property Group" %}
               </button>
               <div class="help-block">
-                <span class="text-danger" data-bind="visible: !newGroupNameUnique()">
+                <span
+                  class="text-danger"
+                  data-bind="visible: !newGroupNameUnique()"
+                >
                   {% blocktrans %}
                     A case property group with this name already exists.
-                    If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated
-                    groups.
+                    If you don’t see it on the page, please click ‘Show
+                    Deprecated’ button to reveal deprecated groups.
                   {% endblocktrans %}
                 </span>
-                <span class="text-danger" data-bind="visible: !newGroupNameValid()">
+                <span
+                  class="text-danger"
+                  data-bind="visible: !newGroupNameValid()"
+                >
                   {% trans "Invalid case group name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
                 </span>
               </div>
             </form>
           {% endif %}
         </div>
+
         {% if not request.is_view_only %}
           <div data-bind="hidden: $root.caseTypes().length > 0">
-            <button class="btn btn-primary" data-bind="openModal: 'create-case-type'">
+            <button
+              class="btn btn-primary"
+              data-bind="openModal: 'create-case-type'"
+            >
               <i class="fa fa-plus"></i>
               {% trans "Add a new Case Type" %}
             </button>
