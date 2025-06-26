@@ -307,6 +307,9 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.showAll = ko.observable(false);
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+    self.activeCaseTypeName = ko.computed(() => {
+        return self.activeCaseType() ? self.activeCaseType().name : '';
+    });
 
     self.casePropertyWarningViewModel = new casePropertyWarningViewModel(casePropertyLimit);
 
@@ -379,7 +382,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                     'properties': JSON.stringify(properties),
                     'fhir_resource_type': self.fhirResourceType(),
                     'remove_fhir_resource_type': self.removefhirResourceType(),
-                    'case_type': self.activeCaseType(),
+                    'case_type': self.activeCaseTypeName(),
                 },
                 success: function () {
                     window.location.reload();
@@ -440,14 +443,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         });
     };
 
-    self.getActiveCaseType = function () {
-        return _.find(self.caseTypes(), function (prop) {
-            return prop.name === self.activeCaseType();
-        });
-    };
-
     self.getCaseTypeGroupsObservable = function () {
-        let caseType = self.getActiveCaseType();
+        let caseType = self.activeCaseType();
         if (caseType) {
             return caseType.groups;  // The observable, not its value
         }
@@ -459,17 +456,17 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     };
 
     self.isActiveCaseTypeDeprecated = function () {
-        const activeCaseType = self.getActiveCaseType();
+        const activeCaseType = self.activeCaseType();
         return (activeCaseType) ? activeCaseType.deprecated : false;
     };
 
     self.canDeleteActiveCaseType = function () {
-        const activeCaseType = self.getActiveCaseType();
+        const activeCaseType = self.activeCaseType();
         return (activeCaseType) ? activeCaseType.canDelete : false;
     };
 
     self.activeCaseTypeModuleCount = function () {
-        const activeCaseType = self.getActiveCaseType();
+        const activeCaseType = self.activeCaseType();
         return (activeCaseType) ? activeCaseType.appCount : 0;
     };
 
@@ -482,7 +479,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     };
 
     self.deprecateOrRestoreCaseType = function (shouldDeprecate) {
-        let activeCaseType = self.getActiveCaseType();
+        const activeCaseType = self.activeCaseType();
         if (!activeCaseType) {
             return;
         }
@@ -507,7 +504,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.deleteCaseType = function () {
         $("#case-type-error").hide();
         $.ajax({
-            url: initialPageData.reverse('delete_case_type', self.getActiveCaseType().name),
+            url: initialPageData.reverse('delete_case_type', self.activeCaseTypeName()),
             method: 'POST',
             success: function () {
                 window.location.href = initialPageData.reverse('data_dictionary');
@@ -526,7 +523,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
             }
         }
         caseType.fetchCaseProperties();
-        self.activeCaseType(caseType.name);
+        self.activeCaseType(caseType);
         self.fhirResourceType(caseType.fhirResourceType());
         self.removefhirResourceType(false);
         self.saveButton.setState('saved');
@@ -585,7 +582,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.newGroup = function () {
         if (_.isString(self.newGroupName()) && self.newGroupName().trim()) {
             var group = groupsViewModel(
-                self.activeCaseType(),
+                self.activeCaseTypeName(),
                 null,
                 self.newGroupName(),
                 '',
@@ -613,7 +610,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     };
 
     self.activeCaseType.subscribe(function () {
-        let caseType = self.getActiveCaseType();
+        let caseType = self.activeCaseType();
         self.casePropertyWarningViewModel.updateViewModel(caseType.name, caseType.propertyCount);
     });
 
