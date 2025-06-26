@@ -23,18 +23,17 @@ class Command(BaseCommand):
         parser.add_argument('--limit', default=10, type=int, help="Grab the top X domains by user count")
         parser.add_argument('--recipient_email', type=str, help="Email address to send the report to")
 
-    def handle(self, args, **options):
+    def handle(self, *args, **options):
         months = options.get('months', 1)
         limit = options.get('limit', 10)
         recipient_email = options.get('recipient_email')
 
-        if months > 12:
-            # This is a safeguard to prevent excessive data collection
-            self.stderr.write("Months cannot be greater than 12")
-            return
+        assert months > 0, "Months must be greater than 0"
+        assert months <= 12, "Months must be less than or equal to 12"
+        assert limit > 0, "Limit must be greater than 0"
 
         if not recipient_email:
-            self.stderr.write("Please provide a recipient email using --recipient_email")
+            print("Email recipient email must be provided")
             return
 
         months_activity = collect_worker_activity_data(months, limit)
@@ -81,7 +80,7 @@ def get_activity_for_timeframe(months, domain_names, limit):
 
 def augment_activity_results(months_activity):
     """Augment the activity data with total users per app on a domain."""
-    print("Gathering total app users for each domain and app...")
+    print("Augmenting activity results...")
 
     for _, activity_list in months_activity.items():
         for activity in activity_list:
