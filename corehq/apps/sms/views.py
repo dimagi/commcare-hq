@@ -291,7 +291,7 @@ def send_to_recipients(request, domain):
                 empty_groups = group_names
 
         users.extend(CouchUser.view('_all_docs', keys=login_ids, include_docs=True).all())
-        users = [user for user in users if user.is_active and not user.is_deleted()]
+        users = [user for user in users if user.is_active_in_domain(domain) and not user.is_deleted()]
 
         phone_numbers.extend([(user, user.phone_number) for user in users])
 

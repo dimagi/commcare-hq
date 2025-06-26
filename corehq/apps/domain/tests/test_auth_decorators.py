@@ -182,8 +182,7 @@ class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
 
         self.assertEqual(SUCCESS, web_test(_get_request(web_user), self.domain_name))
 
-        user_domain_membership = web_user.get_domain_membership(self.domain_name)
-        user_domain_membership.is_active = False
+        web_user.set_is_active(self.domain_name, False)
         web_user.save()
         self.assertForbidden(web_test(_get_request(web_user), self.domain_name))
 

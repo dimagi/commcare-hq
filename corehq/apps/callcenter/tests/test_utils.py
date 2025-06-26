@@ -92,7 +92,7 @@ class CallCenterUtilsTests(TestCase):
         case = self._get_user_case()
         self.assertIsNotNone(case)
 
-        self.user.is_active = False
+        self.user.set_is_active(self.domain.name, False)
         sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertTrue(case.closed)
@@ -293,12 +293,12 @@ class CallCenterUtilsUsercaseTests(TestCase):
         user_case = self._get_user_case()
         self.assertIsNotNone(user_case)
 
-        self.user.is_active = False
+        self.user.set_is_active(self.domain.name, False)
         self.user.save()
         user_case = self._get_user_case()
         self.assertTrue(user_case.closed)
 
-        self.user.is_active = True
+        self.user.set_is_active(self.domain.name, True)
         self.user.save()
         user_case = self._get_user_case()
         self.assertFalse(user_case.closed)
@@ -311,7 +311,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         user_case = self._get_user_case()
         self.assertIsNotNone(user_case)
 
-        self.user.is_active = False
+        self.user.set_is_active(self.domain.name, False)
         self.user.save()
         user_case = self._get_user_case()
         self.assertTrue(user_case.closed)
@@ -333,13 +333,13 @@ class CallCenterUtilsUsercaseTests(TestCase):
         user_case = self._get_user_case()
         self.assertIsNotNone(user_case)
 
-        self.user.is_active = False
+        self.user.set_is_active(self.domain.name, False)
         self.user.save()
         user_case = self._get_user_case()
         self.assertTrue(user_case.closed)
 
         self.user.get_user_data(self.domain.name)['foo'] = 'bar'
-        self.user.is_active = True
+        self.user.set_is_active(self.domain.name, True)
         self.user.save()
         user_case = self._get_user_case()
         self.assertFalse(user_case.closed)

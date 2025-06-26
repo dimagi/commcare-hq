@@ -23,12 +23,12 @@ def get_context_to_send_autopay_failed_email(invoice_id):
     auto_payer = subscription.account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
     autopay_card = payment_method.get_autopay_card(subscription.account)
+    domain = invoice.get_domain()
     web_user = WebUser.get_by_username(auto_payer)
     if web_user:
-        recipient = web_user.get_email() if web_user.is_active else invoice.get_contact_emails()
+        recipient = web_user.get_email() if web_user.is_active_in_domain(domain) else invoice.get_contact_emails()
     else:
         recipient = auto_payer
-    domain = invoice.get_domain()
 
     template_context = {
         'domain': domain,
@@ -53,7 +53,7 @@ def get_context_to_send_purchase_receipt(payment_record_id, domain, additional_c
     payment_record = PaymentRecord.objects.get(id=payment_record_id)
     username = payment_record.payment_method.web_user
     web_user = WebUser.get_by_username(username)
-    if web_user and web_user.is_active:
+    if web_user and web_user.is_active_in_domain(domain):
         email = web_user.get_email()
         name = web_user.first_name
     else:

@@ -99,7 +99,7 @@ def activate_new_user(
         new_user.eula.user_ip = ip
 
     new_user.is_staff = False  # Can't log in to admin site
-    new_user.is_active = True
+    new_user.set_is_active(domain, True)
     new_user.is_superuser = False
     new_user.last_login = now
     new_user.date_joined = now

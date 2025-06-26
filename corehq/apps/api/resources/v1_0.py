@@ -58,7 +58,7 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
 
         user = CouchUser.get_by_username(bundle.request.user.username)
 
-        if not (user and user.is_member_of(domain) and user.is_active):
+        if not (user and user.is_member_of(domain) and user.is_active_in_domain(domain)):
             return None
         return user
 

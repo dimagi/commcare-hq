@@ -147,7 +147,7 @@ class TestWebUserResourceValidator(TestCase):
                         'this project or has a pending invitation.'])
 
         deactivated_user = WebUser.create(self.domain.name, "deactivated@example.com", "123", None, None)
-        deactivated_user.is_active = False
+        deactivated_user.set_is_active(self.domain.name, False)
         deactivated_user.save()
         with self.assertRaises(WebUserValidationException) as e:
             self.spec.email = "deactivated@example.com"

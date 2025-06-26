@@ -152,7 +152,7 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, deactivatio
         'username': user.raw_username,
         'language': user.language,
         'user_id': user._id,
-        'is_active': str(user.is_active),
+        'is_active': str(user.is_active_in_domain(domain)),
         'User IMEIs (read only)': get_devices(user),
         'location_code': location_codes,
         'role': role.name if role else '',

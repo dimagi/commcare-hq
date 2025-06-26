@@ -222,7 +222,7 @@ def mobile_experience(request):
             not request.COOKIES.get(mobile_ux_cookie_name)
             and request.user_agent.is_mobile
             and request.user.is_authenticated
-            and request.user.is_active
+            and (not hasattr(request, 'domain') or request.user.is_active_in_domain(request.domain))
             and not mobile_experience_hidden_by_toggle(request)
         )
     return {

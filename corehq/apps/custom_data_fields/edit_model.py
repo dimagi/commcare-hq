@@ -398,7 +398,7 @@ class CustomDataModelMixin(object):
                 user_data = SQLUserData.objects.filter(profile=profile)
                 for ud in user_data:
                     user = CouchUser.get_by_user_id(ud.user_id)
-                    if user.is_active and self.domain in user.domains:
+                    if user.is_active_in_domain(self.domain) and self.domain in user.domains:
                         errors.append(_("Could not delete profile '{}' because it has users "
                                         "assigned.").format(profile.name))
                         break
