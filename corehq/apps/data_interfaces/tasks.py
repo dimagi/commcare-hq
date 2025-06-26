@@ -11,6 +11,7 @@ from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
 from soil import DownloadBase
+from soil.progress import set_task_progress
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.celery import periodic_task, task
@@ -263,7 +264,7 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
 
 
 def reassign_cases(domain, user, owner_id, case_ids, task=None):
-    DownloadBase.set_progress(task, 0, len(case_ids))
+    set_task_progress(task, 0, len(case_ids), src="reassign_cases")
     submission_handler = SubmitCaseBlockHandler(
         domain,
         import_results=None,
@@ -277,9 +278,9 @@ def reassign_cases(domain, user, owner_id, case_ids, task=None):
         submission_handler.add_caseblock(
             RowAndCase(idx, CaseBlock(case_id, owner_id=owner_id))
         )
-        DownloadBase.set_progress(task, idx, len(case_ids))
+        set_task_progress(task, idx, len(case_ids), src="reassign_cases")
     submission_handler.commit_caseblocks()
-    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
+    set_task_progress(task, len(case_ids), len(case_ids), src="reassign_cases")
     result = submission_handler.results.to_json()
     result['success'] = True
     result['case_count'] = len(case_ids)
@@ -291,7 +292,7 @@ def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **k
     from corehq.apps.hqcase.case_helper import CaseCopier
     task = bulk_case_copy_async
     case_ids = DownloadBase.get(download_id).get_content()
-    DownloadBase.set_progress(task, 0, len(case_ids))
+    set_task_progress(task, 0, len(case_ids), src="copy_cases")
     user = CouchUser.get_by_user_id(user_id)
 
     case_copier = CaseCopier(
@@ -301,7 +302,7 @@ def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **k
     )
     case_copier.copy_cases(case_ids, progress_task=task)
 
-    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
+    set_task_progress(task, len(case_ids), len(case_ids), src="copy_cases")
     result = case_copier.submission_handler.results.to_json()
     result['success'] = True
     result['case_count'] = len(case_ids)
