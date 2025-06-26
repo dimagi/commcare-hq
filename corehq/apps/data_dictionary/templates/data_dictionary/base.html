@@ -322,7 +322,7 @@
             <div
               data-bind="
                 sortable: {
-                    data: activeCaseTypeData(),
+                    data: getCaseTypeGroupsObservable(),
                     connectClass: 'groups',
                     options: { handle: 'i.sortable-handle' }
                 }"
