@@ -66,6 +66,7 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
         context = super(CaseReassignmentInterface, self).template_context
         context.update({
             "total_cases": self.total_records,
+            "slug": self.slug,
             "action": self.action,
             "action_text": self.action_text,
         })
