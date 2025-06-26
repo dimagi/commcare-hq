@@ -1860,18 +1860,18 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                commit=True,
                is_account_confirmed=True,
                user_data=None,
+               is_active=None,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
         """
         # if the account is not confirmed, also set is_active false so they can't login
-        if 'is_active' not in kwargs:
-            kwargs['is_active'] = is_account_confirmed
-        elif not is_account_confirmed:
-            assert not kwargs['is_active'], \
-                "it's illegal to create a user with is_active=True and is_account_confirmed=False"
-        commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
-                                                        email, uuid, date, user_data, **kwargs)
+        if is_active is None:
+            is_active = is_account_confirmed
+        elif is_active and not is_account_confirmed:
+            raise AssertionError("it's illegal to create a user with is_active=True and is_account_confirmed=False")
+        commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via, email,
+                                                        uuid, date, user_data, is_active=is_active, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -2426,11 +2426,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               user_data=None, by_domain_required_for_log=True, commit=True, **kwargs):
+               user_data=None, by_domain_required_for_log=True, commit=True, is_active=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, user_data, **kwargs)
         if domain:
-            web_user.add_domain_membership(domain, **kwargs)
+            web_user.add_domain_membership(domain, is_active=is_active, **kwargs)
         if commit:
             web_user.save()
             web_user.log_user_create(domain, created_by, created_via,
