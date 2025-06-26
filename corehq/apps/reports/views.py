@@ -2060,7 +2060,7 @@ def copy_cases(request, domain, *args, **kwargs):
     case_id_pairs, errors = case_copier.copy_cases(case_ids)
     count = len(case_id_pairs)
     return JsonResponse(
-        {'copied_cases': count, 'error': errors},
+        {'case_count': count, 'error': errors},
         status=400 if count == 0 else 200,
     )
 
