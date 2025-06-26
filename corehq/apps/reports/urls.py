@@ -61,6 +61,7 @@ from .views import (
     unarchive_form,
     view_form_attachment,
     view_scheduled_report,
+    reassign_cases,
     copy_cases,
 )
 
@@ -80,6 +81,7 @@ urlpatterns = [
     ConfigurableReportView.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
     url(r'^copy_cases/$', copy_cases, name='copy_cases'),
+    url(r'^reassign_cases/$', reassign_cases, name='reassign_cases'),
 
     # Report Builder
     url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(),
