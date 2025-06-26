@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from django.utils.translation import gettext_lazy as _
-from soil import DownloadBase
+from soil.progress import set_task_progress
 
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
@@ -290,8 +290,7 @@ class CaseCopier:
                 self.processed_cases[orig_case.case_id] = caseblock
                 self._add_to_submission_handler(caseblock)
 
-            if progress_task is not None:
-                DownloadBase.set_progress(progress_task, idx, len(case_ids))
+            set_task_progress(progress_task, idx, len(case_ids), src="copy_cases")
 
         self._commit_cases()
 
