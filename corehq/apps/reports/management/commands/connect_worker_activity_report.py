@@ -1,6 +1,7 @@
 from io import BytesIO
 from openpyxl import Workbook
 
+from dateutil.relativedelta import relativedelta
 from datetime import datetime, date
 from django.core.management import BaseCommand
 from django.db.models import Count
@@ -60,8 +61,7 @@ def collect_worker_activity_data(months, limit):
 def get_activity_for_timeframe(months, domain_names, limit):
     """Get user activity data for specific timeframe."""
     now = datetime.utcnow()
-    year, month = add_months(now.year, now.month, -months)
-    start_date = date(year, month, 1)
+    start_date = date(now.year, now.month, now.day) - relativedelta(months=months)
 
     # Get active users since start_date
     return (
@@ -151,15 +151,3 @@ def send_email_report(csv_workbook, recipient_email):
     email = EmailMessage(subject, body, from_email, to_emails)
     email.attach("worker_activity_report.xlsx", csv_workbook, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")  # noqa E501
     email.send()
-
-
-def add_months(year, months, offset):
-    """
-    Add a number of months to the passed in year and month, returning
-    a tuple of (year, month)
-    """
-    months = months - 1  # 0 index months coming in
-    nextmonths = months + offset
-    months_offset = nextmonths % 12 + 1  # 1 index it going out
-    years_offset = nextmonths // 12
-    return (year + years_offset, months_offset)
