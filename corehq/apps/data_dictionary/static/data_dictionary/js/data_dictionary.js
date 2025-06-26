@@ -452,8 +452,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     };
 
     self.activeCaseTypeData = function () {
-        const groupsObs = self.getCaseTypeGroupsObservable();
-        return (groupsObs) ? groupsObs() : [];
+        return ko.unwrap(self.getCaseTypeGroupsObservable());
     };
 
     self.isActiveCaseTypeDeprecated = function () {
