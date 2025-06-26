@@ -3,6 +3,7 @@ import warnings
 from collections import namedtuple
 from datetime import datetime
 from uuid import uuid4
+from jsonpath_ng import parse
 
 import attr
 from django.core.serializers.json import DjangoJSONEncoder
@@ -26,6 +27,7 @@ from corehq.util.json import CommCareJSONEncoder
 
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
+CONNECT_XMLNS = 'http://commcareconnect.com/data/v1/learn'
 
 
 def _get_test_form(domain):
@@ -705,6 +707,23 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
+
+
+class ConnectFormRepeaterPayloadGenerator(FormRepeaterJsonPayloadGenerator):
+
+    def get_payload(self, repeat_record, form):
+        form_json = form.to_json()
+        constructed_dict = {}
+        constructed_dict.update(metadata=form_json.get("metadata"))
+        jsonpath_expr = parse('$..@xmlns')
+        matching_blocks = [
+            match
+            for match in jsonpath_expr.find(form_json)
+            if match.value == CONNECT_XMLNS
+        ]
+        for block in matching_blocks:
+            constructed_dict.update({str(block.context.full_path): block.context.value})
+        return constructed_dict
 
 
 class FormDictPayloadGenerator(BasePayloadGenerator):

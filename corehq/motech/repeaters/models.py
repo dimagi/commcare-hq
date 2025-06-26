@@ -136,6 +136,7 @@ from .repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
     CaseRepeaterXMLPayloadGenerator,
+    ConnectFormRepeaterPayloadGenerator,
     DataRegistryCaseUpdatePayloadGenerator,
     DataSourcePayloadGenerator,
     FormRepeaterJsonPayloadGenerator,
@@ -680,6 +681,28 @@ class FormRepeater(Repeater):
             "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
         return headers
+
+
+class ConnectFormRepeater(FormRepeater):
+    """
+    A repeater that only forwards form metadata and commcare connect question blocks
+    """
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Forward Form Metadata to Commcare Connect")
+
+    payload_generator_classes = (ConnectFormRepeaterPayloadGenerator,)
+
+    def form_class_name(self):
+        # Note this class does not exist but this property is only used to construct the URL
+        return 'ConnectFormRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return toggles.COMMCARE_CONNECT.enabled(domain)
 
 
 class CaseRepeater(Repeater):
