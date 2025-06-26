@@ -49,7 +49,7 @@ def user_list(domain):
     #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
-    users.sort(key=lambda user: (not user.is_active, user.username))
+    users.sort(key=lambda user: (not user.is_active_in_domain(domain), user.username))
     return users
 
 
