@@ -1302,6 +1302,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
+                'corehq.util.context_processors.server_location_display',
             ],
             'debug': DEBUG,
             'loaders': [
