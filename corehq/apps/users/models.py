@@ -1875,7 +1875,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if is_active is None:
             is_active = is_account_confirmed
         elif is_active and not is_account_confirmed:
-            raise AssertionError("it's illegal to create a user with is_active=True and is_account_confirmed=False")
+            raise AssertionError("it's illegal to create a user with is_active=True "
+                                 "and is_account_confirmed=False")
         commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via, email,
                                                         uuid, date, user_data, is_active=is_active, **kwargs)
         if phone_number is not None:

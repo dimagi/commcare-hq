@@ -77,9 +77,9 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         users = util.user_list(self.domain)
-        return [(user.user_id,
-                 "%s%s" % (user.username_in_report, "" if user.is_active else " (Inactive)"))
-                for user in users]
+        return [(user.user_id, "%s%s" % (
+            user.username_in_report, "" if user.is_active_in_domain(self.domain) else " (Inactive)"
+        )) for user in users]
 
     @classmethod
     def get_default_text(cls, user_filter):
@@ -124,7 +124,7 @@ class EmwfUtils(object):
                 name = "%s [Active Web User]" % user.username_in_report
             else:
                 name = "%s [Deactivated Web User]" % user.username_in_report
-        elif user.is_active:
+        elif user.is_active_in_domain(self.domain):
             is_active = True
             name = "%s [Active Mobile Worker]" % user.username_in_report
         else:
@@ -485,7 +485,7 @@ class EnterpriseUsersUtils(EmwfUtils):
                 name = f"{report_username} [Active Web User]"
             else:
                 name = f"{report_username} [Deactivated Web User]"
-        elif user_obj.is_active:
+        elif user_obj.is_active_in_domain(self.domain):
             is_active = True
             name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
         else:

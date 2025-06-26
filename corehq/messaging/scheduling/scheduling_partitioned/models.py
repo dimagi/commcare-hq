@@ -202,7 +202,7 @@ class ScheduleInstance(PartitionedModel):
                 users = get_all_users_by_location(domain, location_id)
 
             for user in users:
-                if user.is_active and user.get_id not in user_ids:
+                if user.is_active_in_domain(domain) and user.get_id not in user_ids:
                     user_ids.add(user.get_id)
                     yield user
 

@@ -116,7 +116,9 @@ def require_permission(permission,
                        login_decorator=login_and_domain_required,
                        view_only_permission=None):
     permission = get_permission_name(permission) or permission
-    permission_check = lambda couch_user, domain: couch_user.has_permission(domain, permission, data=data)
+
+    def permission_check(couch_user, domain):
+        return couch_user.has_permission(domain, permission, data=data)
 
     view_only_check = None
     if view_only_permission is not None:
@@ -158,7 +160,8 @@ def require_permission_to_edit_user(view_func):
         go_ahead = False
         if hasattr(request, "couch_user"):
             user = request.couch_user
-            if user.is_superuser or user.user_id == couch_user_id or (hasattr(user, "is_domain_admin") and user.is_domain_admin()):
+            if user.is_superuser or user.user_id == couch_user_id or (
+                    hasattr(user, "is_domain_admin") and user.is_domain_admin()):
                 go_ahead = True
             else:
                 couch_user = CouchUser.get_by_user_id(couch_user_id)
