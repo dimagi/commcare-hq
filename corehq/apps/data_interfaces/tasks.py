@@ -273,6 +273,7 @@ def reassign_cases(domain, user, owner_id, case_ids, task=None):
         record_form_callback=None,
         throttle=True,
         form_name="Case Reassignment (via HQ)",
+        device_id=f"{__name__}.reassign_cases",
     )
     for idx, case_id in enumerate(case_ids):
         submission_handler.add_caseblock(
