@@ -447,10 +447,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     };
 
     self.getCaseTypeGroupsObservable = function () {
-        let caseType = self.getActiveCaseType();
-        if (caseType) {
-            return caseType.groups;  // The observable, not its value
-        }
+        const caseType = self.getActiveCaseType();
+        return caseType ? caseType.groups : ko.observableArray();
     };
 
     self.activeCaseTypeData = function () {
