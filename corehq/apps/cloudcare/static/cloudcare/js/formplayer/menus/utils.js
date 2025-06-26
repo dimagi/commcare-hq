@@ -211,9 +211,8 @@ define("cloudcare/js/formplayer/menus/utils", [
                 menuData.sidebarEnabled = true;
             }
             var eventData = {};
-            let searchFieldData = {};
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
-            var searchFieldList = []
+            var searchFieldList = [];
             if (!_.isEmpty(fields)) {
                 searchFieldList = _.sortBy(_.keys(fields));
                 eventData.searchFields = searchFieldList.join(",");

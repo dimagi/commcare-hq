@@ -53,7 +53,7 @@ define('cloudcare/js/gtx', [
             moduleName: menuResponse.title,
         };
         if (searchFieldList.length > 0) {
-            searchFieldData = formatSearchFieldData(searchFieldList);
+            let searchFieldData = formatSearchFieldData(searchFieldList);
             searchFieldData.searchFieldsLength = searchFieldList.join(",").length;
             gtxEventData = Object.assign(gtxEventData, searchFieldData);
         }
