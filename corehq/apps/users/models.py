@@ -747,6 +747,11 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def is_active_in_domain(self, domain):
         return self.is_active
 
+    def set_is_active(self, domain, is_active):
+        if domain != self.domain:
+            raise AssertionError(f"User is not a member of {domain}")
+        self.is_active = is_active
+
 
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
@@ -755,9 +760,15 @@ class MultiMembershipMixin(_AuthorizableMixin):
     @memoized
     def is_active_in_domain(self, domain):
         domain_membership = self.get_domain_membership(domain)
-        if domain_membership:
+        if domain_membership and self.is_active:
             return domain_membership.is_active
         return False
+
+    def set_is_active(self, domain, is_active):
+        domain_membership = self.get_domain_membership(domain)
+        if not domain_membership:
+            raise AssertionError(f"User is not a member of {domain}")
+        domain_membership.is_active = is_active
 
 
 class LowercaseStringProperty(StringProperty):
@@ -784,7 +795,7 @@ class DjangoUserMixin(DocumentSchema):
     email = LowercaseStringProperty()
     password = StringProperty()
     is_staff = BooleanProperty()
-    is_active = BooleanProperty()
+    is_active = BooleanProperty()  # Use is_active_in_domain and set_is_active instead
     is_superuser = BooleanProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
