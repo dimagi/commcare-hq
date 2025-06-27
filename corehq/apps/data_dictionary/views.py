@@ -163,7 +163,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
 
         group_data = {
             "name": "",
-            "properties": grouped_properties
+            "properties": grouped_properties,
         }
         # Note that properties can be without group
         if group_id:
@@ -173,12 +173,14 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
                 "name": group.name,
                 "description": group.description,
                 "deprecated": group.deprecated,
+                "index": group.index,
             })
         case_type_data["groups"].append(group_data)
+
     if not properties_queryset:
         case_type_data["groups"].append({
             "name": "",
-            "properties": []
+            "properties": [],
         })
 
     # properties_queryset skips groups with no properties. Add them here
@@ -194,7 +196,8 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
             "name": group.name,
             "description": group.description,
             "deprecated": group.deprecated,
-            "properties": []
+            "index": group.index,
+            "properties": [],
         })
 
     return JsonResponse(case_type_data)
