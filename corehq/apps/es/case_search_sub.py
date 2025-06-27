@@ -26,19 +26,17 @@ from .const import (
     HQ_CASE_SEARCH_BHA_INDEX_CANONICAL_NAME,
     HQ_CASE_SEARCH_BHA_INDEX_NAME,
     HQ_CASE_SEARCH_BHA_SECONDARY_INDEX_NAME,
+    HQ_CASE_SEARCH_CC_PERF_INDEX_CANONICAL_NAME,
+    HQ_CASE_SEARCH_CC_PERF_INDEX_NAME,
+    HQ_CASE_SEARCH_CC_PERF_SECONDARY_INDEX_NAME,
 )
 from .index.settings import IndexSettingsKey
 
 
-class CaseSearchBhaES(CaseSearchES):
-    index = HQ_CASE_SEARCH_BHA_INDEX_CANONICAL_NAME
-
-
-class ElasticCaseSearchBha(ElasticCaseSearch):
-
-    settings_key = IndexSettingsKey.CASE_SEARCH_BHA
-    canonical_name = HQ_CASE_SEARCH_BHA_INDEX_CANONICAL_NAME
-    parent_index_cname = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
+class _SubElasticCaseSearch(ElasticCaseSearch):
+    settings_key = ''
+    canonical_name = ''
+    parent_index_cname = ''
 
     def index(self, doc, refresh=False):
         """
@@ -52,9 +50,37 @@ class ElasticCaseSearchBha(ElasticCaseSearch):
         self._index(doc_id, source, refresh)
 
 
+class CaseSearchBhaES(CaseSearchES):
+    index = HQ_CASE_SEARCH_BHA_INDEX_CANONICAL_NAME
+
+
+class ElasticCaseSearchBha(_SubElasticCaseSearch):
+    settings_key = IndexSettingsKey.CASE_SEARCH_BHA
+    canonical_name = HQ_CASE_SEARCH_BHA_INDEX_CANONICAL_NAME
+    parent_index_cname = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
+
+
 case_search_bha_adapter = create_document_adapter(
     ElasticCaseSearchBha,
     HQ_CASE_SEARCH_BHA_INDEX_NAME,
     case_adapter.type,
     secondary=HQ_CASE_SEARCH_BHA_SECONDARY_INDEX_NAME,
+)
+
+
+class CaseSearchCCPerfES(CaseSearchES):
+    index = HQ_CASE_SEARCH_CC_PERF_INDEX_CANONICAL_NAME
+
+
+class ElasticCaseSearchCCPerf(_SubElasticCaseSearch):
+    settings_key = IndexSettingsKey.CASE_SEARCH_CC_PERF
+    canonical_name = HQ_CASE_SEARCH_CC_PERF_INDEX_CANONICAL_NAME
+    parent_index_cname = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
+
+
+case_search_cc_perf_adapter = create_document_adapter(
+    ElasticCaseSearchCCPerf,
+    HQ_CASE_SEARCH_CC_PERF_INDEX_NAME,
+    case_adapter.type,
+    secondary=HQ_CASE_SEARCH_CC_PERF_SECONDARY_INDEX_NAME,
 )
