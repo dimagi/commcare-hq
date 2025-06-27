@@ -48,7 +48,7 @@ def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
                     queries.MUST_NOT,
                 )
         elif isinstance(definition, LocationFilterDefinition):
-            query_ = query_.owner(_get_owner_ids_for_definition(definition))
+            query_ = query_.owner(_get_owner_ids_for_definition(domain, definition))
 
         return query_
 
@@ -58,9 +58,9 @@ def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
     return query
 
 
-def _get_owner_ids_for_definition(location_definition):
+def _get_owner_ids_for_definition(domain, location_definition):
     location_ids = location_definition.get_location_ids()
-    owner_ids = user_ids_at_locations(location_ids)
+    owner_ids = user_ids_at_locations(domain, location_ids)
     # Add the location_ids for cases which belong to a location
     owner_ids.extend(location_ids)
 
