@@ -313,8 +313,8 @@ class EnterpriseFormReport(EnterpriseReport):
         time_filter = form_es.submitted
 
         users_filter = form_es.user_id(
-            UserES().domain(domain_name).mobile_users().show_inactive().size(self.MAXIMUM_USERS_PER_DOMAIN + 1)
-            .values_list('_id', flat=True)
+            UserES().domain(domain_name, include_inactive=True).mobile_users()
+            .size(self.MAXIMUM_USERS_PER_DOMAIN + 1).values_list('_id', flat=True)
         )
 
         if len(users_filter) > self.MAXIMUM_USERS_PER_DOMAIN:
