@@ -235,7 +235,7 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
     task = bulk_case_reassign_async
     user = CouchUser.get_by_user_id(user_id)
     case_ids = DownloadBase.get(download_id).get_content()
-    result = reassign_cases(domain, user, owner_id, case_ids, report_url, task=task)
+    result = reassign_cases(domain, user, owner_id, case_ids, task=task)
     result['report_url'] = report_url
 
     def _send_email():
