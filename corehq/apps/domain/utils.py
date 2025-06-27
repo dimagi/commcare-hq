@@ -14,7 +14,7 @@ from memoized import memoized
 
 from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
 from corehq.apps.domain.extension_points import custom_domain_module
-from corehq.motech.utils import b64_aes_encrypt
+from corehq.motech.utils import b64_aes_cbc_encrypt
 from corehq.util.test_utils import unit_testing_only
 
 from corehq.apps.domain.models import Domain
@@ -183,7 +183,7 @@ def log_domain_changes(user, domain, new_obj, old_obj):
 
 def encrypt_account_confirmation_info(commcare_user):
     data = {"user_id": commcare_user.get_id, "time": int(time.time())}
-    return b64_aes_encrypt(json.dumps(data))
+    return b64_aes_cbc_encrypt(json.dumps(data))
 
 
 def is_domain_in_use(domain_name):
