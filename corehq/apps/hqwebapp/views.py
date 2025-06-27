@@ -820,7 +820,8 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
         reply_to = settings.SERVER_EMAIL
 
     message_parts.append("Message:\n\n{message}\n".format(message=report['message']))
-    message_parts.append(f"Project description: {domain_object.project_description}\n" if domain_object else "")
+    if domain_object and domain_object.project_description:
+        message_parts.append(f"Project description: {domain_object.project_description}\n")
 
     if post_params.get('five-hundred-report'):
         extra_message = ("This message was reported from a 500 error page! "
