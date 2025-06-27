@@ -96,7 +96,15 @@
  {% endblock %}
  
  {% block page_content %}
-@@ -72,19 +87,18 @@
+@@ -64,6 +79,7 @@
+   {% registerurl "case_action_options" domain %}
+   {% registerurl "receiver_secure_post" domain %}
+   {% registerurl "copy_cases_action" domain %}
++  {% registerurl "reassign_cases_action" domain %}
+ 
+   {% if request.datespan %}
+     {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+@@ -72,19 +88,18 @@
    {% initial_page_data 'slug' report.slug %}
  
    {% block filter_panel %}
@@ -122,7 +130,7 @@
              <h4 class="modal-title">
                {% trans "Email report:" %}
                {{ datespan.startdate|date:"Y-m-d" }}
-@@ -93,15 +107,21 @@
+@@ -93,15 +108,21 @@
                {% endif %}
                {{ datespan.enddate|date:"Y-m-d" }}
              </h4>
@@ -146,7 +154,7 @@
        <h4>{% trans 'Notice' %}</h4>
        <p>{{ report.special_notice }}</p>
      </div>
-@@ -111,7 +131,7 @@
+@@ -111,7 +132,7 @@
        {% block reportcontent %}
        {% endblock %}
      {% else %}
