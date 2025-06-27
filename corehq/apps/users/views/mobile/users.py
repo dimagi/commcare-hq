@@ -1515,8 +1515,18 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
     @property
     @memoized
+    def user_invite_hash(self):
+        try:
+            return json.loads(b64_aes_cbc_decrypt(self.kwargs.get('user_invite_hash')))
+        except Exception:
+            # Temporarily fallback to b64_aes_decrypt if b64_aes_cbc_decrypt fails
+            # to handle existing invites
+            return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
+
+    @property
+    @memoized
     def user_id(self):
-        return self.kwargs.get('user_id')
+        return self.user_invite_hash.get('user_id')
 
     @property
     @memoized
@@ -1573,21 +1583,6 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
     one_day_in_seconds = 60 * 60 * 24
-
-    @property
-    @memoized
-    def user_invite_hash(self):
-        try:
-            return json.loads(b64_aes_cbc_decrypt(self.kwargs.get('user_invite_hash')))
-        except Exception:
-            # Temporarily fallback to b64_aes_decrypt if b64_aes_cbc_decrypt fails
-            # to handle existing invites
-            return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
-
-    @property
-    @memoized
-    def user_id(self):
-        return self.user_invite_hash.get('user_id')
 
     @property
     @memoized
