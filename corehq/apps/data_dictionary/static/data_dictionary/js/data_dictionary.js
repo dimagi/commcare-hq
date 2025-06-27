@@ -72,6 +72,7 @@ var caseType = function (
                     group.name,
                     group.description,
                     group.deprecated,
+                    group.index,
                     self.changeSaveButton,
                 );
                 self.groups.push(groupObj);
@@ -106,6 +107,7 @@ var groupsViewModel = function (
     name,
     description,
     deprecated,
+    index,
     changeSaveButton,
 ) {
     var self = {};
@@ -118,6 +120,7 @@ var groupsViewModel = function (
     self.expanded = ko.observable(true);
     self.toggleExpanded = () => self.expanded(!self.expanded());
     self.deprecated = deprecated;
+    self.index = index;
     // Ensures that groups are not directly hidden on clicking the deprecated button
     self.toBeDeprecated = ko.observable(deprecated || false);
     self.deprecateGroup = function () {
@@ -587,6 +590,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 self.newGroupName(),
                 '',
                 false,
+                null,
                 changeSaveButton,
             );
             const groupsObs = self.getCaseTypeGroupsObservable();
