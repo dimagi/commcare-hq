@@ -128,7 +128,7 @@ def generate_csv_report(months_activity):
         for row in activity_list:
             ws.append([
                 row.get('domain_name', ''),
-                row.get('deployment_countries', ''),
+                ', '.join(row.get('deployment_countries', '')),
                 row.get('app_name', ''),
                 row.get('app_id', ''),
                 row.get('default_language', ''),
