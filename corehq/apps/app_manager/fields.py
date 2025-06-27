@@ -639,6 +639,7 @@ class ApplicationDataRMIHelper(object):
             }
         ) for case_type in all_case_type_names]
 
+        all_case_type_objs = sorted(all_case_type_objs, key=lambda case_type: case_type.text)
         if len(all_case_type_names) > 1:
             all_case_type_objs.insert(
                 0,
