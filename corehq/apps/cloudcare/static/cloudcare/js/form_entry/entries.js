@@ -79,7 +79,7 @@ define("cloudcare/js/form_entry/entries", [
     Entry.prototype.getColStyle = function (numChoices) {
         // Account for number of choices plus column for clear button
         var colWidth = parseInt(12 / (numChoices + 1)) || 1;
-        return 'col-sm-' + colWidth;
+        return 'multi-choice col-sm-' + colWidth;
     };
 
     // This should set the answer value if the answer is valid. If the raw answer is valid, this
