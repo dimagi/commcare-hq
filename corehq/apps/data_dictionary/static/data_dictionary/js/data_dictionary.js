@@ -42,23 +42,23 @@ var caseType = function (
 
     self.groups.subscribe(changeSaveButton);
 
-    self.fetchCaseProperties = function () {
+    self.loadCaseProperties = function () {
         if (self.groups().length === 0) {
             const caseTypeUrl = self.dataUrl + self.name + '/';
-            recurseChunks(caseTypeUrl).then(() => {
+            fetchCaseProperties(caseTypeUrl).then(() => {
                 self.groups.sort(sortGroupsFn);
                 self.resetSaveButton();
             });
         }
     };
 
-    const recurseChunks = function (nextUrl) {
+    const fetchCaseProperties = function (nextUrl) {
         return $.getJSON(nextUrl).then(function (data) {
             setCaseProperties(data.groups);
             self.resetSaveButton();
             nextUrl = data._links.next;
             if (nextUrl) {
-                return recurseChunks(nextUrl);
+                return fetchCaseProperties(nextUrl);
             }
         });
     };
@@ -437,7 +437,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                     // Check that hash navigation has not already loaded the first case type
                     && self.caseTypes()[0] !== self.getHashNavigationCaseType()
                 ) {
-                    // `self.goToCaseType()` calls `caseType.fetchCaseProperties()`
+                    // `self.goToCaseType()` calls `caseType.loadCaseProperties()`
                     // to fetch the case properties of the first case type
                     const caseType = self.caseTypes()[0];
                     self.goToCaseType(caseType);
@@ -538,7 +538,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 return;
             }
         }
-        caseType.fetchCaseProperties();
+        caseType.loadCaseProperties();
         self.activeCaseType(caseType.name);
         self.fhirResourceType(caseType.fhirResourceType());
         self.removefhirResourceType(false);
