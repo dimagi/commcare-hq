@@ -72,7 +72,6 @@ def get_activity_for_timeframe(months, domain_names, limit):
             user_type="CommCareUser",
         )
         .values("domain_name", "app_id", "user_id")
-        .distinct()
     )
 
     qualified_users = (
