@@ -6,7 +6,7 @@ from functools import cached_property
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth.views import PasswordResetConfirmView
+from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetView
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -536,6 +536,13 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
+
+
+class DomainPasswordResetView(PasswordResetView):
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.kwargs.get('domain')
+        return kwargs
 
 
 class CustomPasswordResetView(PasswordResetConfirmView):
