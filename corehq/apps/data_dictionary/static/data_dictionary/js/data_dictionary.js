@@ -45,7 +45,10 @@ var caseType = function (
     self.fetchCaseProperties = function () {
         if (self.groups().length === 0) {
             const caseTypeUrl = self.dataUrl + self.name + '/';
-            recurseChunks(caseTypeUrl).then(() => self.groups.sort(sortGroupsFn));
+            recurseChunks(caseTypeUrl).then(() => {
+                self.groups.sort(sortGroupsFn);
+                self.resetSaveButton();
+            });
         }
     };
 
