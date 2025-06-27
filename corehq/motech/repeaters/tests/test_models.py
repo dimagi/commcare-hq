@@ -644,7 +644,8 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
-        repeat_record = self.repeater.register(payload, fire_synchronously=True)
+        self.repeater.register(payload, fire_synchronously=True)
+        repeat_record = self.repeater.repeat_records.last()
         self.assertEqual(repeat_record.payload_id, payload.get_id)
         all_records = list(RepeatRecord.objects.iterate(DOMAIN))
         self.assertEqual(len(all_records), 1)
@@ -655,7 +656,8 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
-        repeat_record = self.repeater.register(payload, fire_synchronously=True)
+        self.repeater.register(payload, fire_synchronously=True)
+        repeat_record = self.repeater.repeat_records.last()
         resp = ResponseMock()
         resp.status_code = 200
         resp.reason = 'OK'
