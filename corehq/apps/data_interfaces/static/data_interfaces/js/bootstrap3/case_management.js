@@ -2,7 +2,6 @@
 import $ from "jquery";
 import _ from "underscore";
 import ko from "knockout";
-import casexmlModule from "case/js/casexml";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import standardHqReport from "reports/js/bootstrap3/standard_hq_report";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
@@ -35,10 +34,6 @@ var caseManagement = function (o) {
 
     self.shouldShowOwners = ko.observable(true);
 
-    var endDate = new Date(o.endDate),
-        now = new Date();
-    self.onToday = (endDate.toDateString() === now.toDateString());
-
     var getOwnerType = function (ownerId) {
         if (ownerId.startsWith('u')) {
             return 'user';
@@ -47,46 +42,35 @@ var caseManagement = function (o) {
         }
     };
 
-    var updateCaseRowReassign = function (caseId, ownerId, ownerType) {
-        return function () {
+    function updateRows(caseIds, action, caseCount, newOwner) {
+        var caseIdsArr = caseIds.slice();
+        var label = action === 'reassign' ? gettext("Reassigned") : gettext("Copied");
+        var ownerType = getOwnerType(newOwner);
+        for (var i = 0 ; i < caseIdsArr.length ; i++) {
+            var caseId = caseIdsArr[i];
             var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
             var $row = $checkbox.closest("tr");
-            var labelMessage = gettext("Out of range of filter. Will not appear on page refresh.");
-            var username = $('#reassign_owner_select').data().select2.data().text,
-                dateMessage = (self.onToday) ? '<span title="0"></span>' :
-                    '<span class="label label-warning" title="0">' + labelMessage + '</span>';
-            $checkbox.data('owner', ownerId);
-            $checkbox.data('ownertype', ownerType);
-
-            var groupLabel = '';
-
-            if (ownerType === 'group') {
-                groupLabel = ' <span class="label label-inverse" title="' + username + '">group</span>';
+            if (action === 'reassign') {
+                var username = $('#reassign_owner_select').data().select2.data().text;
+                var groupLabel = '';
+                if (ownerType === 'group') {
+                    groupLabel = ' <span class="label label-inverse" title="' + username + '">group</span>';
+                }
+                $checkbox.data('owner', newOwner);
+                $checkbox.data('ownertype', ownerType);
+                var labelText = gettext("updated");
+                $row.find('td:nth-child(4)').html(username + groupLabel
+                    + ' <span class="label label-info" title="' + username + '">' + labelText + '</span>');
             }
-
-            var labelText = gettext("updated");
-            $row.find('td:nth-child(4)').html(username + groupLabel + ' <span class="label label-info" title="' + username +
-                                            '">' + labelText + '</span>');
-            $row.find('td:nth-child(5)').html('Today ' + dateMessage);
+            $row.find('td:nth-child(5)').html(
+                gettext("Today") + ' <span class="label label-info" title="0">' + label + '</span>');
             $checkbox.prop("checked", false).change();
-        };
-    };
-
-    var updateCaseRowCopy = function (caseIds) {
-        return function () {
-            var caseIdsArr = caseIds.slice();
-            for (var i = 0 ; i < caseIdsArr.length ; i++) {
-                var caseId = caseIdsArr[i];
-                var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
-                var $row = $checkbox.closest("tr");
-                var labelMessage = gettext("Case copied");
-                var dateMessage = (self.onToday) ? '<span title="0"></span>' :
-                    '<span class="label label-info" title="0">' + labelMessage + '</span>';
-                $row.find('td:nth-child(5)').html('Today ' + dateMessage);
-                $checkbox.prop("checked", false).change();
-            }
-        };
-    };
+        }
+        var message = _.template(action === 'reassign'
+            ? gettext("Reassigned <%- count %> cases")
+            : gettext("Copied <%- count %> cases"))({count: caseCount});
+        alertUser.alert_user(message, "success");
+    }
 
     self.changeNewOwner = function () {
         self.newOwner($('#reassign_owner_select').val());
@@ -133,14 +117,6 @@ var caseManagement = function (o) {
     };
 
     self.onSubmit = function (form) {
-        if (initialPageData.get("action") === "copy") {
-            self.copyCases(form);
-        } else {
-            self.updateCaseOwners(form);
-        }
-    };
-
-    self.copyCases = function (form) {
         var newOwner = $(form).find('#reassign_owner_select').val(),
             $modal = $('#caseManagementStatusModal');
 
@@ -158,70 +134,29 @@ var caseManagement = function (o) {
                 return;
             }
             $(form).find("[type='submit']").disableButton();
-            var sensitiveProperties = JSON.parse(self.getReportParamsObject().sensitive_properties);
+            var action = initialPageData.get('action'),
+                caseIds = self.selectedCases(),
+                sensitiveProperties = action === 'copy'
+                    ? JSON.parse(self.getReportParamsObject().sensitive_properties)
+                    : undefined;
 
             $.ajax({
-                url: initialPageData.reverse("copy_cases"),
+                url: initialPageData.reverse(initialPageData.get('slug')),
                 type: 'POST',
                 data: JSON.stringify({
-                    case_ids: self.selectedCases(),
+                    case_ids: caseIds,
                     owner_id: newOwner,
                     sensitive_properties: sensitiveProperties,
                 }),
                 contentType: "application/json",
                 success: function (response) {
-                    updateCaseRowCopy(self.selectedCases())();
-                    var message = gettext("Cases copied") + ": " + response.copied_cases;
-                    alertUser.alert_user(message, "success");
+                    updateRows(caseIds, action, response.case_count, newOwner);
                 },
                 error: function (response) {
                     self.clearCaseSelection();
                     alertUser.alert_user(response.responseJSON.error, "danger");
                 },
             });
-        }
-    };
-
-    self.updateCaseOwners = function (form) {
-        var newOwner = $(form).find('#reassign_owner_select').val(),
-            $modal = $('#caseManagementStatusModal'),
-            ownerType = getOwnerType(newOwner);
-
-        if (newOwner.includes('__')) {
-            // groups and users have different number of characters before the id
-            // users are u__id and groups are sg__id
-            newOwner = newOwner.slice(newOwner.indexOf('__') + 2);
-        }
-
-        if (_.isEmpty(newOwner)) {
-            $modal.find('.modal-body').text("Please select an owner");
-            $modal.modal('show');
-        } else {
-            if (self.selectAllMatches()) {
-                self.updateAllMatches(newOwner);
-                return;
-            }
-            $(form).find("[type='submit']").disableButton();
-            for (var i = 0; i < self.selectedCases().length; i++) {
-                var caseId = self.selectedCases()[i],
-                    xform;
-                xform = casexmlModule.casexml.CaseDelta.wrap({
-                    case_id: caseId,
-                    properties: {owner_id: newOwner},
-                }).asXFormInstance({
-                    user_id: self.webUserID,
-                    username: self.webUserName,
-                    form_name: self.formName,
-                }).serialize();
-
-                $.ajax({
-                    url: self.receiverUrl,
-                    type: 'post',
-                    data: xform,
-                    success: updateCaseRowReassign(caseId, newOwner, ownerType),
-                });
-
-            }
         }
     };
 
