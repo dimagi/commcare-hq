@@ -1,5 +1,6 @@
 from io import BytesIO
 from openpyxl import Workbook
+from collections import defaultdict
 
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, date
@@ -62,20 +63,39 @@ def get_activity_for_timeframe(months, domain_names, limit):
     now = datetime.utcnow()
     start_date = date(now.year, now.month, now.day) - relativedelta(months=months)
 
-    # Get active users since start_date
-    return (
-        MALTRow.objects.filter(
+    users_months_activity = (
+        MALTRow.objects
+        .filter(
             month__gte=start_date,
             num_of_forms__gte=1,
             domain_name__in=domain_names,
         )
-        .values("user_id", "app_id")  # group by user and app
-        .annotate(month_count=Count('month', distinct=True))  # noqa E501 count distinct months this user has a record for this app
-        .filter(month_count=months)  # makes sure the user has activity for all months in the range
-        .values("domain_name", "app_id")
-        .annotate(user_count=Count("user_id", distinct=True))  # count distinct users for each app in the domain
-        .order_by("-user_count")[:limit]  # sorted by user count and limited to the top results
+        .values("domain_name", "app_id", "user_id")
+        .distinct()
     )
+
+    qualified_users = (
+        users_months_activity
+        .annotate(month_count=Count("month", distinct=True))
+        .filter(month_count=months)
+    )
+
+    # Count distinct users per domain/app pair
+    user_rows = list(qualified_users)
+    user_map = defaultdict(set)
+
+    for row in user_rows:
+        key = (row["domain_name"], row["app_id"])
+        user_map[key].add(row["user_id"])
+
+    user_count_per_domain_app = sorted(
+        [
+            {"domain_name": k[0], "app_id": k[1], "user_count": len(v)}
+            for k, v in user_map.items()
+        ],
+        key=lambda x: -x["user_count"]
+    )
+    return user_count_per_domain_app[:limit]
 
 
 def augment_activity_results(months_activity):
