@@ -245,10 +245,15 @@ def is_active(active=True):
 
 
 def has_domain_membership(domain, active=True):
-    """
-    Temporary: By itself this also includes any active user on a different domain.
-    """
-    if not active:
+    if active:
+        return filters.AND(
+            filters.term("is_active", True),
+            filters.nested('user_domain_memberships', filters.AND(
+                filters.term('user_domain_memberships.domain.exact', domain),
+                filters.NOT(filters.term('user_domain_memberships.is_active', False)),
+            ))
+        )
+    else:
         return filters.OR(
             filters.term("is_active", False),
             filters.nested('user_domain_memberships', filters.AND(
@@ -256,7 +261,6 @@ def has_domain_membership(domain, active=True):
                 filters.term('user_domain_memberships.is_active', False),
             ))
         )
-    return filters.NOT(has_domain_membership(domain, active=False))
 
 
 def _user_data(key, filter_):

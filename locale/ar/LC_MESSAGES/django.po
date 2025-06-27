@@ -1029,6 +1029,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -3812,6 +3813,26 @@ msgid ""
 msgstr "ملاحظة: المتابعة ستغير اشتراكك الحالي."
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a new Pay Annually plan. The "
+"new\n"
+"          subscription will have the same end date as your existing\n"
+"          subscription. You will receive a prorated invoice via email for "
+"the\n"
+"          difference in plan fees due.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a Pay Annually plan and will\n"
+"          receive an invoice via email for plan fees due.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -3830,12 +3851,8 @@ msgstr "ملاحظة: المتابعة ستغير اشتراكك الحالي."
 #| "              "
 msgid ""
 "\n"
-"        By continuing you are subscribing to a Pay Annually plan and will\n"
-"        receive an invoice via email for plan fees due. In case you incur "
-"any\n"
-"        on-demand fees for excess users or SMS, you will receive invoices "
-"for\n"
-"        these charges on a monthly basis. See\n"
+"        In case you incur any on-demand fees for excess users or SMS, you\n"
+"        will receive invoices for these charges on a monthly basis. See\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
 "pages/2143955299/Subscription+Management+Billing#Pay-Annually-"
@@ -3894,6 +3911,16 @@ msgstr ""
 "          <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
 "How+to+Pay+by+Credit+Card+or+Wire+Payment\">هنا</a>.\n"
 "        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are moving from a Pay Annually to a Pay Monthly\n"
+"          plan. Any prepaid plan fees will be automatically applied to "
+"future\n"
+"          monthly invoices.\n"
+"        "
+msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, fuzzy
@@ -4078,6 +4105,7 @@ msgstr ""
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -4488,6 +4516,7 @@ msgstr "المستخدمون الذين تمت إضافتهم:"
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -4990,6 +5019,7 @@ msgstr "آخر 10 عمليات تشغيل"
 #: corehq/apps/case_search/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -7945,6 +7975,7 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -15772,6 +15803,16 @@ msgstr "إعدادات CSQL Fixture"
 msgid "Add Expression"
 msgstr "إضافة تعبير"
 
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+msgid "Fixture Inclusion in Restore Criteria"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#, fuzzy
+#| msgid "Add filter"
+msgid "Add Criteria"
+msgstr "إضافة عامل تصفية"
+
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
 msgstr "البحث يحتوي على عدد كبير جدًا من النتائج. يرجى محاولة بحث أكثر تحديدًا."
@@ -18758,10 +18799,15 @@ msgid "Create Case Type"
 msgstr "إنشاء نوع حالة"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        There was an error processing the request. Please try again.\n"
+#| "      "
 msgid ""
 "\n"
-"        There was an error processing the request. Please try again.\n"
-"      "
+"          There was an error processing the request. Please try again.\n"
+"        "
 msgstr ""
 "\n"
 "        حدث خطأ أثناء معالجة الطلب. يرجى المحاولة مرة أخرى.\n"
@@ -18801,11 +18847,17 @@ msgid "FHIR Resource Property Path"
 msgstr "مسار خاصية مورد FHIR"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <b data-bind=\"text: name()\"></b> group's properties will be "
+#| "moved to <b>No Group</b>\n"
+#| "            "
 msgid ""
 "\n"
-"            <b data-bind=\"text: name()\"></b> group's properties will be "
+"              <b data-bind=\"text: name()\"></b> group's properties will be "
 "moved to <b>No Group</b>\n"
-"            "
+"              "
 msgstr ""
 "\n"
 "            سيتم نقل خصائص مجموعة <b data-bind=\"text: name()\"></b> إلى "
@@ -18846,13 +18898,21 @@ msgid "Deprecate"
 msgstr "إهمال"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        A case property with this name already exists.\n"
+#| "                        If you don’t see it on the page, please click "
+#| "‘Show Deprecated’ button to reveal deprecated\n"
+#| "                        properties.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        A case property with this name already exists.\n"
-"                        If you don’t see it on the page, please click ‘Show "
-"Deprecated’ button to reveal deprecated\n"
-"                        properties.\n"
-"                      "
+"                          A case property with this name already exists.\n"
+"                          If you don’t see it on the page, please click "
+"‘Show Deprecated’ button to reveal deprecated\n"
+"                          properties.\n"
+"                        "
 msgstr ""
 "\n"
 "                        توجد خاصية حالة بهذا الاسم بالفعل.\n"
@@ -18873,13 +18933,21 @@ msgid "Add Case Property Group"
 msgstr "إضافة مجموعة خصائص حالة"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  A case property group with this name already exists.\n"
+#| "                  If you don’t see it on the page, please click ‘Show "
+#| "Deprecated’ button to reveal deprecated\n"
+#| "                  groups.\n"
+#| "                "
 msgid ""
 "\n"
-"                  A case property group with this name already exists.\n"
-"                  If you don’t see it on the page, please click ‘Show "
+"                    A case property group with this name already exists.\n"
+"                    If you don’t see it on the page, please click ‘Show "
 "Deprecated’ button to reveal deprecated\n"
-"                  groups.\n"
-"                "
+"                    groups.\n"
+"                  "
 msgstr ""
 "\n"
 "                  توجد مجموعة خصائص حالة بهذا الاسم بالفعل.\n"
@@ -18898,6 +18966,38 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add a new Case Type"
 msgstr "إضافة نوع حالة جديد"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+msgid "Performance warning"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/"
+#| "spaces/commcarepublic/pages/2143945812/"
+#| "CommCare+Messaging+Reports#Messaging-Dashboard\">Click here</a>\n"
+#| "      for more information about this dashboard.\n"
+#| "    "
+msgid ""
+"\n"
+"        See\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143947182/Case+Configuration\"\n"
+"          >case configuration</a\n"
+"        >\n"
+"        documentation for more information.\n"
+"      "
+msgstr ""
+"\n"
+"      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143945812/CommCare+Messaging+Reports#Messaging-"
+"Dashboard\">انقر هنا</a>\n"
+"      لمزيد من المعلومات حول لوحة المعلومات هذه.\n"
+"    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
@@ -20005,6 +20105,7 @@ msgstr "تفعيل"
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Deactivate"
@@ -22930,6 +23031,58 @@ msgstr ""
 "strong> وستكلف <strong>%(monthly_fee)s</strong>/شهريًا.</p>\n"
 "      "
 
+#: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
+#: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Dimagi accepts wire payments via ACH and wire transfer. "
+#| "You will\n"
+#| "                receive an invoice via email with bank information and\n"
+#| "                instructions for wire payment. Please include the Invoice "
+#| "# in\n"
+#| "                the wire payment memo or note field.\n"
+#| "                <a\n"
+#| "                  href=\"https://confluence.dimagi.com/display/"
+#| "commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+#| "                  target=\"_blank\"\n"
+#| "                  >More information...</a\n"
+#| "                >\n"
+#| "              "
+msgid ""
+"\n"
+"          <p>\n"
+"            By continuing you are renewing to a Pay Annually plan and will\n"
+"            receive an invoice via email for plan fees due. <br />\n"
+"            In case you incur any on-demand fees for excess users or SMS, "
+"you\n"
+"            will receive invoices for these charges on a monthly basis. <br /"
+">\n"
+"            See\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143955299/Subscription+Management+Billing#Pay-Annually-"
+"Subscription\"\n"
+"              >here</a\n"
+"            >\n"
+"            for more information about payment, cancellation, and refunds.\n"
+"          </p>\n"
+"        "
+msgstr ""
+"\n"
+"                تقبل Dimagi المدفوعات البنكية عبر ACH والتحويل البنكي. "
+"ستتلقى\n"
+"                فاتورة عبر البريد الإلكتروني مع معلومات البنك\n"
+"                وتعليمات الدفع البنكي. يرجى تضمين رقم الفاتورة في\n"
+"                مذكرة أو حقل الملاحظات الخاص بالتحويل البنكي.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/"
+"commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+"                  target=\"_blank\"\n"
+"                  >مزيد من المعلومات...</a\n"
+"                >\n"
+"              "
+
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
@@ -23009,15 +23162,24 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid "Got questions about your plan?"
+#, fuzzy
+#| msgid "Got questions about your plan?"
+msgid "Questions about your plan?"
 msgstr "هل لديك أسئلة حول خطتك؟"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
-msgid "Talk to Sales"
-msgstr "تحدث إلى قسم المبيعات"
+#, fuzzy
+#| msgid "Contacts"
+msgid "Contact us"
+msgstr "جهات الاتصال"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, fuzzy
+#| msgid "Change Plan"
+msgid "Upgrade Plan"
+msgstr "تغيير الخطة"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -23177,6 +23339,34 @@ msgstr ""
 "الصفحة التي طلبتها غير متوفرة حاليًا بسبب\n"
 "    ترحيل البيانات. يرجى المحاولة لاحقًا."
 
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    You've been added to %(domain)s.\n"
+#| "  "
+msgid "You have been deactivated from %(domain)s"
+msgstr ""
+"\n"
+"    تمت إضافتك إلى %(domain)s.\n"
+"  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      If you believe this to be in error, please contact support.\n"
+#| "    "
+msgid ""
+"If you believe this is an error, please contact your project administrator "
+"or support."
+msgstr ""
+"\n"
+"      إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع الدعم.\n"
+"    "
+
 #: corehq/apps/domain/templates/domain/bootstrap3/insufficient_privilege_notification.html
 #: corehq/apps/domain/templates/domain/bootstrap5/insufficient_privilege_notification.html
 #, python-format
@@ -23292,6 +23482,11 @@ msgstr ""
 "      أنت تقوم بتجديد اشتراك <strong>%(p)s</strong> الخاص بك.\n"
 "    "
 
+#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
+msgid "Talk to Sales"
+msgstr "تحدث إلى قسم المبيعات"
+
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
 #: corehq/apps/settings/views.py
@@ -23345,11 +23540,18 @@ msgstr "مخفض"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              This plan will be downgrading to\n"
+#| "              <span data-bind=\"text: oNextPlan\"></span> on\n"
+#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
+#| "            "
 msgid ""
 "\n"
 "              This plan will be downgrading to\n"
-"              <span data-bind=\"text: oNextPlan\"></span> on\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextPlan\"></span> on\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 "\n"
@@ -23360,10 +23562,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              This plan will be pausing on<br />\n"
+#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
+#| "            "
 msgid ""
 "\n"
 "              This plan will be pausing on<br />\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 "\n"
@@ -23470,11 +23678,18 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Your subscription will be pausing on\n"
+#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></"
+#| "span>\n"
+#| "        unless you select a different plan above.\n"
+#| "      "
 msgid ""
 "\n"
 "        Your subscription will be pausing on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></"
-"span>\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -23487,12 +23702,20 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Your subscription will be downgrading to\n"
+#| "        <span data-bind=\"text: oNextSubscription\"></span> on\n"
+#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></"
+#| "span>\n"
+#| "        unless you select a different plan above.\n"
+#| "      "
 msgid ""
 "\n"
 "        Your subscription will be downgrading to\n"
-"        <span data-bind=\"text: oNextSubscription\"></span> on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></"
-"span>\n"
+"        <span data-bind=\"text: nextSubscription\"></span> on\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -51605,6 +51828,7 @@ msgid "Not Linked"
 msgstr "مرتبط"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Reactivate"
 msgstr "إعادة تفعيل"
 
@@ -52616,6 +52840,18 @@ msgid "Current Users"
 msgstr "المستخدمون الحاليون"
 
 #: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Show Deactivated Web Users"
+msgstr "عرض مستخدمي الأجهزة المحمولة المعطلين"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Show Active Web Users"
+msgstr "عدد المستخدمين النشطين"
+
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Loading Users..."
 msgstr "جاري تحميل المستخدمين..."
 
@@ -52638,6 +52874,136 @@ msgstr "هل أنت متأكد أنك تريد إزالة عضوية هذا ال
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Membership"
 msgstr "العضوية"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Distance from current location"
+msgid "Deactivate from the current project: "
+msgstr "المسافة من الموقع الحالي"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</"
+#| "strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>deactivate</"
+"strong> this web user?\n"
+"                            "
+msgstr ""
+"\n"
+"                          هل أنت متأكد أنك تريد <strong>حذف</strong> هذه "
+"القاعدة؟\n"
+"                        "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically "
+#| "installs all multimedia\n"
+#| "                                included in your form. All subsequent "
+#| "remote updates will also\n"
+#| "                                include multimedia which could require a "
+#| "lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/"
+#| "wiki/spaces/commcarepublic/pages/2143946239/"
+#| "Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
+msgid ""
+"\n"
+"                              Deactivated web users will not be able to log "
+"into the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+"\n"
+"                                ملاحظة: التثبيت دون اتصال يقوم تلقائيًا "
+"بتثبيت جميع الوسائط المتعددة\n"
+"                                المضمنة في النموذج الخاص بك. جميع التحديثات "
+"البعيدة اللاحقة ستتضمن أيضًا\n"
+"                                الوسائط المتعددة، مما قد يتطلب الكثير من "
+"البيانات. راجع\n"
+"                                <a href=\\\"https://dimagi.atlassian.net/"
+"wiki/spaces/commcarepublic/pages/2143946239/"
+"Installing+CommCare+on+Android+Devices\\\">\n"
+"                                  موقع المساعدة\n"
+"                                </a> لمزيد من المعلومات.\n"
+"                              "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Activate your CommCare project"
+msgid "Reactivate in the current project: "
+msgstr "فعّل مشروعك على CommCare"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</"
+#| "strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>reactivate</"
+"strong> this web user?\n"
+"                            "
+msgstr ""
+"\n"
+"                          هل أنت متأكد أنك تريد <strong>حذف</strong> هذه "
+"القاعدة؟\n"
+"                        "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically "
+#| "installs all multimedia\n"
+#| "                                included in your form. All subsequent "
+#| "remote updates will also\n"
+#| "                                include multimedia which could require a "
+#| "lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/"
+#| "wiki/spaces/commcarepublic/pages/2143946239/"
+#| "Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
+msgid ""
+"\n"
+"                              Deactivated web users are not able to log into "
+"the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+"\n"
+"                                ملاحظة: التثبيت دون اتصال يقوم تلقائيًا "
+"بتثبيت جميع الوسائط المتعددة\n"
+"                                المضمنة في النموذج الخاص بك. جميع التحديثات "
+"البعيدة اللاحقة ستتضمن أيضًا\n"
+"                                الوسائط المتعددة، مما قد يتطلب الكثير من "
+"البيانات. راجع\n"
+"                                <a href=\\\"https://dimagi.atlassian.net/"
+"wiki/spaces/commcarepublic/pages/2143946239/"
+"Installing+CommCare+on+Android+Devices\\\">\n"
+"                                  موقع المساعدة\n"
+"                                </a> لمزيد من المعلومات.\n"
+"                              "
 
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Pending Invitations"

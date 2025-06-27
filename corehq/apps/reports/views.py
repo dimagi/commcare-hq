@@ -101,6 +101,7 @@ from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
+    SUBMISSION_HISTORY_PERMISSION,
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
@@ -149,7 +150,7 @@ require_case_export_permission = require_permission(
 
 require_form_view_permission = require_permission(
     HqPermissions.view_report,
-    'corehq.apps.reports.standard.inspect.SubmitHistory',
+    SUBMISSION_HISTORY_PERMISSION,
     login_decorator=None,
 )
 

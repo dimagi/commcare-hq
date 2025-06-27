@@ -1654,6 +1654,17 @@ msgstr ""
 "Você tem alterações não salvas neste tipo de caso. Tem certeza de que deseja"
 " continuar?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+"Você salvou <%- count %> propriedades de caso no caso '<%- type %>'. "
+"Recomendamos no máximo <%- limit %> propriedades de caso por tipo de caso, "
+"caso contrário, você pode enfrentar problemas de desempenho durante a coleta"
+" e análise de dados."
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js

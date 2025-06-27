@@ -46,3 +46,24 @@ class TestCSQLFixtureExpressionView(HtmxViewTestCase):
              (CSQLFixtureExpressionLog.Action.UPDATE.value, 'updated csql'),
              (CSQLFixtureExpressionLog.Action.DELETE.value, '')],
         )
+
+    def test_new_criteria(self):
+        response = self.hx_action('new_criteria', {})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.content.decode())
+
+    def test_save_filter_modal(self):
+        expression = CSQLFixtureExpression.objects.create(
+            domain=self.domain,
+            name='my_indicator_name',
+            csql='original csql'
+        )
+        response = self.hx_action('save_filter_modal', {
+            'pk': expression.pk,
+            'operator': ['IS'],
+            'property_name': ['my_property'],
+        })
+        self.assertEqual(response.status_code, 200)
+
+        expression.refresh_from_db()
+        self.assertEqual(expression.user_data_criteria, [{'operator': 'IS', 'property_name': 'my_property'}])

@@ -107,7 +107,7 @@ def create_properties_for_case_types(domain, case_type_to_prop):
                     case_type=case_type_obj, name=prop
                 ))
 
-    CaseProperty.objects.bulk_create(new_case_properties)
+    CaseProperty.objects.bulk_create(new_case_properties, ignore_conflicts=True)
 
     for case_type, props in case_type_to_prop.items():
         if case_type:
@@ -420,3 +420,13 @@ def update_url_query_params(url, params):
     merged_params = urlencode({**current_params, **params})
     # Note: _replace is a public method of namedtuple. Starts with _ to avoid conflicts with field names.
     return parsed_url._replace(query=merged_params).geturl()
+
+
+def get_custom_case_property_count(domain, case_type):
+    """This excludes system properties"""
+    try:
+        case_type = CaseType.objects.get(domain=domain, name=case_type)
+    except CaseType.DoesNotExist:
+        return 0
+
+    return case_type.properties.count()

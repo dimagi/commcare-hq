@@ -2,7 +2,7 @@ define("cloudcare/js/formplayer/menus/utils", [
     'underscore',
     'backbone',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/layout/views/progress_bar',
@@ -15,7 +15,7 @@ define("cloudcare/js/formplayer/menus/utils", [
     _,
     Backbone,
     toggles,
-    kissmetrics,
+    noopMetrics,
     FormplayerFrontend,
     constants,
     ProgressBar,
@@ -198,7 +198,7 @@ define("cloudcare/js/formplayer/menus/utils", [
             if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
                 props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
             }
-            kissmetrics.track.event('Case Search', props);
+            noopMetrics.track.event('Case Search', props);
             urlObject.setQueryData({
                 inputs: {},
                 execute: false,
@@ -212,19 +212,20 @@ define("cloudcare/js/formplayer/menus/utils", [
             }
             var eventData = {};
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
+            var searchFieldList = [];
             if (!_.isEmpty(fields)) {
-                eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
+                searchFieldList = _.sortBy(_.keys(fields));
+                eventData.searchFields = searchFieldList.join(",");
             }
 
-            var kissmetricsEventData = _.extend(eventData, {
+            noopMetrics.track.event("Viewed Case List", _.extend(eventData, {
                 domain: UsersModels.getCurrentUser().domain,
                 name: menuResponse.title,
-            });
-            kissmetrics.track.event("Viewed Case List", kissmetricsEventData);
-            gtx.logCaseList(menuResponse);
+            }));
+            gtx.logCaseList(menuResponse, searchFieldList);
 
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
-                kissmetrics.track.event('Started Case Search', {
+                noopMetrics.track.event('Started Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
