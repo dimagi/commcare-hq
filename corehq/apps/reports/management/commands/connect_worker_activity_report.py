@@ -69,6 +69,7 @@ def get_activity_for_timeframe(months, domain_names, limit):
             month__gte=start_date,
             num_of_forms__gte=1,
             domain_name__in=domain_names,
+            user_type="CommCareUser",
         )
         .values("domain_name", "app_id", "user_id")
         .distinct()
