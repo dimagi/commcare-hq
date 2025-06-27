@@ -12,6 +12,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Domain
 from django.core.mail import EmailMessage
 from django.conf import settings
+from corehq.apps.es.users import UserES
 
 
 class Command(BaseCommand):
@@ -102,6 +103,8 @@ def augment_activity_results(months_activity):
     """Augment the activity data with total users per app on a domain."""
     print("Augmenting activity results...")
 
+    domain_users_count = {}
+
     for _, activity_list in months_activity.items():
         for activity in activity_list:
             domain_name = activity.get('domain_name')
@@ -112,16 +115,14 @@ def augment_activity_results(months_activity):
             activity['default_language'] = app_lang
             activity['deployment_countries'] = domain_countries
 
-            total_users = (
-                MALTRow.objects.filter(
-                    domain_name=domain_name,
-                    app_id=app_id,
+            if domain_name not in domain_users_count:
+                total_users = domain_users_count[domain_name] = (
+                    UserES().domain(domain_name).mobile_users().run().total
                 )
-                .values("user_id")
-                .distinct()
-                .count()
-            )
-            activity['total_app_users'] = total_users
+            else:
+                total_users = domain_users_count[domain_name]
+            activity['total_mobile_workers'] = total_users
+
     return months_activity
 
 
@@ -144,7 +145,7 @@ def generate_csv_report(months_activity):
 
     for month, activity_list in months_activity.items():
         ws = wb.create_sheet(title=month)
-        ws.append(['Domain Name', 'Countries', 'App name', 'App ID', 'App default lang', 'Active User Count', 'Total App Users'])  # noqa E501
+        ws.append(['Domain Name', 'Countries', 'App name', 'App ID', 'App default lang', 'Active User Count', 'Total Mobile Workers'])  # noqa E501
         for row in activity_list:
             ws.append([
                 row.get('domain_name', ''),
@@ -153,7 +154,7 @@ def generate_csv_report(months_activity):
                 row.get('app_id', ''),
                 row.get('default_language', ''),
                 row.get('user_count', 0),
-                row.get('total_app_users', 0)
+                row.get('total_mobile_workers', 0)
             ])
     output = BytesIO()
     wb.save(output)
