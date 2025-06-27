@@ -805,7 +805,6 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
         debug_context.update({
             'self_started': domain_object.internal.self_started,
             'has_handoff_info': bool(domain_object.internal.partner_contact),
-            'project_description': domain_object.project_description,
         })
 
     subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
@@ -821,6 +820,8 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
         reply_to = settings.SERVER_EMAIL
 
     message_parts.append("Message:\n\n{message}\n".format(message=report['message']))
+    message_parts.append(f"Project description: {domain_object.project_description}\n" if domain_object else "")
+
     if post_params.get('five-hundred-report'):
         extra_message = ("This message was reported from a 500 error page! "
                          "Please fix this ASAP (as if you wouldn't anyway)...")
@@ -828,7 +829,6 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
             "datetime: {datetime}\n"
             "Is self start: {self_started}\n"
             "Has Support Hand-off Info: {has_handoff_info}\n"
-            "Project description: {project_description}\n"
             "Sentry Error: {sentry_error}\n"
         ).format(**debug_context)
         traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
