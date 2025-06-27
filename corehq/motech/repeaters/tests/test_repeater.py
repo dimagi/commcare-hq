@@ -387,7 +387,8 @@ class RepeaterTest(BaseRepeaterTest):
 
     def test_automatic_cancel_repeat_record(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
-        rr = self.case_repeater.register(case)
+        self.case_repeater.register(case)
+        rr = self.case_repeater.repeat_records.last()
         # Fetch the revision that was updated:
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(1, repeat_record.num_attempts)
@@ -751,7 +752,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 503  # Fail and retry
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
         with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
             state_or_none = rr.fire()
 
@@ -763,7 +765,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def test_payload_exception_on_register(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch.object(Repeater, "get_payload", side_effect=Exception('Payload error')):
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.InvalidPayload)
@@ -772,7 +775,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def test_failure(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=RequestException('Boom!')):
-            rr = self.repeater.register(case)  # calls repeat_record.fire()
+            self.repeater.register(case)  # calls repeat_record.fire()
+            rr = self.repeater.repeat_records.last()
 
         # Fetch the repeat_record revision that was updated
         repeat_record = RepeatRecord.objects.get(id=rr.id)
@@ -782,7 +786,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def test_unexpected_failure(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.failure_reason, 'Internal Server Error')
@@ -793,7 +798,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 200
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.Success)
@@ -803,7 +809,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 204
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.Empty)
@@ -918,7 +925,8 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
             mock_request.return_value.status_code = 200
             mock_manager.return_value = 'MockAuthManager'
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
             repeat_record = RepeatRecord.objects.get(id=rr.id)
             headers = self.repeater.get_headers(repeat_record)
