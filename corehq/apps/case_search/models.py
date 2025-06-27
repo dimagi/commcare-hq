@@ -300,7 +300,7 @@ class CaseSearchConfig(models.Model):
     fuzzy_prefix_length = models.SmallIntegerField(blank=True, null=True, validators=[
         MinValueValidator(0), MaxValueValidator(10),
     ])
-    # See case_search_bha.py docstring for context
+    # See case_search_sub.py docstring for context
     index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
         "Name or alias of alternative index to use for case search"))
 
