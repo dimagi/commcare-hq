@@ -72,7 +72,7 @@ class CaseSearchCCPerfES(CaseSearchES):
     index = HQ_CASE_SEARCH_CC_PERF_INDEX_CANONICAL_NAME
 
 
-class ElasticCaseSearchCCPerf(ElasticCaseSearch):
+class ElasticCaseSearchCCPerf(_SubElasticCaseSearch):
     settings_key = IndexSettingsKey.CASE_SEARCH_CC_PERF
     canonical_name = HQ_CASE_SEARCH_CC_PERF_INDEX_CANONICAL_NAME
     parent_index_cname = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
