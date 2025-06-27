@@ -488,7 +488,6 @@ class Repeater(RepeaterSuperProxy):
             # to prevent serializing the repeater in the celery task payload
             repeat_record.__dict__["repeater"] = self
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
-        return repeat_record
 
     def allowed_to_forward(self, payload):
         """
@@ -697,10 +696,10 @@ class CaseRepeater(Repeater):
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
     def register(self, payload, fire_synchronously=False):
-        if repeat_record := (
+        if (
             self.repeat_records_ready
             .filter(payload_id=payload.get_id)
-            .first()
+            .exists()
         ):
             # There is already a repeat record for this payload waiting
             # to be sent. We pull the case from the database just before
@@ -708,8 +707,8 @@ class CaseRepeater(Repeater):
             # case since the repeat record was created will be reflected
             # when that attempt to forward is made, regardless of when
             # that repeat record was created.
-            return repeat_record
-        return super().register(payload, fire_synchronously)
+            return
+        super().register(payload, fire_synchronously)
 
     @property
     def form_class_name(self):
@@ -752,7 +751,7 @@ class CreateCaseRepeater(CaseRepeater):
     def register(self, payload, fire_synchronously=False):
         # `CaseRepeater.register()` skips duplicate payloads, but
         # `CreateCaseRepeater` will never have duplicates.
-        return Repeater.register(self, payload, fire_synchronously)
+        Repeater.register(self, payload, fire_synchronously)
 
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
