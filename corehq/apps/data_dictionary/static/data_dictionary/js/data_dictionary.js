@@ -45,19 +45,29 @@ var caseType = function (
     self.fetchCaseProperties = function () {
         if (self.groups().length === 0) {
             const caseTypeUrl = self.dataUrl + self.name + '/';
-            recurseChunks(caseTypeUrl);
+            recurseChunks(caseTypeUrl).then(() => self.groups.sort(sortGroupsFn));
         }
     };
 
     const recurseChunks = function (nextUrl) {
-        $.getJSON(nextUrl, function (data) {
+        return $.getJSON(nextUrl).then(function (data) {
             setCaseProperties(data.groups);
             self.resetSaveButton();
             nextUrl = data._links.next;
             if (nextUrl) {
-                recurseChunks(nextUrl);
+                return recurseChunks(nextUrl);
             }
         });
+    };
+
+    const sortGroupsFn = function (left, right) {
+        if (left.index === undefined || left.index > right.index) {
+            return 1;
+        }
+        if (right.index === undefined || right.index > left.index) {
+            return -1;
+        }
+        return 0;
     };
 
     const setCaseProperties = function (groupData) {
