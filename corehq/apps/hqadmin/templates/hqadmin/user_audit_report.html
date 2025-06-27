@@ -1,0 +1,14 @@
+{% extends "reports/bootstrap3/tabular.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block reportcontent %}
+  {% if warning_message %}
+    <div class="alert alert-warning">
+      <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Warning" %}</h4>
+      <p>{{ warning_message }}</p>
+    </div>
+  {% else %}
+    {{ block.super }}
+  {% endif %}
+{% endblock reportcontent %}

@@ -14,6 +14,7 @@ from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.auditcare.utils.export import navigation_events_by_user
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -98,6 +99,8 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 class UserAuditReport(AdminReport, DatespanMixin):
     slug = 'user_audit_report'
     name = gettext_lazy("User Audit Events")
+    MAX_RECORDS = 4000  # Tuned based on performance testing and user experience
+    report_template_path = "hqadmin/user_audit_report.html"
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -134,6 +137,10 @@ class UserAuditReport(AdminReport, DatespanMixin):
         if not (self.selected_domain or self.selected_user):
             return []
 
+        # Check if results would exceed the limit
+        if self._get_record_count() > self.MAX_RECORDS:
+            return []
+
         rows = []
         events = navigation_events_by_user(
             self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate
@@ -148,6 +155,38 @@ class UserAuditReport(AdminReport, DatespanMixin):
                 event.request_path
             ])
         return rows
+
+    def _get_record_count(self):
+        where = self._get_filter_conditions()
+        return NavigationEventAudit.objects.filter(**where).count()
+
+    def _get_filter_conditions(self):
+        from corehq.apps.auditcare.utils.export import get_date_range_where
+
+        where = get_date_range_where(self.datespan.startdate, self.datespan.enddate)
+        if self.selected_user:
+            where['user'] = self.selected_user
+        if self.selected_domain:
+            where['domain'] = self.selected_domain
+        return where
+
+    @property
+    def report_context(self):
+        context = super().report_context
+
+        if not (self.selected_domain or self.selected_user):
+            context['warning_message'] = gettext_lazy("You must specify either a username or a domain. "
+                    "Requesting all audit events across all users and domains would exceed system limits.")
+        elif self._get_record_count() > self.MAX_RECORDS:
+            context['warning_message'] = self._get_limit_exceeded_message()
+
+        return context
+
+    def _get_limit_exceeded_message(self):
+        return gettext_lazy(
+            f"Your search returned more than {self.MAX_RECORDS} records. "
+            "Please narrow down your search by selecting a specific user, domain, or a shorter date range."
+        )
 
 
 class UserListReport(GetParamsMixin, AdminReport):
