@@ -1199,6 +1199,17 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
     })
 
+    # Additional context to redirect form deletion to case deletion if the form created any cases
+    if instance.is_archived:
+        for case_update in get_case_updates(instance):
+            actions = {action.action_type_slug for action in case_update.actions}
+            if const.CASE_ACTION_CREATE in actions:
+                context.update({
+                    "is_create_form": True,
+                    "case_id": case_update.id,
+                })
+            break
+
     context.update(_get_cases_changed_context(domain, instance, case_id))
     context.update(_get_form_metadata_context(domain, instance, timezone, support_enabled))
     context.update(_get_display_options(request, domain, user, instance, support_enabled))
@@ -1386,9 +1397,9 @@ def _get_display_options(request, domain, user, form, support_enabled):
     }
 
 
-def safely_get_form(request, domain, instance_id):
+def safely_get_form(request, domain, instance_id, include_deleted=False):
     """Fetches a form and verifies that the user can access it."""
-    form = get_form_or_404(domain, instance_id)
+    form = get_form_or_404(domain, instance_id, include_deleted)
     if not can_edit_form_location(domain, request.couch_user, form):
         raise location_restricted_exception(request)
     return form
@@ -1556,8 +1567,8 @@ def restore_edit(request, domain, instance_id):
 @require_permission(HqPermissions.edit_data)
 @require_POST
 @location_safe
-def archive_form(request, domain, instance_id):
-    instance = safely_get_form(request, domain, instance_id)
+def archive_form(request, domain, instance_id, is_case_delete=False):
+    instance = safely_get_form(request, domain, instance_id, include_deleted=is_case_delete)
     assert instance.domain == domain
     case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
 
@@ -1576,6 +1587,9 @@ def archive_form(request, domain, instance_id):
     else:
         notify_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
         notify_level = messages.ERROR
+
+    if is_case_delete:
+        return instance.is_archived
 
     params = {
         "notif": notify_msg,
@@ -1668,7 +1682,7 @@ def _get_case_id_and_redirect_url(domain, request):
 @require_form_view_permission
 @require_permission(HqPermissions.edit_data)
 @location_safe
-def unarchive_form(request, domain, instance_id):
+def unarchive_form(request, domain, instance_id, is_case_delete=False):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     if instance.is_archived:
@@ -1676,6 +1690,8 @@ def unarchive_form(request, domain, instance_id):
     else:
         assert instance.is_normal
     messages.success(request, _("Form was successfully restored."))
+    if is_case_delete:
+        return instance.is_archived
 
     redirect = request.META.get('HTTP_REFERER')
     if not redirect:
