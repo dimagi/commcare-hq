@@ -25,7 +25,7 @@ from corehq import privileges
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestCaseCopyAPI(TestCase):
     domain = 'test-domain'
-    url_name = 'copy_cases'
+    url_name = 'copy_cases_action'
 
     @classmethod
     def setUpClass(cls):
@@ -100,7 +100,7 @@ class TestCaseCopyAPI(TestCase):
         new_owner_id = 'new_owner_id'
 
         res = self.make_post({'case_ids': self.case_ids, 'owner_id': new_owner_id})
-        self.assertEqual(json.loads(res.content)['copied_cases'], len(self.case_ids))
+        self.assertEqual(json.loads(res.content)['case_count'], len(self.case_ids))
 
         copied_case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(self.domain, [new_owner_id])
         self.assertEqual(len(copied_case_ids), len(self.case_ids))
