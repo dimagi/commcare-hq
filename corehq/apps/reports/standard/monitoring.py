@@ -1237,7 +1237,9 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn(_("User")),
+        return DataTablesHeader(
+            DataTablesColumn(_("User")),
+            DataTablesColumn(_("Load Time (milliseconds)"), sort_type=DTSortType.DATE),
             DataTablesColumn(_("Completion Time"), sort_type=DTSortType.DATE),
             DataTablesColumn(_("Submission Time"), sort_type=DTSortType.DATE),
             DataTablesColumn(_("Form Name")),
@@ -1282,6 +1284,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 xmlnss=xmlnss,
             )
             for row in paged_result.hits:
+                load_time_ms = row['form']['meta'].get('formLoadTime', '')
                 completion_time = (PhoneTime(
                     string_to_utc_datetime(row['form']['meta']['timeEnd']),
                     self.timezone,
@@ -1294,6 +1297,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                         row['form']['meta']['username'],
                         user_map.get(row['form']['meta']['userID'])
                     ),
+                    load_time_ms,
                     self._format_date(completion_time),
                     self._format_date(submission_time),
                     form_map[row['xmlns']],
