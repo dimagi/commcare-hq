@@ -568,7 +568,6 @@ class ChangeActionFilter(BaseMultipleOptionFilter):
         (ALL, gettext_noop('All')),
         (str(UserHistory.CREATE), gettext_noop('Create')),
         (str(UserHistory.UPDATE), gettext_noop('Update')),
-        (str(UserHistory.DELETE), gettext_noop('Delete')),
     ]
     default_options = ['0']
 
