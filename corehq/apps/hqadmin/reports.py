@@ -137,8 +137,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
         if not (self.selected_domain or self.selected_user):
             return []
 
-        # Check if results would exceed the limit
-        if self._get_record_count() > self.MAX_RECORDS:
+        if self._is_limit_exceeded():
             return []
 
         rows = []
@@ -156,9 +155,10 @@ class UserAuditReport(AdminReport, DatespanMixin):
             ])
         return rows
 
-    def _get_record_count(self):
+    @memoized
+    def _is_limit_exceeded(self):
         where = self._get_filter_conditions()
-        return NavigationEventAudit.objects.filter(**where).count()
+        return NavigationEventAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
 
     def _get_filter_conditions(self):
         from corehq.apps.auditcare.utils.export import get_date_range_where
@@ -177,7 +177,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
         if not (self.selected_domain or self.selected_user):
             context['warning_message'] = gettext_lazy("You must specify either a username or a domain. "
                     "Requesting all audit events across all users and domains would exceed system limits.")
-        elif self._get_record_count() > self.MAX_RECORDS:
+        elif self._is_limit_exceeded():
             context['warning_message'] = self._get_limit_exceeded_message()
 
         return context
