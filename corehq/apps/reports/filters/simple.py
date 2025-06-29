@@ -13,6 +13,11 @@ class SimpleUsername(BaseSimpleFilter):
     label = gettext_lazy("Username")
 
 
+class SingleUserNameOrAllUsers(SimpleUsername):
+    help_inline = gettext_lazy("Leave this blank to include all users. "
+                               "In that case, domain is required to limit the scope.")
+
+
 class SimpleDomain(BaseSimpleFilter):
     slug = 'domain_name'
     label = gettext_lazy('Domain')
