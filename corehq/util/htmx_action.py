@@ -56,11 +56,16 @@ class HqHtmxActionMixin:
     Example docs here: commcarehq.org/styleguide/b5/htmx_alpine/
     See working demo here: commcarehq.org/styleguide/demo/htmx_todo/
     """
+    simulate_errors = False
 
     def render_htmx_redirect(self, url, response_message=None):
         response = HttpResponse(response_message or "")
         response['HX-Redirect'] = url
         return response
+
+    @property
+    def simulate_error(self):
+        return self.request.GET.get('simulate_error', False)
 
     @staticmethod
     def _get_existing_hx_triggers(response):
@@ -143,6 +148,8 @@ class HqHtmxActionMixin:
 
         try:
             response = handler(request, *args, **kwargs)
+            if self.simulate_errors and self.simulate_error:
+                raise Exception("Simulated error for testing purposes")
         except HtmxResponseException as err:
             return self._return_error_response(err, action=action)
         except Exception as err:
