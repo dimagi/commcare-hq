@@ -1562,7 +1562,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
     def post(self, request, *args, **kwargs):
         form = self.form
-        if form.is_valid():
+        if form.is_valid() and self.is_invite_valid():
             user = self.user
             user.email = form.cleaned_data['email']
             full_name = form.cleaned_data['full_name']
