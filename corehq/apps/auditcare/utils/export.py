@@ -26,7 +26,7 @@ def navigation_events_by_user(user, domain=None, start_date=None, end_date=None)
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
-    for event in navigation_events_by_user(user, start_date, end_date):
+    for event in navigation_events_by_user(user, domain, start_date, end_date):
         if not domain or domain == event.domain:
             write_log_event(writer, event, override_user)
 
