@@ -327,13 +327,16 @@ class BaseExportView(BaseProjectDataView):
             return HttpResponseRedirect(url)
 
     @memoized
-    def get_export_schema(self, domain, app_id, identifier, for_new_export_instance=False):
+    def get_export_schema(
+        self, domain, app_id, identifier, for_new_export_instance=False, is_identifier_case_type=False
+    ):
         return self.export_schema_cls.generate_schema_from_builds(
             domain,
             app_id,
             identifier,
             only_process_current_builds=True,
-            for_new_export_instance=for_new_export_instance
+            for_new_export_instance=for_new_export_instance,
+            is_identifier_case_type=is_identifier_case_type,
         )
 
     @memoized
@@ -382,6 +385,13 @@ class CreateNewCustomFormExportView(BaseExportView):
             export_settings=export_settings)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
+
+    def get_export_schema(
+        self, domain, app_id, identifier, for_new_export_instance=False, is_identifier_case_type=False
+    ):
+        super().get_export_schema(
+            domain, app_id, identifier, for_new_export_instance, is_identifier_case_type=False
+        )
 
 
 @location_safe
@@ -457,6 +467,12 @@ class CreateNewCustomCaseExportView(BaseExportView):
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
+    def get_export_schema(
+        self, domain, app_id, identifier, for_new_export_instance=False, is_identifier_case_type=False
+    ):
+        super().get_export_schema(
+            domain, app_id, identifier, for_new_export_instance, is_identifier_case_type=True
+        )
 
 @location_safe
 class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):

@@ -59,7 +59,7 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     RemoteApp,
 )
-from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     ALL_CASE_TYPE_EXPORT,
@@ -1811,6 +1811,16 @@ class ExportDataSchema(Document):
                 and not force_rebuild
                 and current_schema.version == cls.schema_version()):
             original_id, original_rev = current_schema._id, current_schema._rev
+            breakpoint()
+            if is_identifier_case_type:
+                property_schema = current_schema.group_schemas[0]
+                case_type = CaseType.objects.get(name=identifier, domain=domain)
+                dd_properties = set(CaseProperty.objects.filter(case_type=case_type).values_list('name', flat=True))
+                last_export_properties = {path.name for item in property_schema.items for path in item.path}
+                properties_to_remove = last_export_properties.difference(dd_properties)
+                breakpoint()
+                print("test")
+
         else:
             current_schema = cls()
 
