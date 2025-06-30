@@ -42,6 +42,7 @@ class EditCasesTableView(
 ):
     urlname = 'bulk_edit_cases_table'
     table_class = EditCasesTable
+    simulate_errors = True
 
     def get_host_url(self):
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
