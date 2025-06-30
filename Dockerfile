@@ -67,10 +67,3 @@ RUN npm -g install \
  && cd /vendor \
  && npm shrinkwrap \
  && yarn global add phantomjs-prebuilt
-
-# For backward compatibility with commcarehq_base image containing
-# google-chrome-unstable. Can be removed after all test jobs with Gruntfile.js
-# referencing google-chrome-unstable have completed (at least a few weeks or
-# months after the PR in which this was introduced is merged). Old PRs can be
-# updated to use google-chrome-stable by merging master into them.
-RUN ln -s /usr/bin/google-chrome-stable /usr/bin/google-chrome-unstable
