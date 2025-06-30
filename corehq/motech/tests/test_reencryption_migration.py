@@ -2,7 +2,6 @@ from django.test import SimpleTestCase
 
 from corehq.apps.email.models import EmailSettings
 from corehq.motech.const import ALGO_AES
-from corehq.motech.utils import b64_aes_encrypt
 
 
 from corehq.motech.utils import reencrypt_ecb_to_cbc_mode
@@ -14,13 +13,6 @@ class TestReencryptionMigration(SimpleTestCase):
             domain='example.com',
             username='testuser',
         )
-
-    def plaintext_to_ecb_password(self, plaintext, prefix=True):
-        ciphertext = b64_aes_encrypt(plaintext)
-        if prefix:
-            return f'${ALGO_AES}${ciphertext}'
-        else:
-            return ciphertext
 
     def test_reencrypt_ecb_to_cbc_mode_match_plaintext_with_prefix(self):
         plaintext_password = 'testpassword'
