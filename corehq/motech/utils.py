@@ -10,7 +10,7 @@ from Crypto.Util.Padding import unpad as crypto_unpad
 from Crypto.Util.py3compat import bord
 from Crypto.Random import get_random_bytes
 
-from corehq.motech.const import AUTH_PRESETS, OAUTH2_PWD, ALGO_AES_CBC, ALGO_AES
+from corehq.motech.const import AUTH_PRESETS, OAUTH2_PWD
 
 AES_BLOCK_SIZE = 16
 AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
@@ -130,47 +130,6 @@ def b64_aes_cbc_decrypt(message):
     padded_plaintext_bytes = aes.decrypt(ciphertext_bytes)
     plaintext_bytes = unpad(padded_plaintext_bytes)
     return plaintext_bytes.decode('utf8')
-
-
-class AesEcbDecryptionError(Exception):
-    pass
-
-
-# Only needed for migration from ECB to CBC mode.
-def reencrypt_ecb_to_cbc_mode(encrypted_text, existing_prefix=None):
-    """
-    Re-encrypt a message that was encrypted using ECB mode to CBC mode.
-    """
-    if not encrypted_text:
-        return encrypted_text
-
-    if existing_prefix and encrypted_text.startswith(existing_prefix):
-        ciphertext = encrypted_text[len(existing_prefix):]
-    else:
-        ciphertext = encrypted_text
-    try:
-        plaintext = b64_aes_decrypt(ciphertext)
-    except UnicodeDecodeError:
-        raise AesEcbDecryptionError("Failed to decrypt the AES-ECB-encrypted text.")
-    new_ciphertext = b64_aes_cbc_encrypt(plaintext)
-    return f'${ALGO_AES_CBC}${new_ciphertext}'
-
-
-# Only needed for migration revert from CBC to ECB mode.
-def reencrypt_cbc_to_ecb_mode(encrypted_text, existing_prefix=None):
-    """
-    Re-encrypt a message that was encrypted using CBC mode to ECB mode.
-    """
-    if not encrypted_text:
-        return encrypted_text
-
-    if existing_prefix and encrypted_text.startswith(existing_prefix):
-        ciphertext = encrypted_text[len(existing_prefix):]
-    else:
-        ciphertext = encrypted_text
-
-    new_ciphertext = b64_aes_encrypt(b64_aes_cbc_decrypt(ciphertext))
-    return f'${ALGO_AES}${new_ciphertext}'
 
 
 def unpad(bytestring):
