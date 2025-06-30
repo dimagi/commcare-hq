@@ -31,57 +31,6 @@ def simple_pad(bytestring, block_size, char=PAD_CHAR):
     return bytestring + padding
 
 
-def b64_aes_encrypt(message):
-    """
-    AES-encrypt and base64-encode `message`.
-
-    Uses Django SECRET_KEY as AES key.
-
-    >>> settings.SECRET_KEY = 'xyzzy'
-    >>> b64_aes_encrypt('Around you is a forest.')
-    'Vh2Tmlnr5+out2PQDefkudZ2frfze5onsAlUGTLv3Oc='
-
-    """
-    if isinstance(settings.SECRET_KEY, bytes):
-        secret_key_bytes = settings.SECRET_KEY
-    else:
-        secret_key_bytes = settings.SECRET_KEY.encode('ascii')
-    aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    # We never need to unpad the key, so simple_pad() is fine (and
-    # allows us to decrypt old values).
-    aes = AES.new(aes_key, AES.MODE_ECB)
-
-    message_bytes = message if isinstance(message, bytes) else message.encode('utf8')
-    plaintext_bytes = crypto_pad(message_bytes, AES_BLOCK_SIZE, style='iso7816')
-    ciphertext_bytes = aes.encrypt(plaintext_bytes)
-    b64ciphertext_bytes = b64encode(ciphertext_bytes)
-    return b64ciphertext_bytes.decode('ascii')
-
-
-def b64_aes_decrypt(message):
-    """
-    Base64-decode and AES-decrypt ASCII `message`.
-
-    Uses Django SECRET_KEY as AES key.
-
-    >>> settings.SECRET_KEY = 'xyzzy'
-    >>> b64_aes_decrypt('Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
-    'Around you is a forest.'
-
-    """
-    if isinstance(settings.SECRET_KEY, bytes):
-        secret_key_bytes = settings.SECRET_KEY
-    else:
-        secret_key_bytes = settings.SECRET_KEY.encode('ascii')
-    aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    aes = AES.new(aes_key, AES.MODE_ECB)
-
-    ciphertext_bytes = b64decode(message)
-    padded_plaintext_bytes = aes.decrypt(ciphertext_bytes)
-    plaintext_bytes = unpad(padded_plaintext_bytes)
-    return plaintext_bytes.decode('utf8')
-
-
 def b64_aes_cbc_encrypt(message):
     """
     AES-encrypt and base64-encode `message` using CBC mode.
