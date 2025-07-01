@@ -111,3 +111,23 @@
     padding-right: 5px;
   }
 }
+
+.multi-choice {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  position: relative;
+}
+
+.multi-choice-spacer {
+  flex: 1;
+}
+
+.multi-choice-clear {
+  width: max-content;
+  max-width: none;
+  transform: translateX(-50%);
+  left: 50%;
+  position: relative;
+  margin: -3px -5px;  // this is a hack to make the button look more centered
+}

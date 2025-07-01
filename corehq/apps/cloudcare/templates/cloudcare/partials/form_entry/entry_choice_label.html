@@ -22,10 +22,13 @@
     <!-- /ko -->
     <!-- ko if: hideLabel -->
       <div data-bind="attr: { 'class': colStyle }">
-        <button class="btn btn-outline-primary btn-sm" data-bind="click: onClear, fadeVisible: rawAnswer()">
+        <button class="btn btn-outline-primary btn-sm multi-choice-clear" data-bind="click: onClear, fadeVisible: rawAnswer()">
           {% trans "Clear" %}
         </button>
       </div>
+    <!-- /ko -->
+    <!-- ko ifnot: hideLabel -->
+      <div class="multi-choice-spacer"></div>
     <!-- /ko -->
   </div>
 </script>

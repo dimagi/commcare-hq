@@ -6,8 +6,8 @@ define('analytix/js/noopMetrics', [], function () {
      * @param {function} callbackFn - (optional) Function to be called after the event is tracked.
      * @param {integer} timeout - (optional) Timeout for safe callback
      */
-    var trackEvent = function () {
-        // leave as noop
+    var trackEvent = function (name, properties, callbackFn) {
+        callbackFn && callbackFn();
     };
 
     /**
