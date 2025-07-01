@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
+from django.utils.translation import gettext_lazy
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
@@ -179,15 +180,15 @@ def server_location_display(request):
     SERVER_LOCATION_DISPLAY = {
         'production': {
             'flag': "🇺🇸",
-            'hr_name': "United States",
+            'hr_name': gettext_lazy("United States"),
         },
         'india': {
             'flag': "🇮🇳",
-            'hr_name': "India",
+            'hr_name': gettext_lazy("India"),
         },
         'eu': {
             'flag': "🇪🇺",
-            'hr_name': "European Union",
+            'hr_name': gettext_lazy("European Union"),
         },
     }
     context = {}
