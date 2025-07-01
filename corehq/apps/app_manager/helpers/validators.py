@@ -1177,7 +1177,7 @@ class FormValidator(IndexedFormBaseValidator):
         open_case = self.form.actions.open_case
         update_case = self.form.actions.update_case
 
-        if open_case.name_update_multi and len(open_case) > 0:
+        if open_case.name_update_multi and len(open_case.name_update_multi) > 0:
             errors.append(self._get_property_conflict_error('name'))
 
         if update_case.update_multi:
