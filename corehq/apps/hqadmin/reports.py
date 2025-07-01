@@ -15,7 +15,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.auditcare.models import NavigationEventAudit
-from corehq.apps.auditcare.utils.export import navigation_events_by_user
+from corehq.apps.auditcare.utils.export import filters_for_navigation_event_query, navigation_events_by_user
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
@@ -157,18 +157,13 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @memoized
     def _is_limit_exceeded(self):
-        where = self._get_filter_conditions()
+        where = filters_for_navigation_event_query(
+            user=self.selected_user,
+            domain=self.selected_domain,
+            start_date=self.datespan.startdate,
+            end_date=self.datespan.enddate
+        )
         return NavigationEventAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
-
-    def _get_filter_conditions(self):
-        from corehq.apps.auditcare.utils.export import get_date_range_where
-
-        where = get_date_range_where(self.datespan.startdate, self.datespan.enddate)
-        if self.selected_user:
-            where['user'] = self.selected_user
-        if self.selected_domain:
-            where['domain'] = self.selected_domain
-        return where
 
     @property
     def report_context(self):
