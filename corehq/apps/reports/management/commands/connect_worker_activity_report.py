@@ -5,7 +5,6 @@ from collections import defaultdict
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, date
 from django.core.management import BaseCommand
-from django.db.models import Count
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.es.domains import DomainES
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -63,6 +62,7 @@ def get_activity_for_timeframe(months, domain_names, limit):
     """Get user activity data for specific timeframe."""
     now = datetime.utcnow()
     start_date = date(now.year, now.month, now.day) - relativedelta(months=months)
+    print("Start date for activity data:", start_date)
 
     users_months_activity = (
         MALTRow.objects
@@ -71,15 +71,13 @@ def get_activity_for_timeframe(months, domain_names, limit):
             num_of_forms__gte=1,
             domain_name__in=domain_names,
             user_type="CommCareUser",
+            is_app_deleted=False,
         )
-        .values("domain_name", "app_id", "user_id")
+        .values("domain_name", "app_id", "user_id", "month")
+        .distinct()
     )
 
-    qualified_users = (
-        users_months_activity
-        .annotate(month_count=Count("month", distinct=True))
-        .filter(month_count=months)
-    )
+    qualified_users = filter_users_with_complete_months(users_months_activity, months)
 
     # Count distinct users per domain/app pair
     user_rows = list(qualified_users)
@@ -171,3 +169,26 @@ def send_email_report(csv_workbook, recipient_email):
     email = EmailMessage(subject, body, from_email, to_emails)
     email.attach("worker_activity_report.xlsx", csv_workbook, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")  # noqa E501
     email.send()
+
+
+def filter_users_with_complete_months(data, months):
+    """
+    Filter data to only include records where each user has entries for all distinct months.
+    """
+
+    user_months = defaultdict(set)
+    for record in data:
+        user_months[record['user_id']].add(record['month'])
+
+    complete_users = set()
+    for user_id, user_month_set in user_months.items():
+        months_count = len(user_month_set)
+        if months_count >= months:
+            complete_users.add(user_id)
+
+    filtered_data = [
+        record for record in data
+        if record['user_id'] in complete_users
+    ]
+
+    return filtered_data
