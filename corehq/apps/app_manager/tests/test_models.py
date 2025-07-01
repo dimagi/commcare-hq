@@ -177,8 +177,9 @@ class UpdateCaseActionTests(SimpleTestCase):
             }
         })
 
-        action.make_multi()
+        changed = action.make_multi()
 
+        self.assertFalse(changed)
         multi_paths = {k: [action.question_path for action in v] for (k, v) in action.update_multi.items()}
         self.assertEqual(multi_paths, {'two': ['/one/', '/two/']})
 
@@ -193,8 +194,9 @@ class UpdateCaseActionTests(SimpleTestCase):
             }
         })
 
-        action.make_multi()
+        changed = action.make_multi()
 
+        self.assertFalse(changed)
         multi_paths = {k: [action.question_path for action in v] for (k, v) in action.update_multi.items()}
         self.assertEqual(multi_paths, {'two': ['/one/', '/two/']})
 
@@ -206,8 +208,9 @@ class UpdateCaseActionTests(SimpleTestCase):
             }
         })
 
-        action.make_multi()
+        changed = action.make_multi()
 
+        self.assertTrue(changed)
         multi_paths = {k: [action.question_path for action in v] for (k, v) in action.update_multi.items()}
         self.assertEqual(multi_paths, {'one': ['/one/'], 'two': ['/two/']})
         self.assertEqual(action.update, {})
@@ -222,8 +225,9 @@ class UpdateCaseActionTests(SimpleTestCase):
             }
         })
 
-        action.normalize_update()
+        applied = action.normalize_update()
 
+        self.assertFalse(applied)
         self.assertEqual(action.update, {})
 
     def test_normalize_update_moves_update_multi_to_update(self):
@@ -234,10 +238,11 @@ class UpdateCaseActionTests(SimpleTestCase):
             }
         })
 
-        action.normalize_update()
+        applied = action.normalize_update()
 
         update_paths = {k: v.question_path for (k, v) in action.update.items()}
 
+        self.assertTrue(applied)
         self.assertEqual(update_paths, {'one': '/one/', 'two': '/two/'})
         self.assertIsNone(action.update_multi)
 

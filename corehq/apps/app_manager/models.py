@@ -382,27 +382,33 @@ class UpdateCaseAction(FormAction):
     def make_multi(self):
         '''
         Moves any updates from `update` into `update_multi`
+        Returns true when anything was moved
         '''
         if not (self.update and len(self.update)):
             # update contains no items, so no changes are necessary
-            return
+            return False
 
         self.update_multi = {k: [v] for (k, v) in self.update.items()}
         self.update = {}
+
+        return True
 
     def normalize_update(self):
         '''
         Attempt to move `update_multi` to `update`
         If `update_multi` contains multiple updates mapped to the same case property, no changes will occur
+        Returns true when updates are normalized, or false if nothing is done
         '''
         multi_question_cases = ((k, v) for (k, v) in self.update_multi.items() if len(v) > 1)
         if any(multi_question_cases):
             # must continue to use `update_multi`, as there are multiple questions saving to the same case property
-            return
+            return False
 
         normalized_update = {k: v[0] for (k, v) in self.update_multi.items()}
         self.update = normalized_update
         self.update_multi = None
+
+        return True
 
     DIFF_ACTION_ADD = 'add'
     DIFF_ACTION_DELETE = 'del'
