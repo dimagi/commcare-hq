@@ -179,15 +179,15 @@ def server_location_display(request):
     SERVER_LOCATION_DISPLAY = {
         'production': {
             'flag': "🇺🇸",
-            'location_code': "US",
+            'hr_name': "United States",
         },
         'india': {
             'flag': "🇮🇳",
-            'location_code': "IN",
+            'hr_name': "India",
         },
         'eu': {
             'flag': "🇪🇺",
-            'location_code': "EU",
+            'hr_name': "European Union",
         },
     }
     context = {}

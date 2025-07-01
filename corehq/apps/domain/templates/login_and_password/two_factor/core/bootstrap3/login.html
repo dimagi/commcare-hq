@@ -7,7 +7,7 @@
   {% if server_display %}
     <p class="lead text-center">
       {{ server_display.flag }}
-      {% blocktrans with server_display.location_code as server_location %}
+      {% blocktrans with server_display.hr_name as server_location %}
         {{ server_location }} Server
       {% endblocktrans %}
     </p>

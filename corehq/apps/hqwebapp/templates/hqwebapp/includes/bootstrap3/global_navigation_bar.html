@@ -95,9 +95,7 @@
                 <li class="dropdown-header nav-header">{% trans 'Server Location' %}</li>
                 <li class="server-location">
                     {{ server_display.flag }}
-                    {% blocktrans with server_display.location_code as server_location %}
-                        {{ server_location }} Server
-                    {% endblocktrans %}
+                    {% trans server_display.hr_name %}
                 </li>
             {% endif %}
         </ul>
