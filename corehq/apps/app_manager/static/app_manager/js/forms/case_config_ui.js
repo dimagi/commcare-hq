@@ -649,8 +649,10 @@ $(function () {
                 condition: (o.open_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
                 name_update: (o.open_case || {}).name_update || DEFAULT_UPDATE_ALWAYS,
             };
+            const updateCase = o.update_case || {};
             self.update_case = {
-                update: (o.update_case || {}).update || {},
+                update: updateCase.update || {},
+                update_multi: updateCase.update_multi || {},
             };
             self.case_preload = {
                 preload: (o.case_preload || {}).preload || {},
@@ -658,8 +660,10 @@ $(function () {
             self.close_case = {
                 condition: (o.close_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
             };
+            const usercaseUpdate  = o.usercase_update || {};
             self.usercase_update = {
-                update: (o.usercase_update || {}).update || {},
+                update: usercaseUpdate.update || {},
+                update_multi: usercaseUpdate.update_multi || {},
             };
             self.usercase_preload = {
                 preload: (o.usercase_preload || {}).preload || {},
@@ -676,9 +680,9 @@ $(function () {
                     required: true,
                     save_only_if_edited: self.open_case.name_update.update_mode === 'edit',
                 }] : [];
-            var caseProperties = caseConfigUtils.propertyDictToArray(
+            var caseProperties = caseConfigUtils.propertyMultiDictToArray(
                 requiredProperties,
-                self.update_case.update,
+                self.update_case.update_multi,
                 caseConfig,
             );
             var casePreload = caseConfigUtils.preloadDictToArray(
@@ -714,7 +718,8 @@ $(function () {
         },
         from_case_transaction: function (caseTransaction) {
             var o = ko.mapping.toJS(caseTransaction, caseTransactionMapping(caseTransaction));
-            var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
+            // var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
+            var x = caseConfigUtils.propertyArrayToMultiDict(['name'], o.case_properties);
             var caseProperties = x[0],
                 openNameUpdate = x[1].name;
             var casePreload = caseConfigUtils.preloadArrayToDict(o.case_preload);
@@ -740,7 +745,8 @@ $(function () {
                     name_update: openNameUpdate,
                 },
                 update_case: {
-                    update: caseProperties,
+                    // update: caseProperties,
+                    update_multi: caseProperties,
                     condition: cleanCondition(updateCondition),
                 },
                 case_preload: {
