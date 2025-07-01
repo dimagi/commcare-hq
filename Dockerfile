@@ -4,7 +4,7 @@
 # is used for running tests.
 
 FROM ghcr.io/astral-sh/uv:0.7.17-python3.13-bookworm-slim
-MAINTAINER Dimagi <devops@dimagi.com>
+LABEL org.opencontainers.image.authors="Dimagi <devops@dimagi.com>"
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
@@ -53,7 +53,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'
-ENV PUPPETEER_SKIP_DOWNLOAD true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 COPY package.json /vendor/
 RUN npm -g install \
