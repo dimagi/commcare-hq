@@ -462,6 +462,7 @@ es
  0013_add_last_modifed
  0014_enable_slowlogs
  0015_add_user_domain_memberships
+ 0016_add_new_index_for_cc_perf
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -889,6 +890,7 @@ repeaters
  0015_drop_receiverwrapper_couchdb
  0016_repeater_max_workers
  0017_add_indexes
+ 0018_datasourceupdate
 reports
  0001_initial
  0002_auto_20171121_1803

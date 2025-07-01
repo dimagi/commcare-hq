@@ -35,7 +35,7 @@
        class="alert alert-warning text-center"
 -      style="margin-top: 20px;"
 +      style="margin-top: 20px;"  {# todo B5: inline-style #}
-       data-bind="visible: oIsNextPlanDowngrade"
+       data-bind="visible: isNextPlanDowngrade"
      >
        <i class="fa fa-warning"></i>
 @@ -301,9 +301,9 @@

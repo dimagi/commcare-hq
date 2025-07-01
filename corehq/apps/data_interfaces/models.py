@@ -1232,7 +1232,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         return not no_property_changes
 
     def _track_fixed_case(self, case):
-        from corehq.apps.analytics.tasks import track_workflow
+        from corehq.apps.analytics.tasks import track_workflow_noop
         from corehq.apps.accounting.models import Subscription, SubscriptionType, SoftwarePlanEdition
         username = cached_owner_id_to_display(case.modified_by)
 
@@ -1247,7 +1247,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         if subscription and subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
             properties['enterprise_account'] = subscription.account.name
 
-        track_workflow(username, 'Duplicate Fixed', properties)
+        track_workflow_noop(username, 'Duplicate Fixed', properties)
 
     def _create_duplicates(self, case, rule, current_hash):
         """Create any necessary duplicates for this case that don't already exist.

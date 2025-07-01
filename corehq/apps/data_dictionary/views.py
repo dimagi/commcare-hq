@@ -52,6 +52,8 @@ from corehq.motech.fhir.utils import (
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
+from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
+from corehq.project_limits.models import SystemLimit
 
 from .bulk import (
     ALLOWED_VALUES_SHEET_SUFFIX,
@@ -161,7 +163,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
 
         group_data = {
             "name": "",
-            "properties": grouped_properties
+            "properties": grouped_properties,
         }
         # Note that properties can be without group
         if group_id:
@@ -171,12 +173,14 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
                 "name": group.name,
                 "description": group.description,
                 "deprecated": group.deprecated,
+                "index": group.index,
             })
         case_type_data["groups"].append(group_data)
+
     if not properties_queryset:
         case_type_data["groups"].append({
             "name": "",
-            "properties": []
+            "properties": [],
         })
 
     # properties_queryset skips groups with no properties. Add them here
@@ -192,7 +196,8 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
             "name": group.name,
             "description": group.description,
             "deprecated": group.deprecated,
-            "properties": []
+            "index": group.index,
+            "properties": [],
         })
 
     return JsonResponse(case_type_data)
@@ -508,6 +513,11 @@ class DataDictionaryView(BaseProjectDataView):
                                for t in CaseProperty.DataType
                                if t != CaseProperty.DataType.UNDEFINED],
             'fhir_integration_enabled': fhir_integration_enabled,
+            'case_property_limit': SystemLimit.get_limit_for_key(
+                CASE_PROP_LIMIT_PER_CASE_TYPE_KEY,
+                DEFAULT_CASE_PROPS_PER_CASE_TYPE,
+                domain=self.domain
+            )
         })
         return main_context
 

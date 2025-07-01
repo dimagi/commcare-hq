@@ -1029,6 +1029,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -3529,6 +3530,30 @@ msgid ""
 msgstr "ملاحظة: المتابعة ستغير اشتراكك الحالي."
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a new Pay Annually plan. The new\n"
+"          subscription will have the same end date as your existing\n"
+"          subscription. You will receive a prorated invoice via email for the\n"
+"          difference in plan fees due.\n"
+"        "
+msgstr ""
+"\n"
+"          بالاستمرار، أنت تشترك في خطة دفع سنوية جديدة. سيكون للاشتراك الجديد نفس تاريخ الانتهاء كاشتراكك الحالي. ستتلقى فاتورة بنسبة تناسبية عبر البريد الإلكتروني للفرق في رسوم الخطط المستحقة.\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a Pay Annually plan and will\n"
+"          receive an invoice via email for plan fees due.\n"
+"        "
+msgstr ""
+"\n"
+"          بالاستمرار، أنت تشترك في خطة دفع سنوية وستتلقى فاتورة عبر البريد الإلكتروني برسوم الخطة المستحقة.\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -3544,10 +3569,8 @@ msgstr "ملاحظة: المتابعة ستغير اشتراكك الحالي."
 #| "              "
 msgid ""
 "\n"
-"        By continuing you are subscribing to a Pay Annually plan and will\n"
-"        receive an invoice via email for plan fees due. In case you incur any\n"
-"        on-demand fees for excess users or SMS, you will receive invoices for\n"
-"        these charges on a monthly basis. See\n"
+"        In case you incur any on-demand fees for excess users or SMS, you\n"
+"        will receive invoices for these charges on a monthly basis. See\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >here</a\n"
@@ -3592,6 +3615,18 @@ msgstr ""
 "          تتم محاسبة CommCare شهريًا، وجميع الاشتراكات تتطلب التزامًا لمدة 30 يومًا كحد أدنى.\n"
 "          يجب أن تتوقع أول فاتورة لك في %(invoice_date)s، أو يمكنك الدفع المسبق لاشتراكك باتباع التعليمات\n"
 "          <a href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\">هنا</a>.\n"
+"        "
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are moving from a Pay Annually to a Pay Monthly\n"
+"          plan. Any prepaid plan fees will be automatically applied to future\n"
+"          monthly invoices.\n"
+"        "
+msgstr ""
+"\n"
+"          بالاستمرار، أنت تنتقل من خطة دفع سنوية إلى خطة دفع شهرية. سيتم تطبيق أي رسوم خطة مدفوعة مسبقًا تلقائيًا على الفواتير الشهرية المستقبلية.\n"
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
@@ -3758,6 +3793,7 @@ msgstr ""
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -4166,6 +4202,7 @@ msgstr "المستخدمون الذين تمت إضافتهم:"
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -4664,6 +4701,7 @@ msgstr "آخر 10 عمليات تشغيل"
 #: corehq/apps/case_search/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -7598,6 +7636,7 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -7725,41 +7764,65 @@ msgid "Cannot make new version"
 msgstr "لا يمكن إنشاء إصدار جديد"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  If you don't know why this happened, please report an issue.\n"
+#| "                "
 msgid ""
 "\n"
-"                  If you don't know why this happened, please report an issue.\n"
-"                "
+"                If you don't know why this happened, please report an issue.\n"
+"              "
 msgstr ""
 "\n"
 "                  إذا لم تكن تعرف سبب حدوث ذلك، يرجى الإبلاغ عن مشكلة.\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Link to other form or menu is selected, but no links have been provided.\n"
+#| "              "
 msgid ""
 "\n"
-"                Link to other form or menu is selected, but no links have been provided.\n"
-"              "
+"              Link to other form or menu is selected, but no links have been\n"
+"              provided.\n"
+"            "
 msgstr ""
 "\n"
 "                تم اختيار الربط بنموذج أو قائمة أخرى، لكن لم يتم توفير أي روابط.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Link to other form or menu is selected, but we don't recognize the form or menu you provided.\n"
+#| "              "
 msgid ""
 "\n"
-"                Link to other form or menu is selected, but we don't recognize the form or menu you provided.\n"
-"              "
+"              Link to other form or menu is selected, but we don't recognize the\n"
+"              form or menu you provided.\n"
+"            "
 msgstr ""
 "\n"
 "                تم اختيار الربط بنموذج أو قائمة أخرى، لكننا لا نتعرف على النموذج أو القائمة التي قدمتها.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Please check that end of form navigation is correct. It appears to be pointing\n"
+#| "                to a parent menu form, but the menu doesn't have a parent.\n"
+#| "              "
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It appears to be pointing\n"
-"                to a parent menu form, but the menu doesn't have a parent.\n"
-"              "
+"              Please check that end of form navigation is correct. It appears to\n"
+"              be pointing to a parent menu form, but the menu doesn't have a\n"
+"              parent.\n"
+"            "
 msgstr ""
 "\n"
 "                يرجى التأكد من أن التنقل في نهاية النموذج صحيح. يبدو أنه يشير\n"
@@ -7767,11 +7830,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Please check that end of form navigation is correct. It appears to be pointing\n"
+#| "                to a menu using \"Display only forms,\" which makes that menu an invalid choice.\n"
+#| "              "
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It appears to be pointing\n"
-"                to a menu using \"Display only forms,\" which makes that menu an invalid choice.\n"
-"              "
+"              Please check that end of form navigation is correct. It appears to\n"
+"              be pointing to a menu using \"Display only forms,\" which makes that\n"
+"              menu an invalid choice.\n"
+"            "
 msgstr ""
 "\n"
 "                يرجى التأكد من أن التنقل في نهاية النموذج صحيح. يبدو أنه يشير\n"
@@ -7779,11 +7849,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Please check that end of form navigation is correct. It appears to involve both\n"
+#| "                a multi-select form and a single select-form, which is not supported.\n"
+#| "              "
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It appears to involve both\n"
-"                a multi-select form and a single select-form, which is not supported.\n"
-"              "
+"              Please check that end of form navigation is correct. It appears to\n"
+"              involve both a multi-select form and a single select-form, which\n"
+"              is not supported.\n"
+"            "
 msgstr ""
 "\n"
 "                يرجى التأكد من أن التنقل في نهاية النموذج صحيح. يبدو أنه يتضمن\n"
@@ -7791,12 +7868,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Please check that end of form navigation is correct.\n"
+#| "                Modules configured to \"make search input available after search\" do not support\n"
+#| "                the \"Previous Screen\" workflow.\n"
+#| "              "
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct.\n"
-"                Modules configured to \"make search input available after search\" do not support\n"
-"                the \"Previous Screen\" workflow.\n"
-"              "
+"              Please check that end of form navigation is correct. Modules\n"
+"              configured to \"make search input available after search\" do not\n"
+"              support the \"Previous Screen\" workflow.\n"
+"            "
 msgstr ""
 "\n"
 "                يرجى التأكد من أن التنقل في نهاية النموذج صحيح.\n"
@@ -7805,13 +7889,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses \"Display only forms\" and also has a Session Endpoint ID.\n"
+#| "                Session endpoints cannot be used with \"Display only forms.\"\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses \"Display only forms\" and also has a Session Endpoint ID.\n"
-"                Session endpoints cannot be used with \"Display only forms.\"\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses \"Display only forms\" and also has a Session Endpoint ID.\n"
+"              Session endpoints cannot be used with \"Display only forms.\"\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7820,12 +7910,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses referrals but doesn't have detail screens configured for referrals.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses referrals but doesn't have detail screens configured for referrals.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses referrals but doesn't have detail screens configured for\n"
+"              referrals.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7833,12 +7929,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses cases but doesn't have detail screens configured for cases.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses cases but doesn't have detail screens configured for cases.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses cases but doesn't have detail screens configured for cases.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7846,12 +7947,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses CommCare Supply products but doesn't have detail screens configured for products.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses CommCare Supply products but doesn't have detail screens configured for products.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses CommCare Supply products but doesn't have detail screens\n"
+"              configured for products.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7859,13 +7966,20 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has an incorrectly formatted ID key (%(error_key)s).\n"
+#| "                Make sure your key has only letters, numbers, space characters, underscores, and dashes.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has an incorrectly formatted ID key (%(error_key)s).\n"
-"                Make sure your key has only letters, numbers, space characters, underscores, and dashes.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has an incorrectly formatted ID key (%(error_key)s). Make sure\n"
+"              your key has only letters, numbers, space characters, underscores,\n"
+"              and dashes.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7874,14 +7988,23 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                No menus are available. <br />\n"
+#| "                <i class=\"fa fa-arrow-left\"></i>\n"
+#| "                Please click\n"
+#| "                <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to create\n"
+#| "                some menus.\n"
+#| "              "
 msgid ""
 "\n"
-"                No menus are available. <br />\n"
-"                <i class=\"fa fa-arrow-left\"></i>\n"
-"                Please click\n"
-"                <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to create\n"
-"                some menus.\n"
-"              "
+"              No menus are available. <br />\n"
+"              <i class=\"fa fa-arrow-left\"></i>\n"
+"              Please click\n"
+"              <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to create some\n"
+"              menus.\n"
+"            "
 msgstr ""
 "\n"
 "                لا توجد قوائم متاحة. <br />\n"
@@ -7892,21 +8015,31 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  This menu references a missing menu.\n"
+#| "                "
 msgid ""
 "\n"
-"                  This menu references a missing menu.\n"
-"                "
+"                This menu references a missing menu.\n"
+"              "
 msgstr ""
 "\n"
 "                  تشير هذه القائمة إلى قائمة مفقودة.\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  <a href=\"%(module_url)s\">%(module_name)s</a> references a missing menu.\n"
+#| "                "
 msgid ""
 "\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a> references a missing menu.\n"
-"                "
+"                <a href=\"%(module_url)s\">%(module_name)s</a> references a\n"
+"                missing menu.\n"
+"              "
 msgstr ""
 "\n"
 "                  <a href=\"%(module_url)s\">%(module_name)s</a> تشير إلى قائمة مفقودة.\n"
@@ -7917,12 +8050,17 @@ msgid "Details:"
 msgstr "التفاصيل:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has no forms or case list.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has no forms or case list.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has no forms or case list.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7930,12 +8068,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                cannot have a training module as a parent module.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                cannot have a training module as a parent module.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              cannot have a training module as a parent module.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7943,12 +8086,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                is a training module and therefore cannot have a parent module.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                is a training module and therefore cannot have a parent module.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              is a training module and therefore cannot have a parent module.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7956,12 +8104,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has no reports.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has no reports.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has no reports.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7969,12 +8122,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses smart links but does not have a session endpoint id.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses smart links but does not have a session endpoint id.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses smart links but does not have a session endpoint id.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7982,13 +8140,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses both smart links and Parent Child Selection. These two\n"
+#| "                features are not compatible.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses both smart links and Parent Child Selection. These two\n"
-"                features are not compatible.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses both smart links and Parent Child Selection. These two\n"
+"              features are not compatible.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -7996,13 +8160,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses both smart links and a multi-select case list. These two\n"
+#| "                features are not compatible.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses both smart links and a multi-select case list. These two\n"
-"                features are not compatible.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses both smart links and a multi-select case list. These two\n"
+"              features are not compatible.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8010,13 +8180,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                loads a case from a data registry and uses a multi-select case list.\n"
+#| "                These two features are not compatible.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                loads a case from a data registry and uses a multi-select case list.\n"
-"                These two features are not compatible.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              loads a case from a data registry and uses a multi-select case\n"
+"              list. These two features are not compatible.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8025,13 +8201,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses smart links and is configured to make search input available after search.\n"
+#| "                These two features are not compatible.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses smart links and is configured to make search input available after search.\n"
-"                These two features are not compatible.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses smart links and is configured to make search input available\n"
+"              after search. These two features are not compatible.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8040,34 +8222,53 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> can not use the same \"search input instance name\" as its Parent Menu.\n"
+#| "              "
 msgid ""
 "\n"
-"              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> can not use the same \"search input instance name\" as its Parent Menu.\n"
-"              "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> can not use the\n"
+"              same \"search input instance name\" as its Parent Menu.\n"
+"            "
 msgstr ""
 "\n"
 "              لا يمكن لقائمة الحالات في <a href=\"%(module_url)s\">%(module_name)s</a> استخدام نفس \"اسم مثيل إدخال البحث\" مثل القائمة الرئيسية الخاصة بها.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> can not use the same \"search input instance name\" as its Parent Select Menu.\n"
+#| "              "
 msgid ""
 "\n"
-"              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> can not use the same \"search input instance name\" as its Parent Select Menu.\n"
-"              "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> can not use the\n"
+"              same \"search input instance name\" as its Parent Select Menu.\n"
+"            "
 msgstr ""
 "\n"
 "              لا يمكن لقائمة الحالات في <a href=\"%(module_url)s\">%(module_name)s</a> استخدام نفس \"اسم مثيل إدخال البحث\" مثل قائمة الاختيار الرئيسية الخاصة بها.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> uses both multi-select auto select and \"Clearing search terms resets search results\".\n"
+#| "              These two features are not compatible.\n"
+#| "              "
 msgid ""
 "\n"
-"              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> uses both multi-select auto select and \"Clearing search terms resets search results\".\n"
-"              These two features are not compatible.\n"
-"              "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> uses both\n"
+"              multi-select auto select and \"Clearing search terms resets search\n"
+"              results\". These two features are not compatible.\n"
+"            "
 msgstr ""
 "\n"
 "              تستخدم قائمة الحالات في <a href=\"%(module_url)s\">%(module_name)s</a> كل من التحديد التلقائي المتعدد و\"إعادة تعيين مصطلحات البحث تعيد تعيين نتائج البحث\".\n"
@@ -8075,13 +8276,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses \"Display only forms\" and is also configured with\n"
+#| "                \"make search input available after search\". This workflow is unsupported.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses \"Display only forms\" and is also configured with\n"
-"                \"make search input available after search\". This workflow is unsupported.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses \"Display only forms\" and is also configured with \"make search\n"
+"              input available after search\". This workflow is unsupported.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8090,23 +8297,34 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The case hierarchy for <a href=\"%(module_url)s\">%(module_name)s</a> contains a circular reference.\n"
+#| "              "
 msgid ""
 "\n"
-"                The case hierarchy for <a href=\"%(module_url)s\">%(module_name)s</a> contains a circular reference.\n"
-"              "
+"              The case hierarchy for\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> contains a\n"
+"              circular reference.\n"
+"            "
 msgstr ""
 "\n"
 "                تحتوي تسلسل الحالات لـ <a href=\"%(module_url)s\">%(module_name)s</a> على مرجع دائري.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses cases but doesn't have a case type defined.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses cases but doesn't have a case type defined.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses cases but doesn't have a case type defined.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8114,14 +8332,24 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                You have selected the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
+#| "                as the case registration form for <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
+#| "                This form is not a registration form. You need to select a form which opens a case and\n"
+#| "                does not update an existing case. Please select a different form.\n"
+#| "              "
 msgid ""
 "\n"
-"                You have selected the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
-"                as the case registration form for <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"                This form is not a registration form. You need to select a form which opens a case and\n"
-"                does not update an existing case. Please select a different form.\n"
-"              "
+"              You have selected the\n"
+"              <a href=\"%(form_url)s\">%(form_name)s</a> form as the case\n"
+"              registration form for\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>. This form is not\n"
+"              a registration form. You need to select a form which opens a case\n"
+"              and does not update an existing case. Please select a different\n"
+"              form.\n"
+"            "
 msgstr ""
 "\n"
 "                لقد قمت باختيار النموذج <a href=\"%(form_url)s\">%(form_name)s</a>\n"
@@ -8131,13 +8359,22 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                You have selected the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
+#| "                as the case list form for <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
+#| "                To select a followup form as case list form, the module must use the Select Parent First workflow and the form must follow up on the parent case type.\n"
+#| "              "
 msgid ""
 "\n"
-"                You have selected the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
-"                as the case list form for <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"                To select a followup form as case list form, the module must use the Select Parent First workflow and the form must follow up on the parent case type.\n"
-"              "
+"              You have selected the\n"
+"              <a href=\"%(form_url)s\">%(form_name)s</a> form as the case list\n"
+"              form for <a href=\"%(module_url)s\">%(module_name)s</a>. To\n"
+"              select a followup form as case list form, the module must use the\n"
+"              Select Parent First workflow and the form must follow up on the\n"
+"              parent case type.\n"
+"            "
 msgstr ""
 "\n"
 "                لقد قمت باختيار النموذج <a href=\"%(form_url)s\">%(form_name)s</a>\n"
@@ -8146,13 +8383,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The form you have selected as the case registration form for\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a> does not exist.\n"
+#| "                Please select another form.\n"
+#| "              "
 msgid ""
 "\n"
-"                The form you have selected as the case registration form for\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> does not exist.\n"
-"                Please select another form.\n"
-"              "
+"              The form you have selected as the case registration form for\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> does not exist.\n"
+"              Please select another form.\n"
+"            "
 msgstr ""
 "\n"
 "                النموذج الذي اخترته كنموذج تسجيل الحالات لـ\n"
@@ -8161,13 +8404,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                There are references to reports that are deleted in\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
+#| "                You may re-save <a href=\"%(module_url)s\">%(module_name)s</a> to delete them.\n"
+#| "              "
 msgid ""
 "\n"
-"                There are references to reports that are deleted in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"                You may re-save <a href=\"%(module_url)s\">%(module_name)s</a> to delete them.\n"
-"              "
+"              There are references to reports that are deleted in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>. You may re-save\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> to delete them.\n"
+"            "
 msgstr ""
 "\n"
 "                هناك إشارات إلى تقارير تم حذفها في\n"
@@ -8176,13 +8425,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                There are multiple reports with the same report code in\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
+#| "                These codes must be unique.\n"
+#| "              "
 msgid ""
 "\n"
-"                There are multiple reports with the same report code in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"                These codes must be unique.\n"
-"              "
+"              There are multiple reports with the same report code in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>. These codes must\n"
+"              be unique.\n"
+"            "
 msgstr ""
 "\n"
 "                هناك تقارير متعددة بنفس رمز التقرير في\n"
@@ -8191,24 +8446,35 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The filter for <a href=\"%(module_url)s\">%(module_name)s</a> has errors.\n"
+#| "              "
 msgid ""
 "\n"
-"                The filter for <a href=\"%(module_url)s\">%(module_name)s</a> has errors.\n"
-"              "
+"              The filter for\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> has errors.\n"
+"            "
 msgstr ""
 "\n"
 "                يحتوي الفلتر الخاص بـ <a href=\"%(module_url)s\">%(module_name)s</a> على أخطاء.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                Display Condition has syntax errors\n"
+#| "                in the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
+#| "                in <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
+#| "              "
 msgid ""
 "\n"
-"                Display Condition has syntax errors\n"
-"                in the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
-"                in <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"              "
+"              Display Condition has syntax errors in the\n"
+"              <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
+"            "
 msgstr ""
 "\n"
 "                يوجد أخطاء في بناء جملة شرط العرض\n"
@@ -8217,13 +8483,21 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                loads different case types from the other forms. All forms in a case list that has a case registration form\n"
+#| "                selected must load the same case types.\n"
+#| "              "
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                loads different case types from the other forms. All forms in a case list that has a case registration form\n"
-"                selected must load the same case types.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              loads different case types from the other forms. All forms in a\n"
+"              case list that has a case registration form selected must load the\n"
+"              same case types.\n"
+"            "
 msgstr ""
 "\n"
 "                النموذج <a href=\"%(form_url)s\">%(form_name)s</a> في <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8232,12 +8506,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                must update a case. All forms in a case list that has a case registration form selected must update a case.\n"
+#| "              "
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                must update a case. All forms in a case list that has a case registration form selected must update a case.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              must update a case. All forms in a case list that has a case\n"
+"              registration form selected must update a case.\n"
+"            "
 msgstr ""
 "\n"
 "                يجب على النموذج <a href=\"%(form_url)s\">%(form_name)s</a> في <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8245,13 +8526,21 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                can only load or update a single case and its parents. All forms in a case list that\n"
+#| "                has a case registration form selected can only update a single case and its parents.\n"
+#| "              "
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                can only load or update a single case and its parents. All forms in a case list that\n"
-"                has a case registration form selected can only update a single case and its parents.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              can only load or update a single case and its parents. All forms\n"
+"              in a case list that has a case registration form selected can only\n"
+"              update a single case and its parents.\n"
+"            "
 msgstr ""
 "\n"
 "                يمكن للنموذج <a href=\"%(form_url)s\">%(form_name)s</a> في <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8260,13 +8549,21 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form loads a different case type than\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>. All forms in a case list that has a case registration form\n"
+#| "                selected must load a case of the same type as the case list.\n"
+#| "              "
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form loads a different case type than\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>. All forms in a case list that has a case registration form\n"
-"                selected must load a case of the same type as the case list.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form loads a\n"
+"              different case type than\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>. All forms in a\n"
+"              case list that has a case registration form selected must load a\n"
+"              case of the same type as the case list.\n"
+"            "
 msgstr ""
 "\n"
 "                النموذج <a href=\"%(form_url)s\">%(form_name)s</a> يقوم بتحميل نوع حالة مختلف عن\n"
@@ -8275,14 +8572,23 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                loads a case with a different case tag to the other forms in the case list.\n"
+#| "                All forms in a case list that has a case registration form selected must use the same case tag.\n"
+#| "                Expected case tag: <strong>%(expected_tag)s</strong>\n"
+#| "              "
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                loads a case with a different case tag to the other forms in the case list.\n"
-"                All forms in a case list that has a case registration form selected must use the same case tag.\n"
-"                Expected case tag: <strong>%(expected_tag)s</strong>\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> loads a case with\n"
+"              a different case tag to the other forms in the case list. All\n"
+"              forms in a case list that has a case registration form selected\n"
+"              must use the same case tag. Expected case tag:\n"
+"              <strong>%(expected_tag)s</strong>\n"
+"            "
 msgstr ""
 "\n"
 "                النموذج <a href=\"%(form_url)s\">%(form_name)s</a> في <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8292,13 +8598,21 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses a details screen from another case list. All forms in a case list that has a case\n"
+#| "                registration form selected must use the details screen from that case list.\n"
+#| "              "
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses a details screen from another case list. All forms in a case list that has a case\n"
-"                registration form selected must use the details screen from that case list.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses a details screen from another case list. All forms in a case\n"
+"              list that has a case registration form selected must use the\n"
+"              details screen from that case list.\n"
+"            "
 msgstr ""
 "\n"
 "                النموذج <a href=\"%(form_url)s\">%(form_name)s</a> في <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8307,12 +8621,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Case List has invalid filter xpath <code>%(error_filter)s</code> in\n"
+#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                "
 msgid ""
 "\n"
-"                  Case List has invalid filter xpath <code>%(error_filter)s</code> in\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                "
+"                Case List has invalid filter xpath\n"
+"                <code>%(error_filter)s</code> in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
 msgstr ""
 "\n"
 "                  تحتوي قائمة الحالات على فلتر xpath غير صالح <code>%(error_filter)s</code> في\n"
@@ -8320,12 +8640,17 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Case List has blank filter in\n"
+#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                "
 msgid ""
 "\n"
-"                  Case List has blank filter in\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                "
+"                Case List has blank filter in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
 msgstr ""
 "\n"
 "                  تحتوي قائمة الحالات على فلتر فارغ في\n"
@@ -8333,12 +8658,18 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Case List has invalid sort field <code>%(error_field)s</code> in\n"
+#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                "
 msgid ""
 "\n"
-"                  Case List has invalid sort field <code>%(error_field)s</code> in\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                "
+"                Case List has invalid sort field\n"
+"                <code>%(error_field)s</code> in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
 msgstr ""
 "\n"
 "                  تحتوي قائمة الحالات على حقل ترتيب غير صالح <code>%(error_field)s</code> في\n"
@@ -8346,12 +8677,17 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Case List has blank sort field in\n"
+#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                "
 msgid ""
 "\n"
-"                  Case List has blank sort field in\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                "
+"                Case List has blank sort field in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
 msgstr ""
 "\n"
 "                  تحتوي قائمة الحالات على حقل ترتيب فارغ في\n"
@@ -8359,13 +8695,19 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The case list in\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has an invalid case tile configuration. Reason: %(error_reason)s\n"
+#| "              "
 msgid ""
 "\n"
-"                The case list in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has an invalid case tile configuration. Reason: %(error_reason)s\n"
-"              "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has an invalid case tile configuration. Reason: %(error_reason)s\n"
+"            "
 msgstr ""
 "\n"
 "                تحتوي قائمة الحالات في\n"
@@ -8374,13 +8716,20 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The case list in\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has an address popup configuration that should be moved to case detail.\n"
+#| "              "
 msgid ""
 "\n"
-"                The case list in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has an address popup configuration that should be moved to case detail.\n"
-"              "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has an address popup configuration that should be moved to case\n"
+"              detail.\n"
+"            "
 msgstr ""
 "\n"
 "                تحتوي قائمة الحالات في\n"
@@ -8389,13 +8738,20 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                The case list in\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has an invalid clickable icon configuration. Reason: %(error_reason)s\n"
+#| "              "
 msgid ""
 "\n"
-"                The case list in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has an invalid clickable icon configuration. Reason: %(error_reason)s\n"
-"              "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has an invalid clickable icon configuration. Reason:\n"
+"              %(error_reason)s\n"
+"            "
 msgstr ""
 "\n"
 "                تحتوي قائمة الحالات في\n"
@@ -8404,13 +8760,19 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                Shadow module\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                doesn't have a source module specified.\n"
+#| "              "
 msgid ""
 "\n"
-"                Shadow module\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                doesn't have a source module specified.\n"
-"              "
+"              Shadow module\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              doesn't have a source module specified.\n"
+"            "
 msgstr ""
 "\n"
 "                الوحدة الظلية\n"
@@ -8419,12 +8781,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                uses parent case selection but doesn't have a parent case list specified.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses parent case selection but doesn't have a parent case list specified.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses parent case selection but doesn't have a parent case list\n"
+"              specified.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8432,43 +8800,64 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                The app's parent child case selection graph contains a cycle.\n"
+#| "              "
 msgid ""
 "\n"
-"                The app's parent child case selection graph contains a cycle.\n"
-"              "
+"              The app's parent child case selection graph contains a cycle.\n"
+"            "
 msgstr ""
 "\n"
 "                يحتوي مخطط اختيار الحالة الأصلية والفرعية للتطبيق على حلقة مغلقة.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                The app's parent child graph contains a cycle.\n"
+#| "              "
 msgid ""
 "\n"
-"                The app's parent child graph contains a cycle.\n"
-"              "
+"              The app's parent child graph contains a cycle.\n"
+"            "
 msgstr ""
 "\n"
 "                يحتوي مخطط الأصل والفرع للتطبيق على حلقة مغلقة.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                A menu points to an unknown Parent Menu.\n"
+#| "              "
 msgid ""
 "\n"
-"                A menu points to an unknown Parent Menu.\n"
-"              "
+"              A menu points to an unknown Parent Menu.\n"
+"            "
 msgstr ""
 "\n"
 "                تشير قائمة إلى قائمة أصلية غير معروفة.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                Case List has invalid location reference <code>%(property)s</code>.\n"
+#| "                Details: %(details)s\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "              "
 msgid ""
 "\n"
-"                Case List has invalid location reference <code>%(property)s</code>.\n"
-"                Details: %(details)s\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"              "
+"              Case List has invalid location reference\n"
+"              <code>%(property)s</code>. Details: %(details)s\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"            "
 msgstr ""
 "\n"
 "                تحتوي قائمة الحالات على مرجع موقع غير صالح <code>%(property)s</code>.\n"
@@ -8477,13 +8866,20 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                Case List uses an instance that is only available for case search <code>%(property)s</code>.\n"
+#| "                Details: The %(details)s instance(s) are only available in case lists using case search.\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "              "
 msgid ""
 "\n"
-"                Case List uses an instance that is only available for case search <code>%(property)s</code>.\n"
-"                Details: The %(details)s instance(s) are only available in case lists using case search.\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"              "
+"              Case List uses an instance that is only available for case search\n"
+"              <code>%(property)s</code>. Details: The %(details)s\n"
+"              instance(s) are only available in case lists using case search.\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"            "
 msgstr ""
 "\n"
 "                تستخدم قائمة الحالات مثيلاً متاحاً فقط للبحث في الحالات <code>%(property)s</code>.\n"
@@ -8492,57 +8888,87 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                One or more forms are invalid: check all your forms for error messages.\n"
+#| "              "
 msgid ""
 "\n"
-"                One or more forms are invalid: check all your forms for error messages.\n"
-"              "
+"              One or more forms are invalid: check all your forms for error\n"
+"              messages.\n"
+"            "
 msgstr ""
 "\n"
 "                نموذج أو أكثر غير صالح: يرجى التحقق من جميع النماذج بحثاً عن رسائل الخطأ.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  You have two forms with the xmlns \"%(xmlns)s\"\n"
+#| "                "
 msgid ""
 "\n"
-"                  You have two forms with the xmlns \"%(xmlns)s\"\n"
-"                "
+"                You have two forms with the xmlns \"%(xmlns)s\"\n"
+"              "
 msgstr ""
 "\n"
 "                  لديك نموذجين بنفس xmlns \"%(xmlns)s\"\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                Multimedia case property \"%(path)s\" is not supported on apps on or before v2.5.\n"
+#| "              "
 msgid ""
 "\n"
-"                Multimedia case property \"%(path)s\" is not supported on apps on or before v2.5.\n"
-"              "
+"              Multimedia case property \"%(path)s\" is not supported on apps on\n"
+"              or before v2.5.\n"
+"            "
 msgstr ""
 "\n"
 "                خاصية الحالة متعددة الوسائط \"%(path)s\" غير مدعومة في التطبيقات على الإصدار 2.5 أو أقدم.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                One of your languages is empty. Check your <a href=\"%(app_url)s\">app settings</a>.\n"
+#| "              "
 msgid ""
 "\n"
-"                One of your languages is empty. Check your <a href=\"%(app_url)s\">app settings</a>.\n"
-"              "
+"              One of your languages is empty. Check your\n"
+"              <a href=\"%(app_url)s\">app settings</a>.\n"
+"            "
 msgstr ""
 "\n"
 "                إحدى اللغات لديك فارغة. يرجى التحقق من <a href=\"%(app_url)s\">إعدادات التطبيق</a>.\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Your form display condition for form <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
+#| "                  but cases are not available for this form. Please either remove the case reference or (1) make sure\n"
+#| "                  that the case list is set to display the case list first and then form, and (2) make sure that all forms in\n"
+#| "                  this case list update or close a case (which means registration forms must go in a different case list).\n"
+#| "                "
 msgid ""
 "\n"
-"                  Your form display condition for form <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-"                  but cases are not available for this form. Please either remove the case reference or (1) make sure\n"
-"                  that the case list is set to display the case list first and then form, and (2) make sure that all forms in\n"
-"                  this case list update or close a case (which means registration forms must go in a different case list).\n"
-"                "
+"                Your form display condition for form\n"
+"                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
+"                but cases are not available for this form. Please either remove\n"
+"                the case reference or (1) make sure that the case list is set to\n"
+"                display the case list first and then form, and (2) make sure\n"
+"                that all forms in this case list update or close a case (which\n"
+"                means registration forms must go in a different case list).\n"
+"              "
 msgstr ""
 "\n"
 "                  شرط عرض النموذج الخاص بك للنموذج <a href=\"%(form_url)s\">%(form_name)s</a> يشير إلى حالة،\n"
@@ -8552,13 +8978,23 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  You have a display condition which refers to a case, but cases are not available. Please either remove\n"
+#| "                  the case reference or (1) make sure that the case list is set to display the case list first and then form,\n"
+#| "                  and (2) make sure that all forms in this case list update or close a case (which means registration forms\n"
+#| "                  must go in a different case list).\n"
+#| "                "
 msgid ""
 "\n"
-"                  You have a display condition which refers to a case, but cases are not available. Please either remove\n"
-"                  the case reference or (1) make sure that the case list is set to display the case list first and then form,\n"
-"                  and (2) make sure that all forms in this case list update or close a case (which means registration forms\n"
-"                  must go in a different case list).\n"
-"                "
+"                You have a display condition which refers to a case, but cases\n"
+"                are not available. Please either remove the case reference or\n"
+"                (1) make sure that the case list is set to display the case list\n"
+"                first and then form, and (2) make sure that all forms in this\n"
+"                case list update or close a case (which means registration forms\n"
+"                must go in a different case list).\n"
+"              "
 msgstr ""
 "\n"
 "                  لديك شرط عرض يشير إلى حالة، لكن الحالات غير متاحة. يرجى إما إزالة مرجع الحالة أو (1) التأكد من أن قائمة الحالات\n"
@@ -8567,33 +9003,50 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Error with Practice Mobile Worker in Application Profile %(profile.name)s.\n"
+#| "                "
 msgid ""
 "\n"
-"                  Error with Practice Mobile Worker in Application Profile %(profile.name)s.\n"
-"                "
+"                Error with Practice Mobile Worker in Application Profile\n"
+"                %(profile.name)s.\n"
+"              "
 msgstr ""
 "\n"
 "                  خطأ في عامل الجوال التجريبي في ملف تعريف التطبيق %(profile.name)s.\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Error with Practice Mobile Worker in Application Settings.\n"
+#| "                "
 msgid ""
 "\n"
-"                  Error with Practice Mobile Worker in Application Settings.\n"
-"                "
+"                Error with Practice Mobile Worker in Application Settings.\n"
+"              "
 msgstr ""
 "\n"
 "                  خطأ في عامل الجوال التجريبي في إعدادات التطبيق.\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Your form display condition for form <a href=\"%(form_url)s\">%(form_name)s</a> refers to a user property,\n"
+#| "                  but your project does not use user properties. Please remove the user property reference.\n"
+#| "                "
 msgid ""
 "\n"
-"                  Your form display condition for form <a href=\"%(form_url)s\">%(form_name)s</a> refers to a user property,\n"
-"                  but your project does not use user properties. Please remove the user property reference.\n"
-"                "
+"                Your form display condition for form\n"
+"                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a user\n"
+"                property, but your project does not use user properties. Please\n"
+"                remove the user property reference.\n"
+"              "
 msgstr ""
 "\n"
 "                  شرط عرض النموذج الخاص بك للنموذج <a href=\"%(form_url)s\">%(form_name)s</a> يشير إلى خاصية مستخدم،\n"
@@ -8601,11 +9054,18 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  You have a display condition which refers to a user property, but your project does not use user properties.\n"
+#| "                  Please remove the user property reference.\n"
+#| "                "
 msgid ""
 "\n"
-"                  You have a display condition which refers to a user property, but your project does not use user properties.\n"
-"                  Please remove the user property reference.\n"
-"                "
+"                You have a display condition which refers to a user property,\n"
+"                but your project does not use user properties. Please remove the\n"
+"                user property reference.\n"
+"              "
 msgstr ""
 "\n"
 "                  لديك شرط عرض يشير إلى خاصية مستخدم، لكن مشروعك لا يستخدم خصائص المستخدم.\n"
@@ -8613,13 +9073,20 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                Your application uses a feature that is not available in your current subscription. You\n"
+#| "                can <a href=\"%(domain_url)s\">change your subscription</a>, or\n"
+#| "                remove the feature as follows.\n"
+#| "              "
 msgid ""
 "\n"
-"                Your application uses a feature that is not available in your current subscription. You\n"
-"                can <a href=\"%(domain_url)s\">change your subscription</a>, or\n"
-"                remove the feature as follows.\n"
-"              "
+"              Your application uses a feature that is not available in your\n"
+"              current subscription. You can\n"
+"              <a href=\"%(domain_url)s\">change your subscription</a>, or remove\n"
+"              the feature as follows.\n"
+"            "
 msgstr ""
 "\n"
 "                يستخدم تطبيقك ميزة غير متاحة في اشتراكك الحالي. يمكنك\n"
@@ -8628,12 +9095,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case search property\n"
+#| "                <code>%(property)s</code> that is not assigned to a group.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case search property\n"
-"                <code>%(property)s</code> that is not assigned to a group.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a> has a case search\n"
+"              property <code>%(property)s</code> that is not assigned to a\n"
+"              group.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a> لديه خاصية بحث حالة\n"
@@ -8641,12 +9114,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case search property\n"
+#| "                <code>%(property)s</code> that references an invalid instance.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case search property\n"
-"                <code>%(property)s</code> that references an invalid instance.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a> has a case search\n"
+"              property <code>%(property)s</code> that references an invalid\n"
+"              instance.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a> لديه خاصية بحث حالة\n"
@@ -8654,12 +9133,18 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case list property\n"
+#| "                that references a missing form endpoint: <code>%(column.header|trans:langs)s</code>.\n"
+#| "              "
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case list property\n"
-"                that references a missing form endpoint: <code>%(column.header|trans:langs)s</code>.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a> has a case list\n"
+"              property that references a missing form endpoint:\n"
+"              <code>%(column.header|trans:langs)s</code>.\n"
+"            "
 msgstr ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a> لديه خاصية قائمة حالات\n"
@@ -14524,6 +15009,16 @@ msgstr "إعدادات CSQL Fixture"
 msgid "Add Expression"
 msgstr "إضافة تعبير"
 
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+msgid "Fixture Inclusion in Restore Criteria"
+msgstr "تضمين التثبيت في معايير الاستعادة"
+
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#, fuzzy
+#| msgid "Add filter"
+msgid "Add Criteria"
+msgstr "إضافة عامل تصفية"
+
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
 msgstr ""
@@ -17442,10 +17937,15 @@ msgid "Create Case Type"
 msgstr "إنشاء نوع حالة"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        There was an error processing the request. Please try again.\n"
+#| "      "
 msgid ""
 "\n"
-"        There was an error processing the request. Please try again.\n"
-"      "
+"          There was an error processing the request. Please try again.\n"
+"        "
 msgstr ""
 "\n"
 "        حدث خطأ أثناء معالجة الطلب. يرجى المحاولة مرة أخرى.\n"
@@ -17485,10 +17985,15 @@ msgid "FHIR Resource Property Path"
 msgstr "مسار خاصية مورد FHIR"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+#| "            "
 msgid ""
 "\n"
-"            <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
-"            "
+"              <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+"              "
 msgstr ""
 "\n"
 "            سيتم نقل خصائص مجموعة <b data-bind=\"text: name()\"></b> إلى <b>بدون مجموعة</b>\n"
@@ -17528,12 +18033,19 @@ msgid "Deprecate"
 msgstr "إهمال"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        A case property with this name already exists.\n"
+#| "                        If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+#| "                        properties.\n"
+#| "                      "
 msgid ""
 "\n"
-"                        A case property with this name already exists.\n"
-"                        If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                        properties.\n"
-"                      "
+"                          A case property with this name already exists.\n"
+"                          If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                          properties.\n"
+"                        "
 msgstr ""
 "\n"
 "                        توجد خاصية حالة بهذا الاسم بالفعل.\n"
@@ -17553,12 +18065,19 @@ msgid "Add Case Property Group"
 msgstr "إضافة مجموعة خصائص حالة"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  A case property group with this name already exists.\n"
+#| "                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+#| "                  groups.\n"
+#| "                "
 msgid ""
 "\n"
-"                  A case property group with this name already exists.\n"
-"                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                  groups.\n"
-"                "
+"                    A case property group with this name already exists.\n"
+"                    If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                    groups.\n"
+"                  "
 msgstr ""
 "\n"
 "                  توجد مجموعة خصائص حالة بهذا الاسم بالفعل.\n"
@@ -17576,6 +18095,33 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add a new Case Type"
 msgstr "إضافة نوع حالة جديد"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+msgid "Performance warning"
+msgstr "تحذير أداء"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945812/CommCare+Messaging+Reports#Messaging-Dashboard\">Click here</a>\n"
+#| "      for more information about this dashboard.\n"
+#| "    "
+msgid ""
+"\n"
+"        See\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947182/Case+Configuration\"\n"
+"          >case configuration</a\n"
+"        >\n"
+"        documentation for more information.\n"
+"      "
+msgstr ""
+"\n"
+"      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945812/CommCare+Messaging+Reports#Messaging-Dashboard\">انقر هنا</a>\n"
+"      لمزيد من المعلومات حول لوحة المعلومات هذه.\n"
+"    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
@@ -18605,6 +19151,7 @@ msgstr "تفعيل"
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Deactivate"
@@ -21407,6 +21954,49 @@ msgstr ""
 "        <p>ستصبح الخطة الجديدة سارية المفعول في <strong>%(start_date)s</strong> وستكلف <strong>%(monthly_fee)s</strong>/شهريًا.</p>\n"
 "      "
 
+#: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
+#: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
+#| "                receive an invoice via email with bank information and\n"
+#| "                instructions for wire payment. Please include the Invoice # in\n"
+#| "                the wire payment memo or note field.\n"
+#| "                <a\n"
+#| "                  href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+#| "                  target=\"_blank\"\n"
+#| "                  >More information...</a\n"
+#| "                >\n"
+#| "              "
+msgid ""
+"\n"
+"          <p>\n"
+"            By continuing you are renewing to a Pay Annually plan and will\n"
+"            receive an invoice via email for plan fees due. <br />\n"
+"            In case you incur any on-demand fees for excess users or SMS, you\n"
+"            will receive invoices for these charges on a monthly basis. <br />\n"
+"            See\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
+"              >here</a\n"
+"            >\n"
+"            for more information about payment, cancellation, and refunds.\n"
+"          </p>\n"
+"        "
+msgstr ""
+"\n"
+"                تقبل Dimagi المدفوعات البنكية عبر ACH والتحويل البنكي. ستتلقى\n"
+"                فاتورة عبر البريد الإلكتروني مع معلومات البنك\n"
+"                وتعليمات الدفع البنكي. يرجى تضمين رقم الفاتورة في\n"
+"                مذكرة أو حقل الملاحظات الخاص بالتحويل البنكي.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+"                  target=\"_blank\"\n"
+"                  >مزيد من المعلومات...</a\n"
+"                >\n"
+"              "
+
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
@@ -21477,17 +22067,24 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid "Got questions about your plan?"
+#, fuzzy
+#| msgid "Got questions about your plan?"
+msgid "Questions about your plan?"
 msgstr "هل لديك أسئلة حول خطتك؟"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-msgid "Talk to Sales"
-msgstr "تحدث إلى قسم المبيعات"
+#, fuzzy
+#| msgid "Contacts"
+msgid "Contact us"
+msgstr "جهات الاتصال"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, fuzzy
+#| msgid "Change Plan"
+msgid "Upgrade Plan"
+msgstr "تغيير الخطة"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -21647,6 +22244,34 @@ msgstr ""
 "الصفحة التي طلبتها غير متوفرة حاليًا بسبب\n"
 "    ترحيل البيانات. يرجى المحاولة لاحقًا."
 
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    You've been added to %(domain)s.\n"
+#| "  "
+msgid "You have been deactivated from %(domain)s"
+msgstr ""
+"\n"
+"    تمت إضافتك إلى %(domain)s.\n"
+"  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      If you believe this to be in error, please contact support.\n"
+#| "    "
+msgid ""
+"If you believe this is an error, please contact your project administrator "
+"or support."
+msgstr ""
+"\n"
+"      إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع الدعم.\n"
+"    "
+
 #: corehq/apps/domain/templates/domain/bootstrap3/insufficient_privilege_notification.html
 #: corehq/apps/domain/templates/domain/bootstrap5/insufficient_privilege_notification.html
 #, python-format
@@ -21760,6 +22385,11 @@ msgstr ""
 "      أنت تقوم بتجديد اشتراك <strong>%(p)s</strong> الخاص بك.\n"
 "    "
 
+#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
+msgid "Talk to Sales"
+msgstr "تحدث إلى قسم المبيعات"
+
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
 #: corehq/apps/settings/views.py
@@ -21813,11 +22443,18 @@ msgstr "مخفض"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              This plan will be downgrading to\n"
+#| "              <span data-bind=\"text: oNextPlan\"></span> on\n"
+#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
+#| "            "
 msgid ""
 "\n"
 "              This plan will be downgrading to\n"
-"              <span data-bind=\"text: oNextPlan\"></span> on\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextPlan\"></span> on\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 "\n"
@@ -21828,10 +22465,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              This plan will be pausing on<br />\n"
+#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
+#| "            "
 msgid ""
 "\n"
 "              This plan will be pausing on<br />\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 "\n"
@@ -21937,10 +22580,17 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Your subscription will be pausing on\n"
+#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+#| "        unless you select a different plan above.\n"
+#| "      "
 msgid ""
 "\n"
 "        Your subscription will be pausing on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -21952,11 +22602,19 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Your subscription will be downgrading to\n"
+#| "        <span data-bind=\"text: oNextSubscription\"></span> on\n"
+#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+#| "        unless you select a different plan above.\n"
+#| "      "
 msgid ""
 "\n"
 "        Your subscription will be downgrading to\n"
-"        <span data-bind=\"text: oNextSubscription\"></span> on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
+"        <span data-bind=\"text: nextSubscription\"></span> on\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -21966,6 +22624,22 @@ msgstr ""
 "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
 "        ما لم تختر خطة مختلفة أعلاه.\n"
 "      "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+msgid ""
+"\n"
+"        Questions about which software plan is right for you?\n"
+"      "
+msgstr ""
+"\n"
+"        هل لديك أسئلة حول أي خطة برمجيات تناسبك؟\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+msgid "Talk with our team"
+msgstr "تحدث مع فريقنا"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
@@ -23451,6 +24125,12 @@ msgstr "تم إرسال طلبك إلى Dimagi. سنتابع معك قريباً
 #: corehq/apps/domain/views/accounting.py
 msgid "Back to my Subscription"
 msgstr "العودة إلى اشتراكي"
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy
+#| msgid "Select Plan"
+msgid "Back to Select Plan"
+msgstr "اختر خطة"
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Confirm Subscription"
@@ -35824,10 +36504,16 @@ msgid "Issue with registration"
 msgstr "مشكلة في التسجيل"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/submit_errors.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Please check that you have JavaScript enabled to use this site!\n"
+#| "      We found the following issues:\n"
+#| "    "
 msgid ""
 "\n"
-"      Please check that you have JavaScript enabled to use this site!\n"
-"      We found the following issues:\n"
+"      Please check that you have JavaScript enabled to use this site! We found\n"
+"      the following issues:\n"
 "    "
 msgstr ""
 "\n"
@@ -48979,6 +49665,7 @@ msgid "Not Linked"
 msgstr "مرتبط"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Reactivate"
 msgstr "إعادة تفعيل"
 
@@ -49920,6 +50607,18 @@ msgid "Current Users"
 msgstr "المستخدمون الحاليون"
 
 #: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Show Deactivated Web Users"
+msgstr "عرض مستخدمي الأجهزة المحمولة المعطلين"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Show Active Web Users"
+msgstr "عدد المستخدمين النشطين"
+
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Loading Users..."
 msgstr "جاري تحميل المستخدمين..."
 
@@ -49942,6 +50641,106 @@ msgstr "هل أنت متأكد أنك تريد إزالة عضوية هذا ال
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Membership"
 msgstr "العضوية"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Distance from current location"
+msgid "Deactivate from the current project: "
+msgstr "المسافة من الموقع الحالي"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>deactivate</strong> this web user?\n"
+"                            "
+msgstr ""
+"\n"
+"                          هل أنت متأكد أنك تريد <strong>حذف</strong> هذه القاعدة؟\n"
+"                        "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
+msgid ""
+"\n"
+"                              Deactivated web users will not be able to log into the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+"\n"
+"                                ملاحظة: التثبيت دون اتصال يقوم تلقائيًا بتثبيت جميع الوسائط المتعددة\n"
+"                                المضمنة في النموذج الخاص بك. جميع التحديثات البعيدة اللاحقة ستتضمن أيضًا\n"
+"                                الوسائط المتعددة، مما قد يتطلب الكثير من البيانات. راجع\n"
+"                                <a href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\\\">\n"
+"                                  موقع المساعدة\n"
+"                                </a> لمزيد من المعلومات.\n"
+"                              "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid "Activate your CommCare project"
+msgid "Reactivate in the current project: "
+msgstr "فعّل مشروعك على CommCare"
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>reactivate</strong> this web user?\n"
+"                            "
+msgstr ""
+"\n"
+"                          هل أنت متأكد أنك تريد <strong>حذف</strong> هذه القاعدة؟\n"
+"                        "
+
+#: corehq/apps/users/templates/users/web_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
+msgid ""
+"\n"
+"                              Deactivated web users are not able to log into the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+"\n"
+"                                ملاحظة: التثبيت دون اتصال يقوم تلقائيًا بتثبيت جميع الوسائط المتعددة\n"
+"                                المضمنة في النموذج الخاص بك. جميع التحديثات البعيدة اللاحقة ستتضمن أيضًا\n"
+"                                الوسائط المتعددة، مما قد يتطلب الكثير من البيانات. راجع\n"
+"                                <a href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\\\">\n"
+"                                  موقع المساعدة\n"
+"                                </a> لمزيد من المعلومات.\n"
+"                              "
 
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Pending Invitations"

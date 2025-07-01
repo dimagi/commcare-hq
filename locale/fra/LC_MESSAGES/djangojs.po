@@ -1682,6 +1682,18 @@ msgstr ""
 "Vous avez des modifications non enregistrées pour ce type de cas. Êtes-vous "
 "sûr·e de vouloir continuer ?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+"Vous avez enregistré <%- count %> propriétés de dossier dans le dossier "
+"« <%- type %> ». Nous recommandons de ne pas dépasser <%- limit %> "
+"propriétés de dossier par type de dossier, sinon vous pourriez rencontrer "
+"des problèmes de performance lors de la collecte et de l’analyse des "
+"données."
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js

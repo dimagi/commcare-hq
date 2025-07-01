@@ -166,7 +166,6 @@
     {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict'|static %}
 
     {% if demo_workflow_ab_v2 %}
-      {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
       {% initial_analytics_data 'hubspot.demoABv2' demo_workflow_ab_v2 %}
     {% endif %}
 
@@ -189,7 +188,6 @@
     </div>
 
     {% include 'analytics/initial/all.html' %}
-    {% include 'analytics/initial/drift.html' %}
 
     <div class="initial-analytics-data hide">
       {% block initial_analytics_data %}

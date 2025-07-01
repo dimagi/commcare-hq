@@ -53,6 +53,7 @@ from ..const import (
 from ..models import (
     CaseRepeater,
     DataSourceRepeater,
+    DataSourceUpdate,
     FormRepeater,
     LocationRepeater,
     Repeater,
@@ -386,7 +387,8 @@ class RepeaterTest(BaseRepeaterTest):
 
     def test_automatic_cancel_repeat_record(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
-        rr = self.case_repeater.register(case)
+        self.case_repeater.register(case)
+        rr = self.case_repeater.repeat_records.last()
         # Fetch the revision that was updated:
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(1, repeat_record.num_attempts)
@@ -750,7 +752,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 503  # Fail and retry
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
         with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
             state_or_none = rr.fire()
 
@@ -762,7 +765,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def test_payload_exception_on_register(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch.object(Repeater, "get_payload", side_effect=Exception('Payload error')):
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.InvalidPayload)
@@ -771,7 +775,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def test_failure(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=RequestException('Boom!')):
-            rr = self.repeater.register(case)  # calls repeat_record.fire()
+            self.repeater.register(case)  # calls repeat_record.fire()
+            rr = self.repeater.repeat_records.last()
 
         # Fetch the repeat_record revision that was updated
         repeat_record = RepeatRecord.objects.get(id=rr.id)
@@ -781,7 +786,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def test_unexpected_failure(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.failure_reason, 'Internal Server Error')
@@ -792,7 +798,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 200
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.Success)
@@ -802,7 +809,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 204
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.Empty)
@@ -917,7 +925,8 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
             mock_request.return_value.status_code = 200
             mock_manager.return_value = 'MockAuthManager'
-            rr = self.repeater.register(case)
+            self.repeater.register(case)
+            rr = self.repeater.repeat_records.last()
 
             repeat_record = RepeatRecord.objects.get(id=rr.id)
             headers = self.repeater.get_headers(repeat_record)
@@ -1322,66 +1331,87 @@ class TestGetRetryInterval(SimpleTestCase):
 class DataSourceRepeaterTest(BaseRepeaterTest):
     domain = "user-reports"
 
-    def setUp(self):
-        super().setUp()
-        self.config = get_sample_data_source()
-        self.config.save()
-        self.addCleanup(self.config.delete)
-        self.adapter = get_indicator_adapter(self.config)
-        self.adapter.build_table()
-        self.addCleanup(self.adapter.drop_table)
-        self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.data_source = get_sample_data_source()
+        cls.data_source.save()
+        cls.addClassCleanup(cls.data_source.delete)
+        cls.adapter = get_indicator_adapter(cls.data_source)
+        cls.adapter.build_table()
+        cls.addClassCleanup(cls.adapter.drop_table)
+        cls.pillow = _get_pillow([cls.data_source], processor_chunk_size=100)
 
-        self.connx = ConnectionSettings.objects.create(
-            domain=self.domain,
+        cls.connx = ConnectionSettings.objects.create(
+            domain=cls.domain,
             url="case-repeater-url",
         )
-        self.data_source_id = self.config._id
-        self.repeater = DataSourceRepeater(
-            domain=self.domain,
-            connection_settings_id=self.connx.id,
-            data_source_id=self.data_source_id,
+        cls.data_source_id = cls.data_source._id
+        cls.repeater = DataSourceRepeater(
+            domain=cls.domain,
+            connection_settings_id=cls.connx.id,
+            data_source_id=cls.data_source_id,
         )
-        self.repeater.save()
+        cls.repeater.save()
 
     def test_datasource_is_subscribed_to(self):
-        self.assertTrue(self.repeater.datasource_is_subscribed_to(self.domain, self.data_source_id))
-        self.assertFalse(self.repeater.datasource_is_subscribed_to("malicious-domain", self.data_source_id))
+        assert self.repeater.datasource_is_subscribed_to(
+            self.domain,
+            self.data_source_id,
+        )
+        assert self.repeater.datasource_is_subscribed_to(
+            "malicious-domain",
+            self.data_source_id
+        ) is False
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_payload(self):
+        doc_id, expected_indicators = self._create_payload()
+        datasource_update = DataSourceUpdate.objects.first()
+        assert datasource_update.data_source_id.hex == self.data_source_id
+        assert datasource_update.doc_ids == [doc_id]
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_payload_format(self):
-        sample_doc, expected_indicators = self._create_log_and_repeat_record()
-        later = datetime.utcnow() + timedelta(hours=50)
-        repeat_record = RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later).first()
-        json_payload = self.repeater.get_payload(repeat_record)
-        payload = json.loads(json_payload)
+        doc_id, expected_indicators = self._create_payload()
+        repeat_record = self.repeater.repeat_records_ready.first()
+        payload_str = repeat_record.get_payload()
+        payload = json.loads(payload_str)
 
-        # Clean expected_indicators:
-        # expected_indicators includes 'repeat_iteration'
-        del expected_indicators['repeat_iteration']
-        # Decimal expected indicator is not rounded, and will not match
-        del expected_indicators['estimate']
-        del payload['data'][0]['estimate']
+        # assert payload == {
+        #     'data_source_id': self.data_source._id,
+        #     'doc_id': '',
+        #     'doc_ids': [doc_id],
+        #     'data': [expected_indicators],
+        # }
+        # ^^^ kinda like this, but accommodates the value of "estimate":
+        assert set(payload.keys()) == {'data_source_id', 'doc_id', 'doc_ids', 'data'}
+        assert payload['data_source_id'] == self.data_source._id
+        assert payload['doc_id'] == ''
+        assert payload['doc_ids'] == [doc_id]
+        assert len(payload['data']) == 1
+        for key, value in payload['data'][0].items():
+            if key == 'estimate':
+                # '2.3000000000000000' == '2.2999999999...1893310546875'
+                assert float(value) == float(expected_indicators[key])
+            else:
+                assert value == expected_indicators[key]
 
-        self.assertEqual(payload, {
-            'data_source_id': self.data_source_id,
-            'doc_id': sample_doc['_id'],
-            'data': [expected_indicators]
-        })
-
-    def _create_log_and_repeat_record(self):
+    def _create_payload(self):
         from corehq.apps.userreports.tests.test_pillow import _save_sql_case
+
         with patch('corehq.apps.userreports.specs.datetime') as datetime_mock:
-            datetime_mock.utcnow.return_value = self.fake_time_now
-            sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+            fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
+            datetime_mock.utcnow.return_value = fake_time_now
+            sample_doc, expected_indicators = get_sample_doc_and_indicators(fake_time_now)
             since = self.pillow.get_change_feed().get_latest_offsets()
             _save_sql_case(sample_doc)
             self.pillow.process_changes(since=since, forever=False)
+
         # Serialize and deserialize to get objects as strings
         json_indicators = json.dumps(expected_indicators, cls=CommCareJSONEncoder)
         expected_indicators = json.loads(json_indicators)
-        return sample_doc, expected_indicators
+        return sample_doc['_id'], expected_indicators
 
 
 class TestSetBackoff(TestCase):

@@ -2,8 +2,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import RMI from "jquery.rmi/jquery.rmi";
-import kissmetrics from "analytix/js/kissmetrix";
-import appcues from "analytix/js/appcues";
+import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import intlTelInput from "intl-tel-input/build/js/intlTelInput.min";
 import "jquery-ui/ui/effect";
@@ -24,7 +23,7 @@ module.resetEmailFeedback = function (isValidating) {
         "Expects boolean isValidating. " + isValidating);
 };
 module.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
-    kissmetrics.track.event("Clicked Create Account");
+    noopMetrics.track.event("Clicked Create Account");
 };
 module.getPhoneNumberFn = function () {
     // number to return phone number
@@ -36,34 +35,6 @@ module.submitSuccessAnalytics = function () {
 module.onModuleLoad = function () {
     throw new Error("overwrite onModule load to remove loading indicators");
 };
-
-// Can't set up analytics until the values for the A/B tests are ready
-kissmetrics.whenReadyAlways(function () {
-    kissmetrics.track.event("Viewed CommCare signup page");
-
-    module.submitSuccessAnalytics = function (data) {
-        kissmetrics.track.event("Account Creation was Successful");
-
-        var appcuesEvent = "Assigned user to Appcues test",
-            appcuesData = {
-                'Appcues test': data.appcuesAbTest,
-            };
-
-        appcues.identify(data.email, appcuesData);
-        appcues.trackEvent(appcuesEvent, appcuesData);
-
-        kissmetrics.identify(data.email);
-        kissmetrics.identifyTraits(appcuesData);
-        kissmetrics.track.event(appcuesEvent, appcuesData);
-
-        if (data.deniedEmail) {
-            kissmetrics.track.event("Created account after previous denial due to enterprise restricting signups", {
-                email: data.email,
-                previousAttempt: data.deniedEmail,
-            });
-        }
-    };
-});
 
 var formViewModel = function (defaults, containerSelector, steps) {
     var self = {};
@@ -114,7 +85,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
                             {
                                 success: function (result) {
                                     if (result.restrictedByDomain) {
-                                        kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
+                                        noopMetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
                                         self.deniedEmail(val);
                                     }
 
@@ -244,7 +215,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
 
     self.currentStep.subscribe(function (newValue) {
         if (newValue === 1) {
-            kissmetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
+            noopMetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
         }
     });
 
@@ -415,7 +386,6 @@ var formViewModel = function (defaults, containerSelector, steps) {
                         module.submitSuccessAnalytics(_.extend({}, submitData, {
                             email: self.email(),
                             deniedEmail: self.deniedEmail(),
-                            appcuesAbTest: response.appcues_ab_test,
                         }));
                         if (self.isSso()) {
                             setTimeout(function () {

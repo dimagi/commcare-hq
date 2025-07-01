@@ -8,7 +8,7 @@ from corehq.pillows.utils import get_all_expected_es_indices
 
 
 @es_test
-@override_settings(IS_SAAS_ENVIRONMENT=True)
+@override_settings(ENABLE_BHA_CASE_SEARCH_ADAPTER=True)
 class ProdIndexManagementTest(SimpleTestCase):
 
     maxDiff = None  # show the entire diff for test failures
@@ -109,6 +109,43 @@ EXPECTED_PROD_INDICES = [
         "index": "test_case-search-bha-2024-05-10",
         "type": "case",
         "hq_index_name": "case_search_bha",
+        "meta": {
+            "settings": {
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": [
+                                "lowercase"
+                            ]
+                        },
+                        "phonetic": {
+                            "filter": [
+                                "standard",
+                                "lowercase",
+                                "soundex"
+                            ],
+                            "tokenizer": "standard"
+                        }
+                    },
+                    "filter": {
+                        "soundex": {
+                            "replace": "true",
+                            "type": "phonetic",
+                            "encoder": "soundex"
+                        }
+                    }
+                },
+                "number_of_replicas": 0,
+                "number_of_shards": 1,
+            }
+        }
+    },
+    {
+        "index": "test_case-search-cc-perf-2025-06-19",
+        "type": "case",
+        "hq_index_name": "case_search_cc_perf",
         "meta": {
             "settings": {
                 "analysis": {

@@ -58,6 +58,7 @@ from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.toggles import (
+    DEACTIVATE_WEB_USERS,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -314,10 +315,10 @@ class BaseUserInfoForm(forms.Form):
         required=False,
         help_text=gettext_lazy(
             "<i class=\"fa fa-info-circle\"></i> "
-            "Becomes default language seen in Web Apps and reports (if applicable), "
-            "but does not affect mobile applications. "
-            "Supported languages for reports are en, fra (partial), and hin (partial)."
-        )
+            "Changes the default language seen in Web Apps and reports (if supported). "
+            "CommCare HQ supports <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>these languages</a>. "  # noqa: E501
+            "Please reach out to {support_email} if you notice any mistakes in our translations."
+        ).format(support_email=settings.SUPPORT_EMAIL),
     )
 
     def load_language(self, language_choices=None):
@@ -1640,16 +1641,15 @@ class UserFilterForm(forms.Form):
                     data_bind="checked: selected_location_only"
                 ),
                 data_bind="slideVisible: !isCrossDomain() && location_id",
-            )
+            ),
         ]
+        if DEACTIVATE_WEB_USERS.enabled(self.domain):
+            fields += ["user_active_status"]
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
             fieldset_label = _('Filter and Download Mobile Workers')
-            fields += [
-                "user_active_status",
-                crispy.Field("columns", data_bind="value: columns"),
-            ]
+            fields += [crispy.Field("columns", data_bind="value: columns")]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(

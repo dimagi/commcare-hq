@@ -72,7 +72,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
             if letter_code in CUSTOM_LANGUAGE_NAMES.keys():
                 # These are languages not installed on our machines, so localize does not understand them.
-                # Though we don't want to install these langauges, we still want to support projects
+                # Though we don't want to install these languages, we still want to support projects
                 # who want to see the name written properly.
                 name = CUSTOM_LANGUAGE_NAMES[letter_code]
             else:

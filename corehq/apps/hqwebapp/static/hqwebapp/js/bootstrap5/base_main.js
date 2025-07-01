@@ -7,11 +7,9 @@ import "hqwebapp/js/bootstrap5/sticky_tabs";
 import "hqwebapp/js/bootstrap5/main";
 import "hqwebapp/js/bootstrap5/inactivity";
 import "notifications/js/bootstrap5/notifications_service_main";
-import "analytix/js/appcues";
-import "analytix/js/drift";
 import "analytix/js/google";
 import "analytix/js/hubspot";
-import "analytix/js/kissmetrix";
+import "analytix/js/noopMetrics";
 import "analytix/js/gtx";
 import "hqwebapp/js/bootstrap5/mobile_experience_warning";
 

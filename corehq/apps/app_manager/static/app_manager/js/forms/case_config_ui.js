@@ -8,7 +8,7 @@ import privileges from "hqwebapp/js/privileges";
 import toggles from "hqwebapp/js/toggles";
 import main from "hqwebapp/js/bootstrap3/main";
 import appManager from "app_manager/js/app_manager";
-import kissmetrix from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import google from "analytix/js/google";
 
 $(function () {
@@ -92,7 +92,7 @@ $(function () {
                         self.setPropertiesMap(data.propertiesMap);
 
                         if (_(data.propertiesMap).has(self.caseType)) {
-                            kissmetrix.track.event("Saved question as a Case Property", {
+                            noopMetrics.track.event("Saved question as a Case Property", {
                                 questionsSaved: _.property(self.caseType)(data.propertiesMap).length,
                             });
                         }

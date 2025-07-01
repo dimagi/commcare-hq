@@ -13,6 +13,8 @@ from django.utils.translation import gettext as _
 
 import attr
 
+from dimagi.utils.parsing import string_to_boolean
+
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.util.metrics.const import MODULE_NAME_TAG
@@ -298,7 +300,7 @@ class CaseSearchConfig(models.Model):
     fuzzy_prefix_length = models.SmallIntegerField(blank=True, null=True, validators=[
         MinValueValidator(0), MaxValueValidator(10),
     ])
-    # See case_search_bha.py docstring for context
+    # See case_search_sub.py docstring for context
     index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
         "Name or alias of alternative index to use for case search"))
 
@@ -471,6 +473,27 @@ class CSQLFixtureExpression(models.Model):
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain, deleted=False)
+
+    @classmethod
+    def matches_user_data_criteria(cls, user_data, user_data_criteria):
+        for criteria in user_data_criteria:
+            operator = criteria['operator']
+            property_name = criteria['property_name']
+
+            value = user_data.get(property_name)
+
+            if value is None or value == '':
+                continue
+
+            try:
+                if operator == cls.MATCH_IS and not string_to_boolean(value):
+                    return False
+                elif operator == cls.MATCH_IS_NOT and string_to_boolean(value):
+                    return False
+            except ValueError:
+                continue
+
+        return True
 
     @atomic
     def soft_delete(self):

@@ -49,7 +49,7 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
@@ -155,7 +155,7 @@ from corehq.const import (
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
 )
-from corehq.motech.utils import b64_aes_decrypt
+from corehq.motech.utils import b64_aes_decrypt, b64_aes_cbc_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
@@ -1485,7 +1485,7 @@ def download_users(request, domain, user_type):
         return HttpResponseRedirect(reverse(view, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
     if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
-        track_workflow(request.couch_user.username, f'Domain filter used for {user_type} download')
+        track_workflow_noop(request.couch_user.username, f'Domain filter used for {user_type} download')
     if form.cleaned_data['columns'] == UserFilterForm.USERNAMES_COLUMN_OPTION:
         if user_type != MOBILE_USER_TYPE:
             raise AssertionError("USERNAME_COLUMN_OPTION only available for mobile users")
@@ -1577,7 +1577,12 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     @property
     @memoized
     def user_invite_hash(self):
-        return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
+        try:
+            return json.loads(b64_aes_cbc_decrypt(self.kwargs.get('user_invite_hash')))
+        except Exception:
+            # Temporarily fallback to b64_aes_decrypt if b64_aes_cbc_decrypt fails
+            # to handle existing invites
+            return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
 
     @property
     @memoized

@@ -127,7 +127,7 @@ class SystemLimit(models.Model):
                 )
 
     @classmethod
-    def for_key(cls, key, default, *, domain=''):
+    def get_limit_for_key(cls, key, default, *, domain=''):
         """
         Return the value associated with the given key, prioritizing the domain specific entry over the general one
         """
