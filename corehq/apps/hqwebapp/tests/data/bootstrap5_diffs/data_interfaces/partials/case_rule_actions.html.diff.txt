@@ -56,7 +56,7 @@
 -    <span class="help-block col-xs-8">
 +    <label class="form-label col-sm-2">{% trans "Close the case" %}</label>
 +    <span class="help-block col-sm-8">
-       <i class="fa fa-exclamation-triangle"></i>
+       <i class="fa fa-triangle-exclamation"></i>
        {% trans "All cases matching the above criteria will be closed" %}
      </span>
 @@ -79,11 +90,10 @@
