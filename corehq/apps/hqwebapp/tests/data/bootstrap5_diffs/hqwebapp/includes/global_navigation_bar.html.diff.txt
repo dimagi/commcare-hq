@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -3,195 +3,238 @@
+@@ -3,193 +3,236 @@
  {% load hq_shared_tags %}
  
  {% if request.couch_user %}
@@ -163,9 +163,7 @@
 -                <li class="dropdown-header nav-header">{% trans 'Server Location' %}</li>
 -                <li class="server-location">
 -                    {{ server_display.flag }}
--                    {% blocktrans with server_display.location_code as server_location %}
--                        {{ server_location }} Server
--                    {% endblocktrans %}
+-                    {% trans server_display.hr_name %}
 -                </li>
 -            {% endif %}
 -        </ul>
@@ -197,9 +195,7 @@
 +          <li class="dropdown-header nav-header">{% trans 'Server Location' %}</li>
 +          <li class="dropdown-item-text">
 +            {{ server_display.flag }}
-+            {% blocktrans with server_display.location_code as server_location %}
-+              {{ server_location }} Server
-+            {% endblocktrans %}
++            {% trans server_display.hr_name %}
 +          </li>
 +        {% endif %}
 +      </ul>
