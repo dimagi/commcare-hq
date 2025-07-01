@@ -175,7 +175,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
         context = super().report_context
 
         if not (self.selected_domain or self.selected_user):
-            context['warning_message'] = gettext_lazy("You must specify either a username or a domain. "
+            context['warning_message'] = _("You must specify either a username or a domain. "
                     "Requesting all audit events across all users and domains would exceed system limits.")
         elif self._is_limit_exceeded():
             context['warning_message'] = self._get_limit_exceeded_message()
@@ -183,10 +183,9 @@ class UserAuditReport(AdminReport, DatespanMixin):
         return context
 
     def _get_limit_exceeded_message(self):
-        return gettext_lazy(
-            f"Your search returned more than {self.MAX_RECORDS} records. "
-            "Please narrow down your search by selecting a specific user, domain, or a shorter date range."
-        )
+        return _("Your search returned more than {max_records} records. "
+                 "Please narrow down your search by selecting a specific user, domain, or a shorter date range."
+                 ).format(max_records=self.MAX_RECORDS)
 
 
 class UserListReport(GetParamsMixin, AdminReport):
