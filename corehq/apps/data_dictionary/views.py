@@ -6,6 +6,7 @@ from operator import attrgetter
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Count
+from django.db.models.functions import Lower
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -72,6 +73,7 @@ def data_dictionary_json_case_types(request, domain):
     queryset = CaseType.objects.filter(domain=domain).annotate(properties_count=Count('property'))
     if not request.GET.get('load_deprecated_case_types', False) == 'true':
         queryset = queryset.filter(is_deprecated=False)
+    queryset = queryset.order_by(Lower("name"))
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     geo_case_prop = get_geo_case_property(domain)
