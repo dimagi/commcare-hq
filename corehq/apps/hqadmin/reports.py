@@ -133,7 +133,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @property
     def rows(self):
-        # Either domain or user must be has a value
+        # Either domain or user must have a value
         if not (self.selected_domain or self.selected_user):
             return []
 
