@@ -155,7 +155,7 @@ from corehq.const import (
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
 )
-from corehq.motech.utils import b64_aes_decrypt
+from corehq.motech.utils import b64_aes_decrypt, b64_aes_cbc_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
@@ -1577,7 +1577,12 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     @property
     @memoized
     def user_invite_hash(self):
-        return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
+        try:
+            return json.loads(b64_aes_cbc_decrypt(self.kwargs.get('user_invite_hash')))
+        except Exception:
+            # Temporarily fallback to b64_aes_decrypt if b64_aes_cbc_decrypt fails
+            # to handle existing invites
+            return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
 
     @property
     @memoized
