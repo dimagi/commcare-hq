@@ -752,6 +752,9 @@ class SingleMembershipMixin(_AuthorizableMixin):
             raise AssertionError(f"User is not a member of {domain}")
         self.is_active = is_active
 
+    def is_active_in_any_domain(self):
+        return self.is_active
+
 
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
