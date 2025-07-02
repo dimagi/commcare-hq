@@ -445,9 +445,11 @@ class TestFlaggedPayAnnuallyPrepayInvoice(BaseInvoiceTestCase):
         )
         self.subscription.plan_version = self.plan_version
         self.subscription.save()
-        self.invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        self.create_invoices(self.invoice_date)
-        self.invoice = self.subscription.invoice_set.first()
+
+    def create_invoices(self):
+        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        super().create_invoices(invoice_date)
+        return self.subscription.invoice_set.all()
 
     def create_prepayment_invoice(self, date_due):
         yearly_subscription_cost = self.plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS
@@ -468,26 +470,27 @@ class TestFlaggedPayAnnuallyPrepayInvoice(BaseInvoiceTestCase):
         )
 
     def test_monthly_invoice_product_fully_paid(self):
-        product_line_item = self.invoice.lineitem_set.get_products().first()
-        # create a CreditLine the product_line_item will be paid with
-        self.create_product_credit(product_line_item.subtotal)
-        product_line_item.calculate_credit_adjustments()
-        product_line_item.save()
-        flagged_invoice = get_flagged_pay_annually_prepay_invoice(self.invoice)
+        prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
+        self.create_product_credit(prepay_invoice.balance)
+        invoice = self.create_invoices().first()
+        flagged_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertIsNone(flagged_invoice)
 
     def test_no_prepayment_invoice(self):
-        flagged_invoice = get_flagged_pay_annually_prepay_invoice(self.invoice)
+        invoice = self.create_invoices().first()
+        flagged_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertIsNone(flagged_invoice)
 
     def test_prepayment_invoice_not_due_yet(self):
         self.create_prepayment_invoice(datetime.date.today() + relativedelta(days=1))
-        result = get_flagged_pay_annually_prepay_invoice(self.invoice)
+        invoice = self.create_invoices().first()
+        result = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertIsNone(result)
 
     def test_matching_prepayment_invoice_exists(self):
         prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
-        result = get_flagged_pay_annually_prepay_invoice(self.invoice)
+        invoice = self.create_invoices().first()
+        result = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertEqual(result, prepay_invoice)
 
 
