@@ -8840,6 +8840,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 msgid "Warning"
 msgstr ""
 
@@ -11128,6 +11129,10 @@ msgid ""
 "      and Report an Issue if you wish to continue to work with this "
 "application.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/view_submissions_button.html
+msgid "View Submissions"
 msgstr ""
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py
@@ -15409,9 +15414,9 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
-"              <b data-bind=\"text: name()\"></b> group's properties will be "
-"moved to <b>No Group</b>\n"
-"              "
+"                    <b data-bind=\"text: name()\"></b> group's properties "
+"will be moved to <b>No Group</b>\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15448,11 +15453,11 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
-"                          A case property with this name already exists.\n"
-"                          If you don’t see it on the page, please click "
+"                            A case property with this name already exists.\n"
+"                            If you don’t see it on the page, please click "
 "‘Show Deprecated’ button to reveal deprecated\n"
-"                          properties.\n"
-"                        "
+"                            properties.\n"
+"                          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15469,9 +15474,8 @@ msgstr ""
 msgid ""
 "\n"
 "                    A case property group with this name already exists.\n"
-"                    If you don’t see it on the page, please click ‘Show "
-"Deprecated’ button to reveal deprecated\n"
-"                    groups.\n"
+"                    If you don’t see it on the page, please click ‘Show\n"
+"                    Deprecated’ button to reveal deprecated groups.\n"
 "                  "
 msgstr ""
 
@@ -17110,15 +17114,19 @@ msgid "Form Status"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid "{action_text} Cases. This may take some time..."
+msgid "Copying cases. This may take some time."
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid ""
-"Bulk Case {action_text} failed for some reason and we have noted this "
-"failure."
+msgid "Bulk case copying failed. We have logged this failure."
+msgstr ""
+
+#: corehq/apps/data_interfaces/views.py
+msgid "Reassigning cases. This may take some time."
+msgstr ""
+
+#: corehq/apps/data_interfaces/views.py
+msgid "Bulk case reassigning failed. We have logged this failure."
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py corehq/tabs/tabclasses.py
@@ -17801,6 +17809,13 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 #, python-brace-format
+msgid ""
+"Case update rule limits are only modifiable by Dimagi admins. Please reach "
+"out to {support_email} if you wish to update this setting."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+#, python-brace-format
 msgid "Unknown expression {expr}"
 msgstr ""
 
@@ -17832,6 +17847,16 @@ msgstr ""
 msgid ""
 "The user account associated with this email address cannot reset the "
 "password."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"This looks like a username. Please check your URL to be sure you are at your "
+"project's URL"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Email or Username"
 msgstr ""
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/forms.py
@@ -19965,7 +19990,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
 msgid "Password Reset"
 msgstr ""
 
@@ -26027,6 +26052,19 @@ msgstr ""
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "Request Path"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"You must specify either a username or a domain. Requesting all audit events "
+"across all users and domains would exceed system limits."
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Your search returned more than {max_records} records. Please narrow down "
+"your search by selecting a specific user, domain, or a shorter date range."
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
@@ -33115,6 +33153,12 @@ msgstr ""
 #: corehq/motech/repeaters/views/repeat_records.py
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
 msgid "Payload ID"
+msgstr ""
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Leave this blank to include all users. In that case, domain is required to "
+"limit the scope."
 msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
@@ -42293,10 +42337,13 @@ msgid "E-Mail"
 msgstr ""
 
 #: corehq/apps/users/forms.py
+#, python-brace-format
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
-"Apps and reports (if applicable), but does not affect mobile applications. "
-"Supported languages for reports are en, fra (partial), and hin (partial)."
+"<i class=\"fa fa-info-circle\"></i> Changes the default language seen in Web "
+"Apps and reports (if supported). CommCare HQ supports <a href='https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/"
+"Account+Level+CommCare+HQ+UI+Translations'>these languages</a>. Please reach "
+"out to {support_email} if you notice any mistakes in our translations."
 msgstr ""
 
 #: corehq/apps/users/forms.py

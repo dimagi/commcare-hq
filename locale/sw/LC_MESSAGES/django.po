@@ -10688,6 +10688,7 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 msgid "Warning"
 msgstr "Onyo"
 
@@ -13239,6 +13240,12 @@ msgstr ""
 "      Tafadhali bonyeza <i class=\"fa fa-question-circle nav-main-icon\"></i> hapo juu\n"
 "      na Ripoti Tatizo ikiwa ungependa kuendelea kufanya kazi na programu hii.\n"
 "    "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/view_submissions_button.html
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "View Submissions"
+msgstr "Tazama uwasilishaji wa hivi karibuni"
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py
 #: corehq/motech/repeaters/const.py
@@ -18248,8 +18255,8 @@ msgstr "Njia ya Sifa ya Rasilimali ya FHIR"
 #| "            "
 msgid ""
 "\n"
-"              <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
-"              "
+"                    <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+"                  "
 msgstr ""
 "\n"
 "            Sifa za kundi la <b data-bind=\"text: name()\"></b> zitahamishwa kwenda <b>No Group</b>\n"
@@ -18298,10 +18305,10 @@ msgstr "Sitisha Matumizi"
 #| "                      "
 msgid ""
 "\n"
-"                          A case property with this name already exists.\n"
-"                          If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                          properties.\n"
-"                        "
+"                            A case property with this name already exists.\n"
+"                            If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                            properties.\n"
+"                          "
 msgstr ""
 "\n"
 "                        Sifa ya kesi yenye jina hili tayari ipo.\n"
@@ -18332,8 +18339,8 @@ msgstr "Ongeza Kundi la Sifa za Kesi"
 msgid ""
 "\n"
 "                    A case property group with this name already exists.\n"
-"                    If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                    groups.\n"
+"                    If you don’t see it on the page, please click ‘Show\n"
+"                    Deprecated’ button to reveal deprecated groups.\n"
 "                  "
 msgstr ""
 "\n"
@@ -20198,15 +20205,33 @@ msgid "Form Status"
 msgstr "Hali ya Fomu"
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid "{action_text} Cases. This may take some time..."
+#, fuzzy
+#| msgid "{action_text} Cases. This may take some time..."
+msgid "Copying cases. This may take some time."
 msgstr "{action_text} Kesi. Hii inaweza kuchukua muda..."
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid ""
-"Bulk Case {action_text} failed for some reason and we have noted this "
-"failure."
+#, fuzzy
+#| msgid ""
+#| "Bulk Case {action_text} failed for some reason and we have noted this "
+#| "failure."
+msgid "Bulk case copying failed. We have logged this failure."
+msgstr ""
+"Hatua ya pamoja ya {action_text} kwa kesi imeshindikana kwa sababu fulani na"
+" tumerekodi kushindwa huku."
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid "{action_text} Cases. This may take some time..."
+msgid "Reassigning cases. This may take some time."
+msgstr "{action_text} Kesi. Hii inaweza kuchukua muda..."
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid ""
+#| "Bulk Case {action_text} failed for some reason and we have noted this "
+#| "failure."
+msgid "Bulk case reassigning failed. We have logged this failure."
 msgstr ""
 "Hatua ya pamoja ya {action_text} kwa kesi imeshindikana kwa sababu fulani na"
 " tumerekodi kushindwa huku."
@@ -20979,6 +21004,16 @@ msgid "Update Project Information"
 msgstr "Sasisha Taarifa za Mradi"
 
 #: corehq/apps/domain/forms.py
+#, python-brace-format
+msgid ""
+"Case update rule limits are only modifiable by Dimagi admins. Please reach "
+"out to {support_email} if you wish to update this setting."
+msgstr ""
+"Vikomo vya kanuni za masasisho ya kesi vinaweza kubadilishwa na wasimamizi "
+"wa Dimagi pekee. Tafadhali wasiliana na {support_email} ikiwa ungependa "
+"kusasisha mpangilio huu."
+
+#: corehq/apps/domain/forms.py
 #, fuzzy, python-brace-format
 #| msgid "Unknown error"
 msgid "Unknown expression {expr}"
@@ -21017,6 +21052,20 @@ msgid ""
 msgstr ""
 "Akaunti ya mtumiaji inayohusishwa na anwani hii ya barua pepe haiwezi kuweka"
 " upya nenosiri."
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"This looks like a username. Please check your URL to be sure you are at your"
+" project's URL"
+msgstr ""
+"Hii inaonekana kama jina la mtumiaji. Tafadhali angalia URL yako ili "
+"kuhakikisha uko kwenye URL ya mradi wako"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Name or Username"
+msgid "Email or Username"
+msgstr "Jina au Jina la Mtumiaji"
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/forms.py
 #: corehq/apps/users/forms.py
@@ -23627,7 +23676,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
 msgid "Password Reset"
 msgstr "Kubadilisha Nenosiri"
 
@@ -30503,6 +30552,24 @@ msgstr "Njia ya Ombi"
 msgid "Request Path"
 msgstr "Njia ya Ombi"
 
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"You must specify either a username or a domain. Requesting all audit events "
+"across all users and domains would exceed system limits."
+msgstr ""
+"Lazima uweke jina la mtumiaji au domain. Kuomba matukio yote ya ukaguzi kwa "
+"watumiaji na domain zote kungezidi mipaka ya mfumo."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Your search returned more than {max_records} records. Please narrow down "
+"your search by selecting a specific user, domain, or a shorter date range."
+msgstr ""
+"Utafutaji wako umerejesha rekodi zaidi ya {max_records}. Tafadhali punguza "
+"utafutaji wako kwa kuchagua mtumiaji maalum, domain, au kipindi kifupi cha "
+"tarehe."
+
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
 msgid "User List"
 msgstr "Orodha ya Watumiaji"
@@ -34763,27 +34830,27 @@ msgstr ""
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Created {} new location types"
-msgstr ""
+msgstr "Aina mpya za eneo {} zimeundwa"
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Updated {} existing location types"
-msgstr ""
+msgstr "Aina zilizopo za eneo {} zimesasishwa"
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Deleted {} existing location types"
-msgstr ""
+msgstr "Aina zilizopo za eneo {} zimefutwa"
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Created {} new locations"
-msgstr ""
+msgstr "Maeneo mapya {} yameundwa"
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Updated {} existing locations"
-msgstr ""
+msgstr "Maeneo yaliyopo {} yamesasishwa"
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Deleted {} existing locations"
-msgstr ""
+msgstr "Maeneo yaliyopo {} yamefutwa"
 
 #: corehq/apps/locations/bulk_management.py
 #, python-brace-format
@@ -34833,15 +34900,17 @@ msgstr ""
 #: corehq/apps/locations/bulk_management.py
 msgid "Location type code '{}' is used {} times - they should be unique"
 msgstr ""
+"Msimbo wa aina ya eneo '{}' umetumika mara {} - inapaswa kuwa ya kipekee"
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location site_code '{}' is used {} times - they should be unique"
-msgstr ""
+msgstr "site_code ya eneo '{}' imetumika mara {} - inapaswa kuwa ya kipekee"
 
 #: corehq/apps/locations/bulk_management.py
 msgid ""
 "Location location_id '{}' is listed {} times - they should be listed once"
 msgstr ""
+"location_id ya eneo '{}' imetajwa mara {} - inapaswa kutajwa mara moja tu"
 
 #: corehq/apps/locations/bulk_management.py
 #, python-brace-format
@@ -34921,7 +34990,7 @@ msgstr "Eneo '{}' ni '{}', hivyo linapaswa kuwa na mzazi ambaye ni '{}'"
 
 #: corehq/apps/locations/bulk_management.py
 msgid "There are {} locations with the name '{}' under the parent '{}'"
-msgstr ""
+msgstr "Kuna maeneo {} yenye jina '{}' chini ya mzazi '{}'"
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Error with location in sheet '{}', at row {}. {}: {}"
@@ -38534,6 +38603,14 @@ msgstr "Hali ya bendera ya kipengele cha kizuizi cha kujenga upya"
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
 msgid "Payload ID"
 msgstr "Kitambulisho cha Payload"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Leave this blank to include all users. In that case, domain is required to "
+"limit the scope."
+msgstr ""
+"Acha hii wazi kujumuisha watumiaji wote. Katika hali hiyo, domain "
+"inahitajika ili kupunguza wigo."
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional"
@@ -48831,15 +48908,20 @@ msgid "E-Mail"
 msgstr "Barua Pepe"
 
 #: corehq/apps/users/forms.py
+#, python-brace-format
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
-"Apps and reports (if applicable), but does not affect mobile applications. "
-"Supported languages for reports are en, fra (partial), and hin (partial)."
+"<i class=\"fa fa-info-circle\"></i> Changes the default language seen in Web"
+" Apps and reports (if supported). CommCare HQ supports <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>these"
+" languages</a>. Please reach out to {support_email} if you notice any "
+"mistakes in our translations."
 msgstr ""
-"<i class=\"fa fa-info-circle\"></i> Inakuwa lugha chaguo-msingi inayoonekana"
-" kwenye Programu za Wavuti na ripoti (ikihitajika), lakini haiathiri "
-"programu za simu. Lugha zinazoungwa mkono kwa ripoti ni en, fra (sehemu), na"
-" hin (sehemu)."
+"<i class=\\\"fa fa-info-circle\\\"></i> Hubadilisha lugha chaguo-msingi "
+"inayoonekana kwenye Programu za Wavuti na ripoti (ikiwa inasaidiwa). "
+"CommCare HQ inasaidia <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>lugha"
+" hizi</a>. Tafadhali wasiliana na {support_email} ikiwa utaona makosa yoyote"
+" kwenye tafsiri zetu."
 
 #: corehq/apps/users/forms.py
 msgid ""
@@ -57454,6 +57536,16 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid ""
+#~ "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
+#~ "Apps and reports (if applicable), but does not affect mobile applications. "
+#~ "Supported languages for reports are en, fra (partial), and hin (partial)."
+#~ msgstr ""
+#~ "<i class=\"fa fa-info-circle\"></i> Inakuwa lugha chaguo-msingi inayoonekana"
+#~ " kwenye Programu za Wavuti na ripoti (ikihitajika), lakini haiathiri "
+#~ "programu za simu. Lugha zinazoungwa mkono kwa ripoti ni en, fra (sehemu), na"
+#~ " hin (sehemu)."
 
 #~ msgid "Application Status"
 #~ msgstr "Hali ya Maombi"
