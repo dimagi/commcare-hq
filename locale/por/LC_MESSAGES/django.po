@@ -10791,6 +10791,7 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 msgid "Warning"
 msgstr "Aviso"
 
@@ -13342,6 +13343,12 @@ msgstr ""
 "      Por favor, clique no <i class=\"fa fa-question-circle nav-main-icon\"></i> acima\n"
 "      e Relate um Problema se desejar continuar trabalhando com este aplicativo.\n"
 "    "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/view_submissions_button.html
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "View Submissions"
+msgstr "Ver envios recentes"
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py
 #: corehq/motech/repeaters/const.py
@@ -18384,8 +18391,8 @@ msgstr "Caminho da Propriedade do Recurso FHIR"
 #| "            "
 msgid ""
 "\n"
-"              <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
-"              "
+"                    <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+"                  "
 msgstr ""
 "\n"
 "            As propriedades do grupo <b data-bind=\"text: name()\"></b> serão movidas para <b>Sem Grupo</b>\n"
@@ -18434,10 +18441,10 @@ msgstr "Tornar Obsoleto"
 #| "                      "
 msgid ""
 "\n"
-"                          A case property with this name already exists.\n"
-"                          If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                          properties.\n"
-"                        "
+"                            A case property with this name already exists.\n"
+"                            If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                            properties.\n"
+"                          "
 msgstr ""
 "\n"
 "                        Já existe uma propriedade de caso com esse nome.\n"
@@ -18467,8 +18474,8 @@ msgstr "Adicionar Grupo de Propriedade do Caso"
 msgid ""
 "\n"
 "                    A case property group with this name already exists.\n"
-"                    If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                    groups.\n"
+"                    If you don’t see it on the page, please click ‘Show\n"
+"                    Deprecated’ button to reveal deprecated groups.\n"
 "                  "
 msgstr ""
 "\n"
@@ -20333,15 +20340,33 @@ msgid "Form Status"
 msgstr "Status do Formulário"
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid "{action_text} Cases. This may take some time..."
+#, fuzzy
+#| msgid "{action_text} Cases. This may take some time..."
+msgid "Copying cases. This may take some time."
 msgstr "Casos {action_text}. Isso pode levar algum tempo..."
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid ""
-"Bulk Case {action_text} failed for some reason and we have noted this "
-"failure."
+#, fuzzy
+#| msgid ""
+#| "Bulk Case {action_text} failed for some reason and we have noted this "
+#| "failure."
+msgid "Bulk case copying failed. We have logged this failure."
+msgstr ""
+"A ação em massa de casos {action_text} falhou por algum motivo e registramos"
+" essa falha."
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid "{action_text} Cases. This may take some time..."
+msgid "Reassigning cases. This may take some time."
+msgstr "Casos {action_text}. Isso pode levar algum tempo..."
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid ""
+#| "Bulk Case {action_text} failed for some reason and we have noted this "
+#| "failure."
+msgid "Bulk case reassigning failed. We have logged this failure."
 msgstr ""
 "A ação em massa de casos {action_text} falhou por algum motivo e registramos"
 " essa falha."
@@ -21122,6 +21147,16 @@ msgid "Update Project Information"
 msgstr "Atualizar informações do projeto"
 
 #: corehq/apps/domain/forms.py
+#, python-brace-format
+msgid ""
+"Case update rule limits are only modifiable by Dimagi admins. Please reach "
+"out to {support_email} if you wish to update this setting."
+msgstr ""
+"Os limites de regras de atualização de caso só podem ser modificados por "
+"administradores da Dimagi. Entre em contato com {support_email} se desejar "
+"atualizar esta configuração."
+
+#: corehq/apps/domain/forms.py
 #, fuzzy, python-brace-format
 #| msgid "Unknown error"
 msgid "Unknown expression {expr}"
@@ -21160,6 +21195,20 @@ msgid ""
 msgstr ""
 "A conta de usuário associada a este endereço de e-mail não pode redefinir a "
 "senha."
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"This looks like a username. Please check your URL to be sure you are at your"
+" project's URL"
+msgstr ""
+"Isso parece um nome de usuário. Verifique sua URL para garantir que você "
+"está na URL do seu projeto"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Name or Username"
+msgid "Email or Username"
+msgstr "Nome ou Nome de Usuário"
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/forms.py
 #: corehq/apps/users/forms.py
@@ -23789,7 +23838,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
 msgid "Password Reset"
 msgstr "Redefinição de Senha"
 
@@ -30689,6 +30738,25 @@ msgstr "Método da Requisição"
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "Request Path"
 msgstr "Caminho da Requisição"
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"You must specify either a username or a domain. Requesting all audit events "
+"across all users and domains would exceed system limits."
+msgstr ""
+"Você deve especificar um nome de usuário ou um domínio. Solicitar todos os "
+"eventos de auditoria de todos os usuários e domínios excederia os limites do"
+" sistema."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Your search returned more than {max_records} records. Please narrow down "
+"your search by selecting a specific user, domain, or a shorter date range."
+msgstr ""
+"Sua pesquisa retornou mais de {max_records} registros. Por favor, refine sua"
+" pesquisa selecionando um usuário específico, domínio ou um intervalo de "
+"datas menor."
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
 msgid "User List"
@@ -38766,6 +38834,14 @@ msgstr "Reconstruir status do recurso de restrição por feature flag"
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
 msgid "Payload ID"
 msgstr "ID do Payload"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Leave this blank to include all users. In that case, domain is required to "
+"limit the scope."
+msgstr ""
+"Deixe em branco para incluir todos os usuários. Nesse caso, o domínio é "
+"obrigatório para limitar o escopo."
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional"
@@ -49120,15 +49196,19 @@ msgid "E-Mail"
 msgstr "E-Mail"
 
 #: corehq/apps/users/forms.py
+#, python-brace-format
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
-"Apps and reports (if applicable), but does not affect mobile applications. "
-"Supported languages for reports are en, fra (partial), and hin (partial)."
+"<i class=\"fa fa-info-circle\"></i> Changes the default language seen in Web"
+" Apps and reports (if supported). CommCare HQ supports <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>these"
+" languages</a>. Please reach out to {support_email} if you notice any "
+"mistakes in our translations."
 msgstr ""
-"<i class=\"fa fa-info-circle\"></i> Torna-se o idioma padrão visto nos "
-"Aplicativos Web e relatórios (se aplicável), mas não afeta aplicativos "
-"móveis. Idiomas suportados para relatórios são en, fra (parcial) e hin "
-"(parcial)."
+"<i class=\"fa fa-info-circle\"></i> Altera o idioma padrão exibido nos Web "
+"Apps e relatórios (se suportado). O CommCare HQ suporta <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>estes"
+" idiomas</a>. Entre em contato com {support_email} se notar algum erro em "
+"nossas traduções."
 
 #: corehq/apps/users/forms.py
 msgid ""
@@ -57789,6 +57869,16 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#~ msgid ""
+#~ "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
+#~ "Apps and reports (if applicable), but does not affect mobile applications. "
+#~ "Supported languages for reports are en, fra (partial), and hin (partial)."
+#~ msgstr ""
+#~ "<i class=\"fa fa-info-circle\"></i> Torna-se o idioma padrão visto nos "
+#~ "Aplicativos Web e relatórios (se aplicável), mas não afeta aplicativos "
+#~ "móveis. Idiomas suportados para relatórios são en, fra (parcial) e hin "
+#~ "(parcial)."
 
 #~ msgid "Application Status"
 #~ msgstr "Estado da Aplicação"

@@ -10599,6 +10599,7 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 msgid "Warning"
 msgstr "चेतावनी"
 
@@ -13124,6 +13125,12 @@ msgstr ""
 "      कृपया ऊपर <i class=\"fa fa-question-circle nav-main-icon\"></i> पर क्लिक करें\n"
 "      और यदि आप इस एप्लिकेशन के साथ काम करना जारी रखना चाहते हैं तो एक समस्या रिपोर्ट करें।\n"
 "    "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/view_submissions_button.html
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "View Submissions"
+msgstr "हाल की सबमिशन देखें"
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py
 #: corehq/motech/repeaters/const.py
@@ -18108,8 +18115,8 @@ msgstr "FHIR संसाधन प्रॉपर्टी पथ"
 #| "            "
 msgid ""
 "\n"
-"              <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
-"              "
+"                    <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
+"                  "
 msgstr ""
 "\n"
 "            <b data-bind=\"text: name()\"></b> समूह की विशेषताएँ <b>कोई समूह नहीं</b> में स्थानांतरित कर दी जाएँगी\n"
@@ -18158,10 +18165,10 @@ msgstr "अप्रचलित करें"
 #| "                      "
 msgid ""
 "\n"
-"                          A case property with this name already exists.\n"
-"                          If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                          properties.\n"
-"                        "
+"                            A case property with this name already exists.\n"
+"                            If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
+"                            properties.\n"
+"                          "
 msgstr ""
 "\n"
 "                        इस नाम की एक केस प्रॉपर्टी पहले से मौजूद है।\n"
@@ -18192,8 +18199,8 @@ msgstr "केस प्रॉपर्टी समूह जोड़ें"
 msgid ""
 "\n"
 "                    A case property group with this name already exists.\n"
-"                    If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-"                    groups.\n"
+"                    If you don’t see it on the page, please click ‘Show\n"
+"                    Deprecated’ button to reveal deprecated groups.\n"
 "                  "
 msgstr ""
 "\n"
@@ -20058,15 +20065,33 @@ msgid "Form Status"
 msgstr "फ़ॉर्म स्थिति"
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid "{action_text} Cases. This may take some time..."
+#, fuzzy
+#| msgid "{action_text} Cases. This may take some time..."
+msgid "Copying cases. This may take some time."
 msgstr "{action_text} केस। इसमें कुछ समय लग सकता है..."
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid ""
-"Bulk Case {action_text} failed for some reason and we have noted this "
-"failure."
+#, fuzzy
+#| msgid ""
+#| "Bulk Case {action_text} failed for some reason and we have noted this "
+#| "failure."
+msgid "Bulk case copying failed. We have logged this failure."
+msgstr ""
+"कुछ कारणों से बल्क केस {action_text} विफल हो गया और हमने इस विफलता को नोट "
+"किया है।"
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid "{action_text} Cases. This may take some time..."
+msgid "Reassigning cases. This may take some time."
+msgstr "{action_text} केस। इसमें कुछ समय लग सकता है..."
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid ""
+#| "Bulk Case {action_text} failed for some reason and we have noted this "
+#| "failure."
+msgid "Bulk case reassigning failed. We have logged this failure."
 msgstr ""
 "कुछ कारणों से बल्क केस {action_text} विफल हो गया और हमने इस विफलता को नोट "
 "किया है।"
@@ -20834,6 +20859,16 @@ msgid "Update Project Information"
 msgstr "प्रोजेक्ट जानकारी अपडेट करें"
 
 #: corehq/apps/domain/forms.py
+#, python-brace-format
+msgid ""
+"Case update rule limits are only modifiable by Dimagi admins. Please reach "
+"out to {support_email} if you wish to update this setting."
+msgstr ""
+"केस अपडेट रूल की सीमाएं केवल डिमैगी एडमिन्स द्वारा संशोधित की जा सकती हैं। "
+"यदि आप इस सेटिंग को अपडेट करना चाहते हैं तो कृपया {support_email} पर संपर्क "
+"करें।"
+
+#: corehq/apps/domain/forms.py
 #, fuzzy, python-brace-format
 #| msgid "Unknown error"
 msgid "Unknown expression {expr}"
@@ -20870,6 +20905,20 @@ msgid ""
 "The user account associated with this email address cannot reset the "
 "password."
 msgstr "इस ईमेल पते से संबद्ध उपयोगकर्ता खाता पासवर्ड रीसेट नहीं कर सकता।"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"This looks like a username. Please check your URL to be sure you are at your"
+" project's URL"
+msgstr ""
+"यह एक यूज़रनेम जैसा लगता है। कृपया सुनिश्चित करें कि आप अपने प्रोजेक्ट के "
+"यूआरएल पर हैं।"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Name or Username"
+msgid "Email or Username"
+msgstr "नाम या यूज़रनेम"
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/forms.py
 #: corehq/apps/users/forms.py
@@ -23469,7 +23518,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
 msgid "Password Reset"
 msgstr "पासवर्ड रीसेट"
 
@@ -30304,6 +30353,24 @@ msgstr "अनुरोध विधि"
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "Request Path"
 msgstr "अनुरोध पथ"
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"You must specify either a username or a domain. Requesting all audit events "
+"across all users and domains would exceed system limits."
+msgstr ""
+"आपको या तो यूज़रनेम या डोमेन निर्दिष्ट करना होगा। सभी उपयोगकर्ताओं और "
+"डोमेनों के लिए सभी ऑडिट इवेंट्स का अनुरोध करना सिस्टम की सीमाओं से अधिक "
+"होगा।"
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Your search returned more than {max_records} records. Please narrow down "
+"your search by selecting a specific user, domain, or a shorter date range."
+msgstr ""
+"आपकी खोज में {max_records} से अधिक रिकॉर्ड मिले हैं। कृपया अपनी खोज को किसी "
+"विशिष्ट उपयोगकर्ता, डोमेन, या छोटे दिनांक सीमा का चयन करके सीमित करें।"
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
 msgid "User List"
@@ -38276,6 +38343,14 @@ msgstr "रीबिल्ड प्रतिबंध फीचर फ्लै
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
 msgid "Payload ID"
 msgstr "पेलोड आईडी"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Leave this blank to include all users. In that case, domain is required to "
+"limit the scope."
+msgstr ""
+"सभी उपयोगकर्ताओं को शामिल करने के लिए इसे खाली छोड़ दें। उस स्थिति में, "
+"स्कोप सीमित करने के लिए डोमेन आवश्यक है।"
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional"
@@ -48523,14 +48598,19 @@ msgid "E-Mail"
 msgstr "ई-मेल"
 
 #: corehq/apps/users/forms.py
+#, python-brace-format
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
-"Apps and reports (if applicable), but does not affect mobile applications. "
-"Supported languages for reports are en, fra (partial), and hin (partial)."
+"<i class=\"fa fa-info-circle\"></i> Changes the default language seen in Web"
+" Apps and reports (if supported). CommCare HQ supports <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>these"
+" languages</a>. Please reach out to {support_email} if you notice any "
+"mistakes in our translations."
 msgstr ""
-"<i class=\\\"fa fa-info-circle\\\"></i> वेब ऐप्स और रिपोर्ट्स (यदि लागू हो) "
-"में डिफ़ॉल्ट भाषा बन जाती है, लेकिन मोबाइल एप्लिकेशन को प्रभावित नहीं करती। "
-"रिपोर्ट्स के लिए समर्थित भाषाएँ en, fra (आंशिक), और hin (आंशिक) हैं।"
+"<i class=\"fa fa-info-circle\"></i> वेब ऐप्स और रिपोर्ट्स में डिफ़ॉल्ट भाषा "
+"बदलता है (यदि समर्थित हो)। CommCare HQ <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>इन"
+" भाषाओं</a> का समर्थन करता है। यदि आपको हमारे अनुवादों में कोई गलती दिखे तो "
+"कृपया {support_email} पर संपर्क करें।"
 
 #: corehq/apps/users/forms.py
 msgid ""
@@ -57090,6 +57170,15 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid ""
+#~ "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
+#~ "Apps and reports (if applicable), but does not affect mobile applications. "
+#~ "Supported languages for reports are en, fra (partial), and hin (partial)."
+#~ msgstr ""
+#~ "<i class=\\\"fa fa-info-circle\\\"></i> वेब ऐप्स और रिपोर्ट्स (यदि लागू हो) "
+#~ "में डिफ़ॉल्ट भाषा बन जाती है, लेकिन मोबाइल एप्लिकेशन को प्रभावित नहीं करती। "
+#~ "रिपोर्ट्स के लिए समर्थित भाषाएँ en, fra (आंशिक), और hin (आंशिक) हैं।"
 
 #~ msgid "Application Status"
 #~ msgstr "आवेदन की स्थिति"
