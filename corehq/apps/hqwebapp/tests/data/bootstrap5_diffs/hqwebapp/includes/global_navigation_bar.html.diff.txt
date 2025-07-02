@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -3,193 +3,236 @@
+@@ -3,185 +3,228 @@
  {% load hq_shared_tags %}
  
  {% if request.couch_user %}
@@ -158,14 +158,6 @@
 -                    {% trans 'Sign Out' %}
 -                </a>
 -            </li>
--            {% if server_display %}
--                <li class="nav-divider divider"></li>
--                <li class="dropdown-header nav-header">{% trans 'Server Location' %}</li>
--                <li class="server-location">
--                    {{ server_display.flag }}
--                    {% trans server_display.hr_name %}
--                </li>
--            {% endif %}
 -        </ul>
 +              <a href="{% url "raw_doc" %}?id={{ request.project.get_id }}"
 +                 id="menuitem-view-domain-doc"
@@ -190,14 +182,6 @@
 +            {% trans 'Sign Out' %}
 +          </a>
 +        </li>
-+        {% if server_display %}
-+          <li><hr class="dropdown-divider"></li>
-+          <li class="dropdown-header nav-header">{% trans 'Server Location' %}</li>
-+          <li class="dropdown-item-text">
-+            {{ server_display.flag }}
-+            {% trans server_display.hr_name %}
-+          </li>
-+        {% endif %}
 +      </ul>
      </li>
      {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}

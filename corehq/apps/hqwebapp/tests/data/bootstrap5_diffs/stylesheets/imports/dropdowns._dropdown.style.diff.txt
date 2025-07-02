@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -24,98 +24,74 @@
+@@ -24,97 +24,74 @@
    border-color: transparent;
    border-style: solid;
    border-width: 5px 0 5px 5px;
@@ -120,8 +120,7 @@
    }
  }
 -
--.dropdown-menu .login-container,
--.dropdown-menu .server-location {
+-.dropdown-menu .login-container {
 -  padding: 2px 20px 5px;
 -}
 -
