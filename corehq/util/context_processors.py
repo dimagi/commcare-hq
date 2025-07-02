@@ -180,7 +180,7 @@ def server_location_display(request):
     SERVER_LOCATION_DISPLAY = {
         'production': {
             'flag': "🇺🇸",
-            'hr_name': gettext_lazy("United States"),
+            'hr_name': gettext_lazy("US"),
         },
         'india': {
             'flag': "🇮🇳",
@@ -188,7 +188,7 @@ def server_location_display(request):
         },
         'eu': {
             'flag': "🇪🇺",
-            'hr_name': gettext_lazy("European Union"),
+            'hr_name': gettext_lazy("EU"),
         },
     }
     context = {}
