@@ -38,6 +38,7 @@ dependencies = [
     "django-cte",
     "django-field-audit",
     "django-formtools",
+    "django-htmx",
     "django-oauth-toolkit",
     "django-otp",
     "django-phonenumber-field",
