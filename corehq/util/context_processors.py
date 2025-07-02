@@ -192,7 +192,8 @@ def server_location_display(request):
         },
     }
     context = {}
-    if env := settings.SERVER_ENVIRONMENT in SERVER_LOCATION_DISPLAY.keys():
+    env = settings.SERVER_ENVIRONMENT
+    if env in SERVER_LOCATION_DISPLAY.keys():
         context = {'server_display': SERVER_LOCATION_DISPLAY[env]}
     return context
 
