@@ -1560,7 +1560,7 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application.',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="Main use case is to allow migrating projects to a new cluster."
 )
@@ -1925,7 +1925,7 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
 COPY_CASES = StaticToggle(
     'copy_cases',
     'Enable users to copy cases between mobile workers',
-    TAG_SOLUTIONS_OPEN,
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
