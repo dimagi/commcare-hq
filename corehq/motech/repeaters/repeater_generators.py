@@ -713,8 +713,10 @@ class ConnectFormRepeaterPayloadGenerator(FormRepeaterJsonPayloadGenerator):
 
     def get_payload(self, repeat_record, form):
         form_json = form.to_json()
+        fields = ("domain", "id", "app_id", "build_id", "received_on", "metadata")
         constructed_dict = {}
-        constructed_dict.update(metadata=form_json.get("metadata"))
+        for field in fields:
+            constructed_dict[field] = form_json.get(field)
         jsonpath_expr = parse('$..@xmlns')
         matching_blocks = [
             match
