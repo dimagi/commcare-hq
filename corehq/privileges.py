@@ -38,7 +38,7 @@ INBOUND_SMS = 'inbound_sms'
 
 BULK_CASE_MANAGEMENT = 'bulk_case_management'
 BULK_USER_MANAGEMENT = 'bulk_user_management'
-BULK_DATA_CLEANING = 'bulk_data_cleaning'
+BULK_DATA_EDITING = 'bulk_data_editing'
 
 DEIDENTIFIED_DATA = 'deidentified_data'
 
@@ -188,7 +188,7 @@ MAX_PRIVILEGES = [
     CASE_DEDUPE,
     CUSTOM_DOMAIN_ALERTS,
     APP_DEPENDENCIES,
-    BULK_DATA_CLEANING,
+    BULK_DATA_EDITING,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -220,7 +220,7 @@ class Titles(object):
             CUSTOM_SMS_GATEWAY: _("Custom Android Gateway"),
             BULK_CASE_MANAGEMENT: _("Bulk Case Management"),
             BULK_USER_MANAGEMENT: _("Bulk User Management"),
-            BULK_DATA_CLEANING: _("Bulk Data Cleaning"),
+            BULK_DATA_EDITING: _("Bulk Data Editing"),
             ALLOW_EXCESS_USERS: _("Add Mobile Workers Above Limit"),
             DEIDENTIFIED_DATA: _("De-Identified Data"),
             HIPAA_COMPLIANCE_ASSURANCE: _("HIPAA Compliance Assurance"),

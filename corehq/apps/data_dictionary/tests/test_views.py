@@ -15,6 +15,8 @@ from corehq.apps.data_dictionary.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.es import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.util.test_utils import flag_enabled, privilege_enabled
@@ -367,129 +369,11 @@ class TestDeprecateOrRestoreCaseTypeView(DataDictionaryViewTestBase):
         self.assertEqual(case_prop_group_count, 0)
 
 
-# TODO Remove this Test Class once we migrate to the new view
+@es_test(requires=[case_search_adapter], setup_class=True)
+@patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonTest(DataDictionaryViewTestBase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(DataDictionaryJsonTest, cls).setUpClass()
-        cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
-        cls.case_type_obj.save()
-        cls.case_prop_group = CasePropertyGroup(
-            case_type=cls.case_type_obj,
-            name='group',
-        )
-        cls.case_prop_group.save()
-        cls.case_prop_obj = CaseProperty(
-            case_type=cls.case_type_obj,
-            name='property',
-            data_type='number',
-            group=cls.case_prop_group
-        )
-        cls.case_prop_obj.save()
-        cls.deprecated_case_type_obj = CaseType(
-            name='depCaseType',
-            domain=cls.domain_name,
-            is_deprecated=True,
-        )
-        cls.deprecated_case_type_obj.save()
-        cls.client = Client()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        cls.deprecated_case_type_obj.delete()
-        super(DataDictionaryJsonTest, cls).tearDownClass()
-
-    def setUp(self):
-        self.endpoint = reverse('data_dictionary_json', args=[self.domain_name])
-
-    @classmethod
-    def _get_case_type_json(self, with_deprecated=False):
-        expected_output = {
-            "case_types": [
-                {
-                    "name": "caseType",
-                    "fhir_resource_type": None,
-                    "is_safe_to_delete": True,
-                    "groups": [
-                        {
-                            "id": self.case_prop_group.id,
-                            "name": "group",
-                            "description": "",
-                            "deprecated": False,
-                            "properties": [
-                                {
-                                    "id": self.case_prop_obj.id,
-                                    "description": "",
-                                    "label": "",
-                                    "fhir_resource_prop_path": None,
-                                    "name": "property",
-                                    "deprecated": False,
-                                    "is_safe_to_delete": True,
-                                    "allowed_values": {},
-                                    "data_type": "number",
-                                    "index": 0,
-                                },
-                            ],
-                        },
-                        {"name": "", "properties": []},
-                    ],
-                    "is_deprecated": False,
-                    "module_count": 0,
-                    "properties": [],
-                },
-            ],
-            "geo_case_property": GPS_POINT_CASE_PROPERTY,
-        }
-        if with_deprecated:
-            expected_output['case_types'].append(
-                {
-                    "name": "depCaseType",
-                    "fhir_resource_type": None,
-                    "is_safe_to_delete": True,
-                    "groups": [
-                        {
-                            "name": '',
-                            "properties": []
-                        },
-                    ],
-                    "is_deprecated": True,
-                    "module_count": 0,
-                    "properties": [],
-                }
-            )
-        return expected_output
-
-    def test_no_access(self):
-        response = self.client.get(self.endpoint)
-        self.assertEqual(response.status_code, 302)
-
-    @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
-    @patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
-    def test_get_json_success(self, *args):
-        self.client.login(username='username', password='Passw0rd!')
-        response = self.client.get(self.endpoint)
-        self.assertEqual(response.status_code, 200)
-        expected_response = self._get_case_type_json()
-        self.assertEqual(response.json(), expected_response)
-
-    @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
-    @patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
-    def test_get_json_success_with_deprecated_case_types(self, *args):
-        self.client.login(username='username', password='Passw0rd!')
-        response = self.client.get(self.endpoint, data={'load_deprecated_case_types': 'true'})
-        expected_response = self._get_case_type_json(with_deprecated=True)
-        self.assertEqual(response.json(), expected_response)
-
-
-@patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
-@patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
-@flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
-@privilege_enabled(privileges.DATA_DICTIONARY)
-class DataDictionaryJsonV2Test(DataDictionaryViewTestBase):
 
     @classmethod
     def setUpClass(cls):
@@ -599,7 +483,7 @@ class DataDictionaryJsonV2Test(DataDictionaryViewTestBase):
             "properties_count": case_type_obj.properties.count(),
             "_links": {
                 "self": f"http://testserver/a/{cls.domain_name}"
-                        f"/data_dictionary/json_v2/{case_type_obj.name}/"
+                        f"/data_dictionary/json/{case_type_obj.name}/"
                         f"?skip={skip}&limit={limit}"
             },
             "groups": []
@@ -607,12 +491,12 @@ class DataDictionaryJsonV2Test(DataDictionaryViewTestBase):
         if skip:
             expected_output["_links"]["previous"] = (
                 f"http://testserver/a/{cls.domain_name}/data_dictionary/"
-                f"json_v2/{case_type_obj.name}/?skip={skip - limit}"
+                f"json/{case_type_obj.name}/?skip={skip - limit}"
                 f"&limit={limit}"
             )
         if case_type_obj.properties.count() > (skip + limit):
             expected_output["_links"]["next"] = (
-                f"http://testserver/a/{cls.domain_name}/data_dictionary/json_v2/"
+                f"http://testserver/a/{cls.domain_name}/data_dictionary/json/"
                 f"{case_type_obj.name}/?skip={skip + limit}&limit={limit}"
             )
         if groups_properties_dict:
@@ -639,7 +523,8 @@ class DataDictionaryJsonV2Test(DataDictionaryViewTestBase):
                     group_data.update({
                         "id": group.id,
                         "description": "",
-                        "deprecated": False
+                        "deprecated": False,
+                        "index": group.index,
                     })
                 expected_output["groups"].append(group_data)
         return expected_output

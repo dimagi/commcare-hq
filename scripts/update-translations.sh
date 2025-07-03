@@ -2,7 +2,7 @@
 set -euo pipefail  # bash strict mode - exit on hard failures
 
 # Based on this confluence page:
-# https://confluence.dimagi.com/display/commcarehq/Internationalization+and+Localization+-+Transifex+Translations
+# https://dimagi.atlassian.net/wiki/spaces/saas/pages/2146607277/Internationalization+and+Localization+-+Transifex+Translations
 
 function abort () {
     echo $@
@@ -60,14 +60,31 @@ if [[ ! `command -v tx` || ! -f ~/.transifexrc ]]
 then
     echo "It looks like you haven't yet configured transifex."
     echo "Please visit the wiki page for instructions on how to do so:"
-    echo "https://confluence.dimagi.com/display/commcarehq/Internationalization+and+Localization+-+Transifex+Translations"
+    echo "https://dimagi.atlassian.net/wiki/spaces/saas/pages/2146607277/Internationalization+and+Localization+-+Transifex+Translations"
     abort
 fi
 
+# Check if OpenAI client is installed
+if ! python -c "import openai" &> /dev/null; then
+    echo "OpenAI client is not installed."
+    echo "Translations will not be updated with LLM."
+    echo "Please install it with: uv pip install openai"
+    echo "Then run this script again if you want to update translations with LLM."
+    AGENT_INSTALLED=false
+else
+    AGENT_INSTALLED=true
+fi
+
+
 echo "Pulling translations from transifex"
-tx pull -f
+tx pull
 
 ./scripts/make-translations.sh "$@"
+
+if $AGENT_INSTALLED; then
+    echo "Updating translations with LLM. Running ./manage.py translate_po_files"
+    OPENAI_API_KEY="${OPENAI_API_KEY}" ./manage.py translate_po_files
+fi
 
 echo "Pushing updates to transifex."
 tx push -s -t

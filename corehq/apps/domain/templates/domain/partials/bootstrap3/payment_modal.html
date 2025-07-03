@@ -6,8 +6,10 @@
 
     <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
     <div class="alert alert-info">
-      {% trans 'One credit is equivalent to one USD. Credits are applied to
-      monthly invoices' %}
+      {% blocktrans %}
+        One credit is equivalent to one USD.
+        Credits are applied to monthly invoices.
+      {% endblocktrans %}
     </div>
 
     <div data-bind="with: general_credit">
@@ -232,7 +234,7 @@
                 instructions for wire payment. Please include the Invoice # in
                 the wire payment memo or note field.
                 <a
-                  href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment"
+                  href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods"
                   target="_blank"
                   >More information...</a
                 >
@@ -277,7 +279,8 @@
             data-bind="template: {
                            data: newCard,
                            name: 'select-new-stripe-card-template',
-                           if: mustCreateNewCard
+                           if: mustCreateNewCard,
+                           afterRender: showOrHideStripeUI,
                        }"
           ></div>
 
@@ -285,7 +288,8 @@
             data-bind="template: {
                            data: $data,
                            name: 'select-stripe-card-template',
-                           if: canSelectCard
+                           if: canSelectCard,
+                           afterRender: showOrHideStripeUI,
                        }"
           ></div>
           <!-- /ko -->

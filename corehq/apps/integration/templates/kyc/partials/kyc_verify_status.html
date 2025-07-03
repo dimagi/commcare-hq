@@ -3,6 +3,15 @@
   <span class="badge bg-success">{% trans "Pass" %}</span>
 {% elif record.kyc_verification_status.status == 'failed' %}
   <span class="badge bg-danger"> {% trans "Fail" %} </span>
+{% elif record.kyc_verification_status.status == 'invalid' %}
+  <span class="d-flex flex-column" style="width: 8rem;">
+    <span>
+      <span class="badge bg-danger"> {% trans "Invalid" %} </span>
+    </span>
+    <span class="text-wrap">
+      {% trans "The status has been manually set to an invalid value. Please re-verify." %}
+    </span>
+  </span>
 {% elif record.kyc_verification_status.status == 'error' %}
   <span class="d-flex flex-column" style="width: 8rem;">
     <span>

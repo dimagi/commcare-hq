@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -9,31 +9,30 @@
+@@ -9,13 +9,12 @@
  }
  
  .label-plan {
@@ -11,6 +11,13 @@
    color: #ffffff;
 -  background-color: @cc-dark-cool-accent-low;
 +  background-color: $cc-dark-cool-accent-low;
+   a {
+-    color: @cc-neutral-hi;
++    color: $cc-neutral-hi;
+   }
+   a:hover {
+     color: #ffffff;
+@@ -24,23 +23,23 @@
  }
  
  .label-plan-enterprise {
@@ -33,9 +40,9 @@
 +  background-color: $cc-att-pos-mid;
  }
  
- .label-plan-community {
--  background-color: @cc-dark-cool-accent-mid;
-+  background-color: $cc-dark-cool-accent-mid;
+ .label-plan-free {
+-  background-color: @gray;
++  background-color: $gray;
  }
  
  .label-flag {

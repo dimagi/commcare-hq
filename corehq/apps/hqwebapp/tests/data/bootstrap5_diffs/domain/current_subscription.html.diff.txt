@@ -6,8 +6,8 @@
  {% load hq_shared_tags %}
  {% load i18n %}
  
--{% requirejs_main 'domain/js/current_subscription' %}
-+{% requirejs_main_b5 'domain/js/current_subscription' %}
+-{% js_entry_b3 'domain/js/current_subscription' %}
++{% js_entry 'domain/js/current_subscription' %}
  
  {% block page_content %}
    {% initial_page_data "stripe_public_key" stripe_public_key %}
@@ -28,26 +28,24 @@
              <div class="{{ plan.css_class }}">
                <h4>
                  {% if plan.is_paused %}
-@@ -55,8 +55,8 @@
+@@ -54,7 +54,7 @@
+             {% endif %}
              {% if can_change_subscription %}
-               {% if plan.is_annual_plan %}
-                 <form action="{% url 'annual_plan_request_quote' domain %}">
--                  <div style="margin-top:10px;">
--                    <label class="control-label">{% trans "Got questions about your plan?" %}</label>
-+                  <div style="margin-top:10px;">  {# todo B5: inline-style #}
-+                    <label class="form-label">{% trans "Got questions about your plan?" %}</label>
-                     <button class="btn btn-primary btn-lg">
-                       {% trans 'Talk to Sales' %}
-                     </button>
-@@ -64,7 +64,7 @@
-                 </form>
+               {% if plan.is_annual_plan and not plan.upgrade_available %}
+-                <div style="margin-top: 10px;">
++                <div class="mt-3">
+                   {% trans "Questions about your plan?" %}
+                   <a
+                     href="{% url "annual_plan_request_quote" domain %}"
+@@ -62,7 +62,7 @@
+                 </div>
                {% else %}
                  <p>
 -                  <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
-+                  <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">  {# todo B5: inline-style #}
++                  <a class="btn btn-primary mt-3" href="{{ change_plan_url }}">
                      {% if plan.is_paused %}
                        {% trans "Subscribe to Plan" %}
-                     {% else %}
+                     {% elif plan.is_annual_plan and plan.upgrade_available %}
 @@ -95,17 +95,17 @@
          </div>
          {% if not plan.is_trial and not plan.is_paused %}

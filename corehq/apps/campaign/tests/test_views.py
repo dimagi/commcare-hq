@@ -5,8 +5,10 @@ from uuid import uuid4
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq.apps.campaign.const import GAUGE_METRICS
 from corehq.apps.campaign.models import (
     Dashboard,
+    DashboardGauge,
     DashboardMap,
     DashboardReport,
     DashboardTab,
@@ -87,6 +89,33 @@ class TestDashboardView(BaseTestCampaignView):
             geo_case_property='nowhere',
             dashboard_tab=DashboardTab.MOBILE_WORKERS,
         )
+        cls.dashboard_gauge_widget_for_cases = DashboardGauge.objects.create(
+            dashboard=cls.dashboard,
+            title='Cases Gauge 1',
+            description='Gauge 1 described for foo cases.',
+            display_order=0,
+            case_type='foo',
+            metric=GAUGE_METRICS[0][0],
+            dashboard_tab=DashboardTab.CASES,
+        )
+        cls.dashboard_gauge_widget_for_cases_with_removed_metric = DashboardGauge.objects.create(
+            dashboard=cls.dashboard,
+            title='Cases Gauge 2',
+            description='Gauge 2 described for foo cases.',
+            display_order=1,
+            case_type='foo',
+            metric='removed',
+            dashboard_tab=DashboardTab.CASES,
+        )
+        cls.dashboard_gauge_widget_for_mobile_workers = DashboardGauge.objects.create(
+            dashboard=cls.dashboard,
+            title='Mobile Workers Gauge 1',
+            description='Gauge 1 described for bar cases for mobile workers.',
+            display_order=0,
+            case_type='bar',
+            metric=GAUGE_METRICS[0][0],
+            dashboard_tab=DashboardTab.MOBILE_WORKERS,
+        )
 
     def test_not_logged_in(self):
         response = self._make_request(is_logged_in=False)
@@ -97,7 +126,8 @@ class TestDashboardView(BaseTestCampaignView):
         assert response.status_code == 404
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
-    def test_success(self):
+    @patch('corehq.apps.campaign.views.get_gauge_metric_value', return_value=10)
+    def test_success(self, metric_value_patch):
         response = self._make_request(is_logged_in=True)
         assert response.status_code == 200
 
@@ -124,6 +154,56 @@ class TestDashboardView(BaseTestCampaignView):
                     'domain': 'test-domain',
                 },
                 'widget_type': 'DashboardMap',
+            }],
+        }
+
+        assert context['gauge_widgets'] == {
+            'cases': [{
+                'id': self.dashboard_gauge_widget_for_cases.id,
+                'title': 'Cases Gauge 1',
+                'description': 'Gauge 1 described for foo cases.',
+                'case_type': 'foo',
+                'major_ticks': [0, 20, 40, 60, 80, 100],
+                'max_value': 100,
+                'metric': 'number_of_cases',
+                'metric_name': 'Number of cases',
+                'configuration': {},
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'value': 10,
+                'widget_type': 'DashboardGauge',
+            }, {
+                'id': self.dashboard_gauge_widget_for_cases_with_removed_metric.id,
+                'title': 'Cases Gauge 2',
+                'description': 'Gauge 2 described for foo cases.',
+                'case_type': 'foo',
+                'major_ticks': [0, 20, 40, 60, 80, 100],
+                'max_value': 100,
+                'metric': 'removed',
+                'metric_name': '',
+                'configuration': {},
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'value': 10,
+                'widget_type': 'DashboardGauge',
+            }],
+            'mobile_workers': [{
+                'id': self.dashboard_gauge_widget_for_mobile_workers.id,
+                'title': 'Mobile Workers Gauge 1',
+                'description': 'Gauge 1 described for bar cases for mobile workers.',
+                'case_type': 'bar',
+                'major_ticks': [0, 20, 40, 60, 80, 100],
+                'max_value': 100,
+                'metric': 'number_of_cases',
+                'metric_name': 'Number of cases',
+                'configuration': {},
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'value': 10,
+                'widget_type': 'DashboardGauge',
             }],
         }
 
@@ -212,10 +292,15 @@ class TestDashboardWidgetView(BaseTestCampaignView):
         assert response.status_code == 404
 
     @staticmethod
-    def _assert_for_success(response, widget_type):
+    def _assert_for_get_form_success(response, widget_type):
         assert response.status_code == 200
         assert response.context['widget_type'] == widget_type
         assert isinstance(response.context['widget_form'], WidgetType.get_form_class(widget_type))
+
+    @staticmethod
+    def _assert_for_save_form_success(response, widget_type):
+        assert response.status_code == 200
+        assert response.json()['success'] is True
 
 
 class TestNewWidget(TestDashboardWidgetView):
@@ -229,7 +314,7 @@ class TestNewWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.MAP)
+        self._assert_for_get_form_success(response, WidgetType.MAP)
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardReportForm._get_report_configurations', return_value=[])
@@ -240,7 +325,7 @@ class TestNewWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_get_form_success(response, WidgetType.REPORT)
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     def test_new_widget_invalid_widget_type(self, *args):
@@ -249,7 +334,7 @@ class TestNewWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_NEW_WIDGET},
             is_logged_in=True,
         )
-        assert response.context['htmx_error'].message == "Requested widget type is not supported"
+        assert response.content == b'Requested widget type is not supported'
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types')
@@ -270,7 +355,7 @@ class TestNewWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
-        self._assert_for_success(response, WidgetType.MAP)
+        self._assert_for_save_form_success(response, WidgetType.MAP)
         assert DashboardMap.objects.count() == 1
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
@@ -292,7 +377,7 @@ class TestNewWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_save_form_success(response, WidgetType.REPORT)
         assert DashboardReport.objects.count() == 1
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
@@ -309,7 +394,7 @@ class TestNewWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_get_form_success(response, WidgetType.REPORT)
         assert DashboardReport.objects.count() == 0
         assert response.context["widget_form"].errors == {'report_configuration_id': ['This field is required.']}
 
@@ -330,7 +415,7 @@ class TestEditWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.MAP)
+        self._assert_for_get_form_success(response, WidgetType.MAP)
         assert response.context['widget'] == map_widget
 
     def _sample_map_widget(self):
@@ -356,7 +441,7 @@ class TestEditWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_get_form_success(response, WidgetType.REPORT)
         assert response.context['widget'] == report_widget
 
     def _sample_report_widget(self, report_id):
@@ -388,7 +473,7 @@ class TestEditWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.MAP)
+        self._assert_for_save_form_success(response, WidgetType.MAP)
         saved_map_widget = DashboardMap.objects.get(pk=map_widget.id)
         assert saved_map_widget.title == 'New Title'
 
@@ -412,7 +497,7 @@ class TestEditWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_save_form_success(response, WidgetType.REPORT)
         saved_report_widget = DashboardReport.objects.get(pk=report_widget.id)
         assert saved_report_widget.title == 'New Title'
         assert saved_report_widget.dashboard_tab == DashboardTab.MOBILE_WORKERS
@@ -429,6 +514,70 @@ class TestEditWidget(TestDashboardWidgetView):
         )
 
         assert response.status_code == 404
+
+
+class TestDeleteWidget(TestDashboardWidgetView):
+    HQ_ACTION_DELETE_WIDGET = 'delete_widget'
+
+    def _create_sample_map_widget(self):
+        return DashboardMap.objects.create(
+            dashboard=self.dashboard,
+            title='Cases Map',
+            case_type='foo',
+            geo_case_property='somewhere',
+            dashboard_tab=DashboardTab.CASES,
+        )
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_delete_success(self, *args):
+        map_widget = self._create_sample_map_widget()
+        self.addCleanup(map_widget.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'widget_type': WidgetType.MAP,
+                'widget_id': map_widget.id,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_DELETE_WIDGET},
+        )
+
+        assert response.status_code == 200
+        assert DashboardMap.objects.filter(pk=map_widget.id).exists() is False
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_delete_nonexistent_widget(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'widget_type': WidgetType.MAP,
+                'widget_id': 99999,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_DELETE_WIDGET},
+        )
+
+        assert response.status_code == 404
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_invalid_widget_type(self, *args):
+        map_widget = self._create_sample_map_widget()
+        self.addCleanup(map_widget.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'widget_type': 'invalid',
+                'widget_id': map_widget.id,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_DELETE_WIDGET},
+        )
+
+        assert response.status_code == 400
+        assert response.content == b'Requested widget type is not supported'
+        assert DashboardMap.objects.filter(pk=map_widget.id).exists() is True
 
 
 class TestGetGeoCaseProperties(BaseTestCampaignView):

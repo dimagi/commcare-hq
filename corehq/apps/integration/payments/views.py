@@ -1,31 +1,45 @@
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.es.case_search import case_property_query
-from corehq.util.timezones.utils import get_timezone
-from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
-from corehq.apps.domain.decorators import login_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, filters
+from corehq.apps.es.case_search import (
+    case_property_query,
+    wrap_case_search_hit,
+)
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
-from corehq.apps.integration.payments.tables import PaymentsVerifyTable
-from corehq.apps.users.models import WebUser
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from corehq.apps.integration.payments.services import verify_payment_cases
-from corehq.apps.integration.payments.models import MoMoConfig
-from corehq.apps.integration.payments.forms import PaymentConfigureForm
-from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.integration.payments.filters import PaymentVerificationStatusFilter
+from corehq.apps.integration.kyc.models import KycConfig
 from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.filters import (
+    PaymentVerificationStatusFilter,
+)
+from corehq.apps.integration.payments.forms import PaymentConfigureForm
+from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.apps.integration.payments.services import verify_payment_cases
+from corehq.apps.integration.payments.tables import PaymentsVerifyTable
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.generic import get_filter_classes
+from corehq.apps.reports.standard.cases.utils import add_case_owners_and_location_access
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions, WebUser
+from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.timezones.utils import get_timezone
 
 
 class PaymentsFiltersMixin:
     fields = [
+        'corehq.apps.integration.payments.filters.PaymentCaseListFilter',
         'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
@@ -52,8 +66,17 @@ class PaymentsFiltersMixin:
         return get_filter_classes(self.fields, self.request, self.domain, timezone, use_bootstrap5=True)
 
 
+require_payments_report_access = require_permission(
+    HqPermissions.view_report,
+    PAYMENTS_REPORT_PERMISSION,
+    login_decorator=None
+)
+
+
+@location_safe
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_payments_report_access, name='dispatch')
 class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
     urlname = 'payments_verify'
     template_name = 'payments/payments_verify_report.html'
@@ -75,16 +98,62 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
         }
 
 
-@method_decorator(login_required, name='dispatch')
+@location_safe
+@method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_payments_report_access, name='dispatch')
 class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        query = add_case_owners_and_location_access(
+            query,
+            self.request.domain,
+            self.request.couch_user,
+            self.request.can_access_all_locations,
+            mobile_user_and_group_slugs
+        )
         query = self._apply_filters(query)
         return query
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        context_data['user_or_cases_verification_statuses'] = self._get_user_or_cases_verification_status(
+            context_data['page_obj'].object_list
+        )
+
+        return context_data
+
+    def _get_user_or_cases_verification_status(self, object_list):
+        if not self.kyc_config:
+            return {}
+
+        user_or_case_ids = self._get_user_or_case_ids(object_list)
+        kyc_users = self.kyc_config.get_kyc_users_by_ids(user_or_case_ids)
+        return {
+            kyc_user.user_id: kyc_user.kyc_verification_status
+            for kyc_user in kyc_users
+        }
+
+    @cached_property
+    def kyc_config(self):
+        try:
+            return KycConfig.objects.get(domain=self.request.domain)
+        except KycConfig.DoesNotExist:
+            return None
+
+    @staticmethod
+    def _get_user_or_case_ids(object_list):
+        user_or_case_ids = []
+        for commcare_payment_case_details in object_list:
+            case = wrap_case_search_hit(commcare_payment_case_details)
+            if case_prop := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
+                user_or_case_ids.append(case_prop)
+        return user_or_case_ids
 
     def _apply_filters(self, query):
         query_filters = []
@@ -130,6 +199,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_payments_report_access, name='dispatch')
 class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
     section_name = _("Data")
     urlname = 'momo_configuration'

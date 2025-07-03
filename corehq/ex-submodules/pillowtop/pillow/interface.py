@@ -12,7 +12,7 @@ from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
-from kafka.common import TopicPartition
+from kafka import TopicPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
@@ -102,7 +102,7 @@ class PillowBase(metaclass=ABCMeta):
         """
         Main entry point for running pillows forever.
         """
-        pillow_logging.info("Starting pillow %s" % self.__class__)
+        pillow_logging.info("Starting pillow %s" % self.pillow_id)
         scope = Scope.get_current_scope()
         scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:

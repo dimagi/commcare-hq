@@ -265,10 +265,7 @@ JavaScript has a ``gettext`` function that works exactly the same as in python:
 
     gettext("Welcome to CommCare HQ")
 
-``gettext`` is available globally in HQ, coming from `django.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/django.js>`__
-which is part of the imports within the `commcarehq module
-<https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/commcarehq.js>`__,
-that is included within any ``js_entry`` entry point.
+``gettext`` is available globally in HQ, added to the global namespace in ``djangojs.js``.
 
 For translations with interpolated variables, use Underscore's `_.template <https://underscorejs.org/#template>`__
 function similarly to python's string formatting, calling ``gettext`` on the template and __then__ interpolating
@@ -288,7 +285,7 @@ Keeping translations up to date
 Once a string has been added to the code, we can update the .po file by
 running `makemessages`.
 
-To do this for all langauges::
+To do this for all languages::
 
         $ django-admin makemessages --all
 

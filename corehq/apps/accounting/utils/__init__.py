@@ -479,7 +479,7 @@ def get_pending_plan_context(request, domain):
 
     current_sub = Subscription.get_active_subscription_by_domain(domain)
     if (not current_sub
-            or not current_sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+            or not current_sub.plan_version.plan.edition == SoftwarePlanEdition.FREE
             or not request.couch_user.can_edit_billing()
             or not SelfSignupWorkflow.get_in_progress_for_domain(domain)):
         return {}

@@ -1,10 +1,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-<div
-  id="{{ container_id }}"
-  hx-swap="outerHTML"
->
+<div id="{{ container_id }}" hx-swap="outerHTML">
   <form
     hx-post="{{ request.path_info }}"
     hx-target="#{{ container_id }}"

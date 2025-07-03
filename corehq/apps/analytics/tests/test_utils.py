@@ -59,7 +59,7 @@ class TestIsHubspotJsAllowedForRequest(TestCase):
         cls.regular_domain.delete()
         super().tearDownClass()
 
-    @override_settings(IS_SAAS_ENVIRONMENT=True)
+    @override_settings(ANALYTICS_IDS={'HUBSPOT_API_ID': '123'})
     def test_returns_false_if_account_disabled_hubspot(self):
         """
         Ensures that if the BillingAccount associated with a subscription
@@ -68,7 +68,7 @@ class TestIsHubspotJsAllowedForRequest(TestCase):
         self.request.subscription = self.subscription_no_hubspot
         self.assertFalse(is_hubspot_js_allowed_for_request(self.request))
 
-    @override_settings(IS_SAAS_ENVIRONMENT=True)
+    @override_settings(ANALYTICS_IDS={'HUBSPOT_API_ID': '123'})
     def test_returns_true_for_normal_subscription(self):
         """
         Ensures that if the BillingAccount associated with a subscription
@@ -77,7 +77,7 @@ class TestIsHubspotJsAllowedForRequest(TestCase):
         self.request.subscription = self.regular_subscription
         self.assertTrue(is_hubspot_js_allowed_for_request(self.request))
 
-    @override_settings(IS_SAAS_ENVIRONMENT=True)
+    @override_settings(ANALYTICS_IDS={'HUBSPOT_API_ID': '123'})
     def test_returns_true_if_no_subscription(self):
         """
         Ensures that if no subscription attribute is set on the HttpRequest
@@ -85,10 +85,19 @@ class TestIsHubspotJsAllowedForRequest(TestCase):
         """
         self.assertTrue(is_hubspot_js_allowed_for_request(self.request))
 
-    @override_settings(IS_SAAS_ENVIRONMENT=False)
-    def test_returns_false_if_not_saas_environment(self):
+    @override_settings(ANALYTICS_IDS={'HUBSPOT_API_ID': ''})
+    def test_returns_false_if_hubspot_api_id_is_empty(self):
         """
         Ensures that if the environment is not a SaaS environment,
         is_hubspot_js_allowed_for_request returns False
         """
+        self.assertFalse(is_hubspot_js_allowed_for_request(self.request))
+
+    @override_settings(ANALYTICS_IDS={'HUBSPOT_API_ID': '123'})
+    def test_returns_false_if_post_login(self):
+        """
+        Ensures that if the request has a user (i.e. is post-login),
+        is_hubspot_js_allowed_for_request returns False
+        """
+        self.request.couch_user = object()
         self.assertFalse(is_hubspot_js_allowed_for_request(self.request))

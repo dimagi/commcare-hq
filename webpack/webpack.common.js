@@ -3,6 +3,7 @@ const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
 const hqPlugins = require('./plugins');
+const vellumUtils = require('./vellumUtils');
 
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
@@ -21,95 +22,102 @@ const aliases = {
     "sentry_captureconsole": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
         'sentry/js/sentry.captureconsole.7.28.0.min'),
     "tempusDominus": "@eonasdan/tempus-dominus",
+    "hqwebapp/less": path.resolve(utils.getStaticPathForApp('hqwebapp', 'less')),
     "ko.mapping": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
         'knockout_mapping.ko.min'),
 };
 
-
+const vellumDebugDir = vellumUtils.getDebugDir();
 module.exports = {
     entry: utils.getEntries(),
 
+    externals: [
+        function ({ context, request }, callback) {
+            if (vellumDebugDir && context.startsWith(vellumDebugDir)) {
+                if (request.match(/\bbootstrap\b/)) {
+                    return callback(null, 'global bootstrap');
+                }
+            }
+            callback();
+        },
+    ],
+
     module: {
         rules: [
+            vellumUtils.getDebugRule(),
             {
-                test: /\.css$/i,
-                use: ["style-loader", "css-loader"],
-            },
-            {
-                test: /\.js$/,
-                loader: 'babel-loader',
-                exclude: /node_modules/,
-            },
-            {
-                test: /\.png/,
-                type: 'asset/resource',
-            },
-
-            // this rule ensures that hqDefine is renamed to define AMD module
-            // definition syntax that webpack understands
-            {
-                test: /\.js$/,
-                loader: 'string-replace-loader',
-                exclude: /node_modules/,
-                options: {
-                    search: /\bhqDefine\b/g,
-                    replace: 'define',
-                },
-            },
-            {
-                test: /\.js$/,
-                loader: 'string-replace-loader',
-                options: {
-                    search: /\b(es6!)?hqwebapp\/js\/bootstrap5_loader\b/g,
-                    replace: 'bootstrap5',
-                },
-            },
-
-            {
-                test: /modernizr\.js$/,
-                loader: "webpack-modernizr-loader",
-                options: {
-                    "options": [
-                        "setClasses",
-                    ],
-                    "feature-detects": [
-                        "test/svg/smil",
-                    ],
-                },
-            },
-
-            {
-                test: /mapbox\.js\/dist\/mapbox/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "L",
+                exclude: vellumDebugDir || [],
+                rules: [
+                    {
+                        test: /\.css$/i,
+                        use: ["style-loader", "css-loader"],
                     },
-                },
-            },
-            {
-                test: /nvd3\/nv\.d3\.min/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "nv",
+                    {
+                        test: /\.less$/,
+                        use: ["style-loader", "css-loader", "less-loader"],
                     },
-                },
-            },
-            {
-                test: /sentry\/js\/sentry/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "Sentry",
+                    {
+                        test: /\.js$/,
+                        loader: 'babel-loader',
+                        exclude: [
+                            /node_modules/,
+                            // Vellum is already compressed, so it does not need babel's processing
+                            path.resolve(
+                                __dirname, '../corehq/apps/app_manager/static/app_manager/js/vellum/main.js'),
+                        ],
                     },
-                },
+                    {
+                        test: /\.png/,
+                        type: 'asset/resource',
+                    },
+
+                    {
+                        test: /modernizr\.js$/,
+                        loader: "webpack-modernizr-loader",
+                        options: {
+                            "options": [
+                                "setClasses",
+                            ],
+                            "feature-detects": [
+                                "test/svg/smil",
+                            ],
+                        },
+                    },
+
+                    {
+                        test: /mapbox\.js\/dist\/mapbox/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "L",
+                            },
+                        },
+                    },
+                    {
+                        test: /nvd3\/nv\.d3\.min/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "nv",
+                            },
+                        },
+                    },
+                    {
+                        test: /sentry\/js\/sentry/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "Sentry",
+                            },
+                        },
+                    },
+                ],
             },
         ],
     },
@@ -130,7 +138,7 @@ module.exports = {
     },
 
     resolve: {
-        alias: utils.getAllAliases(aliases),
+        alias: utils.getAllAliases(Object.assign(aliases, vellumUtils.getAliases())),
     },
 
     snapshot: {

@@ -99,6 +99,7 @@ see.
 
 from functools import wraps
 
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
@@ -110,15 +111,12 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
 from corehq import privileges
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-)
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
 from corehq.middleware import get_view_func
 
 from .models import SQLLocation
-
 
 # TODO: gettext_lazy is likely not having the desired effect, as format_html will immediately
 # evaluate it against the current language.
@@ -230,13 +228,16 @@ def conditionally_location_safe(conditional_function):
 def location_restricted_response(request):
     from corehq.apps.hqwebapp.views import no_permissions
     notify_exception(request, NOTIFY_EXCEPTION_MSG)
-    return no_permissions(request, message=LOCATION_ACCESS_DENIED)
+    return no_permissions(request, exception=LocationPermissionDenied())
 
 
 def location_restricted_exception(request):
-    from corehq.apps.hqwebapp.views import no_permissions_exception
     notify_exception(request, NOTIFY_EXCEPTION_MSG)
-    return no_permissions_exception(request, message=LOCATION_ACCESS_DENIED)
+    return LocationPermissionDenied()
+
+
+class LocationPermissionDenied(PermissionDenied):
+    user_facing_message = LOCATION_ACCESS_DENIED
 
 
 def _view_obj_is_safe(obj, request, *view_args, **view_kwargs):

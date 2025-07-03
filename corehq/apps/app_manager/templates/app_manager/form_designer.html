@@ -12,12 +12,6 @@
       type="text/css"
       rel="stylesheet"
     />
-  {% elif vellum_debug == "dev-min" %}
-    <link
-      href="{% static 'formdesigner/_build/style.css' %}"
-      type="text/css"
-      rel="stylesheet"
-    />
   {% endif %}
 {% endblock %}
 
@@ -31,27 +25,7 @@
   </style>
 {% endblock %}
 
-{% block js %}
-  {{ block.super }}
-  <script src="{% static 'moment/moment.js' %}"></script>
-  {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
-  <script>
-    /*
-        When r.js optimizes the bundle.js files, one thing it does is add a call to `define` the module.
-        Since these bundles are used by both requirejs and non-requirejs pages, `define` needs to exist,
-        so it's set up as a no-op in hqModules.js. But if `define` is defined, require.js returns early
-        without doing anything. So, for form builder, where the HQ page doesn't use requirejs but vellum
-        itself does, `define` gets changed from a no-op back to undefined so that require.js will re-define it.
-    */
-    define = undefined;
-  </script>
-  {% compress js %}
-    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
-    <script src="{% static 'js/ws4redis.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% js_entry_b3 "app_manager/js/forms/form_designer" %}
 
 {% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
 
@@ -63,13 +37,9 @@
   {% initial_page_data 'form_uses_cases' form.uses_cases %}
   {% initial_page_data 'is_registration_form' form.is_registration_form %}
   {% initial_page_data 'is_survey' module.is_surveys %}
-  {% initial_page_data 'notification_options' notification_options %}
-  {% initial_page_data 'requirejs_args' requirejs_args %}
-  {% initial_page_data 'requirejs_url' requirejs_url|static %}
   {% initial_page_data 'vellum_debug' vellum_debug %}
   {% initial_page_data 'vellum_options' vellum_options %}
   {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
-  {% initial_page_data 'requirejs_static_url' 'requirejs/require.js'|static %}
 
   <div id="formdesigner" class="clearfix loading"></div>
 
@@ -85,6 +55,7 @@
       >
         <i class="fa-regular fa-rectangle-list"></i> {% trans 'App Summary' %}
       </a>
+      {% include "app_manager/partials/view_submissions_button.html" with btn_style='btn-form-action custom-button-style' %}
       <a
         class="btn btn-form-action track-usage-link custom-button-style"
         href="{% url 'view_form' domain app.id form.unique_id %}"
@@ -94,6 +65,12 @@
       >
         <i class="fa fa-cog"></i> {% trans 'Manage Case' %}
       </a>
+    </div>
+  </script>
+
+  <script type="text/html" id="js-fd-view-submissions-only">
+    <div class="pull-right">
+      {% include "app_manager/partials/view_submissions_button.html" with btn_style='btn-form-action custom-button-style' %}
     </div>
   </script>
 

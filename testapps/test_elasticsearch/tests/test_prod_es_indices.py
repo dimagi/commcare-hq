@@ -1,12 +1,14 @@
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
+from corehq.apps.es import canonical_name_adapter_map
 from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.utils import get_all_expected_es_indices
 
 
 @es_test
+@override_settings(ENABLE_BHA_CASE_SEARCH_ADAPTER=True)
 class ProdIndexManagementTest(SimpleTestCase):
 
     maxDiff = None  # show the entire diff for test failures
@@ -18,6 +20,8 @@ class ProdIndexManagementTest(SimpleTestCase):
         if not settings.PILLOWTOPS:
             # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
             settings.PILLOWTOPS = settings._PILLOWTOPS
+        canonical_name_adapter_map.reset_cache()
+        cls.addClassCleanup(canonical_name_adapter_map.reset_cache)
 
     @classmethod
     def tearDownClass(cls):
@@ -105,6 +109,43 @@ EXPECTED_PROD_INDICES = [
         "index": "test_case-search-bha-2024-05-10",
         "type": "case",
         "hq_index_name": "case_search_bha",
+        "meta": {
+            "settings": {
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": [
+                                "lowercase"
+                            ]
+                        },
+                        "phonetic": {
+                            "filter": [
+                                "standard",
+                                "lowercase",
+                                "soundex"
+                            ],
+                            "tokenizer": "standard"
+                        }
+                    },
+                    "filter": {
+                        "soundex": {
+                            "replace": "true",
+                            "type": "phonetic",
+                            "encoder": "soundex"
+                        }
+                    }
+                },
+                "number_of_replicas": 0,
+                "number_of_shards": 1,
+            }
+        }
+    },
+    {
+        "index": "test_case-search-cc-perf-2025-06-19",
+        "type": "case",
+        "hq_index_name": "case_search_cc_perf",
         "meta": {
             "settings": {
                 "analysis": {

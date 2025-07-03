@@ -15,82 +15,76 @@
  * first case. This first case will just be available to forms.
  * This is used for deduplication workflows.
  */
-hqDefine("app_manager/js/details/parent_select", [
-    'knockout',
-    'underscore',
-    'hqwebapp/js/toggles',
-], function (
-    ko,
-    _,
-    toggles,
-) {
-    return function (init) {
-        var self = {};
-        var defaultModule = _(init.parentModules).findWhere({
-            is_parent: true,
-        });
-        self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
-        self.allCaseModules = ko.observable(init.allCaseModules);
-        self.parentModules = ko.observable(init.parentModules);
-        self.lang = ko.observable(init.lang);
-        self.langs = ko.observable(init.langs);
-        self.enableOtherOption = toggles.toggleEnabled('NON_PARENT_MENU_SELECTION');
+import ko from "knockout";
+import _ from "underscore";
+import toggles from "hqwebapp/js/toggles";
 
-        self.selectOptions = [
-            {id: 'none', text: gettext('None')},
-            {id: 'parent', text: gettext('Parent')},
-        ];
-        if (self.enableOtherOption) {
-            self.selectOptions.push(
-                {id: 'other', text: gettext('Other')},
-            );
-        }
-        var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';
-        if (self.enableOtherOption) {
-            self.selectMode = ko.observable(selectMode);
-            self.active = ko.computed(function () {
-                return (self.selectMode() !== 'none');
-            });
-        } else {
-            self.active = ko.observable(init.active);
-            self.selectMode = ko.computed(function () {
-                return self.active ? 'parent' : 'none';
-            });
-        }
-        self.relationship = ko.computed(function () {
-            return (self.selectMode() === 'parent' || self.selectMode() === 'none') ? 'parent' : null ;
-        });
+export default function (init) {
+    var self = {};
+    var defaultModule = _(init.parentModules).findWhere({
+        is_parent: true,
+    });
+    self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
+    self.allCaseModules = ko.observable(init.allCaseModules);
+    self.parentModules = ko.observable(init.parentModules);
+    self.lang = ko.observable(init.lang);
+    self.langs = ko.observable(init.langs);
+    self.enableOtherOption = toggles.toggleEnabled('NON_PARENT_MENU_SELECTION');
 
-        function getTranslation(name, langs) {
-            var firstLang = _(langs).find(function (lang) {
-                return name[lang];
+    self.selectOptions = [
+        {id: 'none', text: gettext('None')},
+        {id: 'parent', text: gettext('Parent')},
+    ];
+    if (self.enableOtherOption) {
+        self.selectOptions.push(
+            {id: 'other', text: gettext('Other')},
+        );
+    }
+    var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';
+    if (self.enableOtherOption) {
+        self.selectMode = ko.observable(selectMode);
+        self.active = ko.computed(function () {
+            return (self.selectMode() !== 'none');
+        });
+    } else {
+        self.active = ko.observable(init.active);
+        self.selectMode = ko.computed(function () {
+            return self.active ? 'parent' : 'none';
+        });
+    }
+    self.relationship = ko.computed(function () {
+        return (self.selectMode() === 'parent' || self.selectMode() === 'none') ? 'parent' : null ;
+    });
+
+    function getTranslation(name, langs) {
+        var firstLang = _(langs).find(function (lang) {
+            return name[lang];
+        });
+        return name[firstLang];
+    }
+    self.dropdownModules = ko.computed(function () {
+        return (self.selectMode() === 'parent') ? self.parentModules() : self.allCaseModules();
+    });
+    self.hasError = ko.computed(function () {
+        return !_.contains(_.pluck(self.dropdownModules(), 'unique_id'), self.moduleId());
+    });
+    self.moduleOptions = ko.computed(function () {
+        var options = _(self.dropdownModules()).map(function (module) {
+            var STAR = '\u2605',
+                SPACE = '\u3000';
+            var marker = (module.is_parent ? STAR : SPACE);
+            return {
+                value: module.unique_id,
+                label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs())),
+            };
+        });
+        if (self.hasError()) {
+            options.unshift({
+                value: '',
+                label: gettext('Unknown menu'),
             });
-            return name[firstLang];
         }
-        self.dropdownModules = ko.computed(function () {
-            return (self.selectMode() === 'parent') ? self.parentModules() : self.allCaseModules();
-        });
-        self.hasError = ko.computed(function () {
-            return !_.contains(_.pluck(self.dropdownModules(), 'unique_id'), self.moduleId());
-        });
-        self.moduleOptions = ko.computed(function () {
-            var options = _(self.dropdownModules()).map(function (module) {
-                var STAR = '\u2605',
-                    SPACE = '\u3000';
-                var marker = (module.is_parent ? STAR : SPACE);
-                return {
-                    value: module.unique_id,
-                    label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs())),
-                };
-            });
-            if (self.hasError()) {
-                options.unshift({
-                    value: '',
-                    label: gettext('Unknown menu'),
-                });
-            }
-            return options;
-        });
-        return self;
-    };
-});
+        return options;
+    });
+    return self;
+}

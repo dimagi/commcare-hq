@@ -23,7 +23,7 @@
    color: #ffffff;
    border: none;
  
-@@ -28,11 +28,11 @@
+@@ -28,11 +28,15 @@
    a:active,
    a:hover,
    a:link {
@@ -33,11 +33,15 @@
  
    .btn-confirm {
 -    .button-variant(#ffffff; @color-purple-dark; darken(@color-purple-dark, 5));
-+    @include button-variant(#ffffff, $color-purple-dark, darken($color-purple-dark, 5));
++    @include button-variant(
++      #ffffff,
++      $color-purple-dark,
++      darken($color-purple-dark, 5)
++    );
      border: 1px solid #ffffff;
  
      &:active,
-@@ -47,8 +47,8 @@
+@@ -47,8 +51,8 @@
  }
  
  .alert-trial {
@@ -48,7 +52,13 @@
    border: none;
    border-radius: 0;
    font-size: 1.1em;
-@@ -60,13 +60,13 @@
+@@ -60,18 +64,18 @@
+     text-decoration: underline;
+   }
+   a:hover {
+-    color: @color-purple-dark-inverse;
++    color: $color-purple-dark-inverse;
+   }
  
    .btn-purple,
    .btn-purple:focus {

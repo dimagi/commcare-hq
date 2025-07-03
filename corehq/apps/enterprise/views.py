@@ -23,6 +23,7 @@ from memoized import memoized
 import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.analytics.tasks import record_event
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
@@ -57,14 +58,13 @@ from corehq.apps.enterprise.tasks import email_enterprise_report
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
 from corehq.apps.hqwebapp.context import get_page_context, Section
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
 
 
-@use_tempusdominus
 @use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin
@@ -112,7 +112,6 @@ def platform_overview(request, domain):
     return render(request, "enterprise/project_dashboard.html", context)
 
 
-@use_tempusdominus
 @use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin
@@ -370,10 +369,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
     def page_context(self):
         pagination_context = self.pagination_context
         pagination_context.update({
-            'stripe_options': {
-                'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-                'stripe_cards': self.stripe_cards,
-            },
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'stripe_cards': self.stripe_cards,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'payment_urls': {
                 'process_invoice_payment_url': reverse(
@@ -390,9 +387,17 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
                 ),
             },
             'total_balance': self.total_balance,
-            'show_plan': False
+            'show_plan': False,
+            'can_pay_by_wire': self.can_pay_by_wire,
         })
         return pagination_context
+
+    @property
+    def can_pay_by_wire(self):
+        return (
+            self.current_subscription is not None
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+        )
 
     @property
     def can_pay_invoices(self):

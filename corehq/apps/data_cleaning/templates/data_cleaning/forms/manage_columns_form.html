@@ -4,21 +4,19 @@
 <div
   id="{{ container_id }}"
   hx-swap="outerHTML"
-  hq-hx-refresh-swap="#CleanCaseTable"
+  hq-hx-refresh-swap="#EditCasesTable"
 >
   {% if active_columns %}
     <div class="mb-3">
       <form
+        class="htmx-disable-on-remove-column"
         hx-post="{{ request.path_info }}"
         hx-target="#{{ container_id }}"
-        hx-disabled-elt="find button"
+        hx-disabled-elt=".htmx-disable-on-column-sort"
         hq-hx-action="update_column_order"
         hx-trigger="end"
       >
-        <div
-          class="list-group"
-          x-htmx-sortable=""
-        >
+        <div class="list-group" x-htmx-sortable="">
           {% for column in active_columns %}
             {% include "data_cleaning/forms/partials/column_list_item.html" %}
           {% endfor %}
@@ -29,9 +27,7 @@
 
   <div class="card mb-3">
     <div class="card-body">
-      <h5 class="mb-3">
-        {% trans "Add Column" %}
-      </h5>
+      <h5 class="mb-3">{% trans "Add Column" %}</h5>
       <form
         hx-post="{{ request.path_info }}"
         hx-target="#{{ container_id }}"
@@ -42,5 +38,4 @@
       </form>
     </div>
   </div>
-
 </div>

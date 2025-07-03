@@ -138,18 +138,27 @@ class DashboardGauge(DashboardWidgetBase):
     # optional additional configuration set to customize gauge appearance
     configuration = JSONField(default=dict)
 
+    def to_widget(self):
+        return model_to_widget(
+            self,
+            exclude=['dashboard_tab', 'display_order'],
+        )
+
 
 class WidgetType(models.TextChoices):
+    GAUGE = 'gauge', _('Gauge')
     MAP = 'map', _('Map')
     REPORT = 'report', _('Report')
 
     @classmethod
     def get_form_class(cls, widget_type):
         from corehq.apps.campaign.forms import (
+            DashboardGaugeForm,
             DashboardMapForm,
             DashboardReportForm,
         )
         form_classes = {
+            cls.GAUGE: DashboardGaugeForm,
             cls.MAP: DashboardMapForm,
             cls.REPORT: DashboardReportForm,
         }

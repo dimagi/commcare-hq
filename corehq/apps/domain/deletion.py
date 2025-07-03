@@ -409,6 +409,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('integration', 'SimprintsIntegration', 'domain'),
     ModelDeletion('integration', 'KycConfig', 'domain'),
     ModelDeletion('integration', 'MoMoConfig', 'domain'),
+    ModelDeletion('ip_access', 'IPAccessConfig', 'domain'),
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
@@ -429,6 +430,7 @@ DOMAIN_DELETE_OPERATIONS = [
     PartitionedModelDeletion('scheduling_partitioned', 'CaseTimedScheduleInstance', 'domain'),
     PartitionedModelDeletion('scheduling_partitioned', 'TimedScheduleInstance', 'domain'),
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
+    ModelDeletion('export', 'DeIdHash', 'domain'),
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
     CustomDeletion('export', _delete_data_files, []),
@@ -487,6 +489,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'FHIRImportResourceProperty',
     ]),
     ModelDeletion('repeaters', 'Repeater', 'domain', manager='all_objects'),
+    ModelDeletion('repeaters', 'DataSourceUpdate', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain', manager='all_objects'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),

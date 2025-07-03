@@ -1,11 +1,11 @@
 import logging
 import time
 import gevent
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+from corehq.apps.es import canonical_name_adapter_map
 
 import corehq.apps.es.const as es_consts
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
@@ -211,7 +211,7 @@ class ESSyncUtil:
         except TaskMissing:
             raise CommandError(f"No Reindex process with {task_id} found")
 
-        start_time = datetime.utcfromtimestamp(task_info['start_time_in_millis'] / 1000)
+        start_time = datetime.fromtimestamp(task_info['start_time_in_millis'] / 1000, tz=timezone.utc)
         running_duration_seconds = task_info['running_time_in_nanos'] / 10**9
         duration = timedelta(running_duration_seconds)
 
@@ -335,7 +335,7 @@ class ESSyncUtil:
 
     def _get_index_name_cname_map(self, ignore_subindices=False):
         index_name_cname_map = {}
-        for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items():
+        for cname, adapter in canonical_name_adapter_map().items():
             if ignore_subindices and adapter.parent_index_cname:
                 continue
             index_name_cname_map[adapter.index_name] = cname
@@ -391,9 +391,9 @@ class ESSyncUtil:
             print("No residual indices found on the environment")
 
     def _get_all_known_index_names(self):
-        # get index name from CANONICAL_NAME_ADAPTER_MAP
+        # get index name from canonical_name_adapter_map()
         known_indices = set()
-        for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
+        for cname in canonical_name_adapter_map().keys():
             known_indices.update(self._get_current_and_older_index_name(cname))
         return [index for index in known_indices if index]
 

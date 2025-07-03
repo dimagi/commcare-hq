@@ -60,12 +60,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_multiselect,
-)
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
@@ -107,6 +101,7 @@ from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
+    SUBMISSION_HISTORY_PERMISSION,
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
@@ -155,7 +150,7 @@ require_case_export_permission = require_permission(
 
 require_form_view_permission = require_permission(
     HqPermissions.view_report,
-    'corehq.apps.reports.standard.inspect.SubmitHistory',
+    SUBMISSION_HISTORY_PERMISSION,
     login_decorator=None,
 )
 
@@ -220,12 +215,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = gettext_noop("My Saved Reports")
     template_name = 'reports/bootstrap3/reports_home.html'
-
-    @use_jquery_ui
-    @use_datatables
-    @use_daterangepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def language(self):
@@ -685,8 +674,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     template_name = 'reports/bootstrap3/edit_scheduled_report.html'
 
     @method_decorator(require_permission(HqPermissions.download_reports))
-    @use_multiselect
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
 
@@ -803,12 +790,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
-        form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                         (Domain.get_by_name(self.domain)['default_timezone'],
-                                          get_timezone_difference(self.domain))
-        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                              (Domain.get_by_name(self.domain)['default_timezone'],
-                                               get_timezone_difference(self.domain))
+        timezone_help_text = _("This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)") % {
+            'timezone': Domain.get_by_name(self.domain)['default_timezone'],
+            'utc_offset': get_timezone_difference(self.domain)
+        }
+        form.fields['hour'].help_text = timezone_help_text
+        form.fields['stop_hour'].help_text = timezone_help_text
         return form
 
     @property

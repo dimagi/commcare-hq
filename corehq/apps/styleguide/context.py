@@ -7,6 +7,7 @@ ColorGroup = namedtuple('ColorGroup', 'title description main_color subtle_color
 Color = namedtuple('Color', 'slug hex')
 CrispyFormsDemo = namedtuple('CrispyFormsDemo', 'form code')
 CrispyFormsWithJsDemo = namedtuple('CrispyFormsWithJsDemo', 'form code_python code_js')
+HtmlWithJsDemo = namedtuple('HtmlWithJsDemo', 'code_html code_js')
 CodeForDisplay = namedtuple('CodeForDisplay', 'code language')
 CodeForDisplayWithPartial = namedtuple('CodeForDisplayWithPartial', 'code language partial')
 ThemeColor = namedtuple('ThemeColor', 'slug hex theme_equivalent')
@@ -235,8 +236,8 @@ def get_common_icons():
         {
             'name': 'Common FontAwesome secondary icons',
             'icons': _add_prefix_to_icons('fa-solid', [
-                'fa-cloud-arrow-down', 'fa-cloud-arrow-up', 'fa-warning', 'fa-info-circle', 'fa-question-circle',
-                'fa-check', 'fa-external-link',
+                'fa-cloud-arrow-down', 'fa-cloud-arrow-up', 'fa-triangle-exclamation', 'fa-info-circle',
+                'fa-question-circle', 'fa-check', 'fa-external-link',
             ]),
         }
     ]
@@ -274,13 +275,19 @@ def get_example_context(filename):
         return content.read()
 
 
-def get_python_example_context(filename):
-    examples = os.path.join(os.path.dirname(__file__), 'examples', 'bootstrap5')
+def get_html_example_context(filename):
+    examples = os.path.join(os.path.dirname(__file__), 'templates', 'styleguide', 'bootstrap5', 'examples')
     with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
         return content.read()
 
 
 def get_js_example_context(filename):
-    examples = os.path.join(os.path.dirname(__file__), 'static', 'styleguide', 'js_examples')
+    examples = os.path.join(os.path.dirname(__file__), 'static', 'styleguide', 'js', 'examples')
+    with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
+        return content.read()
+
+
+def get_python_example_context(filename):
+    examples = os.path.join(os.path.dirname(__file__), 'examples', 'bootstrap5')
     with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
         return content.read()

@@ -1,13 +1,13 @@
-hqDefine("cloudcare/js/formplayer/menus/views", [
+define("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
     'backbone',
     'backbone.marionette',
-    'DOMPurify/dist/purify.min',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'dompurify',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/apps/api',
@@ -15,6 +15,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
+    'crypto-js/crypto-js',
     'mapbox-gl/dist/mapbox-gl',
     'leaflet',
     'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
@@ -27,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     bootstrap,
     initialPageData,
     toggles,
-    kissmetrics,
+    noopMetrics,
     constants,
     FormplayerFrontend,
     AppsAPI,
@@ -35,6 +36,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     formplayerUtils,
     markdown,
     cloudcareUtils,
+    CryptoJS,
     mapboxgl,
     L,
 ) {
@@ -306,6 +308,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             });
             self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
             self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+            this.columnConfigModel = this.options.columnConfigModel;
         },
 
         className: "formplayer-request case-row",
@@ -475,6 +478,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
+                columnConfigModel: this.columnConfigModel,
             };
         },
 
@@ -666,6 +670,107 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         };
     };
 
+    const ColumnConfigModel = Backbone.Model.extend({
+        defaults: function () {
+            return {
+                columnNames: [],
+                columnVisibility: [],
+                columnCanBeVisible: [],
+            };
+        },
+
+        initialize: function (attributes) {
+            const getCanBeVisible = (attributes) => {
+                if (attributes.styles) {
+                    return attributes.styles.map(s => s.widthHint !== 0);
+                } else {
+                    return Array(attributes.columnNames.length).fill(true);
+                }
+            };
+
+            const setFromAttributes = (attributes) => {
+                this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
+                this.set('columnCanBeVisible', getCanBeVisible(attributes));
+            };
+
+            const shouldInvalidateCache = (attributes, savedModel) => {
+                if (!attributes.styles) { // happens with search first.
+                    return false;
+                }
+                const canBeVisible = getCanBeVisible(attributes);
+                return canBeVisible.length !== savedModel.columnCanBeVisible.length ||
+                    canBeVisible.some((value, index) => value !== savedModel.columnCanBeVisible[index]);
+            };
+            if (attributes) {
+                this.configStorageId = attributes.configStorageId;
+                if (this.configStorageId && localStorage.getItem(this.configStorageId)) {
+                    const savedModel = JSON.parse(localStorage.getItem(this.configStorageId));
+                    if (shouldInvalidateCache(attributes, savedModel)) {
+                        localStorage.removeItem(this.configStorageId);
+                        setFromAttributes(attributes);
+                    } else {
+                        this.set(savedModel);
+                    }
+                } else if (attributes) {
+                    setFromAttributes(attributes);
+                }
+
+                this.on('change', this.saveToLocalStorage, this);
+            }
+        },
+
+        isVisible: function (index) {
+            return this.get('columnVisibility')[index];
+        },
+
+        saveToLocalStorage: function () {
+            if (this.configStorageId) {
+                const modelData = this.toJSON();
+                delete modelData.columnNames; // we don't want to save them in case the user changes languages
+                localStorage.setItem(this.configStorageId, JSON.stringify(modelData));
+            }
+        },
+    });
+
+    const CaseListConfigView = Marionette.View.extend({
+        template: _.template($("#case-list-config-body").html() || ""),
+
+        initialize: function () {
+            this.columnVisibility = this.model.get('columnVisibility').slice();
+        },
+
+        templateContext: function () {
+            return {
+                columnNames: this.model.get('columnNames'),
+                columnVisibility: this.columnVisibility,
+                allColumnsHidden: function () {
+                    return this.columnVisibility.every(hidden => hidden === false);
+                },
+            };
+        },
+
+        events: {
+            'click .js-update': 'onUpdate',
+            'click .js-reset': 'onReset',
+            'change .column-checkbox': 'onCheckboxChange',
+        },
+
+        onUpdate: function () {
+            this.model.set('columnVisibility', this.columnVisibility);
+            this.trigger('save', this.model);
+        },
+
+        onReset: function () {
+            this.columnVisibility.fill(true);
+            this.render();
+        },
+
+        onCheckboxChange: function (e) {
+            this.columnVisibility[e.currentTarget.value] = e.currentTarget.checked;
+            this.render();
+        },
+    });
+
     const CaseListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#case-view-list-template").html() || ""),
@@ -676,7 +781,81 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return {
                 styles: this.options.styles,
                 endpointActions: this.options.endpointActions,
+                columnConfigModel: this.columnConfigModel,
             };
+        },
+
+        regions: {
+            configModalRegion: '.js-config-modal-content',
+        },
+
+        onRender: function () {
+            const self = this;
+            const configButton = this.$('#case-list-config-button');
+            if (configButton.length) {
+                const caseListConfigViewPopover = new bootstrap.Popover(configButton[0], {
+                    html: true,
+                    sanitize: false,
+                    content: function () {
+                        self.caseListConfigView = new CaseListConfigView({
+                            model: self.columnConfigModel,
+                        });
+                        const container = document.createElement('div');
+                        self.caseListConfigView.setElement(container);
+                        self.caseListConfigView.render();
+
+                        self.listenTo(self.caseListConfigView, 'save', function () {
+                            caseListConfigViewPopover.dispose();
+                            // save map
+                            const initialixedMapEl = self.$('#module-case-list-map')[0];
+
+                            self.render();
+
+                            // Replace the map element with the initial map element
+                            const newMapEl = self.$('#module-case-list-map')[0];
+                            newMapEl.parentNode.replaceChild(initialixedMapEl, newMapEl);
+                        });
+
+                        return container;
+                    },
+                    placement: 'auto',
+                    trigger: 'click',
+                });
+
+                document.addEventListener('click', function (event) {
+                    if ($(event.target).closest('.popover').length) {
+                        if (!$(event.target).hasClass('js-action') &&
+                                !$(event.target).closest('.js-action').length) {
+                            event.stopPropagation();
+                        }
+                    } else {
+                        caseListConfigViewPopover.hide();
+                    }
+                }, true);
+
+                configButton[0].addEventListener('shown.bs.popover', function () {
+                    const popover = document.querySelector('.popover');
+                    if (popover) {
+                        const firstCheckbox = popover.querySelector('.column-checkbox');
+                        if (firstCheckbox) {
+                            firstCheckbox.focus();
+                        }
+                    }
+                });
+            }
+        },
+
+        getConfigStorageId: function (user) {
+            const urlObject = formplayerUtils.currentUrlToObject();
+            const selectionsWithoutUuid = urlObject.selections.map(function (s) {
+                if (s.match('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$')) {
+                    return 'uuid';
+                } else {
+                    return s;
+                }
+            });
+            const configStorageId = `${urlObject.appId}:${JSON.stringify(selectionsWithoutUuid)}:${user.username}`;
+            return CryptoJS.enc.Hex.stringify(CryptoJS.SHA512(configStorageId));
         },
 
         initialize: function (options) {
@@ -687,6 +866,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
+            const user = UsersModels.getCurrentUser();
+            const configStorageId = this.getConfigStorageId(user);
+            self.columnConfigModel = new ColumnConfigModel({
+                columnNames: self.headers,
+                configStorageId: configStorageId,
+                styles: self.styles,
+            });
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
@@ -694,7 +880,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             } else {
                 self.selectedCaseIds = [];
             }
-            const user = UsersModels.getCurrentUser();
             const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
@@ -774,7 +959,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         paginateAction: function (e) {
             const pageSelection = $(e.currentTarget).data("id");
             FormplayerFrontend.trigger("menu:paginate", pageSelection, this.selectedCaseIds);
-            kissmetrics.track.event("Accessibility Tracking - Pagination Interaction");
+            noopMetrics.track.event("Accessibility Tracking - Pagination Interaction");
         },
 
         onPerPageLimitChange: function (e) {
@@ -788,7 +973,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const goText = Number(this.ui.paginationGoText.val());
             const pageNo = formplayerUtils.paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
-            kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
+            noopMetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
 
         paginateKeyAction: function (e) {
@@ -843,7 +1028,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         continueAction: function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
-                kissmetrics.track.event('Completed Case Search', {
+                noopMetrics.track.event('Completed Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
@@ -1060,6 +1245,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.scrollContainer.off('scroll', self.boundHandleScroll);
         },
 
+        onBeforeDestroy: function () {
+            if (this.caseListConfigView) {
+                this.caseListConfigView.destroy();
+            }
+        },
+
         templateContext: function () {
             const paginateItems = formplayerUtils.paginateOptions(
                 this.options.currentPage,
@@ -1078,6 +1269,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
+                columnConfigModel: this.columnConfigModel,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
@@ -1101,7 +1293,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     return this.sortIndices.indexOf(index) > -1;
                 },
                 columnVisible: function (index) {
-                    return !(this.widthHints && this.widthHints[index] === 0);
+                    return !(this.widthHints && this.widthHints[index] === 0) && this.columnConfigModel.isVisible(index);
                 },
             });
         },
@@ -1153,6 +1345,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         onRender: function () {
+            MultiSelectCaseListView.__super__.onRender.apply(this);
             this.reconcileMultiSelectUI();
         },
     });
@@ -1521,7 +1714,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
                 if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
-                    kissmetrics.track.event('Completed Case Search', {
+                    noopMetrics.track.event('Completed Case Search', {
                         'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                     });
                 }

@@ -64,7 +64,7 @@ class TemporaryBlobDBMixin(object):
         try:
             # verify get_blob_db() returns our new db
             assert blobs.get_blob_db() is self, 'got wrong blob db'
-        except:
+        except:  # noqa: E722
             self.close()
             raise
 
@@ -106,6 +106,9 @@ class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
     def __init__(self, config):
         name_parts = ["test", config.get("s3_bucket", "blobdb"), uuid4().hex]
         config = dict(config)
+        if config.get("config", {}).get("signature_version") == "s3":
+            raise ValueError("S3_BLOB_DB_SETTINGS config signature_version 's3'"
+                             " is not valid and must be removed.")
         config["s3_bucket"] = "-".join(name_parts)
         super(TemporaryS3BlobDB, self).__init__(config)
         assert self.s3_bucket_name == config["s3_bucket"], \
@@ -120,7 +123,8 @@ class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
         summaries = s3_bucket.objects.all()
         for page in summaries.pages():
             objects = [{"Key": o.key} for o in page]
-            s3_bucket.delete_objects(Delete={"Objects": objects})
+            if objects:
+                s3_bucket.delete_objects(Delete={"Objects": objects})
         s3_bucket.delete()
 
 

@@ -204,3 +204,38 @@ class MobileUCRTooLargeException(CannotRestoreException):
     def __init__(self, message, row_count):
         super().__init__(message)
         self.row_count = row_count
+
+
+class AppInDifferentDomainException(AppManagerException):
+    """
+    We generally request an app with a domain and an app_id.
+    If the returned app is not in the targeted domain, we raise this exception.
+    """
+    pass
+
+
+class InvalidPropertyException(Exception):
+    def __init__(self, invalid_property):
+        self.invalid_property = invalid_property
+        message = f"Invalid key found: {self.invalid_property}"
+        super().__init__(message)
+
+
+class MissingPropertyException(Exception):
+    def __init__(self, *missing_properties):
+        self.missing_properties = missing_properties
+        if self.missing_properties:
+            message = f"The following properties were not found: {', '.join(self.missing_properties)}"
+        else:
+            message = "No missing properties specified"
+        super().__init__(message)
+
+
+class DiffConflictException(Exception):
+    def __init__(self, *conflicting_keys):
+        self.conflicting_keys = conflicting_keys
+        if self.conflicting_keys:
+            message = f"The following keys were affected by multiple actions: {', '.join(self.conflicting_keys)}"
+        else:
+            message = "No conflicting keys specified"
+        super().__init__(message)

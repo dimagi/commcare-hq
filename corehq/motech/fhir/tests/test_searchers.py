@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import attr
 import pytest
-from nose.tools import assert_equal, assert_in, assert_true
+from nose.tools import assert_equal, assert_in
 
 from corehq.motech.auth import BasicAuthManager
 from corehq.motech.requests import Requests
@@ -287,16 +287,16 @@ def test_paginated_bundle():
     assert_equal(next(candidates), jane_fonda)
 
     # The first request searched the Patient endpoint
-    assert_true(requests.get.called_with('Patient/', params={
+    requests.get.assert_called_with('Patient/', params={
         'given': 'Jane Seymour',
         'family': 'Fonda',
         'gender': 'female',
         'birthdate': '1937-12-21',
         'address-country': 'United States of America',
-    }))
+    })
 
     # The next request called the "next" URL
-    assert_true(requests.get.called_with(
+    requests.send_request.assert_called_with(
         'GET',
         'https://example.com/api/Patient/page/2',
-    ))
+    )

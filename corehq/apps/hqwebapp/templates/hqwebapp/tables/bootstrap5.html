@@ -17,6 +17,14 @@
 
     {% block table %}{{ block.super }}{% endblock table %}
 
+    {% if table.page.paginator.count == 0 %}
+      {% block no_results_table %}
+        <div class="alert alert-primary">
+          {% blocktrans %}No results found.{% endblocktrans %}
+        </div>
+      {% endblock %}
+    {% endif %}
+
     <div class="pb-3 d-flex justify-content-between">
       <div>
         {% block num_entries %}

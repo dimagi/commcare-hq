@@ -33,7 +33,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.metrics import metrics_counter, metrics_histogram
+from corehq.util.metrics import metrics_counter, metrics_histogram, limit_domains
 from corehq.util.timer import TimingContext
 
 from .checksum import CaseStateHash
@@ -243,7 +243,7 @@ class CachedResponse(object):
         """
         name = 'restore-{}.xml'.format(uuid4().hex)
         get_blob_db().put(
-            NoClose(fileobj),
+            fileobj,
             domain=domain,
             parent_id=restore_user_id,
             type_code=CODES.restore,
@@ -806,6 +806,7 @@ class RestoreConfig(object):
             'status_code': status,
             'device_type': 'webapps' if self.params.is_webapps else 'other',
             'domain': self.domain,
+            'domain_limited': limit_domains(self.domain),
         }
         timer_buckets = (1, 5, 20, 60, 120, 300, 600)
         for timer in timing.to_list(exclude_root=True):
@@ -813,14 +814,16 @@ class RestoreConfig(object):
             extra_tags = {}
             if timer.name in RESTORE_SEGMENTS:
                 segment = RESTORE_SEGMENTS[timer.name]
+                segment_timer_buckets = timer_buckets
             elif timer.name.startswith('fixture:'):
                 segment = 'fixture'
+                segment_timer_buckets = (0.25, 0.5, 1, 5, 20, 60, 120, 300, 600)
                 extra_tags = {'fixture': timer.name.split(':')[1]}
 
             if segment:
                 metrics_histogram(
                     'commcare.restores.{}.duration.seconds'.format(segment), timer.duration,
-                    bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
+                    bucket_tag='duration', buckets=segment_timer_buckets, bucket_unit='s',
                     tags={**tags, **extra_tags}
                 )
 
@@ -862,19 +865,3 @@ RESTORE_SEGMENTS = {
     "FixtureElementProvider": "fixtures",
     "CasePayloadProvider": "cases",
 }
-
-
-class NoClose(object):
-    """HACK file object with no-op `close()` to avoid close by S3Transfer
-
-    https://github.com/boto/s3transfer/issues/80
-    """
-
-    def __init__(self, fileobj):
-        self.fileobj = fileobj
-
-    def __getattr__(self, name):
-        return getattr(self.fileobj, name)
-
-    def close(self):
-        pass

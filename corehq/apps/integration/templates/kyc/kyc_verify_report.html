@@ -41,12 +41,13 @@
       </p>
 
       <div
+        id="kyc-verify-table"
         hx-trigger="load"
         hx-get="{% url 'kyc_verify_table' domain %}{% querystring %}"
-      >
-        <div class="htmx-indicator">
-          <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
-        </div>
+        hx-indicator="#kyc-loader"
+      ></div>
+      <div id="kyc-loader" class="htmx-indicator">
+        <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
       </div>
     {% endif %}
   </div>

@@ -62,12 +62,12 @@ def test_make_select_form_control_renames_bootstrap5():
 
 
 def test_make_template_tag_renames_bootstrap5():
-    line = """        {% requirejs_main "data_dictionary/js/data_dictionary" %}\n"""
+    line = """        {% js_entry_b3 "data_dictionary/js/data_dictionary" %}\n"""
     final_line, renames = make_template_tag_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """        {% requirejs_main_b5 "data_dictionary/js/data_dictionary" %}\n""")
-    eq(renames, ['renamed requirejs_main to requirejs_main_b5'])
+    eq(final_line, """        {% js_entry "data_dictionary/js/data_dictionary" %}\n""")
+    eq(renames, ['renamed js_entry_b3 to js_entry'])
 
 
 def test_make_data_attribute_renames_bootstrap5():
@@ -97,12 +97,12 @@ def test_make_javascript_dependency_renames():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_make_javascript_dependency_renames_hqdefine():
-    line = """hqDefine("hqwebapp/js/bootstrap3/prepaid_modal", [\n"""
+def test_make_javascript_dependency_renames_amd():
+    line = """define("hqwebapp/js/bootstrap3/prepaid_modal", [\n"""
     final_line, renames = make_javascript_dependency_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """hqDefine("hqwebapp/js/bootstrap5/prepaid_modal", [\n""")
+    eq(final_line, """define("hqwebapp/js/bootstrap5/prepaid_modal", [\n""")
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
@@ -152,34 +152,34 @@ def test_make_template_dependency_renames_extends():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_check_bootstrap3_references_in_template_requirejs():
-    line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
+def test_check_bootstrap3_references_in_template_webpack():
+    line = """    {% js_entry_b3 'hqwebapp/bootstrap3/foo' %}\n"""
     issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(issues, ["This template references a bootstrap 3 requirejs file. "
-                "It should also use requirejs_main_b5 instead of requirejs_main."])
+    eq(issues, ["This template references a bootstrap 3 webpack entry point. "
+                "It should also use js_entry instead of js_entry_b3."])
 
 
-def test_make_template_dependency_renames_requirejs():
-    line = """    {% requirejs_main 'hqwebapp/js/bootstrap3/foo' %}\n"""
+def test_make_template_dependency_renames_webpack():
+    line = """    {% js_entry_b3 'hqwebapp/js/bootstrap3/foo' %}\n"""
     final_line, renames = make_template_dependency_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """    {% requirejs_main 'hqwebapp/js/bootstrap5/foo' %}\n""")
+    eq(final_line, """    {% js_entry_b3 'hqwebapp/js/bootstrap5/foo' %}\n""")
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_check_bootstrap3_references_in_template_requirejs_b5():
-    line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
+def test_check_bootstrap3_references_in_template_js_entry():
+    line = """    {% js_entry 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
     issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(issues, ['This template references a bootstrap 3 requirejs file.'])
+    eq(issues, ['This template references a bootstrap 3 webpack entry point.'])
 
 
-def test_make_template_dependency_renames_requirejs_b5():
-    line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
+def test_make_template_dependency_renames_js_entry():
+    line = """    {% js_entry 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
     final_line, renames = make_template_dependency_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap5/foo' %}\n""")
+    eq(final_line, """    {% js_entry 'hqwebapp/js-test/bootstrap5/foo' %}\n""")
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
@@ -213,10 +213,10 @@ def test_make_template_dependency_renames_include():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_flag_requirejs_main_references_in_template():
-    line = """    {% requirejs_main 'hqwebapp/js/foo' %}\n"""
+def test_flag_js_entry_b3_references_in_template():
+    line = """    {% js_entry_b3 'hqwebapp/js/foo' %}\n"""
     issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(issues, ['This template should use requirejs_main_b5 instead of requirejs_main.'])
+    eq(issues, ['This template should use js_entry instead of js_entry_b3.'])
 
 
 def test_flag_any_bootstrap3_references_in_template():
@@ -266,7 +266,7 @@ def test_flag_changed_javascript_plugins_bootstrap5():
                 "\n\nAn EXAMPLE for how to apply this change is provided below.\nPlease see docs for "
                 "further details.\n\npreviously\n```\n$('#bugReport').modal('hide');\n```\n\nnow\n```\n"
                 "const bugReportModal = new bootstrap.Modal($('#bugReport'));\nbugReportModal.hide();\n```\n\n"
-                "Hint: make sure to list `hqwebapp/js/bootstrap5_loader` as a js dependency in the file where\n"
+                "Hint: make sure to list `bootstrap5` as a js dependency in the file where\n"
                 "bootstrap is referenced.\n\nOld docs: https://getbootstrap.com/docs/3.4/javascript/#modals\n"
                 "New docs: https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n"]])
 
@@ -322,22 +322,25 @@ def test_file_does_not_contain_reference_to_path():
 
 
 def test_javascript_file_contains_reference_to_path():
-    filedata = """hqDefine('foobarapp/js/bugz_two', [
-        'foobarapp/js/bugz'
-        'foobarapp/js/layout'
-    ], function() {
-        // nothing to do, this is just to define the dependencies for foobarapp/base.html
-    });"""
+    filedata = """
+import 'foobarapp/js/bugz';
+import Layout from 'foobarapp/js/layout';
+import { OneThing } from 'foobarapp/js/things';
+// do stuff
+    """
     contains_ref = file_contains_reference_to_path(filedata, "foobarapp/js/bugz")
+    eq(contains_ref, True)
+    contains_ref = file_contains_reference_to_path(filedata, "foobarapp/js/layout")
+    eq(contains_ref, True)
+    contains_ref = file_contains_reference_to_path(filedata, "foobarapp/js/things")
     eq(contains_ref, True)
 
 
 def test_javascript_file_does_not_contain_reference_to_path():
-    filedata = """hqDefine('foobarapp/js/bugz_two', [
-        'foobarapp/js/layout'
-    ], function() {
-        // nothing to do, this is just to define the dependencies for foobarapp/base.html
-    });"""
+    filedata = """
+import 'foobarapp/js/layout';
+// do stuff
+    """
     contains_ref = file_contains_reference_to_path(filedata, "foobarapp/js/bugz")
     eq(contains_ref, False)
 
@@ -370,19 +373,17 @@ def test_replace_path_references():
 
 
 def test_replace_path_references_javascript():
-    filedata = """hqDefine('foobarapp/js/bugz_two', [
-    'foobarapp/js/bugz',
-    'foobarapp/js/layout'
-], function() {
-    // nothing to do, this is just to define the dependencies for foobarapp/base.html
-});"""
+    filedata = """
+import 'foobarapp/js/bugz';
+import 'foobarapp/js/layout';
+// do stuff
+"""
     result = replace_path_references(filedata, "foobarapp/js/bugz", "foobarapp/js/bootstrap3/bugz")
-    expected_result = """hqDefine('foobarapp/js/bugz_two', [
-    'foobarapp/js/bootstrap3/bugz',
-    'foobarapp/js/layout'
-], function() {
-    // nothing to do, this is just to define the dependencies for foobarapp/base.html
-});"""
+    expected_result = """
+import 'foobarapp/js/bootstrap3/bugz';
+import 'foobarapp/js/layout';
+// do stuff
+"""
     eq(result, expected_result)
 
 

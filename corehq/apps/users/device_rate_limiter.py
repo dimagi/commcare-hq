@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 
 from django_redis import get_redis_connection
 
-from corehq import toggles
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
+from corehq.project_limits.const import DEVICE_LIMIT_PER_USER_KEY
 from corehq.project_limits.models import SystemLimit
 from corehq.util.metrics import metrics_counter
 
@@ -13,9 +13,6 @@ logger = logging.getLogger(__name__)
 DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
 # intentionally set to > 1 minute to allow for a buffer at minute boundaries
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
-
-DEVICE_LIMIT_PER_USER_KEY = "device_limit_per_user"
-DEVICE_LIMIT_PER_USER_DEFAULT = 50
 REDIS_KEY_PREFIX = "device-limiter"
 
 
@@ -29,24 +26,29 @@ class DeviceRateLimiter:
         self.client = get_redis_connection()
 
     def device_limit_per_user(self, domain):
-        return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, domain=domain) or DEVICE_LIMIT_PER_USER_DEFAULT
+        return SystemLimit.get_limit_for_key(DEVICE_LIMIT_PER_USER_KEY, 10, domain=domain)
 
-    def rate_limit_device(self, domain, user_id, device_id):
+    def rate_limit_device(self, domain, user, device_id):
         """
         Returns boolean representing if this user_id + device_id combo is rate limited or not
         NOTE: calling this method will result in the device_id being added to the list of used device_ids
         """
-        if not device_id or not user_id:
+        if not device_id or not user:
             logger.info(
-                f"Unable to rate limit device activity for domain {domain}, user {user_id}, and device {device_id}"
+                f"Unable to rate limit device activity for domain {domain}, user {user.user_id if user else None},"
+                f" and device {device_id}"
             )
+            return False
+
+        if user.is_commcare_user() and user.is_demo_user:
+            # demo users are intended to be used across devices
             return False
 
         if self._is_formplayer(device_id):
             # do not track formplayer activity
             return False
 
-        key = self._get_redis_key(domain, user_id)
+        key = self._get_redis_key(domain, user.user_id)
 
         key_exists, device_exists, device_count = self._get_usage_for_device(key, device_id)
 
@@ -61,12 +63,11 @@ class DeviceRateLimiter:
             self._track_usage(key, device_id)
             return False
 
-        is_enabled = toggles.DEVICE_RATE_LIMITER.enabled(domain, toggles.NAMESPACE_DOMAIN)
         metrics_counter(
             'commcare.devices_per_user.rate_limited',
-            tags={'domain': domain, 'user_id': user_id, 'enabled': str(is_enabled)},
+            tags={'domain': domain, 'user_id': user.user_id},
         )
-        return is_enabled
+        return True
 
     def _get_redis_key(self, domain, user_id):
         """

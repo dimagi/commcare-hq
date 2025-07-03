@@ -22,6 +22,12 @@ INDEX_CONF_STANDARD = {
     "index.max_result_window": SIZE_LIMIT,
 }
 
+INDEX_SLOWLOG_CONF = {
+    "index.search.slowlog.threshold.query.warn": "10s",
+    "index.search.slowlog.threshold.query.info": "5s",
+    "index.search.slowlog.threshold.query.debug": "2s",
+    "index.search.slowlog.threshold.query.trace": "500ms",
+}
 
 HQ_APPS_INDEX_CANONICAL_NAME = "apps"
 HQ_APPS_INDEX_NAME = "apps-20230524"
@@ -31,10 +37,14 @@ HQ_CASE_SEARCH_INDEX_CANONICAL_NAME = "case_search"
 HQ_CASE_SEARCH_INDEX_NAME = "case-search-20230524"
 HQ_CASE_SEARCH_SECONDARY_INDEX_NAME = "case-search-2024-05-09"
 
-# See case_search_bha.py docstring for context
+# See case_search_sub.py docstring for context
 HQ_CASE_SEARCH_BHA_INDEX_CANONICAL_NAME = "case_search_bha"
 HQ_CASE_SEARCH_BHA_INDEX_NAME = "case-search-bha-2024-05-10"
 HQ_CASE_SEARCH_BHA_SECONDARY_INDEX_NAME = None
+
+HQ_CASE_SEARCH_CC_PERF_INDEX_CANONICAL_NAME = "case_search_cc_perf"
+HQ_CASE_SEARCH_CC_PERF_INDEX_NAME = "case-search-cc-perf-2025-06-19"
+HQ_CASE_SEARCH_CC_PERF_SECONDARY_INDEX_NAME = None
 
 HQ_CASES_INDEX_CANONICAL_NAME = "cases"
 HQ_CASES_INDEX_NAME = "cases-20230524"

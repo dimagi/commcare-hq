@@ -31,6 +31,7 @@ from .const import (
     HQ_USERS_SECONDARY_INDEX_NAME,
 )
 from .es_query import HQESQuery
+from .utils import get_user_domain_memberships
 from .index.settings import IndexSettingsKey
 
 
@@ -45,7 +46,6 @@ class UserES(HQESQuery):
     def builtin_filters(self):
         return [
             domain,
-            domains,
             created,
             mobile_users,
             web_users,
@@ -53,12 +53,15 @@ class UserES(HQESQuery):
             location,
             login_as_user,
             last_logged_in,
+            last_modified,
             analytics_enabled,
             is_practice_user,
+            is_admin,
             role_id,
             is_active,
             username,
             missing_or_empty_user_data_property,
+            has_domain_membership,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -105,6 +108,10 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
         user_dict.pop('password', None)
+
+        memberships = get_user_domain_memberships(user_dict)
+        user_dict['user_domain_memberships'] = memberships
+
         if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
             user_data = user_obj.get_user_data(user_obj.domain)
@@ -125,20 +132,21 @@ user_adapter = create_document_adapter(
 
 
 def domain(domain, allow_enterprise=False):
-    domain_list = [domain]
+    domains = [domain] if isinstance(domain, str) else domain
     if allow_enterprise:
-        from corehq.apps.enterprise.models import EnterprisePermissions
-        source_domain = EnterprisePermissions.get_source_domain(domain)
-        if source_domain:
-            domain_list.append(source_domain)
-    return domains(domain_list)
-
-
-def domains(domains):
+        domains += list(_get_enterprise_domains(domains))
     return filters.OR(
         filters.term("domain.exact", domains),
         filters.term("domain_memberships.domain.exact", domains)
     )
+
+
+def _get_enterprise_domains(domains):
+    from corehq.apps.enterprise.models import EnterprisePermissions
+    for domain in domains:
+        source_domain = EnterprisePermissions.get_source_domain(domain)
+        if source_domain:
+            yield source_domain
 
 
 def analytics_enabled(enabled=True):
@@ -192,6 +200,10 @@ def last_logged_in(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('last_login', gt, gte, lt, lte)
 
 
+def last_modified(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('last_modified', gt, gte, lt, lte)
+
+
 def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
 
@@ -211,6 +223,16 @@ def is_practice_user(practice_mode=True):
     return filters.term('is_demo_user', practice_mode)
 
 
+def is_admin(domain):
+    return filters.nested(
+        'user_domain_memberships',
+        filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.term('user_domain_memberships.is_admin', True),
+        )
+    )
+
+
 def role_id(role_id):
     return filters.OR(
         filters.term("domain_membership.role_id", role_id),     # mobile users
@@ -220,6 +242,25 @@ def role_id(role_id):
 
 def is_active(active=True):
     return filters.term("is_active", active)
+
+
+def has_domain_membership(domain, active=True):
+    if active:
+        return filters.AND(
+            filters.term("is_active", True),
+            filters.nested('user_domain_memberships', filters.AND(
+                filters.term('user_domain_memberships.domain.exact', domain),
+                filters.NOT(filters.term('user_domain_memberships.is_active', False)),
+            ))
+        )
+    else:
+        return filters.OR(
+            filters.term("is_active", False),
+            filters.nested('user_domain_memberships', filters.AND(
+                filters.term('user_domain_memberships.domain.exact', domain),
+                filters.term('user_domain_memberships.is_active', False),
+            ))
+        )
 
 
 def _user_data(key, filter_):
@@ -241,13 +282,33 @@ def login_as_user(value):
     return _user_data('login_as_user', filters.term('user_data_es.value', value))
 
 
+def _missing_user_data_property(property_name):
+    """
+    A user_data property doesn't exist.
+    """
+    return filters.NOT(queries.nested(
+        'user_data_es',
+        filters.term(field='user_data_es.key', value=property_name),
+    ))
+
+
+def _empty_user_data_property(property_name):
+    """
+    A user_data property exists but has an empty string value.
+    """
+    return _user_data(
+        property_name,
+        filters.NOT(
+            filters.wildcard(field='user_data_es.value', value='*')
+        )
+    )
+
+
 def missing_or_empty_user_data_property(property_name):
     """
     A user_data property doesn't exist, or does exist but has an empty string value.
     """
-    missing_property = filters.NOT(queries.nested(
-        'user_data_es',
-        filters.term(field='user_data_es.key', value=property_name),
-    ))
-    empty_value = _user_data(property_name, filters.term('user_data_es.value', ''))
-    return filters.OR(missing_property, empty_value)
+    return filters.OR(
+        _missing_user_data_property(property_name),
+        _empty_user_data_property(property_name),
+    )

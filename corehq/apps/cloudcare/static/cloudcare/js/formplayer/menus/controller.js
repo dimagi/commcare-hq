@@ -1,9 +1,9 @@
-hqDefine("cloudcare/js/formplayer/menus/controller", [
+define("cloudcare/js/formplayer/menus/controller", [
     'jquery',
     'underscore',
     'backbone',
-    'DOMPurify/dist/purify.min',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'dompurify',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/markdown',

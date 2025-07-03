@@ -1,35 +1,27 @@
-hqDefine("mocha/js/main", [
-    "mocha/mocha",
-    "chai/chai",
-    "sinon",
-    "analytix/js/google",
-    "analytix/js/kissmetrix",
-], function (
-    mocha,
-    chai,
-    sinon,
-    googleAnalytics,
-    kissAnalytics
-) {
-    mocha.setup('bdd');
-    window.assert = chai.assert;
+import mocha from "mocha/mocha";
+import chai from "chai/chai";
+import sinon from "sinon";
+import googleAnalytics from "analytix/js/google";
+import noopMetrics from "analytix/js/noopMetrics";
 
-    function gettext(str) {
-        return str;
+mocha.setup('bdd');
+window.assert = chai.assert;
+
+function gettext(str) {
+    return str;
+}
+window.gettext = gettext;
+
+googleAnalytics.track.event = sinon.spy();
+googleAnalytics.track.click = sinon.spy();
+noopMetrics.track.event = sinon.spy();
+
+var run = function () {
+    if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+        mocha.run();
     }
-    window.gettext = gettext;
+};
 
-    googleAnalytics.track.event = sinon.spy();
-    googleAnalytics.track.click = sinon.spy();
-    kissAnalytics.track.event = sinon.spy();
-
-    var run = function () {
-        if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-            mocha.run();
-        }
-    };
-
-    return {
-        run: run,
-    };
-});
+export default {
+    run: run,
+};

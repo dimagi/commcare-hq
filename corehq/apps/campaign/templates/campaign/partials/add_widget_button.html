@@ -1,6 +1,6 @@
 {% load i18n %}
 
-<div class="btn-group d-flex flex-row-reverse">
+<div class="btn-group">
   <div>
     <button
       type="button"
@@ -16,6 +16,7 @@
         <li>
           <a
             class="dropdown-item"
+            data-source="add-widget-dropdown"
             href="#"
             hx-get="{% url 'dashboard_widget' domain %}?widget_type={{ value }}"
             hq-hx-action="new_widget"

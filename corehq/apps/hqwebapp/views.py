@@ -100,7 +100,12 @@ from corehq.apps.users.util import format_username, is_dimagi_email
 from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
-from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
+from corehq.util.metrics import (
+    create_metrics_event,
+    limit_domains,
+    metrics_counter,
+    metrics_gauge,
+)
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
@@ -114,7 +119,6 @@ from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception, notify_error
 from dimagi.utils.web import get_url_base
-from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
@@ -332,8 +336,8 @@ def server_up(req):
 
 
 @use_bootstrap5
-def _no_permissions_message(request, template_name="403.html", message=None):
-    t = loader.get_template(template_name)
+def _no_permissions_message(request, message=None):
+    t = loader.get_template("403.html")
     return t.render(
         context={
             'MEDIA_URL': settings.MEDIA_URL,
@@ -345,16 +349,18 @@ def _no_permissions_message(request, template_name="403.html", message=None):
 
 
 @use_bootstrap5
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
-    """
-    403 error handler.
-    """
-    return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
+def no_permissions(request, redirect_to=None, message=None, exception=None):
+    """403 error handler. Called automatically by Django on PermissionDenied
 
-
-@use_bootstrap5
-def no_permissions_exception(request, template_name="403.html", message=None):
-    return Http403(_no_permissions_message(request, template_name, message))
+    :param exception: Instance of PermissionDenied or subclass. Class name will
+    be reported to datadog.
+    """
+    metrics_counter('commcare.no_permissions.count', tags={
+        'domain': limit_domains(getattr(request, 'domain', '__other__')),
+        'exception_type': exception.__class__.__name__ if exception else 'Other',
+    })
+    message = message or getattr(exception, 'user_facing_message', None)
+    return HttpResponseForbidden(_no_permissions_message(request, message))
 
 
 @use_bootstrap5
@@ -398,11 +404,13 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'next': req_params.get('next', '/a/%s/' % domain_name),
             'allow_domain_requests': domain_obj.allow_domain_requests,
             'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
+            'default_password_reset_link': reverse('domain_password_reset_email', kwargs={'domain': domain_name}),
         })
     else:
         commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
         context.update({
             'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
+            'default_password_reset_link': reverse('password_reset_email'),
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
@@ -554,8 +562,9 @@ def logout(req, default_domain_redirect='domain_login'):
     LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
-        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
-        return HttpResponseRedirect('%s' % domain_login_url)
+        if not (req.couch_user.is_web_user() and not req.couch_user.is_active_in_domain(domain)):
+            domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
+            return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
 
@@ -765,13 +774,13 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
 
     other_recipients = [el.strip() for el in report['cc'].split(",") if el]
 
-    message = (
+    message_parts = [(
         f"username: {report['username']}\n"
         f"full name: {report['full_name']}\n"
         f"domain: {report['domain']}\n"
         f"url: {report['url']}\n"
         f"recipients: {', '.join(other_recipients)}\n"
-    )
+    )]
 
     domain_object = Domain.get_by_name(domain) if report['domain'] else None
     debug_context = {
@@ -789,7 +798,7 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
             domain_object.project_description = new_project_description
             domain_object.save()
 
-        message += ((
+        message_parts.append((
             "software plan: {software_plan}\n"
         ).format(
             software_plan=Subscription.get_subscribed_plan_by_domain(domain),
@@ -798,7 +807,6 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
         debug_context.update({
             'self_started': domain_object.internal.self_started,
             'has_handoff_info': bool(domain_object.internal.partner_contact),
-            'project_description': domain_object.project_description,
         })
 
     subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
@@ -813,7 +821,10 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
     if settings.HQ_ACCOUNT_ROOT in reply_to:
         reply_to = settings.SERVER_EMAIL
 
-    message += "Message:\n\n{message}\n".format(message=report['message'])
+    message_parts.append("Message:\n\n{message}\n".format(message=report['message']))
+    if domain_object and domain_object.project_description:
+        message_parts.append(f"Project description: {domain_object.project_description}\n")
+
     if post_params.get('five-hundred-report'):
         extra_message = ("This message was reported from a 500 error page! "
                          "Please fix this ASAP (as if you wouldn't anyway)...")
@@ -821,13 +832,13 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
             "datetime: {datetime}\n"
             "Is self start: {self_started}\n"
             "Has Support Hand-off Info: {has_handoff_info}\n"
-            "Project description: {project_description}\n"
             "Sentry Error: {sentry_error}\n"
         ).format(**debug_context)
         traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
         cache.cache.delete(report['500traceback'])
-        message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
+        message_parts.append("\n\n".join([extra_debug_info, extra_message, traceback_info]))
 
+    message = "".join(message_parts)
     email = EmailMessage(
         subject=subject,
         body=message,

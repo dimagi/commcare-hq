@@ -12,14 +12,21 @@
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
   {% registerurl 'api_cases_with_gps' request.domain %}
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
-  {% include "campaign/partials/add_widget_button.html" %}
+  {% initial_page_data 'gauge_widgets' gauge_widgets %}
+
+  <div id="delete-widget-alert" class="alert alert-success d-none">
+    {% trans "Widget has been deleted successfully!" %}
+  </div>
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>{% trans "Campaign Dashboard" %}</h1>
-    <button id="print-to-pdf" class="btn btn-info">
-      <i class="fa fa-file-pdf me-1"></i>
-      {% trans "Export to PDF" %}
-    </button>
+    <div>
+      {% include "campaign/partials/add_widget_button.html" %}
+      <button id="print-to-pdf" class="btn btn-info">
+        <i class="fa fa-file-pdf me-1"></i>
+        {% trans "Export to PDF" %}
+      </button>
+    </div>
   </div>
   <div id="pdf-export-error" class="alert alert-danger d-none">
     {% blocktrans %}
@@ -56,12 +63,15 @@
       <!-- Cases tab content -->
       <!-- Gauges Section -->
       <div class="row">
-        <h2>{% trans "Gauges" %}</h2>
+        <div id="gauges-container-cases">
+          {% for widget in gauge_widgets.cases %}
+            {% include 'campaign/partials/dashboard_gauge.html' %}
+          {% endfor %}
+        </div>
       </div>
       <div class="spacer"></div>
       <!-- Report and Map Section -->
       <div class="row">
-        <h2>{% trans "Reports" %}</h2>
         <div id="map-reports-container-cases">
           {% for widget in map_report_widgets.cases %}
             {% if widget.widget_type == 'DashboardMap' %}
@@ -76,12 +86,15 @@
       <!-- Users tab content -->
       <!-- Gauges Section -->
       <div class="row">
-        <h2>{% trans "Gauges" %}</h2>
+        <div id="gauges-container-mobile-workers">
+          {% for widget in gauge_widgets.mobile_workers %}
+            {% include 'campaign/partials/dashboard_gauge.html' %}
+          {% endfor %}
+        </div>
       </div>
       <div class="spacer"></div>
       <!-- Report and Map Section -->
       <div class="row">
-        <h2>{% trans "Reports" %}</h2>
         <div id="map-reports-container-mobile-workers">
           {% for widget in map_report_widgets.mobile_workers %}
             {% if widget.widget_type == 'DashboardMap' %}
@@ -94,6 +107,7 @@
   </div>
 
   {% include "campaign/partials/widget_modal.html" %}
+  {% include "campaign/partials/delete_widget_confirmation_modal.html" %}
 {% endblock page_content %}
 
 {% block modals %}

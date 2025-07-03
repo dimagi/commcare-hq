@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -11,13 +11,13 @@
+@@ -13,13 +13,13 @@
      </div>
  
      <div data-bind="with: general_credit">
@@ -18,7 +18,7 @@
              <input
                type="text"
                class="form-control"
-@@ -39,11 +39,11 @@
+@@ -41,11 +41,11 @@
        </div>
      </div>
  
@@ -33,7 +33,7 @@
          <p class="form-control-text" data-bind="text: ('$ ' + amount())"></p>
        </div>
      </div>
-@@ -52,11 +52,11 @@
+@@ -54,11 +54,11 @@
  
      <!-- ko if: $root.paymentMethod() === $root.WIRE -->
      <div data-bind="with: invoice_credit">
@@ -48,7 +48,7 @@
            <input
              type="text"
              id="prepay-date-start"
-@@ -68,11 +68,11 @@
+@@ -70,11 +70,11 @@
          </div>
        </div>
  
@@ -63,7 +63,7 @@
            <input
              type="text"
              id="prepay-date-end"
-@@ -84,11 +84,11 @@
+@@ -86,11 +86,11 @@
          </div>
        </div>
  
@@ -78,7 +78,7 @@
            <input
              type="text"
              class="form-control"
-@@ -98,9 +98,9 @@
+@@ -100,9 +100,9 @@
          </div>
        </div>
  
@@ -91,7 +91,7 @@
            <div class="input-group">
              <span class="input-group-addon">$</span>
              <input
-@@ -124,9 +124,9 @@
+@@ -126,9 +126,9 @@
          </div>
        </div>
  
@@ -104,7 +104,7 @@
            <input
              type="number"
              class="form-control"
-@@ -138,11 +138,11 @@
+@@ -140,11 +140,11 @@
        </div>
      </div>
  
@@ -119,7 +119,7 @@
          <p
            class="form-control-text"
            data-bind="text: ('$ ' + invoice_amount())"
-@@ -184,8 +184,8 @@
+@@ -186,8 +186,8 @@
        <div class="modal-header">
          <button
            type="button"
@@ -130,7 +130,7 @@
            aria-label="Close"
          >
            <span aria-hidden="true">&times;</span>
-@@ -238,11 +238,11 @@
+@@ -240,11 +240,11 @@
                  >
                {% endblocktrans %}
              </p>
@@ -145,7 +145,7 @@
                  <input
                    type="text"
                    data-bind="value: wireEmail"
-@@ -254,11 +254,11 @@
+@@ -256,11 +256,11 @@
                </div>
              </div>
  
@@ -160,7 +160,7 @@
                  <input
                    type="text"
                    data-bind="value: wireAdditionalEmails"
-@@ -302,8 +302,8 @@
+@@ -306,8 +306,8 @@
            <button
              type="button"
              data-bind="visible: paymentIsNotComplete"
@@ -171,7 +171,7 @@
            >
              {% trans "Cancel" %}
            </button>
-@@ -324,15 +324,15 @@
+@@ -328,15 +328,15 @@
              data-bind="text: submitBtnText"
              disabled="disabled"
            ></button>

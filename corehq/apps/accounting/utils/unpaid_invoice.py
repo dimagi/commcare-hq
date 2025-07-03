@@ -180,6 +180,7 @@ class InvoiceReminder(UnpaidInvoiceAction):
             'date_due': invoice.date_due,
             'total_balance': fmt_dollar_amount(total),
             'plan_name': subscription.plan_version.plan.name,
+            'can_pay_by_wire': invoice.can_pay_by_wire,
         })
         return context
 
@@ -193,7 +194,7 @@ class Downgrade(UnpaidInvoiceAction):
     def is_subscription_eligible_for_process(subscription):
         return (
             subscription.plan_version.plan.edition not in [
-                SoftwarePlanEdition.COMMUNITY,
+                SoftwarePlanEdition.FREE,
                 SoftwarePlanEdition.PAUSED,
             ] and not subscription.skip_auto_downgrade
         )

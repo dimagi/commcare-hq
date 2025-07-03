@@ -2,7 +2,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from jsonobject.exceptions import WrappingAttributeError
 
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
-from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+from corehq.apps.es import canonical_name_adapter_map
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.const import ONE_DAY
@@ -83,7 +83,7 @@ def get_user_type_deep_cache_for_unknown_users(user_id):
 
 
 def get_all_expected_es_indices(ignore_subindices=False):
-    all_es_adapters = CANONICAL_NAME_ADAPTER_MAP.values()
+    all_es_adapters = canonical_name_adapter_map().values()
     if ignore_subindices:
         return [adapter for adapter in all_es_adapters if not adapter.parent_index_cname]
     return all_es_adapters

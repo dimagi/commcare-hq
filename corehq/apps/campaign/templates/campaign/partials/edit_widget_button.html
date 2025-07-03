@@ -1,9 +1,10 @@
 {% load i18n %}
 
 <button
-  id="edit-widget-btn"
+  id="edit-{{ widget_type }}-widget-{{ widget.id }}-btn"
   class="btn btn-default"
   type="button"
+  data-source="edit-widget-btn"
   data-bs-toggle="modal"
   data-bs-target="#widget-modal"
   hx-target="#widget-form"

@@ -5,7 +5,7 @@ from django.conf import settings
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
-from reportlab.platypus import Paragraph
+from reportlab.platypus import Frame, Paragraph
 
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
@@ -110,6 +110,12 @@ def midpoint(x1, x2):
     return (x1 + x2) * 0.5
 
 
+def item_height(item, width):
+    style = item.style
+    __, wrapped_height = item.wrap(width, 0)
+    return sum([wrapped_height, style.spaceBefore, style.spaceAfter])
+
+
 class InvoiceTemplate(object):
     # TODO: improve invoice rendering logic to be more robust:
     # - More than 4 lines for a "from" address block (more than 4 populated of:
@@ -141,7 +147,8 @@ class InvoiceTemplate(object):
                  swift_code=settings.BANK_SWIFT_CODE,
                  applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None,
-                 is_wire=False, is_customer=False, is_prepayment=False, account_name=''):
+                 is_wire=False, is_customer=False, is_prepayment=False, account_name='',
+                 can_pay_by_wire=False):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_image = logo_image
@@ -169,6 +176,7 @@ class InvoiceTemplate(object):
         self.is_customer = is_customer
         self.is_prepayment = is_prepayment
         self.account_name = account_name
+        self.can_pay_by_wire = can_pay_by_wire
 
         self.items = []
 
@@ -508,37 +516,51 @@ class InvoiceTemplate(object):
 
     def draw_footer(self):
         width = inches(5.00)
-        left_x = inches(0.5)
+        text_style = ParagraphStyle('', spaceAfter=inches(0.1))
+        footer_items = []
 
         options = "PAYMENT OPTIONS:"
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
-        options_text = Paragraph(options, ParagraphStyle(''))
-        options_text.wrapOn(self.canvas, width, inches(.12))
-        options_text.drawOn(self.canvas, left_x, inches(3.5))
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        options_text = Paragraph(options, ParagraphStyle('', fontSize=SMALL_FONT_SIZE))
+        footer_items.append(options_text)
 
+        if self.can_pay_by_wire:
+            self._add_flywire_footer_item(footer_items, text_style)
+
+        self._add_credit_card_footer_item(footer_items, text_style)
+
+        if self.can_pay_by_wire:
+            self._add_ach_and_wire_footer_items(footer_items, text_style)
+
+        footer_height = sum(item_height(item, width) for item in footer_items)
+        footer_frame = Frame(inches(0.5), inches(0.5), width, footer_height,
+                             topPadding=0, rightPadding=0, bottomPadding=0, leftPadding=0)
+        footer_frame.addFromList(footer_items, self.canvas)
+
+    def _add_flywire_footer_item(self, items, text_style):
         flywire = """<strong>International payments:</strong>
-                            Make payments in your local currency
-                            via bank transfer or credit card by following this link:
-                            <link href='{flywire_link}' color='blue'>{flywire_link}</link><br />""".format(
+                        Make payments in your local currency
+                        via bank transfer or credit card by following this link:
+                        <link href='{flywire_link}' color='blue'>{flywire_link}</link><br />""".format(
             flywire_link="https://wl.flywire.com/?destination=DMG"
         )
-        flywire_text = Paragraph(flywire, ParagraphStyle(''))
-        flywire_text.wrapOn(self.canvas, width, inches(.4))
-        flywire_text.drawOn(self.canvas, left_x, inches(2.95))
+        flywire_text = Paragraph(flywire, text_style)
+        items.append(flywire_text)
 
+    def _add_credit_card_footer_item(self, items, text_style):
         from corehq.apps.domain.views.accounting import (
             DomainBillingStatementsView,
+            DomainSubscriptionView,
         )
-        credit_card = """<strong>Credit card payments (USD)</strong> can be made online here:<br />
+        billing_view = DomainSubscriptionView if self.is_prepayment else DomainBillingStatementsView
+        credit_card = """<strong>Credit or debit card payments (USD)</strong> can be made online here:<br />
                             <link href='{payment_page}' color='blue'>{payment_page}</link><br />""".format(
             payment_page=absolute_reverse(
-                DomainBillingStatementsView.urlname, args=[self.project_name])
+                billing_view.urlname, args=[self.project_name])
         )
-        credit_card_text = Paragraph(credit_card, ParagraphStyle(''))
-        credit_card_text.wrapOn(self.canvas, width, inches(.5))
-        credit_card_text.drawOn(self.canvas, left_x, inches(2.4))
+        credit_card_text = Paragraph(credit_card, text_style)
+        items.append(credit_card_text)
 
+    def _add_ach_and_wire_footer_items(self, items, text_style):
         ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
                             or Wire, please make sure to email
                             <font color='blue'>{invoicing_contact_email}</font>
@@ -546,11 +568,11 @@ class InvoiceTemplate(object):
                             Invoice No., Project Space, and payment date in the email. <br />""".format(
             invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
         )
-        ach_or_wire_text = Paragraph(ach_or_wire, ParagraphStyle(''))
-        ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
-        ach_or_wire_text.drawOn(self.canvas, left_x, inches(1.7))
+        ach_or_wire_text = Paragraph(ach_or_wire, text_style)
+        items.append(ach_or_wire_text)
 
-        ach_payment_text = """<strong>ACH payment</strong>
+        payment_detail_text_style = ParagraphStyle('', spaceBefore=inches(0.05), leftIndent=inches(0.1))
+        ach_payment = """<strong>ACH payment</strong>
                             (preferred over wire payment for transfer in the US):<br />
                             Bank: {bank_name}
                             Bank Address: {bank_address}
@@ -561,7 +583,10 @@ class InvoiceTemplate(object):
             account_number=self.account_number,
             routing_number_ach=self.routing_number_ach
         )
-        wire_payment_text = """<strong>Wire payment</strong>:<br />
+        ach_payment_text = Paragraph(ach_payment, payment_detail_text_style)
+        items.append(ach_payment_text)
+
+        wire_payment = """<strong>Wire payment</strong>:<br />
                             Bank: {bank_name}
                             Bank Address: {bank_address}
                             Account Number: {account_number}
@@ -573,12 +598,8 @@ class InvoiceTemplate(object):
             routing_number_wire=self.routing_number_wire,
             swift_code=self.swift_code
         )
-        payment_info2 = Paragraph('\n'.join([
-            ach_payment_text,
-            wire_payment_text,
-        ]), ParagraphStyle(''))
-        payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
-        payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))
+        wire_payment_text = Paragraph(wire_payment, payment_detail_text_style)
+        items.append(wire_payment_text)
 
     def draw_table_with_header_and_footer(self, items):
         self.draw_header()

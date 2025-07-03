@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/form_entry/const", [], function () {
+define("cloudcare/js/form_entry/const", [], function () {
     return {
         GROUP_TYPE: 'sub-group',
         QUESTION_TYPE: 'question',
@@ -99,6 +99,7 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         CONTROL_LABEL: 11,
         CONTROL_AUDIO_CAPTURE: 12,
         CONTROL_VIDEO_CAPTURE: 13,
+        CONTROL_DOCUMENT_UPLOAD: 14,
 
         //knockout timeouts
         KO_ENTRY_TIMEOUT: 500,

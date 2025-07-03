@@ -1,28 +1,20 @@
 {% load i18n %}
 
 {% if not is_renewal_page %}
-<p class="lead text-center">
-  {% blocktrans with plan.name as p %}
-    You have selected the <strong>{{ p }} Edition</strong> subscription.
-  {% endblocktrans %}
-</p>
+  <p class="lead text-center">
+    {% blocktrans with plan.name as p %}
+      You have selected the <strong>{{ p }} Edition</strong> subscription.
+    {% endblocktrans %}
+  </p>
 {% endif %}
 <div class="confirm-plan-summary">
   <div class="tile {{ tile_css }}">
-    <h3>
-      {{ plan.name }}
-    </h3>
-    <p class="plan-price">
-      {{ plan.monthly_fee }}
-    </p>
+    <h3>{{ plan.name }}</h3>
+    <p class="plan-price">{{ plan.monthly_fee }}</p>
     <p class="plan-monthly-label">
-      <strong>
-        {% trans "Monthly Fee" %}
-      </strong>
+      <strong> {% trans "Monthly Fee" %} </strong>
     </p>
-    <h4>
-      {% trans 'Included each month' %}
-    </h4>
+    <h4>{% trans 'Included each month' %}</h4>
     <div class="plan-included well well-sm">
       <dl class="dl-horizontal">
         {% for rate in plan.rates %}
@@ -33,77 +25,131 @@
         {% endfor %}
       </dl>
     </div>
-    <p class="plan-desc">
-      {{ plan.description }}
-    </p>
+    <p class="plan-desc">{{ plan.description }}</p>
   </div>
 </div>
-{% if current_plan %}
-  <div class="alert {% if is_same_edition %}alert-info{% else %}alert-warning{% endif %} alert-subscription">
-    {% if is_upgrade %}
-      <h4>
-        <i class="fa fa-warning"></i>
-        {% trans "Note: Continuing will change your current subscription." %}
-      </h4>
-      <p class="text-community">
-        {% blocktrans with next_invoice_date as invoice_date %}
-          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.
-          You should expect your first invoice on {{ invoice_date }}, or you can prepay for your
-          subscription by following the instructions
-          <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
-        {% endblocktrans %}
-      </p>
-      <p class="text-community">
-        {% blocktrans %}
-          Once you subscribe to a paid plan, you will be able to pause your subscription after 30 days,
-          but you will no longer be able to downgrade to the CommCare Community plan.
-        {% endblocktrans %}
-      </p>
-      <p>
-        <strong>
-          {% blocktrans %}
-            <input type="checkbox" data-bind="checked: oUserAgreementSigned"> I understand and wish to continue.
-          {% endblocktrans %}
-        </strong>
-      </p>
-    {% elif is_same_edition %}
-      <h4>
-        {% blocktrans %}
-          Thank you for staying with your current subscription.
-        {% endblocktrans %}
-      </h4>
-      <p>
-        {% blocktrans with current_plan as p %}
-          Continuing will keep you on <strong>{{ p }} Edition Software Plan</strong> and any
-          pending subscriptions will be cancelled.
-        {% endblocktrans %}
-      </p>
-    {% elif is_downgrade_before_minimum %}
-      <h4>
-        {% trans "We're sorry to see you downgrade!" %}
-      </h4>
-      <p>
-        {% blocktrans with current_plan as p %}
-          You’ll have access to the features on your
-          <strong>{{ p }} Edition Software Plan </strong> through {{ current_subscription_end_date }}.<br />
-          On {{ start_date_after_minimum_subscription }} your current subscription will be downgraded
-          to the {{ new_plan_edition }} Edition Software Plan.
-        {% endblocktrans %}
-      </p>
+
+<div
+  class="
+    alert alert-subscription
+    {% if is_same_edition %}
+      alert-info
     {% else %}
-      <h4>
-        <i class="fa fa-warning"></i>
-        {% trans "Note: Continuing will change your current subscription." %}
-      </h4>
-      <p>
-        {% blocktrans with current_plan as p %}
-          We're sorry to see you downgrade! You are currently subscribed to the
-          <strong>{{ p }} Software Plan.</strong>
+      alert-warning
+    {% endif %}
+  "
+>
+  <h4>
+    {% if is_same_edition %}
+      {% blocktrans %}
+        Thank you for staying with your current subscription.
+      {% endblocktrans %}
+    {% elif is_downgrade_before_minimum %}
+      {% blocktrans %}
+        We're sorry to see you downgrade!
+      {% endblocktrans %}
+    {% else %}
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        Note: Continuing will change your current subscription.
+      {% endblocktrans %}
+    {% endif %}
+  </h4>
+
+  {% if is_annual_plan %}
+    <p class="alert-subscription-text">
+      {% if current_is_annual_plan %}
+        {% blocktrans %}
+          By continuing you are subscribing to a new Pay Annually plan. The new
+          subscription will have the same end date as your existing
+          subscription. You will receive a prorated invoice via email for the
+          difference in plan fees due.
+        {% endblocktrans %}
+      {% else %}
+        {% blocktrans %}
+          By continuing you are subscribing to a Pay Annually plan and will
+          receive an invoice via email for plan fees due.
+        {% endblocktrans %}
+      {% endif %}
+      {% blocktrans %}
+        In case you incur any on-demand fees for excess users or SMS, you
+        will receive invoices for these charges on a monthly basis. See
+        <a
+          href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription"
+          >here</a
+        >
+        for more information about payment, cancellation, and refunds.
+      {% endblocktrans %}
+    </p>
+  {% elif is_monthly_upgrade %}
+    <p class="alert-subscription-text">
+      {% blocktrans with next_invoice_date as invoice_date %}
+        CommCare is billed on a monthly basis, and all subscriptions require a
+        30 day minimum commitment. You should expect your first invoice on
+        {{ invoice_date }}, or you can prepay for your subscription by following
+        the instructions
+        <a
+          href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods"
+          >here</a
+        >.
+      {% endblocktrans %}
+    </p>
+    {% if current_is_annual_plan %}
+      <p class="alert-subscription-text">
+        {% blocktrans %}
+          By continuing you are moving from a Pay Annually to a Pay Monthly
+          plan. Any prepaid plan fees will be automatically applied to future
+          monthly invoices.
         {% endblocktrans %}
       </p>
     {% endif %}
-  </div>
-{% endif %}
+    <p class="alert-subscription-text">
+      {% blocktrans %}
+        Once you subscribe to a paid plan, you will be able to pause your
+        subscription after 30 days, but you will no longer be able to downgrade
+        to the CommCare Free edition.
+      {% endblocktrans %}
+    </p>
+  {% elif is_same_edition %}
+    <p>
+      {% blocktrans with current_plan as p %}
+        Continuing will keep you on
+        <strong>{{ p }} Edition Software Plan</strong> and any pending
+        subscriptions will be cancelled.
+      {% endblocktrans %}
+    </p>
+  {% endif %}
+
+  {% if is_downgrade_before_minimum %}
+    <p>
+      {% blocktrans with current_plan as p %}
+        You’ll have access to the features on your
+        <strong>{{ p }} Edition Software Plan </strong> through
+        {{ current_subscription_end_date }}.<br />
+        On {{ start_date_after_minimum_subscription }} your current subscription
+        will be downgraded to the {{ new_plan_edition }} Edition Software Plan.
+      {% endblocktrans %}
+    </p>
+  {% elif is_downgrade %}
+    <p>
+      {% blocktrans with current_plan as p %}
+        We're sorry to see you downgrade! You are currently subscribed to the
+        <strong>{{ p }} Software Plan.</strong>
+      {% endblocktrans %}
+    </p>
+  {% endif %}
+
+  {% if is_monthly_upgrade or is_annual_plan %}
+    <p>
+      <strong>
+        {% blocktrans %}
+          <input type="checkbox" data-bind="checked: oUserAgreementSigned" /> I
+          understand and wish to continue.
+        {% endblocktrans %}
+      </strong>
+    </p>
+  {% endif %}
+</div>
 
 {% if downgrade_messages and not is_same_edition %}
   {% include 'accounting/partials/downgrade_messages.html' with messages=downgrade_messages only %}

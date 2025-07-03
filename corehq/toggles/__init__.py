@@ -27,6 +27,7 @@ from .shortcuts import set_toggle, toggle_enabled
 @attrs(frozen=True)
 class Tag:
     name = attrib(type=str)
+    slug = attrib(type=str)
     css_class = attrib(type=str)
     description = attrib(type=str)
 
@@ -37,6 +38,7 @@ class Tag:
 
 TAG_CUSTOM = Tag(
     name='One-Off / Custom',
+    slug='custom',
     css_class='warning',
     description="This feature flag was created for one specific project. "
                 "Please don't enable it for any other projects. "
@@ -44,28 +46,33 @@ TAG_CUSTOM = Tag(
 )
 TAG_DEPRECATED = Tag(
     name='Deprecated',
+    slug='deprecated',
     css_class='danger',
     description="This feature flag is being removed. "
                 "Do not add any new projects to this list.",
 )
 TAG_PRODUCT = Tag(
     name='Product',
+    slug='product',
     css_class='success',
     description="This is a core-product feature that you should feel free to "
                 "use.  We've feature-flagged until release.",
 )
 TAG_PREVIEW = Tag(
     name='Preview',
+    slug='preview',
     css_class='default',
     description='',
 )
 TAG_RELEASE = Tag(
     name='Release',
+    slug='release',
     css_class='release',
     description='This is a feature that is in the process of being released.',
 )
 TAG_SAAS_CONDITIONAL = Tag(
     name='SaaS - Conditional Use',
+    slug='saas_conditional',
     css_class='primary',
     description="When enabled, “SaaS - Conditional Use” feature flags will be fully supported by the SaaS team. "
                 "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "  # noqa: E501
@@ -73,12 +80,14 @@ TAG_SAAS_CONDITIONAL = Tag(
 )
 TAG_SOLUTIONS = Tag(
     name='Solutions',
+    slug='solutions',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
                 "pricing when the project is transitioned to a subscription."
 )
 TAG_SOLUTIONS_OPEN = Tag(
     name='Solutions - Open Use',
+    slug='solutions_open',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
                 "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "  # noqa: E501
@@ -86,6 +95,7 @@ TAG_SOLUTIONS_OPEN = Tag(
 )
 TAG_SOLUTIONS_CONDITIONAL = Tag(
     name='Solutions - Conditional Use',
+    slug='solutions_conditional',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
                 "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "  # noqa: E501
@@ -93,6 +103,7 @@ TAG_SOLUTIONS_CONDITIONAL = Tag(
 )
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
+    slug='solutions_limited',
     css_class='info',
     description=mark_safe(  # nosec: no user input
         'These features are only available for our services projects. This '
@@ -105,6 +116,7 @@ TAG_SOLUTIONS_LIMITED = Tag(
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
+    slug='solutions_internal',
     css_class='default',
     description="These are tools for our engineering team to use to manage the product",
 )
@@ -928,16 +940,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-SYNC_ALL_LOCATIONS = StaticToggle(
-    'sync_all_locations',
-    '(Deprecated) Sync the full location hierarchy when syncing location fixtures',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
-                "We are actively trying to remove projects from this list. This functionality is now possible by using the "  # noqa: E501
-                "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
-)
-
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     'hierarchical_location_fixture',
     'Display Settings To Get Hierarchical Location Fixture',
@@ -986,14 +988,6 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
-WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
-    'web_apps_upload_questions',
-    'USH: Support image, audio, and video questions in Web Apps',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Jenny Schweers',
-)
-
 LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
     'location_field_user_provisioning',
     'USH: Holding feature flag for various works relating to the location field',
@@ -1025,19 +1019,6 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
     description="""
     Allows user to select multiple cases and load them all into the form.
-    """
-)
-
-CASE_SEARCH_INDEXED_METADATA = StaticToggle(
-    'CASE_SEARCH_INDEXED_METADATA',
-    "Case Search: Search against indexed system metadata fields when possible",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This is a performance optimization. When creating filters from CSQL
-    expressions and the property being queried is a standard system metadata
-    property, query against the top-level location of that property rather than
-    the nested document inside case_properties.
     """
 )
 
@@ -1210,13 +1191,12 @@ SAAS_PROTOTYPE = StaticToggle(
     description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
-DATA_CLEANING_CASES = StaticToggle(
-    'saas_data_cleaning_cases',
-    'Access Data Cleaning for Cases',
+FORMBUILDER_SAVE_TO_CASE = StaticToggle(
+    'saas_formbuilder_save_to_case',
+    'Form Builder - Save Questions to Case Properties',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_USER],
-    description='Use this to allow specific users to access the case '
-                'data cleaning tool (in development)',
+    description='Allows users to save questions to case properties within the Form Builder'
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
@@ -1237,14 +1217,6 @@ ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     description='Enterprise Domains that are eligible to view the Explore Case Data '
     'Feature Preview. By default, this feature will only be available for '
     'domains that are Advanced or Pro and have undergone the ECD migration.'
-)
-
-CASE_API_V0_6 = StaticToggle(
-    'case_api_v0_6',
-    'Enable the v0.6 Case API',
-    TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_ensure_search_index_is_enabled,
 )
 
 ACTION_TIMES_API = StaticToggle(
@@ -1429,12 +1401,12 @@ COMMTRACK = StaticToggle(
     "CommCare Supply",
     TAG_DEPRECATED,
     description=(
-        '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commtrack/overview">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
     ),
-    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/commtrack/overview',
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_commtrackify,
 )
@@ -1588,7 +1560,7 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application.',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="Main use case is to allow migrating projects to a new cluster."
 )
@@ -1953,7 +1925,7 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
 COPY_CASES = StaticToggle(
     'copy_cases',
     'Enable users to copy cases between mobile workers',
-    TAG_SOLUTIONS_OPEN,
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2137,6 +2109,13 @@ DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Enterprise+Permissions',
 )
 
+IP_ACCESS_CONTROLS = StaticToggle(
+    'ip_access_controls',
+    "USH: IP access controls - control project access by country and by individual IP",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
     'Show build profile installed on phone tracked via heartbeat request in App Status Report',
@@ -2279,14 +2258,6 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     default_randomness=0.001
 )
 
-PRIME_FORMPLAYER_DBS = StaticToggle(
-    'prime_formplayer_dbs',
-    'USH: Control which domains will be included in the prime formplayer task runs',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
-)
-
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
     'USH-BHA: Control which domains will be included in the prime formplayer task runs',
@@ -2359,6 +2330,12 @@ USER_HISTORY_REPORT = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/User+History+Report",
 )
 
+REPORT_TIMING_PROFILING = StaticToggle(
+    'report_timing_profiling',
+    'Report timing profiling is visible in reports that have a profiler enabled.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)
 
 COWIN_INTEGRATION = StaticToggle(
     'cowin_integration',
@@ -2529,7 +2506,7 @@ SMS_USE_LATEST_DEV_APP = FeatureRelease(
 
 VIEW_FORM_ATTACHMENT = StaticToggle(
     'view_form_attachments',
-    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',  # noqa: E501
+    'Allow users on the domain to view form attachments without having to have the report Submission History permission.',  # noqa: E501
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -2682,11 +2659,10 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
 
 WEB_USERS_IN_REPORTS = StaticToggle(
     'web_users_in_reports',
-    'Adds web users to standard reports by default',
+    'Adds web users to to the body of the Worker Activity and Project Health reports',
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Adds web users to default filter selections, the [Project Data] filter for the '
-                'case list reports, and to the body of the Worker Activity and Project Health reports'
+    description='Adds web users to the body of the Worker Activity and Project Health reports'
 )
 
 CUSTOM_EMAIL_GATEWAY = StaticToggle(
@@ -2875,6 +2851,14 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
                'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
+DEACTIVATE_WEB_USERS = StaticToggle(
+    slug='deactivate_web_users',
+    label='USH: Deactivate Web Users',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow domains to deactivate web users just for that domain',
+)
+
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
@@ -3011,16 +2995,6 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-DEVICE_RATE_LIMITER = FeatureRelease(
-    slug='device_rate_limiter',
-    label='Apply rate limiting to the number of devices a single user can use in a one minute time window.',
-    description='Form submissions, restores, and heartbeat requests count towards usage. View and update in the '
-                'django admin under the SystemLimit table. The key is "device_limit_per_user"',
-    tag=TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Graham Herceg',
-)
-
 KYC_VERIFICATION = StaticToggle(
     slug='kyc_verification',
     label='Enable KYC verification',
@@ -3038,13 +3012,6 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
-    tag=TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
-USH_DISABLE_INTERVAL_SYNC = StaticToggle(
-    slug='ush_disable_interval_sync',
-    label='Disable interval sync',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

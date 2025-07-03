@@ -1,5 +1,6 @@
 import datetime
 import itertools
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -30,6 +31,7 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
     EXCHANGE_RATE_DECIMAL_PLACES,
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
     SMALL_INVOICE_THRESHOLD,
 )
 from corehq.apps.accounting.emails import (
@@ -73,10 +75,7 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.dbaccessors import (
-    get_active_web_usernames_by_domain,
-    get_web_user_count,
-)
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
@@ -150,7 +149,7 @@ class FeatureType(object):
 
 
 class SoftwarePlanEdition(object):
-    COMMUNITY = "Community"
+    FREE = "Free"
     STANDARD = "Standard"
     PRO = "Pro"
     ADVANCED = "Advanced"
@@ -159,7 +158,7 @@ class SoftwarePlanEdition(object):
     MANAGED_HOSTING = "Managed Hosting"
     PAUSED = "Paused"
     CHOICES = (
-        (COMMUNITY, COMMUNITY),
+        (FREE, FREE),
         (STANDARD, STANDARD),
         (PRO, PRO),
         (ADVANCED, ADVANCED),
@@ -170,7 +169,7 @@ class SoftwarePlanEdition(object):
     )
     SELF_SERVICE_ORDER = [
         PAUSED,
-        COMMUNITY,
+        FREE,
         STANDARD,
         PRO,
         ADVANCED,
@@ -633,13 +632,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return web_users
 
-    def get_web_user_count(self):
-        domains = self.get_domains()
-        count = 0
-        for domain in domains:
-            count += get_web_user_count(domain, include_inactive=False)
-        return count
-
     @staticmethod
     def should_show_sms_billable_report(domain):
         account = BillingAccount.get_account_by_domain(domain)
@@ -860,12 +852,12 @@ class SoftwarePlan(models.Model):
 
 class DefaultProductPlan(models.Model):
     """
-    This links a product type to its default SoftwarePlan (i.e. the Community Plan).
+    This links a product type to its default SoftwarePlan (i.e. the Free edition).
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
     edition = models.CharField(
-        default=SoftwarePlanEdition.COMMUNITY,
+        default=SoftwarePlanEdition.FREE,
         choices=SoftwarePlanEdition.CHOICES,
         max_length=25,
     )
@@ -886,7 +878,7 @@ class DefaultProductPlan(models.Model):
                                  is_report_builder_enabled=False, is_annual_plan=False):
         if not edition:
             edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
-                       else SoftwarePlanEdition.COMMUNITY)
+                       else SoftwarePlanEdition.FREE)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
@@ -983,7 +975,7 @@ class SoftwarePlanVersion(models.Model):
 
         def _default_description(plan, monthly_limit):
             if plan.edition in [
-                SoftwarePlanEdition.COMMUNITY,
+                SoftwarePlanEdition.FREE,
                 SoftwarePlanEdition.STANDARD,
                 SoftwarePlanEdition.PRO,
                 SoftwarePlanEdition.ADVANCED,
@@ -1009,6 +1001,7 @@ class SoftwarePlanVersion(models.Model):
                        'included': 'Infinite' if r.monthly_limit == UNLIMITED_FEATURE_USAGE else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
+            'is_annual_plan': self.plan.is_annual_plan,
         })
         return desc
 
@@ -1288,8 +1281,8 @@ class Subscription(models.Model):
         cls._get_active_subscription_by_domain.clear(cls, domain_name)
 
     @property
-    def is_community(self):
-        return self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+    def is_free_edition(self):
+        return self.plan_version.plan.edition == SoftwarePlanEdition.FREE
 
     @property
     def allowed_attr_changes(self):
@@ -1500,7 +1493,7 @@ class Subscription(models.Model):
         subscription. The current subscription will always end immediately
         (today) and the date_start of the new subscription will always be today.
         """
-        from corehq.apps.analytics.tasks import track_workflow
+        from corehq.apps.analytics.tasks import track_workflow_noop
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -1572,9 +1565,9 @@ class Subscription(models.Model):
         upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
         if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
             if change_status_result.adjustment_reason in upgrade_reasons:
-                track_workflow(web_user, 'Changed Plan: Upgrade')
+                track_workflow_noop(web_user, 'Changed Plan: Upgrade')
             if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
-                track_workflow(web_user, 'Changed Plan: Downgrade')
+                track_workflow_noop(web_user, 'Changed Plan: Downgrade')
 
         return new_subscription
 
@@ -1634,7 +1627,7 @@ class Subscription(models.Model):
             )
 
         if new_version.plan.is_annual_plan:
-            new_date_end = self.date_end.replace(year=self.date_end.year + 1)
+            new_date_end = self.date_end + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
         else:
             new_date_end = None
 
@@ -2163,6 +2156,10 @@ class InvoiceBase(models.Model):
     def is_wire(self):
         return False
 
+    @property
+    def can_pay_by_wire(self):
+        raise NotImplementedError()
+
     def get_domain(self):
         raise NotImplementedError()
 
@@ -2202,6 +2199,10 @@ class WireInvoice(InvoiceBase):
     @property
     def is_prepayment(self):
         return False
+
+    @property
+    def can_pay_by_wire(self):
+        return True
 
     def get_domain(self):
         return self.domain
@@ -2307,6 +2308,10 @@ class Invoice(InvoiceBase):
                 )
 
         return contact_emails
+
+    @property
+    def can_pay_by_wire(self):
+        return self.subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
 
     @property
     def subtotal(self):
@@ -2429,6 +2434,10 @@ class CustomerInvoice(InvoiceBase):
     def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
         # mimic the behavior of the regular Invoice for notification purposes
         return self.contact_emails
+
+    @property
+    def can_pay_by_wire(self):
+        return self.subscriptions.filter(plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE).exists()
 
     @property
     def subtotal(self):
@@ -2633,6 +2642,7 @@ class BillingRecordBase(models.Model):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
             'small_invoice_threshold': SMALL_INVOICE_THRESHOLD,
+            'can_pay_by_wire': self.invoice.can_pay_by_wire,
         }
         return context
 
@@ -3302,7 +3312,8 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             is_wire=invoice.is_wire,
             is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
-            account_name=account_name
+            account_name=account_name,
+            can_pay_by_wire=invoice.can_pay_by_wire,
         )
 
         if not invoice.is_wire:
@@ -3331,14 +3342,13 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                     )
 
         if invoice.is_wire and invoice.is_prepayment:
-            applied_credit = 0
             for item in invoice.items:
                 template.add_item(item['type'],
                                   item['quantity'],
                                   item['unit_cost'],
                                   item['amount'],
-                                  applied_credit,
-                                  item['amount'])
+                                  item['applied_credit'],
+                                  item['total'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)

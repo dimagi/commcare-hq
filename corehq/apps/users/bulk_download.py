@@ -27,7 +27,7 @@ from corehq.apps.users.dbaccessors import (
     get_web_users_by_filters,
 )
 from corehq.apps.users.models import DeactivateMobileWorkerTrigger, UserRole, CouchUser, HqPermissions
-from corehq.toggles import TABLEAU_USER_SYNCING
+from corehq.toggles import DEACTIVATE_WEB_USERS, TABLEAU_USER_SYNCING
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
@@ -186,7 +186,7 @@ def make_web_user_dict(user, location_cache, domain):
     role_name = get_user_role_name(domain_membership)
     location_codes = get_location_codes(location_cache, domain_membership.location_id,
                                         domain_membership.assigned_location_ids)
-    return {
+    dict = {
         'username': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
@@ -199,6 +199,10 @@ def make_web_user_dict(user, location_cache, domain):
         'remove': '',
         'domain': domain,
     }
+    if DEACTIVATE_WEB_USERS.enabled(domain):
+        dict['is_active_in_domain'] = str(user.is_active_in_domain(domain) if user.is_active else '')
+
+    return dict
 
 
 def make_invited_web_user_dict(invite, location_cache):
@@ -254,10 +258,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             }
         else:
             deactivation_triggers = {}
-        for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
-            group_memoizer = load_memoizer(current_domain)
+        group_memoizer = load_memoizer(current_domain)
+        for user in get_mobile_users_by_filters(current_domain, user_filters):
             group_names = sorted([
-                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+                group.name for group in group_memoizer.by_user_id(user.user_id)
             ], key=alphanumeric_sort_key)
 
             user_dict = make_mobile_user_dict(
@@ -327,6 +331,8 @@ def parse_web_users(domain, user_filters, owner, task=None, total_count=None):
         'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
         'last_login (read only)', 'status', 'remove'
     ]
+    if DEACTIVATE_WEB_USERS.enabled(domain):
+        user_headers += ['is_active_in_domain']
     user_headers.extend(user_data_contributor.get_headers())
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.extend(json_to_headers(

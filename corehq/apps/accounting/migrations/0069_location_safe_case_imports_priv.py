@@ -13,7 +13,7 @@ def _grandfather_location_safe_case_imports_priv(apps, schema_editor):
     # Location Safe Case Imports is Advanced Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
         SoftwarePlanEdition.PRO,
     ))

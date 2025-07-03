@@ -21,14 +21,14 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
 
-from corehq.apps.accounting.models import BillingAccount, SoftwarePlanEdition
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
     track_clicked_signup_on_hubspot,
     track_confirmed_account_on_hubspot,
     track_web_user_registration_hubspot,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
@@ -38,7 +38,6 @@ from corehq.apps.domain.exceptions import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
     DomainRegistrationForm,
@@ -47,7 +46,6 @@ from corehq.apps.registration.forms import (
 from corehq.apps.registration.models import (
     AsyncSignupRequest,
     RegistrationRequest,
-    SelfSignupWorkflow,
 )
 from corehq.apps.registration.rate_limiter import rate_limit_check_username_availability
 from corehq.apps.registration.utils import (
@@ -119,10 +117,10 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             persona = reg_form.cleaned_data['persona']
             persona_other = reg_form.cleaned_data['persona_other']
 
-            track_workflow(email, "Requested New Account", {
+            track_workflow_noop(email, "Requested New Account", {
                 'environment': settings.SERVER_ENVIRONMENT,
             })
-            track_workflow(email, "Persona Field Filled Out", {
+            track_workflow_noop(email, "Persona Field Filled Out", {
                 'personachoice': persona,
                 'personaother': persona_other,
             })
@@ -157,26 +155,15 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
         reg_form = RegisterWebUserForm(data['data'], is_sso=idp is not None)
         if reg_form.is_valid():
-            ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
-            appcues_ab_test = ab_test.context['version']
-
             if idp:
-                signup_request = AsyncSignupRequest.create_from_registration_form(
-                    reg_form,
-                    additional_hubspot_data={
-                        "appcues_test": appcues_ab_test,
-                    }
-                )
+                signup_request = AsyncSignupRequest.create_from_registration_form(reg_form)
                 return {
                     'success': True,
-                    'appcues_ab_test': appcues_ab_test,
                     'ssoLoginUrl': idp.get_login_url(signup_request.username),
                     'ssoIdpName': idp.name,
                 }
 
-            self._create_new_account(reg_form, additional_hubspot_data={
-                "appcues_test": appcues_ab_test,
-            })
+            self._create_new_account(reg_form)
             try:
                 request_new_domain(
                     self.request,
@@ -203,7 +190,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 }
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -262,8 +248,6 @@ class UserRegistrationView(BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
-    @use_jquery_ui
-    @use_ko_validation
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -411,7 +395,7 @@ class RegisterDomainView(TemplateView):
                 'requested_domain': domain_name,
                 'current_page': {'page_name': _('Confirm Account')},
             })
-            track_workflow(self.request.user.email, "Created new project")
+            track_workflow_noop(self.request.user.email, "Created new project")
             return render(request, 'registration/confirmation_sent.html', context)
 
         if nextpage:
@@ -516,7 +500,7 @@ def confirm_domain(request, guid=''):
             return render(request, 'registration/confirmation_error.html', context)
 
         requested_domain = Domain.get_by_name(req.domain)
-        view_name = _confirm_domain_redirect(request.plan.plan.edition, req.domain)
+        view_name = _confirm_domain_redirect()
         view_args = [requested_domain.name]
 
         # Has guid already been confirmed?
@@ -540,19 +524,16 @@ def confirm_domain(request, guid=''):
                 'Your account has been successfully activated.  Thank you for taking '
                 'the time to confirm your email address: %s.'
             % (requesting_user.username))
-        track_workflow(requesting_user.email, "Confirmed new project")
+        track_workflow_noop(requesting_user.email, "Confirmed new project")
         track_confirmed_account_on_hubspot.delay(requesting_user.get_id)
         request.session['CONFIRM'] = True
 
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
-def _confirm_domain_redirect(edition, domain):
+def _confirm_domain_redirect():
     from corehq.apps.dashboard.views import DomainDashboardView
-    from corehq.apps.domain.views import SelectPlanView
-    should_select_plan = bool(edition == SoftwarePlanEdition.COMMUNITY
-                              and SelfSignupWorkflow.get_in_progress_for_domain(domain))
-    return SelectPlanView.urlname if should_select_plan else DomainDashboardView.urlname
+    return DomainDashboardView.urlname
 
 
 @retry_resource(3)

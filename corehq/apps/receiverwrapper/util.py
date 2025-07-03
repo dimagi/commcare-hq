@@ -11,6 +11,7 @@ import couchforms
 from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
@@ -91,7 +92,7 @@ def get_version_from_build_id(domain, build_id):
 
     try:
         build = get_app(domain, build_id)
-    except (ResourceNotFound, Http404):
+    except (ResourceNotFound, Http404, AppInDifferentDomainException):
         return None
     if not build.copy_of:
         return None

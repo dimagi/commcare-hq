@@ -1,9 +1,8 @@
-import collections
 import hashlib
 import logging
 import re
-from dataclasses import dataclass
-from typing import Any, Optional
+import uuid
+from collections.abc import Mapping
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
@@ -33,18 +32,6 @@ UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
 
 
-@dataclass
-class DataSourceUpdateLog:
-    domain: str
-    data_source_id: str
-    doc_id: str
-    rows: Optional[list[dict[str, Any]]] = None
-
-    @property
-    def get_id(self):
-        return self.doc_id
-
-
 def localize(value, lang):
     """
     Localize the given value.
@@ -55,7 +42,7 @@ def localize(value, lang):
     :param value: A dict-like object or string
     :param lang: A language code.
     """
-    if isinstance(value, collections.Mapping) and len(value):
+    if isinstance(value, Mapping) and len(value):
         return (
             value.get(lang, None)
             or value.get(default_language(), None)
@@ -392,8 +379,12 @@ def get_domain_for_ucr_table_name(table_name):
 
 
 def register_data_source_row_change(domain, data_source_id, doc_ids):
-    from corehq.motech.repeaters.models import DataSourceRepeater
+    from corehq.motech.repeaters.models import (
+        DataSourceRepeater,
+        DataSourceUpdate,
+    )
     from corehq.motech.repeaters.signals import ucr_data_source_updated
+
     try:
         if not (
             toggles.SUPERSET_ANALYTICS.enabled(domain)
@@ -401,16 +392,15 @@ def register_data_source_row_change(domain, data_source_id, doc_ids):
         ):
             return
 
-        for doc_id in doc_ids:
-            update_log = DataSourceUpdateLog(
-                domain,
-                data_source_id=data_source_id,
-                doc_id=doc_id,
-                # We don't need to set `rows` here. We will determine
-                # them at send time. See DataSourceRepeater.payload_doc()
-                rows=None,
-            )
-            ucr_data_source_updated.send_robust(sender=None, update_log=update_log)
+        datasource_update = DataSourceUpdate.objects.create(
+            domain=domain,
+            data_source_id=uuid.UUID(data_source_id),
+            doc_ids=list(doc_ids),
+        )
+        ucr_data_source_updated.send_robust(
+            sender=None,
+            datasource_update=datasource_update
+        )
 
     except Exception as e:
         logging.exception(str(e))

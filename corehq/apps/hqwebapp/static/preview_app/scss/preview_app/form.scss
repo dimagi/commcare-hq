@@ -47,16 +47,8 @@
   padding-top: 0px;
 }
 
-.form-container .form-actions {
-  background-color: transparent;
-  border-top: none;
-  padding-top: 0;
-
-  .btn {
-    width: 100%;
-    font-size: 16px;
-    transition: all .5s;
-  }
+.form-container .form-actions .submit .btn {
+  font-size: 14px;
 }
 
 .form-container {
@@ -118,4 +110,24 @@
     display: inline-block;
     padding-right: 5px;
   }
+}
+
+.multi-choice {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  position: relative;
+}
+
+.multi-choice-spacer {
+  flex: 1;
+}
+
+.multi-choice-clear {
+  width: max-content;
+  max-width: none;
+  transform: translateX(-50%);
+  left: 50%;
+  position: relative;
+  margin: -3px -5px;  // this is a hack to make the button look more centered
 }

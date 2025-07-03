@@ -170,7 +170,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
             "show_full_path": False,
         })
         cls.static_choice_provider = StaticChoiceProvider(choices)
-        cls.choice_query_context = partial(ChoiceQueryContext, user=cls.web_user)
+        cls.choice_query_context = staticmethod(partial(ChoiceQueryContext, user=cls.web_user))
 
     @classmethod
     def tearDownClass(cls):
@@ -405,7 +405,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         ]
         cls.choice_provider = OwnerChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(cls.choices)
-        cls.choice_query_context = partial(ChoiceQueryContext, user=cls.mobile_worker)
+        cls.choice_query_context = staticmethod(partial(ChoiceQueryContext, user=cls.mobile_worker))
 
     @classmethod
     def tearDownClass(cls):

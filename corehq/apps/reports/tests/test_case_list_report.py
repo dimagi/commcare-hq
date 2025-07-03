@@ -14,7 +14,6 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.form_processor.models import CommCareCase
-from corehq.util.test_utils import flag_enabled
 
 
 @es_test(requires=[case_adapter, group_adapter, user_adapter], setup_class=True)
@@ -80,10 +79,6 @@ class TestCaseListReport(TestCase):
 
     def test_with_project_data_slug(self):
         self.assert_filters_yield_cases(['project_data'], ['id-1', 'id-2', 'id-3', 'id-5'])
-
-    @flag_enabled('WEB_USERS_IN_REPORTS')
-    def test_with_project_data_slug_web_users_enabled(self):
-        self.assert_filters_yield_cases(['project_data'], ['id-1', 'id-2', 'id-3', 'id-4', 'id-5'])
 
     def test_with_deactivated_slug(self):
         self.assert_filters_yield_cases(['t__5'], ['id-1'])
