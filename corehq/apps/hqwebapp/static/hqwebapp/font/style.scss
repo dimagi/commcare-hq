@@ -2,11 +2,11 @@
 
 @font-face {
   font-family: '#{$icomoon-font-family}';
-  src: url('#{$icomoon-font-path}/#{$icomoon-font-family}.eot?yekq87');
-  src: url('#{$icomoon-font-path}/#{$icomoon-font-family}.eot?yekq87#iefix') format('embedded-opentype'),
-  url('#{$icomoon-font-path}/#{$icomoon-font-family}.ttf?yekq87') format('truetype'),
-  url('#{$icomoon-font-path}/#{$icomoon-font-family}.woff?yekq87') format('woff'),
-  url('#{$icomoon-font-path}/#{$icomoon-font-family}.svg?yekq87##{$icomoon-font-family}') format('svg');
+  src: url('#{$icomoon-font-path}/#{$icomoon-font-family}.eot?wru4el');
+  src: url('#{$icomoon-font-path}/#{$icomoon-font-family}.eot?wru4el#iefix') format('embedded-opentype'),
+  url('#{$icomoon-font-path}/#{$icomoon-font-family}.ttf?wru4el') format('truetype'),
+  url('#{$icomoon-font-path}/#{$icomoon-font-family}.woff?wru4el') format('woff'),
+  url('#{$icomoon-font-path}/#{$icomoon-font-family}.svg?wru4el##{$icomoon-font-family}') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -339,20 +339,8 @@
   }
 }
 
-.fcc-cloudcare-incomplete-full {
+.fcc-incomplete {
   &:before {
-    content: $fcc-cloudcare-incomplete-full;
-  }
-}
-
-.fcc-cloudcare-incomplete-fg {
-  &:before {
-    content: $fcc-cloudcare-incomplete-fg;
-  }
-}
-
-.fcc-cloudcare-incomplete-bg {
-  &:before {
-    content: $fcc-cloudcare-incomplete-bg;
+    content: $fcc-incomplete;
   }
 }
