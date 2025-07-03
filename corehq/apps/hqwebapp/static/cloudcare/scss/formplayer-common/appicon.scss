@@ -139,12 +139,10 @@
 
 .appicon-incomplete {
   background-color: $cc-dark-warm-accent-mid;
-  .appicon-icon-fg { color: $cc-dark-warm-accent-hi; }
-  .appicon-icon-bg { color: $cc-dark-warm-accent-low; }
+  .appicon-icon { color: $cc-dark-warm-accent-hi; }
   &:hover {
     background-color: darken($cc-dark-warm-accent-mid, 7);
-    .appicon-icon-fg { color: lighten($cc-dark-warm-accent-hi, 5); }
-    .appicon-icon-bg { color: darken($cc-dark-warm-accent-low, 10); }
+    .appicon-icon { color: lighten($cc-dark-warm-accent-hi, 5); }
   }
 }
 
