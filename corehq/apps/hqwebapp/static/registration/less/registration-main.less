@@ -139,29 +139,21 @@ p.sso-message-block {
   border-radius: @input-border-radius-large;
   border: 2px solid #cccccc;
   font-size: 1em;
-}
 
-.radio-select_options {
-  border-radius: @input-border-radius-large;
-}
-
-.radio-select {
+  &_options {
+    border-radius: @input-border-radius-large;
+  }
   &_expand {
     &::after {
       line-height: @input-height-large;
     }
   }
-}
-.radio-select {
   &_items {
     padding-top: @input-height-large;
   }
   &_label {
     line-height: @input-height-large - 2px;
   }
-}
-
-.radio-select {
   &_expand:checked {
     + .radio-select_closeLabel {
       + .radio-select_options {
