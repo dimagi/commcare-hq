@@ -451,7 +451,9 @@ def case_xml(request, domain, case_id):
 def case_property_names(request, domain, case_id):
     case = safely_get_case(request, domain, case_id)
     case_type = CaseType.objects.get(domain=domain, name=case.type)
-    all_property_names = set(CaseProperty.objects.filter(case_type=case_type).values_list('name', flat=True))
+    all_property_names = set(
+        CaseProperty.objects.filter(case_type=case_type, deprecated=False).values_list('name', flat=True)
+    )
     all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES) | {"case_name"}
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
