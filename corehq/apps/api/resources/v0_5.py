@@ -113,6 +113,7 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
     get_report_config_or_not_found,
 )
+from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
     get_user_id_by_username,
@@ -277,15 +278,23 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
+        require_account_confirmation = True if bundle.data.get('require_account_confirmation') == "True" else False
+        send_confirmation_email = True if bundle.data.get('send_confirmation_email_now') == "True" else False
         try:
+            email = bundle.data.get('email', '').lower()
+            if require_account_confirmation and send_confirmation_email and not email:
+                raise BadRequest(_("You must provide the user's email to send a confirmation email."))
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
                 username=username,
                 password=bundle.data.get('password'),
                 created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,
-                email=bundle.data.get('email', '').lower(),
+                email=email,
+                is_account_confirmed=not require_account_confirmation
             )
+            if require_account_confirmation and send_confirmation_email:
+                send_account_confirmation_if_necessary(bundle.obj)
             # password was just set
             bundle.data.pop('password', None)
             # do not call update with username key
@@ -314,12 +323,19 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
+        send_confirmation_email = True if bundle.data.pop('send_confirmation_email_now', None) == "True" else False
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
             formatted_errors = ', '.join(errors)
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
+
+        if not bundle.obj.is_account_confirmed and send_confirmation_email:
+            if not bundle.obj.email:
+                raise BadRequest(_("This user has no email. "
+                                   "You must provide the user's email to send a confirmation email."))
+            send_account_confirmation_if_necessary(bundle.obj)
         bundle.obj.save()
         user_change_logger.save()
         return bundle
