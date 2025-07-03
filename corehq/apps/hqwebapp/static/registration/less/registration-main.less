@@ -138,7 +138,7 @@ p.sso-message-block {
   box-sizing: border-box;
   border-radius: @input-border-radius-large;
   border: 2px solid #cccccc;
-  font-size: 1em;
+  font-size: @font-size-large;
 
   &_options {
     border-radius: @input-border-radius-large;
@@ -153,6 +153,7 @@ p.sso-message-block {
   }
   &_label {
     line-height: @input-height-large - 2px;
+    padding-left: @padding-large-horizontal;
   }
   &_expand:checked {
     + .radio-select_closeLabel {
