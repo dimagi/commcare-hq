@@ -1,240 +1,280 @@
 {
   "selection": [
     {
-      "order": 100,
+      "order": 0,
       "name": "flower",
       "prevSize": 32
     },
     {
-      "order": 101,
+      "order": 0,
       "name": "applications",
       "prevSize": 32
     },
     {
-      "order": 102,
+      "order": 0,
       "name": "commtrack",
       "prevSize": 32
     },
     {
-      "order": 103,
+      "order": 0,
       "name": "reports",
       "prevSize": 32
     },
     {
-      "order": 104,
+      "order": 0,
       "name": "data",
       "prevSize": 32
     },
     {
-      "order": 105,
+      "order": 0,
       "name": "users",
       "prevSize": 32
     },
     {
-      "order": 106,
+      "order": 0,
       "name": "settings",
       "prevSize": 32
     },
     {
-      "order": 107,
+      "order": 0,
       "name": "help",
       "prevSize": 32
     },
     {
-      "order": 108,
+      "order": 0,
       "name": "exchange",
       "prevSize": 32
     },
     {
-      "order": 109,
+      "order": 0,
       "name": "messaging",
       "prevSize": 32
     },
     {
-      "order": 110,
+      "order": 0,
       "name": "chart-report",
       "prevSize": 32
     },
     {
-      "order": 111,
+      "order": 0,
       "name": "form-report",
       "prevSize": 32
     },
     {
-      "order": 112,
+      "order": 0,
       "name": "user-report",
       "prevSize": 32
     },
     {
-      "order": 113,
+      "order": 0,
       "name": "datatable-report",
       "prevSize": 32
     },
     {
-      "order": 114,
+      "order": 0,
       "name": "piegraph-report",
       "prevSize": 32
     },
     {
-      "order": 115,
+      "order": 0,
       "name": "survey",
       "prevSize": 32
     },
     {
-      "order": 116,
+      "order": 0,
       "name": "casemgt",
       "prevSize": 32
     },
     {
-      "order": 117,
+      "order": 0,
       "name": "blankapp",
       "prevSize": 32
     },
     {
-      "order": 118,
+      "order": 0,
       "name": "globe",
       "prevSize": 32
     },
     {
-      "order": 119,
+      "order": 0,
       "name": "app-createform",
       "prevSize": 32
     },
     {
-      "order": 120,
+      "order": 0,
       "name": "app-updateform",
       "prevSize": 32
     },
     {
-      "order": 121,
+      "order": 0,
       "name": "app-completeform",
       "prevSize": 32
     },
     {
-      "order": 122,
+      "order": 0,
       "name": "app-biometrics",
       "prevSize": 32
     },
     {
-      "order": 123,
+      "order": 0,
       "name": "fd-text",
       "prevSize": 32
     },
     {
-      "order": 124,
+      "order": 0,
       "name": "fd-numeric",
       "prevSize": 32
     },
     {
-      "order": 125,
+      "order": 0,
       "name": "fd-data",
       "prevSize": 32
     },
     {
-      "order": 126,
+      "order": 0,
       "name": "fd-variable",
       "prevSize": 32
     },
     {
-      "order": 127,
+      "order": 0,
       "name": "fd-single-select",
       "prevSize": 32
     },
     {
-      "order": 128,
+      "order": 0,
       "name": "fd-multi-select",
       "prevSize": 32
     },
     {
-      "order": 129,
+      "order": 0,
       "name": "fd-decimal",
       "prevSize": 32
     },
     {
-      "order": 130,
+      "order": 0,
       "name": "fd-long",
       "prevSize": 32
     },
     {
-      "order": 131,
+      "order": 0,
       "name": "fd-calculation",
       "prevSize": 32
     },
     {
-      "order": 132,
+      "order": 0,
       "name": "fd-datetime",
       "prevSize": 32
     },
     {
-      "order": 133,
+      "order": 0,
       "name": "fd-audio-capture",
       "prevSize": 32
     },
     {
-      "order": 134,
+      "order": 0,
       "name": "fd-android-intent",
       "prevSize": 32
     },
     {
-      "order": 135,
+      "order": 0,
       "name": "fd-signature",
       "prevSize": 32
     },
     {
-      "order": 136,
+      "order": 0,
       "name": "fd-multi-box",
       "prevSize": 32
     },
     {
-      "order": 137,
+      "order": 0,
       "name": "fd-single-circle",
       "prevSize": 32
     },
     {
-      "order": 138,
+      "order": 0,
       "name": "fd-hash",
       "prevSize": 32
     },
     {
-      "order": 139,
+      "order": 0,
       "name": "fd-external-case",
       "prevSize": 32
     },
     {
-      "order": 140,
+      "order": 0,
       "name": "fd-external-case-data",
       "prevSize": 32
     },
     {
-      "order": 141,
+      "order": 0,
       "name": "fd-expand",
       "prevSize": 32
     },
     {
-      "order": 142,
+      "order": 0,
       "name": "fd-collapse",
       "prevSize": 32
     },
     {
-      "order": 143,
+      "order": 0,
       "name": "fd-case-property",
       "prevSize": 32
     },
     {
-      "order": 144,
+      "order": 0,
       "name": "fd-edit-form",
       "prevSize": 32
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-start-full"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-start-fg"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-start-bg"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-saved-full"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-saved-fg"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-saved-bg"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-sync"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-incomplete-full"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-incomplete-fg"
+    },
+    {
+      "order": 0,
+      "name": "cloudcare-incomplete-bg"
     }
   ],
   "metadata": {
     "name": "CommCare HQ Font",
     "importSize": {
-      "width": 1506,
+      "width": 1024,
       "height": 1024
     },
     "designer": "CommCare HQ",
     "url": "https://dimagi.com",
-    "iconsHash": 1445401564
+    "iconsHash": 4233948
   },
   "height": 1024,
   "prevSize": 32,
@@ -693,6 +733,96 @@
         "fd-edit-form"
       ],
       "defaultCode": 61491
+    },
+    {
+      "paths": [
+        "M0 733.7l430.7-330.7c-9.7-12.2-37.1-45.7-47.2-37.6l-383.5 294.1v74.2zM24.9 923.6l73.1-55.8c-3 0-3.6 0-6.6 0-5.6 0-8.1-3.6-9.7-9.1-2.5-9.7-7.6-20.3-6.6-31l-75.1 57.3v38.6h24.9zM397.7 923.6l275.3-209.7c-9.7-12.7-34-40.6-44.2-33l-314.4 242.7h83.3zM725.8 923.6l68.1-52.3c-9.7-12.2-33.5-40.1-43.7-32.5l-110.2 84.8h85.8zM1006.2 222.7c1-0.5 1.5-1 1.5-2 10.7-11.7 15.2-23.9 16.3-40.1-1.5-56.4-70.1-105.7-119.9-65.5l-94.5 81.8c-28.4 24.4-56.9 48.8-85.3 73.1-126.5 107.6-252.4 214.8-378.4 322.5-36.1 31-72.1 61.5-108.2 92.4-11.2 9.7-19.8 19.3-27.4 32-14.2 22.9-26.9 46.2-36.6 70.6-5.6 14.2-15.2 33-14.2 49.3 27.9-0.5 54.9-4.1 82.3-8.6 21.3-4.1 47.2-5.6 67.6-13.7 11.2-4.1 17.8-9.7 25.9-16.8 23.4-19.8 47.2-40.1 70.6-59.9 168.6-143.8 337.2-288.1 506.4-431.8l93.9-83.3z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-start-full"
+      ]
+    },
+    {
+      "paths": [
+        "M1006.2 222.7c1-0.5 1.5-1 1.5-2 10.7-11.7 15.2-23.9 16.3-40.1-1.5-56.4-70.1-105.7-119.9-65.5l-94.5 81.8c-28.4 24.4-56.9 48.8-85.3 73.1-126.5 107.6-252.4 214.8-378.4 322.5-36.1 31-72.1 61.5-108.2 92.4-11.2 9.7-19.8 19.3-27.4 32-14.2 22.9-26.9 46.2-36.6 70.6-5.6 14.2-15.2 33-14.2 49.3 27.9-0.5 54.9-4.1 82.3-8.6 21.3-4.1 47.2-5.6 67.6-13.7 11.2-4.1 17.8-9.7 25.9-16.8 23.4-19.8 47.2-40.1 70.6-59.9 168.6-143.8 337.2-288.1 506.4-431.8l93.9-83.3z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-start-fg"
+      ]
+    },
+    {
+      "paths": [
+        "M0 733.7l430.7-330.7c-9.7-12.2-37.1-45.7-47.2-37.6l-383.5 294.1v74.2zM24.9 923.6l73.1-55.8c-3 0-3.6 0-6.6 0-5.6 0-8.1-3.6-9.7-9.1-2.5-9.7-7.6-20.3-6.6-31l-75.1 57.3v38.6h24.9zM397.7 923.6l275.3-209.7c-9.7-12.7-34-40.6-44.2-33l-314.4 242.7h83.3zM725.8 923.6l68.1-52.3c-9.7-12.2-33.5-40.1-43.7-32.5l-110.2 84.8h85.8z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-start-bg"
+      ]
+    },
+    {
+      "paths": [
+        "M895.8 639.4v-113l56.2 113h-56.2zM832 447.4v192h-64.4l-127.6 192h-256.6l-127.6-192h-64.4v-576.1h485.8l154.8 154.8v229.3zM71.4 639.4l56.2-113.1v113.1h-56.2zM895.8 383.6v-192l-192-192h-576.2v384.1l-127.6 255.7v384.1h1024v-384.1l-128.2-255.8zM255.8 447.4h511.7v-63.8h-511.7v63.8zM255.8 319.8h447.9v-64.4h-447.9v64.4zM575.5 127.8h-319.7v63.8h319.6l0.1-63.8zM255.8 575.6h511.7v-64.4h-511.7v64.4z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-saved-full"
+      ]
+    },
+    {
+      "paths": [
+        "M255.8 575.6h511.7v-63.8h-511.7v63.8zM127.6 640.1h63.8v-576.1h485.8l26.5-64.4h-576.1v640.5zM255.8 127.8v63.8h319.6v-63.8h-319.6zM255.8 448h511.7v-64.4h-511.7v64.4zM255.8 319.8h447.9v-63.8h-447.9v63.8z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-saved-fg"
+      ]
+    },
+    {
+      "paths": [
+        "M895.8 641v-113l56.8 113h-56.8zM677.2 64.9l154.8 154.2v421.9h-63.8l-128.2 192h-255.9l-128.3-192h-184.4l56.8-113v-143.4l-128.2 256.4v383.4h1024v-383.4l-128.2-256.4v-192l-192-192-26.6 64.3z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-saved-bg"
+      ]
+    },
+    {
+      "paths": [
+        "M1003.5 336.1c0 127-49.9 246.4-139.6 336.1l-69.5-69.5c71.4-71.4 110.5-166.1 110.5-266.6 0-101.1-39.2-195.2-110.5-266.6l69.5-69.5c89.7 89.7 139.6 209.1 139.6 336.1zM655.4 463.7c34.1-34.1 53.1-79.6 53.1-127.6s-19-93.5-53.1-127.6l69.5-69.5c53.1 52.4 81.5 122.6 81.5 197.1s-28.4 144-81.5 197.1l-69.5-69.5zM229 602.7l-69.5 69.5c-89.7-89.7-139-209.1-139-336.1s49.3-246.4 139-336.1l69.5 69.5c-71.4 71.4-110.6 165.5-110.6 266.6 0 100.4 39.2 195.2 110.6 266.6zM298.5 139l69.5 69.5c-70.1 70.1-70.1 184.5 0 255.2l-69.5 69.5c-108.7-108.7-108.7-285.6 0-394.2zM642.8 904.6c-43-7.6-87.2-12-130.8-12-44.2 0-87.8 4.4-131.4 12 59.4-101.7 103.6-211.6 131.4-325.3 27.2 113.7 71.4 223.6 130.8 325.3zM609.9 336.1c0-54.3-43.6-98.5-97.9-98.5s-98.5 44.2-98.5 98.5c0 40.4 24 74.5 58.7 89.7-24.6 219.8-113.1 427.6-255.2 598.2 93.5-43.6 193.9-65.7 295-65.7 100.4 0 201.5 22.1 294.4 65.7-142.2-170.6-230.6-378.4-255.2-598.2 34.7-15.2 58.7-49.3 58.7-89.7z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-sync"
+      ]
+    },
+    {
+      "paths": [
+        "M895.8 639.9v-113.1l56.9 113.1h-56.9zM832 447.9v192h-63.8l-128.3 192.1h-255.8l-128.2-192h-63.9v-576.2h485.2l154.8 154.8v229.3zM71.4 639.9l56.9-113.1v113.1h-56.9zM895.8 384.1v-192.1l-192.1-192h-575.5v384.1l-128.2 255.8v384.1h1024v-384.1l-128.2-255.8zM255.8 320.3h152.9v-64.4h-152.9v64.4zM255.8 192h320.3v-63.8h-320.3v63.8z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-incomplete-full"
+      ]
+    },
+    {
+      "paths": [
+        "M256.2 320.6h152.2v-64.4h-152.2v64.4zM256.2 192.4h319.6v-63.8h-319.6v63.8zM127.9 640.2h63.8v-576.1h485.8l26.5-63.8h-576.1v639.9z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-incomplete-fg"
+      ]
+    },
+    {
+      "paths": [
+        "M895.8 640.6v-113.1l56.9 113.1h-56.9zM677.2 64.4l154.8 154.2v421.9h-63.8l-128.2 192h-255.9l-128.2-192h-184.5l56.9-113.1v-143.3l-128.3 256.5v383.4h1024v-383.4l-128.2-256.5v-192.1l-192.1-192-26.5 64.4z"
+      ],
+      "grid": 0,
+      "tags": [
+        "cloudcare-incomplete-bg"
+      ]
     }
   ],
   "colorThemes": [],

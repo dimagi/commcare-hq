@@ -296,3 +296,63 @@
     content: $fcc-fd-edit-form;
   }
 }
+
+.fcc-cloudcare-start-full {
+  &:before {
+    content: $fcc-cloudcare-start-full;
+  }
+}
+
+.fcc-cloudcare-start-fg {
+  &:before {
+    content: $fcc-cloudcare-start-fg;
+  }
+}
+
+.fcc-cloudcare-start-bg {
+  &:before {
+    content: $fcc-cloudcare-start-bg;
+  }
+}
+
+.fcc-cloudcare-saved-full {
+  &:before {
+    content: $fcc-cloudcare-saved-full;
+  }
+}
+
+.fcc-cloudcare-saved-fg {
+  &:before {
+    content: $fcc-cloudcare-saved-fg;
+  }
+}
+
+.fcc-cloudcare-saved-bg {
+  &:before {
+    content: $fcc-cloudcare-saved-bg;
+  }
+}
+
+.fcc-cloudcare-sync {
+  &:before {
+    content: $fcc-cloudcare-sync;
+  }
+}
+
+.fcc-cloudcare-incomplete-full {
+  &:before {
+    content: $fcc-cloudcare-incomplete-full;
+  }
+}
+
+.fcc-cloudcare-incomplete-fg {
+  &:before {
+    content: $fcc-cloudcare-incomplete-fg;
+  }
+}
+
+.fcc-cloudcare-incomplete-bg {
+  &:before {
+    content: $fcc-cloudcare-incomplete-bg;
+  }
+}
