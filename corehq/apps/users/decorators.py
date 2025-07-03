@@ -192,7 +192,7 @@ def can_use_filtered_user_download(domain):
     return False
 
 
-def ensure_active_user_by_username(username):
+def ensure_active_user_by_username(username, domain):
     """
     :param username: ex: jordan@testapp-9.commcarehq.org
     :return
@@ -200,9 +200,9 @@ def ensure_active_user_by_username(username):
         error_code: mapping in app_string for the user
         default_response: english description of the error to be used in case error_code missing
     """
-    ccu = CommCareUser.get_by_username(username)
+    user = CommCareUser.get_by_username(username)
     valid, message, error_code = True, None, None
-    if ccu and not ccu.is_active:
+    if user and not user.is_active_in_domain(domain):
         valid, message, error_code = False, 'Your account has been deactivated, please contact your domain admin '\
                                             'to reactivate', 'user.deactivated'
     elif get_deleted_user_by_username(CommCareUser, username):
