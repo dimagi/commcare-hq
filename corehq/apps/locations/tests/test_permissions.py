@@ -126,7 +126,7 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
 
 
 @mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
-@mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
+@mock.patch('corehq.apps.users.views.mobile.users.UserES', UserESFake)
 class TestAccessRestrictions(LocationHierarchyTestCase):
     domain = 'test-access-restrictions-domain'
     location_type_names = ['state', 'county', 'city']
