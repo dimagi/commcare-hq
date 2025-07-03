@@ -61,7 +61,7 @@ ae04d8c82218a9543491 corehq/apps/userreports/_design/views/report_configs_by_dat
 83d4baace1fa5a6ede96 corehq/apps/userreports/_design/views/report_configs_by_domain/reduce.js
 21ec350d103dc4ad697c corehq/apps/users/_design/filters/all_users.js
 8ffe07ffb3cad2da71c7 corehq/apps/users/_design/views/by_default_phone/map.js
-6548ff449797f3442175 corehq/apps/users/_design/views/by_domain/map.js
+c79dd53f9846a70ba388 corehq/apps/users/_design/views/by_domain/map.js
 83d4baace1fa5a6ede96 corehq/apps/users/_design/views/by_domain/reduce.js
 14825fca3c53a827f1a8 corehq/apps/users/_design/views/by_group/map.js
 2ffa52be0d606d2f6418 corehq/apps/users/_design/views/by_username/map.js
