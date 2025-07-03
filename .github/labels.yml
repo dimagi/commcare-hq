@@ -29,6 +29,7 @@ rules:
       - 'corehq/apps/hqwebapp/templates/hqwebapp/includes/core_libraries.html'
       - 'corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/requirejs_config.js'
       - 'corehq/apps/domain/decorators.py'
+      - 'corehq/util/context_processors.py'
 
   - labels: ['Risk: Medium']
     patterns:
