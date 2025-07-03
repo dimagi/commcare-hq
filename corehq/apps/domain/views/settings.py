@@ -61,8 +61,11 @@ from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -584,6 +587,9 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         user = User.objects.get(pk=uid)
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
+        log_user_change(by_domain=couch_user.domain, for_domain=couch_user.domain, couch_user=couch_user,
+                        changed_by_user=couch_user, changed_via=USER_CHANGE_VIA_WEB,
+                        change_messages=UserChangeMessage.password_reset())
         return response
 
 

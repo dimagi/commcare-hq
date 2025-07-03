@@ -1558,6 +1558,9 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
                 f'You have successfully confirmed the {user.raw_username} account. '
                 'You can now login'
             ))
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.user,
+                            changed_by_user=self.user, changed_via=USER_CHANGE_VIA_WEB,
+                            change_messages=UserChangeMessage.mobile_account_confirmed_for_domain(self.domain))
             if hasattr(self, 'send_success_sms'):
                 self.send_success_sms()
             return HttpResponseRedirect('{}?username={}'.format(
