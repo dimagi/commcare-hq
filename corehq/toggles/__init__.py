@@ -1870,6 +1870,18 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
+    'filter_on_groups_and_locations',
+    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
+    'ONSE domain with group and location filters',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='For reports filtered by groups and locations, change the OR logic to an AND, so that '
+                '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
+                'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
+                'have group and location filters, such as the Submissions by Form report.',
+)
+
 DONT_INDEX_SAME_CASETYPE = StaticToggle(
     'dont_index_same_casetype',
     "Don't create a parent index if the child case has the same case type as the parent case",
