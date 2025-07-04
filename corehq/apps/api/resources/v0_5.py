@@ -15,9 +15,7 @@ from django.db.models.functions import TruncDate
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseForbidden,
     HttpResponseNotFound,
-    HttpResponseBadRequest,
     JsonResponse,
     QueryDict,
 )
@@ -25,7 +23,6 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
-from django.views.decorators.csrf import csrf_exempt
 
 import pytz
 from memoized import memoized_property
@@ -40,10 +37,8 @@ from tastypie.resources import ModelResource, Resource
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.cors import add_cors_headers_to_response
-from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
     ODataFormSerializer,
@@ -74,9 +69,7 @@ from corehq.apps.api.util import (
 from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
-from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
-from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
@@ -1476,26 +1469,6 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
                 filter_obj = cls.COMPOUND_FILTERS[param_field_name](qualifier, val)
                 compound_filter &= Q(**filter_obj)
         return compound_filter
-
-
-@csrf_exempt
-@allow_cors(['GET'])
-@api_auth()
-@require_can_edit_data
-@requires_privilege_with_fallback(privileges.API_ACCESS)
-@api_throttle
-def get_ucr_data(request, domain, api_version):
-    if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
-        return HttpResponseForbidden()
-    try:
-        if request.method == 'GET':
-            config_id = request.GET.get("data_source_id")
-            if not config_id:
-                return HttpResponseBadRequest("Missing data_source_id parameter")
-            return get_datasource_data(request, config_id, domain)
-        return JsonResponse({'error': "Request method not allowed"}, status=405)
-    except BadRequest as e:
-        return JsonResponse({'error': str(e)}, status=400)
 
 
 def get_datasource_data(request, config_id, domain):
