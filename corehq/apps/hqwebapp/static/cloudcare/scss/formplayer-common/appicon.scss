@@ -145,12 +145,12 @@
 }
 
 .appicon-sync {
-  background-color: $cc-brand-mid;
+  background-color: $primary;
   .appicon-icon {
     color: $white;
   }
   &:hover {
-    background-color: darken($cc-brand-mid, 10);
+    background-color: darken($primary, 10);
     .appicon-icon { color: $white; }
   }
 }
@@ -181,7 +181,7 @@
   background-color: white;
   color: lighten($cc-text, 30);
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-  .appicon-icon { color: $cc-brand-mid; }
+  .appicon-icon { color: $primary; }
   &:hover {
     background-color: darken(white, 5);
   }
