@@ -89,26 +89,27 @@ def get_users_location_ids(domain, user_ids):
     return list(chain(*location_ids))
 
 
-def user_ids_at_locations(location_ids):
-    return UserES().location(location_ids).get_ids()
+def user_ids_at_locations(domain, location_ids):
+    return UserES().domain(domain).location(location_ids).get_ids()
 
 
-def mobile_user_ids_at_locations(location_ids, include_inactive_users=False):
+def mobile_user_ids_at_locations(domain, location_ids, include_inactive_users=False):
     # this doesn't include web users
-    filter = UserES().location(location_ids).mobile_users()
-    if include_inactive_users:
-        filter = filter.show_inactive()
-    return filter.get_ids()
+    return (UserES()
+            .domain(domain, include_inactive=include_inactive_users)
+            .location(location_ids)
+            .mobile_users()
+            .get_ids())
 
 
-def user_ids_at_locations_and_descendants(location_ids):
+def user_ids_at_locations_and_descendants(domain, location_ids):
     location_ids_and_children = SQLLocation.objects.get_locations_and_children_ids(location_ids)
-    return mobile_user_ids_at_locations(location_ids_and_children)
+    return mobile_user_ids_at_locations(domain, location_ids_and_children)
 
 
-def user_ids_at_accessible_locations(domain_name, user):
-    accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
-    return mobile_user_ids_at_locations(accessible_location_ids)
+def user_ids_at_accessible_locations(domain, user):
+    accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain, user)
+    return mobile_user_ids_at_locations(domain, accessible_location_ids)
 
 
 def get_location_ids_with_location_type(domain, location_type_code):
