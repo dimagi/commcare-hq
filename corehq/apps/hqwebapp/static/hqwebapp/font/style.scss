@@ -1,0 +1,346 @@
+@import "variables";
+
+@font-face {
+  font-family: '#{$icomoon-font-family}';
+  src: url('#{$icomoon-font-path}/#{$icomoon-font-family}.eot?wru4el');
+  src: url('#{$icomoon-font-path}/#{$icomoon-font-family}.eot?wru4el#iefix') format('embedded-opentype'),
+  url('#{$icomoon-font-path}/#{$icomoon-font-family}.ttf?wru4el') format('truetype'),
+  url('#{$icomoon-font-path}/#{$icomoon-font-family}.woff?wru4el') format('woff'),
+  url('#{$icomoon-font-path}/#{$icomoon-font-family}.svg?wru4el##{$icomoon-font-family}') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+.fcc {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: '#{$icomoon-font-family}' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fcc-flower {
+  &:before {
+    content: $fcc-flower;
+  }
+}
+
+.fcc-applications {
+  &:before {
+    content: $fcc-applications;
+  }
+}
+
+.fcc-commtrack {
+  &:before {
+    content: $fcc-commtrack;
+  }
+}
+
+.fcc-reports {
+  &:before {
+    content: $fcc-reports;
+  }
+}
+
+.fcc-data {
+  &:before {
+    content: $fcc-data;
+  }
+}
+
+.fcc-users {
+  &:before {
+    content: $fcc-users;
+  }
+}
+
+.fcc-settings {
+  &:before {
+    content: $fcc-settings;
+  }
+}
+
+.fcc-help {
+  &:before {
+    content: $fcc-help;
+  }
+}
+
+.fcc-exchange {
+  &:before {
+    content: $fcc-exchange;
+  }
+}
+
+.fcc-messaging {
+  &:before {
+    content: $fcc-messaging;
+  }
+}
+
+.fcc-chart-report {
+  &:before {
+    content: $fcc-chart-report;
+  }
+}
+
+.fcc-form-report {
+  &:before {
+    content: $fcc-form-report;
+  }
+}
+
+.fcc-user-report {
+  &:before {
+    content: $fcc-user-report;
+  }
+}
+
+.fcc-datatable-report {
+  &:before {
+    content: $fcc-datatable-report;
+  }
+}
+
+.fcc-piegraph-report {
+  &:before {
+    content: $fcc-piegraph-report;
+  }
+}
+
+.fcc-survey {
+  &:before {
+    content: $fcc-survey;
+  }
+}
+
+.fcc-casemgt {
+  &:before {
+    content: $fcc-casemgt;
+  }
+}
+
+.fcc-blankapp {
+  &:before {
+    content: $fcc-blankapp;
+  }
+}
+
+.fcc-globe {
+  &:before {
+    content: $fcc-globe;
+  }
+}
+
+.fcc-app-createform {
+  &:before {
+    content: $fcc-app-createform;
+  }
+}
+
+.fcc-app-updateform {
+  &:before {
+    content: $fcc-app-updateform;
+  }
+}
+
+.fcc-app-completeform {
+  &:before {
+    content: $fcc-app-completeform;
+  }
+}
+
+.fcc-app-biometrics {
+  &:before {
+    content: $fcc-app-biometrics;
+  }
+}
+
+.fcc-fd-text {
+  &:before {
+    content: $fcc-fd-text;
+  }
+}
+
+.fcc-fd-numeric {
+  &:before {
+    content: $fcc-fd-numeric;
+  }
+}
+
+.fcc-fd-data {
+  &:before {
+    content: $fcc-fd-data;
+  }
+}
+
+.fcc-fd-variable {
+  &:before {
+    content: $fcc-fd-variable;
+  }
+}
+
+.fcc-fd-single-select {
+  &:before {
+    content: $fcc-fd-single-select;
+  }
+}
+
+.fcc-fd-multi-select {
+  &:before {
+    content: $fcc-fd-multi-select;
+  }
+}
+
+.fcc-fd-decimal {
+  &:before {
+    content: $fcc-fd-decimal;
+  }
+}
+
+.fcc-fd-long {
+  &:before {
+    content: $fcc-fd-long;
+  }
+}
+
+.fcc-fd-calculation {
+  &:before {
+    content: $fcc-fd-calculation;
+  }
+}
+
+.fcc-fd-datetime {
+  &:before {
+    content: $fcc-fd-datetime;
+  }
+}
+
+.fcc-fd-audio-capture {
+  &:before {
+    content: $fcc-fd-audio-capture;
+  }
+}
+
+.fcc-fd-android-intent {
+  &:before {
+    content: $fcc-fd-android-intent;
+  }
+}
+
+.fcc-fd-signature {
+  &:before {
+    content: $fcc-fd-signature;
+  }
+}
+
+.fcc-fd-multi-box {
+  &:before {
+    content: $fcc-fd-multi-box;
+  }
+}
+
+.fcc-fd-single-circle {
+  &:before {
+    content: $fcc-fd-single-circle;
+  }
+}
+
+.fcc-fd-hash {
+  &:before {
+    content: $fcc-fd-hash;
+  }
+}
+
+.fcc-fd-external-case {
+  &:before {
+    content: $fcc-fd-external-case;
+  }
+}
+
+.fcc-fd-external-case-data {
+  &:before {
+    content: $fcc-fd-external-case-data;
+  }
+}
+
+.fcc-fd-expand {
+  &:before {
+    content: $fcc-fd-expand;
+  }
+}
+
+.fcc-fd-collapse {
+  &:before {
+    content: $fcc-fd-collapse;
+  }
+}
+
+.fcc-fd-case-property {
+  &:before {
+    content: $fcc-fd-case-property;
+  }
+}
+
+.fcc-fd-edit-form {
+  &:before {
+    content: $fcc-fd-edit-form;
+  }
+}
+
+.fcc-cloudcare-start-full {
+  &:before {
+    content: $fcc-cloudcare-start-full;
+  }
+}
+
+.fcc-cloudcare-start-fg {
+  &:before {
+    content: $fcc-cloudcare-start-fg;
+  }
+}
+
+.fcc-cloudcare-start-bg {
+  &:before {
+    content: $fcc-cloudcare-start-bg;
+  }
+}
+
+.fcc-cloudcare-saved-full {
+  &:before {
+    content: $fcc-cloudcare-saved-full;
+  }
+}
+
+.fcc-cloudcare-saved-fg {
+  &:before {
+    content: $fcc-cloudcare-saved-fg;
+  }
+}
+
+.fcc-cloudcare-saved-bg {
+  &:before {
+    content: $fcc-cloudcare-saved-bg;
+  }
+}
+
+.fcc-cloudcare-sync {
+  &:before {
+    content: $fcc-cloudcare-sync;
+  }
+}
+
+.fcc-incomplete {
+  &:before {
+    content: $fcc-incomplete;
+  }
+}
