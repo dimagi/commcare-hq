@@ -256,6 +256,17 @@ class privilege_enabled:
             patch.stop()
 
 
+def has_permissions(**kwargs):
+    """
+    Patch permissions checks by passing in the kwargs you'd use to init HqPermissions
+
+        with has_permissions(edit_commcare_users=True, edit_web_users=False):
+            ...
+    """
+    from corehq.apps.users.models import HqPermissions
+    return mock.patch("corehq.apps.users.models.DomainMembership.permissions", HqPermissions(**kwargs))
+
+
 class DocTestMixin(object):
     """To be mixed in with a TestCase"""
 

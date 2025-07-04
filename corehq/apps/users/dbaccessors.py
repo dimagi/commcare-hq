@@ -79,9 +79,14 @@ def _get_es_query(domain, user_type, user_filters):
     # The following filter applies only to MOBILE_USER_TYPE
     selected_location_only = user_filters.get('selected_location_only', False)
 
-    query = UserES().domain(domain).remove_default_filter('active')
-    if user_active_status is not None:
-        query = query.has_domain_membership(domain, active=user_active_status)
+    if user_active_status is None:
+        # Show all users in domain - will always be true for WEB_USER_TYPE
+        query = UserES().domain(domain, include_inactive=True)
+    elif user_active_status:
+        # Active users filtered by default
+        query = UserES().domain(domain)
+    else:
+        query = UserES().domain(domain, include_active=False, include_inactive=True)
 
     if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()

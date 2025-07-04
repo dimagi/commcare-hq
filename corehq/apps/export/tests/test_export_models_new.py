@@ -1,6 +1,7 @@
 import pytest
 from django.test import TestCase
 from unittest.mock import patch
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
 
 import pytz
@@ -14,8 +15,15 @@ from corehq.apps.export.models.new import CaseExportInstance, FormExportInstance
 
 
 @pytest.mark.slow
-@es_test
+@es_test(setup_class=True)
 class FormExportInstanceTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.domain_obj = Domain(name='test-domain', is_active=True)
+        cls.domain_obj.save()
+        cls.addClassCleanup(cls.domain_obj.delete)
+
     def setUp(self):
         super().setUp()
 

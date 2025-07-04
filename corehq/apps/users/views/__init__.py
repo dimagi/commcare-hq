@@ -808,7 +808,7 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().show_inactive().domain(domains).mobile_users().sort('username.exact')
+        UserES().domain(domains, include_inactive=True).mobile_users().sort('username.exact')
         .login_as_user(web_user_usernames)
         .run()
     )
@@ -914,8 +914,16 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
     query = request.GET.get('query')
     active_in_domain = json.loads(request.GET.get('showActiveUsers', None))
 
+    user_es = UserES()
+    if active_in_domain is None:
+        user_es = user_es.domain(domains)
+    else:
+        user_es = user_es.domain(domains, include_active=active_in_domain, include_inactive=not active_in_domain)
+        assert len(domains) == 1
+
     user_es = (
-        UserES().domain(domains).web_users().sort('username.exact')
+        user_es
+        .web_users().sort('username.exact')
         .search_string_query(query, ["username", "last_name", "first_name"])
         .start(skip).size(limit)
     )
@@ -923,10 +931,6 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
         assert len(domains) == 1
         domain = domains[0]
         user_es = filter_user_query_by_locations_accessible_to_user(user_es, domain, request.couch_user)
-    if active_in_domain is not None:
-        assert len(domains) == 1
-        domain = domains[0]
-        user_es = user_es.has_domain_membership(domain, active_in_domain)
     result = user_es.run()
 
     return (
