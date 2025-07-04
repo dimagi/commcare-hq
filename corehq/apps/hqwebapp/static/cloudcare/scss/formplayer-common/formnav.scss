@@ -33,14 +33,14 @@
   line-height: 12px;
   padding: 12px 17px 9px;
   border: none;
-  color: $cc-brand-mid;
+  color: $primary;
 
   border-radius: 0;
   transition: background 1s;
 
   &:hover {
     background-color: darken($cc-bg, 5);
-    color: $cc-brand-mid;
+    color: $primary;
   }
 }
 

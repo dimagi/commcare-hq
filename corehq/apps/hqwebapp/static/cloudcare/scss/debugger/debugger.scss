@@ -27,7 +27,7 @@
   .debugger-tab-title {
     line-height: 18px;
     color: white;
-    background-color: $cc-brand-mid;
+    background-color: $primary;
     border-bottom: #ddd solid 4px;
     border-top: 0;
     border-left: 0;
@@ -40,7 +40,7 @@
     }
 
     &:hover {
-      background-color: darken($cc-brand-low, 5);
+      background-color: darken($primary, 10);
     }
 
     transition: background-color 0.5s;
