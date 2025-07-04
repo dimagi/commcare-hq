@@ -8,8 +8,6 @@ from django.utils.translation import gettext_lazy
 
 import dateutil
 from crispy_forms import layout as crispy
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from crispy_forms.bootstrap import StrictButton
 
 from corehq import privileges
 from dimagi.utils.dates import DateSpan
@@ -53,7 +51,6 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util import flatten_non_iterable_list
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 
 
 class DateSpanField(forms.CharField):
@@ -1066,47 +1063,4 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
                 'date_range',
                 data_bind='value: dateRange',
             ),
-        ]
-
-
-class DatasourceExportDownloadForm(forms.Form):
-
-    data_source = forms.ChoiceField(
-        label=gettext_lazy("Select project data source"),
-        required=True,
-    )
-
-    def __init__(self, domain, *args, **kwargs):
-        super(DatasourceExportDownloadForm, self).__init__(*args, **kwargs)
-        self.helper = HQFormHelper()
-
-        self.fields['data_source'].choices = self.domain_datasources(domain)
-
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                "",
-                crispy.Div(
-                    crispy.Field(
-                        'data_source',
-                        css_class='input-xlarge',
-                        data_bind='value: dataSource'
-                    ),
-                    data_bind='visible: haveDatasources'
-                ),
-            ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Download Data Export Tool query file"),
-                    type="submit",
-                    css_class="btn-primary",
-                    data_bind="enable: haveDatasources"
-                ),
-            ),
-        )
-
-    @staticmethod
-    def domain_datasources(domain):
-        return [
-            (ds.data_source_id, ds.table_id)
-            for ds in get_datasources_for_domain(domain)
         ]
