@@ -3,6 +3,7 @@ import json
 import re
 import time
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -1611,12 +1612,12 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         return context
 
     def send_success_sms(self):
-        settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
+        sms_settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
         template_params = {
             'name': self.user.full_name,
             'domain': self.user.domain,
             'username': self.user.raw_username,
-            'hq_name': settings.project_name
+            'hq_name': sms_settings.project_name
         }
         lang = guess_domain_language_for_sms(self.user.domain)
         with override(lang):
