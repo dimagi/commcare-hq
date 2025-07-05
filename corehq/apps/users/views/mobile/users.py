@@ -5,6 +5,7 @@ import time
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.views import PasswordResetView
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.db.models import F
@@ -1679,3 +1680,8 @@ def bulk_user_upload_api(request, domain):
     except Exception as e:
         notify_exception(None, message=str(e))
         return json_response({'success': False, 'message': str(e)}, status_code=500)
+
+
+class UserPasswordResetView(BaseManageCommCareUserView, PasswordResetView):
+    form_class = SendPasswordResetEmailForm
+    from_email = settings.DEFAULT_FROM_EMAIL
