@@ -41,7 +41,7 @@ from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
 )
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
@@ -76,8 +76,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     @use_bootstrap5
-    @use_jquery_ui  # datepicker
-    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 

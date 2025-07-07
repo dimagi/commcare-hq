@@ -1,0 +1,40 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div
+  id="gauge-widget-container-{{ widget.id }}"
+  class="col-md-4 mb-4 float-start"
+  data-htmx-swap-target="gauge-{{ widget.id }}"
+>
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 me-auto" title="{{ widget.description }}">
+        {{ widget.title }}
+      </h5>
+      {% include "campaign/partials/edit_widget_button.html" with widget_type='gauge' %}
+      {% include "campaign/partials/delete_widget_button.html" with widget_type='gauge' %}
+    </div>
+    <div class="card-body p-0 d-flex justify-content-center align-items-center">
+      {% if widget.value %}
+        <canvas id="gauge-widget-{{ widget.id }}"></canvas>
+      {% else %}
+        <canvas data-type="radial-gauge"></canvas>
+      {% endif %}
+    </div>
+    <div>
+      <b class="ms-2">
+        {% trans 'Metric' %} :
+        {% if widget.metric_name %}
+          {{ widget.metric_name }}
+        {% else %}
+          {% trans 'Unknown metric' %}
+        {% endif %}
+      </b>
+      {% if widget.case_type %}
+        <b class="me-2 float-end">
+          {% trans 'Case Type' %} : {{ widget.case_type }}
+        </b>
+      {% endif %}
+    </div>
+  </div>
+</div>

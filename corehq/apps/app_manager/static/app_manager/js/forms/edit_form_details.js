@@ -1,46 +1,47 @@
-hqDefine('app_manager/js/forms/edit_form_details', function () {
-    var module = {};
+import $ from "jquery";
+import ko from "knockout";
 
-    module.name = ko.observable();
-    module.comment = ko.observable();
+var module = {};
 
-    // Callback for when comment update is successful
-    // Arguments: name, comment
-    var _updateCallbackFn = function () {};
+module.name = ko.observable();
+module.comment = ko.observable();
 
-    module.initName = function (name, url) {
-        module.name(name);
-        module.updateNameUrl = url;
-    };
+// Callback for when comment update is successful
+// Arguments: name, comment
+var _updateCallbackFn = function () {};
 
-    module.initComment = function (comment, url) {
-        module.comment(comment);
-        module.updateCommentUrl = url;
-    };
+module.initName = function (name, url) {
+    module.name(name);
+    module.updateNameUrl = url;
+};
 
-    module.setUpdateCallbackFn = function (callbackFn) {
-        _updateCallbackFn = callbackFn;
-    };
+module.initComment = function (comment, url) {
+    module.comment(comment);
+    module.updateCommentUrl = url;
+};
 
-    module.update = function () {
-        $.ajax({
-            url: module.updateNameUrl,
-            type: 'POST',
-            dataType: 'JSON',
-            data: { name: module.name() },
-            success: function () {
-                $.ajax({
-                    url: module.updateCommentUrl,
-                    type: 'POST',
-                    dataType: 'JSON',
-                    data: { comment: module.comment() },
-                    success: function () {
-                        _updateCallbackFn(module.name(), module.comment());
-                    },
-                });
-            },
-        });
-    };
+module.setUpdateCallbackFn = function (callbackFn) {
+    _updateCallbackFn = callbackFn;
+};
 
-    return module;
-});
+module.update = function () {
+    $.ajax({
+        url: module.updateNameUrl,
+        type: 'POST',
+        dataType: 'JSON',
+        data: { name: module.name() },
+        success: function () {
+            $.ajax({
+                url: module.updateCommentUrl,
+                type: 'POST',
+                dataType: 'JSON',
+                data: { comment: module.comment() },
+                success: function () {
+                    _updateCallbackFn(module.name(), module.comment());
+                },
+            });
+        },
+    });
+};
+
+export default module;

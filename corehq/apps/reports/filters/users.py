@@ -210,7 +210,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         'To more easily find a location, you may specify multiple levels by separating with a "/". '
         'For example, "Massachusetts/Suffolk/Boston". '
         '<a href="https://dimagi.atlassian.net/wiki/spaces/'
-        'commcarepublic/pages/2215051298/Organization+Data+Management"'
+        'commcarepublic/pages/2215051298/Organization+Data+Management#Search-for-Locations"'
         'target="_blank">Learn more</a>.'
     ))
 
@@ -222,8 +222,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     options_url = 'emwf_options_all_users'
     filter_help_inline = mark_safe(gettext_lazy(  # nosec: no user input
         '<i class="fa fa-info-circle"></i> See '
-        '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-for-Locations"'  # noqa: E501
-        ' target="_blank"> Filter Definitions</a>.'))
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/Report+and+Export+Filters"'  # noqa: E501
+        'target="_blank"> Filter Definitions</a>.'))
 
     @property
     @memoized
@@ -275,9 +275,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         defaults = [
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
+            self.utils.user_type_tuple(HQUserType.WEB),
         ]
-        if toggles.WEB_USERS_IN_REPORTS.enabled(self.domain):
-            defaults.append(self.utils.user_type_tuple(HQUserType.WEB))
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -474,6 +473,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
+class SubmittedByExpandedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    label = gettext_lazy("Submitted By")
+
+
 class EnterpriseUsersUtils(EmwfUtils):
 
     def user_tuple(self, user):
@@ -524,7 +527,7 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
             return super()._base_user_es_query(domain, request_user)
 
         domains = list(set(EnterprisePermissions.get_domains(domain)) | {domain})
-        return user_es.UserES().domains(domains)
+        return user_es.UserES().domain(domains)
 
 
 class AffectedUserFilter(EnterpriseUserFilter):
@@ -565,7 +568,6 @@ class ChangeActionFilter(BaseMultipleOptionFilter):
         (ALL, gettext_noop('All')),
         (str(UserHistory.CREATE), gettext_noop('Create')),
         (str(UserHistory.UPDATE), gettext_noop('Update')),
-        (str(UserHistory.DELETE), gettext_noop('Delete')),
     ]
     default_options = ['0']
 
@@ -588,6 +590,19 @@ class UserUploadRecordFilter(BaseSingleOptionFilter):
                 )
             )
             for record in records
+        ]
+
+
+class WebUserFilter(BaseMultipleOptionFilter):
+    slug = 'web_user'
+    label = _('Web user')
+    default_text = _('Show all')
+
+    @property
+    def options(self):
+        query = user_es.UserES().domain(self.domain).web_users()
+        return [
+            user_details for user_details in query.values_list('username', 'username')
         ]
 
 

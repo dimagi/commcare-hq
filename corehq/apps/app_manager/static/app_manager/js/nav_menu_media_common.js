@@ -1,17 +1,17 @@
-hqDefine("app_manager/js/nav_menu_media_common", function () {
-    const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        uploadersModule = hqImport("hqmedia/js/uploaders");
-    let uploaders = {};
+import _ from "underscore";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import uploadersModule from "hqmedia/js/uploaders";
 
-    _.each(initialPageData.get("multimedia_upload_managers"), function (uploader, type) {
-        uploaders[type] = uploadersModule.uploader(
-            uploader.slug,
-            uploader.options
-        );
-    });
+let uploaders = {};
 
-    return {
-        audioUploader: uploaders.audio,
-        iconUploader: uploaders.icon,
-    };
+_.each(initialPageData.get("multimedia_upload_managers"), function (uploader, type) {
+    uploaders[type] = uploadersModule.uploader(
+        uploader.slug,
+        uploader.options,
+    );
 });
+
+export default {
+    audioUploader: uploaders.audio,
+    iconUploader: uploaders.icon,
+};

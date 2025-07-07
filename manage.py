@@ -36,6 +36,7 @@ def main():
         GeventCommand('copy_events_to_sql', http_adapter_pool_size=32),
         GeventCommand('verify_ssl_connections'),
         GeventCommand('elastic_sync_multiplexed'),
+        GeventCommand('translate_po_files'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
@@ -137,8 +138,10 @@ def patch_jsonfield():
     See https://github.com/bradjasper/django-jsonfield/pull/173 for more details
     """
     import json
+
     from django.core.exceptions import ValidationError
     from django.utils.translation import gettext_lazy as _
+
     from jsonfield import JSONField
 
     def to_python(self, value):
@@ -154,7 +157,7 @@ def patch_jsonfield():
 
 def unpatch_sys_modules():
     # until https://github.com/DataDog/dd-trace-py/issues/9143 is implemented
-    if os.environ.get("DD_TRACE_ENABLED", "").lower() == "false":
+    if os.environ.get("DD_TRACE_ENABLED", "false").lower() == "false":
         from ddtrace import ModuleWatchdog
         if isinstance(sys.modules, ModuleWatchdog):
             sys.modules.uninstall()

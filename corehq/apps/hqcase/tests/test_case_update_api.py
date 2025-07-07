@@ -23,7 +23,6 @@ from ..utils import submit_case_blocks
 @sharded
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
-@flag_enabled('CASE_API_V0_6')
 @flag_enabled('API_THROTTLE_WHITELIST')
 @patch('corehq.apps.hqcase.api.updates.validate_update_permission', MagicMock())
 class TestCaseAPI(TestCase):
@@ -301,7 +300,6 @@ class TestCaseAPI(TestCase):
         self.assertEqual(case.indices[0].referenced_id, parent_case.case_id)
 
     def test_set_parent_by_bad_external_id(self):
-        parent_case = self._make_case()
         res = self._create_case({
             'case_type': 'match',
             'case_name': 'Harmon/Luchenko',
@@ -637,7 +635,6 @@ class TestCaseAPI(TestCase):
                "Index names must be valid XML identifiers.")
         self.assertEqual(res.json()['error'], msg)
 
-
     def test_bad_index_reference(self):
         res = self._create_case({
             'case_type': 'match',
@@ -681,7 +678,6 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.status_code, 200)
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
         self.assertEqual(case.external_id, '1')
-
 
     def test_urls_without_trailing_slash(self):
         case_id = self._make_case().case_id

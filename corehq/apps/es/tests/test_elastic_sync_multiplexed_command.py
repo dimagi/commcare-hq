@@ -320,7 +320,7 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
             return_value=patched_case_adapter
         ):
             with self.assertRaises(IndexNotMultiplexedException):
-                ESSyncUtil().set_checkpoints_for_new_index('cases')
+                ESSyncUtil().set_checkpoints_for_new_index(['cases'])
 
     @patch.object(es_consts, 'ES_CASES_INDEX_SWAPPED', True)
     def test_set_checkpoints_for_new_index_raises_swapped_multiplexed_index(self):
@@ -330,7 +330,7 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
             return_value=patched_case_adapter
         ):
             with self.assertRaises(IndexAlreadySwappedException):
-                ESSyncUtil().set_checkpoints_for_new_index('cases')
+                ESSyncUtil().set_checkpoints_for_new_index(['cases'])
 
     def test_set_checkpoints_for_new_index(self):
 
@@ -370,7 +370,7 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
                 'corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname',
                 return_value=patched_case_adapter
             ):
-                ESSyncUtil().set_checkpoints_for_new_index('cases')
+                ESSyncUtil().set_checkpoints_for_new_index(['cases'])
 
         # Swap indexes and patch adapter to return multiplexed adapter
         # with secondary index as main index

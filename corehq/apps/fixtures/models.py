@@ -3,16 +3,24 @@ from functools import reduce
 from itertools import chain
 from uuid import uuid4
 
-from attrs import define, field
 from django.db import models
 from django.db.models.expressions import RawSQL
+
+from attrs import define, field
+
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
+
 from .exceptions import FixtureVersionError
 
-FIXTURE_BUCKET = 'domain-fixtures'
+FIXTURE_BUCKET_PREFIX = 'domain-fixtures'
+
+
+def fixture_bucket(lookup_table_id, domain):
+    return f'{FIXTURE_BUCKET_PREFIX}-{lookup_table_id}' + '/' + domain
 
 
 class LookupTableManager(models.Manager):
@@ -26,6 +34,9 @@ class LookupTableManager(models.Manager):
 
     def domain_tag_exists(self, domain_name, tag):
         return self.filter(domain=domain_name, tag=tag).exists()
+
+    def get_tables_modified_since(self, domain, since_datetime):
+        return self.filter(domain=domain, last_modified__gt=since_datetime)
 
 
 @define
@@ -83,6 +94,9 @@ class LookupTable(models.Model):
     item_attributes = models.JSONField(default=list)
     description = models.CharField(max_length=255, default="")
     is_synced = models.BooleanField(default=False)
+    # last_modified is also updated when a related LookupTableRow
+    # or LookupTableRowOwner is created, updated, or deleted
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'fixtures'
@@ -285,18 +299,14 @@ class LookupTableRowOwner(models.Model):
         ]
 
 
-class UserLookupTableType:
-    LOCATION = 1
-    CHOICES = (
-        (LOCATION, "Location"),
-    )
-
-
 class UserLookupTableStatus(models.Model):
     """Keeps track of when a user needs to re-sync a fixture"""
+    class Fixture(models.IntegerChoices):
+        LOCATION = (1, "Location")
+
     id = models.AutoField(primary_key=True, verbose_name="ID", auto_created=True)
     user_id = models.CharField(max_length=100, db_index=True)
-    fixture_type = models.PositiveSmallIntegerField(choices=UserLookupTableType.CHOICES)
+    fixture_type = models.PositiveSmallIntegerField(choices=Fixture.choices)
     last_modified = models.DateTimeField()
 
     DEFAULT_LAST_MODIFIED = datetime.min
@@ -305,3 +315,27 @@ class UserLookupTableStatus(models.Model):
         app_label = 'fixtures'
         db_table = 'fixtures_userfixturestatus'
         unique_together = ("user_id", "fixture_type")
+
+    @classmethod
+    def update(cls, user_id, fixture_type):
+        cls.objects.update_or_create(
+            user_id=user_id,
+            fixture_type=fixture_type,
+            defaults={'last_modified': datetime.utcnow()},
+        )
+
+    @classmethod
+    def bulk_update(cls, user_ids, fixture_type):
+        now = datetime.utcnow()
+        for ids in chunked(user_ids, 50):
+            (cls.objects
+             .filter(user_id__in=ids,
+                     fixture_type=fixture_type)
+             .update(last_modified=now))
+
+    @classmethod
+    def get_last_modified(cls, user_id, fixture_type):
+        try:
+            return cls.objects.get(user_id=user_id, fixture_type=fixture_type).last_modified
+        except cls.DoesNotExist:
+            return cls.DEFAULT_LAST_MODIFIED

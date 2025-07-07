@@ -1,9 +1,9 @@
-hqDefine("cloudcare/js/formplayer/menus/controller", [
+define("cloudcare/js/formplayer/menus/controller", [
     'jquery',
     'underscore',
     'backbone',
-    'DOMPurify/dist/purify.min',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'dompurify',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/markdown',
@@ -56,7 +56,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 return;
             }
 
-            gtx.logNavigateMenu(gtx.extractSelections(menuResponse));
+            gtx.logNavigateMenu(menuResponse);
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {

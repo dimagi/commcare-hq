@@ -11,6 +11,7 @@ import couchforms
 from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
@@ -91,7 +92,7 @@ def get_version_from_build_id(domain, build_id):
 
     try:
         build = get_app(domain, build_id)
-    except (ResourceNotFound, Http404):
+    except (ResourceNotFound, Http404, AppInDifferentDomainException):
         return None
     if not build.copy_of:
         return None
@@ -154,7 +155,13 @@ def get_commcare_version_from_appversion_text(appversion_text):
         r'"([\d.]+)"\s+\(\d+\)',
         r'"\s*([\d.]+)\s*"',
     ]
-    return _first_group_match(appversion_text, patterns)
+    version = _first_group_match(appversion_text, patterns)
+
+    # Check if the version is in the format of major.minor or major and append .0 if needed
+    while version and version.count('.') < 2:
+        version += '.0'
+
+    return version
 
 
 def _first_group_match(text, patterns):

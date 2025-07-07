@@ -17,7 +17,6 @@ from corehq.apps.accounting.dispatcher import (
 from corehq.apps.accounting.models import BillingAccount, Invoice, Subscription
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
-    domain_is_on_trial,
     is_accounting_admin,
 )
 from corehq.apps.accounting.utils.subscription import is_domain_enterprise
@@ -36,6 +35,7 @@ from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.domain.views.settings import EditIPAccessConfigView, EditMyProjectSettingsView
 from corehq.apps.email.views import EmailSMTPSettingsView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
@@ -92,6 +92,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
+    can_access_payments_report,
 )
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
@@ -167,7 +168,7 @@ class ProjectReportsTab(UITab):
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
-            'icon': 'icon-tasks fa fa-tasks',
+            'icon': 'fa-solid fa-floppy-disk',
             'show_in_dropdown': True,
         }]
         is_ucr_toggle_enabled = (
@@ -993,11 +994,11 @@ class ProjectDataTab(UITab):
 
         if self._can_view_case_data_cleaning:
             from corehq.apps.data_cleaning.views.main import (
-                CleanCasesMainView,
+                BulkEditCasesMainView,
             )
             clean_cases_view = {
-                'title': _(CleanCasesMainView.page_title),
-                'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+                'title': _(BulkEditCasesMainView.page_title),
+                'url': reverse(BulkEditCasesMainView.urlname, args=[self.domain]),
                 'icon': 'fa-solid fa-shower',
             }
             edit_section[0][1].append(clean_cases_view)
@@ -1008,7 +1009,6 @@ class ProjectDataTab(UITab):
     def _can_view_case_data_cleaning(self):
         return (
             bulk_data_cleaning_enabled_for_request(self._request)
-            and toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
         )
 
     def _get_explore_data_views(self):
@@ -1084,7 +1084,10 @@ class ProjectDataTab(UITab):
 
     @cached_property
     def _can_view_payments_integration(self):
-        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+        return (
+            toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+            and can_access_payments_report(self.couch_user, self.domain)
+        )
 
     def _get_payments_verification_views(self):
         from corehq.apps.integration.payments.views import PaymentsVerificationReportView
@@ -1201,10 +1204,6 @@ class ApplicationsTab(UITab):
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
             app_title = self.make_app_title(app)
-            if 'created_from_template' in app and app['created_from_template'] == 'appcues':
-                if domain_is_on_trial(self.domain):
-                    # If trial is over, domain may have lost web apps access, don't do appcues intro
-                    url = url + '?appcues=1'
 
             submenu_context.append(dropdown_dict(
                 app_title,
@@ -2071,11 +2070,16 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-        from corehq.apps.domain.views.settings import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
+
+        if toggles.IP_ACCESS_CONTROLS.enabled(self.domain):
+            project_info.append({
+                'title': _(EditIPAccessConfigView.page_title),
+                'url': reverse(EditIPAccessConfigView.urlname, args=[self.domain])
+            })
 
         items.append((_('Project Information'), project_info))
 

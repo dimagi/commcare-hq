@@ -12,7 +12,7 @@ def _grandfather_location_owner_in_report_builder_priv(apps, schema_editor):
 
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
         SoftwarePlanEdition.PRO,
     ))

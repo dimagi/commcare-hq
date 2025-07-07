@@ -270,3 +270,7 @@ class CommCareFeatureSupportMixin(object):
             toggles.CASE_LIST_OPTIMIZATIONS.enabled(self.domain)
             and self._require_minimum_version('2.56')
         )
+
+    @property
+    def support_document_upload(self):
+        return self._require_minimum_version('2.57')

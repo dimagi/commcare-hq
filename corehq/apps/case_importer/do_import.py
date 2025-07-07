@@ -31,7 +31,7 @@ from corehq.toggles import (
     DOMAIN_PERMISSIONS_MIRROR,
     MTN_MOBILE_WORKER_VERIFICATION,
 )
-from corehq.util.metrics import metrics_counter, metrics_histogram
+from corehq.util.metrics import metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
@@ -378,11 +378,6 @@ class _TimedAndThrottledImporter:
             buckets=[50, 70, 100, 150, 250, 350, 500], bucket_tag='duration', bucket_unit='ms',
         )
 
-        for rows, status in ((rows_created, 'created'),
-                             (rows_updated, 'updated'),
-                             (rows_failed, 'error')):
-            metrics_counter("commcare.case_importer.cases", rows, tags={"status": status, "domain": self.domain})
-
 
 class SubmitCaseBlockHandler:
     """
@@ -403,6 +398,7 @@ class SubmitCaseBlockHandler:
         record_form_callback=None,
         throttle=False,
         add_inferred_props_to_schema=True,
+        form_name=None,
     ):
         """
         Initialize ``SubmitCaseBlockHandler``.
@@ -431,6 +427,7 @@ class SubmitCaseBlockHandler:
         self.add_inferred_props_to_schema = add_inferred_props_to_schema
         self.case_type = case_type
         self.user = user
+        self.form_name = form_name
 
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
@@ -527,6 +524,7 @@ class SubmitCaseBlockHandler:
             # Skip the rate-limiting because this importing code will
             # take care of any rate-limiting
             max_wait=None,
+            form_name=self.form_name,
         )
 
 

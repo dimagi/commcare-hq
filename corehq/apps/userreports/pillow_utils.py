@@ -1,13 +1,20 @@
 from collections import defaultdict
 
-from corehq.apps.userreports.exceptions import StaleRebuildError, TableRebuildError
 from couchdbkit import ResourceNotFound
-from corehq.apps.userreports.rebuild import migrate_tables, get_tables_rebuild_migrate, get_table_diffs
-from corehq.apps.userreports.sql import get_metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
+
+from pillowtop.logger import pillow_logging
+
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
-from pillowtop.logger import pillow_logging
+
+from .exceptions import StaleRebuildError, TableRebuildError
+from .rebuild import (
+    get_table_diffs,
+    get_tables_rebuild_migrate,
+    migrate_tables,
+)
+from .sql import get_metadata
+from .tasks import rebuild_indicators
 
 
 def _is_datasource_active(adapter):

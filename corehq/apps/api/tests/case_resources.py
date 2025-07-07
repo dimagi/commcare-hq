@@ -233,11 +233,11 @@ class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
         Tests authorization function properly blocks domains without proper subscription
         :return:
         """
-        community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        new_user = WebUser.create(community_domain.name, 'test', 'testpass', None, None)
+        free_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(free_domain.name, 'test', 'testpass', None, None)
         new_user.save()
 
-        self.addCleanup(community_domain.delete)
+        self.addCleanup(free_domain.delete)
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 403)
@@ -247,11 +247,11 @@ class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
         Tests superuser overrides authorization
         :return:
         """
-        community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        new_user = WebUser.create(community_domain.name, 'test', 'testpass', None, None, is_superuser=True)
+        free_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(free_domain.name, 'test', 'testpass', None, None, is_superuser=True)
         new_user.save()
 
-        self.addCleanup(community_domain.delete)
+        self.addCleanup(free_domain.delete)
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 200)

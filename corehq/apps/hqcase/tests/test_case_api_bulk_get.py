@@ -28,7 +28,6 @@ from corehq.apps.data_dictionary.models import CaseType
 @es_test(requires=[case_search_adapter], setup_class=True)
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
-@flag_enabled('CASE_API_V0_6')
 @flag_enabled('API_THROTTLE_WHITELIST')
 class TestCaseAPIBulkGet(TestCase):
     domain = 'test-bulk-get-cases'

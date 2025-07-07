@@ -3,8 +3,8 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
+from django.utils.translation import gettext_lazy
 from django_prbac.utils import has_privilege
-from ws4redis.context_processors import default
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType
@@ -159,20 +159,6 @@ def js_privileges(request):
     }
 
 
-def websockets_override(request):
-    # for some reason our proxy setup doesn't properly detect these things, so manually override them
-    try:
-        context = default(request)
-        context['WEBSOCKET_URI'] = context['WEBSOCKET_URI'].replace(request.get_host(), settings.BASE_ADDRESS)
-        if settings.DEFAULT_PROTOCOL == 'https':
-            context['WEBSOCKET_URI'] = context['WEBSOCKET_URI'].replace('ws://', 'wss://')
-        return context
-    except Exception:
-        # it's very unlikely this was needed, and some workflows (like scheduled reports) aren't
-        # able to generate this, so don't worry about it.
-        return {}
-
-
 def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
@@ -188,6 +174,28 @@ def commcare_hq_names(request=None):
             'COMMCARE_HQ_NAME': _get_cc_name(request, 'COMMCARE_HQ_NAME'),
         },
     }
+
+
+def server_location_display(request):
+    SERVER_LOCATION_DISPLAY = {
+        'production': {
+            'flag': "🇺🇸",
+            'hr_name': gettext_lazy("US"),
+        },
+        'india': {
+            'flag': "🇮🇳",
+            'hr_name': gettext_lazy("India"),
+        },
+        'eu': {
+            'flag': "🇪🇺",
+            'hr_name': gettext_lazy("EU"),
+        },
+    }
+    context = {}
+    env = settings.SERVER_ENVIRONMENT
+    if env in SERVER_LOCATION_DISPLAY.keys():
+        context = {'server_display': SERVER_LOCATION_DISPLAY[env]}
+    return context
 
 
 def emails(request=None):
@@ -275,9 +283,9 @@ def subscription_banners(request):
             context.update({
                 'num_trial_days_remaining': max(0, delta.days),
             })
-    elif request.subscription.is_community:
+    elif request.subscription.is_free_edition:
         context.update({
-            'show_community_banner': True,
+            'show_free_edition_banner': True,
         })
     return context
 
@@ -286,7 +294,7 @@ def get_demo(request):
     is_user_logged_in = getattr(request, 'user', None) and request.user.is_authenticated
     is_hubspot_enabled = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     context = {}
-    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and not is_user_logged_in:
+    if is_hubspot_enabled and not is_user_logged_in:
         context.update({
             'is_demo_visible': True,
         })

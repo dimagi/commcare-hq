@@ -1,10 +1,10 @@
-hqDefine("cloudcare/js/form_entry/form_ui", [
+define("cloudcare/js/form_entry/form_ui", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify/dist/purify.min',
+    'dompurify',
     'hqwebapp/js/toggles',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
@@ -694,7 +694,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 }
 
                 const inputControl = [constants.CONTROL_IMAGE_CHOOSE, constants.CONTROL_LABEL,
-                    constants.CONTROL_AUDIO_CAPTURE, constants.CONTROL_VIDEO_CAPTURE];
+                    constants.CONTROL_AUDIO_CAPTURE, constants.CONTROL_VIDEO_CAPTURE,
+                    constants.CONTROL_DOCUMENT_UPLOAD];
 
                 let findChildAndSetFilename = function (children) {
                     for (let child of children) {

@@ -1,12 +1,12 @@
 {% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
-{% requirejs_main 'domain/js/bootstrap3/billing_statements' %}
+{% js_entry_b3 'domain/js/bootstrap3/billing_statements' %}
 
 {% block paginated_list_top %}
   {% initial_page_data 'pagination' pagination %}
-  {% initial_page_data 'stripe_options' stripe_options %}
+  {% initial_page_data 'stripe_cards' stripe_cards %}
+  {% initial_page_data 'stripe_public_key' stripe_public_key %}
   {% initial_page_data 'payment_urls' payment_urls %}
   {% initial_page_data 'payment_error_messages' payment_error_messages %}
   {% initial_page_data 'item_creation_allowed' pagination.create.is_allowed %}
@@ -14,47 +14,56 @@
   {% initial_page_data 'show_plan' show_plan %}
 
   <div id="currentBalanceSection">
-    <h2>{% trans 'Total Due:' %}
-      <span data-bind="text: displayTotalDue, visible: hasInitialLoadFinished"></span>
+    <h2>
+      {% trans 'Total Due:' %}
+      <span
+        data-bind="text: displayTotalDue, visible: hasInitialLoadFinished"
+      ></span>
     </h2>
-    {% if not is_ops_user_but_not_admin %}
+    <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
+      <button
+        type="button"
+        class="btn btn-primary"
+        data-toggle="modal"
+        data-target="#bulkPaymentModal"
+        id="bulkPaymentBtn"
+      >
+        {% trans 'Pay by Credit Card' %}
+      </button>
+    </p>
+    {% if can_pay_by_wire %}
       <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
-        <button type="button"
-                class="btn btn-primary"
-                data-toggle="modal"
-                data-target="#bulkPaymentModal"
-                id="bulkPaymentBtn">
-          {% trans 'Pay by Credit Card' %}
-        </button>
-      </p>
-      <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
-        <button type="button"
-                class="btn btn-primary"
-                data-toggle="modal"
-                data-target="#bulkWirePaymentModal"
-                id="bulkWirePaymentBtn">
+        <button
+          type="button"
+          class="btn btn-primary"
+          data-toggle="modal"
+          data-target="#bulkWirePaymentModal"
+          id="bulkWirePaymentBtn"
+        >
           {% trans 'Pay by Wire' %}
         </button>
       </p>
-    {% else %}
-      <span class="label label-default">
-            <i class="fa fa-info-circle"></i>
-            {% trans "Not Billing Admin, Can't Make Payment" %}
-        </span>
     {% endif %}
   </div>
-  <h2>{% trans 'Billing Statements' %} <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span></h2>
+  <h2>
+    {% trans 'Billing Statements' %}
+    <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span>
+  </h2>
   <p>
-    <button type="button"
-            class="btn btn-primary"
-            data-bind="event: {click: toggleUnpaidBills},
-                           visible: showAllBills">
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-bind="event: {click: toggleUnpaidBills},
+                 visible: showAllBills"
+    >
       {% trans 'Show Only Unpaid Statements' %}
     </button>
-    <button type="button"
-            class="btn btn-primary"
-            data-bind="event: {click: toggleUnpaidBills},
-                           visible: showUnpaidBills">
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-bind="event: {click: toggleUnpaidBills},
+                 visible: showUnpaidBills"
+    >
       {% trans 'Show All Statements' %}
     </button>
   </p>
@@ -62,36 +71,43 @@
 
 {% block pagination_templates %}
   <script type="text/html" id="statement-row-template">
-    <td class="col-sm-2" data-bind="text: invoice_number"></td>
+    <td
+      class="col-sm-2"
+      data-bind="text: invoice_number"></td>
     {% if show_plan %}
-      <td class="col-sm-2" data-bind="text: plan.name"></td>
+      <td
+        class="col-sm-2"
+        data-bind="text: plan.name"></td>
     {% endif %}
     <td class="col-sm-3">
-      <span data-bind="text: start"></span> - <span data-bind="text: end"></span>
+      <span data-bind="text: start"></span> -
+      <span data-bind="text: end"></span>
     </td>
-    <td class="col-sm-1" data-bind="text: date_due"></td>
+    <td
+      class="col-sm-1"
+      data-bind="text: date_due"></td>
     <td class="col-sm-2">
-      <span data-bind="text: payment_status, attr: {class: payment_class}"></span>
+      <span
+        data-bind="text: payment_status, attr: {class: payment_class}"
+      ></span>
       <!-- ko if: canMakePayment -->
-      {% if not is_ops_user_but_not_admin %}
-        <button type="button"
-                class="btn btn-primary payment-button"
-                data-toggle="modal"
-                data-target="#paymentModal">
-          {% trans 'Make Payment' %}
-        </button>
-      {% else %}
-        <span class="label label-default">
-                    <i class="fa fa-info-circle"></i>
-                    {% trans "Not Billing Admin, Can't Make Payment" %}
-                </span>
-      {% endif %}
+      <button
+        type="button"
+        class="btn btn-primary payment-button"
+        data-toggle="modal"
+        data-target="#paymentModal"
+      >
+        {% trans 'Make Payment' %}
+      </button>
       <!-- /ko -->
     </td>
     <td class="col-sm-2">
-      <a class="btn btn-primary"
-         data-bind="attr: { href: pdfUrl }"
-         target="_blank">{% trans 'Download' %}</a>
+      <a
+        class="btn btn-primary"
+        data-bind="attr: { href: pdfUrl }"
+        target="_blank"
+        >{% trans 'Download' %}</a
+      >
     </td>
   </script>
 
@@ -99,20 +115,24 @@
 
   <script type="text/html" id="cost-item-template">
     <div class="form-group">
-      <input type="hidden"
-             name="invoice_id"
-             data-bind="value: id" />
+      <input
+        type="hidden"
+        name="invoice_id"
+        data-bind="value: id"
+      />
       <label class="control-label col-sm-3">
         {% trans 'Payment Amount' %}
       </label>
       <div class="col-sm-9">
         <div class="radio">
           <label>
-            <input type="radio"
-                   name="paymentAmount"
-                   id="payment-amount-full"
-                   data-bind="checked: paymentAmountType"
-                   value="full">
+            <input
+              type="radio"
+              name="paymentAmount"
+              id="payment-amount-full"
+              data-bind="checked: paymentAmountType"
+              value="full"
+            />
             {% blocktrans %}
               Pay the full balance: $<span data-bind="text: balance"></span>
             {% endblocktrans %}
@@ -120,37 +140,46 @@
         </div>
         <div class="radio">
           <label data-bind="visible: showCustomOption">
-            <input type="radio"
-                   name="paymentAmount"
-                   id="payment-amount-custom"
-                   data-bind="checked: paymentAmountType"
-                   value="partial">
-            {% blocktrans %}
-              Pay a portion of the balance:
-            {% endblocktrans %}
+            <input
+              type="radio"
+              name="paymentAmount"
+              id="payment-amount-custom"
+              data-bind="checked: paymentAmountType"
+              value="partial"
+            />
+            {% blocktrans %} Pay a portion of the balance: {% endblocktrans %}
             <div class="input-group">
               <span class="input-group-addon">$</span>
-              <input type="text"
-                     class="form-control"
-                     name="customPaymentAmount"
-                     data-bind="value: customPaymentAmount,
-                                   event: { click: selectPartialPayment }" />
+              <input
+                type="text"
+                class="form-control"
+                name="customPaymentAmount"
+                data-bind="value: customPaymentAmount,
+                           event: { click: selectPartialPayment }"
+              />
             </div>
           </label>
-          <div class="alert alert-danger"
-               data-bind="visible: showAmountRangeError">
+          <div
+            class="alert alert-danger"
+            data-bind="visible: showAmountRangeError"
+          >
             <i class="fa-solid fa-triangle-exclamation"></i>
             {% blocktrans %}
-              Please enter an amount that's between $0.50 and $<span data-bind="text: balance"></span>.
+              Please enter an amount that's between $0.50 and
+              $<span data-bind="text: balance"></span>.
             {% endblocktrans %}
           </div>
-          <div class="alert alert-danger"
-               data-bind="visible: showAmountLeftoverError">
+          <div
+            class="alert alert-danger"
+            data-bind="visible: showAmountLeftoverError"
+          >
             <i class="fa-solid fa-triangle-exclamation"></i>
             {% blocktrans %}
-              You can't enter an amount between $<span data-bind="text: maxPartialAmount"></span>
-              and $<span data-bind="text: balance"></span> because
-              the next transfer will be below the minimum amount of $0.50.
+              You can't enter an amount between $<span
+                data-bind="text: maxPartialAmount"
+              ></span>
+              and $<span data-bind="text: balance"></span> because the next
+              transfer will be below the minimum amount of $0.50.
             {% endblocktrans %}
           </div>
         </div>
@@ -160,7 +189,8 @@
 
   <script type="text/html" id="payment-method-modal-title">
     {% blocktrans %}
-      Payment for Statement No. <span data-bind="text: invoiceNumber"></span>
+      Payment for Statement No.
+      <span data-bind="text: invoiceNumber"></span>
     {% endblocktrans %}
   </script>
 
@@ -178,14 +208,15 @@
 
   <script type="text/html" id="payment_complete_template_wire">
     {% blocktrans %}
-      Thank you for your upcoming wire payment.
-      An invoice with your total balance and the instructions to do the wire payment
-      has just been sent to your email address.
+      Thank you for your upcoming wire payment. An invoice with your total
+      balance and the instructions to do the wire payment has just been sent
+      to your email address.
     {% endblocktrans %}
   </script>
 {% endblock %}
 
-{% block modals %}{{ block.super }}
+{% block modals %}
+  {{ block.super }}
   {% with process_invoice_payment_url as process_payment_url %}
     {% include 'domain/partials/bootstrap3/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment_complete_template_simple" %}
   {% endwith %}

@@ -49,7 +49,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
@@ -622,7 +622,6 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     template_name = "settings/user_api_keys.html"
 
     @use_bootstrap5
-    @use_tempusdominus
     def dispatch(self, request, *args, **kwargs):
         return super(ApiKeyView, self).dispatch(request, *args, **kwargs)
 

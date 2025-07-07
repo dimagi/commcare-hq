@@ -1,0 +1,35 @@
+{% extends "data_cleaning/status/base_modal_body.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block htmx-attrs %}{# prettier-ignore-start #}
+  hx-get="{{ request.path_info }}{% querystring %}"
+  hx-swap="outerHTML"
+  hx-trigger="every 0.5s from:load"
+  hq-hx-action="poll_session_status"
+{# prettier-ignore-end #}{% endblock htmx-attrs %}
+
+{% block modal-header %}
+  {% trans "Applying Changes..." %}
+{% endblock modal-header %}
+
+{% block task-status-text %}
+  <div class="d-flex justify-content-between">
+    <div>
+      <i class="fa-solid fa-check-double me-1"></i>
+      {% blocktrans %}
+        Applying changes, please wait...
+      {% endblocktrans %}
+    </div>
+
+    {# artificial buffer to let change feed catch up #}
+    {% if is_task_complete %}
+      <div>
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        {% blocktrans %}
+          Database is refreshing...almost there!
+        {% endblocktrans %}
+      </div>
+    {% endif %}
+  </div>
+{% endblock task-status-text %}

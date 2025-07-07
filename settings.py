@@ -11,13 +11,9 @@ import settingshelper as helper
 
 DEBUG = True
 
-# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
-# this to select various versions of Vellum source on the form designer page.
-# Acceptable values:
-# None - production mode
-# "dev" - use raw vellum source (submodules/formdesigner/src)
-# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
-VELLUM_DEBUG = None
+# Clone http://github.com/dimagi/Vellum into submodules/formdesigner and set
+# this to use raw Vellum source (submodules/formdesigner/src) on the form designer page.
+VELLUM_DEBUG = False
 
 
 # For Single Sign On (SSO) Implementations
@@ -66,12 +62,15 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
+    ('ara', 'Arabic'),
     ('en', 'English'),
     ('es', 'Spanish'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
-    ('sw', 'Swahili'),
+    ('ita', 'Italian'),
     ('por', 'Portuguese'),
+    ('sw', 'Swahili'),
+    ('ukr', 'Ukrainian'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
@@ -148,6 +147,7 @@ MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
+    'corehq.apps.ip_access.middleware.IPAccessMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -157,6 +157,7 @@ MIDDLEWARE = [
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'corehq.middleware.HqHtmxActionMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -168,6 +169,7 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
+    'corehq.apps.hqwebapp.utils.bootstrap.middleware.ThreadLocalCleanupMiddleware',
     'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
@@ -235,7 +237,6 @@ DEFAULT_APPS = (
     'django_tables2',
     'two_factor',
     'two_factor.plugins.phonenumber',
-    'ws4redis',
     'statici18n',
     'django_user_agents',
     'oauth2_provider',
@@ -244,6 +245,9 @@ DEFAULT_APPS = (
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
+
+MAXMIND_ACCOUNT_ID = ''
+MAXMIND_LICENSE_KEY = ''
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
@@ -279,6 +283,7 @@ HQ_APPS = (
     'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
+    'corehq.apps.ip_access',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
@@ -403,6 +408,8 @@ HQ_APPS = (
     'custom.hmhb',
 
     'custom.ccqa',
+
+    'custom.mgh_epic',
 
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
@@ -637,12 +644,6 @@ DEFAULT_REPEATER_WORKERS = 7
 # workers and to ensure that repeaters are iterated fairly.
 MAX_REPEATER_WORKERS = 79
 
-# websockets config
-WEBSOCKET_URL = '/ws/'
-WS4REDIS_PREFIX = 'ws'
-WSGI_APPLICATION = 'ws4redis.django_runserver.application'
-WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
-
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
@@ -794,13 +795,9 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'GOOGLE_ANALYTICS_SECRET': '',
     'GOOGLE_ANALYTICS_MEASUREMENT_ID': '',
-    'KISSMETRICS_KEY': '',
     'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
-    'DRIFT_ID': '',
-    'APPCUES_ID': '',
-    'APPCUES_KEY': '',
 }
 
 ANALYTICS_CONFIG = {
@@ -1024,6 +1021,9 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+EPIC_PRIVATE_KEY = None
+EPIC_CLIENT_ID = None
+
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
@@ -1043,6 +1043,8 @@ ENTERPRISE_MODE = False
 RESTRICT_DOMAIN_CREATION = False
 
 CUSTOM_LANDING_PAGE = False
+
+ENABLE_BHA_CASE_SEARCH_ADAPTER = False
 
 SENTRY_DSN = None
 SENTRY_REPOSITORY = 'dimagi/commcare-hq'
@@ -1095,7 +1097,7 @@ ES_SETTINGS = None
 #         'multiplex_writes': True,
 #     }
 # }
-# See case_search_bha.py docstring for context
+# See case_search_sub.py docstring for context
 CASE_SEARCH_SUB_INDICES = {}
 
 PHI_API_KEY = None
@@ -1255,7 +1257,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('eu', 'india', 'production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1295,13 +1297,13 @@ TEMPLATES = [
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
-                'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
+                'corehq.util.context_processors.server_location_display',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -2036,6 +2038,11 @@ DOMAIN_MODULE_MAP = {
     'co-carecoordination-uat': 'custom.bha',
 
     'ccqa': 'custom.ccqa',
+
+    'epic-integration-test': 'custom.mgh_epic',
+    'sudcare-dev': 'custom.mgh_epic',
+    # Temporarily disabled SUDCare integration (paused 2025-06-13)
+    #'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

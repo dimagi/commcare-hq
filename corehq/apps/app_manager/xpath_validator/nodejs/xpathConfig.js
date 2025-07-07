@@ -1,9 +1,11 @@
+/* eslint-env node */
 if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
     var parser = require('xpath/src/parser');
     var xpath = require('xpath/dist/js-xpath');
+    var _ = require('underscore');
 }
 
-var XPATH_CONFIG = (function () {
+const XPATH_CONFIG = (function () {
     function getAllowedHashtags(allowCaseHashtags) {
         var replacements = {
             '#session': "ok",
@@ -19,22 +21,22 @@ var XPATH_CONFIG = (function () {
 
     function configureHashtags(allowCaseHashtags) {
         var p = new parser.Parser();
-        p.setXPathModels = function(models) {
+        p.setXPathModels = function (models) {
             p.yy.xpathmodels = models;
         };
         var replacements = getAllowedHashtags(allowCaseHashtags);
         p.setXPathModels(xpath.makeXPathModels({
             isValidNamespace: function (namespace) {
-                return replacements.hasOwnProperty('#' + namespace);
+                return _.has(replacements, '#' + namespace);
             },
             hashtagToXPath: function (hashtagExpr) {
-                if (replacements.hasOwnProperty(hashtagExpr)) {
+                if (_.has(replacements, hashtagExpr)) {
                     return replacements[hashtagExpr];
                 } else {
                     throw new Error("Invalid hashtag " + hashtagExpr);
                 }
             },
-            toHashtag: function (xpath_) {
+            toHashtag: function (xpath_) {              // eslint-disable-line no-unused-vars
                 throw new Error("toHashtag not implemented");
             },
         }));

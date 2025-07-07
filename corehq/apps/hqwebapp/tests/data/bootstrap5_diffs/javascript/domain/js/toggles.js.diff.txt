@@ -1,19 +1,16 @@
 --- 
 +++ 
-@@ -1,12 +1,12 @@
--hqDefine('domain/js/bootstrap3/toggles', [
-+hqDefine('domain/js/bootstrap5/toggles', [
-     'jquery',
-     'knockout',
-     'underscore',
-     'hqwebapp/js/initial_page_data',
--    'hqwebapp/js/bootstrap3/alert_user',
-+    'hqwebapp/js/bootstrap5/alert_user',
-     'hqwebapp/js/assert_properties',
--    'hqwebapp/js/bootstrap3/knockout_bindings.ko',  // for slideVisible
--    'hqwebapp/js/bootstrap3/main',
-+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // for slideVisible
-+    'hqwebapp/js/bootstrap5/main',
-     'commcarehq',
- ], function (
-     $,
+@@ -3,10 +3,10 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ import assertProperties from "hqwebapp/js/assert_properties";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // for slideVisible
+-import "hqwebapp/js/bootstrap3/main";
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // for slideVisible
++import "hqwebapp/js/bootstrap5/main";
+ 
+ 
+ var Toggle = function (data) {

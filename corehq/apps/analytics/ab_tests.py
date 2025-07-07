@@ -108,12 +108,9 @@ class SessionAbTest(object):
         USAGE IN TEMPLATE:
         {% analytics_ab_test '<api>.<slug>' <context_variable> %}
 
-        <api> - the api name (e.g. kissmetrics)
+        <api> - the api name (e.g. hubspot)
         <slug> - is a unique slug (can be different from the slug in AbTestConfig
         <context_variable> - the context variable you assign this property to
-
-        kissmetrics is already set up to auto detect analytics_ab_test tags and
-        send the results on page load. Please do not manually do this!
 
         :return: dict
         """
@@ -125,16 +122,6 @@ class SessionAbTest(object):
         }
         self._debug_message("Fetching Template Context {}".format(context))
         return context
-
-
-APPCUES_TEMPLATE_APP_VARIANT_A = 'Variant A'
-APPCUES_TEMPLATE_APP_VARIANT_B = 'Variant B'
-
-APPCUES_V3_APP = SessionAbTestConfig(
-    'Appcues Template App',
-    'appcues_template_app_december2018',
-    (APPCUES_TEMPLATE_APP_VARIANT_A, APPCUES_TEMPLATE_APP_VARIANT_B)
-)
 
 
 DEMO_WORKFLOW_V2_CONTROL = 'control'

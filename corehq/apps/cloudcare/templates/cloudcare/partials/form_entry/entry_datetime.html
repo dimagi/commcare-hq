@@ -1,9 +1,19 @@
 <script type="text/html" id="datetime-entry-ko-template">
-  <div class="input-group">
+  <div
+    class="input-group"
+    data-td-target-input="nearest"
+    data-td-target-toggle="nearest"
+  >
     <input type="text" class="form-control" data-bind="
       css: { 'is-invalid': $parent.hasError() },
-      attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' },
+      attr: {id: entryId, 'aria-required': $parent.required() ? 'true' : 'false',},
     "/>
-    <span class="input-group-text"><i class="fcc fcc-fd-datetime"></i></span>
+    <button
+      class="btn btn-outline-secondary"
+      type="button"
+      data-td-toggle="datetimepicker"
+    >
+      <i data-bind="class: datetimeIconClass"></i>
+    </button>
   </div>
 </script>

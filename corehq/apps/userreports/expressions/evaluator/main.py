@@ -5,18 +5,21 @@ import operator
 from datetime import date, datetime
 from decimal import Decimal
 
-from corehq.util import eval_lazy
 from simpleeval import (
     DEFAULT_OPERATORS,
-    FeatureNotAvailable,
-    InvalidExpression,
     DISALLOW_FUNCTIONS,
-    FunctionNotDefined,
     EvalWithCompoundTypes,
+    FeatureNotAvailable,
+    FunctionNotDefined,
+    InvalidExpression,
+    MultipleExpressions,
 )
 
-from .functions import FUNCTIONS, CONTEXT_PARAM_NAME, NEEDS_CONTEXT_PARAM_NAME
+from corehq.util import eval_lazy
+from corehq.util.decorators import ignore_warning
+
 from ...specs import EvaluationContext, FactoryContext
+from .functions import CONTEXT_PARAM_NAME, FUNCTIONS, NEEDS_CONTEXT_PARAM_NAME
 
 
 def safe_pow_fn(a, b):
@@ -35,6 +38,10 @@ class CommCareEval(EvalWithCompoundTypes):
     users less options to do crazy things that might get them / us into
     hard to back out of situations."""
 
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.nodes.pop(ast.DictComp)  # disallow dict comprehensions
+
     def set_context(self, context):
         self._context = context.scope(self)
 
@@ -46,7 +53,7 @@ class CommCareEval(EvalWithCompoundTypes):
             func = self.functions[node.func.id]
         except KeyError:
             raise FunctionNotDefined(node.func.id, self.expr)
-        except AttributeError as e:
+        except AttributeError:
             raise FeatureNotAvailable('Lambda Functions not implemented')
 
         if func in DISALLOW_FUNCTIONS:
@@ -79,7 +86,8 @@ def eval_statements(statement, variable_context, execution_context=None):
 
     evaluator = CommCareEval(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
     evaluator.set_context(execution_context)
-    return evaluator.eval(statement)
+    with ignore_warning(MultipleExpressions):
+        return evaluator.eval(statement)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -87,7 +95,7 @@ class EvalExecutionContext:
     evaluation_context: EvaluationContext
     factory_context: FactoryContext
     evaluator: CommCareEval = None
-    
+
     @classmethod
     def empty(cls):
         return EvalExecutionContext(EvaluationContext.empty(), FactoryContext.empty())

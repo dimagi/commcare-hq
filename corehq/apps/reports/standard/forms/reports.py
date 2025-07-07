@@ -7,6 +7,7 @@ from django.views import View
 from memoized import memoized
 
 from dimagi.utils.parsing import string_to_utc_datetime
+from django.utils.translation import gettext_lazy
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -32,6 +33,7 @@ def _compare_submissions(x, y):
 
 class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     name = gettext_noop("Raw Forms, Errors & Duplicates")
+    description = gettext_lazy("View all submissions, including errors and archived forms.")
     slug = "submit_errors"
     ajax_pagination = True
     asynchronous = False

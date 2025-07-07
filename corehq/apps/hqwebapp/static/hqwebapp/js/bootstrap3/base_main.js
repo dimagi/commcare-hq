@@ -1,20 +1,16 @@
-hqDefine("hqwebapp/js/bootstrap3/base_main", [
-    'hqwebapp/js/bootstrap3/downgrade_modal',
-    'hqwebapp/js/bootstrap3/prepaid_modal',
-    'hqwebapp/js/bootstrap3/hq.helpers',
-    'hqwebapp/js/layout',
-    'hqwebapp/js/bootstrap3/email-request',
-    'hqwebapp/js/bootstrap3/sticky_tabs',
-    'hqwebapp/js/bootstrap3/main',
-    'hqwebapp/js/bootstrap3/inactivity',
-    'notifications/js/bootstrap3/notifications_service_main',
-    'analytix/js/appcues',
-    'analytix/js/drift',
-    'analytix/js/google',
-    'analytix/js/hubspot',
-    'analytix/js/kissmetrix',
-    'analytix/js/gtx',
-    'hqwebapp/js/bootstrap3/mobile_experience_warning',
-], function () {
-    // nothing to do, this is just to define the dependencies for hqwebapp/base.html
-});
+import "hqwebapp/js/bootstrap3/downgrade_modal";
+import "hqwebapp/js/bootstrap3/prepaid_modal";
+import "hqwebapp/js/bootstrap3/hq.helpers";
+import "hqwebapp/js/layout";
+import "hqwebapp/js/bootstrap3/email-request";
+import "hqwebapp/js/bootstrap3/sticky_tabs";
+import "hqwebapp/js/bootstrap3/main";
+import "hqwebapp/js/bootstrap3/inactivity";
+import "notifications/js/bootstrap3/notifications_service_main";
+import "analytix/js/google";
+import "analytix/js/hubspot";
+import "analytix/js/noopMetrics";
+import "analytix/js/gtx";
+import "hqwebapp/js/bootstrap3/mobile_experience_warning";
+
+// nothing to do, this is just to define the dependencies for hqwebapp/base.html

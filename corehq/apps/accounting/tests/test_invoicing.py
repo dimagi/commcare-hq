@@ -1,32 +1,43 @@
 import datetime
 import random
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.core import mail
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
+
+from dateutil.relativedelta import relativedelta
 
 from corehq.apps.accounting import utils
+from corehq.apps.accounting.const import (
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
+    SMALL_INVOICE_THRESHOLD,
+)
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
     should_create_invoice,
 )
 from corehq.apps.accounting.models import (
-    SMALL_INVOICE_THRESHOLD,
     BillingAccount,
     BillingRecord,
+    CreditLine,
     DefaultProductPlan,
     Invoice,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionType,
+    WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tasks import calculate_users_in_all_domains
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import (
     BaseAccountingTest,
     BaseInvoiceTestCase,
+)
+from corehq.apps.accounting.utils.invoicing import (
+    get_flagged_pay_annually_prepay_invoice,
+    get_prorated_software_plan_cost,
 )
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_previous_month_date_range
@@ -40,9 +51,9 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def setUp(self):
         super().setUp()
-        self.community = DefaultProductPlan.get_default_plan_version()
+        self.free = DefaultProductPlan.get_default_plan_version()
         generator.arbitrary_commcare_users_for_domain(
-            self.domain.name, self.community.user_limit + 1
+            self.domain.name, self.free.user_limit + 1
         )
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
 
@@ -87,17 +98,17 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertRaises(Invoice.DoesNotExist,
                           lambda: Invoice.objects.get(subscription__subscriber__domain=self.domain.name))
 
-    def test_community_invoice(self):
+    def test_free_invoice(self):
         """
-        For community-subscribed domain with any charges over the community limit for the month of invoicing,
+        For free edition domain with any charges over the free edition limit for the month of invoicing,
         make sure that an invoice is generated.
         """
         today = datetime.date.today()
         generator.generate_domain_subscription(
             self.account, self.domain, self.subscription.date_start, None,
-            plan_version=self.community
+            plan_version=self.free
         )
-        generator.create_excess_community_users(self.domain)
+        generator.create_excess_free_users(self.domain)
         self.account.date_confirmed_extra_charges = today
         self.account.save()
         self.create_invoices(datetime.date(today.year, today.month, 1))
@@ -129,11 +140,13 @@ class TestInvoice(BaseInvoiceTestCase):
         domain_under_limits = generator.arbitrary_domain()
         self.addCleanup(domain_under_limits.delete)
 
-        self.assertTrue(self.community.feature_charges_exist_for_domain(self.domain))
-        self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
+        self.assertTrue(self.free.feature_charges_exist_for_domain(self.domain))
+        self.assertFalse(self.free.feature_charges_exist_for_domain(domain_under_limits))
 
     def test_date_due_not_set_small_invoice(self):
-        """Date Due doesn't get set if the invoice is small"""
+        """Date Due doesn't get set if the invoice is very small"""
+        self.subscription.plan_version = generator.custom_plan_version(monthly_fee=1.00)
+        self.subscription.save()
         invoice_date_small = utils.months_from_date(self.subscription.date_start, 1)
         self.create_invoices(invoice_date_small)
         small_invoice = self.subscription.invoice_set.first()
@@ -142,23 +155,25 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertIsNone(small_invoice.date_due)
 
     def test_date_due_set_large_invoice(self):
-        """Date Due only gets set for a large invoice (> $100)"""
+        """Date Due only gets set for a 'large' invoice (> $1)"""
         self.subscription.plan_version = generator.subscribable_plan_version(SoftwarePlanEdition.ADVANCED)
         self.subscription.save()
         invoice_date_large = utils.months_from_date(self.subscription.date_start, 3)
         self.create_invoices(invoice_date_large)
-        large_invoice = self.subscription.invoice_set.last()
+        large_invoice = self.subscription.invoice_set.first()
 
         self.assertTrue(large_invoice.balance > SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(large_invoice.date_due)
 
     def test_date_due_gets_set_autopay(self):
-        """Date due always gets set for autopay """
+        """Date due gets set for autopay even if invoice is very small"""
+        self.subscription.plan_version = generator.custom_plan_version(monthly_fee=1.00)
+        self.subscription.save()
         self.subscription.account.update_autopay_user(self.billing_contact, self.domain)
         invoice_date_autopay = utils.months_from_date(self.subscription.date_start, 1)
         self.create_invoices(invoice_date_autopay)
 
-        autopay_invoice = self.subscription.invoice_set.last()
+        autopay_invoice = self.subscription.invoice_set.first()
         self.assertTrue(autopay_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(autopay_invoice.date_due)
 
@@ -411,3 +426,108 @@ class TestInvoicingMethods(BaseAccountingTest):
             invoice_start=invoice_start,
             invoice_end=invoice_end
         ))
+
+
+class TestFlaggedPayAnnuallyPrepayInvoice(BaseInvoiceTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.subscription_length = PAY_ANNUALLY_SUBSCRIPTION_MONTHS
+        cls.subscription_start_date = datetime.date.today() - relativedelta(months=1)
+        cls.subscription_end_date = cls.subscription_start_date + relativedelta(months=cls.subscription_length)
+
+    def setUp(self):
+        super().setUp()
+        self.plan_version = generator.custom_plan_version(
+            edition=SoftwarePlanEdition.STANDARD,
+            is_annual_plan=True,
+            monthly_fee=100.00
+        )
+        self.subscription.plan_version = self.plan_version
+        self.subscription.save()
+
+    def create_invoices(self):
+        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        super().create_invoices(invoice_date)
+        return self.subscription.invoice_set.all()
+
+    def create_prepayment_invoice(self, date_due):
+        yearly_subscription_cost = self.plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS
+        return WirePrepaymentInvoice.objects.create(
+            domain=self.subscription.subscriber.domain,
+            date_start=self.subscription.date_start,
+            date_end=self.subscription.date_end,
+            date_due=date_due,
+            balance=yearly_subscription_cost,
+        )
+
+    def create_product_credit(self, amount):
+        return CreditLine.objects.create(
+            account=self.subscription.account,
+            subscription=self.subscription,
+            balance=amount,
+            is_product=True,
+        )
+
+    def test_monthly_invoice_product_fully_paid(self):
+        prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
+        self.create_product_credit(prepay_invoice.balance)
+        invoice = self.create_invoices().first()
+        flagged_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
+        self.assertIsNone(flagged_invoice)
+
+    def test_no_prepayment_invoice(self):
+        invoice = self.create_invoices().first()
+        flagged_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
+        self.assertIsNone(flagged_invoice)
+
+    def test_prepayment_invoice_not_due_yet(self):
+        self.create_prepayment_invoice(datetime.date.today() + relativedelta(days=1))
+        invoice = self.create_invoices().first()
+        result = get_flagged_pay_annually_prepay_invoice(invoice)
+        self.assertIsNone(result)
+
+    def test_matching_prepayment_invoice_exists(self):
+        prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
+        invoice = self.create_invoices().first()
+        result = get_flagged_pay_annually_prepay_invoice(invoice)
+        self.assertEqual(result, prepay_invoice)
+
+
+class TestGetProratedSoftwarePlanCost(SimpleTestCase):
+
+    def test_full_month(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 7, 1)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('100.00')
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_partial_month(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 6, 16)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('50.00')  # 15 days is half of June
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_multiple_months(self):
+        date_start = datetime.date(2025, 6, 16)
+        date_end = datetime.date(2025, 8, 4)
+        monthly_fee = Decimal('100.00')
+        expected = (
+            Decimal('50.00')  # half of June
+            + Decimal('100.00')  # all of July
+            + monthly_fee / 31 * 3  # 3 days of August
+        ).quantize(Decimal('0.00'), ROUND_HALF_UP)
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_zero_days(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 6, 1)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('0.00')
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)

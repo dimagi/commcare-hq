@@ -16,10 +16,11 @@ from dimagi.utils.web import get_ip, get_static_url_prefix, get_url_base
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
+    Subscription,
     SubscriptionAdjustmentMethod,
 )
 from corehq.apps.accounting.utils.subscription import (
-    ensure_community_or_paused_subscription,
+    ensure_free_or_paused_subscription,
 )
 from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
@@ -40,7 +41,6 @@ from corehq.toggles import USE_LOGO_IN_SYSTEM_EMAILS
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
-APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
 
 _soft_assert_registration_issues = soft_assert(
     to=[
@@ -168,7 +168,10 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
                 'first_domain_for_user': is_new_user,
                 'error': str(error),
             })
-            new_domain.delete(leave_tombstone=True)
+            Subscription.clear_caches(new_domain.name)
+            # It is safe to delete the domain without leaving a tombstone
+            # because the domain was just created.
+            new_domain.delete(leave_tombstone=False)
             raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
 
         if settings.IS_SAAS_ENVIRONMENT:
@@ -212,16 +215,19 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
 
 def _setup_subscription(domain_name, user, company_name):
     with transaction.atomic():
-        ensure_community_or_paused_subscription(
+        # All subscription objects related to the domain must be created
+        # within this transaction block so they are discarded if an
+        # error occurs.
+        ensure_free_or_paused_subscription(
             domain_name, date.today(), SubscriptionAdjustmentMethod.USER,
             web_user=user.username,
         )
 
-    # add user's email as contact email for billing account for the domain
-    account = BillingAccount.get_account_by_domain(domain_name)
-    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account, company_name=company_name)
-    billing_contact.email_list = [user.email]
-    billing_contact.save()
+        # add user's email as contact email for billing account for the domain
+        account = BillingAccount.get_account_by_domain(domain_name)
+        billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account, company_name=company_name)
+        billing_contact.email_list = [user.email]
+        billing_contact.save()
 
 
 def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain",

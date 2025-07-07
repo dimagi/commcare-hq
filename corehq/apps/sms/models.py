@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy, gettext_noop, gettext as _
 import jsonfield
 
 from dimagi.utils.couch import CriticalSection
+from django.utils.functional import cached_property
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.locations.models import SQLLocation
@@ -605,12 +606,16 @@ class ConnectMessagingNumber:
 
     @property
     def phone_number(self):
-        return self.user_link.channel_id
+        return self.messaging_channel
 
-    @property
+    @cached_property
     def user_link(self):
         django_user = self.owner.get_django_user()
         return ConnectIDUserLink.objects.get(commcare_user=django_user)
+
+    @cached_property
+    def messaging_channel(self):
+        return self.user_link.messaging_channel
 
     @property
     def backend(self):

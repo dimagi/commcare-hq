@@ -69,18 +69,22 @@ import traceback
 import uuid
 from collections import defaultdict
 from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.db import models, router
+from django.db.models import Min
 from django.db.models.base import Deferred
 from django.dispatch import receiver
 from django.utils import timezone
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, classproperty
 from django.utils.translation import gettext_lazy as _
 
+import architect
 from couchdbkit.exceptions import ResourceNotFound
 from jsonfield import JSONField
 from memoized import memoized
@@ -147,24 +151,15 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 
-# Retry responses with these status codes. All other 4XX status codes
-# are treated as InvalidPayload errors.
-HTTP_STATUS_4XX_RETRY = (
-    HTTPStatus.BAD_REQUEST,
-    # Traefik proxy returns (client error) 404 instead of (server error)
-    # 503 when it has not been configured with a catch-all router and is
-    # unable to match a request to a router.
-    # https://doc.traefik.io/traefik/getting-started/faq/#404-not-found
-    HTTPStatus.NOT_FOUND,
+# Back off, and retry responses with these status codes. All other
+# status codes are treated as InvalidPayload errors.
+HTTP_STATUS_BACK_OFF = (
     HTTPStatus.REQUEST_TIMEOUT,
-    HTTPStatus.CONFLICT,
-    HTTPStatus.PRECONDITION_FAILED,
     HTTPStatus.LOCKED,
-    HTTPStatus.FAILED_DEPENDENCY,
     HTTPStatus.TOO_EARLY,
-    HTTPStatus.UPGRADE_REQUIRED,
-    HTTPStatus.PRECONDITION_REQUIRED,
-    HTTPStatus.TOO_MANY_REQUESTS,
+    HTTPStatus.BAD_GATEWAY,
+    HTTPStatus.SERVICE_UNAVAILABLE,
+    HTTPStatus.GATEWAY_TIMEOUT,
 )
 
 
@@ -402,9 +397,8 @@ class Repeater(RepeaterSuperProxy):
     def get_url(self, record):
         return self.connection_settings.url
 
-    @classmethod
-    @property
-    def _repeater_type(cls):
+    @classproperty
+    def _repeater_type(cls):  # noqa: N805
         return cls.__name__
 
     @property
@@ -495,7 +489,6 @@ class Repeater(RepeaterSuperProxy):
             # to prevent serializing the repeater in the celery task payload
             repeat_record.__dict__["repeater"] = self
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
-        return repeat_record
 
     def allowed_to_forward(self, payload):
         """
@@ -566,11 +559,15 @@ class Repeater(RepeaterSuperProxy):
             return repeat_record.handle_exception(result)
         elif is_success_response(result):
             return repeat_record.handle_success(result)
-        elif not is_response(result) or (
-            500 <= result.status_code < 600
-            or result.status_code in HTTP_STATUS_4XX_RETRY
-        ):
-            return repeat_record.handle_failure(result)
+        elif is_server_failure(result):
+            return repeat_record.handle_server_failure(result)
+        elif is_traefik_proxy_404(result):
+            return repeat_record.handle_server_failure(result)
+        elif result.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+            # TODO:
+            #   self.max_workers = ceil(self.num_workers / 2)
+            #   self.save()
+            return repeat_record.handle_server_failure(result)  # Current behavior
         else:
             message = format_response(result)
             return repeat_record.handle_payload_error(message)
@@ -721,6 +718,21 @@ class CaseRepeater(Repeater):
 
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
+    def register(self, payload, fire_synchronously=False):
+        if (
+            self.repeat_records_ready
+            .filter(payload_id=payload.get_id)
+            .exists()
+        ):
+            # There is already a repeat record for this payload waiting
+            # to be sent. We pull the case from the database just before
+            # forwarding it. This means that any updates made to that
+            # case since the repeat record was created will be reflected
+            # when that attempt to forward is made, regardless of when
+            # that repeat record was created.
+            return
+        super().register(payload, fire_synchronously)
+
     @property
     def form_class_name(self):
         """
@@ -758,6 +770,11 @@ class CreateCaseRepeater(CaseRepeater):
         proxy = True
 
     friendly_name = _("Forward Cases on Creation Only")
+
+    def register(self, payload, fire_synchronously=False):
+        # `CaseRepeater.register()` skips duplicate payloads, but
+        # `CreateCaseRepeater` will never have duplicates.
+        Repeater.register(self, payload, fire_synchronously)
 
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
@@ -953,6 +970,54 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+class DataSourceUpdateManager(models.Manager):
+
+    def get_oldest_date(self):
+        return self.aggregate(Min('modified_at'))['modified_at__min']
+
+
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='month',
+    column='modified_at',
+)
+class DataSourceUpdate(models.Model):
+    """
+    ``DataSourceUpdate`` is the payload for ``DataSourceRepeater`` (as
+    ``XFormInstance`` is the payload for ``FormRepeater``).
+    """
+    id = models.BigAutoField(primary_key=True)
+    domain = CharIdField(max_length=126, db_index=True)
+    data_source_id = models.UUIDField()
+    doc_ids = JSONField(default=list)
+    rows = JSONField(default=list, blank=True, null=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    objects = DataSourceUpdateManager()
+
+    class Meta:
+        db_table = 'repeaters_datasourceupdate'
+
+    MAX_AGE = timedelta(days=93)
+
+    @property
+    def get_id(self):
+        return self.id
+
+    def to_json(self):
+        """
+        Used by DataSourcePayloadGenerator.get_payload()
+        """
+        return {
+            "data": self.rows,
+            "data_source_id": self.data_source_id.hex,
+            "doc_id": "",  # CCA `DataSetChange` expects this key
+            "doc_ids": self.doc_ids,
+        }
+
+
 class DataSourceRepeater(Repeater):
     """
     Forwards the UCR data source rows that are updated by a form
@@ -969,31 +1034,56 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
-    def allowed_to_forward(
-        self,
-        payload,  # type DataSourceUpdateLog
-    ):
-        return payload.data_source_id == self.data_source_id
+    def allowed_to_forward(self, payload):
+        return payload.data_source_id == uuid.UUID(self.data_source_id)
 
     def payload_doc(self, repeat_record):
         from corehq.apps.userreports.models import get_datasource_config
-        from corehq.apps.userreports.util import (
-            DataSourceUpdateLog,
-            get_indicator_adapter,
-        )
+        from corehq.apps.userreports.util import get_indicator_adapter
+
+        Row = dict[str, Any]
+
+        @dataclass
+        class DataSourceUpdateLog:
+            # Legacy payload format
+            # TODO: Drop after old repeat records are sent
+            domain: str
+            data_source_id: str
+            doc_id: str
+            rows: Optional[list[Row]] = None
+
+            def to_json(self):
+                # Used by DataSourcePayloadGenerator.get_payload()
+                return {
+                    "data": self.rows,
+                    "data_source_id": self.data_source_id,
+                    "doc_id": self.doc_id,
+                }
 
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
-        return DataSourceUpdateLog(
-            domain=self.domain,
-            data_source_id=self.data_source_id,
-            doc_id=repeat_record.payload_id,
-            rows=rows,
-        )
+        try:
+            datasource_update_id = int(repeat_record.payload_id)
+        except ValueError:
+            # repeat_record.payload_id is not a DataSourceUpdate ID. It
+            # must an old repeat record. `payload_id` is a form/case ID.
+            # TODO: Drop this block after old repeat records are sent.
+            rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+            return DataSourceUpdateLog(
+                domain=self.domain,
+                data_source_id=self.data_source_id,
+                doc_id=repeat_record.payload_id,
+                rows=rows,
+            )
+        datasource_update = DataSourceUpdate.objects.get(pk=datasource_update_id)
+        datasource_update.rows = [
+            row for doc_id in datasource_update.doc_ids
+            for row in datasource_adapter.get_rows_by_doc_id(doc_id)
+        ]
+        return datasource_update
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
@@ -1288,6 +1378,10 @@ class RepeatRecord(models.Model):
         # incorrect status code interpretation resulting in Empty state.
         return self.state == State.Success or self.state == State.Empty
 
+    @property
+    def is_queued(self):
+        return self.state in RECORD_QUEUED_STATES
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Members below this line have been added to support the
     # Couch repeater processing logic.
@@ -1366,7 +1460,7 @@ class RepeatRecord(models.Model):
             # data from overwriting the work of another.
             return
 
-        if self.repeater_type in ['DataSourceRepeater']:
+        if self.repeater_type in ['DataSourceRepeater', 'Dhis2EntityRepeater']:
             # separated for improved datadog reporting
             task = retry_process_datasource_repeat_record if is_retry else process_datasource_repeat_record
         else:
@@ -1390,7 +1484,7 @@ class RepeatRecord(models.Model):
             )
         return self.add_success_attempt(response)
 
-    def handle_failure(self, response):
+    def handle_server_failure(self, response):
         log_repeater_error_in_datadog(self.domain, response.status_code, self.repeater_type)
         return self.add_server_failure_attempt(format_response(response))
 
@@ -1501,6 +1595,44 @@ def is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+def is_server_failure(result):
+    """
+    Returns True if ``result`` is a server error (5xx) or a 4xx
+    response that should be retried after backing off.
+    """
+    return not is_response(result) or result.status_code in HTTP_STATUS_BACK_OFF
+
+
+def is_traefik_proxy_404(response):
+    """
+    Treat 404 responses as server errors if they come from Traefik Proxy
+
+    Traefik Proxy returns (client error) 404 instead of (server error)
+    503 when it has not been configured with a catch-all router and is
+    unable to match a request to a router.
+    https://doc.traefik.io/traefik/getting-started/faq/#404-not-found
+
+    This can happen if the remote endpoint is temporarily unavailable,
+    so the request should be retried.
+
+    .. ATTENTION::
+
+       Note that Traefik's headers can be configured or removed in
+       some deployments, so this detection is not 100% reliable
+       across all Traefik installations, but it should work for
+       standard configurations.
+       -- Claude 3.7 Sonnet
+
+    """
+    return (
+        response.status_code == HTTPStatus.NOT_FOUND
+        and (
+            response.headers.get('X-Traefik-Err')
+            or 'traefik' in response.headers.get('Server', '').lower()
+        )
+    )
 
 
 def domain_can_forward(domain):

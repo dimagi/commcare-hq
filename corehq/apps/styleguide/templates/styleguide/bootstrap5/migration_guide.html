@@ -754,12 +754,6 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
     filter templates marked completed by <code>manage.py complete_bootstrap5_report</code>.
   </p>
   <p>
-    Then, <code>build_requirejs</code> can be updated to only build <code>bootstrap5</code> version of files, with
-    the split <code>requirejs_config.js</code> files no longer needed, and the
-    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py#L147-L149"
-       target="_blank">split_bundles</a> map in <code>build_requirejs</code> can be removed.
-  </p>
-  <p>
     Finally, LESS files can be removed from all parts of HQ and <code>COMPRESS_PRECOMPILERS</code> in
     <code>settings.py</code> can be updated to only precompile SCSS. Any LESS-related dependencies can be removed from
     <code>package.json</code> and commcare-cloud, and new developer setup guides like <code>DEV_SETUP.md</code> can

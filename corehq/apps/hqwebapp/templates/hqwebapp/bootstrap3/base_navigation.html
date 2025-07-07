@@ -12,8 +12,8 @@
   {% if show_trial_banner %}
     {% include "hqwebapp/partials/trial_banner.html" %}
   {% endif %}
-  {% if show_community_banner %}
-    {% include "hqwebapp/partials/community_banner.html" %}
+  {% if show_free_edition_banner %}
+    {% include "hqwebapp/partials/free_edition_banner.html" %}
   {% endif %}
 {% endblock pre_navigation_content %}
 
@@ -38,7 +38,7 @@
         <nav class="navbar-menus navbar-signin" role="navigation">
           <div class="nav-settings-bar pull-right">
             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+            {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
               <a href="#cta-form-get-demo"
                  data-toggle="modal"
                  id="cta-form-get-demo-button-header"

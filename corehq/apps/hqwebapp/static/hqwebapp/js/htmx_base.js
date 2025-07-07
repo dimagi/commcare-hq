@@ -28,7 +28,7 @@ import 'hqwebapp/js/htmx_utils/hq_hx_action';
 import 'hqwebapp/js/htmx_utils/csrf_token';
 import 'hqwebapp/js/htmx_utils/hq_hx_loading';
 import 'hqwebapp/js/htmx_utils/hq_hx_refresh';
-import retryHtmxRequest from 'hqwebapp/js/htmx_utils/retry_request';
+import retryUtils from 'hqwebapp/js/htmx_utils/retry_request';
 import { showHtmxErrorModal } from 'hqwebapp/js/htmx_utils/errors';
 
 // By default, there is no timeout and requests hang indefinitely, so update to reasonable value.
@@ -39,18 +39,41 @@ const HTTP_REQUEST_TIMEOUT = 408;
 
 document.body.addEventListener('htmx:responseError', (evt) => {
     let errorCode = evt.detail.xhr.status;
-    if (errorCode === HTTP_BAD_GATEWAY) {
-        if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig)) {
-            showHtmxErrorModal(
-                errorCode,
-                gettext('Gateway Timeout Error. Max retries exceeded.'),
-            );
+    let errorText = evt.detail.xhr.statusText;
+    let showDetails = true;
+
+    const xhr = evt.detail.xhr;
+    const hqHxActionError = xhr.getResponseHeader('HQ-HX-Action-Error');
+    if (hqHxActionError) {
+        let errorData = {};
+        try {
+            errorData = JSON.parse(hqHxActionError);
+        } catch (e) {
+            console.error('Failed to parse HQ-HX-Action-Error header:', e);
         }
-        return;
+        errorCode = errorData.status_code || errorCode;
+        errorText = errorData.message || errorText;
+        showDetails = errorData.show_details;
+        const maxRetries = errorData.max_retries || retryUtils.DEFAULT_MAX_RETRIES;
+        if (errorData.retry_after && retryUtils.isRetryAllowed(evt, maxRetries)) {
+            setTimeout(() => {
+                retryUtils.retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig);
+            }, errorData.retry_after);
+            return;
+        }
+    }
+    if (errorCode === HTTP_BAD_GATEWAY) {
+        if (retryUtils.isRetryAllowed(evt)) {
+            retryUtils.retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig);
+            return;
+        }
+        errorText = gettext('Gateway Timeout Error. Max retries exceeded.');
     }
     showHtmxErrorModal(
         errorCode,
-        evt.detail.xhr.statusText,
+        errorText,
+        evt,
+        showDetails,
     );
 });
 
@@ -62,10 +85,13 @@ document.body.addEventListener('htmx:timeout', (evt) => {
      * similar event listener there. Also, you may want to adjust the `htmx.config.timeout`
      * value as well.
      */
-    if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig) && evt.detail.requestConfig.verb === 'get') {
+    if (retryUtils.isRetryAllowed(evt) && evt.detail.requestConfig.verb === 'get') {
+        retryUtils.retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig);
+    } else {
         showHtmxErrorModal(
             HTTP_REQUEST_TIMEOUT,
             gettext('Request timed out. Max retries exceeded.'),
+            evt,
         );
     }
 });

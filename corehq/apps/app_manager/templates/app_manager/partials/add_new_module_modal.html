@@ -1,0 +1,59 @@
+{% load i18n %}
+
+<!-- B5 TODO: hq-add-new-module-modal is a hack, should not be duplicated.
+ It overrides a lot of the default behavior of its child classes.
+ The entire modal should be refactored to use built-in bootstrap 5 utilities. -->
+
+<div
+  class="modal fade hq-add-new-module-modal"
+  id="add-new-module-modal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="add-new-module"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="modal-title">
+          {% trans "Create a New Menu" %}
+        </h4>
+      </div>
+      <div class="modal-body">
+        <!-- TODO: Use the b5 flexbox utilities when migrating to bootstrap 5 -->
+        <div class="new-module-modal-flex-container">
+          {% include 'app_manager/partials/module_options/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
+          {% include 'app_manager/partials/module_options/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
+          {% if show_biometric %}
+            {% include 'app_manager/partials/module_options/module_option_biometrics.html' with module_type="biometrics" icon_class="fcc fcc-app-biometrics" %}
+          {% endif %}
+          {% if show_advanced %}
+            {% include 'app_manager/partials/module_options/module_option_advanced.html' with module_type="advanced" icon_class="fa fa-flask" %}
+          {% endif %}
+          {% if show_report_modules %}
+            {% include 'app_manager/partials/module_options/module_option_report.html' with module_type="report" icon_class="fa-regular fa-chart-bar" %}
+          {% endif %}
+          {% if show_shadow_modules %}
+            {% include 'app_manager/partials/module_options/module_option_shadow.html' with module_type="shadow" icon_class="fa-regular fa-moon" %}
+          {% endif %}
+          {% if show_shadow_module_v1 %}
+            {% include 'app_manager/partials/module_options/module_option_shadow_v1.html' with module_type="shadow-v1" icon_class="fa-regular fa-moon" %}
+          {% endif %}
+          {% if show_training_modules %}
+            {% include 'app_manager/partials/module_options/module_option_training.html' with module_type="training" icon_class="fa fa-graduation-cap" %}
+          {% endif %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        {% trans "Please note you will not be able to change menu type later." %}
+      </div>
+    </div>
+  </div>
+</div>

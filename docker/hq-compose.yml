@@ -38,7 +38,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      elasticsearch5:
+      elasticsearch6:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -105,21 +105,21 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
 
-  elasticsearch5:
+  elasticsearch6:
     build:
       context: .
-      dockerfile: ./files/Dockerfile.es.5
+      dockerfile: ./files/Dockerfile.es.6
     environment:
-      ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+      ES_JAVA_OPTS: "-Xms750m -Xmx750m"
     expose:
       - "9200"
     healthcheck:
-      test: bash -c 'exec 6<>/dev/tcp/elasticsearch5/9200'
+      test: bash -c 'exec 6<>/dev/tcp/elasticsearch6/9200'
       interval: 10s
       retries: 10
     volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch5:}/usr/share/elasticsearch/data
-      - ./files/elasticsearch_5.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch6:}/usr/share/elasticsearch/data
+      - ./files/elasticsearch_6.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
     image: docker.io/zookeeper:3.7
@@ -136,7 +136,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.7/data
 
   kafka:
-    image: docker.io/confluentinc/cp-kafka:7.2.2 # kafka v3.2.2
+    image: docker.io/confluentinc/cp-kafka:7.2.14  # Kafka v3.2.3
     expose:
       - "9092"
     environment:

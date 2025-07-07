@@ -45,6 +45,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('campaign.Dashboard', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('campaign.DashboardMap', SimpleFilter('dashboard__domain')),
     FilteredModelIteratorBuilder('campaign.DashboardReport', SimpleFilter('dashboard__domain')),
+    FilteredModelIteratorBuilder('campaign.DashboardGauge', SimpleFilter('dashboard__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('timedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
@@ -156,6 +157,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('integration.SimprintsIntegration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.KycConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.MoMoConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('ip_access.IPAccessConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.ForceCloseEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
@@ -205,7 +207,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('commtrack.StockRestoreConfig', SimpleFilter('commtrack_config__domain')),
     FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_cleaning.BulkEditSession', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('data_cleaning.BulkEditColumnFilter', SimpleFilter('session__domain')),
+    FilteredModelIteratorBuilder('data_cleaning.BulkEditFilter', SimpleFilter('session__domain')),
     FilteredModelIteratorBuilder('data_cleaning.BulkEditPinnedFilter', SimpleFilter('session__domain')),
     FilteredModelIteratorBuilder('data_cleaning.BulkEditColumn', SimpleFilter('session__domain')),
     FilteredModelIteratorBuilder('data_cleaning.BulkEditRecord', SimpleFilter('session__domain')),
@@ -227,6 +229,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     # Repeat Records might foreign key to deleted repeaters, override default manager to include deleted repeaters
     FilteredModelIteratorBuilder('repeaters.Repeater', SimpleFilter('domain'), use_all_objects=True),
+    FilteredModelIteratorBuilder('repeaters.DataSourceUpdate', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.RequestLog', SimpleFilter('domain')),
     # NH (2021-01-08): Including RepeatRecord because we dump (Couch)
@@ -268,6 +271,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('email.EmailSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataSetMap', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataValueMap', SimpleFilter('dataset_map__domain')),
+    FilteredModelIteratorBuilder('export.DeIdHash', SimpleFilter('domain')),
 ]]
 
 

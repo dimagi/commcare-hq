@@ -203,15 +203,28 @@ class UserData:
             return ret
 
 
+class SQLUserDataManager(models.Manager):
+
+    def get_queryset(self):
+        """
+        By default, this manager omits soft deleted SQLUserData from any query
+        """
+        return super().get_queryset().filter(deleted_on__isnull=True)
+
+
 class SQLUserData(models.Model):
     domain = models.CharField(max_length=128)
     user_id = models.CharField(max_length=36)
     django_user = models.ForeignKey(User, on_delete=models.CASCADE)
     modified_on = models.DateTimeField(auto_now=True)
+    deleted_on = models.DateTimeField(null=True)
 
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.SET_NULL, null=True)
     data = models.JSONField()
+
+    all_objects = models.Manager()
+    objects = SQLUserDataManager()
 
     class Meta:
         unique_together = ("user_id", "domain")

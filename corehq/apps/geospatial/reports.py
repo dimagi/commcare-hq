@@ -100,8 +100,8 @@ class CaseManagementMap(BaseCaseMapReport):
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     ]
 
-    base_template = "geospatial/case_management_base.html"
-    report_template_path = "geospatial/case_management.html"
+    base_template = "geospatial/bootstrap3/case_management_base.html"
+    report_template_path = "geospatial/bootstrap3/case_management.html"
     max_rows = 5_000
     default_rows = 5_000
     force_page_size = True
@@ -161,8 +161,8 @@ class CaseGroupingReport(BaseCaseMapReport):
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     ]
 
-    base_template = 'geospatial/case_grouping_map_base.html'
-    report_template_path = 'geospatial/case_grouping_map.html'
+    base_template = 'geospatial/bootstrap3/case_grouping_map_base.html'
+    report_template_path = 'geospatial/bootstrap3/case_grouping_map.html'
 
     default_rows = 1
     force_page_size = True

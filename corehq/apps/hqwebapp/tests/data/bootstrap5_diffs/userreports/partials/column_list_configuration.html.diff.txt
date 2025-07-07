@@ -1,0 +1,35 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "userreports/partials/bootstrap3/property_list_configuration.html" %}
++{% extends "userreports/partials/bootstrap5/property_list_configuration.html" %}
+ {% load i18n %}
+ 
+ {% block property_name_display %}
+@@ -9,7 +9,7 @@
+   {% comment %}
+     <td></td>
+     <td colspan="4">
+-        <button class="btn btn-default" data-bind="
++        <button class="btn btn-outline-primary" data-bind="
+             click: buttonHandler
+         ">
+             <i class="fa fa-plus"></i>&nbsp;
+@@ -20,7 +20,7 @@
+   <td></td>
+   <td>
+     <!-- ko ifnot: $root.optionsContainQuestions -->
+-    <select class="form-control input-sm"
++    <select class="form-select input-sm"
+             data-placeholder="Select a case property"
+             data-bind="
+                 select2: selectablePropertyOptions,
+@@ -28,7 +28,7 @@
+     "></select>
+     <!-- /ko -->
+     <!-- ko if: $root.optionsContainQuestions -->
+-    <select class="form-control"
++    <select class="form-select"
+             data-bind="
+                 questionsSelect: selectablePropertyOptions,
+                 value: newProperty

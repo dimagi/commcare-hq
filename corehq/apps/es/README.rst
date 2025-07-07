@@ -614,3 +614,6 @@ Code Documentation
 
 .. automodule:: corehq.apps.es.client
    :members:
+
+.. automodule:: corehq.apps.es.profiling
+   :members:

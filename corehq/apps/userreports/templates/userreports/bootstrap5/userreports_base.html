@@ -1,0 +1,155 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load compress %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block page_navigation %}
+  {% initial_page_data 'useUpdatedUcrNaming' use_updated_ucr_naming %}
+  <h2 class="text-hq-nav-header">{% trans "Tools" %}</h2>
+  <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
+    {% if use_updated_ucr_naming %}
+      <li>
+        <a href="{% url 'configurable_reports_home' domain %}">
+          <i class="fa fa-wrench"></i>
+          {% trans "Custom Web Reports" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_report' domain %}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Custom Web Report" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'import_configurable_report' domain %}">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          {% trans "Import Custom Web Report" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_data_source' domain %}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Custom Web Report Source" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_data_source_from_app' domain %}">
+          <i class="fa fa-copy"></i>
+          {% trans "Custom Web Report Source from Application" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'expression_debugger' domain %}">
+          <i class="fa fa-search"></i>
+          {% trans "Expression Debugger" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'data_source_debugger' domain %}">
+          <i class="fa fa-search"></i>
+          {% trans "Custom Web Report Source Debugger" %}
+        </a>
+      </li>
+    {% else %}
+      <li>
+        <a href="{% url 'configurable_reports_home' domain %}">
+          <i class="fa fa-wrench"></i>
+          {% trans "Configurable Reports" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_report' domain %}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add report" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'import_configurable_report' domain %}">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          {% trans "Import report" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_data_source' domain %}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add data source" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_data_source_from_app' domain %}">
+          <i class="fa fa-copy"></i>
+          {% trans "Data source from application" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'expression_debugger' domain %}">
+          <i class="fa fa-search"></i>
+          {% trans "Expression Debugger" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'data_source_debugger' domain %}">
+          <i class="fa fa-search"></i>
+          {% trans "Data Source Debugger" %}
+        </a>
+      </li>
+    {% endif %}
+  </ul>
+
+  <h2 class="text-hq-nav-header">{% trans "Edit Reports" %}</h2>
+  <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
+    {% with report as selected_report %}
+      {% for report in reports %}
+        <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
+          <a href="{% url 'edit_configurable_report' domain report.get_id %}"  title="{{ report.title }}" class='report-nav'>
+            {{ report.title }}
+            {% if report.is_static %}
+              <span class="badge text-bg-secondary">static</span>
+            {% endif %}
+          </a>
+        </li>
+      {% endfor %}
+    {% endwith %}
+  </ul>
+
+  <h2 class="text-hq-nav-header">
+    {% if use_updated_ucr_naming %}
+      {% trans "Edit Custom Data Sources" %}
+    {% else %}
+      {% trans "Edit Data Sources" %}
+    {% endif %}
+
+  </h2>
+  <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
+    {% with data_source as selected_data_source %}
+      {% for data_source in data_sources %}
+        <li{% if data_source.get_id == selected_data_source.get_id %} class="active"{% endif %}>
+          <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">
+            {{ data_source.display_name }}
+            {% if data_source.is_static %}
+              <span class="badge text-bg-secondary">static</span>
+            {% endif %}
+            {% if data_source.is_deactivated %}
+              <span class="badge text-bg-secondary">deactivated</span>
+            {% endif %}
+          </a>
+        </li>
+      {% endfor %}
+    {% endwith %}
+  </ul>
+  {% if request|toggle_enabled:"AGGREGATE_UCRS" %}
+    <h2 class="text-hq-nav-header">{% trans "Aggregate Data Sources" %}</h2>
+    <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
+      {% with aggregate_table as selected_aggregate_ucr %}
+        {% for aggregate_ucr in aggregate_data_sources %}
+          <li {% if aggregate_ucr.id == selected_aggregate_ucr.id %} class="active"{% endif %}>
+            <a href="{% url 'aggregate_ucr' domain aggregate_ucr.table_id %}">
+              {{ aggregate_ucr.display_name }}
+            </a>
+          </li>
+        {% endfor %}
+      {% endwith %}
+    </ul>
+  {% endif %}
+{% endblock %}

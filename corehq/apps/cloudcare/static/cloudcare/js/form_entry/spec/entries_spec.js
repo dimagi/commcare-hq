@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import _ from "underscore";
 import sinon from "sinon";
 import moment from "moment";
@@ -19,7 +21,6 @@ describe('Entries', function () {
         initialPageData.register(
             "toggles_dict",
             {
-                WEB_APPS_UPLOAD_QUESTIONS: true,
                 WEB_APPS_ANCHORED_SUBMIT: false,
             },
         );
@@ -398,7 +399,7 @@ describe('Entries', function () {
 
         var entry = formUI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof entries.DateEntry);
-        assert.equal(entry.templateType, 'date');
+        assert.equal(entry.templateType, 'datetime');
 
         entry.answer('1987-11-19');
         this.clock.tick(1000);
@@ -443,7 +444,7 @@ describe('Entries', function () {
 
         var entry = formUI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof entries.TimeEntry);
-        assert.equal(entry.templateType, 'time');
+        assert.equal(entry.templateType, 'datetime');
 
         entry.rawAnswer('12:45');
         this.clock.tick(1000);

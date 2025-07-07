@@ -2,7 +2,9 @@ import $ from "jquery";
 import ko from "knockout";
 
 import "jquery-ui/ui/widgets/datepicker";
+import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
 import "bootstrap-timepicker/js/bootstrap-timepicker";
+import "bootstrap-timepicker/less/timepicker.less";
 
 import "hqwebapp/js/components/rich_text_knockout_bindings";
 import "hqwebapp/js/components/select_toggle";
@@ -118,12 +120,12 @@ var EventAndContentViewModel = function (initialValues) {
     self.day = ko.observable(initialValues.day);
     self.time = ko.observable(initialValues.time);
     self.case_property_name = ko.observable(initialValues.case_property_name);
-    self.minutesToWait = ko.observable(initialValues.minutesToWait);
+    self.minutes_to_wait = ko.observable(initialValues.minutesToWait);
     self.deleted = ko.observable(initialValues.DELETE);
     self.order = ko.observable(initialValues.ORDER);
 
     self.waitTimeDisplay = ko.computed(function () {
-        var minutesToWait = parseInt(self.minutesToWait());
+        var minutesToWait = parseInt(self.minutes_to_wait());
         if (minutesToWait >= 0) {
             var hours = Math.floor(minutesToWait / 60);
             var minutes = minutesToWait % 60;

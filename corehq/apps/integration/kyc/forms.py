@@ -102,6 +102,6 @@ class KycConfigureForm(forms.ModelForm):
     def _get_case_types(self):
         case_types = sorted(get_case_types_for_domain(self.instance.domain))
         return [
-            (case, case) for case in case_types
-            if case not in (USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE)
+            (case_type, case_type) for case_type in case_types
+            if case_type not in (USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE)
         ]

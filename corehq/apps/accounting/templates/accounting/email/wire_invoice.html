@@ -4,7 +4,7 @@
 
 <p>
   {% blocktrans %}
-    The Wire Payment Invoice you requested for project {{ domain }} is now available.
+    Please find attached the prepayment invoice for your CommCare subscription.
   {% endblocktrans %}
 </p>
 
@@ -35,17 +35,36 @@
       {{ amount_due }}
     </td>
   </tr>
+  {% if date_due %}
+    <tr>
+      <th align="right">
+        {% trans 'Due Date' %}:
+      </th>
+      <td>
+        {{ date_due }}
+      </td>
+    </tr>
+  {% endif %}
 </table>
 
 <p>
   {% blocktrans %}
-    <b>Instructions for Wire Payment</b>
+    <b>Note:</b> Any on-demand charges for excess users or SMS will be billed separately
+    based on actual usage in the following month. If you prefer, you may also prepay for
+    expected on-demand usage. Please contact us if you would like to explore this option.
   {% endblocktrans %}
 </p>
 
 <p>
   {% blocktrans %}
-    Dimagi accepts wire payments via ACH and wire transfer. To complete the Wire Payment, please follow these instructions:
+    <b>Instructions for Payment</b>
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.
+    If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:
   {% endblocktrans %}
 </p>
 

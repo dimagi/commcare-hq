@@ -16,7 +16,7 @@ from corehq.apps.users.util import raw_username
 from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics import metrics_counter
 
-RATE_LIMIT = getattr(settings, 'USH_PRIME_RESTORE_RATE_LIMIT', 100)
+RATE_LIMIT = getattr(settings, 'USH_PRIME_RESTORE_RATE_LIMIT', 1)
 
 
 @no_result_task(queue='ush_background_tasks', max_retries=3, bind=True, rate_limit=RATE_LIMIT)

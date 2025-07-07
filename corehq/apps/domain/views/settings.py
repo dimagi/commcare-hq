@@ -6,7 +6,7 @@ from functools import cached_property
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth.views import PasswordResetConfirmView
+from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetView
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -24,7 +24,7 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_ip
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -50,6 +50,7 @@ from corehq.apps.domain.forms import (
     DomainMetadataForm,
     PrivacySecurityForm,
     ProjectSettingsForm,
+    IPAccessConfigForm,
     clean_password
 )
 from corehq.apps.domain.models import Domain
@@ -57,6 +58,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
@@ -271,6 +273,77 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator([
+    domain_admin_required,
+    use_bootstrap5,
+    toggles.IP_ACCESS_CONTROLS.required_decorator(),
+], name='dispatch')
+class EditIPAccessConfigView(BaseProjectSettingsView):
+    template_name = 'domain/admin/ip_access_config.html'
+    urlname = 'ip_access_config'
+    page_title = gettext_lazy("IP Access")
+
+    @property
+    @memoized
+    def form(self):
+        initial = {}
+        domain_config = self.ip_access_config
+        if domain_config:
+            display_spacer = ", "
+            initial.update({
+                'country_allowlist': domain_config.country_allowlist,
+                'ip_allowlist': display_spacer.join(domain_config.ip_allowlist),
+                'ip_denylist': display_spacer.join(domain_config.ip_denylist),
+                'comment': domain_config.comment
+            })
+        if self.request.method == 'POST':
+            return IPAccessConfigForm(self.request.POST, initial=initial,
+                                      current_ip=self.current_ip, current_country=self.ip_country)
+        return IPAccessConfigForm(initial=initial)
+
+    @cached_property
+    def ip_access_config(self):
+        try:
+            return IPAccessConfig.objects.get(domain=self.domain)
+        except IPAccessConfig.DoesNotExist:
+            return None
+
+    @cached_property
+    def ip_country(self):
+        if settings.MAXMIND_LICENSE_KEY:
+            return get_ip_country(self.current_ip)
+        return None
+
+    @property
+    def current_ip(self):
+        return get_ip(self.request)
+
+    @property
+    def page_context(self):
+        return {
+            'ip_access_config_form': self.form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            domain_config = self.ip_access_config
+            should_save = True
+            if not domain_config:
+                should_save = False
+                domain_config = IPAccessConfig()
+                domain_config.domain = self.domain
+            for attr, value in self.form.cleaned_data.items():
+                current_value = getattr(domain_config, attr)
+                if value != current_value:
+                    should_save = True
+                    setattr(domain_config, attr, value)
+            if should_save:
+                domain_config.save()
+                messages.success(request, _("Your IP Access settings have been saved!"))
+            return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
 @location_safe
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
@@ -463,6 +536,13 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
+
+
+class DomainPasswordResetView(PasswordResetView):
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.kwargs.get('domain')
+        return kwargs
 
 
 class CustomPasswordResetView(PasswordResetConfirmView):
