@@ -53,7 +53,6 @@ from corehq.apps.api.resources.auth import (
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
-from corehq.apps.api.resources.messaging_event.utils import get_request_params
 from corehq.apps.api.resources.meta import (
     AdminResourceMeta,
     CustomResourceMeta,
@@ -64,7 +63,6 @@ from corehq.apps.api.util import (
     get_obj,
     make_date_filter,
     parse_str_to_date,
-    cursor_based_query_for_datasource
 )
 from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
 from corehq.apps.app_manager.models import Application
@@ -91,7 +89,6 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
-    get_datasource_config,
     report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.data_source import (
@@ -103,7 +100,6 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.util import (
     get_configurable_and_static_reports,
-    get_indicator_adapter,
     get_report_config_or_not_found,
 )
 from corehq.apps.users.dbaccessors import (
@@ -141,7 +137,7 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+from .pagination import DoesNothingPaginator, NoCountingPaginator
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -1469,16 +1465,3 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
                 filter_obj = cls.COMPOUND_FILTERS[param_field_name](qualifier, val)
                 compound_filter &= Q(**filter_obj)
         return compound_filter
-
-
-def get_datasource_data(request, config_id, domain):
-    """Fetch data of the datasource specified by `config_id` in a paginated manner"""
-    config, _ = get_datasource_config(config_id, domain)
-    datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
-    request_params = get_request_params(request).params
-    request_params["limit"] = request.GET.dict().get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
-    if int(request_params["limit"]) > EXPORT_DATASOURCE_MAX_PAGINATION_LIMIT:
-        request_params["limit"] = EXPORT_DATASOURCE_MAX_PAGINATION_LIMIT
-    query = cursor_based_query_for_datasource(request_params, datasource_adapter)
-    data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
-    return JsonResponse(data)
