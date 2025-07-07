@@ -144,7 +144,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
 
-upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
+upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT / (1024 * 1024):,.0f}"
 
 
 def tf_choices(true_txt, false_txt):
