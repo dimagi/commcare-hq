@@ -2,10 +2,10 @@ import datetime
 import json
 import secrets
 import string
-
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.tokens import default_token_generator
 from django.core.validators import EmailValidator, validate_email
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
@@ -28,7 +28,7 @@ from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
+from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password, send_password_reset_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import (
     EnterpriseMobileWorkerSettings,
@@ -628,6 +628,19 @@ class SendPasswordResetEmailForm(forms.Form):
             ),
         )
         super(SendPasswordResetEmailForm, self).__init__(*args, **kwargs)
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None, **kwargs):
+        user_id = self.data.get('user_id')
+        django_user = CommCareUser.get(user_id).get_django_user()
+
+        send_password_reset_email([django_user], domain_override, subject_template_name,
+                                  email_template_name, use_https, token_generator, request)
 
 
 class NewMobileWorkerForm(forms.Form):

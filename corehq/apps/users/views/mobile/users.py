@@ -1685,3 +1685,12 @@ def bulk_user_upload_api(request, domain):
 class UserPasswordResetView(BaseManageCommCareUserView, PasswordResetView):
     form_class = SendPasswordResetEmailForm
     from_email = settings.DEFAULT_FROM_EMAIL
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        data = kwargs.get('data', {}).copy()
+        data.update({
+            'user_id': self.kwargs.get('couch_user_id')
+        })
+        kwargs['data'] = data
+        return kwargs
