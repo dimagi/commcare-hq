@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repeaters', '0017_add_indexes'),
+        ('repeaters', '0018_datasourceupdate'),
     ]
 
     operations = [
