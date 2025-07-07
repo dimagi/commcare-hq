@@ -22,7 +22,7 @@ WHITELIST = [
     ("bs4.builder", "option of HTMLParser() has never done anything"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("ddtrace.internal.module", "pkg_resources is deprecated as an API"),
-    ("eulxml", "pkg_resources is deprecated as an API"),
+    ("eulxml", "pkg_resources is deprecated as an API", UserWarning),
     ("pkg_resources", "pkg_resources.declare_namespace"),
     ("", "", RemovedInDjango50Warning),
     ("", "", RemovedInDjango51Warning),
