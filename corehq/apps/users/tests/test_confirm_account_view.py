@@ -85,6 +85,5 @@ class TestMobileWorkerConfirmAccountView(TestCase):
     @patch.object(CommCareUserConfirmAccountView, '_expiration_time_in_hours', new_callable=Mock(return_value=-1))
     def test_invite_expired_message(self, mock_expiration_time):
         response = self.client.get(self.url)
-        print(response)
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Invitation link has expired")

@@ -1508,6 +1508,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
+    ONE_HOUR_IN_SECONDS = 60 * 60
 
     @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
     def dispatch(self, request, *args, **kwargs):
@@ -1584,8 +1585,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
     def is_invite_valid(self):
-        ONE_HOUR_IN_SECONDS = 60 * 60
-        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / ONE_HOUR_IN_SECONDS
+        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.ONE_HOUR_IN_SECONDS
         if hours_elapsed <= self._expiration_time_in_hours:
             return True
         return False
@@ -1594,6 +1594,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 @location_safe
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
+    HOURS_IN_A_DAY = 24
 
     @property
     @memoized
@@ -1610,8 +1611,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     @property
     def _expiration_time_in_hours(self):
         settings_obj = SMSAccountConfirmationSettings.get_settings(self.user.domain)
-        HOURS_IN_A_DAY = 24
-        return settings_obj.confirmation_link_expiry_time * HOURS_IN_A_DAY
+        return settings_obj.confirmation_link_expiry_time * self.HOURS_IN_A_DAY
 
     def send_success_sms(self):
         settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
