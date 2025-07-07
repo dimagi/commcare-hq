@@ -213,6 +213,10 @@ $ venv
       ```
       `uv` caches compiled dependencies, so this is only necessary when a new
       dependency with a compiled binary is installed.
+    - If `uv sync` fails to build `lxml`, where it mentions incompatible pointer types, try rebuilding via:
+      ```sh
+      CC=gcc CFLAGS="-Wno-error=incompatible-pointer-types" LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" uv sync --compile-bytecode
+      ```
 
 Note that once you're up and running, you'll want to periodically re-run these
 steps, and a few others, to keep your environment up to date. Some developers
