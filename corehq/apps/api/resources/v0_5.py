@@ -282,19 +282,29 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         send_confirmation_email = True if bundle.data.get('send_confirmation_email_now') == "True" else False
         try:
             email = bundle.data.get('email', '').lower()
-            if require_account_confirmation and send_confirmation_email and not email:
-                raise BadRequest(_("You must provide the user's email to send a confirmation email."))
-            bundle.obj = CommCareUser.create(
-                domain=kwargs['domain'],
-                username=username,
-                password=bundle.data.get('password'),
-                created_by=bundle.request.couch_user,
-                created_via=USER_CHANGE_VIA_API,
-                email=email,
-                is_account_confirmed=not require_account_confirmation
-            )
-            if require_account_confirmation and send_confirmation_email:
-                send_account_confirmation_if_necessary(bundle.obj)
+            if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']):
+                if require_account_confirmation and send_confirmation_email and not email:
+                    raise BadRequest(_("You must provide the user's email to send a confirmation email."))
+                bundle.obj = CommCareUser.create(
+                    domain=kwargs['domain'],
+                    username=username,
+                    password=bundle.data.get('password'),
+                    created_by=bundle.request.couch_user,
+                    created_via=USER_CHANGE_VIA_API,
+                    email=email,
+                    is_account_confirmed=not require_account_confirmation
+                )
+                if require_account_confirmation and send_confirmation_email:
+                    send_account_confirmation_if_necessary(bundle.obj)
+            else:
+                bundle.obj = CommCareUser.create(
+                    domain=kwargs['domain'],
+                    username=username,
+                    password=bundle.data.get('password'),
+                    created_by=bundle.request.couch_user,
+                    created_via=USER_CHANGE_VIA_API,
+                    email=email,
+                )
             # password was just set
             bundle.data.pop('password', None)
             # do not call update with username key
@@ -331,7 +341,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
 
-        if not bundle.obj.is_account_confirmed and send_confirmation_email:
+        if (toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain'])
+                and not bundle.obj.is_account_confirmed and send_confirmation_email):
             if not bundle.obj.email:
                 raise BadRequest(_("This user has no email. "
                                    "You must provide the user's email to send a confirmation email."))

@@ -202,6 +202,7 @@ class TestCommCareUserResource(APIResourceTest):
                          [self.loc1.location_id, self.loc2.location_id])
         self.assertEqual(user_back.get_location_id(self.domain.name), self.loc1.location_id)
 
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
     def test_create_and_send_confirmation_email(self, mock_send_account_confirmation):
         self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
@@ -222,6 +223,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertNotEqual(mobile_user, None)
         self.assertEqual(mock_send_account_confirmation.call_count, 1)
 
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     def test_create_and_send_confirmation_email_no_email(self):
         user_json = {
             "username": "no_email",
@@ -414,6 +416,7 @@ class TestCommCareUserResource(APIResourceTest):
             "non-editable field 'username', 'default_phone_number' must be a string\"}"
         )
 
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
     def test_update_and_send_confirmation_email(self, mock_send_account_confirmation):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234", created_by=None,
@@ -430,6 +433,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(mock_send_account_confirmation.call_count, 1)
 
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
     def test_update_and_send_confirmation_already_confirmed(self, mock_send_account_confirmation):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
@@ -446,6 +450,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(mock_send_account_confirmation.call_count, 0)
 
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
     def test_update_and_send_confirmation_no_email(self, mock_send_account_confirmation):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234", created_by=None,
@@ -463,6 +468,7 @@ class TestCommCareUserResource(APIResourceTest):
                          "This user has no email. You must provide the user's email to send a confirmation email.")
         self.assertEqual(mock_send_account_confirmation.call_count, 0)
 
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     def test_update_cant_change_account_confirmation(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")
