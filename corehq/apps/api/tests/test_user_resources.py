@@ -202,6 +202,42 @@ class TestCommCareUserResource(APIResourceTest):
                          [self.loc1.location_id, self.loc2.location_id])
         self.assertEqual(user_back.get_location_id(self.domain.name), self.loc1.location_id)
 
+    @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
+    def test_create_and_send_confirmation_email(self, mock_send_account_confirmation):
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
+
+        user_json = {
+            "username": "jdoe",
+            "password": "qwer1234",
+            "email": "jdoe@example.org",
+            "require_account_confirmation": "True",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        mobile_user = CommCareUser.get_by_user_id(json.loads(response.content).get('id'))
+        self.addCleanup(mobile_user.delete, self.domain.name, deleted_by=None)
+        self.assertNotEqual(mobile_user, None)
+        self.assertEqual(mock_send_account_confirmation.call_count, 1)
+
+    def test_create_and_send_confirmation_email_no_email(self):
+        user_json = {
+            "username": "no_email",
+            "password": "qwer1234",
+            "require_account_confirmation": "True",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        # should raise an error and not create the user
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "You must provide the user's email to send a confirmation email.")
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
+
     @flag_enabled('COMMCARE_CONNECT')
     def test_create_connect_user_no_password(self):
         user_json = {
@@ -377,6 +413,71 @@ class TestCommCareUserResource(APIResourceTest):
             "{\"error\": \"The request resulted in the following errors: Attempted to update unknown or "
             "non-editable field 'username', 'default_phone_number' must be a string\"}"
         )
+
+    @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
+    def test_update_and_send_confirmation_email(self, mock_send_account_confirmation):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234", created_by=None,
+                                   created_via=None, phone_number="50253311398", is_account_confirmed=False)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "email": "jdoe@example.org",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mock_send_account_confirmation.call_count, 1)
+
+    @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
+    def test_update_and_send_confirmation_already_confirmed(self, mock_send_account_confirmation):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "email": "jdoe@example.org",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mock_send_account_confirmation.call_count, 0)
+
+    @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
+    def test_update_and_send_confirmation_no_email(self, mock_send_account_confirmation):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234", created_by=None,
+                                   created_via=None, phone_number="50253311398", is_account_confirmed=False)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "This user has no email. You must provide the user's email to send a confirmation email.")
+        self.assertEqual(mock_send_account_confirmation.call_count, 0)
+
+    def test_update_cant_change_account_confirmation(self):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        self.assertEqual(user.is_account_confirmed, True)
+        user_json = {
+            "require_account_confirmation": "True"
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 400)
+        [updated_user] = CommCareUser.by_domain(self.domain.name)
+        self.assertEqual(updated_user.is_account_confirmed, True)
 
     def test_activate_user(self):
         """Activate the user through the API"""
