@@ -231,8 +231,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
 
-    updates = _get_updates(form.actions, request.POST)
-    form.actions.update(updates)
+    form.actions = _get_updates(form.actions, request.POST)
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -254,13 +253,8 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
 def _get_updates(existing_actions, data):
     updates = json.loads(data['actions'])
-    if 'update_diff' in data:
-        update_diff = json.loads(data['update_diff'])
-        diff = existing_actions.with_diffs(update_diff)
-        updates['open_case'] = diff.open_case.to_json()
-        updates['update_case'] = diff.update_case.to_json()
-
-    return updates
+    update_diff = json.loads(data['update_diff']) if 'update_diff' in data else {}
+    return existing_actions.with_updates(updates, update_diff)
 
 
 @waf_allow('XSS_BODY')
