@@ -82,7 +82,8 @@ from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     can_edit_workers_location,
-    location_safe
+    location_safe,
+    user_can_access_other_user
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
@@ -1685,6 +1686,7 @@ def bulk_user_upload_api(request, domain):
         return json_response({'success': False, 'message': str(e)}, status_code=500)
 
 
+@location_safe
 class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetView):
     form_class = SendCommCareUserPasswordResetEmailForm
     from_email = settings.DEFAULT_FROM_EMAIL
@@ -1712,8 +1714,19 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetVie
 
         return HttpResponseRedirect(f"{base_url}#user-password")
 
+    @property
+    def editable_user_id(self):
+        return self.kwargs.get('couch_user_id')
+
+    @property
+    @memoized
+    def editable_user(self):
+        return CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
+
     @method_decorator(require_POST)
     def dispatch(self, *args, **kwargs):
+        if not user_can_access_other_user(self.domain, self.request.couch_user, self.editable_user):
+            return HttpResponse(status=401)
         return super().dispatch(*args, **kwargs)
 
     def get_form_kwargs(self):
