@@ -5490,7 +5490,6 @@
     "case_list_menu_item": false,
     "case_detail_overwrite": false,
     "display_conditions": true,
-    "custom_icon_badges": false,
     "conditional_form_actions": true
   },
   "langs": [

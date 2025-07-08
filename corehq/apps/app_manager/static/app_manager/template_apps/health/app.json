@@ -2094,7 +2094,6 @@
     "case_list_menu_item": true,
     "enum_image": true,
     "display_conditions": false,
-    "custom_icon_badges": false,
     "conditional_form_actions": false
   },
   "langs": [
