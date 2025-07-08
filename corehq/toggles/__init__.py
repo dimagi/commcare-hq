@@ -823,7 +823,7 @@ BIOMETRIC_INTEGRATION = StaticToggle(
 CASE_DETAIL_PRINT = StaticToggle(
     'case_detail_print',
     'MLabour: Allowing printing of the case detail, based on an HTML template',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1712,7 +1712,7 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1778,7 +1778,7 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
 CUSTOM_ICON_BADGES = StaticToggle(
     'custom_icon_badges',
     'Custom Icon Badges for modules and forms',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
