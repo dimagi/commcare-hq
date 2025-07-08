@@ -109,7 +109,9 @@ class TestCommCareUserResource(APIResourceTest):
             'id': backend_id,
             'last_name': '',
             'phone_numbers': [],
+            'require_account_confirmation': False,
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'send_confirmation_email': False,
             'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: '', 'imaginary': '',
                           'commcare_location_id': self.loc2.location_id,
                           'commcare_primary_case_sharing_id': self.loc2.location_id,
@@ -142,7 +144,9 @@ class TestCommCareUserResource(APIResourceTest):
             'id': backend_id,
             'last_name': '',
             'phone_numbers': [],
+            'require_account_confirmation': False,
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'send_confirmation_email': False,
             'user_data': {'commcare_project': 'qwerty',
                           PROFILE_SLUG: '',
                           'imaginary': '',
@@ -209,7 +213,6 @@ class TestCommCareUserResource(APIResourceTest):
 
         user_json = {
             "username": "jdoe",
-            "password": "qwer1234",
             "email": "jdoe@example.org",
             "require_account_confirmation": "True",
             "send_confirmation_email_now": "True"
@@ -224,10 +227,9 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(mock_send_account_confirmation.call_count, 1)
 
     @flag_enabled('TWO_STAGE_USER_PROVISIONING')
-    def test_create_and_send_confirmation_email_no_email(self):
+    def test_create_and_send_confirmation_email_invalid_input(self):
         user_json = {
-            "username": "no_email",
-            "password": "qwer1234",
+            "username": "jdoe",
             "require_account_confirmation": "True",
             "send_confirmation_email_now": "True"
         }
@@ -238,6 +240,37 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(json.loads(response.content).get('error'),
                          "You must provide the user's email to send a confirmation email.")
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
+
+        user_json = {
+            "username": "jdoe",
+            "password": "password",
+            "email": "jdoe@example.org",
+            "require_account_confirmation": "True",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        # should raise an error and not create the user
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "Users will provide their own password on confirmation.")
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
+
+        user_json = {
+            "username": "jdoe",
+            "password": "password",
+            "email": "jdoe@example.org",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        # should raise an error and not create the user
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "You must require account confirmation to send a confirmation email.")
         self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
 
     @flag_enabled('COMMCARE_CONNECT')
@@ -482,7 +515,7 @@ class TestCommCareUserResource(APIResourceTest):
                                                    content_type='application/json',
                                                    method='PUT')
         self.assertEqual(response.status_code, 400)
-        [updated_user] = CommCareUser.by_domain(self.domain.name)
+        updated_user = CommCareUser.get(user.get_id)
         self.assertEqual(updated_user.is_account_confirmed, True)
 
     def test_activate_user(self):

@@ -119,6 +119,7 @@ from corehq.apps.users.dbaccessors import (
     get_user_id_by_username,
 )
 from corehq.apps.users.exceptions import ModifyUserStatusException
+from corehq.apps.users.forms import generate_strong_password
 from corehq.apps.users.models import (
     CommCareUser,
     ConnectIDUserLink,
@@ -239,6 +240,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 class CommCareUserResource(v0_1.CommCareUserResource):
     primary_location = fields.CharField()
     locations = fields.ListField()
+    require_account_confirmation = fields.BooleanField(default=False)
+    send_confirmation_email = fields.BooleanField(default=False)
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -268,8 +271,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
-
-        if not (bundle.data.get('password') or bundle.data.get('connect_username')):
+        require_account_confirmation = bundle.data.pop('require_account_confirmation', None)
+        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', None)
+        password = bundle.data.get('password')
+        if not (password or bundle.data.get('connect_username')) and not require_account_confirmation:
             raise BadRequest(_('Password or connect username required'))
 
         if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
@@ -278,17 +283,16 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
-        require_account_confirmation = True if bundle.data.get('require_account_confirmation') == "True" else False
-        send_confirmation_email = True if bundle.data.get('send_confirmation_email_now') == "True" else False
         try:
             email = bundle.data.get('email', '').lower()
-            if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']):
-                if require_account_confirmation and send_confirmation_email and not email:
-                    raise BadRequest(_("You must provide the user's email to send a confirmation email."))
+            if (toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain'])
+                    and (require_account_confirmation or send_confirmation_email)):
+                self.validate_new_user_input(require_account_confirmation, send_confirmation_email,
+                                             email, password)
                 bundle.obj = CommCareUser.create(
                     domain=kwargs['domain'],
                     username=username,
-                    password=bundle.data.get('password'),
+                    password=generate_strong_password(),
                     created_by=bundle.request.couch_user,
                     created_via=USER_CHANGE_VIA_API,
                     email=email,
@@ -300,7 +304,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 bundle.obj = CommCareUser.create(
                     domain=kwargs['domain'],
                     username=username,
-                    password=bundle.data.get('password'),
+                    password=password,
                     created_by=bundle.request.couch_user,
                     created_via=USER_CHANGE_VIA_API,
                     email=email,
@@ -330,10 +334,19 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             )
         return bundle
 
+    @staticmethod
+    def validate_new_user_input(require_account_confirmation, send_confirmation_email, email, password):
+        if require_account_confirmation and not email:
+            raise BadRequest(_("You must provide the user's email to send a confirmation email."))
+        if require_account_confirmation and password:
+            raise BadRequest(_("Users will provide their own password on confirmation."))
+        if send_confirmation_email and not require_account_confirmation:
+            raise BadRequest(_("You must require account confirmation to send a confirmation email."))
+
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
-        send_confirmation_email = True if bundle.data.pop('send_confirmation_email_now', None) == "True" else False
+        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', None)
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
