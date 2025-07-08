@@ -613,7 +613,7 @@ class SetUserPasswordForm(SetPasswordForm):
 validate_username = EmailValidator(message=gettext_lazy('Username contains invalid characters.'))
 
 
-class SendPasswordResetEmailForm(forms.Form):
+class SendCommCareUserPasswordResetEmailForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
@@ -627,7 +627,7 @@ class SendPasswordResetEmailForm(forms.Form):
                 ),
             ),
         )
-        super(SendPasswordResetEmailForm, self).__init__(*args, **kwargs)
+        super(SendCommCareUserPasswordResetEmailForm, self).__init__(*args, **kwargs)
 
     def save(self, domain_override=None,
              subject_template_name='registration/password_reset_subject.txt',

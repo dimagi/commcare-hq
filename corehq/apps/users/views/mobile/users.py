@@ -116,7 +116,7 @@ from corehq.apps.users.forms import (
     MultipleSelectionForm,
     NewMobileWorkerForm,
     SetUserPasswordForm,
-    SendPasswordResetEmailForm,
+    SendCommCareUserPasswordResetEmailForm,
     UserFilterForm,
 )
 from corehq.apps.users.models import (
@@ -335,7 +335,7 @@ class EditCommCareUserView(BaseEditUserView):
             ))
         if self.editable_user.is_active:
             context.update({
-                'send_password_reset_email_form': SendPasswordResetEmailForm()
+                'send_password_reset_email_form': SendCommCareUserPasswordResetEmailForm()
             })
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
@@ -1685,8 +1685,8 @@ def bulk_user_upload_api(request, domain):
         return json_response({'success': False, 'message': str(e)}, status_code=500)
 
 
-class UserPasswordResetView(BaseManageCommCareUserView, PasswordResetView):
-    form_class = SendPasswordResetEmailForm
+class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetView):
+    form_class = SendCommCareUserPasswordResetEmailForm
     from_email = settings.DEFAULT_FROM_EMAIL
 
     def post(self, request, *args, **kwargs):
