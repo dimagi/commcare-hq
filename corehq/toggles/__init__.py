@@ -1761,12 +1761,6 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     [NAMESPACE_USER]
 )
 
-CUSTOM_ICON_BADGES = StaticToggle(
-    'custom_icon_badges',
-    'Custom Icon Badges for modules and forms',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',

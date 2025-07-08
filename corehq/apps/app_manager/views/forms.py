@@ -833,7 +833,7 @@ def get_form_view_context(
         }
     }
 
-    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
+    if domain_has_privilege(domain, privileges.CUSTOM_ICON_BADGES):
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):

@@ -7,6 +7,7 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -297,7 +298,7 @@ def _get_multimedia_context(
         }
     })
 
-    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
+    if domain_has_privilege(domain, privileges.CUSTOM_ICON_BADGES):
         if module.custom_icon:
             multimedia_context['module_icon'] = module.custom_icon
         else:

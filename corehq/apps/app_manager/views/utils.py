@@ -13,7 +13,8 @@ from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
@@ -291,7 +292,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
 
 
 def handle_custom_icon_edits(request, form_or_module, lang):
-    if toggles.CUSTOM_ICON_BADGES.enabled(request.domain):
+    if domain_has_privilege(request.domain, privileges.CUSTOM_ICON_BADGES):
         icon_text_body = request.POST.get("custom_icon_text_body")
         icon_xpath = request.POST.get("custom_icon_xpath")
         icon_form = request.POST.get("custom_icon_form")
