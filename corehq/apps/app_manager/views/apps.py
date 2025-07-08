@@ -91,7 +91,6 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     track_domain_request,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -651,32 +650,8 @@ def import_app(request, domain):
 
         return back_to_main(request, domain, app_id=app._id)
     else:
-        app_id = request.GET.get('app')
-        redirect_domain = request.GET.get('domain') or None
-        if redirect_domain is not None:
-            redirect_domain = redirect_domain.lower()
-            if Domain.get_by_name(redirect_domain):
-                return HttpResponseRedirect(
-                    reverse('import_app', args=[redirect_domain])
-                    + "?app={app_id}".format(app_id=app_id)
-                )
-            else:
-                if redirect_domain:
-                    messages.error(request, "We can't find a project called \"%s\"." % redirect_domain)
-                else:
-                    messages.error(request, "You left the project name blank.")
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
-
-        if app_id:
-            app = get_app(None, app_id)
-            assert (app.get_doc_type() in ('Application', 'RemoteApp'))
-            assert (request.couch_user.is_member_of(app.domain))
-        else:
-            app = None
-
         return render(request, template, {
             'domain': domain,
-            'app': app,
         })
 
 

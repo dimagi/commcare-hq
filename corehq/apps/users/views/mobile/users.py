@@ -1514,6 +1514,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
+    ONE_HOUR_IN_SECONDS = 60 * 60
 
     @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
     def dispatch(self, request, *args, **kwargs):
@@ -1521,8 +1522,18 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
     @property
     @memoized
+    def user_invite_hash(self):
+        try:
+            return json.loads(b64_aes_cbc_decrypt(self.kwargs.get('user_invite_hash')))
+        except Exception:
+            # Temporarily fallback to b64_aes_decrypt if b64_aes_cbc_decrypt fails
+            # to handle existing invites
+            return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
+
+    @property
+    @memoized
     def user_id(self):
-        return self.kwargs.get('user_id')
+        return self.user_invite_hash.get('user_id')
 
     @property
     @memoized
@@ -1541,19 +1552,24 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
                 'email': self.user.email,
             })
 
+    @property
+    def _expiration_time_in_hours(self):
+        return 1
+
     def get_context_data(self, **kwargs):
         context = super(CommCareUserConfirmAccountView, self).get_context_data(**kwargs)
         context.update({
             'domain_name': self.domain_object.display_name(),
             'user': self.user,
             'form': self.form,
-            'button_label': _('Confirm Account')
+            'button_label': _('Confirm Account'),
+            'invite_expired': self.is_invite_valid() is False,
         })
         return context
 
     def post(self, request, *args, **kwargs):
         form = self.form
-        if form.is_valid():
+        if form.is_valid() and self.is_invite_valid():
             user = self.user
             user.email = form.cleaned_data['email']
             full_name = form.cleaned_data['full_name']
@@ -1574,26 +1590,17 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)
 
+    def is_invite_valid(self):
+        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.ONE_HOUR_IN_SECONDS
+        if hours_elapsed <= self._expiration_time_in_hours:
+            return True
+        return False
+
 
 @location_safe
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
-    one_day_in_seconds = 60 * 60 * 24
-
-    @property
-    @memoized
-    def user_invite_hash(self):
-        try:
-            return json.loads(b64_aes_cbc_decrypt(self.kwargs.get('user_invite_hash')))
-        except Exception:
-            # Temporarily fallback to b64_aes_decrypt if b64_aes_cbc_decrypt fails
-            # to handle existing invites
-            return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
-
-    @property
-    @memoized
-    def user_id(self):
-        return self.user_invite_hash.get('user_id')
+    HOURS_IN_A_DAY = 24
 
     @property
     @memoized
@@ -1607,12 +1614,10 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
                 'email': "",
             })
 
-    def get_context_data(self, **kwargs):
-        context = super(CommCareUserConfirmAccountBySMSView, self).get_context_data(**kwargs)
-        context.update({
-            'invite_expired': self.is_invite_valid() is False,
-        })
-        return context
+    @property
+    def _expiration_time_in_hours(self):
+        settings_obj = SMSAccountConfirmationSettings.get_settings(self.user.domain)
+        return settings_obj.confirmation_link_expiry_time * self.HOURS_IN_A_DAY
 
     def send_success_sms(self):
         sms_settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
@@ -1630,13 +1635,6 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         send_sms(
             domain=self.user.domain, contact=None, phone_number=self.user.default_phone_number, text=text_content
         )
-
-    def is_invite_valid(self):
-        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.one_day_in_seconds
-        settings_obj = SMSAccountConfirmationSettings.get_settings(self.user.domain)
-        if hours_elapsed <= settings_obj.confirmation_link_expiry_time:
-            return True
-        return False
 
 
 @csrf_exempt

@@ -245,7 +245,7 @@ urlpatterns = [
         name=ConfirmBillingAccountForExtraUsersView.urlname
     ),
     url(
-        r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$',
+        r'^commcare/confirm_account/(?P<user_invite_hash>[\S-]+)/$',
         CommCareUserConfirmAccountView.as_view(),
         name=CommCareUserConfirmAccountView.urlname
     ),

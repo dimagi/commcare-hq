@@ -1,8 +1,11 @@
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import Mock, patch
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.utils import encrypt_account_confirmation_info
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.views.mobile.users import CommCareUserConfirmAccountView
 from corehq.util.test_utils import flag_enabled
 
 
@@ -29,7 +32,8 @@ class TestMobileWorkerConfirmAccountView(TestCase):
             email='mw1@example.com',
             is_account_confirmed=False,
         )
-        self.url = reverse('commcare_user_confirm_account', args=[self.domain, self.user.get_id])
+        encrypted_user_info = encrypt_account_confirmation_info(self.user)
+        self.url = reverse('commcare_user_confirm_account', args=[self.domain, encrypted_user_info])
 
     def tearDown(self):
         self.user.delete(self.domain, deleted_by=None)
@@ -46,7 +50,11 @@ class TestMobileWorkerConfirmAccountView(TestCase):
 
     @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     def test_user_id_not_found(self):
-        response = self.client.get(reverse('commcare_user_confirm_account', args=[self.domain, 'missing-id']))
+        mock_commcare_user = Mock()
+        mock_commcare_user.get_id = 'missing-id'
+        encrypted_info = encrypt_account_confirmation_info(mock_commcare_user)
+
+        response = self.client.get(reverse('commcare_user_confirm_account', args=[self.domain, encrypted_info]))
         self.assertEqual(404, response.status_code)
 
     @flag_enabled('TWO_STAGE_USER_PROVISIONING')
@@ -72,3 +80,10 @@ class TestMobileWorkerConfirmAccountView(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'your account has been deactivated')
+
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @patch.object(CommCareUserConfirmAccountView, '_expiration_time_in_hours', new_callable=Mock(return_value=-1))
+    def test_invite_expired_message(self, mock_expiration_time):
+        response = self.client.get(self.url)
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "Invitation link has expired")

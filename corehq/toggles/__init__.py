@@ -3002,3 +3002,10 @@ ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
+    slug='convert_xml_group_separator',
+    label='Convert the group separator to a symbol XML can support',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
