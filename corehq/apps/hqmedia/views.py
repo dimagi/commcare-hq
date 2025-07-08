@@ -836,7 +836,7 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
 class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
     urlname = "hqmedia_uploader_detail_print_template"
 
-    @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
+    @method_decorator(requires_privilege_raise404(privileges.CASE_DETAIL_PRINT))
     def post(self, request, *args, **kwargs):
         return super(ProcessDetailPrintTemplateUploadView, self).post(request, *args, **kwargs)
 
@@ -870,7 +870,7 @@ class RemoveDetailPrintTemplateView(BaseMultimediaView):
             return self.request.POST.get('module_unique_id')
         return None
 
-    @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
+    @method_decorator(requires_privilege_raise404(privileges.CASE_DETAIL_PRINT))
     def post(self, *args, **kwargs):
         del self.app.get_module_by_unique_id(self.module_unique_id).case_details.long.print_template
         self.app.save()

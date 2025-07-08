@@ -292,7 +292,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             },
         },
     }
-    if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
+    if domain_has_privilege(app.domain, privileges.CASE_DETAIL_PRINT):
         slug = 'module_%s_detail_print' % module.unique_id
         print_template = module.case_details.long.print_template
         print_uploader = MultimediaHTMLUploadController(
