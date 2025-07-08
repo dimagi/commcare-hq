@@ -94,10 +94,6 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_access_payments_report,
 )
-from corehq.feature_previews import (
-    EXPLORE_CASE_DATA_PREVIEW,
-    is_eligible_for_ecd_preview,
-)
 from corehq.messaging.scheduling.views import \
     BroadcastListView as NewBroadcastListView
 from corehq.messaging.scheduling.views import (
@@ -597,11 +593,6 @@ class ProjectDataTab(UITab):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
-    def can_view_ecd_preview(self):
-        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request)
-                and is_eligible_for_ecd_preview(self._request))
-
-    @property
     def _can_view_geospatial(self):
         return toggles.MICROPLANNING.enabled(self.domain)
 
@@ -634,7 +625,7 @@ class ProjectDataTab(UITab):
         if self.can_edit_commcare_data:
             items.extend(self._get_edit_section())
 
-        explore_data_views = self._get_explore_data_views()
+        explore_data_views = self._get_explore_data_views()  # TODO: Delete
         if explore_data_views:
             items.append([_("Explore Data"), explore_data_views])
 
@@ -1013,16 +1004,6 @@ class ProjectDataTab(UITab):
 
     def _get_explore_data_views(self):
         explore_data_views = []
-        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
-             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
-            from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            explore_data_views.append({
-                'title': _(ExploreCaseDataView.page_title),
-                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
-                'show_in_dropdown': False,
-                'icon': 'fa-solid fa-location-dot',
-                'subpages': [],
-            })
         if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
             from corehq.apps.case_search.models import (
                 case_search_enabled_for_domain,
@@ -1136,12 +1117,6 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 _(DownloadNewSmsExportView.page_title),
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
-            ))
-        if self.can_view_ecd_preview and self.can_edit_commcare_data:
-            from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            items.append(dropdown_dict(
-                _('Explore Case Data (Preview)'),
-                url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
         if self.can_view_odata_feed:
             from corehq.apps.export.views.list import ODataFeedListView
