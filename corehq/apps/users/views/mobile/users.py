@@ -1694,3 +1694,11 @@ class UserPasswordResetView(BaseManageCommCareUserView, PasswordResetView):
         })
         kwargs['data'] = data
         return kwargs
+
+    def get_success_url(self):
+        messages.success(self.request, _("Password reset email sent."))
+        base_url = reverse(
+            EditCommCareUserView.urlname,
+            args=[self.request.domain, self.kwargs.get('couch_user_id')],
+        )
+        return f"{base_url}#user-password"
