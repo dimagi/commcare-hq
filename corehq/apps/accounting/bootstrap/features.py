@@ -91,6 +91,9 @@ standard_v2 = community_v2 + [
     privileges.PHONE_APK_HEARTBEAT,
     privileges.FORM_CASE_IDS_CASE_IMPORTER,
     privileges.EXPORT_MULTISORT,
+    privileges.CASE_DETAIL_PRINT,
+    privileges.SORT_CALCULATION_IN_CASE_LIST,
+    privileges.CUSTOM_ICON_BADGES,
 ]
 
 

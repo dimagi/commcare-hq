@@ -239,6 +239,15 @@ class Command(BaseCommand):
              name='App Dependencies',
              description='Set Android app dependencies that must be installed before using a CommCare app'),
         Role(slug=privileges.BULK_DATA_EDITING, name='Bulk Data Editing', description=''),
+        Role(slug=privileges.CASE_DETAIL_PRINT,
+             name='Case Detail Print',
+             description='Allowing printing of the case detail, based on an HTML template'),
+        Role(slug=privileges.SORT_CALCULATION_IN_CASE_LIST,
+             name='Sort Calculations in Case List',
+             description='Configure a custom xpath calculation for Sort Property in Case Lists'),
+        Role(slug=privileges.CUSTOM_ICON_BADGES,
+             name='Custom Icon Badges',
+             description='Custom Icon Badges for modules and forms'),
     ]
 
     BOOTSTRAP_PLANS = [

@@ -123,6 +123,9 @@ CASE_COPY = 'case_copy'
 CASE_DEDUPE = 'case_deduplicate'
 CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
 APP_DEPENDENCIES = 'app_dependencies'
+CASE_DETAIL_PRINT = 'case_detail_print'
+SORT_CALCULATION_IN_CASE_LIST = 'sort_calculation_in_case_list'
+CUSTOM_ICON_BADGES = 'custom_icon_badges'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -189,6 +192,9 @@ MAX_PRIVILEGES = [
     CUSTOM_DOMAIN_ALERTS,
     APP_DEPENDENCIES,
     BULK_DATA_EDITING,
+    CASE_DETAIL_PRINT,
+    SORT_CALCULATION_IN_CASE_LIST,
+    CUSTOM_ICON_BADGES,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -269,4 +275,7 @@ class Titles(object):
             CASE_DEDUPE: _("Deduplication Rules"),
             CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
             APP_DEPENDENCIES: _("App Dependencies"),
+            CASE_DETAIL_PRINT: _("Print Case Detail"),
+            SORT_CALCULATION_IN_CASE_LIST: _("Sort Calculations in Case List"),
+            CUSTOM_ICON_BADGES: _("Custom Icon Badges"),
         }.get(privilege, privilege)
