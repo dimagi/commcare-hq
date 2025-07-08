@@ -3,9 +3,7 @@ import json
 import re
 import time
 
-from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.views import PasswordResetView
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.db.models import F
@@ -22,9 +20,9 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop, override
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
@@ -1687,9 +1685,8 @@ def bulk_user_upload_api(request, domain):
 
 
 @location_safe
-class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetView):
+class CommCareUserPasswordResetView(BaseManageCommCareUserView, FormView):
     form_class = SendCommCareUserPasswordResetEmailForm
-    from_email = settings.DEFAULT_FROM_EMAIL
 
     def post(self, request, *args, **kwargs):
         base_url = reverse(EditCommCareUserView.urlname, args=[request.domain, self.editable_user_id])
@@ -1713,6 +1710,14 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetVie
 
         return HttpResponseRedirect(f"{base_url}#user-password")
 
+    def form_valid(self, form):
+        opts = {
+            "use_https": self.request.is_secure(),
+            "request": self.request,
+        }
+        form.save(**opts)
+        return super().form_valid(form)
+
     @property
     def editable_user_id(self):
         return self.kwargs.get('couch_user_id')
@@ -1723,6 +1728,7 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetVie
         return CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
 
     @method_decorator(require_POST)
+    @method_decorator(csrf_protect)
     def dispatch(self, *args, **kwargs):
         if not user_can_access_other_user(self.domain, self.request.couch_user, self.editable_user):
             return HttpResponse(status=401)
