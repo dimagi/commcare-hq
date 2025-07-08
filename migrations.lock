@@ -892,6 +892,7 @@ repeaters
  0016_repeater_max_workers
  0017_add_indexes
  0018_datasourceupdate
+ 0019_connectformrepeater
 reports
  0001_initial
  0002_auto_20171121_1803
