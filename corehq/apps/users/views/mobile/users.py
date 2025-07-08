@@ -1692,9 +1692,8 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetVie
     from_email = settings.DEFAULT_FROM_EMAIL
 
     def post(self, request, *args, **kwargs):
-        editable_user_id = self.kwargs.get('couch_user_id')
-        base_url = reverse(EditCommCareUserView.urlname, args=[request.domain, editable_user_id])
-        django_user = CommCareUser.get(editable_user_id).get_django_user()
+        base_url = reverse(EditCommCareUserView.urlname, args=[request.domain, self.editable_user_id])
+        django_user = self.editable_user.get_django_user()
 
         error_messages = {
             'inactive': gettext_lazy("This user is inactive and cannot reset their password."),
@@ -1733,7 +1732,7 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetVie
         kwargs = super().get_form_kwargs()
         data = kwargs.get('data', {}).copy()
         data.update({
-            'user_id': self.kwargs.get('couch_user_id')
+            'user_id': self.editable_user_id
         })
         kwargs['data'] = data
         return kwargs
@@ -1742,6 +1741,6 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, PasswordResetVie
         messages.success(self.request, _("Password reset email sent."))
         base_url = reverse(
             EditCommCareUserView.urlname,
-            args=[self.request.domain, self.kwargs.get('couch_user_id')],
+            args=[self.request.domain, self.editable_user_id],
         )
         return f"{base_url}#user-password"
