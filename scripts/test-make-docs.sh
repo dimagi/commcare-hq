@@ -24,6 +24,7 @@ WHITELIST_PATTERNS=(
     'logger is being changed to' # ignore error when FIX_LOGGER_ERROR_OBFUSCATION is true
     'yacc table file version is out of date' # warning whenever building docs on a freshly created virtual environment
     "^<unknown>:[0-9]+: SyntaxWarning: invalid escape sequence '\\\\_'$"  # ignore '\_' syntax warning
+    "pkg_resources is deprecated as an API"  # pkg_resources in setuptools is being removed in v81
     # Only whitelist docs build warnings/errors when absolutely necessary
 )
 
