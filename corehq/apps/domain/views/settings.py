@@ -587,9 +587,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         user = User.objects.get(pk=uid)
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
-        domain = None
-        if couch_user.is_commcare_user():
-            domain = couch_user.domain
+        domain = couch_user.domain if couch_user.is_commcare_user() else None
         log_user_change(by_domain=None, for_domain=domain, couch_user=couch_user, changed_by_user=couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, change_messages=UserChangeMessage.password_reset(),
                         by_domain_required_for_log=False, for_domain_required_for_log=False)
