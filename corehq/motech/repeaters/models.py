@@ -403,13 +403,18 @@ class Repeater(RepeaterSuperProxy):
     @property
     def repeat_records_ready(self):
         """
-        A QuerySet of repeat records in the Pending or Fail state in the
-        order in which they were registered
+        A QuerySet of repeat records in the Pending or Fail state
+        If BACKOFF_REPEATERS is enabled, this will return in the order they
+        were registered, otherwise it will order by the next check date
         """
+        if toggles.BACKOFF_REPEATERS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN):
+            order_by_fields = ['registered_at']
+        else:
+            order_by_fields = ['next_check', 'registered_at']
         return (
             self.repeat_records
             .filter(state__in=RECORD_QUEUED_STATES)
-            .order_by('registered_at')
+            .order_by(*order_by_fields)
         )
 
     @property
