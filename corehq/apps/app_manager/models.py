@@ -317,7 +317,19 @@ class FormActionCondition(DocumentSchema):
         return self.type in ('if', 'always')
 
 
-class FormAction(DocumentSchema):
+class UpdateableDocument(DocumentSchema):
+    def update_object(self, updates):
+        '''
+        Apply all 'updates' to the current object.
+        'updates' is expected to be a collection of properties which already exist on this document
+        '''
+        for key, value in updates.items():
+            if key not in self:
+                raise InvalidPropertyException(key)
+            self.set_raw_value(key, value)
+
+
+class FormAction(UpdateableDocument):
     """
     Corresponds to Case XML
 
@@ -519,7 +531,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
         return 'subcase_{}'.format(self.id)
 
 
-class FormActions(DocumentSchema):
+class FormActions(UpdateableDocument):
 
     open_case = SchemaProperty(OpenCaseAction)
     update_case = SchemaProperty(UpdateCaseAction)
@@ -551,17 +563,6 @@ class FormActions(DocumentSchema):
 
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
-
-    def update(self, updates):
-        '''
-        Apply all 'updates' to the current object.
-        'updates' is expected to be a collection of valid properties within
-        FormActions (such as 'open_case', 'subcases', etc) in a json object form
-        '''
-        for key, value in updates.items():
-            if key not in self:
-                raise InvalidPropertyException(key)
-            self.set_raw_value(key, value)
 
     def with_diffs(self, diffs):
         '''

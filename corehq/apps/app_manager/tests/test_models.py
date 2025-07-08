@@ -7,6 +7,55 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import FormActions, UpdateCaseAction, OpenCaseAction
 
 
+class UpdateableDocumentTests(SimpleTestCase):
+    def test_handles_partially_specified_update(self):
+        actions = FormActions()
+        updates = {
+            'usercase_update': {
+                'update': {
+                    'one': {
+                        'question_path': 'test_path',
+                        'update_mode': 'edit',
+                    }
+                },
+                'condition': {
+                    'type': 'always',
+                    'question': 'test_question',
+                    'answer': 'yes',
+                    'operator': 'selected'
+                }
+            }
+        }
+
+        actions.update_object(updates)
+
+        # Verify that empty values remain empty
+        self.assertEqual(actions.update_case.update, {})
+
+        # Verify that the updated values were applied
+        self.assertEqual(set(actions.usercase_update.update.keys()), {'one'})
+        self.assertEqual(actions.usercase_update.update['one'].question_path, 'test_path')
+        self.assertEqual(actions.usercase_update.update['one'].update_mode, 'edit')
+
+        self.assertEqual(actions.usercase_update.condition['type'], 'always')
+        self.assertEqual(actions.usercase_update.condition['question'], 'test_question')
+        self.assertEqual(actions.usercase_update.condition['answer'], 'yes')
+        self.assertEqual(actions.usercase_update.condition['operator'], 'selected')
+
+    def test_throws_error_on_unrecognized_key(self):
+        actions = FormActions()
+        updates = {
+            'malicious_key': {
+                'update': {}
+            }
+        }
+
+        with self.assertRaises(InvalidPropertyException) as context:
+            actions.update_object(updates)
+
+        self.assertEqual(context.exception.invalid_property, 'malicious_key')
+
+
 class OpenCaseActionTests(SimpleTestCase):
     def test_construction(self):
         action = OpenCaseAction({'name_update': {'question_path': 'name'}})
@@ -302,55 +351,6 @@ class FormActionsTests(SimpleTestCase):
     def test_constructor_creates_empty_values(self):
         actions = FormActions()
         self.assertEqual(actions.update_case.update, {})
-
-
-class FormActions_UpdateTests(SimpleTestCase):
-    def test_handles_partially_specified_update(self):
-        actions = FormActions()
-        updates = {
-            'usercase_update': {
-                'update': {
-                    'one': {
-                        'question_path': 'test_path',
-                        'update_mode': 'edit',
-                    }
-                },
-                'condition': {
-                    'type': 'always',
-                    'question': 'test_question',
-                    'answer': 'yes',
-                    'operator': 'selected'
-                }
-            }
-        }
-
-        actions.update(updates)
-
-        # Verify that empty values remain empty
-        self.assertEqual(actions.update_case.update, {})
-
-        # Verify that the updated values were applied
-        self.assertEqual(set(actions.usercase_update.update.keys()), {'one'})
-        self.assertEqual(actions.usercase_update.update['one'].question_path, 'test_path')
-        self.assertEqual(actions.usercase_update.update['one'].update_mode, 'edit')
-
-        self.assertEqual(actions.usercase_update.condition['type'], 'always')
-        self.assertEqual(actions.usercase_update.condition['question'], 'test_question')
-        self.assertEqual(actions.usercase_update.condition['answer'], 'yes')
-        self.assertEqual(actions.usercase_update.condition['operator'], 'selected')
-
-    def test_throws_error_on_unrecognized_key(self):
-        actions = FormActions()
-        updates = {
-            'malicious_key': {
-                'update': {}
-            }
-        }
-
-        with self.assertRaises(InvalidPropertyException) as context:
-            actions.update(updates)
-
-        self.assertEqual(context.exception.invalid_property, 'malicious_key')
 
 
 class FormActions_WithDiffsTests(SimpleTestCase):
