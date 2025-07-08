@@ -62,20 +62,6 @@ class OpenCaseActionTests(SimpleTestCase):
 
         self.assertEqual(action.name_update.question_path, 'name')
 
-    def test_apply_diffs_with_no_changes(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
-
-        action.apply_diffs({})
-
-        self.assertEqual(action.name_update.question_path, 'name')
-
-    def test_apply_diffs_name_update(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
-
-        action.apply_diffs({'updated': {'question_path': 'updated_name'}})
-
-        self.assertEqual(action.name_update.question_path, 'updated_name')
-
     def test_multiple_name_updates(self):
         action = OpenCaseAction({
             'name_update_multi': [{'question_path': 'name1'}, {'question_path': 'name2'}]
@@ -115,6 +101,54 @@ class OpenCaseActionTests(SimpleTestCase):
 
         self.assertEqual(action.name_update.question_path, 'name')
         self.assertEqual(len(action.name_update_multi), 0)
+
+
+class OpenCaseAction_ApplyUpdates_Tests(SimpleTestCase):
+    def test_no_changes(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+
+        action.apply_updates({}, {})
+
+        self.assertEqual(action.name_update.question_path, 'name')
+
+    def test_name_update(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+
+        action.apply_updates({}, {'updated': {'question_path': 'updated_name'}})
+
+        self.assertEqual(action.name_update.question_path, 'updated_name')
+
+    def test_with_conditional_update(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+
+        update_condition_dict = {'condition': {'type': 'if', 'question': 'name', 'answer': 'bob', 'operator': '='}}
+        action.apply_updates(update_condition_dict, {})
+
+        self.assertEqual(action.condition.type, 'if')
+        self.assertEqual(action.condition.question, 'name')
+        self.assertEqual(action.condition.answer, 'bob')
+        self.assertEqual(action.condition.operator, '=')
+
+    def test_can_assign_with_update(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+
+        action.apply_updates({'name_update': {'question_path': 'name2'}}, {})
+
+        self.assertEqual(action.name_update.question_path, 'name2')
+
+    def test_diffs_override_updates(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+
+        update = {'name_update': {'question_path': 'name2'}}
+        diff = {'updated': {'question_path': 'name3'}}
+        action.apply_updates(update, diff)
+
+        self.assertEqual(action.name_update.question_path, 'name3')
+
+    def test_with_invalid_key_raises_exception(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+        with self.assertRaises(InvalidPropertyException):
+            action.apply_updates({'invalid_property': {}}, {})
 
 
 class UpdateCaseActionTests(SimpleTestCase):
@@ -208,13 +242,13 @@ class UpdateCaseActionTests(SimpleTestCase):
         self.assertIsNone(action.update_multi)
 
 
-class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
+class UpdateCaseAction_ApplyUpdates_Tests(SimpleTestCase):
     def test_no_changes(self):
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': 'one'}
         }})
 
-        actions.apply_diffs({})
+        actions.apply_updates({}, {})
 
         self.assertEqual(actions.update['one'].question_path, 'one')
 
@@ -224,7 +258,7 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
             'two': {'question_path': 'two'},
         }})
 
-        actions.apply_diffs({
+        actions.apply_updates({}, {
             'add': {'three': {'question_path': 'some_path'}},
         })
 
@@ -236,7 +270,7 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
             'two': {'question_path': 'two'},
         }})
 
-        actions.apply_diffs({
+        actions.apply_updates({}, {
             'del': ['one'],
         })
 
@@ -248,7 +282,7 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
             'two': {'question_path': 'two'},
         }})
 
-        actions.apply_diffs({
+        actions.apply_updates({}, {
             'update': {
                 'two': {
                     'original': {'question_path': 'two'},
@@ -264,7 +298,7 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
             'one': {'question_path': 'updated'},
         }})
 
-        actions.apply_diffs({
+        actions.apply_updates({}, {
             'update': {
                 'one': {
                     'original': {'question_path': 'stale'},
@@ -281,7 +315,7 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
             'two': {'question_path': 'two'},
         }})
 
-        actions.apply_diffs({
+        actions.apply_updates({}, {
             'add': {'one': {'question_path': 'four'}},
         })
 
@@ -294,7 +328,7 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
         }})
 
         with self.assertRaises(MissingPropertyException):
-            actions.apply_diffs({
+            actions.apply_updates({}, {
                 'update': {
                     'two': {
                         'original': {'question_path': 'a'},
@@ -307,7 +341,7 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
         actions = UpdateCaseAction({'update': {}})
 
         with self.assertRaises(MissingPropertyException) as context:
-            actions.apply_diffs({
+            actions.apply_updates({}, {
                 'update': {
                     'one': {
                         'original': {'question_path': 'a'},
@@ -327,7 +361,7 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
             'one': {'question_path': 'one'},
         }})
 
-        actions.apply_diffs({'del': ['two']})
+        actions.apply_updates({}, {'del': ['two']})
 
         self.assertEqual(actions.update.keys(), {'one'})
 
@@ -338,13 +372,48 @@ class UpdateCaseAction_ApplyDiffs_Tests(SimpleTestCase):
         }})
 
         with self.assertRaises(DiffConflictException):
-            actions.apply_diffs({
+            actions.apply_updates({}, {
                 'update': {'two': {
                     'original': {'question_path': 'two'},
                     'updated': {'question_path': 'three'}
                 }},
                 'del': ['two']
             })
+
+    def test_updates_no_diffs(self):
+        actions = UpdateCaseAction({'update': {
+            'one': {'question_path': 'one'}
+        }})
+
+        actions.apply_updates({'update': {'one': {'question_path': 'two'}}}, {})
+
+        self.assertEqual(actions.update['one'].question_path, 'two')
+
+    def test_updates_condition(self):
+        actions = UpdateCaseAction()
+
+        actions.apply_updates({'condition': {'type': 'never'}}, {})
+        self.assertEqual(actions.condition.type, 'never')
+
+    def test_diffs_override_updates(self):
+        actions = UpdateCaseAction({'update': {
+            'one': {'question_path': 'one'},
+        }})
+
+        updates = {
+            'update': {'one': {'question_path': 'two'}}
+        }
+        diffs = {
+            'update': {
+                'one': {
+                    'original': {'question_path': 'one'},
+                    'updated': {'question_path': 'three'}
+                }
+            }
+        }
+        actions.apply_updates(updates, diffs)
+
+        self.assertEqual(actions.update['one'].question_path, 'three')
 
 
 class FormActionsTests(SimpleTestCase):
@@ -353,7 +422,7 @@ class FormActionsTests(SimpleTestCase):
         self.assertEqual(actions.update_case.update, {})
 
 
-class FormActions_WithDiffsTests(SimpleTestCase):
+class FormActions_WithUpdatesTests(SimpleTestCase):
     def test_empty_diff(self):
         actions = FormActions({
             'open_case': {
@@ -367,10 +436,20 @@ class FormActions_WithDiffsTests(SimpleTestCase):
             }
         })
 
-        result = actions.with_diffs({})
+        result = actions.with_updates({}, {})
 
         self.assertEqual(result['open_case']['name_update']['question_path'], 'name')
         self.assertEqual(list(result['update_case']['update'].keys()), ['one', 'two'])
+
+    def test_other_updates(self):
+        # i.e. not open_case or update_case
+        actions = FormActions()
+
+        close_case_update = {'close_case': {'condition': {'type': 'never'}}}
+
+        result = actions.with_updates(close_case_update, {})
+
+        self.assertEqual(result.close_case.condition.type, 'never')
 
     def test_all_actions_at_once(self):
         actions = FormActions({
@@ -385,7 +464,7 @@ class FormActions_WithDiffsTests(SimpleTestCase):
             }
         })
 
-        result = actions.with_diffs({
+        result = actions.with_updates({}, {
             'open_case': {
                 'original': {'question_path': 'form_name'},
                 'updated': {'question_path': 'new_name'}
