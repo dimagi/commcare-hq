@@ -21,7 +21,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop, override
+from django.utils.translation import gettext_lazy, gettext_noop, override
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
@@ -1685,6 +1685,33 @@ def bulk_user_upload_api(request, domain):
 class UserPasswordResetView(BaseManageCommCareUserView, PasswordResetView):
     form_class = SendPasswordResetEmailForm
     from_email = settings.DEFAULT_FROM_EMAIL
+
+    def post(self, request, *args, **kwargs):
+        editable_user_id = self.kwargs.get('couch_user_id')
+        base_url = reverse(EditCommCareUserView.urlname, args=[request.domain, editable_user_id])
+        django_user = CommCareUser.get(editable_user_id).get_django_user()
+
+        error_messages = {
+            'inactive': gettext_lazy("This user is inactive and cannot reset their password."),
+            'unusable': gettext_lazy("This user account cannot reset the password."),
+        }
+
+        if not django_user.has_usable_password():
+            messages.error(self.request, _("Password reset email failed to send - ") + error_messages['inactive'])
+            return HttpResponseRedirect(f"{base_url}#user-password")
+        if not django_user.is_active:
+            messages.error(self.request, _("Password reset email failed to send - ") + error_messages['inactive'])
+            return HttpResponseRedirect(f"{base_url}#user-password")
+
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+
+        return HttpResponseRedirect(f"{base_url}#user-password")
+
+    @method_decorator(require_POST)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
