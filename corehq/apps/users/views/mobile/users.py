@@ -334,7 +334,7 @@ class EditCommCareUserView(BaseEditUserView):
             messages.error(self.request, _(
                 "There were some errors while saving user's locations. Please check the 'Locations' tab"
             ))
-        if self.editable_user.is_active:
+        if self.editable_user.is_active and toggles.TWO_STAGE_USER_PROVISIONING.enabled(self.domain):
             context.update({
                 'send_password_reset_email_form': SendCommCareUserPasswordResetEmailForm()
             })
