@@ -1702,13 +1702,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
-SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
-    'sort_calculation_in_case_list',
-    'Configure a custom xpath calculation for Sort Property in Case Lists',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',

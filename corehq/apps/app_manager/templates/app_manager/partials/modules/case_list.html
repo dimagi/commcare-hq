@@ -217,7 +217,7 @@
                       </span>
                     </th>
                   {% endif %}
-                  {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+                  {% if request|request_has_privilege:'SORT_CALCULATION_IN_CASE_LIST' %}
                     <th>{% trans "Sort Calculation" %}</th>
                   {% endif %}
                   <th>{% trans "Format" %}</th>
@@ -283,7 +283,7 @@
                     </td>
                   {% endif %}
 
-                  {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+                  {% if request|request_has_privilege:'SORT_CALCULATION_IN_CASE_LIST' %}
                     <td>
                       <input
                         class="form-control"

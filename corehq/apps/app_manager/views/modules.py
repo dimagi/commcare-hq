@@ -1273,7 +1273,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             if item.field in old_elements_by_field:
                 item.display = old_elements_by_field[item.field].display
             item.display[lang] = sort_element['display']
-            if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
+            if domain_has_privilege(domain, privileges.SORT_CALCULATION_IN_CASE_LIST):
                 item.sort_calculation = sort_element['sort_calculation']
             else:
                 item.sort_calculation = ""
