@@ -118,9 +118,6 @@ $dimagi-indigo: #3843D0;
 $dimagi-marigold: #FEAF31;
 $dimagi-sunset: #E44434;
 $dimagi-mango: #FC5F36;
-$dimagi-lime-green: #6AB849;
-$dimagi-deep-lavender: #8962C2;
-
 
 // Base color overrides
 $blue: #5D70D2;
@@ -144,6 +141,9 @@ $gray-800: #343a40;
 // Blues from default stylesheet - needed for reference
 $blue-600: shade-color($blue, 20%);
 $blue-900: shade-color($blue, 80%);
+
+// Purple from default stylesheet - needed for reference
+$purple-400: shade-color($purple, 20%);
 
 // for determining when to show black or white text on top of color
 $min-contrast-ratio: 3;
@@ -247,3 +247,6 @@ $position-values: (
   50: 50%,
   100: 100%,
 );
+
+// WebApps
+$home-screen-start-button: #6AB849;

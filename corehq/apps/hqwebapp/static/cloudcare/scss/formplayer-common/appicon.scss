@@ -127,14 +127,14 @@
 }
 
 .appicon-start {
-  background-color: $dimagi-lime-green;
+  background-color: $home-screen-start-button;
   .appicon-icon { color: $white; }
   &:hover {
-    background-color: darken($dimagi-lime-green, 10);
+    background-color: darken($home-screen-start-button, 10);
     .appicon-icon { color: $white; }
   }
   &:active {
-    background-color: darken($dimagi-lime-green, 20);
+    background-color: darken($home-screen-start-button, 20);
     .appicon-icon { color: $white; }
   }
 }
@@ -168,16 +168,16 @@
 }
 
 .appicon-restore-as {
-  background-color: $dimagi-deep-lavender;
+  background-color: $purple-400;
   .appicon-icon {
     color: $white;
   }
   &:hover {
-    background-color: darken($dimagi-deep-lavender, 10);
+    background-color: darken($purple-400, 10);
     .appicon-icon { color: $white; }
   }
   &:active {
-    background-color: darken($dimagi-deep-lavender, 20);
+    background-color: darken($purple-400, 20);
     .appicon-icon { color: $white; }
   }
 }
