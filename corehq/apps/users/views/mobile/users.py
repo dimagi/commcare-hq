@@ -1697,7 +1697,7 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, FormView):
         }
 
         if not django_user.has_usable_password():
-            messages.error(self.request, _("Password reset email failed to send - ") + error_messages['inactive'])
+            messages.error(self.request, _("Password reset email failed to send - ") + error_messages['unusable'])
             return HttpResponseRedirect(f"{base_url}#user-password")
         if not django_user.is_active:
             messages.error(self.request, _("Password reset email failed to send - ") + error_messages['inactive'])
