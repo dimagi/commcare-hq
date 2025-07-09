@@ -241,7 +241,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     primary_location = fields.CharField()
     locations = fields.ListField()
     require_account_confirmation = fields.BooleanField(default=False)
-    send_confirmation_email = fields.BooleanField(default=False)
+    send_confirmation_email_now = fields.BooleanField(default=False)
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -271,8 +271,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
-        require_account_confirmation = bundle.data.pop('require_account_confirmation', None)
-        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', None)
+        require_account_confirmation = bundle.data.pop('require_account_confirmation', False)
+        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
         password = bundle.data.get('password')
         if not (password or bundle.data.get('connect_username')) and not require_account_confirmation:
             raise BadRequest(_('Password or connect username required'))
@@ -346,7 +346,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
-        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', None)
+        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
@@ -354,8 +354,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
 
-        if (toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain'])
-                and not bundle.obj.is_account_confirmed and send_confirmation_email):
+        if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']) and send_confirmation_email:
+            if bundle.obj.is_account_confirmed:
+                raise BadRequest(_("The confirmation email can not be sent "
+                                   "because this user's account is already confirmed."))
             if not bundle.obj.email:
                 raise BadRequest(_("This user has no email. "
                                    "You must provide the user's email to send a confirmation email."))
@@ -376,6 +378,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def dehydrate_locations(self, bundle):
         return bundle.obj.get_location_ids(bundle.obj.domain)
+
+    def dehydrate(self, bundle):
+        bundle.data.pop('require_account_confirmation', None)
+        bundle.data.pop('send_confirmation_email_now', None)
+        return super(v0_1.CommCareUserResource, self).dehydrate(bundle)
 
     @classmethod
     def _update(cls, bundle, user_change_logger=None):

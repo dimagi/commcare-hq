@@ -109,9 +109,7 @@ class TestCommCareUserResource(APIResourceTest):
             'id': backend_id,
             'last_name': '',
             'phone_numbers': [],
-            'require_account_confirmation': False,
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'send_confirmation_email': False,
             'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: '', 'imaginary': '',
                           'commcare_location_id': self.loc2.location_id,
                           'commcare_primary_case_sharing_id': self.loc2.location_id,
@@ -144,9 +142,7 @@ class TestCommCareUserResource(APIResourceTest):
             'id': backend_id,
             'last_name': '',
             'phone_numbers': [],
-            'require_account_confirmation': False,
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'send_confirmation_email': False,
             'user_data': {'commcare_project': 'qwerty',
                           PROFILE_SLUG: '',
                           'imaginary': '',
@@ -480,7 +476,10 @@ class TestCommCareUserResource(APIResourceTest):
                                                    json.dumps(user_json),
                                                    content_type='application/json',
                                                    method='PUT')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "The confirmation email can not be sent because "
+                         "this user's account is already confirmed.")
         self.assertEqual(mock_send_account_confirmation.call_count, 0)
 
     @flag_enabled('TWO_STAGE_USER_PROVISIONING')
