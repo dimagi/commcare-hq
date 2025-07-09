@@ -16,6 +16,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'payment_verified',
         'payment_verified_by',
         'payment_status',
+        'payment_timestamp',
         'kyc_status',
     ]
 
@@ -70,6 +71,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     )
     payment_status = columns.Column(
         verbose_name=_("Payment Status"),
+    )
+    payment_timestamp = columns.Column(
+        verbose_name=_("Requested At"),
     )
 
     def render_verify_select(self, record, value):
