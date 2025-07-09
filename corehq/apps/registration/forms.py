@@ -105,6 +105,7 @@ class RegisterWebUserForm(forms.Form):
             server_location_field = [
                 hqcrispy.RadioSelect(
                     'server_location',
+                    data_bind="checked: serverLocation"
                 ),
             ]
 
