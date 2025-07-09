@@ -880,9 +880,9 @@ class NewMobileWorkerForm(forms.Form):
                 location_field,
                 confirm_account_field,
                 email_field,
-                send_email_field,
                 confirm_account_by_sms_field,
                 phone_number_field,
+                send_email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
