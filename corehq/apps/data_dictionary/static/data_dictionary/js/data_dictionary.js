@@ -25,6 +25,7 @@ var caseType = function (
     changeSaveButton,
     resetSaveButton,
     dataUrl,
+    isLoadingCaseProperties,
 ) {
     var self = {};
     self.name = name || gettext("No Name");
@@ -44,10 +45,14 @@ var caseType = function (
 
     self.loadCaseProperties = function () {
         if (self.groups().length === 0) {
+            isLoadingCaseProperties(true);
             const caseTypeUrl = self.dataUrl + self.name + '/';
             fetchCaseProperties(caseTypeUrl).then(() => {
                 self.groups.sort(sortGroupsFn);
                 self.resetSaveButton();
+                isLoadingCaseProperties(false);
+            }).catch(() => {
+                isLoadingCaseProperties(false);
             });
         }
     };
@@ -324,6 +329,10 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
 
+    // Loading indicators
+    self.isLoadingCaseTypes = ko.observable(false);
+    self.isLoadingCaseProperties = ko.observable(false);
+
     self.casePropertyWarningViewModel = new casePropertyWarningViewModel(casePropertyLimit);
 
     const params = new URLSearchParams(document.location.search);
@@ -415,6 +424,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
 
     self.init = function (callback) {
         // Get list of case types
+        self.isLoadingCaseTypes(true);
         $.getJSON(dataUrl, {load_deprecated_case_types: self.showDeprecatedCaseTypes()})
             .done(function (data) {
                 _.each(data.case_types, function (caseTypeData) {
@@ -429,6 +439,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         changeSaveButton,
                         resetSaveButton,
                         dataUrl,
+                        self.isLoadingCaseProperties,
                     );
                     self.caseTypes.push(caseTypeObj);
                 });
@@ -444,6 +455,11 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 }
                 self.fhirResourceType.subscribe(changeSaveButton);
                 self.removefhirResourceType.subscribe(changeSaveButton);
+                self.isLoadingCaseTypes(false);
+                callback();
+            })
+            .fail(function() {
+                self.isLoadingCaseTypes(false);
                 callback();
             });
     };
