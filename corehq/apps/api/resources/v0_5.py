@@ -36,7 +36,6 @@ from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource
 
-
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -570,11 +569,13 @@ class WebUserResource(v0_1.WebUserResource):
         return [
             url(r"^(?P<pk>\w[\w/-]*)/enable/$", self.wrap_view('enable_user'), name="api_enable_web_user"),
             url(r"^(?P<pk>\w[\w/-]*)/disable/$", self.wrap_view('disable_user'), name="api_disable_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('enable_user'), name="api_activate_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$",
+                self.wrap_view('disable_user'), name="api_deactivate_web_user"),
         ]
 
     @location_safe
     def enable_user(self, request, **kwargs):
-        print("enable_user api")
         return self._modify_user_status(request, **kwargs, enabled=True)
 
     @location_safe
@@ -586,21 +587,17 @@ class WebUserResource(v0_1.WebUserResource):
         self.is_authenticated(request)
         self.throttle_check(request)
 
-        user = WebUser.get_by_user_id(kwargs['pk'], kwargs["domain"])
+        domain = kwargs["domain"]
+
+        user = WebUser.get_by_user_id(kwargs['pk'], domain)
         if not user:
             raise NotFound()
 
-        # need different check
-        # try:
-        #     verify_modify_user_conditions(request, user, enabled)
+        dm = user.get_domain_membership(domain)
 
-        # except ModifyUserStatusException as e:
-        #     raise BadRequest(_(str(e)))
-
-        dm = user.get_domain_membership(kwargs["domain"])
         dm.is_active = enabled
         user.save(spawn_task=True)
-        log_user_change(by_domain=kwargs["domain"], for_domain=kwargs["domain"],
+        log_user_change(by_domain=domain, for_domain=domain,
                         couch_user=user, changed_by_user=request.couch_user,
                         changed_via=USER_CHANGE_VIA_API, fields_changed={'domain_membership.is_active': enabled})
 
