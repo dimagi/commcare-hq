@@ -696,6 +696,7 @@ class TestCommCareUserPasswordResetView(TestCase):
     def _mock_commcare_user(self, is_active=True, has_usable_password=True):
         mock_user = Mock()
         mock_user._id = "mock-user-id"
+        mock_user.get_email.return_value = "test@example.com"
         mock_django_user = Mock()
         mock_django_user.is_active = is_active
         mock_django_user.has_usable_password.return_value = has_usable_password
@@ -741,7 +742,6 @@ class TestCommCareUserPasswordResetView(TestCase):
         view.setup(request, domain=self.domain, couch_user_id=self.editable_user_id)
 
         response = view.post(request)
-        # response = view.post(request, domain=self.domain, couch_user_id=self.editable_user_id)
 
         self.assertIsInstance(response, HttpResponseRedirect)
         self.assertEqual(response.url, '/edit/user/url#user-password')
