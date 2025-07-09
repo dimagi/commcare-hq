@@ -1,3 +1,6 @@
+from datetime import date
+import pytz
+
 from django.forms.utils import flatatt
 from django.utils.html import mark_safe
 from django.utils.translation import gettext as _
@@ -5,6 +8,9 @@ from django.utils.translation import gettext as _
 from django_tables2 import columns
 
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
+from corehq.apps.reports.v2.utils import report_date_to_json
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
+from corehq.util.timezones.utils import parse_date
 
 
 class DisableableCheckBoxColumn(columns.CheckBoxColumn):
@@ -45,7 +51,7 @@ class KycVerifyTable(BaseHtmxTable):
                 template_name='kyc/partials/kyc_verify_status.html',
                 verbose_name=_('KYC Status')
             )),
-            ('kyc_last_verified_at', columns.DateTimeColumn(
+            ('kyc_last_verified_at', columns.Column(
                 verbose_name=_('Last Verified')
             )),
             ('verify_btn', columns.TemplateColumn(
@@ -54,3 +60,14 @@ class KycVerifyTable(BaseHtmxTable):
             )),
         ])
         return cols
+
+    def render_kyc_last_verified_at(self, record, value):
+        parsed_date = parse_date(value)
+        if not isinstance(parsed_date, date):
+            return ''
+        return report_date_to_json(
+            parsed_date,
+            pytz.UTC,
+            USER_DATETIME_FORMAT_WITH_SEC,
+            is_phonetime=False
+        )
