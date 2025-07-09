@@ -1695,8 +1695,12 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, FormView):
         error_messages = {
             'inactive': gettext_lazy("This user is inactive and cannot reset their password."),
             'unusable': gettext_lazy("This user account cannot reset the password."),
+            'no_email': gettext_lazy("This user does not have an email address set."),
         }
 
+        if not self.editable_user.get_email():
+            messages.error(self.request, _("Password reset email failed to send - ") + error_messages['no_email'])
+            return HttpResponseRedirect(f"{base_url}#user-password")
         if not django_user.has_usable_password():
             messages.error(self.request, _("Password reset email failed to send - ") + error_messages['unusable'])
             return HttpResponseRedirect(f"{base_url}#user-password")
@@ -1744,7 +1748,7 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, FormView):
         return kwargs
 
     def get_success_url(self):
-        messages.success(self.request, _("Password reset email sent."))
+        messages.success(self.request, _("Password reset email sent to {}").format(self.editable_user.get_email()))
         base_url = reverse(
             EditCommCareUserView.urlname,
             args=[self.request.domain, self.editable_user_id],
