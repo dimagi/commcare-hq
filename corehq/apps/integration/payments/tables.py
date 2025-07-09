@@ -1,19 +1,14 @@
-from datetime import date
-import pytz
-
 from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from django_tables2 import columns
 
+from corehq.apps.hqwebapp.tables.columns import DateTimeStringColumn
 from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 from corehq.apps.integration.payments.const import PaymentStatus
-from corehq.apps.reports.v2.utils import report_date_to_json
-from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
-from corehq.util.timezones.utils import parse_date
 
 
 class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
@@ -78,7 +73,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     payment_status = columns.Column(
         verbose_name=_("Payment Status"),
     )
-    payment_timestamp = columns.Column(
+    payment_timestamp = DateTimeStringColumn(
         verbose_name=_("Requested At"),
     )
 
@@ -104,14 +99,3 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         if user_or_case_id and user_or_case_id in self.context['user_or_cases_verification_statuses']:
             return self.context['user_or_cases_verification_statuses'][user_or_case_id]
         return _("Unavailable")
-
-    def render_payment_timestamp(self, record, value):
-        parsed_date = parse_date(value)
-        if not isinstance(parsed_date, date):
-            return ''
-        return report_date_to_json(
-            parsed_date,
-            pytz.UTC,
-            USER_DATETIME_FORMAT_WITH_SEC,
-            is_phonetime=False
-        )
