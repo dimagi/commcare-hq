@@ -888,7 +888,7 @@ class NewMobileWorkerForm(forms.Form):
                         _("Password"),
                         InlineField(
                             'new_password',
-                            data_bind="value: password, valueUpdate: 'input', enable: passwordEnabled",
+                            data_bind="value: password, valueUpdate: 'input'",
                         ),
                         crispy.HTML('''
                             <p class="help-block" data-bind="if: $root.isSuggestedPassword">
@@ -915,15 +915,6 @@ class NewMobileWorkerForm(forms.Form):
                                 <!-- ko if: $root.skipStandardValidations() -->
                                     <i class="fa fa-info-circle"></i> {custom_warning}
                                 <!-- /ko -->
-                                <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
-                                    <!-- ko if: $root.stagedUser().force_account_confirmation() -->
-                                        <i class="fa fa-warning"></i> {disabled_email}
-                                    <!-- /ko -->
-                                    <!-- ko if: !($root.stagedUser().force_account_confirmation())
-                                    && $root.stagedUser().force_account_confirmation_by_sms() -->
-                                        <i class="fa fa-warning"></i> {disabled_phone}
-                                    <!-- /ko -->
-                                <!-- /ko -->
                             </p>
                         '''.format(
                             suggested=_(
@@ -935,28 +926,22 @@ class NewMobileWorkerForm(forms.Form):
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
-                            disabled_email=_(
-                                "Setting a password is disabled. The user "
-                                "will set their own password on confirming "
-                                "their account email."
-                            ),
-                            disabled_phone=_(
-                                "Setting a password is disabled. The user "
-                                "will set their own password on confirming "
-                                "their account phone number."
-                            ),
                             short=_("Password must have at least {password_length} characters."
                                     ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
                         required=True,
                     ),
-                    data_bind='''
-                        css: {
-                            'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS,
-                            'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
-                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR,
-                        }
-                    ''' if not has_custom_clean_password() else ''
+                    data_bind=(
+                        "visible: passwordVisible"
+                        + (
+                            ", css: {"
+                            "'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS, "
+                            "'has-warning': $root.passwordStatus() === $root.STATUS.WARNING, "
+                            "'has-error': $root.passwordStatus() === $root.STATUS.ERROR"
+                            "}"
+                            if not has_custom_clean_password() else ""
+                        )
+                    )
                 ),
             )
         )
