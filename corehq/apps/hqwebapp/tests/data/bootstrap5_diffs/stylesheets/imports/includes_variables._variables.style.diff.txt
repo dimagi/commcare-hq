@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,130 +1,247 @@
+@@ -1,130 +1,252 @@
 -@import "@{b3-import-variables}";
 -
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
@@ -232,7 +232,6 @@
 +$dimagi-sunset: #E44434;
 +$dimagi-mango: #FC5F36;
 +
-+
 +// Base color overrides
 +$blue: #5D70D2;
 +$green: #358623;
@@ -255,6 +254,9 @@
 +// Blues from default stylesheet - needed for reference
 +$blue-600: shade-color($blue, 20%);
 +$blue-900: shade-color($blue, 80%);
++
++// Purple from default stylesheet - needed for reference
++$purple-400: shade-color($purple, 20%);
 +
 +// for determining when to show black or white text on top of color
 +$min-contrast-ratio: 3;
@@ -358,3 +360,6 @@
 +  50: 50%,
 +  100: 100%,
 +);
++
++// WebApps
++$home-screen-start-button: #6AB849;
