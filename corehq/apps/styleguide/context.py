@@ -236,8 +236,8 @@ def get_common_icons():
         {
             'name': 'Common FontAwesome secondary icons',
             'icons': _add_prefix_to_icons('fa-solid', [
-                'fa-cloud-arrow-down', 'fa-cloud-arrow-up', 'fa-warning', 'fa-info-circle', 'fa-question-circle',
-                'fa-check', 'fa-external-link',
+                'fa-cloud-arrow-down', 'fa-cloud-arrow-up', 'fa-triangle-exclamation', 'fa-info-circle',
+                'fa-question-circle', 'fa-check', 'fa-external-link',
             ]),
         }
     ]
@@ -252,7 +252,7 @@ def get_custom_icons():
                 'fcc-settings', 'fcc-help', 'fcc-exchange', 'fcc-messaging', 'fcc-chart-report',
                 'fcc-form-report', 'fcc-datatable-report', 'fcc-piegraph-report', 'fcc-survey',
                 'fcc-casemgt', 'fcc-blankapp', 'fcc-globe', 'fcc-app-createform', 'fcc-app-updateform',
-                'fcc-app-completeform', 'fcc-app-biometrics',
+                'fcc-app-completeform', 'fcc-app-biometrics', 'fcc-incomplete',
             ]),
         },
         {

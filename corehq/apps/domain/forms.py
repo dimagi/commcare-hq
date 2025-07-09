@@ -47,10 +47,7 @@ from memoized import memoized
 from PIL import Image
 
 from corehq import privileges
-from corehq.apps.accounting.const import (
-    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
-    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
-)
+from corehq.apps.accounting.const import PAY_ANNUALLY_SUBSCRIPTION_MONTHS
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
@@ -130,6 +127,7 @@ from corehq.apps.registration.models import SelfSignupWorkflow
 from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.util import generate_mobile_username
 from corehq.toggles import (
     COMMCARE_CONNECT,
     EXPORTS_APPS_USE_ELASTICSEARCH,
@@ -146,7 +144,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
 
-upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
+upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT / (1024 * 1024):,.0f}"
 
 
 def tf_choices(true_txt, false_txt):
@@ -1461,10 +1459,10 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
         if not self.user.is_staff:
             self.fields['auto_case_update_limit'].disabled = True
-            self.fields['auto_case_update_limit'].help_text = (
+            self.fields['auto_case_update_limit'].help_text = _(
                 'Case update rule limits are only modifiable by Dimagi admins. '
-                'Please reach out to support@dimagi.com if you wish to update this setting.'
-            )
+                'Please reach out to {support_email} if you wish to update this setting.'
+            ).format(support_email=settings.SUPPORT_EMAIL)
 
     @property
     def current_values(self):
@@ -1607,7 +1605,62 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
-class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
+def send_password_reset_email(active_users, domain_override, subject_template_name,
+                              email_template_name, use_https, token_generator, request):
+    """
+    Generates a one-use only link for resetting password and sends to the
+    user.
+    """
+    if settings.IS_SAAS_ENVIRONMENT:
+        subject_template_name = 'registration/email/password_reset_subject_hq.txt'
+        email_template_name = 'registration/email/password_reset_email_hq.html'
+
+    # the code below is copied from default PasswordForm
+    for user in active_users:
+        # Make sure that no email is sent to a user that actually has
+        # a password marked as unusable
+        if not user.has_usable_password():
+            continue
+        if not domain_override:
+            current_site = get_current_site(request)
+            site_name = current_site.name
+            domain = current_site.domain
+        else:
+            site_name = domain = domain_override
+
+        couch_user = CouchUser.from_django_user(user)
+        if not couch_user:
+            continue
+
+        user_email = couch_user.get_email()
+        if not user_email:
+            continue
+
+        c = {
+            'email': user_email,
+            'domain': domain,
+            'site_name': site_name,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'user': user,
+            'token': token_generator.make_token(user),
+            'protocol': 'https' if use_https else 'http',
+        }
+        c.update(project_logo_emails_context(None, couch_user=couch_user))
+        subject = render_to_string(subject_template_name, c)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+
+        message_plaintext = render_to_string('registration/password_reset_email.html', c)
+        message_html = render_to_string(email_template_name, c)
+
+        send_html_email_async.delay(
+            subject, user_email, message_html,
+            text_content=message_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL
+        )
+
+
+class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     Only finds users and emails forms where the USERNAME is equal to the
     email specified (preventing Mobile Workers from using this form to submit).
@@ -1615,7 +1668,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     This small change is why we can't use the default PasswordReset form.
     """
     email = forms.EmailField(label=gettext_lazy("Email"), max_length=254,
-                             widget=forms.TextInput(attrs={'class': 'form-control'}))
+                            widget=forms.TextInput(attrs={'class': 'form-control'}))
     if settings.RECAPTCHA_PRIVATE_KEY:
         captcha = ReCaptchaField(label="")
     error_messages = {
@@ -1641,6 +1694,36 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
 
+    def save(self, active_users, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None, **kwargs):
+        send_password_reset_email(active_users, domain_override, subject_template_name,
+                                  email_template_name, use_https, token_generator, request)
+
+
+class UsernameAwareEmailField(forms.EmailField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget = forms.TextInput(attrs={'class': 'form-control'})
+
+    def validate(self, value):
+        if value and '@' not in value:
+            raise ValidationError(
+                gettext_lazy(
+                    "This looks like a username. "
+                    "Please check your URL to be sure you are at your project's URL"
+                )
+            )
+        super().validate(value)
+
+
+class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
+    email = UsernameAwareEmailField(label=gettext_lazy("Email"), max_length=254)
+
     def save(self, domain_override=None,
              subject_template_name='registration/password_reset_subject.txt',
              email_template_name='registration/password_reset_email.html',
@@ -1652,11 +1735,6 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
         Generates a one-use only link for resetting password and sends to the
         user.
         """
-
-        if settings.IS_SAAS_ENVIRONMENT:
-            subject_template_name = 'registration/email/password_reset_subject_hq.txt'
-            email_template_name = 'registration/email/password_reset_email_hq.html'
-
         email = self.cleaned_data["email"]
 
         # this is the line that we couldn't easily override in PasswordForm where
@@ -1665,49 +1743,74 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
         # get a password reset email.
         active_users = get_active_users_by_email(email)
 
-        # the code below is copied from default PasswordForm
-        for user in active_users:
-            # Make sure that no email is sent to a user that actually has
-            # a password marked as unusable
-            if not user.has_usable_password():
-                continue
-            if not domain_override:
-                current_site = get_current_site(request)
-                site_name = current_site.name
-                domain = current_site.domain
-            else:
-                site_name = domain = domain_override
+        super().save(active_users, domain_override, subject_template_name,
+                     email_template_name, html_email_template_name, use_https,
+                     token_generator, from_email, request, **kwargs)
 
-            couch_user = CouchUser.from_django_user(user)
-            if not couch_user:
-                continue
 
-            user_email = couch_user.get_email()
-            if not user_email:
-                continue
+class UsernameOrEmailField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget = forms.TextInput(attrs={'class': 'form-control'})
 
-            c = {
-                'email': user_email,
-                'domain': domain,
-                'site_name': site_name,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'user': user,
-                'token': token_generator.make_token(user),
-                'protocol': 'https' if use_https else 'http',
-            }
-            c.update(project_logo_emails_context(None, couch_user=couch_user))
-            subject = render_to_string(subject_template_name, c)
-            # Email subject *must not* contain newlines
-            subject = ''.join(subject.splitlines())
+    def validate(self, value):
+        if value and '@' in value:
+            email_field = forms.EmailField()
+            try:
+                email_field.run_validators(value)
+            except ValidationError as e:
+                raise ValidationError(e)
+        super().validate(value)
 
-            message_plaintext = render_to_string('registration/password_reset_email.html', c)
-            message_html = render_to_string(email_template_name, c)
 
-            send_html_email_async.delay(
-                subject, user_email, message_html,
-                text_content=message_plaintext,
-                email_from=settings.DEFAULT_FROM_EMAIL
-            )
+class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
+    email = UsernameOrEmailField(label=gettext_lazy("Email or Username"), max_length=254)
+
+    def __init__(self, *args, domain, **kwargs):
+        self.domain = domain
+        super().__init__(*args, **kwargs)
+
+    def clean_email(self):
+        email_or_username = self.cleaned_data["email"]
+        if email_or_username and '@' in email_or_username:
+            return email_or_username
+        mobile_username_email = generate_mobile_username(email_or_username, self.domain, False)
+        self.cleaned_data["email"] = mobile_username_email
+        return super().clean_email()
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None, **kwargs):
+        """
+        Generates a one-use only link for resetting password and sends to the
+        user.
+        """
+        email = self.cleaned_data["email"]
+
+        # this is the line that we couldn't easily override in PasswordForm where
+        # we specifically filter for the username, not the email, so that
+        # mobile workers who have the same email set as a web worker don't
+        # get a password reset email.
+        active_users = get_active_users_by_email(email, self.domain)
+
+        super().save(active_users, domain_override, subject_template_name,
+                     email_template_name, html_email_template_name, use_https,
+                     token_generator, from_email, request, **kwargs)
+
+
+class ConfidentialDomainPasswordResetForm(DomainPasswordResetForm):
+
+    def clean_email(self):
+        try:
+            return super(ConfidentialDomainPasswordResetForm, self).clean_email()
+        except forms.ValidationError:
+            # The base class throws various emails that give away information about the user;
+            # we can pretend all is well since the save() method is safe for missing users.
+            return self.cleaned_data['email']
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
@@ -1856,6 +1959,12 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     def clean_email_list(self):
         return self.data.getlist('email_list')
 
+    def get_email_lists(self):
+        email_list = self.clean_email_list()
+        contact_email = email_list[:1]
+        cc_emails = email_list[1:]
+        return contact_email, cc_emails
+
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
     @transaction.atomic
@@ -1937,15 +2046,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
+                new_sub_date_start, new_sub_date_end = self.new_subscription_start_end_dates()
                 if (
                     self.is_downgrade_from_paid_plan()
                     and self.current_subscription.is_below_minimum_subscription
                 ):
-                    new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
-                    new_sub_date_end = (
-                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-                        if self.is_annual_plan_selected() else None
-                    )
                     self.current_subscription.update_subscription(
                         date_start=self.current_subscription.date_start,
                         date_end=new_sub_date_start
@@ -1963,11 +2068,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         funding_source=FundingSource.CLIENT,
                     )
                 else:
-                    new_sub_date_start = datetime.date.today()
-                    new_sub_date_end = (
-                        new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-                        if self.is_annual_plan_selected() else None
-                    )
                     self.current_subscription.change_plan(
                         self.plan_version,
                         date_end=new_sub_date_end,
@@ -1991,26 +2091,38 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             )
             return False
 
-    def send_prepayment_invoice(self, date_start, date_end):
-        label = f"One month of {self.plan_version.plan.name}"
-        monthly_fee = self.plan_version.product_rate.monthly_fee
-        duration = relativedelta(date_end, date_start)
-        num_months = getattr(duration, 'years', 0) * 12  # todo: support other subscription lengths
-        amount = monthly_fee * num_months
-        date_due = max(date_start,
-                       datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
-
-        email_list = self.cleaned_data['email_list']
-        contact_emails = [email_list[0]]
-        cc_emails = [email for email in email_list[1:]]
-
+    def send_prepayment_invoice(self, new_date_start, date_end):
+        contact_emails, cc_emails = self.get_email_lists()
         invoice_factory = DomainWireInvoiceFactory(
-            self.domain, date_start=date_start, date_end=date_end,
+            self.domain, date_start=new_date_start, date_end=date_end,
             contact_emails=contact_emails, cc_emails=cc_emails
         )
-        invoice_factory.create_wire_credits_invoice(
-            amount, label, monthly_fee, num_months, date_due
-        )
+        if self.current_is_annual_plan():
+            invoice_factory.create_prorated_subscription_change_credits_invoice(
+                self.current_subscription.date_start, new_date_start, date_end,
+                self.current_subscription.plan_version, self.plan_version,
+            )
+        else:
+            invoice_factory.create_subscription_credits_invoice(self.plan_version, new_date_start, date_end)
+
+    def new_subscription_start_end_dates(self):
+        if self.is_downgrade_from_paid_plan() and self.current_subscription.is_below_minimum_subscription:
+            new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
+        else:
+            new_sub_date_start = datetime.date.today()
+
+        if self.is_annual_plan_selected():
+            if self.current_is_annual_plan() and self.current_subscription.date_end is not None:
+                new_sub_date_end = self.current_subscription.date_end
+            else:
+                new_sub_date_end = new_sub_date_start + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+        else:
+            new_sub_date_end = None
+
+        return new_sub_date_start, new_sub_date_end
+
+    def current_is_annual_plan(self):
+        return self.current_subscription.plan_version.plan.is_annual_plan
 
     def is_annual_plan_selected(self):
         return self.plan_version.plan.is_annual_plan
@@ -2096,7 +2208,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, self.current_subscription.date_start, self.creating_user)
-                self.current_subscription.renew_subscription(
+                renewed_subscription = self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,
                     service_type=SubscriptionType.PRODUCT,
@@ -2104,6 +2216,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,
                 )
+                if self.renewed_version.plan.is_annual_plan:
+                    self.send_prepayment_invoice(renewed_subscription.date_start, renewed_subscription.date_end)
                 return True
         except SubscriptionRenewalError as e:
             log_accounting_error(
@@ -2113,6 +2227,14 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 }
             )
             return False
+
+    def send_prepayment_invoice(self, date_start, date_end):
+        contact_emails, cc_emails = self.get_email_lists()
+        invoice_factory = DomainWireInvoiceFactory(
+            self.domain, date_start=date_start, date_end=date_end,
+            contact_emails=contact_emails, cc_emails=cc_emails
+        )
+        invoice_factory.create_subscription_credits_invoice(self.renewed_version, date_start, date_end)
 
 
 class ProBonoForm(forms.Form):

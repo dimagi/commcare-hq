@@ -17,8 +17,7 @@ of all unknown users, web users, and demo users on a domain.
 
     query = (user_es.UserES()
              .domain(self.domain)
-             .OR(*user_filters)
-             .show_inactive())
+             .OR(*user_filters))
 
     owner_ids = query.get_ids()
 """
@@ -39,14 +38,13 @@ class UserES(HQESQuery):
     index = HQ_USERS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_deleted': filters.term("base_doc", "couchuser"),
-        'active': filters.term("is_active", True),
     }
 
     @property
     def builtin_filters(self):
         return [
             domain,
-            domains,
+            active_on_any_domain,
             created,
             mobile_users,
             web_users,
@@ -57,19 +55,13 @@ class UserES(HQESQuery):
             last_modified,
             analytics_enabled,
             is_practice_user,
+            is_admin,
             role_id,
             is_active,
+            is_inactive,
             username,
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
-
-    def show_inactive(self):
-        """Include inactive users, which would normally be filtered out."""
-        return self.remove_default_filter('active')
-
-    def show_only_inactive(self):
-        query = self.remove_default_filter('active')
-        return query.is_active(False)
 
 
 class ElasticUser(ElasticDocumentAdapter):
@@ -130,20 +122,57 @@ user_adapter = create_document_adapter(
 )
 
 
-def domain(domain, allow_enterprise=False):
-    domain_list = [domain]
-    if allow_enterprise:
-        from corehq.apps.enterprise.models import EnterprisePermissions
-        source_domain = EnterprisePermissions.get_source_domain(domain)
-        if source_domain:
-            domain_list.append(source_domain)
-    return domains(domain_list)
-
-
-def domains(domains):
-    return filters.OR(
+def domain(domain, *, include_active=True, include_inactive=False):
+    domains = [domain] if isinstance(domain, str) else domain
+    domain_filter = filters.OR(
         filters.term("domain.exact", domains),
-        filters.term("domain_memberships.domain.exact", domains)
+        filters.nested(
+            'user_domain_memberships',
+            filters.term('user_domain_memberships.domain.exact', domains),
+        )
+    )
+
+    if include_active and include_inactive:  # all
+        return domain_filter
+    if include_active and not include_inactive:  # only active
+        return filters.AND(
+            domain_filter,
+            is_active(domain),
+        )
+    if not include_active and include_inactive:  # only inactive
+        return filters.AND(
+            domain_filter,
+            is_inactive(domain),
+        )
+    return filters.match_none()
+
+
+def is_active(domain):
+    return filters.AND(
+        filters.term("is_active", True),
+        filters.nested('user_domain_memberships', filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.NOT(filters.term('user_domain_memberships.is_active', False)),
+        ))
+    )
+
+
+def is_inactive(domain):
+    return filters.OR(
+        filters.term("is_active", False),
+        filters.nested('user_domain_memberships', filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.term('user_domain_memberships.is_active', False),
+        ))
+    )
+
+
+def active_on_any_domain():
+    return filters.AND(
+        filters.term("is_active", True),
+        filters.nested('user_domain_memberships', filters.AND(
+            filters.term('user_domain_memberships.is_active', True)
+        ))
     )
 
 
@@ -221,15 +250,21 @@ def is_practice_user(practice_mode=True):
     return filters.term('is_demo_user', practice_mode)
 
 
+def is_admin(domain):
+    return filters.nested(
+        'user_domain_memberships',
+        filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.term('user_domain_memberships.is_admin', True),
+        )
+    )
+
+
 def role_id(role_id):
     return filters.OR(
         filters.term("domain_membership.role_id", role_id),     # mobile users
         filters.term("domain_memberships.role_id", role_id)     # web users
     )
-
-
-def is_active(active=True):
-    return filters.term("is_active", active)
 
 
 def _user_data(key, filter_):

@@ -3,11 +3,10 @@
  * Instatiates the Hubspot analytics platform.
  */
 import $ from "jquery";
-import _ from "underscore";
 import initialAnalytics from "analytix/js/initial";
 import logging from "analytix/js/logging";
 import utils from "analytix/js/utils";
-import kissmetrics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import ctaForms from "analytix/js/cta_forms";
 
 var _get = initialAnalytics.getFn('hubspot'),
@@ -48,7 +47,7 @@ _utils.loadDemoForm = function () {
             $('#get-demo-cta-success').fadeIn();
             $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
 
-            kissmetrics.track.event("Demo Workflow - Contact Info Received");
+            noopMetrics.track.event("Demo Workflow - Contact Info Received");
         },
     });
     if ($form.length) {
@@ -56,15 +55,15 @@ _utils.loadDemoForm = function () {
     }
 
     $modal.on('shown.bs.modal', function () {
-        kissmetrics.track.event("Demo Workflow - Viewed Form");
+        noopMetrics.track.event("Demo Workflow - Viewed Form");
     });
     $modal.on('hide.bs.modal', function () {
-        kissmetrics.track.event("Demo Workflow - Dismissed Form");
+        noopMetrics.track.event("Demo Workflow - Dismissed Form");
     });
 
     $form.find('input').click(function () {
         if (!hasInteractedWithForm) {
-            kissmetrics.track.event("Demo Workflow - Interacted With Form");
+            noopMetrics.track.event("Demo Workflow - Interacted With Form");
             hasInteractedWithForm = true;
         }
     });

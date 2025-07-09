@@ -1,10 +1,10 @@
 import datetime
 import random
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.core import mail
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
 
@@ -37,6 +37,7 @@ from corehq.apps.accounting.tests.base_tests import (
 )
 from corehq.apps.accounting.utils.invoicing import (
     get_flagged_pay_annually_prepay_invoice,
+    get_prorated_software_plan_cost,
 )
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_previous_month_date_range
@@ -444,48 +445,89 @@ class TestFlaggedPayAnnuallyPrepayInvoice(BaseInvoiceTestCase):
         )
         self.subscription.plan_version = self.plan_version
         self.subscription.save()
-        self.invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        self.create_invoices(self.invoice_date)
-        self.invoice = self.subscription.invoice_set.first()
+
+    def create_invoices(self):
+        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        super().create_invoices(invoice_date)
+        return self.subscription.invoice_set.all()
+
+    def create_prepayment_invoice(self, date_due):
+        yearly_subscription_cost = self.plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS
+        return WirePrepaymentInvoice.objects.create(
+            domain=self.subscription.subscriber.domain,
+            date_start=self.subscription.date_start,
+            date_end=self.subscription.date_end,
+            date_due=date_due,
+            balance=yearly_subscription_cost,
+        )
+
+    def create_product_credit(self, amount):
+        return CreditLine.objects.create(
+            account=self.subscription.account,
+            subscription=self.subscription,
+            balance=amount,
+            is_product=True,
+        )
 
     def test_monthly_invoice_product_fully_paid(self):
-        product_line_item = self.invoice.lineitem_set.get_products().first()
-        # create a CreditLine the product_line_item will be paid with
-        CreditLine.objects.create(
-            account=self.invoice.subscription.account,
-            subscription=self.invoice.subscription,
-            balance=product_line_item.subtotal,
-            is_active=True,
-        )
-        product_line_item.calculate_credit_adjustments()
-        product_line_item.save()
-        flagged_invoice = get_flagged_pay_annually_prepay_invoice(self.invoice)
+        prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
+        self.create_product_credit(prepay_invoice.balance)
+        invoice = self.create_invoices().first()
+        flagged_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertIsNone(flagged_invoice)
 
     def test_no_prepayment_invoice(self):
-        flagged_invoice = get_flagged_pay_annually_prepay_invoice(self.invoice)
+        invoice = self.create_invoices().first()
+        flagged_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertIsNone(flagged_invoice)
 
     def test_prepayment_invoice_not_due_yet(self):
-        yearly_subscription_cost = self.plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS
-        WirePrepaymentInvoice.objects.create(
-            domain=self.subscription.subscriber.domain,
-            date_start=self.subscription.date_start,
-            date_end=self.subscription.date_end,
-            date_due=datetime.date.today() + relativedelta(days=1),
-            balance=yearly_subscription_cost,
-        )
-        result = get_flagged_pay_annually_prepay_invoice(self.invoice)
+        self.create_prepayment_invoice(datetime.date.today() + relativedelta(days=1))
+        invoice = self.create_invoices().first()
+        result = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertIsNone(result)
 
     def test_matching_prepayment_invoice_exists(self):
-        yearly_subscription_cost = self.plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS
-        prepay_invoice = WirePrepaymentInvoice.objects.create(
-            domain=self.subscription.subscriber.domain,
-            date_start=self.subscription.date_start,
-            date_end=self.subscription.date_end,
-            date_due=self.subscription.date_start,
-            balance=yearly_subscription_cost,
-        )
-        result = get_flagged_pay_annually_prepay_invoice(self.invoice)
+        prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
+        invoice = self.create_invoices().first()
+        result = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertEqual(result, prepay_invoice)
+
+
+class TestGetProratedSoftwarePlanCost(SimpleTestCase):
+
+    def test_full_month(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 7, 1)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('100.00')
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_partial_month(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 6, 16)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('50.00')  # 15 days is half of June
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_multiple_months(self):
+        date_start = datetime.date(2025, 6, 16)
+        date_end = datetime.date(2025, 8, 4)
+        monthly_fee = Decimal('100.00')
+        expected = (
+            Decimal('50.00')  # half of June
+            + Decimal('100.00')  # all of July
+            + monthly_fee / 31 * 3  # 3 days of August
+        ).quantize(Decimal('0.00'), ROUND_HALF_UP)
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)
+
+    def test_zero_days(self):
+        date_start = datetime.date(2025, 6, 1)
+        date_end = datetime.date(2025, 6, 1)
+        monthly_fee = Decimal('100.00')
+        expected = Decimal('0.00')
+        result = get_prorated_software_plan_cost(date_start, date_end, monthly_fee)
+        self.assertEqual(result, expected)

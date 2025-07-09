@@ -1560,7 +1560,7 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application.',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="Main use case is to allow migrating projects to a new cluster."
 )
@@ -1925,7 +1925,7 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
 COPY_CASES = StaticToggle(
     'copy_cases',
     'Enable users to copy cases between mobile workers',
-    TAG_SOLUTIONS_OPEN,
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2838,6 +2838,14 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
                'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
+DEACTIVATE_WEB_USERS = StaticToggle(
+    slug='deactivate_web_users',
+    label='USH: Deactivate Web Users',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow domains to deactivate web users just for that domain',
+)
+
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
@@ -2991,6 +2999,13 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
+    slug='convert_xml_group_separator',
+    label='Convert the group separator to a symbol XML can support',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

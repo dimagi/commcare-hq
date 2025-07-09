@@ -1154,6 +1154,8 @@ class FormValidator(IndexedFormBaseValidator):
             subcase_names=subcase_names
         ))
 
+        errors.extend(self.check_for_conflicting_questions())
+
         def generate_paths():
             from corehq.apps.app_manager.models import FormAction
             for action in self.form.active_actions().values():
@@ -1168,6 +1170,25 @@ class FormValidator(IndexedFormBaseValidator):
         errors.extend(self.check_paths(generate_paths()))
 
         return errors
+
+    def check_for_conflicting_questions(self):
+        errors = []
+
+        open_case = self.form.actions.open_case
+        update_case = self.form.actions.update_case
+
+        if open_case.name_update_multi and len(open_case.name_update_multi) > 0:
+            errors.append(self._get_property_conflict_error('name'))
+
+        if update_case.update_multi:
+            for (key, value) in update_case.update_multi.items():
+                if len(value) > 0:
+                    errors.append(self._get_property_conflict_error(key))
+
+        return errors
+
+    def _get_property_conflict_error(self, property_name):
+        return {'type': 'conflicting questions', 'property': property_name}
 
     @time_method()
     def extended_build_validation(self, xml_valid):

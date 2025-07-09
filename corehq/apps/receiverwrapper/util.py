@@ -17,7 +17,7 @@ from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils import convert_xform_to_json
+from corehq.form_processor.utils.xform import convert_xform_to_json, sanitize_instance_xml
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -269,6 +269,7 @@ def should_ignore_submission(request):
     form_json = None
     if settings.IGNORE_ALL_DEMO_USER_SUBMISSIONS:
         instance, _ = couchforms.get_instance_and_attachment(request)
+        instance = sanitize_instance_xml(instance, request)
         try:
             form_json = convert_xform_to_json(instance)
         except couchforms.XMLSyntaxError:
@@ -285,6 +286,7 @@ def should_ignore_submission(request):
 
     if form_json is None:
         instance, _ = couchforms.get_instance_and_attachment(request)
+        instance = sanitize_instance_xml(instance, request)
         form_json = convert_xform_to_json(instance)
     return False if from_demo_user(form_json) else True
 

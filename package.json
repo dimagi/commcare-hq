@@ -116,7 +116,7 @@
         "mem": "^4.0.0",
         "minimist": "^1.2.6",
         "minimatch": "^3.0.5",
-        "mocha-headless-chrome/puppeteer/tar-fs": "^2.1.2",
+        "mocha-headless-chrome/puppeteer/tar-fs": "^2.1.3",
         "moment-timezone": "^0.5.35",
         "qs": "^6.9.7",
         "set-value": "^4.0.1",
@@ -134,5 +134,20 @@
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
         "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"
+    },
+    "prettier": {
+        "plugins": ["prettier-plugin-jinja-template"],
+        "overrides": [
+            {
+                "files": [
+                    "*.html"
+                ],
+                "options": {
+                    "parser": "jinja-template"
+                }
+            }
+        ],
+        "proseWrap": "always",
+        "tabWidth": 2
     }
 }

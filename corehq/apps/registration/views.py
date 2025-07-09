@@ -28,7 +28,7 @@ from corehq.apps.analytics.tasks import (
     track_clicked_signup_on_hubspot,
     track_confirmed_account_on_hubspot,
     track_web_user_registration_hubspot,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
@@ -117,10 +117,10 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             persona = reg_form.cleaned_data['persona']
             persona_other = reg_form.cleaned_data['persona_other']
 
-            track_workflow(email, "Requested New Account", {
+            track_workflow_noop(email, "Requested New Account", {
                 'environment': settings.SERVER_ENVIRONMENT,
             })
-            track_workflow(email, "Persona Field Filled Out", {
+            track_workflow_noop(email, "Persona Field Filled Out", {
                 'personachoice': persona,
                 'personaother': persona_other,
             })
@@ -155,26 +155,15 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
         reg_form = RegisterWebUserForm(data['data'], is_sso=idp is not None)
         if reg_form.is_valid():
-            ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
-            appcues_ab_test = ab_test.context['version']
-
             if idp:
-                signup_request = AsyncSignupRequest.create_from_registration_form(
-                    reg_form,
-                    additional_hubspot_data={
-                        "appcues_test": appcues_ab_test,
-                    }
-                )
+                signup_request = AsyncSignupRequest.create_from_registration_form(reg_form)
                 return {
                     'success': True,
-                    'appcues_ab_test': appcues_ab_test,
                     'ssoLoginUrl': idp.get_login_url(signup_request.username),
                     'ssoIdpName': idp.name,
                 }
 
-            self._create_new_account(reg_form, additional_hubspot_data={
-                "appcues_test": appcues_ab_test,
-            })
+            self._create_new_account(reg_form)
             try:
                 request_new_domain(
                     self.request,
@@ -201,7 +190,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 }
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -407,7 +395,7 @@ class RegisterDomainView(TemplateView):
                 'requested_domain': domain_name,
                 'current_page': {'page_name': _('Confirm Account')},
             })
-            track_workflow(self.request.user.email, "Created new project")
+            track_workflow_noop(self.request.user.email, "Created new project")
             return render(request, 'registration/confirmation_sent.html', context)
 
         if nextpage:
@@ -536,7 +524,7 @@ def confirm_domain(request, guid=''):
                 'Your account has been successfully activated.  Thank you for taking '
                 'the time to confirm your email address: %s.'
             % (requesting_user.username))
-        track_workflow(requesting_user.email, "Confirmed new project")
+        track_workflow_noop(requesting_user.email, "Confirmed new project")
         track_confirmed_account_on_hubspot.delay(requesting_user.get_id)
         request.session['CONFIRM'] = True
 

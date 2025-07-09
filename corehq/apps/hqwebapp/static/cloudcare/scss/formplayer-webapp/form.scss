@@ -2,8 +2,8 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 
 .form-container {
   background-color: white;
-  box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
-  font-size: $form-text-size;   // Don't overshadow inputs
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+  font-size: $form-text-size; // Don't overshadow inputs
 
   .page-header h1 {
     padding-left: $form-text-indent - 8px;
@@ -13,7 +13,8 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
     padding-top: 3px;
   }
 
-  .form-control, .form-select {
+  .form-control,
+  .form-select {
     font-size: $form-text-size;
   }
 
@@ -67,7 +68,6 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
       &:hover {
         background-color: var(--bsbtn-hover-bg);
       }
-
     }
   }
 
@@ -75,7 +75,6 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
   }
-
 }
 
 .has-debugger {
@@ -97,7 +96,7 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
   }
 
   .q.required {
-    transition: all .5s;
+    transition: all 0.5s;
     margin-bottom: 0;
     label:before {
       display: none;
@@ -120,7 +119,7 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
   .form-group-required-label {
     display: block;
     opacity: 0;
-    transition: all .5s;
+    transition: all 0.5s;
   }
 
   .form-group-required-label.on {
@@ -137,7 +136,6 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
     margin-top: 0;
     border: none;
   }
-
 }
 
 @media print {
@@ -172,6 +170,18 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
     color: #52616f !important;
     font-size: 14px;
   }
+
+  input.form-check-input:checked {
+    background-color: $primary !important;
+
+    &[type="checkbox"] {
+      background-image: #{escape-svg($form-check-input-checked-bg-image)} !important;
+    }
+
+    &[type="radio"] {
+      background-image: #{escape-svg($form-check-radio-checked-bg-image)} !important;
+    }
+  }
 }
 
 .question-tile-row:has(div.q) {
@@ -182,7 +192,9 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 .question-tile-row {
   display: flex;
   align-items: start;
-  * .q, * p, * .caption {
+  * .q,
+  * p,
+  * .caption {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
     margin-top: 0px !important;
@@ -190,8 +202,10 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
   }
 }
 
-.checkbox, .radio {
-  input[type="checkbox"], input[type="radio"] {
+.checkbox,
+.radio {
+  input[type="checkbox"],
+  input[type="radio"] {
     margin-top: 3.15px;
   }
   // Overrides Bootstrap defaults
@@ -206,8 +220,13 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 }
 
 .my-05em-for-hs {
-    h1, h2, h3, h4, h5, h6 {
-        margin-top: 0.5em !important;
-        margin-bottom: 0.5em !important;
-    }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+  }
 }
