@@ -19,10 +19,10 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop, override
-from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import gettext_lazy, gettext_noop, override
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
@@ -80,7 +80,8 @@ from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     can_edit_workers_location,
-    location_safe
+    location_safe,
+    user_can_access_other_user
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
@@ -113,6 +114,7 @@ from corehq.apps.users.forms import (
     MultipleSelectionForm,
     NewMobileWorkerForm,
     SetUserPasswordForm,
+    SendCommCareUserPasswordResetEmailForm,
     UserFilterForm,
 )
 from corehq.apps.users.models import (
@@ -329,6 +331,10 @@ class EditCommCareUserView(BaseEditUserView):
             messages.error(self.request, _(
                 "There were some errors while saving user's locations. Please check the 'Locations' tab"
             ))
+        if self.editable_user.is_active and toggles.TWO_STAGE_USER_PROVISIONING.enabled(self.domain):
+            context.update({
+                'send_password_reset_email_form': SendCommCareUserPasswordResetEmailForm()
+            })
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
                 'commtrack_enabled': self.domain_object.commtrack_enabled,
@@ -1615,12 +1621,12 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         return settings_obj.confirmation_link_expiry_time * self.HOURS_IN_A_DAY
 
     def send_success_sms(self):
-        settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
+        sms_settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
         template_params = {
             'name': self.user.full_name,
             'domain': self.user.domain,
             'username': self.user.raw_username,
-            'hq_name': settings.project_name
+            'hq_name': sms_settings.project_name
         }
         lang = guess_domain_language_for_sms(self.user.domain)
         with override(lang):
@@ -1675,3 +1681,72 @@ def bulk_user_upload_api(request, domain):
     except Exception as e:
         notify_exception(None, message=str(e))
         return json_response({'success': False, 'message': str(e)}, status_code=500)
+
+
+@location_safe
+class CommCareUserPasswordResetView(BaseManageCommCareUserView, FormView):
+    form_class = SendCommCareUserPasswordResetEmailForm
+    urlname = 'send_password_reset_email'
+
+    def post(self, request, *args, **kwargs):
+        base_url = reverse(EditCommCareUserView.urlname, args=[request.domain, self.editable_user_id])
+        django_user = self.editable_user.get_django_user()
+
+        error_messages = {
+            'inactive': gettext_lazy("This user is inactive and cannot reset their password."),
+            'unusable': gettext_lazy("This user account cannot reset the password."),
+        }
+
+        if not django_user.has_usable_password():
+            messages.error(self.request, _("Password reset email failed to send - ") + error_messages['unusable'])
+            return HttpResponseRedirect(f"{base_url}#user-password")
+        if not django_user.is_active:
+            messages.error(self.request, _("Password reset email failed to send - ") + error_messages['inactive'])
+            return HttpResponseRedirect(f"{base_url}#user-password")
+
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+
+        return HttpResponseRedirect(f"{base_url}#user-password")
+
+    def form_valid(self, form):
+        opts = {
+            "use_https": self.request.is_secure(),
+            "request": self.request,
+        }
+        form.save(**opts)
+        return super().form_valid(form)
+
+    @property
+    def editable_user_id(self):
+        return self.kwargs.get('couch_user_id')
+
+    @property
+    @memoized
+    def editable_user(self):
+        return CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
+
+    @method_decorator(require_POST)
+    @method_decorator(csrf_protect)
+    def dispatch(self, *args, **kwargs):
+        if not user_can_access_other_user(self.domain, self.request.couch_user, self.editable_user):
+            return HttpResponse(status=401)
+        return super().dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        data = kwargs.get('data', {}).copy()
+        data.update({
+            'user_id': self.editable_user_id
+        })
+        kwargs['data'] = data
+        return kwargs
+
+    def get_success_url(self):
+        messages.success(self.request, _("Password reset email sent."))
+        base_url = reverse(
+            EditCommCareUserView.urlname,
+            args=[self.request.domain, self.editable_user_id],
+        )
+        return f"{base_url}#user-password"
