@@ -1685,6 +1685,7 @@ def bulk_user_upload_api(request, domain):
 @location_safe
 class CommCareUserPasswordResetView(BaseManageCommCareUserView, FormView):
     form_class = SendCommCareUserPasswordResetEmailForm
+    urlname = 'send_password_reset_email'
 
     def post(self, request, *args, **kwargs):
         base_url = reverse(EditCommCareUserView.urlname, args=[request.domain, self.editable_user_id])

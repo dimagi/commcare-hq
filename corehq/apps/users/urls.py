@@ -95,7 +95,7 @@ urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
     url(r'^change_password/(?P<login_id>[ \w-]+)/$', change_password, name="change_password"),
     url(r'^send_password_reset_email/(?P<couch_user_id>[ \w-]+)/$', CommCareUserPasswordResetView.as_view(),
-        name='send_password_reset_email'),
+        name=CommCareUserPasswordResetView.urlname),
     url(r'^domain_accounts/(?P<couch_user_id>[ \w-]+)/$', domain_accounts, name='domain_accounts'),
     url(r'^delete_phone_number/(?P<couch_user_id>[ \w-]+)/$', delete_phone_number, name='delete_phone_number'),
     url(
