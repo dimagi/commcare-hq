@@ -165,21 +165,21 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _filter_partitions(self, topic_partitions):
         topic_partitions.sort()
-
-        if not self.dedicated_migration_process:
-            return [
-                topic_partitions[num::self.num_processes]
-                for num in range(self.num_processes)
-            ][self.process_num]
-        else:
+        num_processes = self.num_processes
+        process_num = self.process_num
+        if self.dedicated_migration_process:
             if self.process_num == 0:
+                # process 0 is the migration process. It calls
+                # processor.bootstrap_if_needed() on each of its
+                # processors periodically. Returning None disables
+                # the Kafka consumer.
                 return None
-            else:
-                num_processes = self.num_processes - 1
-                return [
-                    topic_partitions[num::num_processes]
-                    for num in range(num_processes)
-                ][self.process_num - 1]
+            num_processes -= 1
+            process_num -= 1
+        return [
+            topic_partitions[num::num_processes]
+            for num in range(num_processes)
+        ][process_num]
 
 
 class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
