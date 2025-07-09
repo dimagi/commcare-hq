@@ -3093,3 +3093,89 @@ class DomainAlertForm(forms.Form):
                 )
             )
         )
+
+
+class ConstructAppDownloadLinkForm(forms.Form):
+
+    app_url = forms.URLField(
+        label=gettext_lazy("App URL"),
+        required=True,
+        widget=forms.URLInput(attrs={"placeholder": "https://[server]/a/[domain]/apps/view/[app_id]/..."}),
+        help_text=gettext_lazy("Copy and paste the full URL of the application from the source server."
+                               "You can find this URL in your browser's address bar when viewing the app."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.HTML(render_to_string('domain/partials/import_app_step_1_instruction.html', {})),
+            crispy.Field('app_url'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Next'),
+                    type='submit',
+                    css_class='btn btn-primary',
+                ),
+            )
+        )
+
+    # TODO: validate app_url
+    # 1. check if server is either production, india or EU
+    # 2. check if server is the same as the current server
+    # 3. check if app_url is a valid app url
+
+
+class ImportAppForm(forms.Form):
+    app_name = forms.CharField(
+        label=gettext_lazy("Application Name"),
+        required=True,
+        help_text=gettext_lazy("Choose a name for the imported application on this server."),
+    )
+
+    app_file = forms.FileField(
+        label=gettext_lazy("Application Source File"),
+        required=True,
+    )
+
+    def __init__(self, container_id, cancel_url, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_tag = False
+        # TODO: construct the actual download url
+        download_url = "www.placeholder.com"
+        self.helper.layout = crispy.Layout(
+            crispy.HTML(render_to_string('domain/partials/import_app_step_2_instruction.html', {
+                'download_url': download_url,
+            })),
+            crispy.Field('app_name'),
+            crispy.Field('app_file'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Go Back'),
+                    type='button',
+                    css_class='btn btn-outline-primary',
+                    hx_get=cancel_url,
+                    hx_target=f'#{container_id}',
+                    hx_disabled_elt='this',
+                ),
+                twbscrispy.StrictButton(
+                    _('Import Application'),
+                    type='submit',
+                    css_class='btn btn-primary',
+                ),
+            )
+        )
+
+    def clean_app_file(self):
+        app_file = self.cleaned_data['app_file']
+        try:
+            source = json.load(app_file)
+        except (json.decoder.JSONDecodeError, UnicodeDecodeError):
+            source = None
+        if not source:
+            raise forms.ValidationError(_("The file uploaded is an invalid JSON file"))
+        return app_file
