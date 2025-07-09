@@ -521,6 +521,8 @@ var newUserCreationModel = function (options) {
                 user.phoneRequired(false);
                 // enable password input
                 user.passwordEnabled(true);
+                user.sendConfirmationEmailEnabled(false);
+                user.send_account_confirmation_email(false);
             }
         });
     });
