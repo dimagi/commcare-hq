@@ -233,6 +233,14 @@ class UserChangeMessage(object):
             DEACTIVATE_AFTER_FIELD: message,
         }
 
+    @staticmethod
+    def mobile_account_confirmed_for_domain(domain):
+        return {
+            ACCOUNT_FIELD: {
+                CONFIRM_MOBILE_ACCOUNT: {"domain": domain}
+            }
+        }
+
 
 class UserChangeFormatter(object):
     @staticmethod
@@ -284,6 +292,7 @@ DOMAIN_INVITATION_FIELD = "domain_invitation"
 DEACTIVATE_AFTER_FIELD = "deactivate_after"
 DEACTIVATE_AFTER_DATE = "deactivate_after_date"
 DEACTIVATE_AFTER_DATE_DELETED = 'deactivate_after_date_deleted'
+ACCOUNT_FIELD = "account"
 
 CHANGE_MESSAGES_FIELDS = [
     PROGRAM_FIELD,
@@ -299,6 +308,7 @@ CHANGE_MESSAGES_FIELDS = [
     GROUPS_FIELD,
     DOMAIN_INVITATION_FIELD,
     DEACTIVATE_AFTER_FIELD,
+    ACCOUNT_FIELD
 ]
 
 # message slugs
@@ -326,6 +336,7 @@ SET_GROUPS = 'set_groups'
 CLEAR_GROUPS = 'clear_groups'
 ADD_DOMAIN_INVITATION = 'add_domain_invitation'
 REMOVE_DOMAIN_INVITATION = 'remove_domain_invitation'
+CONFIRM_MOBILE_ACCOUNT = 'confirm_mobile_account'
 
 MESSAGES = {
     SET_PROGRAM: UserChangeFormatter.simple_formatter(noop("Program: {name}[{id}]")),
@@ -367,6 +378,9 @@ MESSAGES = {
     ),
     DEACTIVATE_AFTER_DATE_DELETED: UserChangeFormatter.simple_formatter(
         noop("Deactivation After date has been deleted")
+    ),
+    CONFIRM_MOBILE_ACCOUNT: UserChangeFormatter.simple_formatter(
+        noop("Mobile Worker account confirmed for domain '{domain}'")
     ),
 }
 
