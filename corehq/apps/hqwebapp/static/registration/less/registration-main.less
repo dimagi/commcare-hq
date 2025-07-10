@@ -217,11 +217,29 @@ p.sso-message-block {
 }
 
 .reg-form-container {
+  select.input-lg {
+    color: @cc-text;
+    appearance: none;
+    padding: 2px 16px;
+    line-height: unset;
+  }
+
   .select2-container {
     .select2-selection--single {
+      font-size: @font-size-large;
       border: 2px solid #cccccc;
       border-radius: @input-border-radius-large;
       height: 42px;
+      padding: 5px 8px;
+
+      .select2-selection__rendered {
+        color: @cc-text;
+      }
     }
   }
+}
+
+.select2-container .select2-results__option {
+  font-size: @font-size-large !important;
+  padding: 5px 17px !important;
 }
