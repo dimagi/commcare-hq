@@ -143,7 +143,7 @@ $blue-600: shade-color($blue, 20%);
 $blue-900: shade-color($blue, 80%);
 
 // Purple from default stylesheet - needed for reference
-$purple-400: shade-color($purple, 20%);
+$purple-400: tint-color($purple, 20%);
 
 // for determining when to show black or white text on top of color
 $min-contrast-ratio: 3;
