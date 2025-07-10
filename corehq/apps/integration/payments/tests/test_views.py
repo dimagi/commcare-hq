@@ -273,7 +273,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                 data={
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.PAYMENT_VERIFIED: True,
-                    PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING,
+                    PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
                 }),
             _create_case(
                 cls.factory,
@@ -349,7 +349,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_payment_status_filter_pending_payments_has_one(self):
-        response = self._make_request(querystring=f'payment_status={PaymentStatus.PENDING}')
+        response = self._make_request(querystring=f'payment_status={PaymentStatus.PENDING_SUBMISSION}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 

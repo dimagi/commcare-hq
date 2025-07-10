@@ -26,6 +26,6 @@ PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
 
 
 class PaymentStatus(models.TextChoices):
-    PENDING = 'pending', _("Pending")
-    REQUESTED = 'requested', _("Requested")
+    PENDING_SUBMISSION = 'pending_submission', _("Pending Submission")
+    SUBMITTED = 'submitted', _("Submitted")
     REQUEST_FAILED = 'request_failed', _("Request failed")
