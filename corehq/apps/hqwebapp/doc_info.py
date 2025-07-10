@@ -195,10 +195,7 @@ def form_docinfo(domain, doc_id, is_deleted):
         id=doc_id,
         type="XFormInstance",
         type_display=_('Form'),
-        link=reverse(
-            'render_form_data',
-            args=[domain, doc_id],
-        ),
+        link=get_form_url(domain, doc_id),
         is_deleted=is_deleted,
     )
     return doc_info
@@ -219,6 +216,13 @@ def get_case_url(domain, case_id):
     return reverse(
         'case_data',
         args=[domain, case_id],
+    )
+
+
+def get_form_url(domain, form_id):
+    return reverse(
+        'render_form_data',
+        args=[domain, form_id],
     )
 
 
