@@ -23,7 +23,7 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 )
 class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     urlname = 'import_app_steps'
-    template_name = 'hqwebapp/htmx/next_action_form.html'
+    template_name = 'hqwebapp/htmx/forms/next_action_form.html'
     container_id = 'import-app-steps'
 
     def get_context_data(self, form=None, next_action=None, **kwargs):
