@@ -3185,19 +3185,37 @@ class ImportAppForm(forms.Form):
         required=True,
     )
 
-    def __init__(self, container_id, cancel_url, *args, **kwargs):
+    source_server = forms.CharField(widget=forms.HiddenInput)
+    source_domain = forms.CharField(widget=forms.HiddenInput)
+    app_id = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, container_id, cancel_url, validated_data=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
-        # TODO: construct the actual download url
-        download_url = "www.placeholder.com"
+
+        # Set initial values of the hidden fields so they are available for future use
+        if validated_data:
+            self.fields['source_server'].initial = validated_data.get('source_server')
+            self.fields['source_domain'].initial = validated_data.get('source_domain')
+            self.fields['app_id'].initial = validated_data.get('app_id')
+
+        source_server = self.fields['source_server'].initial or self.data.get('source_server')
+        source_domain = self.fields['source_domain'].initial or self.data.get('source_domain')
+        app_id = self.fields['app_id'].initial or self.data.get('app_id')
+
+        download_url = self.construct_download_url(source_server, source_domain, app_id)
+
         self.helper.layout = crispy.Layout(
             crispy.HTML(render_to_string('domain/partials/import_app_step_2_instruction.html', {
                 'download_url': download_url,
             })),
             crispy.Field('app_name'),
             crispy.Field('app_file'),
+            crispy.Field('source_server'),
+            crispy.Field('source_domain'),
+            crispy.Field('app_id'),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _('Go Back'),
@@ -3224,3 +3242,12 @@ class ImportAppForm(forms.Form):
         if not source:
             raise forms.ValidationError(_("The file uploaded is an invalid JSON file"))
         return app_file
+
+    def construct_download_url(self, source_server, source_domain, app_id):
+        server_mapping = {
+            'production': 'www',
+            'india': 'india',
+            'eu': 'eu'
+        }
+        server_address = server_mapping[source_server]
+        return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
