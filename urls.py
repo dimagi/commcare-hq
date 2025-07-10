@@ -36,6 +36,7 @@ from corehq.apps.settings.urls import \
     domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect
 from corehq.apps.sms.urls import sms_admin_interface_urls
+from corehq.apps.sso.url_helpers import sso_libraries_are_installed
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -111,7 +112,6 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
-    url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),
@@ -165,6 +165,9 @@ urlpatterns = [
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
 ] + LOCAL_APP_URLS
+
+if sso_libraries_are_installed():
+    urlpatterns.append(url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')))
 
 if settings.ENABLE_PRELOGIN_SITE:
     # handle redirects from old prelogin
