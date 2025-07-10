@@ -2094,16 +2094,10 @@ class ProjectSettingsTab(UITab):
             elif user_can_manage_domain_alerts:
                 section = _get_manage_domain_alerts_section(self.domain)
             if self.couch_user.can_edit_apps():
-                if section:
-                    section.append({
-                        'title': ImportAppFromAnotherServerView.page_title,
-                        'url': reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain]),
-                    })
-                else:
-                    section = [{
-                        'title': ImportAppFromAnotherServerView.page_title,
-                        'url': reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain]),
-                    }]
+                section.append({
+                    'title': ImportAppFromAnotherServerView.page_title,
+                    'url': reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain]),
+                })
             if section:
                 items.append((_('Project Administration'), section))
 
