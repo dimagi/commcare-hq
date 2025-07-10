@@ -4,6 +4,8 @@ import ipaddress
 import json
 import logging
 import uuid
+import re
+import urllib.parse
 
 from django import forms
 from django.conf import settings
@@ -3099,3 +3101,169 @@ class DomainAlertForm(forms.Form):
                 )
             )
         )
+
+
+class ExtractAppInfoForm(forms.Form):
+
+    app_url = forms.URLField(
+        label=gettext_lazy("App URL"),
+        required=True,
+        help_text=gettext_lazy("Copy and paste the full URL of the application from the source server. "
+                               "You can find this URL in your browser's address bar when viewing the app."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.HTML(render_to_string('domain/partials/import_app_step_1_instruction.html', {})),
+            crispy.Field('app_url', placeholder="https://[server]/a/[domain]/apps/view/[app_id]/..."),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Next'),
+                    type='submit',
+                    css_class='btn btn-primary',
+                ),
+            )
+        )
+
+    def clean_app_url(self):
+        app_url = self.cleaned_data['app_url']
+
+        if not app_url.startswith('https://'):
+            raise forms.ValidationError(_("The URL must start with https://"))
+
+        parsed_url = urllib.parse.urlparse(app_url)
+
+        source_server = self._get_source_server(parsed_url)
+        current_server = settings.SERVER_ENVIRONMENT
+        if source_server == current_server:
+            raise forms.ValidationError(_(
+                "The source app url is in the same server as current server. "
+                "To copy app in the same server, please use Copy Application feature."
+            ))
+
+        match = re.match(
+            r'^https://[^/]+/a/(?P<domain>[^/]+)/apps/view/(?P<app_id>[a-f0-9]{32})/?',
+            app_url
+        )
+        if not match:
+            raise forms.ValidationError(_("Invalid app URL format."))
+
+        # Save extracted values on the instance for use in clean()
+        self._extracted = {
+            'source_server': source_server,
+            'source_domain': match.group('domain'),
+            'app_id': match.group('app_id'),
+        }
+        return app_url
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if hasattr(self, '_extracted'):
+            cleaned_data.update(self._extracted)
+
+        # Wipe app_url just in case it contains any malicious code
+        cleaned_data['app_url'] = None
+
+        return cleaned_data
+
+    @staticmethod
+    def _get_source_server(parsed_url):
+        server_mapping = {
+            'www': 'production',
+            'india': 'india',
+            'eu': 'eu',
+        }
+
+        netloc = parsed_url.netloc.split(".")
+
+        if len(netloc) == 3:
+            subdomain, domain, suffix = netloc
+            if subdomain in server_mapping.keys() and domain == 'commcarehq' and suffix == 'org':
+                return server_mapping[subdomain]
+
+        raise forms.ValidationError(_("The URL must be from a valid CommCare server."))
+
+
+class ImportAppForm(forms.Form):
+    app_name = forms.CharField(
+        label=gettext_lazy("Application Name"),
+        required=True,
+        help_text=gettext_lazy("Choose a name for the imported application on this server."),
+    )
+
+    app_file = forms.FileField(
+        label=gettext_lazy("Application Source File"),
+        required=True,
+    )
+
+    source_server = forms.CharField(widget=forms.HiddenInput)
+    source_domain = forms.CharField(widget=forms.HiddenInput)
+    app_id = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, container_id, cancel_url, validated_data=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_tag = False
+
+        # Set initial values of the hidden fields so they are available for future use
+        if validated_data:
+            self.fields['source_server'].initial = validated_data.get('source_server')
+            self.fields['source_domain'].initial = validated_data.get('source_domain')
+            self.fields['app_id'].initial = validated_data.get('app_id')
+
+        source_server = self.fields['source_server'].initial or self.data.get('source_server')
+        source_domain = self.fields['source_domain'].initial or self.data.get('source_domain')
+        app_id = self.fields['app_id'].initial or self.data.get('app_id')
+
+        download_url = self.construct_download_url(source_server, source_domain, app_id)
+
+        self.helper.layout = crispy.Layout(
+            crispy.HTML(render_to_string('domain/partials/import_app_step_2_instruction.html', {
+                'download_url': download_url,
+            })),
+            crispy.Field('app_name'),
+            crispy.Field('app_file'),
+            crispy.Field('source_server'),
+            crispy.Field('source_domain'),
+            crispy.Field('app_id'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Go Back'),
+                    type='button',
+                    css_class='btn btn-outline-primary',
+                    hx_get=cancel_url,
+                    hx_target=f'#{container_id}',
+                    hx_disabled_elt='this',
+                ),
+                twbscrispy.StrictButton(
+                    _('Import Application'),
+                    type='submit',
+                    css_class='btn btn-primary',
+                ),
+            )
+        )
+
+    def clean_app_file(self):
+        app_file = self.cleaned_data['app_file']
+        try:
+            source = json.load(app_file)
+        except (json.decoder.JSONDecodeError, UnicodeDecodeError):
+            source = None
+        if not source:
+            raise forms.ValidationError(_("The file uploaded is an invalid JSON file."))
+        return app_file
+
+    def construct_download_url(self, source_server, source_domain, app_id):
+        server_mapping = {
+            'production': 'www',
+            'india': 'india',
+            'eu': 'eu',
+        }
+        server_address = server_mapping[source_server]
+        return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
