@@ -36,7 +36,7 @@ from corehq.apps.settings.urls import \
     domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect
 from corehq.apps.sms.urls import sms_admin_interface_urls
-from corehq.apps.sso.url_helpers import sso_libraries_are_installed
+import os
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -166,7 +166,7 @@ urlpatterns = [
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
 ] + LOCAL_APP_URLS
 
-if sso_libraries_are_installed():
+if not os.getenv('CCHQ_WITHOUT_SSO'):
     urlpatterns.append(url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')))
 
 if settings.ENABLE_PRELOGIN_SITE:

@@ -8,6 +8,8 @@ jobs:
   update_translations:
     name: Update transifex translations
     runs-on: ubuntu-latest
+    env:
+      CCHQ_WITHOUT_SSO: 1
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,7 +29,7 @@ jobs:
           sudo apt-get install -y libxml2-dev libxslt-dev
       - name: Install Python requirements
         run: |
-          uv sync --no-group=sso --no-group=docs --locked --compile-bytecode --no-progress
+          uv sync --no-group=sso --locked --compile-bytecode --no-progress
           uv pip install openai
       - name: Install transifex client
         run: |
