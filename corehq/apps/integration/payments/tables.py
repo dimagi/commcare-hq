@@ -74,7 +74,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         verbose_name=_("Payment Status"),
     )
     payment_timestamp = DateTimeStringColumn(
-        verbose_name=_("Requested At"),
+        verbose_name=_("Submitted At"),
     )
 
     def render_verify_select(self, record, value):
