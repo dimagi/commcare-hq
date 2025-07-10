@@ -3129,28 +3129,9 @@ class ExtractAppInfoForm(forms.Form):
         if not app_url.startswith('https://'):
             raise forms.ValidationError(_("The URL must start with https://"))
 
-        server_mapping = {
-            'www': 'production',
-            'india': 'india',
-            'eu': 'eu'
-        }
-
-        is_valid_commcare_server = True
         parsed_url = urllib.parse.urlparse(app_url)
-        netloc = parsed_url.netloc.split(".")
-        subdomain = netloc[0]
 
-        if len(netloc) == 3:
-            domain = netloc[1]
-            suffix = netloc[2]
-            if subdomain not in server_mapping.keys() or domain != 'commcarehq' or suffix != 'org':
-                is_valid_commcare_server = False
-        else:
-            is_valid_commcare_server = False
-        if not is_valid_commcare_server:
-            raise forms.ValidationError(_("The URL must be from a valid CommCare server."))
-
-        source_server = server_mapping[subdomain]
+        source_server = self._get_source_server(parsed_url)
         current_server = settings.SERVER_ENVIRONMENT
         if source_server == current_server:
             raise forms.ValidationError(_(
@@ -3170,6 +3151,23 @@ class ExtractAppInfoForm(forms.Form):
         self.cleaned_data['app_id'] = match.group('app_id')
 
         return None
+
+    @staticmethod
+    def _get_source_server(parsed_url):
+        server_mapping = {
+            'www': 'production',
+            'india': 'india',
+            'eu': 'eu',
+        }
+
+        netloc = parsed_url.netloc.split(".")
+
+        if len(netloc) == 3:
+            subdomain, domain, suffix = netloc
+            if subdomain in server_mapping.keys() and domain == 'commcarehq' and suffix == 'org':
+                return server_mapping[subdomain]
+
+        raise forms.ValidationError(_("The URL must be from a valid CommCare server."))
 
 
 class ImportAppForm(forms.Form):
@@ -3246,7 +3244,7 @@ class ImportAppForm(forms.Form):
         server_mapping = {
             'production': 'www',
             'india': 'india',
-            'eu': 'eu'
+            'eu': 'eu',
         }
         server_address = server_mapping[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
