@@ -629,8 +629,14 @@ class TestExtractAppInfoForm(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('The URL must start with https://', str(form.errors['app_url']))
 
-    def test_clean_app_url_with_invalid_server(self):
+    def test_clean_app_url_with_invalid_subdomain(self):
         url = 'https://invalid.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
+
+    def test_clean_app_url_with_non_commcare_domain(self):
+        url = 'https://india.foo.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
         form = forms.ExtractAppInfoForm(data={'app_url': url})
         self.assertFalse(form.is_valid())
         self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
