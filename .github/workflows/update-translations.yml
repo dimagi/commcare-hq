@@ -25,10 +25,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libxml2-dev libxslt-dev
-          sudo apt-get install -y libxmlsec1-dev libxmlsec1
       - name: Install Python requirements
         run: |
-          uv sync --locked --compile-bytecode --no-progress
+          uv sync --no-group=sso --no-group=docs --locked --compile-bytecode --no-progress
           uv pip install openai
       - name: Install transifex client
         run: |
