@@ -288,7 +288,8 @@ class ConfigurableReportTableManager(UcrTableManager):
             for source in provider.get_data_sources_modified_since(timestamp)
         ]
         filtered_data_sources = self.get_filtered_configs(new_data_sources)
-        invalid_data_sources = {ds._id for ds in new_data_sources} - {ds._id for ds in filtered_data_sources}
+        filtered_ids = {ds._id for ds in filtered_data_sources}
+        invalid_data_sources = [ds for ds in new_data_sources if ds._id not in filtered_ids]
         self._add_data_sources_to_table_adapters(filtered_data_sources, invalid_data_sources)
 
     def _add_data_sources_to_table_adapters(self, new_data_sources, invalid_data_sources):
@@ -306,7 +307,7 @@ class ConfigurableReportTableManager(UcrTableManager):
         for data_source in invalid_data_sources:
             new_adapters = [
                 adapter for adapter in self.table_adapters_by_domain[data_source.domain]
-                if adapter._id != data_source._id
+                if adapter.config._id != data_source._id
             ]
             self.table_adapters_by_domain[data_source.domain] = new_adapters
 
