@@ -162,6 +162,21 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         )
         self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
 
+    def test_update_modified_since_drops_invalid_data_sources(self):
+        class AlwaysModified(MockDataSourceProvider):
+            def get_data_sources_modified_since(self, timestamp):
+                return self.get_all_data_sources()
+        src = get_sample_data_source()
+        src.save()
+        sources = {src.domain: [src]}
+        table_manager = ConfigurableReportTableManager([AlwaysModified(sources)])
+        table_manager.bootstrap()
+        assert len(table_manager.table_adapters_by_domain[src.domain]) == 1
+
+        table_manager.exclude_ucrs = {src.table_id}
+        table_manager._update_modified_since('whenever')
+        assert table_manager.table_adapters_by_domain[src.domain] == []
+
     def test_complete_integration(self):
         # initialize pillow with one data source
         data_source_1 = get_sample_data_source()
