@@ -3102,7 +3102,6 @@ class ExtractAppInfoForm(forms.Form):
     app_url = forms.URLField(
         label=gettext_lazy("App URL"),
         required=True,
-        widget=forms.URLInput(attrs={"placeholder": "https://[server]/a/[domain]/apps/view/[app_id]/..."}),
         help_text=gettext_lazy("Copy and paste the full URL of the application from the source server."
                                "You can find this URL in your browser's address bar when viewing the app."),
     )
@@ -3114,7 +3113,7 @@ class ExtractAppInfoForm(forms.Form):
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.HTML(render_to_string('domain/partials/import_app_step_1_instruction.html', {})),
-            crispy.Field('app_url'),
+            crispy.Field('app_url', placeholder="https://[server]/a/[domain]/apps/view/[app_id]/..."),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _('Next'),
