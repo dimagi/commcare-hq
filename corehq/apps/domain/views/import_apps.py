@@ -72,6 +72,7 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
             clear_app_cache(request, self.domain)
             name = form.cleaned_data.get('app_name')
             file = form.cleaned_data.get('app_file')
+            file.seek(0)  # rewind to the beginning becaues the file has already been read once when validating
             source = json.load(file)
             app = import_app_util(source, self.domain, {'name': name}, request=request)
             response = back_to_main(request, self.domain, app_id=app._id)
