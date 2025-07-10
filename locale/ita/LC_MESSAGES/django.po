@@ -57412,7 +57412,7 @@ msgstr "Gestisci eventi di tracciamento presenze"
 
 #: corehq/util/context_processors.py
 msgid "US"
-msgstr "US"
+msgstr "USA"
 
 #: corehq/util/context_processors.py
 #, fuzzy
@@ -57422,7 +57422,7 @@ msgstr "Indici"
 
 #: corehq/util/context_processors.py
 msgid "EU"
-msgstr "EU"
+msgstr "UE"
 
 #: corehq/util/jsonattrs.py
 #, python-format
