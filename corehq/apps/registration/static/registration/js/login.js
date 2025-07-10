@@ -2,7 +2,9 @@ import "commcarehq";
 import $ from "jquery";
 import userLoginForm from "registration/js/user_login_form";
 import initialPageData from "hqwebapp/js/initial_page_data";
+import serverLocationSelect from "registration/js/server_location_select";
 import "hqwebapp/js/captcha";  // shows captcha
+import "select2/dist/js/select2.full.min";
 
 $(function () {
 
@@ -34,5 +36,11 @@ $(function () {
         $('#user-login-form').koApplyBindings(loginController);
         loginController.init();
     }
-});
 
+    if (initialPageData.get('can_select_server')) {
+        var $serverLocationField = $('#id_auth-server_location');
+        var serverLocationModel = serverLocationSelect.serverLocationModel($serverLocationField.val());
+        $serverLocationField.koApplyBindings(serverLocationModel);
+        $serverLocationField.select2({disabled: false, minimumResultsForSearch: Infinity});
+    }
+});
