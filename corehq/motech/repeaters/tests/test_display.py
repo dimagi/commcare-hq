@@ -42,7 +42,7 @@ class RepeaterTestCase(TestCase):
             self.assertEqual(display.url, self.url)
             self.assertEqual(display.state, '<span class="label label-success">Success</span>')
 
-    def test_record_display_process_repeaters(self):
+    def test_record_display_backoff_repeaters(self):
         jan_1 = datetime.strptime('2025-01-01 00:00:00', self.date_format)
         self.repeater.next_attempt_at = jan_1
         with make_repeat_record(self.repeater, State.Pending) as record:
@@ -50,7 +50,7 @@ class RepeaterTestCase(TestCase):
                 record,
                 pytz.UTC,
                 date_format=self.date_format,
-                process_repeaters_enabled=True,
+                backoff_repeaters_enabled=True,
             )
             self.assertEqual(display.next_check, '2025-01-01 00:00:00')
 
@@ -62,7 +62,7 @@ class RepeaterTestCase(TestCase):
                 record,
                 pytz.UTC,
                 date_format=self.date_format,
-                process_repeaters_enabled=True,
+                backoff_repeaters_enabled=True,
             )
             self.assertEqual(display.next_check, '---')
 
