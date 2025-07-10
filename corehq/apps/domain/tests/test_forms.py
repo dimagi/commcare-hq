@@ -580,3 +580,132 @@ class TestPasswordResetFormsNoAutocompleteMixin(SimpleTestCase):
         self.assertNotEqual(form1.fields['email'].widget.attrs.get('autocomplete'), 'off')
         form2 = forms.ConfidentialDomainPasswordResetForm(domain='test')
         self.assertNotEqual(form2.fields['email'].widget.attrs.get('autocomplete'), 'off')
+
+
+class TestExtractAppInfoForm(SimpleTestCase):
+    def test_clean_app_url_with_valid_production_server(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_valid_india_server(self):
+        url = 'https://india.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'india')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_valid_eu_server(self):
+        url = 'https://eu.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'eu')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_without_trailing_slash(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_additional_path_segments(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/settings/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_http_protocol(self):
+        url = 'http://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must start with https://', str(form.errors['app_url']))
+
+    def test_clean_app_url_with_invalid_server(self):
+        url = 'https://invalid.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
+
+    @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'production')
+    def test_clean_app_url_same_server_validation(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The source app url is in the same server as current server', str(form.errors['app_url']))
+
+    @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'india')
+    def test_clean_app_url_different_server_validation(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+
+    def test_clean_app_url_missing_path_segments(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_invalid_path_structure(self):
+        url = 'https://www.commcarehq.org/b/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_missing_apps_segment(self):
+        url = 'https://www.commcarehq.org/a/test-domain/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_missing_view_segment(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_invalid_app_id_format(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/invalid-app-id/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_with_query_parameters(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/?param=value'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_fragment(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/#section'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_forms_open_in_app(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/form/'
+        '545858ed6a3449ccb377ba6f0c8a3c61/source/#form/name'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_port_number(self):
+        url = 'https://www.commcarehq.org:443/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
