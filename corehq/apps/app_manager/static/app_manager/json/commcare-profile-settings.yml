@@ -313,6 +313,19 @@
   since: "2.24"
   force: true
 
+- name: "Auto-Capture Location Accuracy"
+  description: "The target accuracy of auto-captured GPS in meters. Once a reading meets this accuracy, it will be captured and the form will stop polling the GPS"
+  id: "cc-gps-auto-capture-accuracy"
+  values:
+    - [5, '5 Meters']
+    - [10, '10 Meters']
+    - [20, '20 Meters']
+    - [40, '40 Meters']
+    - [80, '80 Meters']
+  default: 10
+  since: "2.30"
+  force: true
+
 - name: "Default Map Tileset"
   description: "For mobile map displays, chooses a base tileset for the underlying map layer"
   id: "cc-maps-default-layer"
