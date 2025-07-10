@@ -9,7 +9,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.domain.decorators import LoginAndDomainMixin
-from corehq.apps.domain.forms import ConstructAppDownloadLinkForm, ImportAppForm
+from corehq.apps.domain.forms import ExtractAppInfoForm, ImportAppForm
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 
@@ -29,7 +29,7 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
     def get_context_data(self, form=None, next_action=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'form': form or ConstructAppDownloadLinkForm(),
+            'form': form or ExtractAppInfoForm(),
             'container_id': self.container_id,
             'next_action': next_action or 'process_first_step',
         })
@@ -37,7 +37,7 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
 
     @hq_hx_action('post')
     def process_first_step(self, request, *args, **kwargs):
-        form = ConstructAppDownloadLinkForm(request.POST)
+        form = ExtractAppInfoForm(request.POST)
         next_action = 'process_first_step'
         if form.is_valid():
             # Store the validated data for use in the second step

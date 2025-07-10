@@ -3097,7 +3097,7 @@ class DomainAlertForm(forms.Form):
         )
 
 
-class ConstructAppDownloadLinkForm(forms.Form):
+class ExtractAppInfoForm(forms.Form):
 
     app_url = forms.URLField(
         label=gettext_lazy("App URL"),
