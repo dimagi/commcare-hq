@@ -39,7 +39,9 @@ $(function () {
 
     if (initialPageData.get('can_select_server')) {
         var $serverLocationField = $('#id_auth-server_location');
-        var serverLocationModel = serverLocationSelect.serverLocationModel($serverLocationField.val());
+        var serverLocationModel = serverLocationSelect.serverLocationModel({
+            initialValue: $serverLocationField.val(),
+        });
         $serverLocationField.koApplyBindings(serverLocationModel);
         $serverLocationField.select2({disabled: false, minimumResultsForSearch: Infinity});
     }

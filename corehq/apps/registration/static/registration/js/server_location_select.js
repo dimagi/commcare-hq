@@ -17,8 +17,9 @@ const navigateSubdomain = value => {
     }
 };
 
-const serverLocationModel = function (initialValue = currentSubdomain()) {
+const serverLocationModel = function (options) {
     const self = {};
+    const initialValue = options.initialValue || currentSubdomain();
     self.serverLocation = ko.observable(initialValue);
     self.serverLocation.subscribe(value => navigateSubdomain(value));
     return self;
