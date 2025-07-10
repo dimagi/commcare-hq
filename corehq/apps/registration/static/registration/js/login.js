@@ -2,7 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import userLoginForm from "registration/js/user_login_form";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import serverLocationSelect from "hqwebapp/js/server_location_select";
+import serverLocationSelect from "registration/js/server_location_select";
 import "hqwebapp/js/captcha";  // shows captcha
 import "select2/dist/js/select2.full.min";
 
