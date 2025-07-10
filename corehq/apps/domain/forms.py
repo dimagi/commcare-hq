@@ -4,6 +4,8 @@ import ipaddress
 import json
 import logging
 import uuid
+import re
+import urllib.parse
 
 from django import forms
 from django.conf import settings
@@ -3122,10 +3124,53 @@ class ConstructAppDownloadLinkForm(forms.Form):
             )
         )
 
-    # TODO: validate app_url
-    # 1. check if server is either production, india or EU
-    # 2. check if server is the same as the current server
-    # 3. check if app_url is a valid app url
+    def clean_app_url(self):
+        app_url = self.cleaned_data['app_url']
+
+        if not app_url.startswith('https://'):
+            raise forms.ValidationError(_("The URL must start with https://"))
+
+        server_mapping = {
+            'www': 'production',
+            'india': 'india',
+            'eu': 'eu'
+        }
+
+        is_valid_commcare_server = True
+        parsed_url = urllib.parse.urlparse(app_url)
+        netloc = parsed_url.netloc.split(".")
+        subdomain = netloc[0]
+
+        if len(netloc) == 3:
+            domain = netloc[1]
+            suffix = netloc[2]
+            if subdomain not in server_mapping.keys() or domain != 'commcarehq' or suffix != 'org':
+                is_valid_commcare_server = False
+        else:
+            is_valid_commcare_server = False
+        if not is_valid_commcare_server:
+            raise forms.ValidationError(_("The URL must be from a valid CommCare server."))
+
+        source_server = server_mapping[subdomain]
+        current_server = settings.SERVER_ENVIRONMENT
+        if source_server == current_server:
+            raise forms.ValidationError(_(
+                "The source app url is in the same server as current server."
+                "To copy app in the same server, please use Copy Application feature."
+            ))
+
+        match = re.match(
+            r'^https://[^/]+/a/(?P<domain>[^/]+)/apps/view/(?P<app_id>[a-f0-9]{32})/?',
+            app_url
+        )
+        if not match:
+            raise forms.ValidationError(_("Invalid app URL format."))
+
+        self.cleaned_data['source_server'] = source_server
+        self.cleaned_data['source_domain'] = match.group('domain')
+        self.cleaned_data['app_id'] = match.group('app_id')
+
+        return None
 
 
 class ImportAppForm(forms.Form):
