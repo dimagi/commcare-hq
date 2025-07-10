@@ -24,25 +24,37 @@ $(function () {
         }
     }
 
-    if (initialPageData.get('enforce_sso_login')) {
+    var enforceSsoLogin = initialPageData.get('enforce_sso_login');
+    var canSelectServer = initialPageData.get('can_select_server');
+
+    var loginFormModel = {};
+    if (enforceSsoLogin) {
         var $passwordField = $('#id_auth-password');
-        var loginController = userLoginForm.loginController({
+        loginFormModel = userLoginForm.loginController({
             initialUsername: $('#id_auth-username').val(),
             passwordField: $passwordField,
             passwordFormGroup: $passwordField.closest('.form-group'),
             nextUrl: urlParams.get('next'),
             isSessionExpiration: isSessionExpiration,
         });
-        $('#user-login-form').koApplyBindings(loginController);
-        loginController.init();
     }
 
-    if (initialPageData.get('can_select_server')) {
-        var $serverLocationField = $('#id_auth-server_location');
+    var serverLocationEl = '#id_auth-server_location';
+    if (canSelectServer) {
         var serverLocationModel = serverLocationSelect.serverLocationModel({
-            initialValue: $serverLocationField.val(),
+            initialValue: $(serverLocationEl).val(),
         });
-        $serverLocationField.koApplyBindings(serverLocationModel);
-        $serverLocationField.select2({disabled: false, minimumResultsForSearch: Infinity});
+        loginFormModel.serverLocation = serverLocationModel.serverLocation;
+    }
+
+    if (enforceSsoLogin || canSelectServer) {
+        var $bindingEl = enforceSsoLogin ? $('#user-login-form') : $(serverLocationEl);
+        $bindingEl.koApplyBindings(loginFormModel);
+        if (enforceSsoLogin) {
+            loginFormModel.init();
+        }
+        if (canSelectServer) {
+            $(serverLocationEl).select2({disabled: false, minimumResultsForSearch: Infinity});
+        }
     }
 });
