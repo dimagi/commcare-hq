@@ -35,6 +35,8 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             required=False,
             widget=forms.Select(attrs={
                 'class': 'form-control input-lg',
+                'data-bind': 'value: serverLocation',
+                'disabled': 'disabled',
             }),
             choices=ServerLocation.choices(),
         )
