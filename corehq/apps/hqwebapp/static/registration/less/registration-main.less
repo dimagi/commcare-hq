@@ -215,3 +215,64 @@ p.sso-message-block {
     text-align: center;
   }
 }
+
+.reg-form-container {
+  select.input-lg {
+    color: @cc-text;
+    appearance: none;
+    padding: 2px 16px;
+    line-height: unset;
+  }
+
+  .select2-container {
+    .select2-selection--single {
+      font-size: @font-size-large;
+      border: 2px solid #cccccc;
+      border-radius: @input-border-radius-large;
+      height: 42px;
+      padding: 5px 8px;
+
+      .select2-selection__rendered {
+        color: @cc-text;
+      }
+    }
+
+    .select2-selection__arrow {
+      top: 10px !important;
+      right: 6px !important;
+      b {
+        display: none;
+      }
+
+      &::after {
+        // from radio_select.less
+        outline: none !important;
+        content: "\f078";
+        font-family: FontAwesome;
+        position: absolute;
+        top: 0;
+        line-height: @input-height-base;
+        right: 0;
+        color: @cc-neutral-mid;
+        font-size: @font-size-base;
+        transform: translate(-80%, -10%);
+        pointer-events: none;
+        z-index: 2;
+        transition: all 250ms cubic-bezier(.4, .25, .3, 1);
+        opacity: .6;
+        width: 10px;
+        padding-right: 8px;
+        margin: 0;
+      }
+    }
+
+    &--open .select2-selection__arrow::after {
+      content: "\f077";
+    }
+  }
+}
+
+.select2-container .select2-results__option {
+  font-size: @font-size-large !important;
+  padding: 5px 17px !important;
+}
