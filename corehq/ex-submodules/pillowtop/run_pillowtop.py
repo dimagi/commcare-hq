@@ -1,7 +1,65 @@
 import multiprocessing
 import sys
 
+import gevent
+
 from pillowtop import get_all_pillow_instances
+from pillowtop.utils import get_pillow_by_name
+
+
+def run_pillow_by_name(
+    pillow_name,
+    *,
+    num_processes,
+    process_number,
+    gevent_workers=None,
+    processor_chunk_size,
+    dedicated_migration_process=False,
+    exclude_ucrs=(),
+):
+    assert 0 <= process_number < num_processes
+    assert processor_chunk_size
+
+    options = {'processor_chunk_size': processor_chunk_size}
+    if exclude_ucrs:
+        options['exclude_ucrs'] = exclude_ucrs
+
+    if gevent_workers is not None:
+        if gevent_workers < 2:
+            sys.exit("cannot run less than 2 gevent workers")
+        if process_number > 0 or not dedicated_migration_process:
+            if dedicated_migration_process:
+                num_processes -= 1
+                process_number -= 1
+            run_gevent_pillows(pillow_name, num_processes, process_number, gevent_workers, options)
+            return
+        # the migration process (process_number == 0) is always run in a
+        # single process without gevent workers.
+
+    pillow = get_pillow_by_name(
+        pillow_name,
+        num_processes=num_processes,
+        process_num=process_number,
+        dedicated_migration_process=dedicated_migration_process,
+        **options
+    )
+    start_pillow(pillow)
+
+
+def run_gevent_pillows(pillow_name, num_processes, process_number, gevent_workers, options):
+    # NOTE dedicated_migration_process is always False for gevent workers.
+    # The gevent worker with process number 0 is NOT a migration process.
+    assert 'gevent_workers' not in options, options
+    workers = []
+    for worker_num in range(gevent_workers):
+        workers.append(gevent.spawn(
+            run_pillow_by_name,
+            pillow_name,
+            num_processes=num_processes * gevent_workers,
+            process_number=process_number * gevent_workers + worker_num,
+            **options
+        ))
+    gevent.joinall(workers)
 
 
 def start_pillows(pillows=None):
