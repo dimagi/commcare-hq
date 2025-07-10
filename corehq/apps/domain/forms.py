@@ -3102,7 +3102,7 @@ class ExtractAppInfoForm(forms.Form):
     app_url = forms.URLField(
         label=gettext_lazy("App URL"),
         required=True,
-        help_text=gettext_lazy("Copy and paste the full URL of the application from the source server."
+        help_text=gettext_lazy("Copy and paste the full URL of the application from the source server. "
                                "You can find this URL in your browser's address bar when viewing the app."),
     )
 
@@ -3154,7 +3154,7 @@ class ExtractAppInfoForm(forms.Form):
         current_server = settings.SERVER_ENVIRONMENT
         if source_server == current_server:
             raise forms.ValidationError(_(
-                "The source app url is in the same server as current server."
+                "The source app url is in the same server as current server. "
                 "To copy app in the same server, please use Copy Application feature."
             ))
 
@@ -3239,7 +3239,7 @@ class ImportAppForm(forms.Form):
         except (json.decoder.JSONDecodeError, UnicodeDecodeError):
             source = None
         if not source:
-            raise forms.ValidationError(_("The file uploaded is an invalid JSON file"))
+            raise forms.ValidationError(_("The file uploaded is an invalid JSON file."))
         return app_file
 
     def construct_download_url(self, source_server, source_domain, app_id):
