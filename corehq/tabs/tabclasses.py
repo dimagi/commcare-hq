@@ -35,7 +35,11 @@ from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
-from corehq.apps.domain.views.settings import EditIPAccessConfigView, EditMyProjectSettingsView
+from corehq.apps.domain.views.settings import (
+    EditIPAccessConfigView,
+    EditMyProjectSettingsView,
+    ImportAppFromAnotherServerView,
+)
 from corehq.apps.email.views import EmailSMTPSettingsView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
@@ -2089,6 +2093,17 @@ class ProjectSettingsTab(UITab):
                 section = _get_administration_section(self.domain)
             elif user_can_manage_domain_alerts:
                 section = _get_manage_domain_alerts_section(self.domain)
+            if self.couch_user.can_edit_apps():
+                if section:
+                    section.append({
+                        'title': ImportAppFromAnotherServerView.page_title,
+                        'url': reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain]),
+                    })
+                else:
+                    section = [{
+                        'title': ImportAppFromAnotherServerView.page_title,
+                        'url': reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain]),
+                    }]
             if section:
                 items.append((_('Project Administration'), section))
 
