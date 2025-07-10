@@ -1,10 +1,7 @@
 import json
 
-from django.http import HttpResponse
-from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
-
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from django.views.generic import TemplateView
 
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.models import import_app as import_app_util
@@ -12,6 +9,7 @@ from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.forms import ExtractAppInfoForm, ImportAppForm
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
 @method_decorator(
