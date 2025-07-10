@@ -3146,11 +3146,24 @@ class ExtractAppInfoForm(forms.Form):
         if not match:
             raise forms.ValidationError(_("Invalid app URL format."))
 
-        self.cleaned_data['source_server'] = source_server
-        self.cleaned_data['source_domain'] = match.group('domain')
-        self.cleaned_data['app_id'] = match.group('app_id')
+        # Save extracted values on the instance for use in clean()
+        self._extracted = {
+            'source_server': source_server,
+            'source_domain': match.group('domain'),
+            'app_id': match.group('app_id'),
+        }
+        return app_url
 
-        return None
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if hasattr(self, '_extracted'):
+            cleaned_data.update(self._extracted)
+
+        # Wipe app_url just in case it contains any malicious code
+        cleaned_data['app_url'] = None
+
+        return cleaned_data
 
     @staticmethod
     def _get_source_server(parsed_url):
