@@ -76,11 +76,5 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
             source = json.load(file)
             app = import_app_util(source, self.domain, {'name': name}, request=request)
             response = back_to_main(request, self.domain, app_id=app._id)
-            if request.headers.get('HX-Request'):
-                # Add a header to tell HTMX to do a full page redirect
-                return HttpResponse(
-                    status=200,
-                    headers={'HX-Redirect': response.url}
-                )
-            return response
+            return self.render_htmx_redirect(response.url)
         return self.get(request, form=form, next_action=next_action, *args, **kwargs)
