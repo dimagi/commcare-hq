@@ -410,11 +410,11 @@ class AttemptsTests(RepeaterTestCase):
         tb_str = 'Traceback ...'
         self.repeat_record.add_payload_error_attempt(message=message,
                                                      traceback_str=tb_str)
-        assert self.repeat_record.state == State.InvalidPayload
+        assert self.repeat_record.state == State.PayloadRejected
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:
         assert self.repeat_record.num_attempts == 1
-        assert self.repeat_record.attempts[0].state == State.InvalidPayload
+        assert self.repeat_record.attempts[0].state == State.PayloadRejected
         assert self.repeat_record.attempts[0].message == message
         assert self.repeat_record.attempts[0].traceback == tb_str
 
@@ -505,7 +505,7 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
             )
             repeat_record = self.get_repeat_record()
             self.repeater.handle_response(resp, repeat_record)
-            assert repeat_record.state == State.InvalidPayload
+            assert repeat_record.state == State.PayloadRejected
 
 
 class TestConnectionSettingsUsedBy(TestCase):

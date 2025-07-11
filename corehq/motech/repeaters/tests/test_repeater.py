@@ -263,7 +263,7 @@ class RepeaterTest(BaseRepeaterTest):
                 repeat_record.fire()
 
         for repeat_record in self.enqueued_repeat_records():
-            assert repeat_record.state == State.InvalidPayload
+            assert repeat_record.state == State.PayloadRejected
 
     def test_bad_request_fail(self):
         with patch(
@@ -751,7 +751,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
         assert state_or_none is None
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        assert repeat_record.state == State.InvalidPayload
+        assert repeat_record.state == State.PayloadRejected
         assert repeat_record.failure_reason == 'Boom!'
 
     def test_payload_exception_on_register(self):
@@ -761,7 +761,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        assert repeat_record.state == State.InvalidPayload
+        assert repeat_record.state == State.PayloadRejected
         assert repeat_record.failure_reason == "Payload error"
 
     def test_failure(self):

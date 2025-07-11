@@ -141,7 +141,7 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
             State.Pending,
             State.Cancelled,
             State.Fail,
-            State.InvalidPayload,
+            State.PayloadRejected,
         ]]
 
 

@@ -154,7 +154,7 @@ from .repeater_generators import (
 )
 
 # Back off and retry responses that have these status codes. All other
-# status codes are treated as InvalidPayload errors because sending the
+# status codes are treated as PayloadRejected errors because sending the
 # same repeat record again later will result in the same response. This
 # list can be modified per repeater. See `Repeater.backoff_codes`.
 HTTP_STATUS_BACK_OFF = (
@@ -1298,7 +1298,7 @@ class RepeatRecord(models.Model):
         # preserves the value of `self.failure_reason`.
         if self.succeeded:
             self.state = State.Pending
-        elif self.state in (State.Cancelled, State.InvalidPayload):
+        elif self.state in (State.Cancelled, State.PayloadRejected):
             self.state = State.Fail
         self.next_check = datetime.utcnow()
         self.max_possible_tries = self.num_attempts + MAX_BACKOFF_ATTEMPTS
@@ -1359,11 +1359,11 @@ class RepeatRecord(models.Model):
 
     def add_payload_error_attempt(self, message, traceback_str):
         attempt = self.attempt_set.create(
-            state=State.InvalidPayload,
+            state=State.PayloadRejected,
             message=message,
             traceback=traceback_str,
         )
-        self.state = State.InvalidPayload
+        self.state = State.PayloadRejected
         self.next_check = None
         self.save()
         return attempt
@@ -1452,9 +1452,9 @@ class RepeatRecord(models.Model):
             except Exception as e:
                 self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
                 # Repeat records with State.Fail are retried, and repeat
-                # records with State.InvalidPayload are not.
+                # records with State.PayloadRejected are not.
                 #
-                # But a repeat record can have State.InvalidPayload
+                # But a repeat record can have State.PayloadRejected
                 # because it was sent and rejected, so we know that the
                 # remote endpoint is healthy and responding, or because
                 # this exception occurred and it was not sent, so we
@@ -1610,7 +1610,7 @@ def _get_retry_interval(last_checked, now):
 
 
 def has_failed(record):
-    return record.state in (State.Fail, State.Cancelled, State.InvalidPayload)
+    return record.state in (State.Fail, State.Cancelled, State.PayloadRejected)
 
 
 def format_response(response):

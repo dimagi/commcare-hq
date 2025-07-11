@@ -83,7 +83,7 @@ class TestDomainForwardingOptionsView(TestCase):
             'Empty': 0,
             'EmptyOrSuccess': 0,
             'Fail': 0,
-            'InvalidPayload': 0,
+            'PayloadRejected': 0,
             'Pending': 1,
             'Success': 0
         })

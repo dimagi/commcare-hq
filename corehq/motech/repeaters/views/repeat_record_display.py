@@ -71,6 +71,6 @@ def _get_state_tuple(record):
         State.Cancelled: ('danger', _('Cancelled')),
         State.Fail: ('danger', _('Failed')),
         State.Empty: ('success', _('Empty')),
-        State.InvalidPayload: ('danger', _('Invalid payload')),
+        State.PayloadRejected: ('danger', _('Payload rejected')),
     }
     return state_map.get(record.state, ('', ''))
