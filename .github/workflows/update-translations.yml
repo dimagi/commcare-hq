@@ -23,13 +23,16 @@ jobs:
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-      - name: Install system packages for Python dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-dev libxslt-dev
       - name: Install Python requirements
+        # HACK: lxml and xmlsec libraries both access libxml, but the pre-built binaries
+        # have incompatible methods of doing so. Since we install both normally, we
+        # resolve this by building libxml from source. However, since xmlsec is only
+        # required by the sso group (as a consequence of python3-saml), and because translations
+        # don't need sso support, we can instead rely on lxml's binary package that we normally skip
         run: |
-          uv sync --no-group=sso --locked --compile-bytecode --no-progress
+          uv sync --no-group=sso --locked --compile-bytecode --no-progress --no-install-package=lxml
+          uv pip install --no-config --python=.venv/bin/python \
+            $(uv export --format=requirements.txt --no-hashes | grep ^lxml==)
           uv pip install openai
       - name: Install transifex client
         run: |
