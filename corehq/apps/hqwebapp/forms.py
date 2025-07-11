@@ -31,7 +31,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         captcha = ReCaptchaField(label="")
 
     def __init__(self, *args, **kwargs):
-        can_select_server = kwargs.pop('can_select_server')
+        can_select_server = kwargs.pop('can_select_server', False)
         super().__init__(*args, **kwargs)
 
         if can_select_server:
