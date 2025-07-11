@@ -596,7 +596,7 @@ class WebUserResource(v0_1.WebUserResource):
         dm = user.get_domain_membership(domain)
 
         dm.is_active = enabled
-        user.save(spawn_task=True)
+        user.save()
         log_user_change(by_domain=domain, for_domain=domain,
                         couch_user=user, changed_by_user=request.couch_user,
                         changed_via=USER_CHANGE_VIA_API, fields_changed={'domain_membership.is_active': enabled})
