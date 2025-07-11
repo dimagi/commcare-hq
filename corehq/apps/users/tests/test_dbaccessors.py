@@ -15,6 +15,7 @@ from corehq.apps.users.dbaccessors import (
     delete_all_users,
     get_all_commcare_users_by_domain,
     get_all_user_ids,
+    get_all_user_rows,
     get_all_usernames_by_domain,
     get_all_web_users_by_domain,
     get_deleted_user_by_username,
@@ -34,6 +35,8 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+
+from corehq.util.test_utils import flag_enabled
 
 
 @es_test(requires=[user_adapter], setup_class=True)
@@ -91,6 +94,30 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='webuser@example.com',
         )
+
+        cls.web_user_inactive_sso = WebUser.create(
+            domain=cls.ccdomain.name,
+            username='webuser_inactive_sso',
+            password='secret',
+            created_by=None,
+            created_via=None,
+            email='webuser@example.com',
+        )
+        cls.web_user_inactive_sso.is_active = False
+        cls.web_user_inactive_sso.save()
+
+        cls.web_user_inactive_domain = WebUser.create(
+            domain=cls.ccdomain.name,
+            username='webuser_inactive_domain',
+            password='secret',
+            created_by=None,
+            created_via=None,
+            email='webuser@example.com',
+        )
+        dm = cls.web_user_inactive_domain.get_domain_membership(cls.ccdomain.name)
+        dm.is_active = False
+        cls.web_user_inactive_domain.save()
+
         cls.location_restricted_web_user = WebUser.create(
             domain=cls.ccdomain.name,
             username='LRWU',
@@ -138,6 +165,8 @@ class AllCommCareUsersTest(TestCase):
             self.web_user.to_json(),
             self.location_restricted_web_user.to_json(),
             self.ccuser_inactive.to_json(),
+            self.web_user_inactive_sso.to_json(),
+            self.web_user_inactive_domain.to_json()
         ])
 
         def usernames(users):
@@ -151,17 +180,19 @@ class AllCommCareUsersTest(TestCase):
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, {}), 3)
         self.assertEqual(
             usernames(get_web_users_by_filters(self.ccdomain.name, {})),
-            usernames([self.web_user, self.location_restricted_web_user])
+            usernames([self.web_user, self.location_restricted_web_user,
+                self.web_user_inactive_sso, self.web_user_inactive_domain])
         )
 
-        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, {}), 2)
+        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, {}), 4)
 
         # query_string search
         self.assertEqual(
             sorted(get_all_user_search_query(self.ccdomain.name[0:2]).get_ids()),
             sorted([
                 self.ccuser_1._id, self.ccuser_2._id, self.web_user._id,
-                self.location_restricted_web_user._id, self.ccuser_inactive._id
+                self.location_restricted_web_user._id, self.ccuser_inactive._id,
+                self.web_user_inactive_sso._id, self.web_user_inactive_domain._id
             ])
         )
 
@@ -181,9 +212,9 @@ class AllCommCareUsersTest(TestCase):
         filters = {'search_string': 'webuser'}
         self.assertEqual(
             usernames(get_web_users_by_filters(self.ccdomain.name, filters)),
-            [self.web_user.username]
+            [self.web_user.username, self.web_user_inactive_domain.username, self.web_user_inactive_sso.username]
         )
-        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, filters), 1)
+        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, filters), 3)
 
         filters = {'search_string': 'notwebuser'}
         self.assertEqual(usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)), [])
@@ -270,7 +301,8 @@ class AllCommCareUsersTest(TestCase):
         self.assertItemsEqual(actual_usernames, expected_usernames)
 
     def test_get_all_web_users_by_domain(self):
-        expected_users = [self.web_user, self.location_restricted_web_user]
+        expected_users = [self.web_user, self.location_restricted_web_user,
+            self.web_user_inactive_sso, self.web_user_inactive_domain]
         expected_usernames = [user.username for user in expected_users]
         actual_usernames = [user.username for user in get_all_web_users_by_domain(self.ccdomain.name)]
         self.assertItemsEqual(actual_usernames, expected_usernames)
@@ -281,7 +313,9 @@ class AllCommCareUsersTest(TestCase):
             self.ccuser_2,
             self.ccuser_inactive,
             self.web_user,
-            self.location_restricted_web_user
+            self.location_restricted_web_user,
+            self.web_user_inactive_sso,
+            self.web_user_inactive_domain
         ]
         expected_usernames = [user.username for user in all_cc_users]
         actual_usernames = get_all_usernames_by_domain(self.ccdomain.name)
@@ -322,15 +356,78 @@ class AllCommCareUsersTest(TestCase):
 
     def test_get_all_ids(self):
         all_ids = get_all_user_ids()
-        self.assertEqual(6, len(all_ids))
+        self.assertEqual(8, len(all_ids))
         user_ids = [
             self.ccuser_1._id,
             self.ccuser_2._id,
             self.web_user._id,
             self.ccuser_other_domain._id,
-            self.location_restricted_web_user._id
+            self.location_restricted_web_user._id,
+            self.web_user_inactive_sso._id,
+            self.web_user_inactive_domain._id
         ]
 
+        for id in user_ids:
+            self.assertTrue(id in all_ids)
+
+    def test_get_all_user_rows(self):
+        all_rows = get_all_user_rows(self.ccdomain.name)
+        all_ids = [row['id'] for row in all_rows]
+        self.assertEqual(7, len(all_ids))
+        user_ids = [
+            self.ccuser_1._id,
+            self.ccuser_2._id,
+            self.web_user._id,
+            self.ccuser_inactive._id,
+            self.location_restricted_web_user._id,
+            self.web_user_inactive_sso._id,
+            self.web_user_inactive_domain._id
+        ]
+        for id in user_ids:
+            self.assertTrue(id in all_ids)
+
+    def test_get_all_user_rows_no_inactive(self):
+        all_rows = get_all_user_rows(self.ccdomain.name, include_inactive=False)
+        all_ids = [row['id'] for row in all_rows]
+        self.assertEqual(5, len(all_ids))
+        user_ids = [
+            self.ccuser_1._id,
+            self.ccuser_2._id,
+            self.web_user._id,
+            self.location_restricted_web_user._id,
+            self.web_user_inactive_domain._id
+        ]
+        for id in user_ids:
+            self.assertTrue(id in all_ids)
+
+    @flag_enabled('DEACTIVATE_WEB_USERS')
+    def test_get_all_user_rows_FF(self):
+        all_rows = get_all_user_rows(self.ccdomain.name)
+        all_ids = [row['id'] for row in all_rows]
+        self.assertEqual(7, len(all_ids))
+        user_ids = [
+            self.ccuser_1._id,
+            self.ccuser_2._id,
+            self.web_user._id,
+            self.ccuser_inactive._id,
+            self.location_restricted_web_user._id,
+            self.web_user_inactive_sso._id,
+            self.web_user_inactive_domain._id
+        ]
+        for id in user_ids:
+            self.assertTrue(id in all_ids)
+
+    @flag_enabled('DEACTIVATE_WEB_USERS')
+    def test_get_all_user_rows_no_inactive_FF(self):
+        all_rows = get_all_user_rows(self.ccdomain.name, include_inactive=False)
+        all_ids = [row['id'] for row in all_rows]
+        self.assertEqual(4, len(all_ids))
+        user_ids = [
+            self.ccuser_1._id,
+            self.ccuser_2._id,
+            self.web_user._id,
+            self.location_restricted_web_user._id
+        ]
         for id in user_ids:
             self.assertTrue(id in all_ids)
 

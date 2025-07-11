@@ -779,7 +779,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         web_user_emails = [
             WebUser.wrap(row['doc']).get_email()
             for row in get_all_user_rows(self.domain, include_web_users=True,
-                                         include_mobile_users=False, include_docs=True)
+                                         include_inactive=False, include_mobile_users=False,
+                                         include_docs=True)
         ]
         for email in selected_emails:
             if email not in web_user_emails:
