@@ -126,12 +126,14 @@ class ServerLocation(object):
     PRODUCTION = 'production'
     INDIA = 'india'
     EU = 'eu'
-    ENVS = (PRODUCTION, INDIA, EU)
+    STAGING = 'staging'
+    ENVS = (PRODUCTION, INDIA, EU, STAGING)
 
     CHOICES_DICT = {
         PRODUCTION: ("www", _("United States")),
         INDIA: ("india", _("India")),
         EU: ("eu", _("European Union")),
+        STAGING: ("staging", _("Staging - TEST ONLY"))
     }
 
     @classmethod
