@@ -131,7 +131,7 @@ class TestPaymentRequest(TestCase):
             name='foo',
             data={
                 PaymentProperties.PAYMENT_VERIFIED: True,
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUESTED,
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
                 **self._payment_details,
             }
         )
@@ -254,7 +254,7 @@ class TestRequestPaymentsForCases(TestCase):
         case_id, payment_property_update, _ = payment_updates[0]
         assert case_id == payment_cases[0].case_id
         assert payment_property_update['transaction_id'] == transaction_id
-        assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.REQUESTED
+        assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.SUBMITTED
         assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
 
     @patch('corehq.apps.integration.payments.services._make_payment_request')

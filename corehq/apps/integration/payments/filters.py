@@ -7,19 +7,6 @@ from corehq.apps.reports.filters.users import WebUserFilter
 from corehq.apps.integration.payments.const import PaymentStatus
 
 
-class PaymentVerificationStatusFilter(BaseSingleOptionFilter):
-    slug = 'payment_verification_status'
-    label = _("Verification Status")
-    default_text = _('Show all')
-
-    verified = 'verified'
-    unverified = 'unverified'
-    options = [
-        (verified, _("Verified")),
-        (unverified, _("Unverified")),
-    ]
-
-
 class BatchNumberFilter(BaseSingleOptionFilter):
     slug = "batch_number"
     label = _("Batch number")
@@ -42,7 +29,13 @@ class PaymentStatusFilter(BaseSingleOptionFilter):
     slug = 'payment_status'
     label = _('Payment status')
     default_text = _('Show all')
-    options = PaymentStatus.choices
+
+    @property
+    def options(self):
+        return [
+            (str(None) if value is None else value, label)
+            for value, label in PaymentStatus.choices()
+        ]
 
 
 class PaymentCaseListFilter(CaseListFilter):
