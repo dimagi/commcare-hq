@@ -19,9 +19,6 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.models import KycConfig
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
-from corehq.apps.integration.payments.filters import (
-    PaymentVerificationStatusFilter,
-)
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import verify_payment_cases
@@ -40,7 +37,6 @@ from corehq.util.timezones.utils import get_timezone
 class PaymentsFiltersMixin:
     fields = [
         'corehq.apps.integration.payments.filters.PaymentCaseListFilter',
-        'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
         'corehq.apps.integration.payments.filters.PaymentStatusFilter',
@@ -157,9 +153,6 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     def _apply_filters(self, query):
         query_filters = []
-        if verification_status := self.request.GET.get('payment_verification_status'):
-            filter_value = 'True' if verification_status == PaymentVerificationStatusFilter.verified else ''
-            query_filters.append(case_property_query(PaymentProperties.PAYMENT_VERIFIED, filter_value))
 
         if batch_number := self.request.GET.get('batch_number'):
             query_filters.append(case_property_query(PaymentProperties.BATCH_NUMBER, batch_number))

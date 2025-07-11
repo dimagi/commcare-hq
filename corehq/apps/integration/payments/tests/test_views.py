@@ -312,24 +312,6 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         assert response.status_code == 404
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_verified_has_two(self):
-        response = self._make_request(querystring='payment_verification_status=verified')
-        queryset = response.context['table'].data
-        assert len(queryset) == 2
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_unverified_has_two(self):
-        response = self._make_request(querystring='payment_verification_status=unverified')
-        queryset = response.context['table'].data
-        assert len(queryset) == 2
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_unfiltered(self):
-        response = self._make_request(querystring='payment_verification_status=')
-        queryset = response.context['table'].data
-        assert len(queryset) == 4
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_batch_number_filter_has_none(self):
         response = self._make_request(querystring='batch_number=9999')
         queryset = response.context['table'].data
