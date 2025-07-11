@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: master
+          ref: mjr/transifex-tests
           submodules: recursive
       - uses: astral-sh/setup-uv@v6
         with:
