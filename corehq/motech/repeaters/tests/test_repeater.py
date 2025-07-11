@@ -254,7 +254,7 @@ class RepeaterTest(BaseRepeaterTest):
         )
         assert len(repeat_records) == 2
 
-    def test_bad_payload_invalid(self):
+    def test_bad_payload_rejected(self):
         with patch(
             'corehq.motech.repeaters.models.simple_request',
             return_value=MockResponse(status_code=401, reason='Unauthorized')
@@ -264,6 +264,18 @@ class RepeaterTest(BaseRepeaterTest):
 
         for repeat_record in self.enqueued_repeat_records():
             assert repeat_record.state == State.PayloadRejected
+
+    def test_error_generating_payload(self):
+        for repeat_record in RepeatRecord.objects.all():
+            with patch.object(
+                repeat_record.repeater.generator,
+                'get_payload',
+                side_effect=ValueError()
+            ):
+                repeat_record.fire()
+
+        for repeat_record in RepeatRecord.objects.all():
+            self.assertEqual(repeat_record.state, State.ErrorGeneratingPayload)
 
     def test_bad_request_fail(self):
         with patch(

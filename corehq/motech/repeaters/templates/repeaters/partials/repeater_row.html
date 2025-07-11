@@ -21,7 +21,7 @@
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=PAYLOADREJECTED">
-            {{ repeater.count_State.PayloadRejected }}
+            {{ repeater.count_State.ErrorGeneratingPayloadOrRejected }}
         </a>
     </td>
     <td>

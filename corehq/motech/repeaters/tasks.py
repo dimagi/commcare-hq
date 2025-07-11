@@ -405,7 +405,7 @@ def process_failed_repeat_record(repeat_record_id, domain):
 
 
 def process_ready_repeat_record(repeat_record_id):
-    state_or_none = None
+    state = None
     with TimingContext('process_repeat_record') as timer:
         try:
             repeat_record = (
@@ -419,7 +419,7 @@ def process_ready_repeat_record(repeat_record_id):
             _metrics_wait_duration(repeat_record)
             report_repeater_attempt(repeat_record.repeater.repeater_id)
             with timer('fire_timing') as fire_timer:
-                state_or_none = repeat_record.fire(timing_context=fire_timer)
+                state = repeat_record.fire(timing_context=fire_timer)
             report_repeater_usage(
                 repeat_record.domain,
                 # round up to the nearest millisecond, meaning always at least 1ms
@@ -427,7 +427,7 @@ def process_ready_repeat_record(repeat_record_id):
             )
         except Exception:
             logging.exception(f'Failed to process repeat record {repeat_record_id}')
-    return state_or_none
+    return state
 
 
 def is_repeat_record_ready(repeat_record):

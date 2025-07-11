@@ -72,5 +72,6 @@ def _get_state_tuple(record):
         State.Fail: ('danger', _('Failed')),
         State.Empty: ('success', _('Empty')),
         State.PayloadRejected: ('danger', _('Payload rejected')),
+        State.ErrorGeneratingPayload: ('danger', _('Error generating payload')),
     }
     return state_map.get(record.state, ('', ''))

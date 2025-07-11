@@ -35,6 +35,7 @@ class State(IntegerChoices):
     Cancelled = 8, _('Cancelled')
     Empty = 16, _('Empty')  # There was nothing to send. Implies Success.
     PayloadRejected = 32, _('Payload Rejected')  # Implies Cancelled.
+    ErrorGeneratingPayload = 64, _('Error Generating Payload')  # Unsent like Empty, but implies Cancelled
 
     @staticmethod
     def state_for_key(key):

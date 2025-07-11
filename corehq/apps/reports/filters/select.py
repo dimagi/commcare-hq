@@ -137,11 +137,12 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [(s.name.upper(), s.label) for s in [
-            State.Success,
+            State.Success,  # Includes Empty
             State.Pending,
             State.Cancelled,
             State.Fail,
-            State.PayloadRejected,
+            State.PayloadRejected,  # Includes ErrorGeneratingPayload
+            # See templates/repeaters/partials/repeater_row.html
         ]]
 
 
