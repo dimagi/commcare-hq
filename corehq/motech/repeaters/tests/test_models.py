@@ -408,8 +408,8 @@ class AttemptsTests(RepeaterTestCase):
     def test_add_payload_error_attempt(self):
         message = 'ValueError: Schema validation failed'
         tb_str = 'Traceback ...'
-        self.repeat_record.add_payload_error_attempt(message=message,
-                                                     traceback_str=tb_str)
+        self.repeat_record.add_payload_rejected_attempt(message=message,
+                                                        traceback_str=tb_str)
         assert self.repeat_record.state == State.PayloadRejected
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:

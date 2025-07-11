@@ -82,6 +82,8 @@ class TestDomainForwardingOptionsView(TestCase):
             'Cancelled': 0,
             'Empty': 0,
             'EmptyOrSuccess': 0,
+            'ErrorGeneratingPayload': 0,
+            'ErrorGeneratingPayloadOrRejected': 0,
             'Fail': 0,
             'PayloadRejected': 0,
             'Pending': 1,

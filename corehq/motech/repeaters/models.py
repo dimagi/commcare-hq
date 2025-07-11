@@ -619,7 +619,7 @@ class Repeater(RepeaterSuperProxy):
             return repeat_record.handle_server_failure(result)  # Current behavior
         else:
             message = format_response(result)
-            return repeat_record.handle_payload_error(message)
+            return repeat_record.handle_payload_rejection(message)
 
     def get_headers(self, repeat_record):
         # to be overridden
@@ -1298,7 +1298,11 @@ class RepeatRecord(models.Model):
         # preserves the value of `self.failure_reason`.
         if self.succeeded:
             self.state = State.Pending
-        elif self.state in (State.Cancelled, State.PayloadRejected):
+        elif self.state in (
+            State.Cancelled,
+            State.PayloadRejected,
+            State.ErrorGeneratingPayload,
+        ):
             self.state = State.Fail
         self.next_check = datetime.utcnow()
         self.max_possible_tries = self.num_attempts + MAX_BACKOFF_ATTEMPTS
@@ -1357,13 +1361,24 @@ class RepeatRecord(models.Model):
         self.save()
         return attempt
 
-    def add_payload_error_attempt(self, message, traceback_str):
+    def add_payload_rejected_attempt(self, message, traceback_str):
         attempt = self.attempt_set.create(
             state=State.PayloadRejected,
             message=message,
             traceback=traceback_str,
         )
         self.state = State.PayloadRejected
+        self.next_check = None
+        self.save()
+        return attempt
+
+    def add_error_generating_payload_attempt(self, message, traceback_str):
+        attempt = self.attempt_set.create(
+            state=State.ErrorGeneratingPayload,
+            message=message,
+            traceback=traceback_str,
+        )
+        self.state = State.ErrorGeneratingPayload
         self.next_check = None
         self.save()
         return attempt
@@ -1450,20 +1465,7 @@ class RepeatRecord(models.Model):
                 self.handle_exception(str(e))
                 raise
             except Exception as e:
-                self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
-                # Repeat records with State.Fail are retried, and repeat
-                # records with State.PayloadRejected are not.
-                #
-                # But a repeat record can have State.PayloadRejected
-                # because it was sent and rejected, so we know that the
-                # remote endpoint is healthy and responding, or because
-                # this exception occurred and it was not sent, so we
-                # don't know anything about the remote endpoint.
-                #
-                # Return None so that `tasks.update_repeater()` treats
-                # the repeat record as unsent, and does not apply or
-                # reset a backoff.
-                return None
+                self.handle_generate_payload_error(str(e), traceback_str=traceback.format_exc())
             return self.state
         return None
 
@@ -1544,9 +1546,13 @@ class RepeatRecord(models.Model):
         log_repeater_timeout_in_datadog(self.domain)
         return self.add_server_failure_attempt(str(exception))
 
-    def handle_payload_error(self, message, traceback_str=''):
+    def handle_payload_rejection(self, message, traceback_str=''):
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
-        return self.add_payload_error_attempt(message, traceback_str)
+        return self.add_payload_rejected_attempt(message, traceback_str)
+
+    def handle_generate_payload_error(self, message, traceback_str=''):
+        log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
+        return self.add_error_generating_payload_attempt(message, traceback_str)
 
     def cancel(self):
         self.state = State.Cancelled
