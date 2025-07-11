@@ -29,7 +29,13 @@ class PaymentStatusFilter(BaseSingleOptionFilter):
     slug = 'payment_status'
     label = _('Payment status')
     default_text = _('Show all')
-    options = PaymentStatus.choices()
+
+    @property
+    def options(self):
+        return [
+            (str(None) if value is None else value, label)
+            for value, label in PaymentStatus.choices()
+        ]
 
 
 class PaymentCaseListFilter(CaseListFilter):
