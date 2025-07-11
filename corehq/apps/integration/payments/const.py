@@ -26,6 +26,8 @@ PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
 
 
 class PaymentStatus(models.TextChoices):
+    # # None is the default value when payment cases are created and are not verified yet.
+    NOT_VERIFIED = None, _("Not Verified")
     PENDING_SUBMISSION = 'pending_submission', _("Pending Submission")
     SUBMITTED = 'submitted', _("Submitted")
     REQUEST_FAILED = 'request_failed', _("Request failed")
