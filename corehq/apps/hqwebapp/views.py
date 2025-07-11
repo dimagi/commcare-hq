@@ -87,8 +87,8 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
-from corehq.apps.hqwebapp.models import HQOauthApplication
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page
+from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page, is_logged_in
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
 from corehq.apps.locations.permissions import location_safe
@@ -378,7 +378,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
-    if req.user.is_authenticated and req.method == "GET":
+    if is_logged_in(req.user) and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
@@ -524,10 +524,16 @@ class HQLoginView(LoginView):
                 return HttpResponseRedirect(idp.get_login_url(username=username))
         return super().post(*args, **kwargs)
 
+    def can_select_server(self):
+        env = settings.SERVER_ENVIRONMENT
+        domain = self.extra_context.get('domain')
+        return env in ServerLocation.ENVS and not domain
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
         kwargs.setdefault('request', self.request)
+        kwargs['can_select_server'] = self.can_select_server()
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -538,6 +544,7 @@ class HQLoginView(LoginView):
             and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
+        context['can_select_server'] = self.can_select_server()
         if domain and not is_domain_using_sso(domain):
             # ensure that domain login pages not associated with SSO do not
             # enforce SSO on the login screen
