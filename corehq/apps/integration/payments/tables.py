@@ -93,7 +93,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         return mark_safe('<input %s/>' % flatatt(default_attrs))
 
     def render_payment_status(self, record, value):
-        return PaymentStatus(value).label
+        return PaymentStatus.label_for(value)
 
     def render_kyc_status(self, record, value):
         user_or_case_id = record.record.get('user_or_case_id')

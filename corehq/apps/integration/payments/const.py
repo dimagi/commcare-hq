@@ -1,5 +1,4 @@
 from enum import Enum
-from django.db import models
 from django.utils.translation import gettext as _
 
 
@@ -25,9 +24,21 @@ PAYMENT_SUCCESS_STATUS_CODE = 202
 PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
 
 
-class PaymentStatus(models.TextChoices):
-    # # None is the default value when payment cases are created and are not verified yet.
-    NOT_VERIFIED = None, _("Not Verified")
-    PENDING_SUBMISSION = 'pending_submission', _("Pending Submission")
-    SUBMITTED = 'submitted', _("Submitted")
-    REQUEST_FAILED = 'request_failed', _("Request failed")
+class PaymentStatus:
+    NOT_VERIFIED = None  # None is the default value when payment cases are created and are not verified yet.
+    PENDING_SUBMISSION = 'pending_submission'
+    SUBMITTED = 'submitted'
+    REQUEST_FAILED = 'request_failed'
+
+    @classmethod
+    def choices(cls):
+        return (
+            (cls.NOT_VERIFIED, _("Not Verified")),
+            (cls.PENDING_SUBMISSION, _("Pending Submission")),
+            (cls.SUBMITTED, _("Submitted")),
+            (cls.REQUEST_FAILED, _("Request Failed")),
+        )
+
+    @classmethod
+    def label_for(cls, value):
+        return dict(cls.choices()).get(value, _("Invalid Status"))
