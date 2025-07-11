@@ -48,7 +48,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
     // ---------------------------------------------------------------------
     // Step 1 Fields
     // ---------------------------------------------------------------------
-    const serverLocationModel = serverLocationSelect.serverLocationModel();
+    const serverLocationModel = serverLocationSelect.serverLocationModel({});
     self.serverLocation = serverLocationModel.serverLocation;
     self.fullName = ko.observable(defaults.full_name)
         .extend({
