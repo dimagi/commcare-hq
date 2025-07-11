@@ -619,42 +619,6 @@ def _valid_exchange_record_exists_helper(app_id, records):
     return False
 
 
-@require_can_edit_apps
-def import_app(request, domain):
-    template = "app_manager/import_app.html"
-    if request.method == "POST":
-        clear_app_cache(request, domain)
-        name = request.POST.get('name')
-        file = request.FILES.get('source_file')
-
-        valid_request = True
-        if not name:
-            messages.error(request, _("You must submit a name for the application you are importing."))
-            valid_request = False
-        if not file:
-            messages.error(request, _("You must upload the app source file."))
-            valid_request = False
-
-        try:
-            if valid_request:
-                source = json.load(file)
-        except json.decoder.JSONDecodeError:
-            messages.error(request, _("The file uploaded is an invalid JSON file"))
-            valid_request = False
-
-        if not valid_request:
-            return render(request, template, {'domain': domain})
-
-        assert (source is not None)
-        app = import_app_util(source, domain, {'name': name}, request=request)
-
-        return back_to_main(request, domain, app_id=app._id)
-    else:
-        return render(request, template, {
-            'domain': domain,
-        })
-
-
 @require_GET
 @require_deploy_apps
 def app_settings(request, domain, app_id):

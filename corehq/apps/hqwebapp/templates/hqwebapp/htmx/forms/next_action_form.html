@@ -7,6 +7,7 @@
     hx-target="#{{ container_id }}"
     hx-disabled-elt="find button"
     hq-hx-action="{{ next_action }}"
+    enctype="multipart/form-data"
   >
     {% crispy form %}
   </form>

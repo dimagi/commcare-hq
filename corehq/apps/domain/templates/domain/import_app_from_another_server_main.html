@@ -1,0 +1,15 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block page_content %}
+  <div>
+    <h3>{% trans "Import App from Another Server" %}</h3>
+    <div
+      class="mt-3"
+      hx-get="{{ htmx_import_app_steps_view_url }}"
+      hx-trigger="load"
+    ></div>
+  </div>
+{% endblock page_content %}

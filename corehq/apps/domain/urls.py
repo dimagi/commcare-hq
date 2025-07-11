@@ -41,6 +41,7 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.domain.views.base import select, accept_all_invitations
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
+from corehq.apps.domain.views.import_apps import ImportAppStepsView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
     DeactivateTransferDomainView,
@@ -75,6 +76,7 @@ from corehq.apps.domain.views.settings import (
     ManageDomainMobileWorkersView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
+    ImportAppFromAnotherServerView,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -224,5 +226,9 @@ domain_settings = [
         name='activate_release_restriction'),
     url(r'^toggle_release_restriction_by_app_profile/(?P<restriction_id>[\w-]+)/$',
         toggle_release_restriction_by_app_profile, name='toggle_release_restriction_by_app_profile'),
+    url(r'^import_app/$', ImportAppFromAnotherServerView.as_view(),
+        name=ImportAppFromAnotherServerView.urlname),
+    url(r'^import_app/steps/$', ImportAppStepsView.as_view(),
+        name=ImportAppStepsView.urlname),
     DomainReportDispatcher.url_pattern()
 ]
