@@ -45,7 +45,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         can_select_server = kwargs.pop('can_select_server')
         super().__init__(*args, **kwargs)
 
-        if not can_select_server:
+        if self.fields.get('server_location') and not can_select_server:
             del self.fields['server_location']
 
         if settings.ENFORCE_SSO_LOGIN:
