@@ -115,6 +115,10 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
 
     @property
     def bulk_response(self):
+        # This is way more than a simple property that returns a
+        # response value. Accessing it saves case ids to a file and
+        # fires off an async task to act on those cases. It is invoked
+        # by ReportDispatcher.dispatch(..., render_as='bulk')
         if self.request.method != 'POST':
             return HttpResponseBadRequest()
         owner_id = self.request_params.get('new_owner_id', None)
@@ -184,15 +188,6 @@ class CaseCopyInterface(CaseReassignmentInterface):
             query = query.owner(owner_id)
 
         return query.run().raw
-
-    @property
-    def template_context(self):
-        context = super(CaseCopyInterface, self).template_context
-        context.update({
-            "action": self.action,
-            "action_text": self.action_text,
-        })
-        return context
 
     @property
     def fields(self):
