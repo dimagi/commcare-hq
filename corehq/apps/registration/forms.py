@@ -100,7 +100,11 @@ class RegisterWebUserForm(forms.Form):
         saas_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
             self.fields['server_location'].help_text = _(
-                "*Once created, a project space cannot be transferred from one server to another."
+                "*Once created, a project space cannot be transferred from one server to another. "
+                "For more information, visit <a href='{help_link}' target='_blank'>this help page</a>."
+            ).format(
+                help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/"
+                           "CommCare+Cloud+Server+Locations")
             )
             server_location_field = [
                 hqcrispy.RadioSelect(
