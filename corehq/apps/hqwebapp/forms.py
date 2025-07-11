@@ -42,7 +42,12 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         )
 
     def __init__(self, *args, **kwargs):
+        can_select_server = kwargs.pop('can_select_server')
         super().__init__(*args, **kwargs)
+
+        if not can_select_server:
+            del self.fields['server_location']
+
         if settings.ENFORCE_SSO_LOGIN:
             self.fields['username'].widget = forms.TextInput(attrs={
                 'class': 'form-control',
