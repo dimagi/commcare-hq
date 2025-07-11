@@ -498,11 +498,13 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
             for state in repeat_record_states:
                 if state in (State.Success, State.InvalidPayload):
                     repeater.reset_backoff()
-                    break
+                    break  # Skips the `else` clause below
                 if state in (State.Fail, State.Cancelled):
                     remote_is_bad = True
             else:
                 if remote_is_bad:
+                    # All the payloads that were sent failed with server or
+                    # connection errors. Try again later.
                     metrics_counter(
                         'commcare.repeaters.process_repeaters.repeater_backoff',
                         tags={'domain': repeater.domain},
