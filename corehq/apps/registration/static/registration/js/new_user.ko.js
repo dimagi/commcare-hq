@@ -5,6 +5,7 @@ import RMI from "jquery.rmi/jquery.rmi";
 import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import intlTelInput from "intl-tel-input/build/js/intlTelInput.min";
+import serverLocationSelect from "registration/js/server_location_select";
 import "jquery-ui/ui/effect";
 import "jquery-ui/ui/effects/effect-slide";
 import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
@@ -47,6 +48,8 @@ var formViewModel = function (defaults, containerSelector, steps) {
     // ---------------------------------------------------------------------
     // Step 1 Fields
     // ---------------------------------------------------------------------
+    const serverLocationModel = serverLocationSelect({});
+    self.serverLocation = serverLocationModel.serverLocation;
     self.fullName = ko.observable(defaults.full_name)
         .extend({
             required: {
