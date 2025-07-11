@@ -2,7 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
-
 {% js_entry_b3 'registration/js/login' %}
 
 {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
@@ -15,16 +14,20 @@
 {% endblock %}
 
 {% block stylesheets %}
-  <link type="text/css"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+  <link
+    type="text/css"
+    rel="stylesheet"
+    media="all"
+    href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}"
+  />
 
   {% compress css %}
-    <link type="text/less"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'registration/less/registration.less' %}" />
+    <link
+      type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/less/registration.less' %}"
+    />
   {% endcompress %}
 {% endblock stylesheets %}
 
@@ -35,10 +38,11 @@
   {% registerurl 'check_sso_login_status' %}
   {% registerurl 'iframe_sso_login_pending' %}
   {% block login-content %}
-    <div {% if enforce_sso_login %}
-         id="user-login-form"
-         class="ko-template"
-         {% endif %}>
+    <div
+      {% if enforce_sso_login %}
+        id="user-login-form" class="ko-template"
+      {% endif %}
+    >
       {% include "login_and_password/partials/bootstrap3/login_full.html" %}
     </div>
   {% endblock %}
