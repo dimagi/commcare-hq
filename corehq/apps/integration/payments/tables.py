@@ -93,7 +93,13 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         return mark_safe('<input %s/>' % flatatt(default_attrs))
 
     def render_payment_status(self, record, value):
-        return PaymentStatus(value).label
+        # For new payment cases that are not verified yet, the case property does not exist,
+        if not value:
+            return PaymentStatus.NOT_VERIFIED.label
+        try:
+            return PaymentStatus.label(value)
+        except ValueError:
+            return _("Invalid Status")
 
     def render_kyc_status(self, record, value):
         user_or_case_id = record.record.get('user_or_case_id')
