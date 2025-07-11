@@ -313,16 +313,6 @@ class RepeaterTest(BaseRepeaterTest):
                     method="POST",
                 )
 
-        # The following is pretty fickle and depends on which of
-        #   - corehq.motech.repeaters.signals
-        #   - casexml.apps.case.signals
-        # gets loaded first.
-        # This is deterministic but easily affected by minor code changes
-        repeat_records = self.enqueued_repeat_records()
-        for repeat_record in repeat_records:
-            self.assertEqual(repeat_record.state, State.Success)
-            self.assertEqual(repeat_record.next_check, None)
-
         self.assertEqual(len(self.enqueued_repeat_records()), 0)
 
         submit_form_locally(self.update_xform_xml, self.domain)
