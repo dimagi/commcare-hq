@@ -72,6 +72,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     )
     payment_status = columns.Column(
         verbose_name=_("Payment Status"),
+        empty_values=(),
     )
     payment_timestamp = DateTimeStringColumn(
         verbose_name=_("Submitted At"),
