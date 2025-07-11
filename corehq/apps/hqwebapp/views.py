@@ -87,7 +87,7 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
-from corehq.apps.hqwebapp.models import HQOauthApplication
+from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
@@ -525,8 +525,9 @@ class HQLoginView(LoginView):
         return super().post(*args, **kwargs)
 
     def can_select_server(self):
+        env = settings.SERVER_ENVIRONMENT
         domain = self.extra_context.get('domain')
-        return settings.IS_SAAS_ENVIRONMENT and not domain
+        return env in ServerLocation.ENVS and not domain
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
