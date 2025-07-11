@@ -32,12 +32,19 @@ from corehq.apps.users.models import CouchUser
 class RegisterWebUserForm(forms.Form):
     # Use: NewUserRegistrationView
     # Not inheriting from other forms to de-obfuscate the role of this form.
-    if settings.IS_SAAS_ENVIRONMENT:
+    if settings.SERVER_ENVIRONMENT in ServerLocation.ENVS:
         server_location = forms.ChoiceField(
             label=_("Server Location"),
             required=False,
             widget=forms.RadioSelect,
             choices=ServerLocation.choices(),
+            help_text=_(
+                "*Once created, a project space cannot be transferred from one server to another. "
+                "For more information, visit <a href='{help_link}' target='_blank'>this help page</a>."
+            ).format(
+                help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/"
+                           "CommCare+Cloud+Server+Locations")
+            ),
         )
     full_name = forms.CharField(label=_("Full Name"))
     email = forms.CharField(label=_("Professional Email"))
@@ -97,15 +104,7 @@ class RegisterWebUserForm(forms.Form):
             self.fields['password'].required = False
 
         server_location_field = []
-        saas_fields = []
-        if settings.IS_SAAS_ENVIRONMENT:
-            self.fields['server_location'].help_text = _(
-                "*Once created, a project space cannot be transferred from one server to another. "
-                "For more information, visit <a href='{help_link}' target='_blank'>this help page</a>."
-            ).format(
-                help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/"
-                           "CommCare+Cloud+Server+Locations")
-            )
+        if self.fields.get('server_location'):
             server_location_field = [
                 hqcrispy.RadioSelect(
                     'server_location',
@@ -113,6 +112,8 @@ class RegisterWebUserForm(forms.Form):
                 ),
             ]
 
+        saas_fields = []
+        if settings.IS_SAAS_ENVIRONMENT:
             persona_fields = [
                 crispy.Div(
                     hqcrispy.RadioSelect(
