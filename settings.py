@@ -207,6 +207,7 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
     'django.contrib.auth.hashers.CryptPasswordHasher',
 )
+PASSWORD_RESET_TIMEOUT = 3600
 
 ROOT_URLCONF = "urls"
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
@@ -831,6 +832,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.ReferCaseRepeater',
     'corehq.motech.repeaters.models.DataRegistryCaseUpdateRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.ConnectFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
@@ -1302,6 +1304,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
+                'corehq.util.context_processors.server_location_display',
             ],
             'debug': DEBUG,
             'loaders': [

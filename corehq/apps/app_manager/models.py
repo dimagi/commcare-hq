@@ -94,9 +94,6 @@ from corehq.apps.app_manager.exceptions import (
     VersioningError,
     XFormException,
     XFormValidationError,
-    InvalidPropertyException,
-    DiffConflictException,
-    MissingPropertyException,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -392,51 +389,6 @@ class UpdateCaseAction(FormAction):
         self.update = normalized_update
         self.update_multi = None
 
-    DIFF_ACTION_ADD = 'add'
-    DIFF_ACTION_DELETE = 'del'
-    DIFF_ACTION_UPDATE = 'update'
-
-    DIFF_VALUE_UPDATED = 'updated'
-
-    def apply_diffs(self, diffs):
-        self.check_for_duplicate_keys(diffs)
-        self.check_for_invalid_updates(diffs)
-
-        if self.DIFF_ACTION_ADD in diffs:
-            for (key, value) in diffs[self.DIFF_ACTION_ADD].items():
-                self.update[key] = ConditionalCaseUpdate(value)
-
-        if self.DIFF_ACTION_DELETE in diffs:
-            for key in diffs[self.DIFF_ACTION_DELETE]:
-                if key in self.update:
-                    del self.update[key]
-
-        if self.DIFF_ACTION_UPDATE in diffs:
-            for (key, value) in diffs[self.DIFF_ACTION_UPDATE].items():
-                self.update[key] = ConditionalCaseUpdate(value[self.DIFF_VALUE_UPDATED])
-
-    def check_for_duplicate_keys(self, diffs):
-        addition_keys = set(diffs.get(self.DIFF_ACTION_ADD, {}).keys())
-        deletion_keys = set(diffs.get(self.DIFF_ACTION_DELETE, []))
-        update_keys = set(diffs.get(self.DIFF_ACTION_UPDATE, {}).keys())
-
-        overlapping_addition_keys = addition_keys & (deletion_keys | update_keys)
-        overlapping_deletion_keys = deletion_keys & update_keys
-        overlapping_keys = overlapping_addition_keys | overlapping_deletion_keys
-
-        if overlapping_keys:
-            raise DiffConflictException(*overlapping_keys)
-
-    def check_for_invalid_updates(self, diffs):
-        missing_keys = []
-        if self.DIFF_ACTION_UPDATE in diffs:
-            for key in diffs[self.DIFF_ACTION_UPDATE].keys():
-                if key not in self.update:
-                    missing_keys.append(key)
-
-            if missing_keys:
-                raise MissingPropertyException(*missing_keys)
-
 
 class PreloadAction(FormAction):
 
@@ -472,12 +424,6 @@ class OpenCaseAction(FormAction):
     name_update = SchemaProperty(ConditionalCaseUpdate)
     name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
-
-    DIFF_VALUE_UPDATED = 'updated'
-
-    def apply_diffs(self, diffs):
-        if self.DIFF_VALUE_UPDATED in diffs:
-            self.name_update = ConditionalCaseUpdate(diffs[self.DIFF_VALUE_UPDATED])
 
     def make_multi(self):
         '''
@@ -551,32 +497,6 @@ class FormActions(DocumentSchema):
 
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
-
-    def update(self, updates):
-        '''
-        Apply all 'updates' to the current object.
-        'updates' is expected to be a collection of valid properties within
-        FormActions (such as 'open_case', 'subcases', etc) in a json object form
-        '''
-        for key, value in updates.items():
-            if key not in self:
-                raise InvalidPropertyException(key)
-            self.set_raw_value(key, value)
-
-    def with_diffs(self, diffs):
-        '''
-        Produce a new FormActions object containing potentially updated
-        'open_case' and 'update_case' properties reflecting the diffs.
-        '''
-        dest = FormActions(self.to_json())  # clone object
-
-        if 'update_case' in diffs:
-            dest.update_case.apply_diffs(diffs['update_case'])
-
-        if 'open_case' in diffs:
-            dest.open_case.apply_diffs(diffs['open_case'])
-
-        return dest
 
 
 class CaseIndex(DocumentSchema):

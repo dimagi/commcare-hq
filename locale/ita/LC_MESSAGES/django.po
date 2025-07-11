@@ -4204,7 +4204,7 @@ msgid "Mobile Workers"
 msgstr "Operatori mobili"
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/export/forms.py corehq/apps/reports/models.py
+#: corehq/apps/export/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
 #: corehq/apps/users/views/mobile/custom_data_fields.py
@@ -4538,8 +4538,37 @@ msgid "You don't have permission to use connect_username field"
 msgstr "Non hai il permesso di usare il campo connect_username"
 
 #: corehq/apps/api/resources/v0_5.py
+msgid "You must provide the user's email to send a confirmation email."
+msgstr "Devi fornire l'email dell'utente per inviare una email di conferma."
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Users will provide their own password on confirmation."
+msgstr "Gli utenti forniranno la propria password al momento della conferma."
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "You must require account confirmation to send a confirmation email."
+msgstr ""
+"Devi richiedere la conferma dell'account per inviare una email di conferma."
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "The request resulted in the following errors: {}"
 msgstr "La richiesta ha prodotto i seguenti errori: {}"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"The confirmation email can not be sent because this user's account is "
+"already confirmed."
+msgstr ""
+"L'email di conferma non può essere inviata perché l'account di questo utente"
+" è già stato confermato."
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"This user has no email. You must provide the user's email to send a "
+"confirmation email."
+msgstr ""
+"Questo utente non ha un'email. Devi fornire l'email dell'utente per inviare "
+"una email di conferma."
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
@@ -4841,7 +4870,6 @@ msgstr "Ultime 10 esecuzioni"
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
@@ -7714,17 +7742,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
 msgid "Import Application"
 msgstr "Importa applicazione"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-#, python-format
-msgid ""
-"\n"
-"          <p>Import application <strong>%(app_name)s</strong> from domain <strong>%(app_domain)s</strong>?</p>\n"
-"        "
-msgstr ""
-"\n"
-"          <p>Importare l'applicazione <strong>%(app_name)s</strong> dal dominio <strong>%(app_domain)s</strong>?</p>\n"
-"        "
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
 msgid "Application Source File"
@@ -12769,12 +12786,20 @@ msgid "Transfer this file to your Android phone's file system"
 msgstr "Trasferisci questo file nel file system del tuo telefono Android"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                From CommCare ODK's install screen menu, bring up the\n"
+#| "                                application menu by hitting the three dots in the upper\n"
+#| "                                right or by hitting the menu button on your phone to\n"
+#| "                                select Offline Install\n"
+#| "                              "
 msgid ""
 "\n"
-"                                From CommCare ODK's install screen menu, bring up the\n"
-"                                application menu by hitting the three dots in the upper\n"
-"                                right or by hitting the menu button on your phone to\n"
-"                                select Offline Install\n"
+"                                Login to the CommCare App, tap the three dots in\n"
+"                                the top-right corner, select \"Update App,\" then\n"
+"                                tap the three-dot menu again and choose \"Offline\n"
+"                                Update.\"\n"
 "                              "
 msgstr ""
 "\n"
@@ -24058,6 +24083,22 @@ msgstr "Genera token"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        %(entity_string)s Property\n"
+#| "      "
+msgid ""
+"\n"
+"        %(server_location)s Server\n"
+"      "
+msgstr ""
+"\n"
+"        Proprietà %(entity_string)s\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
 msgid ""
 "\n"
 "          We are calling your phone right now, please enter the\n"
@@ -25206,6 +25247,12 @@ msgstr "Ultimo accesso [UTC]"
 #: corehq/apps/enterprise/enterprise.py
 msgid "Last Access Date [UTC]"
 msgstr "Data ultimo accesso [UTC]"
+
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Archive Product"
+msgid "Active in Project"
+msgstr "Archivia prodotto"
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/users/bulk_download.py
 msgid "Active User"
@@ -32417,6 +32464,13 @@ msgid "Sign Out"
 msgstr "Esci"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#, fuzzy
+#| msgid "User Location"
+msgid "Server Location"
+msgstr "Posizione utente"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 msgid "Help &amp; Resources"
 msgstr "Aiuto &amp; Risorse"
 
@@ -39218,6 +39272,18 @@ msgstr "admin"
 msgid "Deactivated Mobile Workers"
 msgstr "Operatori mobili disattivati"
 
+#: corehq/apps/reports/models.py
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Active Web Users"
+msgstr "# Utenti attivi"
+
+#: corehq/apps/reports/models.py
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Deactivated Web Users"
+msgstr "Mostra operatori mobili disattivati"
+
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
@@ -40282,6 +40348,12 @@ msgstr "progetto"
 #: corehq/apps/reports/standard/users/reports.py
 msgid "is active"
 msgstr "è attivo"
+
+#: corehq/apps/reports/standard/users/reports.py
+#, fuzzy
+#| msgid "Active Domains"
+msgid "is active in domain"
+msgstr "Domini attivi"
 
 #: corehq/apps/reports/standard/users/reports.py
 msgid "language"
@@ -49354,6 +49426,18 @@ msgid "Username contains invalid characters."
 msgstr "Il nome utente contiene caratteri non validi."
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid "Password Reset"
+msgid "Password Reset Email"
+msgstr "Reimpostazione password"
+
+#: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid "Password Reset"
+msgid "Send Password Reset Link"
+msgstr "Reimpostazione password"
+
+#: corehq/apps/users/forms.py
 msgid "Require Account Confirmation?"
 msgstr "Richiedere la conferma dell'account?"
 
@@ -52443,6 +52527,44 @@ msgid ""
 " login"
 msgstr ""
 "La password per {} è stata reimpostata con successo. Ora puoi accedere."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user is inactive and cannot reset their password."
+msgstr ""
+"L'account utente associato a questo indirizzo email non può reimpostare la "
+"password."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user account cannot reset the password."
+msgstr ""
+"L'account utente associato a questo indirizzo email non può reimpostare la "
+"password."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Recipient has no email address."
+msgid "This user does not have an email address set."
+msgstr "Il destinatario non ha un indirizzo email."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Password Reset Complete"
+msgid "Password reset email failed to send - "
+msgstr "Reimpostazione password completata"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Password Reset Complete"
+msgid "Password reset email sent to {}"
+msgstr "Reimpostazione password completata"
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -56241,6 +56363,12 @@ msgstr "Utente sconosciuto"
 msgid "Forward Forms"
 msgstr "Inoltra Form"
 
+#: corehq/motech/repeaters/models.py
+#, fuzzy
+#| msgid "Forward Cases To Another Commcare Project"
+msgid "Forward Form Metadata to Commcare Connect"
+msgstr "Inoltra Case a un altro progetto CommCare"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Cases"
 msgstr "Inoltra Case"
@@ -57282,6 +57410,20 @@ msgstr "Visualizza tutti gli eventi"
 msgid "Manage Attendance Tracking Events"
 msgstr "Gestisci eventi di tracciamento presenze"
 
+#: corehq/util/context_processors.py
+msgid "US"
+msgstr "US"
+
+#: corehq/util/context_processors.py
+#, fuzzy
+#| msgid "Indices"
+msgid "India"
+msgstr "Indici"
+
+#: corehq/util/context_processors.py
+msgid "EU"
+msgstr "EU"
+
 #: corehq/util/jsonattrs.py
 #, python-format
 msgid "'%(field)s' field value has an invalid format: %(exc)s"
@@ -57957,6 +58099,16 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <p>Import application <strong>%(app_name)s</strong> from domain <strong>%(app_domain)s</strong>?</p>\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <p>Importare l'applicazione <strong>%(app_name)s</strong> dal dominio <strong>%(app_domain)s</strong>?</p>\n"
+#~ "        "
 
 #~ msgid ""
 #~ "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "

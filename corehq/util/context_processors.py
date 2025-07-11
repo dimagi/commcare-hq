@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
+from django.utils.translation import gettext_lazy
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
@@ -173,6 +174,28 @@ def commcare_hq_names(request=None):
             'COMMCARE_HQ_NAME': _get_cc_name(request, 'COMMCARE_HQ_NAME'),
         },
     }
+
+
+def server_location_display(request):
+    SERVER_LOCATION_DISPLAY = {
+        'production': {
+            'flag': "🇺🇸",
+            'hr_name': gettext_lazy("US"),
+        },
+        'india': {
+            'flag': "🇮🇳",
+            'hr_name': gettext_lazy("India"),
+        },
+        'eu': {
+            'flag': "🇪🇺",
+            'hr_name': gettext_lazy("EU"),
+        },
+    }
+    context = {}
+    env = settings.SERVER_ENVIRONMENT
+    if env in SERVER_LOCATION_DISPLAY.keys():
+        context = {'server_display': SERVER_LOCATION_DISPLAY[env]}
+    return context
 
 
 def emails(request=None):
