@@ -21,6 +21,7 @@ from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed,
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.models import TableauUser
 from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
@@ -31,7 +32,13 @@ from corehq.apps.users.models import CouchUser
 class RegisterWebUserForm(forms.Form):
     # Use: NewUserRegistrationView
     # Not inheriting from other forms to de-obfuscate the role of this form.
-
+    if settings.IS_SAAS_ENVIRONMENT:
+        server_location = forms.ChoiceField(
+            label=_("Server Location"),
+            required=False,
+            widget=forms.RadioSelect,
+            choices=ServerLocation.choices(),
+        )
     full_name = forms.CharField(label=_("Full Name"))
     email = forms.CharField(label=_("Professional Email"))
     password = forms.CharField(
@@ -89,8 +96,19 @@ class RegisterWebUserForm(forms.Form):
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
             self.fields['password'].required = False
 
+        server_location_field = []
         saas_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
+            self.fields['server_location'].help_text = _(
+                "*Once created, a project space cannot be transferred from one server to another."
+            )
+            server_location_field = [
+                hqcrispy.RadioSelect(
+                    'server_location',
+                    data_bind="checked: serverLocation"
+                ),
+            ]
+
             persona_fields = [
                 crispy.Div(
                     hqcrispy.RadioSelect(
@@ -140,6 +158,7 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Fieldset(
                     _('Create Your Account'),
                     hqcrispy.FormStepNumber(1, 2),
+                    *server_location_field,
                     hqcrispy.InlineField(
                         'full_name',
                         css_class="input-lg",

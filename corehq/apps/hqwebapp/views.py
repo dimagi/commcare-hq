@@ -524,10 +524,15 @@ class HQLoginView(LoginView):
                 return HttpResponseRedirect(idp.get_login_url(username=username))
         return super().post(*args, **kwargs)
 
+    def can_select_server(self):
+        domain = self.extra_context.get('domain')
+        return settings.IS_SAAS_ENVIRONMENT and not domain
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
         kwargs.setdefault('request', self.request)
+        kwargs['can_select_server'] = self.can_select_server()
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -538,6 +543,7 @@ class HQLoginView(LoginView):
             and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
+        context['can_select_server'] = self.can_select_server()
         if domain and not is_domain_using_sso(domain):
             # ensure that domain login pages not associated with SSO do not
             # enforce SSO on the login screen
