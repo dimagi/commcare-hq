@@ -534,8 +534,8 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self.pillow = _get_pillow([self.config])
         later = datetime.utcnow() + timedelta(hours=50)
         repeat_records = RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
-        # We expect 2 repeat records for 2 repeaters each
-        self.assertEqual(repeat_records.count(), 4)
+        # We expect 1 repeat record each for 2 repeaters
+        assert repeat_records.count() == 2
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.motech.repeaters.models.Repeater.register')
