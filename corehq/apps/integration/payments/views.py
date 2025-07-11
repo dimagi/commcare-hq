@@ -18,7 +18,7 @@ from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.models import KycConfig
-from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.integration.payments.filters import (
     PaymentVerificationStatusFilter,
 )
@@ -168,8 +168,15 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             query_filters.append(case_property_query(PaymentProperties.PAYMENT_VERIFIED_BY, verified_by))
 
         if payment_status := self.request.GET.get('payment_status'):
-            query_filters.append(case_property_query(PaymentProperties.PAYMENT_STATUS, payment_status))
-
+            # For new payment cases that are not verified yet, the case property does not exist,
+            # hence the check for '' (empty string).
+            if payment_status == PaymentStatus.NOT_VERIFIED.value:
+                query_filters.append(filters.OR(
+                    case_property_query(PaymentProperties.PAYMENT_STATUS, ''),
+                    case_property_query(PaymentProperties.PAYMENT_STATUS, payment_status)
+                ))
+            else:
+                query_filters.append(case_property_query(PaymentProperties.PAYMENT_STATUS, payment_status))
         if query_filters:
             query = query.filter(filters.AND(*query_filters))
 
