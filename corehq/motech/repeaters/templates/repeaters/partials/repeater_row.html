@@ -20,8 +20,8 @@
         </a>
     </td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=INVALIDPAYLOAD">
-            {{ repeater.count_State.InvalidPayload }}
+        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=PAYLOADREJECTED">
+            {{ repeater.count_State.PayloadRejected }}
         </a>
     </td>
     <td>

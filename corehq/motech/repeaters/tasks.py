@@ -496,7 +496,7 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
         if toggles.BACKOFF_REPEATERS.enabled(repeater.domain, namespace=toggles.NAMESPACE_DOMAIN):
             remote_is_bad = False
             for state in repeat_record_states:
-                if state in (State.Success, State.InvalidPayload):
+                if state in (State.Success, State.PayloadRejected):
                     repeater.reset_backoff()
                     break  # Skips the `else` clause below
                 if state in (State.Fail, State.Cancelled):
