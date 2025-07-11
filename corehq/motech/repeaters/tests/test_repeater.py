@@ -1280,36 +1280,36 @@ class TestGetRetryInterval(SimpleTestCase):
 
     def test_no_last_checked(self):
         last_checked = None
-        now = fromisoformat("2020-01-01 00:05:00")
+        now = datetime.fromisoformat("2020-01-01 00:05:00")
         interval = _get_retry_interval(last_checked, now)
         assert interval == MIN_RETRY_WAIT
 
     def test_min_interval(self):
-        last_checked = fromisoformat("2020-01-01 00:00:00")
-        now = fromisoformat("2020-01-01 00:05:00")
+        last_checked = datetime.fromisoformat("2020-01-01 00:00:00")
+        now = datetime.fromisoformat("2020-01-01 00:05:00")
         interval = _get_retry_interval(last_checked, now)
         assert interval == MIN_RETRY_WAIT
 
     def test_max_interval(self):
-        last_checked = fromisoformat("2020-01-01 00:00:00")
-        now = fromisoformat("2020-02-01 00:00:00")
+        last_checked = datetime.fromisoformat("2020-01-01 00:00:00")
+        now = datetime.fromisoformat("2020-02-01 00:00:00")
         interval = _get_retry_interval(last_checked, now)
         assert interval == MAX_RETRY_WAIT
 
     def test_three_times_interval(self):
-        last_checked = fromisoformat("2020-01-01 00:00:00")
-        now = fromisoformat("2020-01-01 01:00:00")
+        last_checked = datetime.fromisoformat("2020-01-01 00:00:00")
+        now = datetime.fromisoformat("2020-01-01 01:00:00")
         interval = _get_retry_interval(last_checked, now)
         assert interval == timedelta(hours=3)
 
     def test_five_retries(self):
         # (Five retries because RepeatRecord.max_possible_tries is 6)
         for last_checked, now, expected_interval_hours in [
-            (None, fromisoformat("2020-01-01 00:00:00"), 1),
-            (fromisoformat("2020-01-01 00:00:00"), fromisoformat("2020-01-01 01:00:00"), 3),
-            (fromisoformat("2020-01-01 01:00:00"), fromisoformat("2020-01-01 04:00:00"), 9),
-            (fromisoformat("2020-01-01 04:00:00"), fromisoformat("2020-01-01 13:00:00"), 27),
-            (fromisoformat("2020-01-01 13:00:00"), fromisoformat("2020-01-02 16:00:00"), 81),
+            (None, datetime.fromisoformat("2020-01-01 00:00:00"), 1),
+            (datetime.fromisoformat("2020-01-01 00:00:00"), datetime.fromisoformat("2020-01-01 01:00:00"), 3),
+            (datetime.fromisoformat("2020-01-01 01:00:00"), datetime.fromisoformat("2020-01-01 04:00:00"), 9),
+            (datetime.fromisoformat("2020-01-01 04:00:00"), datetime.fromisoformat("2020-01-01 13:00:00"), 27),
+            (datetime.fromisoformat("2020-01-01 13:00:00"), datetime.fromisoformat("2020-01-02 16:00:00"), 81),
         ]:
             interval = _get_retry_interval(last_checked, now)
             assert interval == timedelta(hours=expected_interval_hours)
@@ -1464,20 +1464,6 @@ class TestSetBackoff(TestCase):
 
 def str_seconds(dt):
     return dt.isoformat(timespec='seconds')
-
-
-def fromisoformat(isoformat):
-    """
-    Return a datetime from a string in ISO 8601 date time format
-
-    >>> fromisoformat("2019-12-31 23:59:59")
-    datetime.datetime(2019, 12, 31, 23, 59, 59)
-
-    """
-    try:
-        return datetime.fromisoformat(isoformat)  # Python >= 3.7
-    except AttributeError:
-        return datetime.strptime(isoformat, "%Y-%m-%d %H:%M:%S")
 
 
 def _get_pillow(configs, processor_chunk_size=0):
