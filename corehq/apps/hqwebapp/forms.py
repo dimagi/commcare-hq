@@ -29,24 +29,22 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = ReCaptchaField(label="")
-    if settings.IS_SAAS_ENVIRONMENT:
-        server_location = forms.ChoiceField(
-            label=_("Server Location"),
-            required=False,
-            widget=forms.Select(attrs={
-                'class': 'form-control input-lg',
-                'data-bind': 'value: serverLocation',
-                'disabled': 'disabled',
-            }),
-            choices=ServerLocation.choices(),
-        )
 
     def __init__(self, *args, **kwargs):
         can_select_server = kwargs.pop('can_select_server')
         super().__init__(*args, **kwargs)
 
-        if self.fields.get('server_location') and not can_select_server:
-            del self.fields['server_location']
+        if can_select_server:
+            self.fields['server_location'] = forms.ChoiceField(
+                label=_("Server Location"),
+                required=False,
+                widget=forms.Select(attrs={
+                    'class': 'form-control input-lg',
+                    'data-bind': 'value: serverLocation',
+                    'disabled': 'disabled',
+                }),
+                choices=ServerLocation.choices(),
+            )
 
         if settings.ENFORCE_SSO_LOGIN:
             self.fields['username'].widget = forms.TextInput(attrs={
