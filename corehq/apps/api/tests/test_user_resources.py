@@ -36,6 +36,7 @@ from corehq.apps.users.role_utils import (
     UserRolePresets,
     initialize_domain_with_default_roles,
 )
+from corehq.apps.users.signals import update_user_in_es
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util.es.testing import sync_users_to_es
@@ -665,7 +666,7 @@ class TestWebUserResource(APIResourceTest):
 
     @sync_users_to_es()
     def test_get_list(self):
-        self.user.save()
+        update_user_in_es(None, self.user)
         update_analytics_indexes()
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -883,6 +884,41 @@ class TestWebUserResource(APIResourceTest):
                  groups=[TableauGroupTuple(name='group1', id='id1'), TableauGroupTuple(name='group2', id='id2')],
                  session="fake_session")
         ])
+
+    def test_activate_user(self):
+        """Activate the user through the API"""
+        user = WebUser.create(domain=self.domain.name, username='inactive_web_user', password='*****',
+                              created_by=None, created_via=None, is_active=True)
+        dm = user.get_domain_membership(self.domain.name)
+        dm.is_active = False
+        user.save()
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        activate_url = self.single_endpoint(user.get_id) + 'enable/'
+        response = self._assert_auth_post_resource(
+            activate_url, json.dumps({}), content_type='application/json', method='POST')
+        updated_user = WebUser.get(user.get_id)
+        changes = UserHistory.objects.filter(user_id=user.get_id, changed_via=USER_CHANGE_VIA_API)
+
+        self.assertEqual(response.status_code, 202)
+        self.assertTrue(updated_user.get_domain_membership(self.domain.name).is_active)
+        self.assertEqual(changes.count(), 1)
+
+    def test_deactivate_user(self):
+        """Activate the user through the API"""
+        user = WebUser.create(domain=self.domain.name, username='active_web_user', password='*****',
+                              created_by=None, created_via=None, is_active=True)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        activate_url = self.single_endpoint(user.get_id) + 'disable/'
+        response = self._assert_auth_post_resource(
+            activate_url, json.dumps({}), content_type='application/json', method='POST')
+        updated_user = WebUser.get(user.get_id)
+        changes = UserHistory.objects.filter(user_id=user.get_id, changed_via=USER_CHANGE_VIA_API)
+
+        self.assertEqual(response.status_code, 202)
+        self.assertFalse(updated_user.get_domain_membership(self.domain.name).is_active)
+        self.assertEqual(changes.count(), 1)
 
 
 class FakeUserES(object):
