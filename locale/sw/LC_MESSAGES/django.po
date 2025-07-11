@@ -56992,7 +56992,7 @@ msgstr "Simamia Matukio ya Ufuatiliaji wa Mahudhurio"
 
 #: corehq/util/context_processors.py
 msgid "US"
-msgstr "US"
+msgstr "Marekani"
 
 #: corehq/util/context_processors.py
 #, fuzzy
@@ -57002,7 +57002,7 @@ msgstr "Manejo de Casos"
 
 #: corehq/util/context_processors.py
 msgid "EU"
-msgstr "EU"
+msgstr "Ulaya"
 
 #: corehq/util/jsonattrs.py
 #, python-format
