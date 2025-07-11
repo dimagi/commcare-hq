@@ -13,6 +13,7 @@ from crispy_forms.helper import FormHelper
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.users.models import CouchUser
 from corehq.util.metrics import metrics_counter
 
@@ -30,7 +31,21 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         captcha = ReCaptchaField(label="")
 
     def __init__(self, *args, **kwargs):
+        can_select_server = kwargs.pop('can_select_server')
         super().__init__(*args, **kwargs)
+
+        if can_select_server:
+            self.fields['server_location'] = forms.ChoiceField(
+                label=_("Server Location"),
+                required=False,
+                widget=forms.Select(attrs={
+                    'class': 'form-control input-lg',
+                    'data-bind': 'value: serverLocation',
+                    'disabled': 'disabled',
+                }),
+                choices=ServerLocation.choices(),
+            )
+
         if settings.ENFORCE_SSO_LOGIN:
             self.fields['username'].widget = forms.TextInput(attrs={
                 'class': 'form-control',
@@ -41,6 +56,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
                 'class': 'form-control',
                 'placeholder': _("Enter password"),
             })
+        self.order_fields(['server_location', 'username', 'password', 'captcha'])
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()
