@@ -28,6 +28,7 @@ from dimagi.utils.web import json_response, get_ip
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
@@ -55,6 +56,7 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.domain.views.import_apps import ImportAppStepsView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
@@ -782,6 +784,28 @@ class EditDomainAlertView(BaseDomainAlertsView):
         )
 
         alert.save()
+
+
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_can_edit_apps,
+    ],
+    name='dispatch',
+)
+class ImportAppFromAnotherServerView(BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Import App from Another Server")
+    urlname = 'import_app_from_another_server_main'
+    template_name = 'domain/import_app_from_another_server_main.html'
+
+    @property
+    def page_context(self):
+        return {
+            'htmx_import_app_steps_view_url': reverse(
+                ImportAppStepsView.urlname,
+                args=[self.domain,],
+            ),
+        }
 
 
 @require_POST
