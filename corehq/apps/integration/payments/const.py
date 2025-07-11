@@ -26,6 +26,9 @@ PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
 
 
 class PaymentStatus(models.TextChoices):
+    # For new records that have not yet been verified, the payment_status field is missing and value is None.
+    # Such cases should be treated as "Not Verified" during validation or status checks.
+    NOT_VERIFIED = 'not_verified', _("Not Verified")
     PENDING_SUBMISSION = 'pending_submission', _("Pending Submission")
     SUBMITTED = 'submitted', _("Submitted")
     REQUEST_FAILED = 'request_failed', _("Request failed")
