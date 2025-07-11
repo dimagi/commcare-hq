@@ -123,14 +123,19 @@ def pkce_required(client_id):
 
 
 class ServerLocation(object):
+    PRODUCTION = 'production'
+    INDIA = 'india'
+    EU = 'eu'
+    ENVS = (PRODUCTION, INDIA, EU)
+
     CHOICES_DICT = {
-        'production': ("www", _("United States")),
-        'india': ("india", _("India")),
-        'eu': ("eu", _("European Union")),
+        PRODUCTION: ("www", _("United States")),
+        INDIA: ("india", _("India")),
+        EU: ("eu", _("European Union")),
     }
 
     @classmethod
     def choices(cls):
         env = settings.SERVER_ENVIRONMENT
-        sorted_keys = sorted(cls.CHOICES_DICT.keys(), key=lambda x: x != env)
+        sorted_keys = sorted(cls.ENVS, key=lambda x: x != env)
         return [cls.CHOICES_DICT[key] for key in sorted_keys]
