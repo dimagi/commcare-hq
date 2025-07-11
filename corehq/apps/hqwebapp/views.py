@@ -533,6 +533,7 @@ class HQLoginView(LoginView):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
         kwargs.setdefault('request', self.request)
+        kwargs['can_select_server'] = self.can_select_server()
         return kwargs
 
     def get_context_data(self, **kwargs):
