@@ -24,7 +24,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 )
 class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     urlname = 'start_bulk_edit_case_session'
-    template_name = 'data_cleaning/forms/next_action_form.html'
+    template_name = 'hqwebapp/htmx/forms/next_action_form.html'
     container_id = 'start-case-session'
 
     def get_context_data(self, form=None, next_action=None, **kwargs):
