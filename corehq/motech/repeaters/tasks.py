@@ -493,12 +493,15 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
     """
     repeater = Repeater.objects.get(id=repeater_id)
     try:
-        remote_is_healthy = (State.Success, State.InvalidPayload)
-        remote_is_bad = (State.Fail, State.Cancelled)
         if toggles.BACKOFF_REPEATERS.enabled(repeater.domain, namespace=toggles.NAMESPACE_DOMAIN):
+            remote_is_healthy = (State.Success, State.InvalidPayload)
+            remote_is_bad = (State.Fail, State.Cancelled)
+            payload_not_sent = (State.Empty, None)
             if any(s in remote_is_healthy for s in repeat_record_states):
                 repeater.reset_backoff()
-            elif all(s in remote_is_bad for s in repeat_record_states):
+            elif all(s in payload_not_sent for s in repeat_record_states):
+                pass
+            elif any(s in remote_is_bad for s in repeat_record_states):
                 metrics_counter(
                     'commcare.repeaters.process_repeaters.repeater_backoff',
                     tags={'domain': repeater.domain},
