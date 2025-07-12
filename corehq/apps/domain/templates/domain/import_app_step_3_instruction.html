@@ -1,0 +1,50 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div>
+  <div class="alert alert-success">
+    <h4>{% trans "Your application has been successfully imported!" %}</h4>
+    <p class="lead mb-1">
+      {% trans "You’re almost done — if your application contains multimedia files, follow these steps to copy them to your new application." %}
+    </p>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">
+      {% trans "Step 1: Download Multimedia from Source App" %}
+    </div>
+    <div class="card-body">
+      <p class="mb-2">
+        {% trans "Go to the source application's multimedia page and download the multimedia files as a ZIP:" %}
+      </p>
+      <a href="{{ source_multimedia_url }}" target="_blank">
+        <i class="fa fa-external-link"></i>
+        {% trans "Go to Source App Multimedia Download Page" %}
+      </a>
+      <p class="mb-1">{% trans 'Click "Download ZIP".' %}</p>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">
+      {% trans "Step 2: Upload Multimedia to New App" %}
+    </div>
+    <div class="card-body">
+      <p class="mb-2">
+        {% trans "Go to your new application's multimedia page and upload the downloaded files:" %}
+      </p>
+      <a href="{{ current_multimedia_url }}" target="_blank">
+        <i class="fa fa-external-link"></i>
+        {% trans "Go to New App Multimedia Upload Page" %}
+      </a>
+      <p class="mb-1">{% trans 'Upload Multimedia Files under Step 3.' %}</p>
+    </div>
+  </div>
+
+  <p class="lead">
+    {% trans "All done? Click below to go to your new application." %}
+  </p>
+  <button type="submit" class="btn btn-primary">
+    {% trans "Go to Application" %}
+  </button>
+</div>
