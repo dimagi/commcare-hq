@@ -37,8 +37,7 @@ class Command(BaseCommand):
             return
 
         existing_dc_users = [
-            u.username.split('@')[0]
-            for u in get_all_commcare_users_by_domain(domain)
+            u for u in get_all_commcare_users_by_domain(domain)
             if u.username.startswith(DATA_EDITING_TEST_USER_PREFIX)
         ]
         starting_number = len(existing_dc_users) + 1
