@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from corehq.apps.data_cleaning.management.commands.utils import input_validation
@@ -42,7 +43,7 @@ class Command(BaseCommand):
         ]
         starting_number = len(existing_dc_users) + 1
         for index in range(starting_number, starting_number + num_users):
-            username = f'{DATA_EDITING_TEST_USER_PREFIX}{index}@{domain}.commcarehq.org'
+            username = f'{DATA_EDITING_TEST_USER_PREFIX}{index}@{domain}.{settings.HQ_ACCOUNT_ROOT}'
             self.stdout.write("\n\n")
             CommCareUser.create(
                 domain,
