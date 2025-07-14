@@ -583,6 +583,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
             except ValidationError as e:
                 messages.error(request, _(e.message))
                 return HttpResponseRedirect(request.path_info)
+        response = super().post(request, *args, **kwargs)
 
         if self.get_context_data().get('form').is_valid():
             uidb64 = kwargs.get('uidb64')
@@ -605,7 +606,6 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 domain=domain,
                 use_domain_gateway=True
             )
-        response = super().post(request, *args, **kwargs)
         return response
 
 
