@@ -67,7 +67,6 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
-    FormActions,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
@@ -231,7 +230,10 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
-    form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+
+    updates = _get_updates(form.actions, request.POST)
+    form.actions.update(updates)
+
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
 
@@ -248,6 +250,17 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
+
+
+def _get_updates(existing_actions, data):
+    updates = json.loads(data['actions'])
+    if 'update_diff' in data:
+        update_diff = json.loads(data['update_diff'])
+        diff = existing_actions.with_diffs(update_diff)
+        updates['open_case'] = diff.open_case.to_json()
+        updates['update_case'] = diff.update_case.to_json()
+
+    return updates
 
 
 @waf_allow('XSS_BODY')
