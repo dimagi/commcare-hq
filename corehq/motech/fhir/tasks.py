@@ -11,6 +11,7 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.hqcase.bulk import case_block_submitter
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
@@ -370,28 +371,27 @@ def create_parent_indices(
     if not child_cases:
         return
 
-    case_blocks = []
-    for child_case_id, parent_ref, parent_resource_type in child_cases:
-        resource_type_name, external_id = parent_ref.split('/')
-        parent_case = get_case_by_external_id(
-            parent_resource_type.domain,
-            external_id,
-            parent_resource_type.case_type.name,
-        )
-        if not parent_case:
-            raise ConfigurationError(
-                f'Case not found with external_id {external_id!r}')
-
-        case_blocks.append(CaseBlock(
-            child_case_id,
-            index={'parent': (parent_case.type, parent_case.case_id)},
-        ))
-    submit_case_blocks(
-        [cb.as_text() for cb in case_blocks],
+    with case_block_submitter(
         importer.domain,
         xmlns=XMLNS_FHIR,
         device_id=f'FHIRImportConfig-{importer.pk}',
-    )
+    ) as submitter:
+        for child_case_id, parent_ref, parent_resource_type in child_cases:
+            resource_type_name, external_id = parent_ref.split('/')
+            parent_case = get_case_by_external_id(
+                parent_resource_type.domain,
+                external_id,
+                parent_resource_type.case_type.name,
+            )
+            if not parent_case:
+                raise ConfigurationError(
+                    f'Case not found with external_id {external_id!r}')
+
+            case_block = CaseBlock(
+                child_case_id,
+                index={'parent': (parent_case.type, parent_case.case_id)},
+            )
+            submitter.send(case_block)
 
 
 class ServiceRequestNotActive(Exception):

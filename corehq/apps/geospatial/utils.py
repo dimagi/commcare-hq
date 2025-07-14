@@ -10,8 +10,8 @@ from couchforms.geopoint import GeoPoint
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.geospatial.models import GeoConfig
+from corehq.apps.hqcase.bulk import case_block_submitter
 from corehq.apps.hqcase.case_helper import CaseHelper
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.const import ONE_DAY
 
@@ -210,28 +210,25 @@ def update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases=Fals
     if flag_assigned_cases:
         case_properties[ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY] = True
 
-    for i, case_owner_update in enumerate(case_owner_updates_dict):
-        case_blocks = []
-        cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
-        for case_id in cases_to_updates:
-            case_blocks.append(
-                CaseBlock(
+    with case_block_submitter(
+        domain=domain,
+        device_id=__name__ + '.update_cases_owners'
+    ) as submitter:
+        for i, case_owner_update in enumerate(case_owner_updates_dict):
+            cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
+            for case_id in cases_to_updates:
+                case_block = CaseBlock(
                     create=False,
                     case_id=case_id,
                     owner_id=case_owner_update['owner_id'],
                     update=case_properties,
-                ).as_text()
-            )
-        submit_case_blocks(
-            case_blocks=case_blocks,
-            domain=domain,
-            device_id=__name__ + '.update_cases_owners'
-        )
-        if celery_task_tracker:
-            celery_task_tracker.update_progress(
-                current=i + 1,
-                total=len(case_owner_updates_dict)
-            )
+                )
+                submitter.send(case_block)
+            if celery_task_tracker:
+                celery_task_tracker.update_progress(
+                    current=i + 1,
+                    total=len(case_owner_updates_dict)
+                )
 
 
 class CeleryTaskTracker(object):

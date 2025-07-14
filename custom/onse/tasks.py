@@ -15,7 +15,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.dbaccessors import domain_exists
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.bulk import case_block_submitter
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
@@ -353,12 +353,13 @@ def get_data_element_total(
 
 def save_cases(clays: List[CassiusMarcellus]):
     today = date.today().isoformat()
-    submit_case_blocks(
-        [clay.case_block.as_text() for clay in clays],
+    with case_block_submitter(
         DOMAIN,
         xmlns='http://commcarehq.org/dhis2-import',
         device_id=f"dhis2-import-{DOMAIN}-{today}",
-    )
+    ) as submitter:
+        for clay in clays:
+            submitter.send(clay.case_block)
 
 
 def handle_error(
