@@ -584,11 +584,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 messages.error(request, _(e.message))
                 return HttpResponseRedirect(request.path_info)
 
-        response = super().post(request, *args, **kwargs)
-        try:
-            # the response will only have context_data is the submitted form was invalid (mismatched passwords)
-            context = response.context_data
-        except AttributeError:
+        if self.get_context_data().get('form').is_valid():
             uidb64 = kwargs.get('uidb64')
             uid = urlsafe_base64_decode(uidb64)
             user = User.objects.get(pk=uid)
@@ -609,6 +605,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 domain=domain,
                 use_domain_gateway=True
             )
+        response = super().post(request, *args, **kwargs)
         return response
 
 
