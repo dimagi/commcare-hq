@@ -3129,6 +3129,13 @@ class ExtractAppInfoForm(forms.Form):
         if not app_url.startswith('https://'):
             raise forms.ValidationError(_("The URL must start with https://"))
 
+        return app_url
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        app_url = cleaned_data['app_url']
+
         parsed_url = urllib.parse.urlparse(app_url)
 
         source_server = self._get_source_server(parsed_url)
@@ -3146,22 +3153,9 @@ class ExtractAppInfoForm(forms.Form):
         if not match:
             raise forms.ValidationError(_("Invalid app URL format."))
 
-        # Save extracted values on the instance for use in clean()
-        self._extracted = {
-            'source_server': source_server,
-            'source_domain': match.group('domain'),
-            'app_id': match.group('app_id'),
-        }
-        return app_url
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        if hasattr(self, '_extracted'):
-            cleaned_data.update(self._extracted)
-
-        # Wipe app_url just in case it contains any malicious code
-        cleaned_data['app_url'] = None
+        cleaned_data['source_server'] = source_server
+        cleaned_data['source_domain'] = match.group('domain')
+        cleaned_data['app_id'] = match.group('app_id')
 
         return cleaned_data
 
