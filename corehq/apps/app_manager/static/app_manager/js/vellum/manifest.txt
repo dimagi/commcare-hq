@@ -1022,7 +1022,7 @@
 ├─ ws@5.2.4
 │  └─ async-limiter@~1.0.0
 ├─ XMLWriter@1.1.0
-├─ xpath@0.0.8
+├─ xpath@0.0.9
 │  └─ biginteger@^1.0.3
 ├─ y18n@5.0.8
 ├─ yargs-parser@20.2.4
@@ -1045,4 +1045,4 @@
 │  ├─ buffer-crc32@~0.2.3
 │  └─ fd-slicer@~1.1.0
 └─ yocto-queue@0.1.0
-Done in 0.14s.
+Done in 0.18s.
