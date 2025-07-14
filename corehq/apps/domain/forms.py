@@ -3134,14 +3134,18 @@ class ExtractAppInfoForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
 
-        app_url = cleaned_data['app_url']
+        app_url = cleaned_data.get('app_url')
+        if not app_url:
+            return cleaned_data
 
         parsed_url = urllib.parse.urlparse(app_url)
 
         source_server = self._get_source_server(parsed_url)
+        if source_server is None:
+            return cleaned_data
         current_server = settings.SERVER_ENVIRONMENT
         if source_server == current_server:
-            raise forms.ValidationError(_(
+            self.add_error('app_url', _(
                 "The source app url is in the same server as current server. "
                 "To copy app in the same server, please use Copy Application feature."
             ))
@@ -3151,16 +3155,15 @@ class ExtractAppInfoForm(forms.Form):
             app_url
         )
         if not match:
-            raise forms.ValidationError(_("Invalid app URL format."))
-
-        cleaned_data['source_server'] = source_server
-        cleaned_data['source_domain'] = match.group('domain')
-        cleaned_data['app_id'] = match.group('app_id')
+            self.add_error('app_url', _("Invalid app URL format."))
+        else:
+            cleaned_data['source_server'] = source_server
+            cleaned_data['source_domain'] = match.group('domain')
+            cleaned_data['app_id'] = match.group('app_id')
 
         return cleaned_data
 
-    @staticmethod
-    def _get_source_server(parsed_url):
+    def _get_source_server(self, parsed_url):
         server_mapping = {
             'www': 'production',
             'india': 'india',
@@ -3174,7 +3177,8 @@ class ExtractAppInfoForm(forms.Form):
             if subdomain in server_mapping.keys() and domain == 'commcarehq' and suffix == 'org':
                 return server_mapping[subdomain]
 
-        raise forms.ValidationError(_("The URL must be from a valid CommCare server."))
+        self.add_error('app_url', _("The URL must be from a valid CommCare server."))
+        return None
 
 
 class ImportAppForm(forms.Form):
