@@ -65,7 +65,7 @@ jobs:
       - name: Install Node.js dependencies
         run: yarn install --frozen-lockfile
 
-      - uses: sibiraj-s/action-eslint@v3
+      - uses: sibiraj-s/action-eslint@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           annotations: true
