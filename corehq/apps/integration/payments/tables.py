@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 
 from django_tables2 import columns
 
+from corehq.apps.hqwebapp.tables.columns import DateTimeStringColumn
 from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
@@ -16,6 +17,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'payment_verified',
         'payment_verified_by',
         'payment_status',
+        'payment_timestamp',
         'kyc_status',
     ]
 
@@ -70,6 +72,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     )
     payment_status = columns.Column(
         verbose_name=_("Payment Status"),
+    )
+    payment_timestamp = DateTimeStringColumn(
+        verbose_name=_("Submitted At"),
     )
 
     def render_verify_select(self, record, value):
