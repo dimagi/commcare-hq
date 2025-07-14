@@ -48,14 +48,14 @@ def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
     )
     form_meta = form_meta or SystemFormMeta()
     count = 0
-    with submit_case_block_context(
+    with case_block_submitter(
         domain,
         device_id=form_meta.device_id,
         user_id=form_meta.user_id,
         username=form_meta.username,
-    ) as submit_case_block:
+    ) as submitter:
         for count, case_block in enumerate(case_blocks, start=1):
-            submit_case_block.send(case_block)
+            submitter.send(case_block)
     return count
 
 
@@ -92,60 +92,36 @@ def coro_as_context(func):
     return wrapper
 
 
-def submit_case_block_coro(
+@coro_as_context
+def case_block_submitter(
     *args,
     chunk_size=CASEBLOCK_CHUNKSIZE,
     **kwargs,
 ):
     """
     Accepts case blocks and submits them in chunks of chunk_size.
-    Returns a list of form IDs.
 
-    Use undecorated as a coroutine for access to the return value, or
-    use `submit_case_block_context()` for simplicity.
+    ``*args`` and ``**kwargs`` are passed through to
+    ``submit_case_blocks()``.
 
-    Context manager usage::
+    Usage::
 
-        with submit_case_block_context(domain, device_id=__name__) as submit:
+        with case_block_submitter(domain, device_id=__name__) as submitter:
             for case in iter_all_the_cases:
                 case_block = get_case_updates(case)
-                submit.send(case_block)
-
-    Coroutine usage::
-
-        submit = submit_case_block_coro(domain, device_id=__name__)
-        next(submit)  # Prime the coroutine
-        for case in iter_all_the_cases:
-            case_block = get_case_updates(case)
-            submit.send(case_block)
-        try:
-            submit.send(None)  # Trigger exit
-        except StopIteration as exc:
-            form_ids = exc.value
+                submitter.send(case_block)
 
     """
-    form_ids = []
     case_blocks = []
     try:
         while True:
             case_block = yield
-            if case_block is None:  # Send `None` to exit
-                raise GeneratorExit
-            case_blocks.append(
-                case_block.as_text()
-                if isinstance(case_block, CaseBlock)
-                else case_block
-            )
-            if len(case_blocks) >= chunk_size:
-                chunk = case_blocks[:chunk_size]
-                case_blocks = case_blocks[chunk_size:]
-                xform, __ = submit_case_blocks(chunk, *args, **kwargs)
-                form_ids.append(xform.form_id)
+            if isinstance(case_block, CaseBlock):
+                case_block = case_block.as_text()
+            case_blocks.append(case_block)
+            if len(case_blocks) == chunk_size:
+                submit_case_blocks(case_blocks, *args, **kwargs)
+                case_blocks = []
     except GeneratorExit:
         if case_blocks:
-            xform, __ = submit_case_blocks(case_blocks, *args, **kwargs)
-            form_ids.append(xform.form_id)
-    return form_ids
-
-
-submit_case_block_context = coro_as_context(submit_case_block_coro)
+            submit_case_blocks(case_blocks, *args, **kwargs)
