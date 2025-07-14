@@ -36,7 +36,6 @@ from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource
 
-
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -565,6 +564,40 @@ class WebUserResource(v0_1.WebUserResource):
                 errors.append(e.message)
 
         return errors
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<pk>\w[\w/-]*)/enable/$", self.wrap_view('enable_user'), name="api_enable_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/disable/$", self.wrap_view('disable_user'), name="api_disable_web_user"),
+        ]
+
+    def enable_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, enabled=True)
+
+    def disable_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, enabled=False)
+
+    def _modify_user_status(self, request, enabled, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+        self.throttle_check(request)
+
+        domain = kwargs["domain"]
+
+        user = WebUser.get_by_user_id(kwargs['pk'], domain)
+        if not user:
+            raise NotFound()
+
+        dm = user.get_domain_membership(domain)
+
+        dm.is_active = enabled
+        user.save()
+        log_user_change(by_domain=domain, for_domain=domain,
+                        couch_user=user, changed_by_user=request.couch_user,
+                        changed_via=USER_CHANGE_VIA_API, fields_changed={'domain_membership.is_active': enabled})
+
+        self.log_throttled_access(request)
+        return self.create_response(request, {}, response_class=http.HttpAccepted)
 
 
 class AdminWebUserResource(v0_1.UserResource):
