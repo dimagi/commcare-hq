@@ -569,16 +569,11 @@ class WebUserResource(v0_1.WebUserResource):
         return [
             url(r"^(?P<pk>\w[\w/-]*)/enable/$", self.wrap_view('enable_user'), name="api_enable_web_user"),
             url(r"^(?P<pk>\w[\w/-]*)/disable/$", self.wrap_view('disable_user'), name="api_disable_web_user"),
-            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('enable_user'), name="api_activate_web_user"),
-            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$",
-                self.wrap_view('disable_user'), name="api_deactivate_web_user"),
         ]
 
-    @location_safe
     def enable_user(self, request, **kwargs):
         return self._modify_user_status(request, **kwargs, enabled=True)
 
-    @location_safe
     def disable_user(self, request, **kwargs):
         return self._modify_user_status(request, **kwargs, enabled=False)
 
