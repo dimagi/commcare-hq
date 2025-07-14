@@ -9,8 +9,11 @@ codebase. These guidelines apply in the following circumstances:
 
 ## General Principles
 
-- Focus on clarity, maintainability, and performance
-- Consider both immediate needs and long-term implications
+- Clarity, maintainability and performance are important. Prioritize clarity
+  and maintainability higher than performance. Situations where performance
+  must come at the cost of clarity or maintainability should be documented
+  using comments.
+- Consider both immediate needs and long-term implications.
 
 ## Communication
 
@@ -25,7 +28,8 @@ codebase. These guidelines apply in the following circumstances:
 - Python dependency management: uv
 - Testing: pytest
 - Linting & formatting: Flake8, isort, YAPF
-- Frontend: JavaScript, HTMX, Alpine.js, Knockout.js (legacy), Bootstrap
+- Frontend: JavaScript, HTMX, Alpine.js, Knockout.js (legacy), Bootstrap 5
+  (Bootstrap 3 for legacy code)
 - JavaScript bundling & dependency management: Webpack, Yarn
 - Databases: PostgreSQL, Elasticsearch, CouchDB (legacy)
 - Asynchronous task queue: Celery
@@ -42,6 +46,10 @@ codebase. These guidelines apply in the following circumstances:
 - When writing or reviewing code, consider any potential bugs or edge cases.
 - Keep functions and methods focused on a single responsibility. Break up
   longer functions where appropriate.
+- Don't repeat yourself (DRY). If you suspect that similar code might have been
+  needed before, search the codebase for if before implementing it. If you find
+  functionality similar to what you are looking for, you may need to move it to
+  keep architectural layers or Django app dependencies structured well.
 
 ### Performance
 
@@ -54,7 +62,7 @@ codebase. These guidelines apply in the following circumstances:
 
 ### Maintainability
 
-- Have comments or docstrings that are affected by the change been updated?
+- Update comments and docstrings affected by incoming changes.
 - Document complex logic, algorithms, and business rules.
 - Not all functions, classes and methods ought to have docstrings. Where
   functionality is not obvious just from the name, a docstring should be
@@ -70,6 +78,9 @@ codebase. These guidelines apply in the following circumstances:
 - Always consider security vulnerabilities.
 - Ensure that user input is properly validated and sanitized.
 - Ensure that permissions and access controls are properly implemented.
+- Where a destructive action, like deleting an instance of an important class,
+  could have strong negative consequences, rather choose a less permanent
+  action, like disabling the instance instead.
 
 ### Testing
 
