@@ -250,7 +250,7 @@ class CaseCopier:
             record_form_callback=None,
             throttle=True,
             add_inferred_props_to_schema=False,
-            form_name="Copy cases",
+            form_name="Copy Cases",
             device_id=f"{__name__}.CaseCopier",
         )
         self.row_count = 0
