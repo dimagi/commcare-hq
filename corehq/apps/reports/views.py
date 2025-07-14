@@ -2027,37 +2027,29 @@ def get_or_create_filter_hash(request, domain):
     })
 
 
-def handle_case_action_errors(view):
-    @wraps(view)
-    def wrapper(*args, **kwargs):
-        try:
-            return view(*args, **kwargs)
-        except CaseActionError as err:
-            return JsonResponse({'error': err.args[0]}, status=400)
-    return wrapper
-
-
 @require_POST
 @toggles.COPY_CASES.required_decorator()
 @require_permission(HqPermissions.edit_data)
 @requires_privilege(privileges.CASE_COPY)
 @location_safe
-@handle_case_action_errors
 def copy_cases(request, domain, *args, **kwargs):
     from corehq.apps.hqcase.case_helper import CaseCopier
-    new_owner, case_ids, body = _get_case_action_data(request)
+    data, error = _get_case_action_data(request)
+    if error:
+        assert data is None, data
+        return JsonResponse({'error': error}, status=400)
 
     censor_data = {
         prop['name']: prop['label']
-        for prop in body.get('sensitive_properties', [])
+        for prop in data['body'].get('sensitive_properties', [])
     }
 
     case_copier = CaseCopier(
         domain,
-        to_owner=new_owner,
+        to_owner=data['owner_id'],
         censor_data=censor_data,
     )
-    case_id_pairs, errors = case_copier.copy_cases(case_ids)
+    case_id_pairs, errors = case_copier.copy_cases(data['case_ids'])
     count = len(case_id_pairs)
     return JsonResponse(
         {'case_count': count, 'error': errors},
@@ -2068,11 +2060,13 @@ def copy_cases(request, domain, *args, **kwargs):
 @require_POST
 @require_permission(HqPermissions.edit_data)
 @location_safe
-@handle_case_action_errors
 def reassign_cases(request, domain, *args, **kwargs):
     from corehq.apps.data_interfaces.tasks import reassign_cases
-    owner_id, case_ids, _ = _get_case_action_data(request)
-    result = reassign_cases(domain, request.couch_user, owner_id, case_ids)
+    data, error = _get_case_action_data(request)
+    if error:
+        assert data is None, data
+        return JsonResponse({'error': error}, status=400)
+    result = reassign_cases(domain, request.couch_user, data['owner_id'], data['case_ids'])
     return JsonResponse(result, status=200)
 
 
@@ -2081,14 +2075,10 @@ def _get_case_action_data(request):
 
     case_ids = body.get('case_ids')
     if not case_ids:
-        raise CaseActionError(_("Missing case ids"))
+        return None, _("Missing case ids")
 
     owner_id = body.get('owner_id')
     if not owner_id:
-        raise CaseActionError(_("Missing new owner id"))
+        return None, _("Missing new owner id")
 
-    return owner_id, case_ids, body
-
-
-class CaseActionError(Exception):
-    pass
+    return {"owner_id": owner_id, "case_ids": case_ids, "body": body}, None
