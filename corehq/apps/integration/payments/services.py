@@ -178,7 +178,8 @@ def _payment_is_verified(case_data: dict):
 
 
 def _payment_already_requested(case_data: dict):
-    return case_data.get(PaymentProperties.PAYMENT_STATUS) == PaymentStatus.SUBMITTED
+    status = case_data.get(PaymentProperties.PAYMENT_STATUS)
+    return PaymentStatus.from_value(status) == PaymentStatus.SUBMITTED
 
 
 def get_payment_batch_numbers_for_domain(domain):

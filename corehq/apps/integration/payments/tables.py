@@ -93,11 +93,8 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         return mark_safe('<input %s/>' % flatatt(default_attrs))
 
     def render_payment_status(self, record, value):
-        # For new payment cases that are not verified yet, the case property does not exist,
-        if not value:
-            return PaymentStatus.NOT_VERIFIED.label
         try:
-            return PaymentStatus.label(value)
+            return PaymentStatus.from_value(value).label
         except ValueError:
             return _("Invalid Status")
 
