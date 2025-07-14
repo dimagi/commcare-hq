@@ -14,7 +14,6 @@ from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
-from corehq.util.timer import TimingContext
 
 
 class Command(BaseCommand):
@@ -63,30 +62,27 @@ class Command(BaseCommand):
         instance = bytes(self.get_form_data(fake_data), 'utf-8')
         instance_json = convert_xform_to_json(instance)
 
-        with TimingContext() as timer:
-            submission_post = SubmissionPost(
-                instance=instance,
-                instance_json=instance_json,
-                attachments={},
+        submission_post = SubmissionPost(
+            instance=instance,
+            instance_json=instance_json,
+            attachments={},
+            domain=domain,
+            app_id=fake_app.get_id,
+            build_id=fake_app.get_id,
+            auth_context=AuthContext(
                 domain=domain,
-                app_id=fake_app.get_id,
-                build_id=fake_app.get_id,
-                auth_context=AuthContext(
-                    domain=domain,
-                    user_id=web_user.get_id,
-                    authenticated=True,
-                ),
-                location='http://localhost:8000',
-                received_on=None,
-                date_header=None,
-                path=f'/a/{domain}/receiver/secure/{fake_app.get_id}/',
-                submit_ip='127.0.0.1',
-                last_sync_token=uuid.uuid1(),
-                openrosa_headers={'HTTP_X_OPENROSA_VERSION': '3.0'},
-                force_logs=False,
-                timing_context=timer,
-            )
-            result = submission_post.run()
+                user_id=web_user.get_id,
+                authenticated=True,
+            ),
+            received_on=None,
+            date_header=None,
+            path=f'/a/{domain}/receiver/secure/{fake_app.get_id}/',
+            submit_ip='127.0.0.1',
+            last_sync_token=uuid.uuid1(),
+            openrosa_headers={'HTTP_X_OPENROSA_VERSION': '3.0'},
+            force_logs=False,
+        )
+        result = submission_post.run()
         self.stdout.write(self.style.SUCCESS('✅  Form Submitted'))
         self.stdout.write(f'RESULT: {result}')
         self.stdout.write("\n\n")
