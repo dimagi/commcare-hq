@@ -127,55 +127,73 @@
 }
 
 .appicon-start {
-  background-color: $cc-att-pos-mid;
-  .appicon-icon-fg { color: $cc-att-pos-hi; }
-  .appicon-icon-bg { color: $cc-att-pos-low; }
+  background-color: $home-screen-start-button;
+  .appicon-icon { color: $white; }
   &:hover {
-    background-color: darken($cc-att-pos-mid, 5);
-    .appicon-icon-fg { color: lighten($cc-att-pos-hi, 5); }
-    .appicon-icon-bg { color: darken($cc-att-pos-low, 10); }
+    background-color: darken($home-screen-start-button, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($home-screen-start-button, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-incomplete {
-  background-color: $cc-dark-warm-accent-mid;
-  .appicon-icon { color: $cc-dark-warm-accent-hi; }
+  background-color: $dimagi-sunset;
+  .appicon-icon { color: $white; }
   &:hover {
-    background-color: darken($cc-dark-warm-accent-mid, 7);
-    .appicon-icon { color: lighten($cc-dark-warm-accent-hi, 5); }
+    background-color: darken($dimagi-sunset, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($dimagi-sunset, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-sync {
-  background-color: $cc-brand-mid;
+  background-color: $primary;
   .appicon-icon {
-    color: $cc-brand-hi;
+    color: $white;
   }
   &:hover {
-    background-color: darken($cc-brand-mid, 10);
-    .appicon-icon { color: lighten($cc-brand-hi, 5); }
+    background-color: darken($primary, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($cc-brand-mid, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-restore-as {
-  background-color: $cc-dark-cool-accent-mid;
+  background-color: $purple-400;
   .appicon-icon {
-    color: $cc-dark-cool-accent-hi;
+    color: $white;
   }
   &:hover {
-    background-color: darken($cc-dark-cool-accent-mid, 5);
-    .appicon-icon { color: lighten($cc-dark-cool-accent-hi, 5); }
+    background-color: darken($purple-400, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($purple-400, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-settings {
   background-color: $cc-neutral-low;
   .appicon-icon {
-    color: $cc-neutral-hi;
+    color: $white;
   }
   &:hover {
     background-color: darken($cc-neutral-low, 5);
-    .appicon-icon { color: lighten($cc-neutral-hi, 5); }
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($cc-neutral-low, 10);
+    .appicon-icon { color: $white; }
   }
 }
 
@@ -183,7 +201,7 @@
   background-color: white;
   color: lighten($cc-text, 30);
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-  .appicon-icon { color: $cc-brand-mid; }
+  .appicon-icon { color: $primary; }
   &:hover {
     background-color: darken(white, 5);
   }

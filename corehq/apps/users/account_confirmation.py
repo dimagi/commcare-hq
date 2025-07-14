@@ -50,8 +50,9 @@ def should_send_account_confirmation(couch_user):
 def send_account_confirmation(commcare_user):
     from corehq.apps.hqwebapp.tasks import send_html_email_async
     from corehq.apps.users.views.mobile import CommCareUserConfirmAccountView
+    encrypted_user_info = encrypt_account_confirmation_info(commcare_user)
     template_params = _get_account_confirmation_template_params(
-        commcare_user, commcare_user.get_id, CommCareUserConfirmAccountView.urlname
+        commcare_user, encrypted_user_info, CommCareUserConfirmAccountView.urlname
     )
     template_params.update(project_logo_emails_context(commcare_user.domain))
 

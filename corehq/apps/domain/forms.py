@@ -144,7 +144,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
 
-upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
+upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT / (1024 * 1024):,.0f}"
 
 
 def tf_choices(true_txt, false_txt):
@@ -1605,6 +1605,61 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
+def send_password_reset_email(active_users, domain_override, subject_template_name,
+                              email_template_name, use_https, token_generator, request):
+    """
+    Generates a one-use only link for resetting password and sends to the
+    user.
+    """
+    if settings.IS_SAAS_ENVIRONMENT:
+        subject_template_name = 'registration/email/password_reset_subject_hq.txt'
+        email_template_name = 'registration/email/password_reset_email_hq.html'
+
+    # the code below is copied from default PasswordForm
+    for user in active_users:
+        # Make sure that no email is sent to a user that actually has
+        # a password marked as unusable
+        if not user.has_usable_password():
+            continue
+        if not domain_override:
+            current_site = get_current_site(request)
+            site_name = current_site.name
+            domain = current_site.domain
+        else:
+            site_name = domain = domain_override
+
+        couch_user = CouchUser.from_django_user(user)
+        if not couch_user:
+            continue
+
+        user_email = couch_user.get_email()
+        if not user_email:
+            continue
+
+        c = {
+            'email': user_email,
+            'domain': domain,
+            'site_name': site_name,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'user': user,
+            'token': token_generator.make_token(user),
+            'protocol': 'https' if use_https else 'http',
+        }
+        c.update(project_logo_emails_context(None, couch_user=couch_user))
+        subject = render_to_string(subject_template_name, c)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+
+        message_plaintext = render_to_string('registration/password_reset_email.html', c)
+        message_html = render_to_string(email_template_name, c)
+
+        send_html_email_async.delay(
+            subject, user_email, message_html,
+            text_content=message_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL
+        )
+
+
 class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     Only finds users and emails forms where the USERNAME is equal to the
@@ -1646,57 +1701,8 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
              html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
              from_email=None, request=None, **kwargs):
-        """
-        Generates a one-use only link for resetting password and sends to the
-        user.
-        """
-        if settings.IS_SAAS_ENVIRONMENT:
-            subject_template_name = 'registration/email/password_reset_subject_hq.txt'
-            email_template_name = 'registration/email/password_reset_email_hq.html'
-
-        # the code below is copied from default PasswordForm
-        for user in active_users:
-            # Make sure that no email is sent to a user that actually has
-            # a password marked as unusable
-            if not user.has_usable_password():
-                continue
-            if not domain_override:
-                current_site = get_current_site(request)
-                site_name = current_site.name
-                domain = current_site.domain
-            else:
-                site_name = domain = domain_override
-
-            couch_user = CouchUser.from_django_user(user)
-            if not couch_user:
-                continue
-
-            user_email = couch_user.get_email()
-            if not user_email:
-                continue
-
-            c = {
-                'email': user_email,
-                'domain': domain,
-                'site_name': site_name,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'user': user,
-                'token': token_generator.make_token(user),
-                'protocol': 'https' if use_https else 'http',
-            }
-            c.update(project_logo_emails_context(None, couch_user=couch_user))
-            subject = render_to_string(subject_template_name, c)
-            # Email subject *must not* contain newlines
-            subject = ''.join(subject.splitlines())
-
-            message_plaintext = render_to_string('registration/password_reset_email.html', c)
-            message_html = render_to_string(email_template_name, c)
-
-            send_html_email_async.delay(
-                subject, user_email, message_html,
-                text_content=message_plaintext,
-                email_from=settings.DEFAULT_FROM_EMAIL
-            )
+        send_password_reset_email(active_users, domain_override, subject_template_name,
+                                  email_template_name, use_https, token_generator, request)
 
 
 class UsernameAwareEmailField(forms.EmailField):

@@ -4519,7 +4519,7 @@ msgid "Mobile Workers"
 msgstr "Мобільні працівники"
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/export/forms.py corehq/apps/reports/models.py
+#: corehq/apps/export/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
 #: corehq/apps/users/views/mobile/custom_data_fields.py
@@ -4856,8 +4856,32 @@ msgid "You don't have permission to use connect_username field"
 msgstr "У вас немає дозволу використовувати поле connect_username"
 
 #: corehq/apps/api/resources/v0_5.py
+msgid "You must provide the user's email to send a confirmation email."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Users will provide their own password on confirmation."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "You must require account confirmation to send a confirmation email."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "The request resulted in the following errors: {}"
 msgstr "Запит призвів до наступних помилок: {}"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"The confirmation email can not be sent because this user's account is "
+"already confirmed."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"This user has no email. You must provide the user's email to send a "
+"confirmation email."
+msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
@@ -5156,7 +5180,6 @@ msgstr "Останні 10 запусків"
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
@@ -8011,19 +8034,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
 msgid "Import Application"
 msgstr "Імпортувати додаток"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-#, python-format
-msgid ""
-"\n"
-"          <p>Import application <strong>%(app_name)s</strong> from domain "
-"<strong>%(app_domain)s</strong>?</p>\n"
-"        "
-msgstr ""
-"\n"
-"          <p>Імпортувати додаток <strong>%(app_name)s</strong> з домену "
-"<strong>%(app_domain)s</strong>?</p>\n"
-"        "
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
 msgid "Application Source File"
@@ -13460,15 +13470,26 @@ msgid "Transfer this file to your Android phone's file system"
 msgstr "Передайте цей файл у файлову систему вашого телефону Android"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                From CommCare ODK's install screen menu, "
+#| "bring up the\n"
+#| "                                application menu by hitting the three "
+#| "dots in the upper\n"
+#| "                                right or by hitting the menu button on "
+#| "your phone to\n"
+#| "                                select Offline Install\n"
+#| "                              "
 msgid ""
 "\n"
-"                                From CommCare ODK's install screen menu, "
-"bring up the\n"
-"                                application menu by hitting the three dots "
-"in the upper\n"
-"                                right or by hitting the menu button on your "
-"phone to\n"
-"                                select Offline Install\n"
+"                                Login to the CommCare App, tap the three "
+"dots in\n"
+"                                the top-right corner, select \"Update App,\" "
+"then\n"
+"                                tap the three-dot menu again and choose "
+"\"Offline\n"
+"                                Update.\"\n"
 "                              "
 msgstr ""
 "\n"
@@ -25240,6 +25261,22 @@ msgstr "Згенерувати токени"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        %(entity_string)s Property\n"
+#| "      "
+msgid ""
+"\n"
+"        %(server_location)s Server\n"
+"      "
+msgstr ""
+"\n"
+"        Властивість %(entity_string)s\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
 msgid ""
 "\n"
 "          We are calling your phone right now, please enter the\n"
@@ -26389,6 +26426,12 @@ msgstr "Останній вхід [UTC]"
 #: corehq/apps/enterprise/enterprise.py
 msgid "Last Access Date [UTC]"
 msgstr "Остання дата доступу [UTC]"
+
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Archive Product"
+msgid "Active in Project"
+msgstr "Архівувати продукт"
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/users/bulk_download.py
 msgid "Active User"
@@ -33911,6 +33954,13 @@ msgid "Sign Out"
 msgstr "Вийти"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#, fuzzy
+#| msgid "User Location"
+msgid "Server Location"
+msgstr "Місцезнаходження користувача"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 msgid "Help &amp; Resources"
 msgstr "Довідка та ресурси"
 
@@ -40998,6 +41048,18 @@ msgstr "admin"
 msgid "Deactivated Mobile Workers"
 msgstr "Деактивовані мобільні працівники"
 
+#: corehq/apps/reports/models.py
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Active Web Users"
+msgstr "# Активних користувачів"
+
+#: corehq/apps/reports/models.py
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Deactivated Web Users"
+msgstr "Показати деактивованих мобільних працівників"
+
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
@@ -42055,6 +42117,12 @@ msgstr "проєкт"
 #: corehq/apps/reports/standard/users/reports.py
 msgid "is active"
 msgstr "активний"
+
+#: corehq/apps/reports/standard/users/reports.py
+#, fuzzy
+#| msgid "Active Domains"
+msgid "is active in domain"
+msgstr "Активні домени"
 
 #: corehq/apps/reports/standard/users/reports.py
 msgid "language"
@@ -51372,6 +51440,18 @@ msgid "Username contains invalid characters."
 msgstr "Ім'я користувача містить недопустимі символи."
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid "Password Reset"
+msgid "Password Reset Email"
+msgstr "Скидання пароля"
+
+#: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid "Password Reset"
+msgid "Send Password Reset Link"
+msgstr "Скидання пароля"
+
+#: corehq/apps/users/forms.py
 msgid "Require Account Confirmation?"
 msgstr "Потрібне підтвердження облікового запису?"
 
@@ -54693,6 +54773,44 @@ msgid ""
 "You have successfully confirmed the {user.raw_username} account. You can now "
 "login"
 msgstr "Пароль для {} успішно скинуто. Тепер ви можете увійти."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user is inactive and cannot reset their password."
+msgstr ""
+"Обліковий запис користувача, пов'язаний із цією електронною адресою, не може "
+"скинути пароль."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user account cannot reset the password."
+msgstr ""
+"Обліковий запис користувача, пов'язаний із цією електронною адресою, не може "
+"скинути пароль."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Recipient has no email address."
+msgid "This user does not have an email address set."
+msgstr "Одержувач не має електронної адреси."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Password Reset Complete"
+msgid "Password reset email failed to send - "
+msgstr "Скидання пароля завершено"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Password Reset Complete"
+msgid "Password reset email sent to {}"
+msgstr "Скидання пароля завершено"
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -58596,6 +58714,12 @@ msgstr "Невідомий користувач"
 msgid "Forward Forms"
 msgstr "Пересилати форми"
 
+#: corehq/motech/repeaters/models.py
+#, fuzzy
+#| msgid "Forward Cases To Another Commcare Project"
+msgid "Forward Form Metadata to Commcare Connect"
+msgstr "Пересилати кейси до іншого проєкту Commcare"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Cases"
 msgstr "Пересилати кейси"
@@ -59659,6 +59783,20 @@ msgstr "Переглянути всі події"
 msgid "Manage Attendance Tracking Events"
 msgstr "Керувати подіями відстеження відвідуваності"
 
+#: corehq/util/context_processors.py
+msgid "US"
+msgstr ""
+
+#: corehq/util/context_processors.py
+#, fuzzy
+#| msgid "Indices"
+msgid "India"
+msgstr "Індекси"
+
+#: corehq/util/context_processors.py
+msgid "EU"
+msgstr ""
+
 #: corehq/util/jsonattrs.py
 #, python-format
 msgid "'%(field)s' field value has an invalid format: %(exc)s"
@@ -60332,6 +60470,18 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <p>Import application <strong>%(app_name)s</strong> from domain "
+#~ "<strong>%(app_domain)s</strong>?</p>\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <p>Імпортувати додаток <strong>%(app_name)s</strong> з домену "
+#~ "<strong>%(app_domain)s</strong>?</p>\n"
+#~ "        "
 
 #~ msgid ""
 #~ "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
