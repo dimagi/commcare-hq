@@ -105,11 +105,11 @@
         </div>
         {% if request|toggle_enabled:"DEACTIVATE_WEB_USERS" %}
         <div class="col-sm-6">
-          <button type="button" class="btn btn-default pull-right"
+          <button id="gtm-show-disabled-web-users" type="button" class="btn btn-default pull-right"
                     data-bind="visible: showActiveUsers(), click: function() { showActiveUsers(false); }">
               {% trans 'Show Deactivated Web Users' %}
           </button>
-          <button type="button" class="btn btn-default pull-right"
+          <button id="gtm-show-enabled-web-users" type="button" class="btn btn-default pull-right"
                     data-bind="visible: !showActiveUsers(), click: function() { showActiveUsers(true); }">
               {% trans 'Show Active Web Users' %}
           </button>
@@ -162,13 +162,13 @@
               <td>
                 <div>
                   <button type="button"
-                          class="btn btn-default"
+                          class="btn btn-default gtm-web-user-disable"
                           data-toggle="modal"
                           data-bind="attr: {'data-target': '#deactivate_' + id}, visible: deactivateUrl">
                     {% trans "Deactivate" %}
                   </button>
                   <button type="button"
-                          class="btn btn-default"
+                          class="btn btn-default gtm-web-user-enable"
                           data-toggle="modal"
                           data-bind="attr: {'data-target': '#reactivate_' + id}, visible: reactivateUrl">
                     {% trans "Reactivate" %}
