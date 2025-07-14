@@ -583,6 +583,12 @@ class CustomPasswordResetView(PasswordResetConfirmView):
             except ValidationError as e:
                 messages.error(request, _(e.message))
                 return HttpResponseRedirect(request.path_info)
+
+        response = super().post(request, *args, **kwargs)
+        try:
+            # the response will only have context_data is the submitted form was invalid (mismatched passwords)
+            context = response.context_data
+        except AttributeError:
             uidb64 = kwargs.get('uidb64')
             uid = urlsafe_base64_decode(uidb64)
             user = User.objects.get(pk=uid)
@@ -593,13 +599,8 @@ class CustomPasswordResetView(PasswordResetConfirmView):
             log_user_change(by_domain=None, for_domain=domain, couch_user=couch_user, changed_by_user=couch_user,
                             changed_via=USER_CHANGE_VIA_WEB, change_messages=UserChangeMessage.password_reset(),
                             by_domain_required_for_log=False, for_domain_required_for_log=False)
-
-            context = {
-                'username': couch_user.raw_username,
-            }
+            context = {'username': couch_user.raw_username}
             email = couch_user.get_email()
-            if not email:
-                email = couch_user.username
             send_html_email_async.delay(
                 subject=_('Successful password reset for {}').format(couch_user.raw_username),
                 recipient=email,
@@ -608,7 +609,6 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 domain=domain,
                 use_domain_gateway=True
             )
-        response = super().post(request, *args, **kwargs)
         return response
 
 
