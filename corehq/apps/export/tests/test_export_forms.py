@@ -162,7 +162,7 @@ class TestEmwfFilterExportMixin(TestCase):
         self.filter_export = self.subject(self.domain, pytz.utc)
         users_patch.return_value = self.user_ids
         location_ids = self.filter_export._get_locations_ids(self.location_ids_slug)
-        locations_filter = self.filter_builder(None, None)._get_locations_filter(location_ids)
+        locations_filter = self.filter_builder(self.domain, None)._get_locations_filter(location_ids)
 
         self.assertIsInstance(locations_filter, self.subject.export_user_filter)
         self.assertEqual(locations_filter.submitted_by, self.user_ids)

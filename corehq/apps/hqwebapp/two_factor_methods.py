@@ -1,4 +1,5 @@
 from django_otp.plugins.otp_totp.models import TOTPDevice
+from django.utils.translation import gettext_lazy as _
 
 from two_factor.plugins.phonenumber.method import PhoneCallMethod, SMSMethod
 from two_factor.plugins.registry import GeneratorMethod
@@ -11,6 +12,8 @@ class HQGeneratorMethod(GeneratorMethod):
 
     # only overriding this because it is set in GeneratorMethod
     form_path = 'corehq.apps.settings.forms.HQTOTPDeviceForm'
+    # override the default verbose name "Token Generator"
+    verbose_name = _("Authenticator App")
 
     def get_setup_forms(self, *args):
         return {self.code: HQTOTPDeviceForm}

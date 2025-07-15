@@ -1,60 +1,57 @@
 --- 
 +++ 
-@@ -1,13 +1,14 @@
--hqDefine('hqwebapp/js/bootstrap3/email-request', [
-+hqDefine('hqwebapp/js/bootstrap5/email-request', [
-     "jquery",
-     "knockout",
--    "hqwebapp/js/bootstrap3/hq.helpers",
--], function ($, ko) {
+@@ -1,12 +1,13 @@
+ import $ from "jquery";
+ import ko from "knockout";
+-import "hqwebapp/js/bootstrap3/hq.helpers";
 -
-+    "bootstrap5",
-+    "hqwebapp/js/bootstrap5/hq.helpers",
-+], function ($, ko, bootstrap) {
-     var EmailRequest = function (modalId, formId) {
-         let self = {};
++import { Modal } from "bootstrap5";
++import "hqwebapp/js/bootstrap5/hq.helpers";
  
-         self.$element = $(`#${modalId}`);
-+        self.reportModal = new bootstrap.Modal(self.$element);
-         self.$formElement = $(`#${formId}`);
-         self.$submitBtn = self.$formElement.find("button[type='submit']");
+ var EmailRequest = function (modalId, formId) {
+     let self = {};
  
-@@ -61,9 +62,9 @@
+     self.$element = $(`#${modalId}`);
++    self.reportModal = new Modal(self.$element);
+     self.$formElement = $(`#${formId}`);
+     self.$submitBtn = self.$formElement.find("button[type='submit']");
  
-             if (!self.isRequestReportSubmitting && self.isReportSent) {
-                 self.isReportSent = false;
--                self.$element.modal('hide');
-+                self.reportModal.hide();
-             } else if (!self.isRequestReportSubmitting) {
--                self.$submitBtn.button('loading');
-+                self.$submitBtn.changeButtonState('loading');
-                 self.cancelBtnEnabled(false);
-                 self.reportUrl(location.href);
-                 self.isRequestReportSubmitting = true;
-@@ -86,9 +87,9 @@
-         };
+@@ -60,9 +61,9 @@
  
-         self.resetForm = function () {
--            self.$formElement.find("button[type='submit']").button('reset');
-+            self.$formElement.find("button[type='submit']").changeButtonState('reset');
-             self.cancelBtnEnabled(true);
--            self.$submitBtn.button('reset');
-+            self.$submitBtn.changeButtonState('reset');
-             resetErrors();
-         };
+         if (!self.isRequestReportSubmitting && self.isReportSent) {
+             self.isReportSent = false;
+-            self.$element.modal('hide');
++            self.reportModal.hide();
+         } else if (!self.isRequestReportSubmitting) {
+-            self.$submitBtn.button('loading');
++            self.$submitBtn.changeButtonState('loading');
+             self.cancelBtnEnabled(false);
+             self.reportUrl(location.href);
+             self.isRequestReportSubmitting = true;
+@@ -85,9 +86,9 @@
+     };
  
-@@ -111,12 +112,12 @@
-         function hqwebappRequestReportSucccess() {
-             self.isRequestReportSubmitting = false;
-             self.isReportSent = true;
--            self.$submitBtn.button('success');
-+            self.$submitBtn.changeButtonState('success');
-         }
+     self.resetForm = function () {
+-        self.$formElement.find("button[type='submit']").button('reset');
++        self.$formElement.find("button[type='submit']").changeButtonState('reset');
+         self.cancelBtnEnabled(true);
+-        self.$submitBtn.button('reset');
++        self.$submitBtn.changeButtonState('reset');
+         resetErrors();
+     };
  
-         function hqwebappRequestReportError() {
-             self.isRequestReportSubmitting = false;
--            self.$submitBtn.button('error');
-+            self.$submitBtn.changeButtonState('error');
-             self.cancelBtnEnabled(true);
-             self.hasSubmitError(true);
-         }
+@@ -110,12 +111,12 @@
+     function hqwebappRequestReportSucccess() {
+         self.isRequestReportSubmitting = false;
+         self.isReportSent = true;
+-        self.$submitBtn.button('success');
++        self.$submitBtn.changeButtonState('success');
+     }
+ 
+     function hqwebappRequestReportError() {
+         self.isRequestReportSubmitting = false;
+-        self.$submitBtn.button('error');
++        self.$submitBtn.changeButtonState('error');
+         self.cancelBtnEnabled(true);
+         self.hasSubmitError(true);
+     }

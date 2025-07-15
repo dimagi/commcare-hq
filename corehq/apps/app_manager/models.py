@@ -362,6 +362,32 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
+    update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+
+    def make_multi(self):
+        '''
+        Moves any updates from `update` into `update_multi`
+        '''
+        if not (self.update and len(self.update)):
+            # update contains no items, so no changes are necessary
+            return
+
+        self.update_multi = {k: [v] for (k, v) in self.update.items()}
+        self.update = {}
+
+    def normalize_update(self):
+        '''
+        Attempt to move `update_multi` to `update`
+        If `update_multi` contains multiple updates mapped to the same case property, no changes will occur
+        '''
+        multi_question_cases = ((k, v) for (k, v) in self.update_multi.items() if len(v) > 1)
+        if any(multi_question_cases):
+            # must continue to use `update_multi`, as there are multiple questions saving to the same case property
+            return
+
+        normalized_update = {k: v[0] for (k, v) in self.update_multi.items()}
+        self.update = normalized_update
+        self.update_multi = None
 
 
 class PreloadAction(FormAction):
@@ -391,8 +417,34 @@ class OpenReferralAction(UpdateReferralAction):
 
 class OpenCaseAction(FormAction):
 
+    # `name_update` is the "official" version, while `name_update_multi` is intended as a temporary option
+    # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
+    # buildable state, where `name_update` is specified, or conflicts are waiting to be resolved, where
+    # `name_updatd_multi` will hold the updates.
     name_update = SchemaProperty(ConditionalCaseUpdate)
+    name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
+
+    def make_multi(self):
+        '''
+        Moves any updates from `name_update` into `name_update_multi`
+        '''
+        if not (self.name_update):
+            return
+
+        self.name_update_multi = [self.name_update]
+        self.name_update = None
+
+    def normalize_name_update(self):
+        '''
+        Attempt to move `name_update_multi` to `name_update`
+        If `name_update_multi` contains multiple updates, no changes will occur
+        '''
+        if len(self.name_update_multi) > 1:
+            return
+
+        self.name_update = self.name_update_multi[0]
+        self.name_update_multi = []
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
@@ -4400,18 +4452,15 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
-            if bitly.BITLY_CONFIGURED:
-                view_url = reverse(view_name, args=[self.domain, self._id])
-                if build_profile_id is not None:
-                    long_url = urljoin(
-                        self.url_base,
-                        f'{view_url}?profile={build_profile_id}'
-                    )
-                else:
-                    long_url = urljoin(self.url_base, view_url)
-                shortened_url = bitly.shorten(long_url)
+            view_url = reverse(view_name, args=[self.domain, self._id])
+            if build_profile_id is not None:
+                long_url = urljoin(
+                    self.url_base,
+                    f'{view_url}?profile={build_profile_id}'
+                )
             else:
-                shortened_url = None
+                long_url = urljoin(self.url_base, view_url)
+            shortened_url = bitly.shorten(long_url)
         except Exception:
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
         else:
@@ -4539,7 +4588,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
-        from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.analytics.tasks import track_workflow_noop, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
         from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
@@ -4556,14 +4605,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
         get_mobile_ucr_count.clear(self.domain)
-        if toggles.DATA_CLEANING_CASES.enabled(self.domain):
-            from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
-            clear_caches_case_data_cleaning(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
-            track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
+            track_workflow_noop(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))

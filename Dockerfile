@@ -3,21 +3,20 @@
 # This Dockerfile is built as the `dimagi/commcarehq_base` image, which
 # is used for running tests.
 
-FROM ghcr.io/astral-sh/uv:0.7.2-python3.9-bookworm-slim
-MAINTAINER Dimagi <devops@dimagi.com>
+FROM ghcr.io/astral-sh/uv:0.7.17-python3.13-bookworm-slim
+LABEL org.opencontainers.image.authors="Dimagi <devops@dimagi.com>"
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
     PATH=/vendor/bin:$PATH \
     NODE_VERSION=20.11.1 \
+    # Compile bytecode during installation to improve startup time. Also
+    # suppresses a couchdbkit syntax error that happens during bytecode
+    # compilation.
     UV_COMPILE_BYTECODE=1 \
+    # Copy from the cache instead of linking since it's a mounted volume
     UV_LINK_MODE=copy \
-    UV_PROJECT=/vendor \
     UV_PROJECT_ENVIRONMENT=/vendor
-# UV_COMPILE_BYTECODE: Compile bytecode during installation to improve module
-#   load performance. Also suppresses a couchdbkit syntax error that happens
-#   during bytecode compilation.
-# UV_LINK_MODE: Copy from the cache instead of linking since it's a mounted volume
 
 RUN mkdir /vendor
 
@@ -27,6 +26,7 @@ RUN apt-get update \
   && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
+     # allows uv to build dependencies; increases image size by 240 MB
      build-essential \
      bzip2 \
      default-jre \
@@ -35,27 +35,27 @@ RUN apt-get update \
      google-chrome-stable \
      libmagic1 \
      libpq5 \
-     libxml2 \
-     libxmlsec1 \
-     libxmlsec1-openssl \
+     # for xmlsec on Python 3.13
+     libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config \
+     # for `no-binary-package lxml` in pyproject.toml
+     libz-dev \
      make \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
-# build-essential allows uv to build dependencies; increases image size by 240 MB
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-COPY pyproject.toml uv.lock package.json /vendor/
-
+COPY .python-version pyproject.toml uv.lock /tmp-project/
 RUN --mount=type=cache,target=/root/.cache/uv \
-  uv venv --allow-existing /vendor \
-  && uv sync --locked --group=test --no-dev --no-install-project
+  uv sync --locked --group=test --no-dev --project=/tmp-project --no-install-project \
+  && rm -rf /tmp-project
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'
-ENV PUPPETEER_SKIP_DOWNLOAD true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
+COPY package.json /vendor/
 RUN npm -g install \
     yarn \
     bower \
@@ -67,10 +67,3 @@ RUN npm -g install \
  && cd /vendor \
  && npm shrinkwrap \
  && yarn global add phantomjs-prebuilt
-
-# For backward compatibility with commcarehq_base image containing
-# google-chrome-unstable. Can be removed after all test jobs with Gruntfile.js
-# referencing google-chrome-unstable have completed (at least a few weeks or
-# months after the PR in which this was introduced is merged). Old PRs can be
-# updated to use google-chrome-stable by merging master into them.
-RUN ln -s /usr/bin/google-chrome-stable /usr/bin/google-chrome-unstable

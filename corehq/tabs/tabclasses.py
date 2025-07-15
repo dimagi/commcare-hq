@@ -17,7 +17,6 @@ from corehq.apps.accounting.dispatcher import (
 from corehq.apps.accounting.models import BillingAccount, Invoice, Subscription
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
-    domain_is_on_trial,
     is_accounting_admin,
 )
 from corehq.apps.accounting.utils.subscription import is_domain_enterprise
@@ -169,7 +168,7 @@ class ProjectReportsTab(UITab):
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
-            'icon': 'icon-tasks fa fa-tasks',
+            'icon': 'fa-solid fa-floppy-disk',
             'show_in_dropdown': True,
         }]
         is_ucr_toggle_enabled = (
@@ -1010,7 +1009,6 @@ class ProjectDataTab(UITab):
     def _can_view_case_data_cleaning(self):
         return (
             bulk_data_cleaning_enabled_for_request(self._request)
-            and toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
         )
 
     def _get_explore_data_views(self):
@@ -1206,10 +1204,6 @@ class ApplicationsTab(UITab):
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
             app_title = self.make_app_title(app)
-            if 'created_from_template' in app and app['created_from_template'] == 'appcues':
-                if domain_is_on_trial(self.domain):
-                    # If trial is over, domain may have lost web apps access, don't do appcues intro
-                    url = url + '?appcues=1'
 
             submenu_context.append(dropdown_dict(
                 app_title,

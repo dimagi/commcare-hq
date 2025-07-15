@@ -981,6 +981,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -1076,7 +1077,9 @@ msgstr ""
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -2926,8 +2929,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    You have selected the <strong>%(p)s Edition</strong> subscription.\n"
-"  "
+"      You have selected the <strong>%(p)s Edition</strong> subscription.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
@@ -2941,83 +2944,139 @@ msgid "Included each month"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid "Note: Continuing will change your current subscription."
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
 msgid ""
 "\n"
-"          CommCare is billed on a monthly basis, and all subscriptions "
-"require a 30 day minimum commitment.\n"
-"          You should expect your first invoice on %(invoice_date)s, or you "
-"can prepay for your\n"
-"          subscription by following the instructions\n"
-"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143955299/Subscription+Management+Billing#Payment-Methods\">here</"
-"a>.\n"
-"        "
+"        Thank you for staying with your current subscription.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 msgid ""
 "\n"
-"          Once you subscribe to a paid plan, you will be able to pause your "
-"subscription after 30 days,\n"
-"          but you will no longer be able to downgrade to the CommCare Free "
-"edition.\n"
-"        "
+"        We're sorry to see you downgrade!\n"
+"      "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 msgid ""
 "\n"
-"            <input type=\"checkbox\" data-bind=\"checked: "
-"oUserAgreementSigned\"> I understand and wish to continue.\n"
-"          "
+"        Note: Continuing will change your current subscription.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 msgid ""
 "\n"
-"          Thank you for staying with your current subscription.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
-msgid ""
-"\n"
-"          Continuing will keep you on <strong>%(p)s Edition Software Plan</"
-"strong> and any\n"
-"          pending subscriptions will be cancelled.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid "We're sorry to see you downgrade!"
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
-msgid ""
-"\n"
-"          You’ll have access to the features on your\n"
-"          <strong>%(p)s Edition Software Plan </strong> through "
-"%(current_subscription_end_date)s.<br />\n"
-"          On %(start_date_after_minimum_subscription)s your current "
-"subscription will be downgraded\n"
-"          to the %(new_plan_edition)s Edition Software Plan.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#, python-format
-msgid ""
-"\n"
-"          We're sorry to see you downgrade! You are currently subscribed to "
+"          By continuing you are subscribing to a new Pay Annually plan. The "
+"new\n"
+"          subscription will have the same end date as your existing\n"
+"          subscription. You will receive a prorated invoice via email for "
 "the\n"
-"          <strong>%(p)s Software Plan.</strong>\n"
+"          difference in plan fees due.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are subscribing to a Pay Annually plan and will\n"
+"          receive an invoice via email for plan fees due.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"        In case you incur any on-demand fees for excess users or SMS, you\n"
+"        will receive invoices for these charges on a monthly basis. See\n"
+"        <a\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143955299/Subscription+Management+Billing#Pay-Annually-"
+"Subscription\"\n"
+"          >here</a\n"
+"        >\n"
+"        for more information about payment, cancellation, and refunds.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, python-format
+msgid ""
+"\n"
+"        CommCare is billed on a monthly basis, and all subscriptions require "
+"a\n"
+"        30 day minimum commitment. You should expect your first invoice on\n"
+"        %(invoice_date)s, or you can prepay for your subscription by "
+"following\n"
+"        the instructions\n"
+"        <a\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+"          >here</a\n"
+"        >.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          By continuing you are moving from a Pay Annually to a Pay Monthly\n"
+"          plan. Any prepaid plan fees will be automatically applied to "
+"future\n"
+"          monthly invoices.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"        Once you subscribe to a paid plan, you will be able to pause your\n"
+"        subscription after 30 days, but you will no longer be able to "
+"downgrade\n"
+"        to the CommCare Free edition.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, python-format
+msgid ""
+"\n"
+"        Continuing will keep you on\n"
+"        <strong>%(p)s Edition Software Plan</strong> and any pending\n"
+"        subscriptions will be cancelled.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, python-format
+msgid ""
+"\n"
+"        You’ll have access to the features on your\n"
+"        <strong>%(p)s Edition Software Plan </strong> through\n"
+"        %(current_subscription_end_date)s.<br />\n"
+"        On %(start_date_after_minimum_subscription)s your current "
+"subscription\n"
+"        will be downgraded to the %(new_plan_edition)s Edition Software "
+"Plan.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#, python-format
+msgid ""
+"\n"
+"        We're sorry to see you downgrade! You are currently subscribed to "
+"the\n"
+"        <strong>%(p)s Software Plan.</strong>\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+msgid ""
+"\n"
+"          <input type=\"checkbox\" data-bind=\"checked: "
+"oUserAgreementSigned\" /> I\n"
+"          understand and wish to continue.\n"
 "        "
 msgstr ""
 
@@ -3085,6 +3144,7 @@ msgstr ""
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -3257,7 +3317,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
@@ -3368,7 +3428,7 @@ msgid "Mobile Workers"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/export/forms.py corehq/apps/reports/models.py
+#: corehq/apps/export/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
 #: corehq/apps/users/views/mobile/custom_data_fields.py
@@ -3471,6 +3531,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -3691,7 +3752,31 @@ msgid "You don't have permission to use connect_username field"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
+msgid "You must provide the user's email to send a confirmation email."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Users will provide their own password on confirmation."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "You must require account confirmation to send a confirmation email."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "The request resulted in the following errors: {}"
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"The confirmation email can not be sent because this user's account is "
+"already confirmed."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"This user has no email. You must provide the user's email to send a "
+"confirmation email."
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
@@ -3849,7 +3934,6 @@ msgstr ""
 #: corehq/apps/app_execution/templates/app_execution/workflow_log.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
@@ -3960,6 +4044,7 @@ msgstr ""
 #: corehq/apps/case_search/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -3983,7 +4068,6 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
@@ -6522,15 +6606,6 @@ msgid "Import Application"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
-#, python-format
-msgid ""
-"\n"
-"          <p>Import application <strong>%(app_name)s</strong> from domain "
-"<strong>%(app_domain)s</strong>?</p>\n"
-"        "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
 msgid "Application Source File"
 msgstr ""
 
@@ -6642,8 +6717,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
@@ -6691,6 +6767,8 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -6766,95 +6844,142 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                  If you don't know why this happened, please report an "
+"                If you don't know why this happened, please report an "
 "issue.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Link to other form or menu is selected, but no links have "
-"been provided.\n"
 "              "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Link to other form or menu is selected, but we don't "
-"recognize the form or menu you provided.\n"
-"              "
+"              Link to other form or menu is selected, but no links have "
+"been\n"
+"              provided.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It "
-"appears to be pointing\n"
-"                to a parent menu form, but the menu doesn't have a parent.\n"
-"              "
+"              Link to other form or menu is selected, but we don't recognize "
+"the\n"
+"              form or menu you provided.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It "
-"appears to be pointing\n"
-"                to a menu using \"Display only forms,\" which makes that "
-"menu an invalid choice.\n"
-"              "
+"              Please check that end of form navigation is correct. It "
+"appears to\n"
+"              be pointing to a parent menu form, but the menu doesn't have "
+"a\n"
+"              parent.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve both\n"
-"                a multi-select form and a single select-form, which is not "
-"supported.\n"
-"              "
+"              Please check that end of form navigation is correct. It "
+"appears to\n"
+"              be pointing to a menu using \"Display only forms,\" which "
+"makes that\n"
+"              menu an invalid choice.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct.\n"
-"                Modules configured to \"make search input available after "
-"search\" do not support\n"
-"                the \"Previous Screen\" workflow.\n"
-"              "
+"              Please check that end of form navigation is correct. It "
+"appears to\n"
+"              involve both a multi-select form and a single select-form, "
+"which\n"
+"              is not supported.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"              Please check that end of form navigation is correct. Modules\n"
+"              configured to \"make search input available after search\" do "
+"not\n"
+"              support the \"Previous Screen\" workflow.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses \"Display only forms\" and also has a Session Endpoint "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses \"Display only forms\" and also has a Session Endpoint "
 "ID.\n"
-"                Session endpoints cannot be used with \"Display only forms."
-"\"\n"
-"              "
+"              Session endpoints cannot be used with \"Display only forms.\"\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses referrals but doesn't have detail screens configured "
-"for referrals.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses referrals but doesn't have detail screens configured for\n"
+"              referrals.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses cases but doesn't have detail screens configured for "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses cases but doesn't have detail screens configured for "
 "cases.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses CommCare Supply products but doesn't have detail screens\n"
+"              configured for products.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has an incorrectly formatted ID key (%(error_key)s). Make "
+"sure\n"
+"              your key has only letters, numbers, space characters, "
+"underscores,\n"
+"              and dashes.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"              No menus are available. <br />\n"
+"              <i class=\"fa fa-arrow-left\"></i>\n"
+"              Please click\n"
+"              <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to create "
+"some\n"
+"              menus.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                This menu references a missing menu.\n"
 "              "
 msgstr ""
 
@@ -6862,49 +6987,9 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses CommCare Supply products but doesn't have detail "
-"screens configured for products.\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a> references a\n"
+"                missing menu.\n"
 "              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has an incorrectly formatted ID key (%(error_key)s).\n"
-"                Make sure your key has only letters, numbers, space "
-"characters, underscores, and dashes.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                No menus are available. <br />\n"
-"                <i class=\"fa fa-arrow-left\"></i>\n"
-"                Please click\n"
-"                <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to "
-"create\n"
-"                some menus.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                  This menu references a missing menu.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a> references "
-"a missing menu.\n"
-"                "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
@@ -6915,353 +7000,472 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has no forms or case list.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has no forms or case list.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                cannot have a training module as a parent module.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              cannot have a training module as a parent module.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                is a training module and therefore cannot have a parent "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              is a training module and therefore cannot have a parent "
 "module.\n"
-"              "
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has no reports.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has no reports.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses smart links but does not have a session endpoint id.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses smart links but does not have a session endpoint id.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses both smart links and Parent Child Selection. These two\n"
-"                features are not compatible.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses both smart links and Parent Child Selection. These two\n"
+"              features are not compatible.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses both smart links and a multi-select case list. These "
-"two\n"
-"                features are not compatible.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses both smart links and a multi-select case list. These two\n"
+"              features are not compatible.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                loads a case from a data registry and uses a multi-select "
-"case list.\n"
-"                These two features are not compatible.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              loads a case from a data registry and uses a multi-select "
+"case\n"
+"              list. These two features are not compatible.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses smart links and is configured to make search input "
-"available after search.\n"
-"                These two features are not compatible.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses smart links and is configured to make search input "
+"available\n"
+"              after search. These two features are not compatible.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
-"a> can not use the same \"search input instance name\" as its Parent Menu.\n"
-"              "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> can not use "
+"the\n"
+"              same \"search input instance name\" as its Parent Menu.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
-"a> can not use the same \"search input instance name\" as its Parent Select "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> can not use "
+"the\n"
+"              same \"search input instance name\" as its Parent Select "
 "Menu.\n"
-"              "
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
-"a> uses both multi-select auto select and \"Clearing search terms resets "
-"search results\".\n"
-"              These two features are not compatible.\n"
-"              "
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> uses both\n"
+"              multi-select auto select and \"Clearing search terms resets "
+"search\n"
+"              results\". These two features are not compatible.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses \"Display only forms\" and is also configured with\n"
-"                \"make search input available after search\". This workflow "
-"is unsupported.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses \"Display only forms\" and is also configured with \"make "
+"search\n"
+"              input available after search\". This workflow is unsupported.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The case hierarchy for <a "
-"href=\"%(module_url)s\">%(module_name)s</a> contains a circular reference.\n"
-"              "
+"              The case hierarchy for\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> contains a\n"
+"              circular reference.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses cases but doesn't have a case type defined.\n"
-"              "
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses cases but doesn't have a case type defined.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                You have selected the <a "
-"href=\"%(form_url)s\">%(form_name)s</a> form\n"
-"                as the case registration form for <a "
-"href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"                This form is not a registration form. You need to select a "
-"form which opens a case and\n"
-"                does not update an existing case. Please select a different "
-"form.\n"
-"              "
+"              You have selected the\n"
+"              <a href=\"%(form_url)s\">%(form_name)s</a> form as the case\n"
+"              registration form for\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>. This form is "
+"not\n"
+"              a registration form. You need to select a form which opens a "
+"case\n"
+"              and does not update an existing case. Please select a "
+"different\n"
+"              form.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                You have selected the <a "
-"href=\"%(form_url)s\">%(form_name)s</a> form\n"
-"                as the case list form for <a "
-"href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"                To select a followup form as case list form, the module must "
-"use the Select Parent First workflow and the form must follow up on the "
-"parent case type.\n"
-"              "
+"              You have selected the\n"
+"              <a href=\"%(form_url)s\">%(form_name)s</a> form as the case "
+"list\n"
+"              form for <a href=\"%(module_url)s\">%(module_name)s</a>. To\n"
+"              select a followup form as case list form, the module must use "
+"the\n"
+"              Select Parent First workflow and the form must follow up on "
+"the\n"
+"              parent case type.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The form you have selected as the case registration form "
-"for\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> does not "
+"              The form you have selected as the case registration form for\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> does not "
 "exist.\n"
-"                Please select another form.\n"
-"              "
+"              Please select another form.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                There are references to reports that are deleted in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"                You may re-save <a href=\"%(module_url)s\">%(module_name)s</"
-"a> to delete them.\n"
-"              "
+"              There are references to reports that are deleted in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>. You may re-"
+"save\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> to delete "
+"them.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                There are multiple reports with the same report code in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"                These codes must be unique.\n"
-"              "
+"              There are multiple reports with the same report code in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>. These codes "
+"must\n"
+"              be unique.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The filter for <a href=\"%(module_url)s\">%(module_name)s</"
-"a> has errors.\n"
-"              "
+"              The filter for\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> has errors.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                Display Condition has syntax errors\n"
-"                in the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
-"                in <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-"              "
+"              Display Condition has syntax errors in the\n"
+"              <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a "
-"href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                loads different case types from the other forms. All forms "
-"in a case list that has a case registration form\n"
-"                selected must load the same case types.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              loads different case types from the other forms. All forms in "
+"a\n"
+"              case list that has a case registration form selected must load "
+"the\n"
+"              same case types.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a "
-"href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                must update a case. All forms in a case list that has a case "
-"registration form selected must update a case.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              must update a case. All forms in a case list that has a case\n"
+"              registration form selected must update a case.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a "
-"href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                can only load or update a single case and its parents. All "
-"forms in a case list that\n"
-"                has a case registration form selected can only update a "
-"single case and its parents.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              can only load or update a single case and its parents. All "
+"forms\n"
+"              in a case list that has a case registration form selected can "
+"only\n"
+"              update a single case and its parents.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form loads a "
-"different case type than\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>. All forms in "
-"a case list that has a case registration form\n"
-"                selected must load a case of the same type as the case "
-"list.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form loads a\n"
+"              different case type than\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>. All forms in "
+"a\n"
+"              case list that has a case registration form selected must load "
+"a\n"
+"              case of the same type as the case list.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a "
-"href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                loads a case with a different case tag to the other forms in "
-"the case list.\n"
-"                All forms in a case list that has a case registration form "
-"selected must use the same case tag.\n"
-"                Expected case tag: <strong>%(expected_tag)s</strong>\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> loads a case "
+"with\n"
+"              a different case tag to the other forms in the case list. All\n"
+"              forms in a case list that has a case registration form "
+"selected\n"
+"              must use the same case tag. Expected case tag:\n"
+"              <strong>%(expected_tag)s</strong>\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a "
-"href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses a details screen from another case list. All forms in a "
-"case list that has a case\n"
-"                registration form selected must use the details screen from "
-"that case list.\n"
-"              "
+"              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses a details screen from another case list. All forms in a "
+"case\n"
+"              list that has a case registration form selected must use the\n"
+"              details screen from that case list.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                  Case List has invalid filter xpath <code>%(error_filter)s</"
-"code> in\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                  Case List has blank filter in\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                  Case List has invalid sort field <code>%(error_field)s</"
-"code> in\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                  Case List has blank sort field in\n"
-"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                The case list in\n"
+"                Case List has invalid filter xpath\n"
+"                <code>%(error_filter)s</code> in\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has an invalid case tile configuration. Reason: "
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                Case List has blank filter in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                Case List has invalid sort field\n"
+"                <code>%(error_field)s</code> in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                Case List has blank sort field in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has an invalid case tile configuration. Reason: "
 "%(error_reason)s\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has an address popup configuration that should be moved to "
+"case\n"
+"              detail.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              The case list in\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              has an invalid clickable icon configuration. Reason:\n"
+"              %(error_reason)s\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              Shadow module\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              doesn't have a source module specified.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              uses parent case selection but doesn't have a parent case "
+"list\n"
+"              specified.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"              The app's parent child case selection graph contains a cycle.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"              The app's parent child graph contains a cycle.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"              A menu points to an unknown Parent Menu.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              Case List has invalid location reference\n"
+"              <code>%(property)s</code>. Details: %(details)s\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              Case List uses an instance that is only available for case "
+"search\n"
+"              <code>%(property)s</code>. Details: The %(details)s\n"
+"              instance(s) are only available in case lists using case "
+"search.\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"              One or more forms are invalid: check all your forms for error\n"
+"              messages.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                You have two forms with the xmlns \"%(xmlns)s\"\n"
 "              "
 msgstr ""
 
@@ -7269,197 +7473,54 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                The case list in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has an address popup configuration that should be moved to "
-"case detail.\n"
-"              "
+"              Multimedia case property \"%(path)s\" is not supported on apps "
+"on\n"
+"              or before v2.5.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                The case list in\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has an invalid clickable icon configuration. Reason: "
-"%(error_reason)s\n"
-"              "
+"              One of your languages is empty. Check your\n"
+"              <a href=\"%(app_url)s\">app settings</a>.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
-"                Shadow module\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                doesn't have a source module specified.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses parent case selection but doesn't have a parent case "
-"list specified.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                The app's parent child case selection graph contains a "
-"cycle.\n"
+"                Your form display condition for form\n"
+"                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a "
+"case,\n"
+"                but cases are not available for this form. Please either "
+"remove\n"
+"                the case reference or (1) make sure that the case list is "
+"set to\n"
+"                display the case list first and then form, and (2) make "
+"sure\n"
+"                that all forms in this case list update or close a case "
+"(which\n"
+"                means registration forms must go in a different case list).\n"
 "              "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                The app's parent child graph contains a cycle.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                A menu points to an unknown Parent Menu.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                Case List has invalid location reference <code>%(property)s</"
-"code>.\n"
-"                Details: %(details)s\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                Case List uses an instance that is only available for case "
-"search <code>%(property)s</code>.\n"
-"                Details: The %(details)s instance(s) are only available in "
-"case lists using case search.\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                One or more forms are invalid: check all your forms for "
-"error messages.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                  You have two forms with the xmlns \"%(xmlns)s\"\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                Multimedia case property \"%(path)s\" is not supported on "
-"apps on or before v2.5.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                One of your languages is empty. Check your <a "
-"href=\"%(app_url)s\">app settings</a>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                  Your form display condition for form <a "
-"href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-"                  but cases are not available for this form. Please either "
-"remove the case reference or (1) make sure\n"
-"                  that the case list is set to display the case list first "
-"and then form, and (2) make sure that all forms in\n"
-"                  this case list update or close a case (which means "
-"registration forms must go in a different case list).\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                  You have a display condition which refers to a case, but "
-"cases are not available. Please either remove\n"
-"                  the case reference or (1) make sure that the case list is "
-"set to display the case list first and then form,\n"
-"                  and (2) make sure that all forms in this case list update "
-"or close a case (which means registration forms\n"
-"                  must go in a different case list).\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                  Error with Practice Mobile Worker in Application Profile "
-"%(profile.name)s.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                  Error with Practice Mobile Worker in Application "
-"Settings.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                  Your form display condition for form <a "
-"href=\"%(form_url)s\">%(form_name)s</a> refers to a user property,\n"
-"                  but your project does not use user properties. Please "
-"remove the user property reference.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                  You have a display condition which refers to a user "
-"property, but your project does not use user properties.\n"
-"                  Please remove the user property reference.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                Your application uses a feature that is not available in "
-"your current subscription. You\n"
-"                can <a href=\"%(domain_url)s\">change your subscription</a>, "
+"                You have a display condition which refers to a case, but "
+"cases\n"
+"                are not available. Please either remove the case reference "
 "or\n"
-"                remove the feature as follows.\n"
+"                (1) make sure that the case list is set to display the case "
+"list\n"
+"                first and then form, and (2) make sure that all forms in "
+"this\n"
+"                case list update or close a case (which means registration "
+"forms\n"
+"                must go in a different case list).\n"
 "              "
 msgstr ""
 
@@ -7467,9 +7528,15 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"search property\n"
-"                <code>%(property)s</code> that is not assigned to a group.\n"
+"                Error with Practice Mobile Worker in Application Profile\n"
+"                %(profile.name)s.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                Error with Practice Mobile Worker in Application Settings.\n"
 "              "
 msgstr ""
 
@@ -7477,10 +7544,22 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"search property\n"
-"                <code>%(property)s</code> that references an invalid "
-"instance.\n"
+"                Your form display condition for form\n"
+"                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a user\n"
+"                property, but your project does not use user properties. "
+"Please\n"
+"                remove the user property reference.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                You have a display condition which refers to a user "
+"property,\n"
+"                but your project does not use user properties. Please remove "
+"the\n"
+"                user property reference.\n"
 "              "
 msgstr ""
 
@@ -7488,11 +7567,45 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"list property\n"
-"                that references a missing form endpoint: "
-"<code>%(column.header|trans:langs)s</code>.\n"
-"              "
+"              Your application uses a feature that is not available in your\n"
+"              current subscription. You can\n"
+"              <a href=\"%(domain_url)s\">change your subscription</a>, or "
+"remove\n"
+"              the feature as follows.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"search\n"
+"              property <code>%(property)s</code> that is not assigned to a\n"
+"              group.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"search\n"
+"              property <code>%(property)s</code> that references an invalid\n"
+"              instance.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"list\n"
+"              property that references a missing form endpoint:\n"
+"              <code>%(column.header|trans:langs)s</code>.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles_select.html
@@ -7585,8 +7698,8 @@ msgstr ""
 #: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/data_cleaning/forms/setup.py corehq/apps/data_cleaning/tables.py
-#: corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/data_cleaning/tables.py corehq/apps/data_cleaning/utils/cases.py
 #: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -7631,7 +7744,7 @@ msgid "* You can change the Case Type later by going to the menu settings page"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 msgid "Go Back"
@@ -8741,6 +8854,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 msgid "Warning"
 msgstr ""
 
@@ -10518,13 +10632,13 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
 "\n"
-"                                From CommCare ODK's install screen menu, "
-"bring up the\n"
-"                                application menu by hitting the three dots "
-"in the upper\n"
-"                                right or by hitting the menu button on your "
-"phone to\n"
-"                                select Offline Install\n"
+"                                Login to the CommCare App, tap the three "
+"dots in\n"
+"                                the top-right corner, select \"Update App,\" "
+"then\n"
+"                                tap the three-dot menu again and choose "
+"\"Offline\n"
+"                                Update.\"\n"
 "                              "
 msgstr ""
 
@@ -10992,17 +11106,13 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 msgid ""
 "\n"
-"            The following features are not turned on in the domain to which "
-"you're copying.\n"
-"            Select any that you wish to copy along with this application.\n"
+"            The following features are not turned on in the domain to which\n"
+"            you're copying. Please enable the necessary feature flags "
+"required\n"
+"            for the app to function from\n"
+"            <a id=\"feature-flags-link\" href=\"\" target=\"_blank\">here</"
+"a>.\n"
 "          "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select All"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/undo_delete_app.html
@@ -11033,6 +11143,10 @@ msgid ""
 "      and Report an Issue if you wish to continue to work with this "
 "application.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/view_submissions_button.html
+msgid "View Submissions"
 msgstr ""
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py
@@ -11907,7 +12021,7 @@ msgid "Edit Widget"
 msgstr ""
 
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_session.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
@@ -12619,6 +12733,10 @@ msgid "{param} must be a string"
 msgstr ""
 
 #: corehq/apps/case_search/models.py
+msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+msgstr ""
+
+#: corehq/apps/case_search/models.py
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
@@ -12756,6 +12874,14 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Add Expression"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+msgid "Fixture Inclusion in Restore Criteria"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+msgid "Add Criteria"
 msgstr ""
 
 #: corehq/apps/case_search/utils.py
@@ -13115,6 +13241,12 @@ msgid "Refine search"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Select All"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr ""
 
@@ -13159,7 +13291,7 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_signature.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
@@ -14039,77 +14171,77 @@ msgstr ""
 msgid "[All Data]"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Select a property to edit"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid ""
 "You can only select editable case properties that are currently visible in "
 "the table as a column. System properties cannot be edited."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Edit action"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Find:"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Use regular expression"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Replace with:"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Replace existing value with:"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Copy from property:"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid ""
 "The value from this property will replace the value from the selected "
 "property at the top."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Select a case property..."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Select a cleaning action..."
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
+msgid "Select an edit action..."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Preview Edits"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid ""
 "Please specify a value you would like to replace the existing property value "
 "with."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Please specify the value you would like to find."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Not a valid regular expression."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "Please select a property to copy from."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/cleaning.py
+#: corehq/apps/data_cleaning/forms/bulk_edit.py
 msgid "You cannot copy from the same property."
 msgstr ""
 
@@ -14213,11 +14345,11 @@ msgstr ""
 msgid "Data type '{}' cannot have match type '{}'."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Select a Case Type"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -14237,28 +14369,32 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Please select a case type to continue."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "'{}' is not a valid case type"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Next Step"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Resume the session."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/data_cleaning/forms/start_session.py
 msgid "Start a new session and delete the existing session."
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
-msgid "Start Session"
+#: corehq/apps/data_cleaning/forms/start_session.py
+msgid "Start New Session"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/start_session.py
+msgid "Resume Session"
 msgstr ""
 
 #: corehq/apps/data_cleaning/models/change.py
@@ -14499,18 +14635,18 @@ msgid "Completed On"
 msgstr ""
 
 #: corehq/apps/data_cleaning/tables.py
-msgid "# Cases Cleaned"
+msgid "# Cases Edited"
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_main.html
 msgid "Start a Bulk Edit Session"
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
-msgid "Recent Tasks"
+#: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_main.html
+msgid "Recent Bulk Edit Sessions"
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_session.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 msgid "Show Whitespaces"
 msgstr ""
 
@@ -14544,12 +14680,48 @@ msgstr ""
 msgid "System"
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/selection_read_only.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
+msgid "This session is read-only."
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+msgid "Open Session"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#: corehq/apps/sms/models.py corehq/apps/smsforms/models.py
+#: custom/inddex/filters.py
+msgid "Completed"
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
 #: corehq/apps/integration/payments/const.py corehq/apps/registry/models.py
 #: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+msgid "Only one active session per case type allowed."
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Active"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/values/empty.html
@@ -14560,33 +14732,34 @@ msgstr ""
 msgid "NULL"
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #, python-format
 msgid ""
 "\n"
-"        Priviewed edits on %(num_records)s cases.\n"
+"        Previewed edits on %(num_records)s cases.\n"
 "      "
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 msgid ""
 "\n"
 "            The edit history for this session is too large to support new "
-"bulk edits.\n"
-"            You can either apply the current edits, undo edits, or clear the "
-"edit history to start over.\n"
+"bulk\n"
+"            edits. You can either apply the current edits, undo edits, or "
+"clear\n"
+"            the edit history to start over.\n"
 "          "
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 msgid "No editible case properties are visible"
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 msgid ""
 "\n"
 "        Please\n"
@@ -14596,17 +14769,33 @@ msgid ""
 "          data-bs-dismiss=\"offcanvas\"\n"
 "          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
 "        >Configure Columns</a>\n"
-"        to include editible case properties in the column list in\n"
-"        order to clean the selected cases.\n"
+"        to include editable case properties in the column list in order to "
+"edit\n"
+"        the selected cases.\n"
 "      "
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
 msgid ""
 "\n"
-"    An active bulk edit session already exists for this case type.\n"
-"    Please decide how you would like to proceed.\n"
-"  "
+"      An active bulk edit session already exists for this case type.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+msgid ""
+"\n"
+"      Only one session can be active per case type. Any previewed edits will "
+"be\n"
+"      lost when starting a new session.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+msgid ""
+"\n"
+"      Please decide how you would like to proceed...\n"
+"    "
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -14629,7 +14818,8 @@ msgstr ""
 msgid ""
 "\n"
 "          \"Apply\" will apply all previewed edits in the session, "
-"regardless of filters.\n"
+"regardless of\n"
+"          filters.\n"
 "        "
 msgstr ""
 
@@ -14669,7 +14859,7 @@ msgid "Undo edit for multiple cases?"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_undo.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/reports/views.py
 msgid "Undo"
 msgstr ""
@@ -14687,7 +14877,8 @@ msgstr ""
 msgid ""
 "\n"
 "        Cannot select or actively edit more than %(max_recorded_limit)s "
-"cases in a session.\n"
+"cases\n"
+"        in a session.\n"
 "      "
 msgstr ""
 
@@ -14695,7 +14886,8 @@ msgstr ""
 msgid ""
 "\n"
 "        Please either apply your previewed edits, or add filters to select "
-"fewer cases.\n"
+"fewer\n"
+"        cases.\n"
 "      "
 msgstr ""
 
@@ -14729,6 +14921,97 @@ msgstr ""
 msgid "Edit Selected Cases"
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/base_modal_body.html
+msgid "Exit session"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/base_modal_body.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+msgid "Continue editing"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+msgid "Changes Applied"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+#, python-format
+msgid ""
+"\n"
+"    Finished processing changes, updated 1 case.\n"
+"  "
+msgid_plural ""
+"\n"
+"    Finished processing changes, updated %(count)s cases.\n"
+"  "
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
+#, python-format
+msgid ""
+"\n"
+"      Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> "
+"cases\n"
+"      with the same columns and filters?\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
+msgid "Applying Changes..."
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
+msgid ""
+"\n"
+"        Applying changes, please wait...\n"
+"      "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
+msgid ""
+"\n"
+"          Database is refreshing...almost there!\n"
+"        "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/partial/task_progress_bar.html
+msgid "Task progress"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+msgid "This is a completed session"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+msgid ""
+"\n"
+"      Restart this session with the same columns and filters?\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+msgid "Important"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+msgid ""
+"\n"
+"      This will replace your existing active session with a new one.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+msgid ""
+"\n"
+"      Any edits you made will be lost.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
+msgid "Restart this session"
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
 msgid ""
@@ -14737,7 +15020,7 @@ msgid ""
 "    "
 msgid_plural ""
 "\n"
-"      A total of %(num_changes)s edits will be applied.\n"
+"      A total of %(count)s edits will be applied.\n"
 "    "
 msgstr[0] ""
 msgstr[1] ""
@@ -14757,7 +15040,7 @@ msgid ""
 "    "
 msgid_plural ""
 "\n"
-"      A total of %(num_changes)s edits will be cleared.\n"
+"      A total of %(count)s edits will be cleared.\n"
 "    "
 msgstr[0] ""
 msgstr[1] ""
@@ -14793,7 +15076,7 @@ msgid ""
 "  "
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid ""
 "\n"
 "      No cases were found that match the current filters. Please\n"
@@ -14801,16 +15084,17 @@ msgid ""
 "        href=\"#\"\n"
 "        class=\"fw-bold\"\n"
 "        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
-"      >adjust your filters</a>\n"
+"        >adjust your filters</a\n"
+"      >\n"
 "      and try again.\n"
 "    "
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Edits"
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #, python-format
 msgid ""
 "\n"
@@ -14818,26 +15102,40 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Clear Filters"
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid ""
 "\n"
-"            Cases Selected\n"
-"          "
+"              Cases Selected\n"
+"            "
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid ""
 "You have selected cases which have been filtered out. New previewed edits "
 "will only apply to selected cases in the current filters, unless you remove "
 "filters."
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 msgid "Clear Selection"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/recent_sessions.html
+msgid ""
+"\n"
+"        No sessions exist.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/recent_sessions.html
+msgid ""
+"\n"
+"      Please start a new bulk edit session above.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/data_cleaning/templatetags/data_cleaning.py
@@ -14923,8 +15221,8 @@ msgstr ""
 msgid "Last Modified (UTC)"
 msgstr ""
 
-#: corehq/apps/data_cleaning/views/cleaning.py
-msgid "Cannot load clean selected records form, session was not found."
+#: corehq/apps/data_cleaning/views/bulk_edit.py
+msgid "Cannot load edit selected records form, session was not found."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/columns.py
@@ -14948,22 +15246,6 @@ msgid "Bulk Edit Case Type"
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/main.py
-msgid "That session does not exist. Please start a new session."
-msgstr ""
-
-#: corehq/apps/data_cleaning/views/main.py
-msgid ""
-"You tried to access a session for \"{}\" that was already completed. Please "
-"start a new session."
-msgstr ""
-
-#: corehq/apps/data_cleaning/views/main.py
-msgid ""
-"You tried to access a session for \"{}\" that is currently applying changes. "
-"Please wait for that task to complete, then start a new session."
-msgstr ""
-
-#: corehq/apps/data_cleaning/views/main.py
 #, python-brace-format
 msgid "Case Type \"{case_type}\""
 msgstr ""
@@ -14973,11 +15255,15 @@ msgid "Caches successfully cleared."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/mixins.py
-msgid "Data cleaning session was not found."
+msgid "That session does not exist. Please start a new session."
 msgstr ""
 
-#: corehq/apps/data_cleaning/views/setup.py
-msgid "Starting Data Cleaning Session..."
+#: corehq/apps/data_cleaning/views/start.py
+msgid "Starting Bulk Edit Session..."
+msgstr ""
+
+#: corehq/apps/data_cleaning/views/status.py
+msgid "Resuming Bulk Edit Session..."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/summary.py
@@ -14985,7 +15271,9 @@ msgid "Cannot retrieve summary, session was not found."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/tables.py
-msgid "Changes applied. Check the Recent Tasks table for progress."
+msgid ""
+"We are having trouble connecting to the server. Please try again in a few "
+"minutes."
 msgstr ""
 
 #: corehq/apps/data_dictionary/bulk.py
@@ -15100,8 +15388,8 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
-"        There was an error processing the request. Please try again.\n"
-"      "
+"          There was an error processing the request. Please try again.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15140,9 +15428,9 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
-"            <b data-bind=\"text: name()\"></b> group's properties will be "
-"moved to <b>No Group</b>\n"
-"            "
+"                    <b data-bind=\"text: name()\"></b> group's properties "
+"will be moved to <b>No Group</b>\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15179,11 +15467,11 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
-"                        A case property with this name already exists.\n"
-"                        If you don’t see it on the page, please click ‘Show "
-"Deprecated’ button to reveal deprecated\n"
-"                        properties.\n"
-"                      "
+"                            A case property with this name already exists.\n"
+"                            If you don’t see it on the page, please click "
+"‘Show Deprecated’ button to reveal deprecated\n"
+"                            properties.\n"
+"                          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15199,11 +15487,10 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
-"                  A case property group with this name already exists.\n"
-"                  If you don’t see it on the page, please click ‘Show "
-"Deprecated’ button to reveal deprecated\n"
-"                  groups.\n"
-"                "
+"                    A case property group with this name already exists.\n"
+"                    If you don’t see it on the page, please click ‘Show\n"
+"                    Deprecated’ button to reveal deprecated groups.\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15214,6 +15501,24 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add a new Case Type"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+msgid "Performance warning"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
+msgid ""
+"\n"
+"        See\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143947182/Case+Configuration\"\n"
+"          >case configuration</a\n"
+"        >\n"
+"        documentation for more information.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
@@ -16080,23 +16385,9 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Active"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -16126,6 +16417,7 @@ msgstr ""
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Deactivate"
@@ -16836,15 +17128,19 @@ msgid "Form Status"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid "{action_text} Cases. This may take some time..."
+msgid "Copying cases. This may take some time."
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#, python-brace-format
-msgid ""
-"Bulk Case {action_text} failed for some reason and we have noted this "
-"failure."
+msgid "Bulk case copying failed. We have logged this failure."
+msgstr ""
+
+#: corehq/apps/data_interfaces/views.py
+msgid "Reassigning cases. This may take some time."
+msgstr ""
+
+#: corehq/apps/data_interfaces/views.py
+msgid "Bulk case reassigning failed. We have logged this failure."
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py corehq/tabs/tabclasses.py
@@ -17527,6 +17823,13 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 #, python-brace-format
+msgid ""
+"Case update rule limits are only modifiable by Dimagi admins. Please reach "
+"out to {support_email} if you wish to update this setting."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+#, python-brace-format
 msgid "Unknown expression {expr}"
 msgstr ""
 
@@ -17558,6 +17861,16 @@ msgstr ""
 msgid ""
 "The user account associated with this email address cannot reset the "
 "password."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"This looks like a username. Please check your URL to be sure you are at your "
+"project's URL"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Email or Username"
 msgstr ""
 
 #: corehq/apps/domain/forms.py corehq/apps/settings/forms.py
@@ -18428,7 +18741,8 @@ msgstr ""
 msgid ""
 "\n"
 "            Clicking the 'Confirm Plan' button below will bring you to a "
-"page where you can confirm your billing information.\n"
+"page\n"
+"            where you can confirm your billing information.\n"
 "          "
 msgstr ""
 
@@ -18468,8 +18782,9 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
 "\n"
-"              We'd love to make CommCare work better for you.\n"
-"              Please help us by answering these simple questions.\n"
+"              We'd love to make CommCare work better for you. Please help us "
+"by\n"
+"              answering these simple questions.\n"
 "            "
 msgstr ""
 
@@ -18493,32 +18808,32 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
 "\n"
-"                Do you think your project may start again?\n"
-"              "
+"              Do you think your project may start again?\n"
+"            "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
 "\n"
-"                Could you indicate which new tool you’re using?\n"
-"              "
+"              Could you indicate which new tool you’re using?\n"
+"            "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
 "\n"
-"                Why are you switching to a new tool?\n"
-"              "
+"              Why are you switching to a new tool?\n"
+"            "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
 "\n"
-"                Please specify\n"
-"              "
+"              Please specify\n"
+"            "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
@@ -18561,6 +18876,29 @@ msgid ""
 "        <p>The new plan will take effect on <strong>%(start_date)s</strong> "
 "and will cost <strong>%(monthly_fee)s</strong>/month.</p>\n"
 "      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
+#: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
+msgid ""
+"\n"
+"          <p>\n"
+"            By continuing you are renewing to a Pay Annually plan and will\n"
+"            receive an invoice via email for plan fees due. <br />\n"
+"            In case you incur any on-demand fees for excess users or SMS, "
+"you\n"
+"            will receive invoices for these charges on a monthly basis. <br /"
+">\n"
+"            See\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143955299/Subscription+Management+Billing#Pay-Annually-"
+"Subscription\"\n"
+"              >here</a\n"
+"            >\n"
+"            for more information about payment, cancellation, and refunds.\n"
+"          </p>\n"
+"        "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
@@ -18625,16 +18963,17 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid "Got questions about your plan?"
+msgid "Questions about your plan?"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-msgid "Talk to Sales"
+msgid "Contact us"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "Upgrade Plan"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
@@ -18787,6 +19126,19 @@ msgid ""
 "    data migration. Please check back later."
 msgstr ""
 
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+#, python-format
+msgid "You have been deactivated from %(domain)s"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
+#: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
+msgid ""
+"If you believe this is an error, please contact your project administrator "
+"or support."
+msgstr ""
+
 #: corehq/apps/domain/templates/domain/bootstrap3/insufficient_privilege_notification.html
 #: corehq/apps/domain/templates/domain/bootstrap5/insufficient_privilege_notification.html
 #, python-format
@@ -18872,6 +19224,11 @@ msgid ""
 "    "
 msgstr ""
 
+#: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
+msgid "Talk to Sales"
+msgstr ""
+
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
 #: corehq/apps/settings/views.py
@@ -18922,8 +19279,8 @@ msgstr ""
 msgid ""
 "\n"
 "              This plan will be downgrading to\n"
-"              <span data-bind=\"text: oNextPlan\"></span> on\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextPlan\"></span> on\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 
@@ -18932,7 +19289,7 @@ msgstr ""
 msgid ""
 "\n"
 "              This plan will be pausing on<br />\n"
-"              <span data-bind=\"text: oNextDate\"></span>.\n"
+"              <span data-bind=\"text: nextDate\"></span>.\n"
 "            "
 msgstr ""
 
@@ -19014,8 +19371,7 @@ msgstr ""
 msgid ""
 "\n"
 "        Your subscription will be pausing on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></"
-"span>\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
 msgstr ""
@@ -19025,11 +19381,23 @@ msgstr ""
 msgid ""
 "\n"
 "        Your subscription will be downgrading to\n"
-"        <span data-bind=\"text: oNextSubscription\"></span> on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></"
-"span>\n"
+"        <span data-bind=\"text: nextSubscription\"></span> on\n"
+"        <span data-bind=\"text: startDateAfterMinimumSubscription\"></span>\n"
 "        unless you select a different plan above.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+msgid ""
+"\n"
+"        Questions about which software plan is right for you?\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
+#: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
+msgid "Talk with our team"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
@@ -19636,7 +20004,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
 msgid "Password Reset"
 msgstr ""
 
@@ -19794,6 +20162,15 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/backup_tokens.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/backup_tokens.html
 msgid "Generate Tokens"
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
+#, python-format
+msgid ""
+"\n"
+"        %(server_location)s Server\n"
+"      "
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
@@ -20316,6 +20693,10 @@ msgid "Back to my Subscription"
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
+msgid "Back to Select Plan"
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
 msgid "Confirm Subscription"
 msgstr ""
 
@@ -20364,10 +20745,11 @@ msgid "Your project has been successfully subscribed to the %s Edition Plan."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
+#, python-format
 msgid ""
 "You have already scheduled a downgrade to the %(software_plan_name)s "
 "Software Plan on %(downgrade_date)s. If this is a mistake, please reach out "
-"to %(contact_email)."
+"to %(contact_email)s."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
@@ -20780,6 +21162,10 @@ msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Last Access Date [UTC]"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Active in Project"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/users/bulk_download.py
@@ -21556,7 +21942,6 @@ msgid "Loading potential attendees ..."
 msgstr ""
 
 #: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
@@ -24624,6 +25009,8 @@ msgid "Case Coordinates"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py corehq/apps/linked_domain/views.py
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Link"
 msgstr ""
@@ -25692,6 +26079,19 @@ msgstr ""
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "Request Path"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"You must specify either a username or a domain. Requesting all audit events "
+"across all users and domains would exceed system limits."
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Your search returned more than {max_records} records. Please narrow down "
+"your search by selecting a specific user, domain, or a shorter date range."
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
@@ -27021,7 +27421,7 @@ msgid "Errors"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "HTMX Request: Server Error Encountered"
+msgid "Server Error Encountered"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
@@ -27099,6 +27499,11 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
 msgid "Sign Out"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+msgid "Server Location"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
@@ -28062,6 +28467,10 @@ msgstr ""
 #: corehq/apps/hqwebapp/two_factor_gateways.py
 msgctxt "twilio_locale"
 msgid "en"
+msgstr ""
+
+#: corehq/apps/hqwebapp/two_factor_methods.py
+msgid "Authenticator App"
 msgstr ""
 
 #: corehq/apps/hqwebapp/views.py
@@ -31334,8 +31743,9 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/register_new_user/submit_errors.html
 msgid ""
 "\n"
-"      Please check that you have JavaScript enabled to use this site!\n"
-"      We found the following issues:\n"
+"      Please check that you have JavaScript enabled to use this site! We "
+"found\n"
+"      the following issues:\n"
 "    "
 msgstr ""
 
@@ -32778,6 +33188,12 @@ msgid "Payload ID"
 msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
+msgid ""
+"Leave this blank to include all users. In that case, domain is required to "
+"limit the scope."
+msgstr ""
+
+#: corehq/apps/reports/filters/simple.py
 msgid "Optional"
 msgstr ""
 
@@ -32806,8 +33222,8 @@ msgid ""
 "exact matches. To more easily find a location, you may specify multiple "
 "levels by separating with a \"/\". For example, \"Massachusetts/Suffolk/"
 "Boston\". <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2215051298/Organization+Data+Management\"target=\"_blank\">Learn more</"
-"a>."
+"pages/2215051298/Organization+Data+Management#Search-for-"
+"Locations\"target=\"_blank\">Learn more</a>."
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -32817,9 +33233,12 @@ msgstr ""
 #: corehq/apps/reports/filters/users.py
 msgid ""
 "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://dimagi.atlassian."
-"net/wiki/spaces/commcarepublic/pages/2215051298/"
-"Organization+Data+Management#Search-for-Locations\" target=\"_blank\"> "
-"Filter Definitions</a>."
+"net/wiki/spaces/commcarepublic/pages/2143947350/"
+"Report+and+Export+Filters\"target=\"_blank\"> Filter Definitions</a>."
+msgstr ""
+
+#: corehq/apps/reports/filters/users.py
+msgid "Submitted By"
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -33025,9 +33444,21 @@ msgstr ""
 msgid "Deactivated Mobile Workers"
 msgstr ""
 
+#: corehq/apps/reports/models.py
+msgid "Active Web Users"
+msgstr ""
+
+#: corehq/apps/reports/models.py
+msgid "Deactivated Web Users"
+msgstr ""
+
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/basic.py
+msgid "View all cases within your project space."
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/basic.py
@@ -33246,7 +33677,11 @@ msgid "Sensitive Date"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
-msgid "Application Status"
+msgid "User Last Activity Report"
+msgstr ""
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "View last sync and last submission by user."
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
@@ -33396,6 +33831,10 @@ msgid "Raw Forms, Errors & Duplicates"
 msgstr ""
 
 #: corehq/apps/reports/standard/forms/reports.py
+msgid "View all submissions, including errors and archived forms."
+msgstr ""
+
+#: corehq/apps/reports/standard/forms/reports.py
 msgid "Submit Time"
 msgstr ""
 
@@ -33446,6 +33885,10 @@ msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
 msgid "Submission History"
+msgstr ""
+
+#: corehq/apps/reports/standard/inspect.py
+msgid "View all submitted data."
 msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
@@ -33988,6 +34431,10 @@ msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py
 msgid "is active"
+msgstr ""
+
+#: corehq/apps/reports/standard/users/reports.py
+msgid "is active in domain"
 msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py
@@ -36838,11 +37285,6 @@ msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "Missed"
-msgstr ""
-
-#: corehq/apps/sms/models.py corehq/apps/smsforms/models.py
-#: custom/inddex/filters.py
-msgid "Completed"
 msgstr ""
 
 #: corehq/apps/sms/models.py
@@ -40674,12 +41116,6 @@ msgid "Rows from the database"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-msgid "Populating your report did not complete successfully."
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
 msgid "Please note that this data source is being rebuilt."
 msgstr ""
 
@@ -40732,11 +41168,6 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Data Source JSON"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-msgid "Resume Build"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -41146,6 +41577,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid "Resume Build"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "This datasource is read only, any changes made can not be saved."
 msgstr ""
 
@@ -41210,19 +41645,16 @@ msgid "Filter Value should not be blank."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
 msgid "Your report is still being populated."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
 msgid ""
 "\n"
-"          What you are seeing now is just a preview, and contains some or "
-"none of your data.\n"
-"        "
+"        What you are seeing now is just a preview, and contains some or none "
+"of\n"
+"        your data.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/edit_report_button.html
@@ -41770,8 +42202,9 @@ msgstr ""
 
 #: corehq/apps/userreports/views.py
 msgid ""
-"CommCare HQ will not perform a data source rebuild for the changes made. "
-"Please initiate one manually if needed."
+"The data source configuration will be updated but CommCare HQ will not "
+"perform a rebuild for the changes made. Please initiate one manually if "
+"needed."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -41806,7 +42239,7 @@ msgid "Data source \"{name}\" not deleted."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
-msgid "Table \"{}\" is now being rebuilt. Data should start showing up soon"
+msgid "Table \"{}\" will be rebuilt. Data should start showing up soon"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -41821,21 +42254,6 @@ msgid ""
 "expected to iterate during a rebuild. Expected records to be processed is "
 "currently {number_of_records} which is above the limit of {rebuild_limit}. "
 "Please update the data source to have asynchronous processing."
-msgstr ""
-
-#: corehq/apps/userreports/views.py
-msgid ""
-"Table \"{}\" has already finished building. Rebuild table to start over."
-msgstr ""
-
-#: corehq/apps/userreports/views.py
-msgid ""
-"Table \"{}\" did not finish building but resume information is not "
-"available. Unfortunately, this means you need to rebuild the table."
-msgstr ""
-
-#: corehq/apps/userreports/views.py
-msgid "Resuming rebuilding table \"{}\"."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -41963,10 +42381,13 @@ msgid "E-Mail"
 msgstr ""
 
 #: corehq/apps/users/forms.py
+#, python-brace-format
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
-"Apps and reports (if applicable), but does not affect mobile applications. "
-"Supported languages for reports are en, fra (partial), and hin (partial)."
+"<i class=\"fa fa-info-circle\"></i> Changes the default language seen in Web "
+"Apps and reports (if supported). CommCare HQ supports <a href='https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/"
+"Account+Level+CommCare+HQ+UI+Translations'>these languages</a>. Please reach "
+"out to {support_email} if you notice any mistakes in our translations."
 msgstr ""
 
 #: corehq/apps/users/forms.py
@@ -42017,6 +42438,14 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "Username contains invalid characters."
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "Password Reset Email"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "Send Password Reset Link"
 msgstr ""
 
 #: corehq/apps/users/forms.py
@@ -42916,16 +43345,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/email/user_limit_notice.html
-#, python-format
 msgid ""
 "\n"
-"      Please note that you have reached %(user_count)s mobile users, the "
-"maximum user limit included in your plan.\n"
-"      Your user limit represents all mobile users that are not currently "
-"deactivated\n"
-"      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number "
-"of mobile users\n"
-"      included in your plan, you will be charged as per the terms of plan.\n"
+"      Please note that you have reached the user limit included in your "
+"plan.\n"
 "    "
 msgstr ""
 
@@ -42934,15 +43357,23 @@ msgstr ""
 msgid ""
 "\n"
 "      Please note that you have utilised 90%% of the user limit included in "
-"your plan.\n"
-"      Your project currently has %(user_count)s mobile users out of "
-"%(plan_limit)s included in your plan.\n"
-"      Your user limit represents all mobile users that are not currently "
-"deactivated\n"
-"      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number "
-"of mobile users\n"
-"      included in your plan, you will be charged as per the terms of plan.\n"
+"your\n"
+"      plan.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/users/templates/users/email/user_limit_notice.html
+#, python-format
+msgid ""
+"\n"
+"    Your project currently has %(user_count)s mobile users out of\n"
+"    %(plan_limit)s included in your plan. Your user limit represents all\n"
+"    mobile users that are not currently deactivated (see\n"
+"    <a href=\"%(url)s\">here</a> for more). If you exceed the number of "
+"mobile\n"
+"    users included in your plan, you will be charged as per the terms of "
+"plan.\n"
+"  "
 msgstr ""
 
 #: corehq/apps/users/templates/users/extra_users_confirm_billing.html
@@ -42976,7 +43407,8 @@ msgstr ""
 msgid ""
 "\n"
 "            Mobile Workers can log into applications in this project space "
-"and submit data.\n"
+"and\n"
+"            submit data.\n"
 "          "
 msgstr ""
 
@@ -42985,12 +43417,16 @@ msgstr ""
 msgid ""
 "\n"
 "            Their activity and form submissions can be monitored in the "
-"Reports section of this %(hq_name)s project space.\n"
+"Reports\n"
+"            section of this %(hq_name)s project space.\n"
 "            <br />\n"
 "            Read more about managing mobile workers on our\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Help Site</"
-"a>.\n"
+"            <a\n"
+"              href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Create+and+Manage+CommCare+Mobile+Workers\"\n"
+"              target=\"_blank\"\n"
+"              >Help Site</a\n"
+"            >.\n"
 "          "
 msgstr ""
 
@@ -43029,24 +43465,28 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                      You have reached the limit of <strong>%(u)s\n"
-"                      Mobile Workers</strong> included with your plan.\n"
+"                      You have reached the limit of\n"
+"                      <strong>%(u)s Mobile Workers</strong> included with "
+"your\n"
+"                      plan.\n"
 "                    "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                        Please subscribe to a paid plan in order to add\n"
-"                        more Mobile Workers.\n"
+"                        Please subscribe to a paid plan in order to add "
+"more\n"
+"                        Mobile Workers.\n"
 "                      "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                        Please ask your billing administrator to subscribe\n"
-"                        to a paid plan in order to add more Mobile Workers.\n"
+"                        Please ask your billing administrator to subscribe "
+"to a\n"
+"                        paid plan in order to add more Mobile Workers.\n"
 "                      "
 msgstr ""
 
@@ -43072,8 +43512,10 @@ msgstr ""
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"              <strong>There are no mobile workers visible to you at this "
-"time.</strong>\n"
+"              <strong\n"
+"                >There are no mobile workers visible to you at this\n"
+"                time.</strong\n"
+"              >\n"
 "              Please contact your project's administrator if this is "
 "incorrect.\n"
 "            "
@@ -43082,16 +43524,20 @@ msgstr ""
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                  <strong>There are currently no mobile workers in this "
-"project.</strong>\n"
+"                <strong\n"
+"                  >There are currently no mobile workers in this\n"
+"                  project.</strong\n"
+"                >\n"
 "              "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                <strong>No mobile users are assigned to your user's location."
-"</strong>\n"
+"                <strong\n"
+"                  >No mobile users are assigned to your user's location.</"
+"strong\n"
+"                >\n"
 "              "
 msgstr ""
 
@@ -43103,6 +43549,15 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+msgid "PersonalID Status"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Not Linked"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Reactivate"
 msgstr ""
 
@@ -43115,30 +43570,44 @@ msgid "Send Confirmation SMS"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Unlink PersonalID"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Link PersonalID"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate Mobile Worker"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                            Are you sure you want to <strong>reactivate</"
-"strong> this mobile worker?\n"
-"                          "
+"                              Are you sure you want to\n"
+"                              <strong>reactivate</strong> this mobile "
+"worker?\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                            Deactivated mobile workers are not able to log "
-"into new devices.<br />\n"
-"                            Read more about\n"
-"                            <a href='https://confluence.dimagi.com/display/"
+"                              Deactivated mobile workers are not able to "
+"log\n"
+"                              into new devices.<br />\n"
+"                              Read more about\n"
+"                              <a\n"
+"                                href='https://confluence.dimagi.com/display/"
 "commcarepublic/"
 "Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-"
-"D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers' target=\"_blank\">\n"
-"                              deactivating mobile workers\n"
-"                            </a> on our Help Site.\n"
-"                          "
+"D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers'\n"
+"                                target=\"_blank\"\n"
+"                              >\n"
+"                                deactivating mobile workers\n"
+"                              </a>\n"
+"                              on our Help Site.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -43148,47 +43617,47 @@ msgstr ""
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                            Are you sure you want to <strong>deactivate</"
-"strong> this mobile worker?\n"
-"                          "
-msgstr ""
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid ""
-"\n"
-"                              Would you like to send the account "
-"confirmation\n"
-"                              email to this account?\n"
+"                              Are you sure you want to\n"
+"                              <strong>deactivate</strong> this mobile "
+"worker?\n"
 "                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                              Would you like to send the account "
-"confirmation\n"
-"                              SMS to this account?\n"
-"                            "
+"                                  Would you like to send the account\n"
+"                                  confirmation email to this account?\n"
+"                                "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                              The user will be sent an email with "
-"instructions to\n"
-"                              set a password and be able to login to this "
-"project.\n"
-"                            "
+"                                  Would you like to send the account\n"
+"                                  confirmation SMS to this account?\n"
+"                                "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                              The user will be sent a SMS with instructions "
+"                                  The user will be sent an email with\n"
+"                                  instructions to set a password and be able "
 "to\n"
-"                              set a password and be able to login to this "
-"project.\n"
-"                            "
+"                                  login to this project.\n"
+"                                "
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"                                  The user will be sent a SMS with "
+"instructions\n"
+"                                  to set a password and be able to login to "
+"this\n"
+"                                  project.\n"
+"                                "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -43201,6 +43670,17 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Loading Workers..."
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"            <strong>There was an issue contacting the server.</strong>\n"
+"            Please check your internet connection. If this issue continues,\n"
+"            please\n"
+"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an "
+"issue</a>.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/basic_info_form.html
@@ -43292,6 +43772,69 @@ msgstr ""
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Mark as primary"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Link PersonalID Account"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            Are you sure you want to <strong>link</strong> the PersonalID\n"
+"            account for this mobile worker?\n"
+"          "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            After linking, the mobile worker will be able to access this "
+"project\n"
+"            using their PersonalID credentials.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Unlink PersonalID Account"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            Are you sure you want to <strong>unlink</strong> the PersonalID\n"
+"            account for this mobile worker?\n"
+"          "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid ""
+"\n"
+"            After unlinking, the mobile worker will no longer be able to "
+"access\n"
+"            this project using their PersonalID credentials.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+msgid "Unlink"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/personalid_password_locked_banner.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/personalid_password_locked_banner.html
+msgid ""
+"\n"
+"    This user is linked with a PersonalID account, and so the password may "
+"not\n"
+"    be reset or changed here.\n"
+"  "
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
@@ -43781,6 +44324,14 @@ msgid "Current Users"
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html
+msgid "Show Deactivated Web Users"
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html
+msgid "Show Active Web Users"
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Loading Users..."
 msgstr ""
 
@@ -43802,6 +44353,56 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Membership"
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html
+msgid "Deactivate from the current project: "
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>deactivate</"
+"strong> this web user?\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html
+msgid ""
+"\n"
+"                              Deactivated web users will not be able to log "
+"into the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html
+msgid "Reactivate in the current project: "
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html
+msgid ""
+"\n"
+"                              Are you sure you want to <strong>reactivate</"
+"strong> this web user?\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html
+msgid ""
+"\n"
+"                              Deactivated web users are not able to log into "
+"the project space.<br />\n"
+"                              Read more about\n"
+"                              <a href='https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143958279/Web+Users' target=\"_blank\">\n"
+"                                deactivating web users\n"
+"                              </a> on our Help Site.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html
@@ -44298,6 +44899,26 @@ msgstr ""
 msgid ""
 "You have successfully confirmed the {user.raw_username} account. You can now "
 "login"
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "This user is inactive and cannot reset their password."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "This user account cannot reset the password."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "This user does not have an email address set."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "Password reset email failed to send - "
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "Password reset email sent to {}"
 msgstr ""
 
 #: corehq/apps/users/views/utils.py
@@ -47688,6 +48309,10 @@ msgstr ""
 msgid "Forward Forms"
 msgstr ""
 
+#: corehq/motech/repeaters/models.py
+msgid "Forward Form Metadata to Commcare Connect"
+msgstr ""
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Cases"
 msgstr ""
@@ -48157,7 +48782,7 @@ msgid "Bulk User Management"
 msgstr ""
 
 #: corehq/privileges.py
-msgid "Bulk Data Cleaning"
+msgid "Bulk Data Editing"
 msgstr ""
 
 #: corehq/privileges.py
@@ -48659,9 +49284,17 @@ msgstr ""
 msgid "Manage Attendance Tracking Events"
 msgstr ""
 
-#: corehq/trans_override.py
-msgid "Token generator"
-msgstr "Google Authenticator"
+#: corehq/util/context_processors.py
+msgid "US"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "India"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "EU"
+msgstr ""
 
 #: corehq/util/jsonattrs.py
 #, python-format
@@ -49341,3 +49974,6 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "Token generator"
+#~ msgstr "Google Authenticator"

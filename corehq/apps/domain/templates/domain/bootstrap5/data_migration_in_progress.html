@@ -2,8 +2,14 @@
 {% load i18n %}
 
 {% block page_content %}
-  <h1>{% block title %}{% trans "Domain Temporarily Unavailable" %}{% endblock %}</h1>
+  <h1>
+    {% block title %}{% trans "Project Space Unavailable" %}{% endblock %}
+  </h1>
 
-  <p>{% blocktrans %}The page you requested is currently unavailable due to a
-    data migration. Please check back later.{% endblocktrans %}</p>
+  <p>
+    {% blocktrans %}
+      The page you requested is unavailable because the project space is being
+      or has been migrated to a different hosting environment.
+    {% endblocktrans %}
+  </p>
 {% endblock %}

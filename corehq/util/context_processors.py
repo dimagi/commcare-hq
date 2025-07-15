@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
+from django.utils.translation import gettext_lazy
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
@@ -175,6 +176,28 @@ def commcare_hq_names(request=None):
     }
 
 
+def server_location_display(request):
+    SERVER_LOCATION_DISPLAY = {
+        'production': {
+            'flag': "🇺🇸",
+            'hr_name': gettext_lazy("US"),
+        },
+        'india': {
+            'flag': "🇮🇳",
+            'hr_name': gettext_lazy("India"),
+        },
+        'eu': {
+            'flag': "🇪🇺",
+            'hr_name': gettext_lazy("EU"),
+        },
+    }
+    context = {}
+    env = settings.SERVER_ENVIRONMENT
+    if env in SERVER_LOCATION_DISPLAY.keys():
+        context = {'server_display': SERVER_LOCATION_DISPLAY[env]}
+    return context
+
+
 def emails(request=None):
     """
     Emails commonly referenced in user-facing templates.
@@ -271,7 +294,7 @@ def get_demo(request):
     is_user_logged_in = getattr(request, 'user', None) and request.user.is_authenticated
     is_hubspot_enabled = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     context = {}
-    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and not is_user_logged_in:
+    if is_hubspot_enabled and not is_user_logged_in:
         context.update({
             'is_demo_visible': True,
         })

@@ -1,5 +1,5 @@
-from django.test import TestCase
 from django.db import IntegrityError
+from django.test import TestCase
 
 from corehq.project_limits.exceptions import SystemLimitIllegalScopeChange
 from corehq.project_limits.models import SystemLimit
@@ -7,23 +7,31 @@ from corehq.project_limits.models import SystemLimit
 
 class TestSystemLimitMethods(TestCase):
 
-    def test_for_key_returns_none_if_no_limit_set(self):
-        self.assertIsNone(SystemLimit.for_key("imaginary_limit"))
+    def test_creates_limit_if_does_not_exist(self):
+        self.assertFalse(SystemLimit.objects.filter(key="imaginary_limit", limit=10).exists())
+        SystemLimit.get_limit_for_key("imaginary_limit", 10)
+        self.assertTrue(SystemLimit.objects.filter(key="imaginary_limit", limit=10).exists())
 
-    def test_for_key_returns_zero_if_limit_set_to_zero(self):
-        SystemLimit.objects.create(key="general_limit", limit=0)
-        self.assertEqual(SystemLimit.for_key("general_limit"), 0)
+    def test_only_one_limit_created(self):
+        SystemLimit.get_limit_for_key("imaginary_limit", 10)
+        SystemLimit.get_limit_for_key("imaginary_limit", 10)
+        SystemLimit.get_limit_for_key("imaginary_limit", 10, domain="random")
+        self.assertEqual(SystemLimit.objects.filter(key="imaginary_limit", limit=10).count(), 1)
 
-    def test_for_key_returns_general_limit(self):
-        SystemLimit.objects.create(key="general_limit", limit=10)  # domain defaults to blank
-        self.assertEqual(SystemLimit.for_key("general_limit"), 10)
-        self.assertEqual(SystemLimit.for_key("general_limit", domain="no_match"), 10)
+    def test_existing_limit_is_not_updated_if_default_changes(self):
+        SystemLimit.get_limit_for_key("imaginary_limit", 10)
+        limit = SystemLimit.get_limit_for_key("imaginary_limit", 20)
+        self.assertEqual(limit, 10)
 
-    def test_for_key_returns_domain_specific_limit(self):
+    def test_global_limit_used_if_no_domain_limit_exists(self):
+        SystemLimit.get_limit_for_key("general_limit", 10)
+        self.assertEqual(SystemLimit.get_limit_for_key("general_limit", 10, domain="no_match"), 10)
+
+    def test_domain_specific_limit(self):
         SystemLimit.objects.create(key="general_limit", limit=10)
         SystemLimit.objects.create(key="general_limit", limit=20, domain="specific")
-        self.assertEqual(SystemLimit.for_key("general_limit"), 10)
-        self.assertEqual(SystemLimit.for_key("general_limit", domain="specific"), 20)
+        self.assertEqual(SystemLimit.get_limit_for_key("general_limit", 10), 10)
+        self.assertEqual(SystemLimit.get_limit_for_key("general_limit", 10, domain="specific"), 20)
 
     def test_raises_error_if_changing_scope_from_global_to_domain(self):
         global_limit = SystemLimit.objects.create(key="general_limit", limit=10)

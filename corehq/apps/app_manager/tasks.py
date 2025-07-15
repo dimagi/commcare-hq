@@ -18,7 +18,7 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
+from corehq.toggles import USH_USERCASES_FOR_WEB_USERS, VELLUM_SAVE_TO_CASE
 from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter
 
@@ -93,9 +93,19 @@ def refresh_data_dictionary_from_app(domain, app_id):
         # If there's no app in the domain, there's nothing to do
         return
 
+    # RemoteApp does not implement get_modules()/get_forms() (would raise AttributeError).
+    # As RemoteApp has not been actively used since 2016, it's safe to skip syncing it.
+    if app.is_remote_app():
+        return
+
     from corehq.apps.app_manager.util import actions_use_usercase
     from corehq.apps.data_dictionary.util import create_properties_for_case_types
+    from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+
     case_type_to_prop = defaultdict(set)
+    if VELLUM_SAVE_TO_CASE.enabled(domain):
+        for form in app.get_forms():
+            case_type_to_prop.update(form.get_save_to_case_updates())
     for module in app.get_modules():
         if not module.is_surveys:
             for form in module.get_forms():
@@ -108,6 +118,7 @@ def refresh_data_dictionary_from_app(domain, app_id):
                         case_type_to_prop[action.case_type].update(action.case_properties)
     if case_type_to_prop:
         create_properties_for_case_types(domain, case_type_to_prop)
+    clear_caches_case_data_cleaning(domain)
 
 
 @task(queue='background_queue', ignore_result=True)

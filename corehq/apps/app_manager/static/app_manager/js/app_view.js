@@ -23,6 +23,7 @@ import "app_manager/js/settings/translations";
 import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/select_toggle";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
+import "jquery-textchange/jquery.textchange";   // textchange is referenced in ko bindings in app_settings.html
 
 $(function () {
     // App name
@@ -85,21 +86,15 @@ $(function () {
                     if (toggles.length) {
                         var template = _.template($modal.find("script").html()),
                             $ul = $modal.find("ul").html(""),
-                            allSelected = false;
-                        $modal.find(".select-all").click(function (e) {
-                            allSelected = !allSelected;
-                            $(e.currentTarget).text(allSelected ? gettext("Select None") : gettext("Select All"));
-                            $ul.find("input:checkbox").prop('checked', allSelected);
-                        });
+                            flagsUrl = initialPageData.reverse("feature_flags_and_privileges", domain);
+
+                        $modal.find("#feature-flags-link").attr("href", flagsUrl);
+
                         _.each(toggles, function (toggle) {
                             $ul.append(template(toggle));
                         });
                         $modal.modal().one("click", ".btn-primary", function () {
                             $(this).disableButton();
-                            var slugs = _.map($modal.find(":checked"), function (c) {
-                                return $(c).data("slug");
-                            });
-                            $form.find("input[name='toggles']").val(slugs.join(","));
                             $form.submit();
                         }).one("hide.bs.modal", function () {
                             $submit.enableButton();

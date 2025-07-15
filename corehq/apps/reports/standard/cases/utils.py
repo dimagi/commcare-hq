@@ -1,4 +1,3 @@
-from corehq import toggles
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
@@ -47,7 +46,7 @@ def all_project_data_filter(domain, mobile_user_and_group_slugs):
         domain=domain,
         admin=HQUserType.ADMIN not in user_types,
         unknown=HQUserType.UNKNOWN not in user_types,
-        web=not toggles.WEB_USERS_IN_REPORTS.enabled(domain),  # don't exclude if flag enabled
+        web=HQUserType.WEB not in user_types,
         demo=HQUserType.DEMO_USER not in user_types,
         commtrack=False,
     )
@@ -56,8 +55,7 @@ def all_project_data_filter(domain, mobile_user_and_group_slugs):
 
 def deactivated_case_owners(domain):
     owner_ids = (user_es.UserES()
-                 .show_only_inactive()
-                 .domain(domain)
+                 .domain(domain, include_active=False, include_inactive=True)
                  .get_ids())
     return case_es.owner(owner_ids)
 
@@ -143,8 +141,7 @@ def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slug
 
     if loc_ids:
         # Get users at selected locations and descendants
-        assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(
-            loc_ids)
+        assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(domain, loc_ids)
         # Get user ids for each user in specified reporting groups
 
     if selected_user_ids:
@@ -183,7 +180,7 @@ def _get_location_accessible_ids(domain, couch_user):
         domain,
         couch_user
     ))
-    accessible_user_ids = mobile_user_ids_at_locations(accessible_location_ids)
+    accessible_user_ids = mobile_user_ids_at_locations(domain, accessible_location_ids)
     accessible_ids = accessible_user_ids + list(accessible_location_ids)
     return accessible_ids
 

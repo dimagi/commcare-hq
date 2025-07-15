@@ -29,7 +29,7 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.casegroups.dbaccessors import (
     get_case_groups_in_domain,
@@ -635,9 +635,11 @@ class BulkCaseActionSatusView(DataInterfaceSection):
 
     def get(self, request, *args, **kwargs):
         if self.is_copy_action:
-            action_text = "Copying"
+            progress_text = _('Copying cases. This may take some time.')
+            error_text = _('Bulk case copying failed. We have logged this failure.')
         else:
-            action_text = "Reassigning"
+            progress_text = _('Reassigning cases. This may take some time.')
+            error_text = _('Bulk case reassigning failed. We have logged this failure.')
 
         context = super(BulkCaseActionSatusView, self).main_context
         context.update({
@@ -645,10 +647,8 @@ class BulkCaseActionSatusView(DataInterfaceSection):
             'download_id': kwargs['download_id'],
             'poll_url': self.poll_url(kwargs['download_id']),
             'title': _(self.page_title),
-            'progress_text': _("{action_text} Cases. This may take some time...").format(action_text=action_text),
-            'error_text': _(
-                "Bulk Case {action_text} failed for some reason and we have noted this failure."
-            ).format(action_text=action_text),
+            'progress_text': progress_text,
+            'error_text': error_text,
         })
         return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
@@ -1237,7 +1237,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         subscription = Subscription.get_active_subscription_by_domain(rule.domain)
         managed_by_saas = bool(subscription and subscription.service_type == SubscriptionType.PRODUCT)
 
-        track_workflow(
+        track_workflow_noop(
             username,
             'Created Dedupe Rule',
             {

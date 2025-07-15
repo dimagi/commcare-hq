@@ -28,6 +28,7 @@ from corehq.apps.domain.views.accounting import (
     DomainBillingStatementsView,
     DomainSubscriptionView,
     EditExistingBillingAccountView,
+    GeneralPlanQuestionView,
     InternalSubscriptionManagementView,
     InvoiceStripePaymentView,
     SelectedAnnualPlanView,
@@ -90,7 +91,9 @@ PASSWORD_RESET_KWARGS = {
     'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
-    'extra_context': {'current_page': {'page_name': _('Password Reset')}}
+    'extra_context': {'current_page': {'page_name': _('Password Reset')},
+                      'form_submit_url_name': 'password_reset_email',
+                      'login_url_name': 'login'}
 }
 
 PASSWORD_RESET_DONE_KWARGS = {
@@ -152,6 +155,8 @@ domain_settings = [
         name=SelectedAnnualPlanView.urlname),
     url(r'^subscription/change/request_custom/$', SelectedCustomPlanView.as_view(),
         name=SelectedCustomPlanView.urlname),
+    url(r'^subscription/change/request_general/$', GeneralPlanQuestionView.as_view(),
+        name=GeneralPlanQuestionView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),

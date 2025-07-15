@@ -523,7 +523,8 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                     group_data.update({
                         "id": group.id,
                         "description": "",
-                        "deprecated": False
+                        "deprecated": False,
+                        "index": group.index,
                     })
                 expected_output["groups"].append(group_data)
         return expected_output

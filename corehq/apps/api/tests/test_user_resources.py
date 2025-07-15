@@ -36,6 +36,7 @@ from corehq.apps.users.role_utils import (
     UserRolePresets,
     initialize_domain_with_default_roles,
 )
+from corehq.apps.users.signals import update_user_in_es
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util.es.testing import sync_users_to_es
@@ -201,6 +202,73 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.get_location_ids(self.domain.name),
                          [self.loc1.location_id, self.loc2.location_id])
         self.assertEqual(user_back.get_location_id(self.domain.name), self.loc1.location_id)
+
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
+    def test_create_and_send_confirmation_email(self, mock_send_account_confirmation):
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
+
+        user_json = {
+            "username": "jdoe",
+            "email": "jdoe@example.org",
+            "require_account_confirmation": "True",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        mobile_user = CommCareUser.get_by_user_id(json.loads(response.content).get('id'))
+        self.addCleanup(mobile_user.delete, self.domain.name, deleted_by=None)
+        self.assertNotEqual(mobile_user, None)
+        self.assertEqual(mock_send_account_confirmation.call_count, 1)
+
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    def test_create_and_send_confirmation_email_invalid_input(self):
+        user_json = {
+            "username": "jdoe",
+            "require_account_confirmation": "True",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        # should raise an error and not create the user
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "You must provide the user's email to send a confirmation email.")
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
+
+        user_json = {
+            "username": "jdoe",
+            "password": "password",
+            "email": "jdoe@example.org",
+            "require_account_confirmation": "True",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        # should raise an error and not create the user
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "Users will provide their own password on confirmation.")
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
+
+        user_json = {
+            "username": "jdoe",
+            "password": "password",
+            "email": "jdoe@example.org",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        # should raise an error and not create the user
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "You must require account confirmation to send a confirmation email.")
+        self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
 
     @flag_enabled('COMMCARE_CONNECT')
     def test_create_connect_user_no_password(self):
@@ -378,6 +446,78 @@ class TestCommCareUserResource(APIResourceTest):
             "non-editable field 'username', 'default_phone_number' must be a string\"}"
         )
 
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
+    def test_update_and_send_confirmation_email(self, mock_send_account_confirmation):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234", created_by=None,
+                                   created_via=None, phone_number="50253311398", is_account_confirmed=False)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "email": "jdoe@example.org",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mock_send_account_confirmation.call_count, 1)
+
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
+    def test_update_and_send_confirmation_already_confirmed(self, mock_send_account_confirmation):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "email": "jdoe@example.org",
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "The confirmation email can not be sent because "
+                         "this user's account is already confirmed.")
+        self.assertEqual(mock_send_account_confirmation.call_count, 0)
+
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
+    def test_update_and_send_confirmation_no_email(self, mock_send_account_confirmation):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234", created_by=None,
+                                   created_via=None, phone_number="50253311398", is_account_confirmed=False)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "send_confirmation_email_now": "True"
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content).get('error'),
+                         "This user has no email. You must provide the user's email to send a confirmation email.")
+        self.assertEqual(mock_send_account_confirmation.call_count, 0)
+
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    def test_update_cant_change_account_confirmation(self):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        self.assertEqual(user.is_account_confirmed, True)
+        user_json = {
+            "require_account_confirmation": "True"
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 400)
+        updated_user = CommCareUser.get(user.get_id)
+        self.assertEqual(updated_user.is_account_confirmed, True)
+
     def test_activate_user(self):
         """Activate the user through the API"""
         user = CommCareUser.create(domain=self.domain.name, username='inactive_user', password='*****',
@@ -526,7 +666,7 @@ class TestWebUserResource(APIResourceTest):
 
     @sync_users_to_es()
     def test_get_list(self):
-        self.user.save()
+        update_user_in_es(None, self.user)
         update_analytics_indexes()
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -744,6 +884,41 @@ class TestWebUserResource(APIResourceTest):
                  groups=[TableauGroupTuple(name='group1', id='id1'), TableauGroupTuple(name='group2', id='id2')],
                  session="fake_session")
         ])
+
+    def test_activate_user(self):
+        """Activate the user through the API"""
+        user = WebUser.create(domain=self.domain.name, username='inactive_web_user', password='*****',
+                              created_by=None, created_via=None, is_active=True)
+        dm = user.get_domain_membership(self.domain.name)
+        dm.is_active = False
+        user.save()
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        activate_url = self.single_endpoint(user.get_id) + 'enable/'
+        response = self._assert_auth_post_resource(
+            activate_url, json.dumps({}), content_type='application/json', method='POST')
+        updated_user = WebUser.get(user.get_id)
+        changes = UserHistory.objects.filter(user_id=user.get_id, changed_via=USER_CHANGE_VIA_API)
+
+        self.assertEqual(response.status_code, 202)
+        self.assertTrue(updated_user.get_domain_membership(self.domain.name).is_active)
+        self.assertEqual(changes.count(), 1)
+
+    def test_deactivate_user(self):
+        """Activate the user through the API"""
+        user = WebUser.create(domain=self.domain.name, username='active_web_user', password='*****',
+                              created_by=None, created_via=None, is_active=True)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        activate_url = self.single_endpoint(user.get_id) + 'disable/'
+        response = self._assert_auth_post_resource(
+            activate_url, json.dumps({}), content_type='application/json', method='POST')
+        updated_user = WebUser.get(user.get_id)
+        changes = UserHistory.objects.filter(user_id=user.get_id, changed_via=USER_CHANGE_VIA_API)
+
+        self.assertEqual(response.status_code, 202)
+        self.assertFalse(updated_user.get_domain_membership(self.domain.name).is_active)
+        self.assertEqual(changes.count(), 1)
 
 
 class FakeUserES(object):

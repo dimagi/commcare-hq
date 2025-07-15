@@ -1,6 +1,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import "jquery-textchange/jquery.textchange";
 import main from "hqwebapp/js/bootstrap3/main";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManager from "app_manager/js/app_manager";

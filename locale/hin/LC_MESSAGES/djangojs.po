@@ -240,7 +240,6 @@ msgstr "इस केस टाइप को डेटा डिक्शनर�
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add"
 msgstr "जोड़ें"
 
@@ -286,14 +285,6 @@ msgstr ""
 " शामिल हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "कोई नहीं चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "सभी चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "एप्लिकेशन नाम आवश्यक है"
 
@@ -328,7 +319,6 @@ msgstr "लुकअप टेबल विकल्प"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lookup Table"
 msgstr "लुकअप टेबल"
 
@@ -353,9 +343,16 @@ msgid "Tab Name"
 msgstr "टैब नाम"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display Condition"
 msgstr "प्रदर्शन शर्त"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"चेतावनी: प्रयुक्त गणना की गई संपत्ति कैशिंग के अनुकूल नहीं है और इससे केस "
+"सूची गुणों में पुराना डेटा आ सकता है"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -536,7 +533,6 @@ msgid "Plain"
 msgstr "सादा"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Date"
 msgstr "तिथि"
 
@@ -585,7 +581,6 @@ msgid "Picture"
 msgstr "चित्र"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Audio"
 msgstr "ऑडियो"
 
@@ -602,7 +597,6 @@ msgid "Translatable Text"
 msgstr "अनुवाद योग्य पाठ"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Image"
 msgstr "छवि"
 
@@ -798,7 +792,6 @@ msgid "Datum ID"
 msgstr "डेटम आईडी"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath Expression"
 msgstr "XPath अभिव्यक्ति"
 
@@ -972,7 +965,6 @@ msgid "Form"
 msgstr "फ़ॉर्म"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Question"
 msgstr "प्रश्न"
 
@@ -981,7 +973,6 @@ msgid "Name"
 msgstr "नाम"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Label"
 msgstr "लेबल"
 
@@ -1006,7 +997,6 @@ msgid "Display condition"
 msgstr "प्रदर्शन शर्त"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Required"
 msgstr "आवश्यक"
 
@@ -1015,17 +1005,14 @@ msgid "Question Comment"
 msgstr "प्रश्न टिप्पणी"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Default Value"
 msgstr "डिफ़ॉल्ट मान"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Condition"
 msgstr "मान्यता शर्त"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Comment"
 msgstr "टिप्पणी"
 
@@ -1110,909 +1097,87 @@ msgstr "भाषा दो बार दिखाई दे रही है"
 msgid "This conflicts with a current language"
 msgstr "यह वर्तमान भाषा के साथ टकराव करता है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Questions"
-msgstr "प्रश्न"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copy"
-msgstr "कॉपी करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expand All"
-msgstr "सभी विस्तार करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Collapse All"
-msgstr "सभी संक्षिप्त करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Bulk Update All Questions"
-msgstr "सभी प्रश्नों का बल्क अपडेट करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Question"
-msgstr "प्रश्न जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Click {btn} to start building your form."
-msgstr "{btn} पर क्लिक करें और अपना फ़ॉर्म बनाना शुरू करें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question Details"
-msgstr "प्रश्न विवरण"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expression Editor"
-msgstr "एक्सप्रेशन एडिटर"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot Change Question Type"
-msgstr "प्रश्न प्रकार नहीं बदल सकते"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Change Question Type To"
-msgstr "प्रश्न प्रकार बदलें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-msgid "Delete"
-msgstr "हटाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show"
-msgstr "दिखाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Used By"
-msgstr "द्वारा उपयोग किया गया"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "In Property"
-msgstr "प्रॉपर्टी में"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
-msgid "Search..."
-msgstr "खोजें..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No match for {info} found!"
-msgstr "{info} के लिए कोई मेल नहीं मिला!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple matches for {info} found!"
-msgstr "{info} के लिए कई मेल मिले हैं!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
-msgid "key"
-msgstr "कुंजी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
-msgid "value"
-msgstr "मान"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Key&rarr;Value Pair"
-msgstr "कुंजी&rarr;मान जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "show in question list"
-msgstr "प्रश्न सूची में दिखाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date Format Options"
-msgstr "तिथि प्रारूप विकल्प"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Formatting"
-msgstr "कोई स्वरूपण नहीं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Invalid XPath expression."
-msgstr "अमान्य XPath अभिव्यक्ति।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {property} for a question is not allowed to reference the question "
-"itself. Please remove the . from the {property} or your form will have "
-"errors."
-msgstr ""
-"किसी प्रश्न के लिए {property} का उसी प्रश्न को संदर्भित करना अनुमति नहीं है।"
-" कृपया {property} से . हटा दें, अन्यथा आपके फॉर्म में त्रुटियाँ होंगी।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown question:"
-msgstr "अज्ञात प्रश्न:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown questions:"
-msgstr "अज्ञात प्रश्न:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "no formatting"
-msgstr "कोई स्वरूपण नहीं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
-msgid "Custom"
-msgstr "कस्टम"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} is required."
-msgstr "{question} आवश्यक है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} is not allowed."
-msgstr "{question} की अनुमति नहीं है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} validation failed"
-msgstr "{question} का सत्यापन विफल हुआ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown (read-only) question type"
-msgstr "अज्ञात (केवल-पढ़ने योग्य) प्रश्न प्रकार"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup Table Data"
-msgstr "लुकअप तालिका डेटा"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Translation Data"
-msgstr "कोई अनुवाद डेटा नहीं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question ID"
-msgstr "प्रश्न आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
-" pick a different Question ID."
-msgstr ""
-"आईडी '{nodeID}' से फॉर्म पार्सिंग में समस्या हो सकती है। किसी अन्य प्रश्न "
-"आईडी का चयन करना अनुशंसित है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"{nodeID} is not a valid Question ID. It must start with a letter and contain"
-" only letters, numbers, and '-' or '_' characters."
-msgstr ""
-"{nodeID} मान्य प्रश्न आईडी नहीं है। इसे एक अक्षर से शुरू होना चाहिए और केवल "
-"अक्षर, संख्या, और '-' या '_' अक्षर ही होने चाहिए।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "'meta' is not a valid Question ID."
-msgstr "'meta' मान्य प्रश्न आईडी नहीं है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Making this change will create a new Question ID (and a new column in "
-"exports)."
-msgstr ""
-"यह परिवर्तन करने से एक नया प्रश्न आईडी (और निर्यात में एक नया कॉलम) बनेगा।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This question has the same Question ID as another question in the same "
-"group. Please choose a unique Question ID."
-msgstr ""
-"इस प्रश्न का प्रश्न आईडी उसी समूह के किसी अन्य प्रश्न के समान है। कृपया एक "
-"अद्वितीय प्रश्न आईडी चुनें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Data Value"
-msgstr "डिफ़ॉल्ट डेटा मान"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Special Hidden Value XMLNS attribute"
-msgstr "विशेष छिपा हुआ मान XMLNS विशेषता"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Data Attributes"
-msgstr "अतिरिक्त डेटा विशेषताएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Calculate Condition"
-msgstr "शर्त की गणना करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You cannot have a Validation Error Message with no Validation Condition!"
-msgstr "आप बिना सत्यापन शर्त के सत्यापन त्रुटि संदेश नहीं रख सकते!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Error Message"
-msgstr "सत्यापन त्रुटि संदेश"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Required Condition"
-msgstr "आवश्यक शर्त"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The condition will be ignored unless you mark the question required."
-msgstr ""
-"जब तक आप प्रश्न को आवश्यक नहीं चिह्नित करते, शर्त को अनदेखा किया जाएगा।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Bind Attributes"
-msgstr "अतिरिक्त बाइंड विशेषताएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are referencing a node in this form. This can cause errors in the form"
-msgstr ""
-"आप इस फॉर्म में एक नोड का संदर्भ दे रहे हैं। इससे फॉर्म में त्रुटियाँ आ सकती"
-" हैं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Appearance Attribute"
-msgstr "दिखावट विशेषता"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Display Text"
-msgstr "डिफ़ॉल्ट प्रदर्शन पाठ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Display Text is required"
-msgstr "डिफ़ॉल्ट प्रदर्शन पाठ आवश्यक है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Display Text"
-msgstr "संकेत प्रदर्शन पाठ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Control Attributes"
-msgstr "अतिरिक्त नियंत्रण विशेषताएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Raw XML"
-msgstr "कच्चा XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Data Parent"
-msgstr "डेटा पैरेंट"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be valid path"
-msgstr "मान्य पथ होना चाहिए"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} मान्य डेटा पैरेंट नहीं है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Data parent of question in repeat group must be (in) the same repeat group"
-msgstr ""
-"दोहराव समूह में प्रश्न का डेटा पैरेंट उसी दोहराव समूह (में) होना चाहिए"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "Create"
+msgid "createXML"
+msgstr "बनाएँ"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hidden Value"
-msgstr "छिपा हुआ मान"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "User Data"
+msgid "getData"
+msgstr "यूज़र डेटा"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Text"
-msgstr "पाठ"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Phone Number or Numeric ID"
-msgstr "फोन नंबर या संख्यात्मक आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/motech/static/motech/js/connection_settings_detail.js
-msgid "Password"
-msgstr "पासवर्ड"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Integer"
-msgstr "पूर्णांक"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Audio Capture"
-msgstr "ऑडियो कैप्चर"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image Capture"
-msgstr "इमेज कैप्चर"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image Size"
-msgstr "इमेज साइज़"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Small"
-msgstr "छोटा"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Medium"
-msgstr "मध्यम"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Large"
-msgstr "बड़ा"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Original"
-msgstr "मूल"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This will resize the image before sending the form. Use this option to send "
-"smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
-"megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
-"megapixels</li></ul>"
-msgstr ""
-"यह फ़ॉर्म भेजने से पहले इमेज का आकार बदल देगा। इस विकल्प का उपयोग कम "
-"कनेक्टिविटी वाले क्षेत्रों में छोटी इमेज भेजने के लिए करें।<ul><li>छोटा - "
-"0.1 मेगापिक्सल</li><li>मध्यम - 0.2 मेगापिक्सल</li><li>बड़ा - 0.5 "
-"मेगापिक्सल</li></ul>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Micro-Image"
-msgstr "माइक्रो-इमेज"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Video Capture"
-msgstr "वीडियो कैप्चर"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Signature Capture"
-msgstr "हस्ताक्षर कैप्चर"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Document Upload"
-msgstr "दस्तावेज़ अपलोड"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "GPS"
-msgstr "जीपीएस"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Barcode Scan"
-msgstr "बारकोड स्कैन"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date and Time"
-msgstr "तारीख और समय"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
-msgid "Time"
-msgstr "समय"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Long"
-msgstr "लंबा"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Decimal"
-msgstr "दशमलव"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Choice"
-msgstr "विकल्प"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Choice Value"
-msgstr "विकल्प मान"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Whitespace in values is not allowed."
-msgstr "मानों में व्हाइटस्पेस की अनुमति नहीं है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "This choice value has been used in the same question"
-msgstr "यह विकल्प मान इसी प्रश्न में पहले ही उपयोग किया गया है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Cannot change a Multiple/Single Choice question to a non-Choice question if "
-"it has Choices. Please remove all Choices and try again."
-msgstr ""
-"यदि इसमें विकल्प हैं, तो मल्टीपल/सिंगल चॉइस प्रश्न को नॉन-चॉइस प्रश्न में "
-"नहीं बदला जा सकता। कृपया सभी विकल्प हटाएँ और पुनः प्रयास करें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Checkbox"
-msgstr "चेकबॉक्स"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple Choice"
-msgstr "मल्टीपल चॉइस"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Group"
-msgstr "समूह"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question List"
-msgstr "प्रश्न सूची"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Group"
-msgstr "दोहराव समूह"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Count"
-msgstr "दोहराव संख्या"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Count is required."
-msgstr "दोहराव संख्या आवश्यक है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Repeat Attributes"
-msgstr "अतिरिक्त दोहराव गुण"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You have deleted a question."
-msgstr "आपने एक प्रश्न हटा दिया है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Undo"
-msgstr "पूर्ववत करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Warning: {errs} is still referenced by other questions."
-msgid_plural "Warning: {errs} are still referenced by other questions."
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
 msgid "New Form"
 msgstr "नया फ़ॉर्म"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Bind Node [{path}] found but has no associated Data node. This bind node "
-"will be discarded!"
-msgstr ""
-"Bind Node [{path}] मिला लेकिन इससे संबंधित कोई डेटा नोड नहीं है। यह बाइंड "
-"नोड हटा दिया जाएगा!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Not Found"
-msgstr "नहीं मिला"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"{type} nodes cannot be used in an output value. Please remove the output "
-"value for '{path}' or your form will have errors."
-msgstr ""
-"{type} नोड्स को आउटपुट मान में उपयोग नहीं किया जा सकता। कृपया '{path}' के "
-"लिए आउटपुट मान हटा दें, अन्यथा आपके फ़ॉर्म में त्रुटियाँ होंगी।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {field} for a question is not allowed to reference the question itself. "
-"Please remove the {ref} from the {field} or your form will have errors."
-msgstr ""
-"किसी प्रश्न के लिए {field} को स्वयं प्रश्न का संदर्भ देने की अनुमति नहीं है।"
-" कृपया {field} से {ref} हटा दें, अन्यथा आपके फ़ॉर्म में त्रुटियाँ होंगी।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "output value"
-msgstr "आउटपुट मान"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Failed"
-msgstr "सत्यापन विफल"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Please fix the error before leaving this page:"
-msgstr "कृपया इस पृष्ठ को छोड़ने से पहले त्रुटि ठीक करें:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
-msgstr "<span class='property-name'>एक्सप्रेशन</span> (एडवांस्ड) संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show Simple Mode"
-msgstr "सिंपल मोड दिखाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are currently in Advanced Mode because your logic is too complicated for"
-" Simple Mode."
-msgstr ""
-"आप वर्तमान में एडवांस्ड मोड में हैं क्योंकि आपकी लॉजिक सिंपल मोड के लिए बहुत"
-" जटिल है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You can drag a question into the box."
-msgstr "आप एक प्रश्न को बॉक्स में खींच सकते हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Guide to Common Logic and Calculations"
-msgstr "सामान्य लॉजिक और गणनाओं के लिए गाइड"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit <span class='property-name'>Expression</span>"
-msgstr "<span class='property-name'>एक्सप्रेशन</span> संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show Advanced Mode"
-msgstr "एडवांस्ड मोड दिखाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Result is"
-msgstr "परिणाम है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expression"
-msgstr "व्यक्ति अभिव्यक्ति"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Expression"
-msgstr "अभिव्यक्ति जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
-msgid "Save"
-msgstr "सहेजें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "Cancel"
-msgstr "रद्द करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
 msgstr "प्रश्न को यहाँ खींचें"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is equal to"
 msgstr "के बराबर है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is not equal to"
 msgstr "के बराबर नहीं है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is less than"
 msgstr "से कम है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is less than or equal to"
 msgstr "से कम या बराबर है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is greater than"
 msgstr "से अधिक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is greater than or equal to"
 msgstr "से अधिक या बराबर है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "has selected value"
 msgstr "चयनित मान है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ALL of the expressions are true."
 msgstr "सभी अभिव्यक्तियाँ सत्य होने पर ही सत्य।"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ANY of the expressions are true."
 msgstr "कोई भी अभिव्यक्ति सत्य होने पर सत्य।"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Error"
-msgstr "त्रुटि"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Command Bar"
+msgstr "कमांड बार"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Warning"
-msgstr "चेतावनी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Warning"
-msgstr "फॉर्म चेतावनी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Notification"
-msgstr "सूचना"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Holding the ALT key while clicking save invokes an inefficient save "
-"procedure. Do this only if a normal save fails."
-msgstr ""
-"ALT कुंजी दबाकर सहेजने पर एक अप्रभावी सहेजने की प्रक्रिया शुरू होती है। ऐसा "
-"केवल तभी करें जब सामान्य सहेजना विफल हो जाए।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Are you sure you want to exit? All unsaved changes will be lost!"
-msgstr "क्या आप वाकई बाहर निकलना चाहते हैं? सभी असहेजे गए परिवर्तन खो जाएंगे!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Look for questions marked with $1 and check they don't reference deleted "
-"questions."
-msgstr ""
-"$1 से चिह्नित प्रश्नों को देखें और सुनिश्चित करें कि वे हटाए गए प्रश्नों का "
-"संदर्भ नहीं देते।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Errors in Form"
-msgstr "फॉर्म में त्रुटियाँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form has reference errors."
-msgstr "फॉर्म में संदर्भ त्रुटियाँ हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Look for questions marked with $1 and fix the errors."
-msgstr "$1 से चिह्नित प्रश्नों को देखें और त्रुटियाँ ठीक करें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form has validation errors."
-msgstr "फॉर्म में मान्यता त्रुटियाँ हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
-msgstr "मल्टीमीडिया कैप्चर"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Number"
-msgstr "संख्या"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Groups"
-msgstr "समूह"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Advanced"
-msgstr "उन्नत"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Make Required"
-msgstr "आवश्यक बनाएं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are about to make all existing questions on this form required. This "
-"action will overwrite the current configuration of this form and can only be"
-" undone by editing individual questions."
-msgstr ""
-"आप इस फॉर्म के सभी मौजूदा प्रश्नों को आवश्यक बनाने जा रहे हैं। यह क्रिया इस "
-"फॉर्म की वर्तमान कॉन्फ़िगरेशन को अधिलेखित कर देगी और केवल व्यक्तिगत प्रश्नों"
-" को संपादित करके ही पूर्ववत की जा सकती है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Load Default Values"
-msgstr "डिफ़ॉल्ट मान लोड करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are about to set matching case properties as Default Values for all "
-"existing questions. This action will overwrite existing Default Values for "
-"all questions with matching case properties and can only be undone by "
-"editing individual questions."
-msgstr ""
-"आप सभी मौजूदा प्रश्नों के लिए मिलते-जुलते केस गुणों को डिफ़ॉल्ट मान के रूप "
-"में सेट करने जा रहे हैं। यह क्रिया सभी प्रश्नों के मिलते-जुलते केस गुणों के "
-"लिए मौजूदा डिफ़ॉल्ट मानों को अधिलेखित कर देगी और केवल व्यक्तिगत प्रश्नों को "
-"संपादित करके ही पूर्ववत की जा सकती है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Are you sure you want to perform this action?"
-msgstr "क्या आप वाकई यह क्रिया करना चाहते हैं?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "जारी रखें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expand Editor"
-msgstr "संपादक को बड़ा करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Shrink Editor"
-msgstr "संपादक को छोटा करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Export Form Contents"
-msgstr "फॉर्म सामग्री निर्यात करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Source XML"
-msgstr "स्रोत XML संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Properties"
-msgstr "फॉर्म गुण"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Find Usages"
-msgstr "उपयोग खोजें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation failed. Form may not perform correctly on your device!"
-msgstr "मान्यता विफल रही। फॉर्म आपके डिवाइस पर सही ढंग से काम नहीं कर सकता!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Form's Source XML"
-msgstr "फॉर्म के स्रोत XML को संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Source"
-msgstr "स्रोत अपडेट करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This is the raw XML. You can edit or paste into this box to make changes to "
-"your form. Press 'Update Source' to save changes, or 'Close' to cancel."
-msgstr ""
-"यह कच्चा XML है। आप इसमें बदलाव करने के लिए इस बॉक्स में संपादन या पेस्ट कर "
-"सकते हैं। परिवर्तन सहेजने के लिए 'स्रोत अपडेट करें' दबाएँ, या रद्द करने के "
-"लिए 'बंद करें' दबाएँ।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Copy and paste this content into a spreadsheet program like Excel to easily "
-"share your form with others."
-msgstr ""
-"इस सामग्री को कॉपी करें और Excel जैसे स्प्रेडशीट प्रोग्राम में पेस्ट करें "
-"ताकि आप अपने फॉर्म को दूसरों के साथ आसानी से साझा कर सकें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lost Work Warning"
-msgstr "काम खोने की चेतावनी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Overwrite their work"
-msgstr "उनका काम अधिलेखित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show XML Differences"
-msgstr "XML अंतर दिखाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Looks like someone else has edited this form since you loaded the page. Are "
-"you sure you want to overwrite their work?"
-msgstr ""
-"लगता है किसी और ने आपके पेज लोड करने के बाद इस फॉर्म को संपादित किया है। "
-"क्या आप वाकई उनका काम अधिलेखित करना चाहते हैं?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Form Properties"
-msgstr "फ़ॉर्म गुण संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Disable Text Formatting"
-msgstr "पाठ स्वरूपण अक्षम करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Easy References"
-msgstr "आसान संदर्भों का उपयोग करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use of each question"
-msgstr "प्रत्येक प्रश्न का उपयोग"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
-msgid "Close"
-msgstr "बंद करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsaved Changes in Editor"
-msgstr "संपादक में असहेजित परिवर्तन"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You have UNSAVED changes in the Expression Editor. Please save changes "
-"before continuing."
-msgstr ""
-"आपके पास अभिव्यक्ति संपादक में असहेजित परिवर्तन हैं। कृपया आगे बढ़ने से पहले"
-" परिवर्तन सहेजें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Parsing Error. Please check that your form is valid XML."
-msgstr "पार्सिंग त्रुटि। कृपया जांचें कि आपका फ़ॉर्म मान्य XML है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "OK"
-msgstr "ठीक है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Sorry, {err}"
-msgstr "माफ़ करें, {err}"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Choice"
-msgstr "विकल्प जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "and"
-msgstr "और"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "There are errors in the form"
-msgstr "फ़ॉर्म में त्रुटियाँ हैं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix Manually"
-msgstr "स्वयं ठीक करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix Automatically"
-msgstr "स्वचालित रूप से ठीक करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"It looks like your form is not valid XML. This can often happen if you use a"
-" reserved character in one of your questions. Characters to look out for are"
-" <, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
-"you fix the XML by hand. What would you like to do?"
-msgstr ""
-"ऐसा लगता है कि आपका फ़ॉर्म मान्य XML नहीं है। यह अक्सर तब होता है जब आप अपने"
-" किसी प्रश्न में आरक्षित वर्ण का उपयोग करते हैं। जिन वर्णों पर ध्यान देना "
-"चाहिए वे हैं <, >, और &। आप अभी भी सहेज सकते हैं, लेकिन जब तक आप XML को "
-"स्वयं ठीक नहीं करते, तब तक आप इस फ़ॉर्म को फिर से लोड नहीं कर सकते। आप क्या "
-"करना चाहेंगे?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Validation Error"
-msgstr "फ़ॉर्म मान्यता त्रुटि"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix the problem (recommended)"
-msgstr "समस्या ठीक करें (अनुशंसित)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Save anyway"
-msgstr "फिर भी सहेजें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Basic"
 msgstr "मूल"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {displaytext} appears in the application. This text will not appear in "
-"data exports."
-msgstr ""
-"{displaytext} एप्लिकेशन में दिखाई देता है। यह पाठ डेटा निर्यात में नहीं "
-"दिखाई देगा।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text"
-msgstr "प्रदर्शन पाठ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
-msgid "Data Source"
-msgstr "डेटा स्रोत"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You can configure an external data source like a case list or lookup table "
-"to use as the choices for a multiple choice question."
-msgstr ""
-"आप एक बाहरी डेटा स्रोत जैसे केस सूची या लुकअप तालिका को कई विकल्प वाले "
-"प्रश्न के विकल्पों के रूप में उपयोग करने के लिए कॉन्फ़िगर कर सकते हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Logic"
 msgstr "तर्क"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -2021,736 +1186,6 @@ msgstr ""
 "यह नियंत्रित करने के लिए तर्क का उपयोग करें कि प्रश्न कब पूछे जाएं और कौन से"
 " उत्तर मान्य हैं। आप पिछले उत्तर के आधार पर प्रश्न दिखाने, प्रश्न को आवश्यक "
 "बनाने या उत्तर को मान्य सीमा में सुनिश्चित करने के लिए तर्क जोड़ सकते हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Media"
-msgstr "मीडिया"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This will allow you to add images, audio or video media to a question, or "
-"other custom content."
-msgstr ""
-"यह आपको किसी प्रश्न में छवियाँ, ऑडियो या वीडियो मीडिया, या अन्य कस्टम "
-"सामग्री जोड़ने की अनुमति देगा।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"These are advanced settings and are not needed for most applications.  "
-"Please only change these if you have a specific need!"
-msgstr ""
-"ये उन्नत सेटिंग्स हैं और अधिकांश एप्लिकेशन के लिए आवश्यक नहीं हैं। कृपया "
-"इन्हें केवल तभी बदलें जब आपको विशेष आवश्यकता हो!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This question represents advanced content that is not supported by the form "
-"builder. Please only change it if you have a specific need!"
-msgstr ""
-"यह प्रश्न उन्नत सामग्री का प्रतिनिधित्व करता है जिसे फ़ॉर्म बिल्डर द्वारा "
-"समर्थित नहीं किया गया है। कृपया इसे केवल तभी बदलें जब आपको विशेष आवश्यकता "
-"हो!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Ignored XML"
-msgstr "अनदेखा किया गया XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Android App Callout"
-msgstr "एंड्रॉइड ऐप कॉलआउट"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "External App"
-msgstr "बाहरी ऐप"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Insert Android Application ID"
-msgstr "एंड्रॉइड एप्लिकेशन आईडी डालें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "change your subscription"
-msgstr "अपनी सदस्यता बदलें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You no longer have access to built in or external integration in your application.\n"
-"\n"
-"Built in integrations are available on the Pro plan and higher. External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
-msgstr ""
-"अब आपके पास अपने एप्लिकेशन में अंतर्निहित या बाहरी एकीकरण तक पहुँच नहीं है।\n"
-"\n"
-"अंतर्निहित एकीकरण प्रो प्लान और उससे ऊपर पर उपलब्ध हैं। बाहरी एकीकरण एडवांस्ड प्लान और उससे ऊपर पर उपलब्ध हैं। आप अपने एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Your subscription only has access to built-in integration.\n"
-"\n"
-"External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
-msgstr ""
-"आपकी सदस्यता में केवल अंतर्निहित एकीकरण तक पहुँच है।\n"
-"\n"
-"बाहरी एकीकरण एडवांस्ड प्लान और उससे ऊपर पर उपलब्ध हैं। आप अपने एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Android app callouts of the same type must have different question ids."
-msgstr ""
-"एक ही प्रकार के एंड्रॉइड ऐप कॉलआउट के लिए प्रश्न आईडी अलग-अलग होनी चाहिए।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra"
-msgstr "अतिरिक्त"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Response"
-msgstr "प्रतिक्रिया"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Special Intent XMLNS attribute"
-msgstr "विशेष इंटेंट XMLNS विशेषता"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Print"
-msgstr "प्रिंट करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Document Template"
-msgstr "दस्तावेज़ टेम्पलेट"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Data Source"
-msgstr "डेटा स्रोत संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Query Expression"
-msgstr "क्वेरी अभिव्यक्ति"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Optional Instance Properties"
-msgstr "वैकल्पिक इंस्टेंस गुण"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Instance ID"
-msgstr "इंस्टेंस आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Instance URI"
-msgstr "इंस्टेंस URI"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup table was not found in the project"
-msgstr "लुकअप तालिका परियोजना में नहीं मिली"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
-msgid "Loading..."
-msgstr "लोड हो रहा है..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
-"Before you can make a new version of your application, you must {link} or delete this question"
-msgstr ""
-"अब आपके एप्लिकेशन में लुकअप टेबल्स तक पहुँच नहीं है। लुकअप टेबल्स स्टैंडर्ड प्लान और उससे ऊपर के लिए उपलब्ध हैं।\n"
-"अपने एप्लिकेशन का नया संस्करण बनाने से पहले आपको {link} या इस प्रश्न को हटाना होगा।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A data source must be selected."
-msgstr "एक डेटा स्रोत का चयन करना आवश्यक है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text Field"
-msgstr "डिस्प्ले टेक्स्ट फ़ील्ड"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Sort Field"
-msgstr "सॉर्ट फ़ील्ड"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Filter"
-msgstr "फ़िल्टर"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This is an XPath expression that will filter the set of choices from the "
-"lookup table"
-msgstr ""
-"यह एक XPath अभिव्यक्ति है जो लुकअप टेबल से विकल्पों के सेट को फ़िल्टर करेगी।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup Tables"
-msgstr "लुकअप टेबल्स"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Checkbox Lookup Table"
-msgstr "चेकबॉक्स लुकअप टेबल"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Cannot change to Multiple/Single Choice question if it has Choices. Please "
-"remove all Choices and try again."
-msgstr ""
-"अगर इसमें विकल्प हैं तो मल्टीपल/सिंगल चॉइस प्रश्न में परिवर्तन नहीं किया जा "
-"सकता। कृपया सभी विकल्प हटाएँ और पुनः प्रयास करें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can only change to a Multiple Choice Lookup Table"
-msgstr "केवल मल्टीपल चॉइस लुकअप टेबल में परिवर्तन किया जा सकता है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple Choice Lookup Table"
-msgstr "मल्टीपल चॉइस लुकअप टेबल"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can only change to a Checkbox Lookup Table"
-msgstr "केवल चेकबॉक्स लुकअप टेबल में परिवर्तन किया जा सकता है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{attr} was not found in the lookup table"
-msgstr "लुकअप टेबल में {attr} नहीं मिला।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display"
-msgstr "डिस्प्ले"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "auto?"
-msgstr "ऑटो?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
-"use bulleted lists, and <a target='_blank' "
-"href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
-msgstr ""
-"शब्दों को <strong>बोल्ड</strong> और <em>इटैलिक</em> करने के लिए टेक्स्ट "
-"फॉर्मेटिंग का उपयोग करें, बुलेटेड लिस्ट्स बनाएं, और <a target='_blank' "
-"href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>और"
-" भी बहुत कुछ</a>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Turn Off Text Formatting"
-msgstr "टेक्स्ट फॉर्मेटिंग बंद करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Turn On Text Formatting"
-msgstr "टेक्स्ट फॉर्मेटिंग चालू करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "custom..."
-msgstr "कस्टम..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "New Content Type"
-msgstr "नई कंटेंट टाइप"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Content Type"
-msgstr "कंटेंट टाइप"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You have languages in your form that are not specified in the \"Languages\" "
-"page of the application builder. The following language will be deleted on "
-"save unless you add it to the \"Languages\" page:"
-msgstr ""
-"आपके फॉर्म में ऐसी भाषाएँ हैं जो एप्लिकेशन बिल्डर के \"Languages\" पेज में "
-"निर्दिष्ट नहीं हैं। निम्नलिखित भाषा को सेव करने पर हटा दिया जाएगा जब तक आप "
-"इसे \"Languages\" पेज में नहीं जोड़ते:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} (or multimedia) is required."
-msgstr "{name} (या मल्टीमीडिया) आवश्यक है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} (or multimedia) is required for all languages."
-msgstr "सभी भाषाओं के लिए {name} (या मल्टीमीडिया) आवश्यक है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} Itext ID is required."
-msgstr "{name} Itext ID आवश्यक है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} is not a valid ID."
-msgstr "{name} एक मान्य ID नहीं है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia was not copied; it must be uploaded separately."
-msgstr "मल्टीमीडिया कॉपी नहीं किया गया; इसे अलग से अपलोड करना होगा।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Discarded languages:"
-msgstr "अस्वीकृत भाषाएँ:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Message"
-msgstr "मान्यता संदेश"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Can't have a Validation Message Itext ID without a Validation Condition"
-msgstr "मान्यता शर्त के बिना मान्यता संदेश Itext ID नहीं हो सकता"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Message Itext ID"
-msgstr "मान्यता संदेश Itext ID"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Validation Media"
-msgstr "मान्यता मीडिया जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text Itext ID"
-msgstr "डिस्प्ले टेक्स्ट Itext ID"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Message"
-msgstr "संकेत संदेश"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Itext ID"
-msgstr "संकेत Itext ID"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Help Message"
-msgstr "सहायता संदेश"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Help Itext ID"
-msgstr "सहायता Itext ID"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add New Item Button Text"
-msgstr "नया आइटम जोड़ें बटन टेक्स्ट"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add New Itext ID"
-msgstr "नया Itext ID जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Another Item Button Text"
-msgstr "एक और आइटम जोड़ें बटन टेक्स्ट"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Another Itext ID"
-msgstr "एक और Itext ID जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Other Content"
-msgstr "अन्य सामग्री जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Multimedia"
-msgstr "मल्टीमीडिया जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Help Media"
-msgstr "सहायता मीडिया जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Bulk Translations"
-msgstr "थोक अनुवाद संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Translations"
-msgstr "अनुवाद अपडेट करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Copy these translations into a spreadsheet program like Excel. You can edit "
-"them there and then paste them back here when you're done. These will update"
-" the translations used in your form. Press 'Update Translations' to save "
-"changes, or 'Close' to cancel."
-msgstr ""
-"इन अनुवादों को Excel जैसे स्प्रेडशीट प्रोग्राम में कॉपी करें। आप इन्हें वहाँ"
-" संपादित कर सकते हैं और फिर यहाँ पेस्ट कर सकते हैं जब आप पूरा कर लें। ये "
-"आपके फॉर्म में उपयोग किए गए अनुवादों को अपडेट करेंगे। परिवर्तनों को सहेजने "
-"के लिए 'अनुवाद अपडेट करें' दबाएँ, या रद्द करने के लिए 'बंद करें' दबाएँ।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "App Properties"
-msgstr "ऐप गुण"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Could not load app properties."
-msgstr "ऐप गुण लोड नहीं किए जा सके।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "If this error persists, please report an issue."
-msgstr "यदि यह त्रुटि बनी रहती है, तो कृपया एक समस्या रिपोर्ट करें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {questionid} is an internal identifier for a question. It does not "
-"appear on the phone. It is the name of the question in data exports."
-msgstr ""
-"{questionid} एक प्रश्न के लिए आंतरिक पहचानकर्ता है। यह फोन पर दिखाई नहीं "
-"देता। यह डेटा निर्यात में प्रश्न का नाम है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The date and time of the action, e.g., now() or today()"
-msgstr "क्रिया की तिथि और समय, जैसे कि now() या today()"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Balance ID"
-msgstr "बैलेंस आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The name of the balance you are tracking. This is an internal identifier "
-"which does not appear on the phone."
-msgstr ""
-"उस बैलेंस का नाम जिसे आप ट्रैक कर रहे हैं। यह एक आंतरिक पहचानकर्ता है जो फोन"
-" पर दिखाई नहीं देता।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Product"
-msgstr "उत्पाद"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
-msgstr "एक उत्पाद आईडी का संदर्भ, जैसे कि \"/data/products/current_product\""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Quantity"
-msgstr "मात्रा"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A reference to an integer question in this form."
-msgstr "इस फॉर्म में एक पूर्णांक प्रश्न का संदर्भ।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
-msgid "Case"
-msgstr "केस"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID associated with this balance."
-msgstr "इस बैलेंस से संबंधित केस आईडी के लिए XPath अभिव्यक्ति।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Transfer must have both Source Case and Destination Case defined."
-msgstr "ट्रांसफर के लिए स्रोत केस और गंतव्य केस दोनों परिभाषित होने चाहिए।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot change $1 to $2"
-msgstr "$1 को $2 में बदल नहीं सकते"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Source Case"
-msgstr "स्रोत केस"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID issuing the transaction."
-msgstr "लेन-देन जारी करने वाले केस आईडी के लिए XPath अभिव्यक्ति।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Destination Case"
-msgstr "गंतव्य केस"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID receiving the transaction."
-msgstr "लेन-देन प्राप्त करने वाले केस आईडी के लिए XPath अभिव्यक्ति।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Dispense must have a Source Case."
-msgstr "डिस्पेंस के लिए एक स्रोत केस होना चाहिए।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Receive must have a Destination Case."
-msgstr "रिसीव के लिए एक गंतव्य केस होना चाहिए।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Model Iteration ID Query"
-msgstr "मॉडल इटरेशन आईडी क्वेरी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Property Name"
-msgstr "प्रॉपर्टी नाम"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
-msgid "Calculation"
-msgstr "गणना"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relevant"
-msgstr "संबंधित"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship Identifier (e.g. parent or host)"
-msgstr "रिलेशनशिप पहचानकर्ता (जैसे parent या host)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Referenced Case ID"
-msgstr "संदर्भित केस आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Referenced Case Type"
-msgstr "संदर्भित केस प्रकार"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship (child or extension)"
-msgstr "रिलेशनशिप (child या extension)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Node Name"
-msgstr "नोड नाम"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Source"
-msgstr "स्रोत"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "From"
-msgstr "से"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachment Name"
-msgstr "अटैचमेंट नाम"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Property"
-msgstr "प्रॉपर्टी जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date Modified"
-msgstr "संशोधित तिथि"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User ID"
-msgstr "यूज़र आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Case Type"
-msgstr "केस प्रकार"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
-msgid "Case ID"
-msgstr "केस आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Create Case"
-msgstr "केस बनाएं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Properties To Create"
-msgstr "बनाने के लिए प्रॉपर्टीज़"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You must include {columns} columns to create a case"
-msgstr "केस बनाने के लिए आपको {columns} कॉलम शामिल करने होंगे"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You can only use the following properties:"
-msgstr "आप केवल निम्न प्रॉपर्टीज़ का उपयोग कर सकते हैं:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{props} are invalid properties"
-msgstr "{props} अमान्य प्रॉपर्टीज़ हैं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Close Case"
-msgstr "केस बंद करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Close Condition"
-msgstr "बंद करने की शर्त"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Case"
-msgstr "केस अपडेट करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Properties To Update"
-msgstr "अपडेट करने के लिए प्रॉपर्टीज़"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Index"
-msgstr "इंडेक्स का उपयोग करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Index Properties"
-msgstr "इंडेक्स प्रॉपर्टीज़"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship must be child or extension"
-msgstr "रिलेशनशिप child या extension होना चाहिए"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Attachments"
-msgstr "अटैचमेंट्स का उपयोग करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachment Properties"
-msgstr "अटैचमेंट प्रॉपर्टीज़"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The from attribute must be one of: local, remote, or inline"
-msgstr "from एट्रिब्यूट निम्न में से एक होना चाहिए: local, remote, या inline"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Inlined attachments must have an attachment name"
-msgstr "इनलाइन अटैचमेंट्स के लिए अटैचमेंट नाम होना आवश्यक है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
-msgid "Create"
-msgstr "बनाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update"
-msgstr "अपडेट करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Index"
-msgstr "सूची"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachments"
-msgstr "अटैचमेंट्स"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "An error occurred when parsing bind node [{path}]. Please fix this."
-msgstr ""
-"बाइंड नोड [{path}] को पार्स करते समय एक त्रुटि हुई। कृपया इसे ठीक करें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Upload"
-msgstr "अपलोड करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Select new"
-msgstr "नया चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Select File"
-msgstr "फ़ाइल चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Current"
-msgstr "वर्तमान"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Begin Upload"
-msgstr "अपलोड प्रारंभ करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Replace"
-msgstr "बदलें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Reference"
-msgstr "कोई संदर्भ नहीं"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Advanced: Show Path"
-msgstr "एडवांस्ड: पथ दिखाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hide Path"
-msgstr "पथ छुपाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Video"
-msgstr "वीडियो"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Inline Video"
-msgstr "इनलाइन वीडियो"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "HTML"
-msgstr "HTML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copying and Pasting Questions"
-msgstr "प्रश्नों की कॉपी और पेस्टिंग"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"These actions are available via the browser's Edit menu, and you can also "
-"use:"
-msgstr ""
-"ये क्रियाएँ ब्राउज़र के एडिट मेनू से उपलब्ध हैं, और आप इनका उपयोग भी कर सकते"
-" हैं:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "for copy"
-msgstr "कॉपी के लिए"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "for paste"
-msgstr "पेस्ट के लिए"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copy from or Paste into this text box:"
-msgstr "इस टेक्स्ट बॉक्स में से कॉपी करें या इसमें पेस्ट करें:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Insert Questions"
-msgstr "प्रश्न जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Selecting Multiple Questions"
-msgstr "एक से अधिक प्रश्न चुनना"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hold {key} and click on each question."
-msgstr "{key} दबाएँ और प्रत्येक प्रश्न पर क्लिक करें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Other Tips"
-msgstr "अन्य सुझाव"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Questions can be copied between forms, and even to other apps."
-msgstr ""
-"प्रश्नों को फॉर्म्स के बीच, और यहाँ तक कि अन्य ऐप्स में भी कॉपी किया जा सकता"
-" है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert {type} into tree root"
-msgstr "ट्री रूट में {type} नहीं जोड़ा जा सकता"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert $1 into or after $2"
-msgstr "$2 में या उसके बाद $1 नहीं जोड़ा जा सकता"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert $1 into $2"
-msgstr "$2 में $1 नहीं जोड़ा जा सकता"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsupported paste format"
-msgstr "असमर्थित पेस्ट प्रारूप"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsupported paste format:"
-msgstr "असमर्थित पेस्ट प्रारूप:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown question type:"
-msgstr "अज्ञात प्रश्न प्रकार:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter command"
-msgstr "कमांड दर्ज करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Command Bar"
-msgstr "कमांड बार"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -2987,6 +1422,13 @@ msgstr ""
 "फ़ॉर्म प्लेइंग सेवा से कनेक्ट नहीं हो सका। यदि आप यह संदेश बार-बार देखते हैं"
 " तो कृपया एक समस्या रिपोर्ट करें।"
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Loading..."
+msgstr "लोड हो रहा है..."
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
 msgid "Fetching your location..."
 msgstr "आपका स्थान प्राप्त किया जा रहा है..."
@@ -3082,8 +1524,21 @@ msgid "Confirm?"
 msgstr "पुष्टि करें?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "OK"
+msgstr "ठीक है"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Cancel"
+msgstr "रद्द करें"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Page <%- num %>"
 msgstr "पृष्ठ <%- num %>"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Close"
+msgstr "बंद करें"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
@@ -3183,6 +1638,16 @@ msgstr ""
 "इस केस प्रकार में आपके असहेजे गए परिवर्तन हैं। क्या आप वाकई जारी रखना चाहते "
 "हैं?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+"आपने '<%- type %>' केस में <%- count %> केस प्रॉपर्टीज़ सेव की हैं। हम सलाह "
+"देते हैं कि प्रति केस टाइप अधिकतम <%- limit %> केस प्रॉपर्टीज़ ही रखें, "
+"अन्यथा डेटा संग्रहण और विश्लेषण के समय प्रदर्शन संबंधी समस्याएँ आ सकती हैं।"
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
@@ -3269,6 +1734,14 @@ msgstr "केस खोजें"
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "IDs can be found in a <a href=\"<%- url %>\">case data export</a>"
 msgstr "आईडी <a href=\"<%- url %>\">केस डेटा एक्सपोर्ट</a> में पाई जा सकती हैं"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Case ID"
+msgstr "केस आईडी"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Case found!"
@@ -3390,6 +1863,10 @@ msgstr "पिछले 30 दिन"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Month"
 msgstr "पिछला महीना"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Custom"
+msgstr "कस्टम"
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
 msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
@@ -3559,6 +2036,16 @@ msgstr ""
 "निर्यात</strong>: सभी उपयोगकर्ता संपादित और निर्यात कर सकते हैं।"
 
 #: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Save"
+msgstr "सहेजें"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Create"
+msgstr "बनाएँ"
+
+#: corehq/apps/export/static/export/js/models.js
 msgid "The table path should end with []"
 msgstr "टेबल पथ का अंत [] से होना चाहिए"
 
@@ -3714,6 +2201,12 @@ msgstr "मोबाइल वर्कर"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Case"
+msgstr "केस"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
@@ -3805,16 +2298,6 @@ msgstr "चयन साफ़ करें"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Close the picker"
 msgstr "पिकर बंद करें"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "long"
-msgstr "लंबा"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "2-digit"
-msgstr "2-अंकीय"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3975,6 +2458,12 @@ msgstr "पुनः प्रयास करें"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+msgid "Delete"
+msgstr "हटाएँ"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Deleting..."
 msgstr "हटाया जा रहा है..."
 
@@ -4079,6 +2568,16 @@ msgstr " से "
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "key"
+msgstr "कुंजी"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "value"
+msgstr "मान"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "blank"
 msgstr "रिक्त"
 
@@ -4099,6 +2598,11 @@ msgstr "आइटम जोड़ें"
 msgid "Click <strong>Edit</strong> to Add Values</span>"
 msgstr ""
 "मूल्य जोड़ने के लिए <strong>संपादित करें</strong> पर क्लिक करें</span>"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Calculation"
+msgstr "गणना"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
@@ -4350,6 +2854,10 @@ msgstr "कृपया निर्दिष्ट करें।"
 msgid "Please list your organization or company name."
 msgstr "कृपया अपनी संस्था या कंपनी का नाम लिखें।"
 
+#: corehq/apps/registration/static/registration/js/user_login_form.js
+msgid "Continue"
+msgstr "जारी रखें"
+
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
 msgstr ""
@@ -4569,6 +3077,11 @@ msgstr "समय से"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "Time"
+msgstr "समय"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "एक भाषा चुनें..."
@@ -4727,6 +3240,10 @@ msgstr "फ़िल्टर सहेजें"
 #: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
 msgid "Export Data"
 msgstr "डेटा निर्यात करें"
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
+msgid "Search..."
+msgstr "खोजें..."
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/columns.js
 msgid "Column Title"
@@ -5007,6 +3524,10 @@ msgstr "स्थिर"
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "deactivated"
 msgstr "निष्क्रिय"
+
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Data Source"
+msgstr "डेटा स्रोत"
 
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
 msgid "Unknown error"
@@ -5673,6 +4194,10 @@ msgid "Username"
 msgstr "यूज़रनेम"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Password"
+msgstr "पासवर्ड"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
 msgstr "क्लाइंट आईडी"
 
@@ -5699,6 +4224,1158 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Select None"
+#~ msgstr "कोई नहीं चुनें"
+
+#~ msgid "Select All"
+#~ msgstr "सभी चुनें"
+
+#~ msgid "long"
+#~ msgstr "लंबा"
+
+#~ msgid "2-digit"
+#~ msgstr "2-अंकीय"
+
+#~ msgid "Questions"
+#~ msgstr "प्रश्न"
+
+#~ msgid "Copy"
+#~ msgstr "कॉपी करें"
+
+#~ msgid "Expand All"
+#~ msgstr "सभी विस्तार करें"
+
+#~ msgid "Collapse All"
+#~ msgstr "सभी संक्षिप्त करें"
+
+#~ msgid "Bulk Update All Questions"
+#~ msgstr "सभी प्रश्नों का बल्क अपडेट करें"
+
+#~ msgid "Add Question"
+#~ msgstr "प्रश्न जोड़ें"
+
+#~ msgid "Click {btn} to start building your form."
+#~ msgstr "{btn} पर क्लिक करें और अपना फ़ॉर्म बनाना शुरू करें।"
+
+#~ msgid "Question Details"
+#~ msgstr "प्रश्न विवरण"
+
+#~ msgid "Expression Editor"
+#~ msgstr "एक्सप्रेशन एडिटर"
+
+#~ msgid "Cannot Change Question Type"
+#~ msgstr "प्रश्न प्रकार नहीं बदल सकते"
+
+#~ msgid "Change Question Type To"
+#~ msgstr "प्रश्न प्रकार बदलें"
+
+#~ msgid "Show"
+#~ msgstr "दिखाएँ"
+
+#~ msgid "Used By"
+#~ msgstr "द्वारा उपयोग किया गया"
+
+#~ msgid "In Property"
+#~ msgstr "प्रॉपर्टी में"
+
+#~ msgid "No match for {info} found!"
+#~ msgstr "{info} के लिए कोई मेल नहीं मिला!"
+
+#~ msgid "Multiple matches for {info} found!"
+#~ msgstr "{info} के लिए कई मेल मिले हैं!"
+
+#~ msgid "Add Key&rarr;Value Pair"
+#~ msgstr "कुंजी&rarr;मान जोड़ें"
+
+#~ msgid "show in question list"
+#~ msgstr "प्रश्न सूची में दिखाएँ"
+
+#~ msgid "Date Format Options"
+#~ msgstr "तिथि प्रारूप विकल्प"
+
+#~ msgid "No Formatting"
+#~ msgstr "कोई स्वरूपण नहीं"
+
+#~ msgid "Invalid XPath expression."
+#~ msgstr "अमान्य XPath अभिव्यक्ति।"
+
+#~ msgid ""
+#~ "The {property} for a question is not allowed to reference the question "
+#~ "itself. Please remove the . from the {property} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "किसी प्रश्न के लिए {property} का उसी प्रश्न को संदर्भित करना अनुमति नहीं है।"
+#~ " कृपया {property} से . हटा दें, अन्यथा आपके फॉर्म में त्रुटियाँ होंगी।"
+
+#~ msgid "Unknown question:"
+#~ msgstr "अज्ञात प्रश्न:"
+
+#~ msgid "Unknown questions:"
+#~ msgstr "अज्ञात प्रश्न:"
+
+#~ msgid "no formatting"
+#~ msgstr "कोई स्वरूपण नहीं"
+
+#~ msgid "{question} is required."
+#~ msgstr "{question} आवश्यक है।"
+
+#~ msgid "{question} is not allowed."
+#~ msgstr "{question} की अनुमति नहीं है।"
+
+#~ msgid "{question} validation failed"
+#~ msgstr "{question} का सत्यापन विफल हुआ"
+
+#~ msgid "Unknown (read-only) question type"
+#~ msgstr "अज्ञात (केवल-पढ़ने योग्य) प्रश्न प्रकार"
+
+#~ msgid "Lookup Table Data"
+#~ msgstr "लुकअप तालिका डेटा"
+
+#~ msgid "No Translation Data"
+#~ msgstr "कोई अनुवाद डेटा नहीं"
+
+#~ msgid "Question ID"
+#~ msgstr "प्रश्न आईडी"
+
+#~ msgid ""
+#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
+#~ " pick a different Question ID."
+#~ msgstr ""
+#~ "आईडी '{nodeID}' से फॉर्म पार्सिंग में समस्या हो सकती है। किसी अन्य प्रश्न "
+#~ "आईडी का चयन करना अनुशंसित है।"
+
+#~ msgid ""
+#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
+#~ " only letters, numbers, and '-' or '_' characters."
+#~ msgstr ""
+#~ "{nodeID} मान्य प्रश्न आईडी नहीं है। इसे एक अक्षर से शुरू होना चाहिए और केवल "
+#~ "अक्षर, संख्या, और '-' या '_' अक्षर ही होने चाहिए।"
+
+#~ msgid "'meta' is not a valid Question ID."
+#~ msgstr "'meta' मान्य प्रश्न आईडी नहीं है।"
+
+#~ msgid ""
+#~ "Making this change will create a new Question ID (and a new column in "
+#~ "exports)."
+#~ msgstr ""
+#~ "यह परिवर्तन करने से एक नया प्रश्न आईडी (और निर्यात में एक नया कॉलम) बनेगा।"
+
+#~ msgid ""
+#~ "This question has the same Question ID as another question in the same "
+#~ "group. Please choose a unique Question ID."
+#~ msgstr ""
+#~ "इस प्रश्न का प्रश्न आईडी उसी समूह के किसी अन्य प्रश्न के समान है। कृपया एक "
+#~ "अद्वितीय प्रश्न आईडी चुनें।"
+
+#~ msgid "Default Data Value"
+#~ msgstr "डिफ़ॉल्ट डेटा मान"
+
+#~ msgid "Special Hidden Value XMLNS attribute"
+#~ msgstr "विशेष छिपा हुआ मान XMLNS विशेषता"
+
+#~ msgid "Extra Data Attributes"
+#~ msgstr "अतिरिक्त डेटा विशेषताएँ"
+
+#~ msgid "Calculate Condition"
+#~ msgstr "शर्त की गणना करें"
+
+#~ msgid ""
+#~ "You cannot have a Validation Error Message with no Validation Condition!"
+#~ msgstr "आप बिना सत्यापन शर्त के सत्यापन त्रुटि संदेश नहीं रख सकते!"
+
+#~ msgid "Validation Error Message"
+#~ msgstr "सत्यापन त्रुटि संदेश"
+
+#~ msgid "Required Condition"
+#~ msgstr "आवश्यक शर्त"
+
+#~ msgid "The condition will be ignored unless you mark the question required."
+#~ msgstr ""
+#~ "जब तक आप प्रश्न को आवश्यक नहीं चिह्नित करते, शर्त को अनदेखा किया जाएगा।"
+
+#~ msgid "Extra Bind Attributes"
+#~ msgstr "अतिरिक्त बाइंड विशेषताएँ"
+
+#~ msgid ""
+#~ "You are referencing a node in this form. This can cause errors in the form"
+#~ msgstr ""
+#~ "आप इस फॉर्म में एक नोड का संदर्भ दे रहे हैं। इससे फॉर्म में त्रुटियाँ आ सकती"
+#~ " हैं"
+
+#~ msgid "Appearance Attribute"
+#~ msgstr "दिखावट विशेषता"
+
+#~ msgid "Default Display Text"
+#~ msgstr "डिफ़ॉल्ट प्रदर्शन पाठ"
+
+#~ msgid "Default Display Text is required"
+#~ msgstr "डिफ़ॉल्ट प्रदर्शन पाठ आवश्यक है"
+
+#~ msgid "Hint Display Text"
+#~ msgstr "संकेत प्रदर्शन पाठ"
+
+#~ msgid "Extra Control Attributes"
+#~ msgstr "अतिरिक्त नियंत्रण विशेषताएँ"
+
+#~ msgid "Raw XML"
+#~ msgstr "कच्चा XML"
+
+#~ msgid "Data Parent"
+#~ msgstr "डेटा पैरेंट"
+
+#~ msgid "Must be valid path"
+#~ msgstr "मान्य पथ होना चाहिए"
+
+#~ msgid ""
+#~ "Data parent of question in repeat group must be (in) the same repeat group"
+#~ msgstr ""
+#~ "दोहराव समूह में प्रश्न का डेटा पैरेंट उसी दोहराव समूह (में) होना चाहिए"
+
+#~ msgid "Hidden Value"
+#~ msgstr "छिपा हुआ मान"
+
+#~ msgid "Text"
+#~ msgstr "पाठ"
+
+#~ msgid "Phone Number or Numeric ID"
+#~ msgstr "फोन नंबर या संख्यात्मक आईडी"
+
+#~ msgid "Integer"
+#~ msgstr "पूर्णांक"
+
+#~ msgid "Audio Capture"
+#~ msgstr "ऑडियो कैप्चर"
+
+#~ msgid "Image Capture"
+#~ msgstr "इमेज कैप्चर"
+
+#~ msgid "Image Size"
+#~ msgstr "इमेज साइज़"
+
+#~ msgid "Small"
+#~ msgstr "छोटा"
+
+#~ msgid "Medium"
+#~ msgstr "मध्यम"
+
+#~ msgid "Large"
+#~ msgstr "बड़ा"
+
+#~ msgid "Original"
+#~ msgstr "मूल"
+
+#~ msgid ""
+#~ "This will resize the image before sending the form. Use this option to send "
+#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+#~ "megapixels</li></ul>"
+#~ msgstr ""
+#~ "यह फ़ॉर्म भेजने से पहले इमेज का आकार बदल देगा। इस विकल्प का उपयोग कम "
+#~ "कनेक्टिविटी वाले क्षेत्रों में छोटी इमेज भेजने के लिए करें।<ul><li>छोटा - "
+#~ "0.1 मेगापिक्सल</li><li>मध्यम - 0.2 मेगापिक्सल</li><li>बड़ा - 0.5 "
+#~ "मेगापिक्सल</li></ul>"
+
+#~ msgid "Micro-Image"
+#~ msgstr "माइक्रो-इमेज"
+
+#~ msgid "Video Capture"
+#~ msgstr "वीडियो कैप्चर"
+
+#~ msgid "Signature Capture"
+#~ msgstr "हस्ताक्षर कैप्चर"
+
+#~ msgid "Document Upload"
+#~ msgstr "दस्तावेज़ अपलोड"
+
+#~ msgid "GPS"
+#~ msgstr "जीपीएस"
+
+#~ msgid "Barcode Scan"
+#~ msgstr "बारकोड स्कैन"
+
+#~ msgid "Date and Time"
+#~ msgstr "तारीख और समय"
+
+#~ msgid "Long"
+#~ msgstr "लंबा"
+
+#~ msgid "Decimal"
+#~ msgstr "दशमलव"
+
+#~ msgid "Choice"
+#~ msgstr "विकल्प"
+
+#~ msgid "Choice Value"
+#~ msgstr "विकल्प मान"
+
+#~ msgid "Whitespace in values is not allowed."
+#~ msgstr "मानों में व्हाइटस्पेस की अनुमति नहीं है।"
+
+#~ msgid "This choice value has been used in the same question"
+#~ msgstr "यह विकल्प मान इसी प्रश्न में पहले ही उपयोग किया गया है"
+
+#~ msgid ""
+#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
+#~ "it has Choices. Please remove all Choices and try again."
+#~ msgstr ""
+#~ "यदि इसमें विकल्प हैं, तो मल्टीपल/सिंगल चॉइस प्रश्न को नॉन-चॉइस प्रश्न में "
+#~ "नहीं बदला जा सकता। कृपया सभी विकल्प हटाएँ और पुनः प्रयास करें।"
+
+#~ msgid "Checkbox"
+#~ msgstr "चेकबॉक्स"
+
+#~ msgid "Multiple Choice"
+#~ msgstr "मल्टीपल चॉइस"
+
+#~ msgid "Group"
+#~ msgstr "समूह"
+
+#~ msgid "Question List"
+#~ msgstr "प्रश्न सूची"
+
+#~ msgid "Repeat Group"
+#~ msgstr "दोहराव समूह"
+
+#~ msgid "Repeat Count"
+#~ msgstr "दोहराव संख्या"
+
+#~ msgid "Repeat Count is required."
+#~ msgstr "दोहराव संख्या आवश्यक है।"
+
+#~ msgid "Extra Repeat Attributes"
+#~ msgstr "अतिरिक्त दोहराव गुण"
+
+#~ msgid "You have deleted a question."
+#~ msgstr "आपने एक प्रश्न हटा दिया है।"
+
+#~ msgid "Undo"
+#~ msgstr "पूर्ववत करें"
+
+#~ msgid ""
+#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
+#~ "will be discarded!"
+#~ msgstr ""
+#~ "Bind Node [{path}] मिला लेकिन इससे संबंधित कोई डेटा नोड नहीं है। यह बाइंड "
+#~ "नोड हटा दिया जाएगा!"
+
+#~ msgid "Not Found"
+#~ msgstr "नहीं मिला"
+
+#~ msgid ""
+#~ "{type} nodes cannot be used in an output value. Please remove the output "
+#~ "value for '{path}' or your form will have errors."
+#~ msgstr ""
+#~ "{type} नोड्स को आउटपुट मान में उपयोग नहीं किया जा सकता। कृपया '{path}' के "
+#~ "लिए आउटपुट मान हटा दें, अन्यथा आपके फ़ॉर्म में त्रुटियाँ होंगी।"
+
+#~ msgid ""
+#~ "The {field} for a question is not allowed to reference the question itself. "
+#~ "Please remove the {ref} from the {field} or your form will have errors."
+#~ msgstr ""
+#~ "किसी प्रश्न के लिए {field} को स्वयं प्रश्न का संदर्भ देने की अनुमति नहीं है।"
+#~ " कृपया {field} से {ref} हटा दें, अन्यथा आपके फ़ॉर्म में त्रुटियाँ होंगी।"
+
+#~ msgid "output value"
+#~ msgstr "आउटपुट मान"
+
+#~ msgid "Validation Failed"
+#~ msgstr "सत्यापन विफल"
+
+#~ msgid "Please fix the error before leaving this page:"
+#~ msgstr "कृपया इस पृष्ठ को छोड़ने से पहले त्रुटि ठीक करें:"
+
+#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
+#~ msgstr "<span class='property-name'>एक्सप्रेशन</span> (एडवांस्ड) संपादित करें"
+
+#~ msgid "Show Simple Mode"
+#~ msgstr "सिंपल मोड दिखाएँ"
+
+#~ msgid ""
+#~ "You are currently in Advanced Mode because your logic is too complicated for"
+#~ " Simple Mode."
+#~ msgstr ""
+#~ "आप वर्तमान में एडवांस्ड मोड में हैं क्योंकि आपकी लॉजिक सिंपल मोड के लिए बहुत"
+#~ " जटिल है।"
+
+#~ msgid "You can drag a question into the box."
+#~ msgstr "आप एक प्रश्न को बॉक्स में खींच सकते हैं।"
+
+#~ msgid "Guide to Common Logic and Calculations"
+#~ msgstr "सामान्य लॉजिक और गणनाओं के लिए गाइड"
+
+#~ msgid "Edit <span class='property-name'>Expression</span>"
+#~ msgstr "<span class='property-name'>एक्सप्रेशन</span> संपादित करें"
+
+#~ msgid "Show Advanced Mode"
+#~ msgstr "एडवांस्ड मोड दिखाएँ"
+
+#~ msgid "Result is"
+#~ msgstr "परिणाम है"
+
+#~ msgid "Expression"
+#~ msgstr "व्यक्ति अभिव्यक्ति"
+
+#~ msgid "Add Expression"
+#~ msgstr "अभिव्यक्ति जोड़ें"
+
+#~ msgid "Error"
+#~ msgstr "त्रुटि"
+
+#~ msgid "Warning"
+#~ msgstr "चेतावनी"
+
+#~ msgid "Form Warning"
+#~ msgstr "फॉर्म चेतावनी"
+
+#~ msgid "Notification"
+#~ msgstr "सूचना"
+
+#~ msgid ""
+#~ "Holding the ALT key while clicking save invokes an inefficient save "
+#~ "procedure. Do this only if a normal save fails."
+#~ msgstr ""
+#~ "ALT कुंजी दबाकर सहेजने पर एक अप्रभावी सहेजने की प्रक्रिया शुरू होती है। ऐसा "
+#~ "केवल तभी करें जब सामान्य सहेजना विफल हो जाए।"
+
+#~ msgid "Are you sure you want to exit? All unsaved changes will be lost!"
+#~ msgstr "क्या आप वाकई बाहर निकलना चाहते हैं? सभी असहेजे गए परिवर्तन खो जाएंगे!"
+
+#~ msgid ""
+#~ "Look for questions marked with $1 and check they don't reference deleted "
+#~ "questions."
+#~ msgstr ""
+#~ "$1 से चिह्नित प्रश्नों को देखें और सुनिश्चित करें कि वे हटाए गए प्रश्नों का "
+#~ "संदर्भ नहीं देते।"
+
+#~ msgid "Errors in Form"
+#~ msgstr "फॉर्म में त्रुटियाँ"
+
+#~ msgid "Form has reference errors."
+#~ msgstr "फॉर्म में संदर्भ त्रुटियाँ हैं।"
+
+#~ msgid "Look for questions marked with $1 and fix the errors."
+#~ msgstr "$1 से चिह्नित प्रश्नों को देखें और त्रुटियाँ ठीक करें।"
+
+#~ msgid "Form has validation errors."
+#~ msgstr "फॉर्म में मान्यता त्रुटियाँ हैं।"
+
+#~ msgid "Multimedia Capture"
+#~ msgstr "मल्टीमीडिया कैप्चर"
+
+#~ msgid "Number"
+#~ msgstr "संख्या"
+
+#~ msgid "Groups"
+#~ msgstr "समूह"
+
+#~ msgid "Advanced"
+#~ msgstr "उन्नत"
+
+#~ msgid "Make Required"
+#~ msgstr "आवश्यक बनाएं"
+
+#~ msgid ""
+#~ "You are about to make all existing questions on this form required. This "
+#~ "action will overwrite the current configuration of this form and can only be"
+#~ " undone by editing individual questions."
+#~ msgstr ""
+#~ "आप इस फॉर्म के सभी मौजूदा प्रश्नों को आवश्यक बनाने जा रहे हैं। यह क्रिया इस "
+#~ "फॉर्म की वर्तमान कॉन्फ़िगरेशन को अधिलेखित कर देगी और केवल व्यक्तिगत प्रश्नों"
+#~ " को संपादित करके ही पूर्ववत की जा सकती है।"
+
+#~ msgid "Load Default Values"
+#~ msgstr "डिफ़ॉल्ट मान लोड करें"
+
+#~ msgid ""
+#~ "You are about to set matching case properties as Default Values for all "
+#~ "existing questions. This action will overwrite existing Default Values for "
+#~ "all questions with matching case properties and can only be undone by "
+#~ "editing individual questions."
+#~ msgstr ""
+#~ "आप सभी मौजूदा प्रश्नों के लिए मिलते-जुलते केस गुणों को डिफ़ॉल्ट मान के रूप "
+#~ "में सेट करने जा रहे हैं। यह क्रिया सभी प्रश्नों के मिलते-जुलते केस गुणों के "
+#~ "लिए मौजूदा डिफ़ॉल्ट मानों को अधिलेखित कर देगी और केवल व्यक्तिगत प्रश्नों को "
+#~ "संपादित करके ही पूर्ववत की जा सकती है।"
+
+#~ msgid "Are you sure you want to perform this action?"
+#~ msgstr "क्या आप वाकई यह क्रिया करना चाहते हैं?"
+
+#~ msgid "Expand Editor"
+#~ msgstr "संपादक को बड़ा करें"
+
+#~ msgid "Shrink Editor"
+#~ msgstr "संपादक को छोटा करें"
+
+#~ msgid "Export Form Contents"
+#~ msgstr "फॉर्म सामग्री निर्यात करें"
+
+#~ msgid "Edit Source XML"
+#~ msgstr "स्रोत XML संपादित करें"
+
+#~ msgid "Form Properties"
+#~ msgstr "फॉर्म गुण"
+
+#~ msgid "Find Usages"
+#~ msgstr "उपयोग खोजें"
+
+#~ msgid "Validation failed. Form may not perform correctly on your device!"
+#~ msgstr "मान्यता विफल रही। फॉर्म आपके डिवाइस पर सही ढंग से काम नहीं कर सकता!"
+
+#~ msgid "Edit Form's Source XML"
+#~ msgstr "फॉर्म के स्रोत XML को संपादित करें"
+
+#~ msgid "Update Source"
+#~ msgstr "स्रोत अपडेट करें"
+
+#~ msgid ""
+#~ "This is the raw XML. You can edit or paste into this box to make changes to "
+#~ "your form. Press 'Update Source' to save changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "यह कच्चा XML है। आप इसमें बदलाव करने के लिए इस बॉक्स में संपादन या पेस्ट कर "
+#~ "सकते हैं। परिवर्तन सहेजने के लिए 'स्रोत अपडेट करें' दबाएँ, या रद्द करने के "
+#~ "लिए 'बंद करें' दबाएँ।"
+
+#~ msgid ""
+#~ "Copy and paste this content into a spreadsheet program like Excel to easily "
+#~ "share your form with others."
+#~ msgstr ""
+#~ "इस सामग्री को कॉपी करें और Excel जैसे स्प्रेडशीट प्रोग्राम में पेस्ट करें "
+#~ "ताकि आप अपने फॉर्म को दूसरों के साथ आसानी से साझा कर सकें।"
+
+#~ msgid "Lost Work Warning"
+#~ msgstr "काम खोने की चेतावनी"
+
+#~ msgid "Overwrite their work"
+#~ msgstr "उनका काम अधिलेखित करें"
+
+#~ msgid "Show XML Differences"
+#~ msgstr "XML अंतर दिखाएँ"
+
+#~ msgid ""
+#~ "Looks like someone else has edited this form since you loaded the page. Are "
+#~ "you sure you want to overwrite their work?"
+#~ msgstr ""
+#~ "लगता है किसी और ने आपके पेज लोड करने के बाद इस फॉर्म को संपादित किया है। "
+#~ "क्या आप वाकई उनका काम अधिलेखित करना चाहते हैं?"
+
+#~ msgid "Edit Form Properties"
+#~ msgstr "फ़ॉर्म गुण संपादित करें"
+
+#~ msgid "Disable Text Formatting"
+#~ msgstr "पाठ स्वरूपण अक्षम करें"
+
+#~ msgid "Use Easy References"
+#~ msgstr "आसान संदर्भों का उपयोग करें"
+
+#~ msgid "Use of each question"
+#~ msgstr "प्रत्येक प्रश्न का उपयोग"
+
+#~ msgid "Unsaved Changes in Editor"
+#~ msgstr "संपादक में असहेजित परिवर्तन"
+
+#~ msgid ""
+#~ "You have UNSAVED changes in the Expression Editor. Please save changes "
+#~ "before continuing."
+#~ msgstr ""
+#~ "आपके पास अभिव्यक्ति संपादक में असहेजित परिवर्तन हैं। कृपया आगे बढ़ने से पहले"
+#~ " परिवर्तन सहेजें।"
+
+#~ msgid "Parsing Error. Please check that your form is valid XML."
+#~ msgstr "पार्सिंग त्रुटि। कृपया जांचें कि आपका फ़ॉर्म मान्य XML है।"
+
+#~ msgid "Sorry, {err}"
+#~ msgstr "माफ़ करें, {err}"
+
+#~ msgid "Add Choice"
+#~ msgstr "विकल्प जोड़ें"
+
+#~ msgid "and"
+#~ msgstr "और"
+
+#~ msgid "There are errors in the form"
+#~ msgstr "फ़ॉर्म में त्रुटियाँ हैं"
+
+#~ msgid "Fix Manually"
+#~ msgstr "स्वयं ठीक करें"
+
+#~ msgid "Fix Automatically"
+#~ msgstr "स्वचालित रूप से ठीक करें"
+
+#~ msgid ""
+#~ "It looks like your form is not valid XML. This can often happen if you use a"
+#~ " reserved character in one of your questions. Characters to look out for are"
+#~ " <, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
+#~ "you fix the XML by hand. What would you like to do?"
+#~ msgstr ""
+#~ "ऐसा लगता है कि आपका फ़ॉर्म मान्य XML नहीं है। यह अक्सर तब होता है जब आप अपने"
+#~ " किसी प्रश्न में आरक्षित वर्ण का उपयोग करते हैं। जिन वर्णों पर ध्यान देना "
+#~ "चाहिए वे हैं <, >, और &। आप अभी भी सहेज सकते हैं, लेकिन जब तक आप XML को "
+#~ "स्वयं ठीक नहीं करते, तब तक आप इस फ़ॉर्म को फिर से लोड नहीं कर सकते। आप क्या "
+#~ "करना चाहेंगे?"
+
+#~ msgid "Form Validation Error"
+#~ msgstr "फ़ॉर्म मान्यता त्रुटि"
+
+#~ msgid "Fix the problem (recommended)"
+#~ msgstr "समस्या ठीक करें (अनुशंसित)"
+
+#~ msgid "Save anyway"
+#~ msgstr "फिर भी सहेजें"
+
+#~ msgid ""
+#~ "The {displaytext} appears in the application. This text will not appear in "
+#~ "data exports."
+#~ msgstr ""
+#~ "{displaytext} एप्लिकेशन में दिखाई देता है। यह पाठ डेटा निर्यात में नहीं "
+#~ "दिखाई देगा।"
+
+#~ msgid "Display Text"
+#~ msgstr "प्रदर्शन पाठ"
+
+#~ msgid ""
+#~ "You can configure an external data source like a case list or lookup table "
+#~ "to use as the choices for a multiple choice question."
+#~ msgstr ""
+#~ "आप एक बाहरी डेटा स्रोत जैसे केस सूची या लुकअप तालिका को कई विकल्प वाले "
+#~ "प्रश्न के विकल्पों के रूप में उपयोग करने के लिए कॉन्फ़िगर कर सकते हैं।"
+
+#~ msgid "Media"
+#~ msgstr "मीडिया"
+
+#~ msgid ""
+#~ "This will allow you to add images, audio or video media to a question, or "
+#~ "other custom content."
+#~ msgstr ""
+#~ "यह आपको किसी प्रश्न में छवियाँ, ऑडियो या वीडियो मीडिया, या अन्य कस्टम "
+#~ "सामग्री जोड़ने की अनुमति देगा।"
+
+#~ msgid ""
+#~ "These are advanced settings and are not needed for most applications.  "
+#~ "Please only change these if you have a specific need!"
+#~ msgstr ""
+#~ "ये उन्नत सेटिंग्स हैं और अधिकांश एप्लिकेशन के लिए आवश्यक नहीं हैं। कृपया "
+#~ "इन्हें केवल तभी बदलें जब आपको विशेष आवश्यकता हो!"
+
+#~ msgid ""
+#~ "This question represents advanced content that is not supported by the form "
+#~ "builder. Please only change it if you have a specific need!"
+#~ msgstr ""
+#~ "यह प्रश्न उन्नत सामग्री का प्रतिनिधित्व करता है जिसे फ़ॉर्म बिल्डर द्वारा "
+#~ "समर्थित नहीं किया गया है। कृपया इसे केवल तभी बदलें जब आपको विशेष आवश्यकता "
+#~ "हो!"
+
+#~ msgid "Ignored XML"
+#~ msgstr "अनदेखा किया गया XML"
+
+#~ msgid "Android App Callout"
+#~ msgstr "एंड्रॉइड ऐप कॉलआउट"
+
+#~ msgid "External App"
+#~ msgstr "बाहरी ऐप"
+
+#~ msgid "Insert Android Application ID"
+#~ msgstr "एंड्रॉइड एप्लिकेशन आईडी डालें"
+
+#~ msgid "change your subscription"
+#~ msgstr "अपनी सदस्यता बदलें"
+
+#~ msgid ""
+#~ "You no longer have access to built in or external integration in your application.\n"
+#~ "\n"
+#~ "Built in integrations are available on the Pro plan and higher. External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
+#~ msgstr ""
+#~ "अब आपके पास अपने एप्लिकेशन में अंतर्निहित या बाहरी एकीकरण तक पहुँच नहीं है।\n"
+#~ "\n"
+#~ "अंतर्निहित एकीकरण प्रो प्लान और उससे ऊपर पर उपलब्ध हैं। बाहरी एकीकरण एडवांस्ड प्लान और उससे ऊपर पर उपलब्ध हैं। आप अपने एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
+
+#~ msgid ""
+#~ "Your subscription only has access to built-in integration.\n"
+#~ "\n"
+#~ "External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
+#~ msgstr ""
+#~ "आपकी सदस्यता में केवल अंतर्निहित एकीकरण तक पहुँच है।\n"
+#~ "\n"
+#~ "बाहरी एकीकरण एडवांस्ड प्लान और उससे ऊपर पर उपलब्ध हैं। आप अपने एप्लिकेशन का नया संस्करण बनाने से पहले, आपको {link} या इस प्रश्न को हटाना होगा।"
+
+#~ msgid ""
+#~ "Android app callouts of the same type must have different question ids."
+#~ msgstr ""
+#~ "एक ही प्रकार के एंड्रॉइड ऐप कॉलआउट के लिए प्रश्न आईडी अलग-अलग होनी चाहिए।"
+
+#~ msgid "Extra"
+#~ msgstr "अतिरिक्त"
+
+#~ msgid "Response"
+#~ msgstr "प्रतिक्रिया"
+
+#~ msgid "Special Intent XMLNS attribute"
+#~ msgstr "विशेष इंटेंट XMLNS विशेषता"
+
+#~ msgid "Print"
+#~ msgstr "प्रिंट करें"
+
+#~ msgid "Document Template"
+#~ msgstr "दस्तावेज़ टेम्पलेट"
+
+#~ msgid "Edit Data Source"
+#~ msgstr "डेटा स्रोत संपादित करें"
+
+#~ msgid "Query Expression"
+#~ msgstr "क्वेरी अभिव्यक्ति"
+
+#~ msgid "Optional Instance Properties"
+#~ msgstr "वैकल्पिक इंस्टेंस गुण"
+
+#~ msgid "Instance ID"
+#~ msgstr "इंस्टेंस आईडी"
+
+#~ msgid "Instance URI"
+#~ msgstr "इंस्टेंस URI"
+
+#~ msgid "Lookup table was not found in the project"
+#~ msgstr "लुकअप तालिका परियोजना में नहीं मिली"
+
+#~ msgid ""
+#~ "You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
+#~ "Before you can make a new version of your application, you must {link} or delete this question"
+#~ msgstr ""
+#~ "अब आपके एप्लिकेशन में लुकअप टेबल्स तक पहुँच नहीं है। लुकअप टेबल्स स्टैंडर्ड प्लान और उससे ऊपर के लिए उपलब्ध हैं।\n"
+#~ "अपने एप्लिकेशन का नया संस्करण बनाने से पहले आपको {link} या इस प्रश्न को हटाना होगा।"
+
+#~ msgid "A data source must be selected."
+#~ msgstr "एक डेटा स्रोत का चयन करना आवश्यक है।"
+
+#~ msgid "Display Text Field"
+#~ msgstr "डिस्प्ले टेक्स्ट फ़ील्ड"
+
+#~ msgid "Sort Field"
+#~ msgstr "सॉर्ट फ़ील्ड"
+
+#~ msgid "Filter"
+#~ msgstr "फ़िल्टर"
+
+#~ msgid ""
+#~ "This is an XPath expression that will filter the set of choices from the "
+#~ "lookup table"
+#~ msgstr ""
+#~ "यह एक XPath अभिव्यक्ति है जो लुकअप टेबल से विकल्पों के सेट को फ़िल्टर करेगी।"
+
+#~ msgid "Lookup Tables"
+#~ msgstr "लुकअप टेबल्स"
+
+#~ msgid "Checkbox Lookup Table"
+#~ msgstr "चेकबॉक्स लुकअप टेबल"
+
+#~ msgid ""
+#~ "Cannot change to Multiple/Single Choice question if it has Choices. Please "
+#~ "remove all Choices and try again."
+#~ msgstr ""
+#~ "अगर इसमें विकल्प हैं तो मल्टीपल/सिंगल चॉइस प्रश्न में परिवर्तन नहीं किया जा "
+#~ "सकता। कृपया सभी विकल्प हटाएँ और पुनः प्रयास करें।"
+
+#~ msgid "Can only change to a Multiple Choice Lookup Table"
+#~ msgstr "केवल मल्टीपल चॉइस लुकअप टेबल में परिवर्तन किया जा सकता है।"
+
+#~ msgid "Multiple Choice Lookup Table"
+#~ msgstr "मल्टीपल चॉइस लुकअप टेबल"
+
+#~ msgid "Can only change to a Checkbox Lookup Table"
+#~ msgstr "केवल चेकबॉक्स लुकअप टेबल में परिवर्तन किया जा सकता है।"
+
+#~ msgid "{attr} was not found in the lookup table"
+#~ msgstr "लुकअप टेबल में {attr} नहीं मिला।"
+
+#~ msgid "Display"
+#~ msgstr "डिस्प्ले"
+
+#~ msgid "auto?"
+#~ msgstr "ऑटो?"
+
+#~ msgid ""
+#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
+#~ "use bulleted lists, and <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
+#~ msgstr ""
+#~ "शब्दों को <strong>बोल्ड</strong> और <em>इटैलिक</em> करने के लिए टेक्स्ट "
+#~ "फॉर्मेटिंग का उपयोग करें, बुलेटेड लिस्ट्स बनाएं, और <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>और"
+#~ " भी बहुत कुछ</a>"
+
+#~ msgid "Turn Off Text Formatting"
+#~ msgstr "टेक्स्ट फॉर्मेटिंग बंद करें"
+
+#~ msgid "Turn On Text Formatting"
+#~ msgstr "टेक्स्ट फॉर्मेटिंग चालू करें"
+
+#~ msgid "custom..."
+#~ msgstr "कस्टम..."
+
+#~ msgid "New Content Type"
+#~ msgstr "नई कंटेंट टाइप"
+
+#~ msgid "Content Type"
+#~ msgstr "कंटेंट टाइप"
+
+#~ msgid ""
+#~ "You have languages in your form that are not specified in the \"Languages\" "
+#~ "page of the application builder. The following language will be deleted on "
+#~ "save unless you add it to the \"Languages\" page:"
+#~ msgstr ""
+#~ "आपके फॉर्म में ऐसी भाषाएँ हैं जो एप्लिकेशन बिल्डर के \"Languages\" पेज में "
+#~ "निर्दिष्ट नहीं हैं। निम्नलिखित भाषा को सेव करने पर हटा दिया जाएगा जब तक आप "
+#~ "इसे \"Languages\" पेज में नहीं जोड़ते:"
+
+#~ msgid "{name} (or multimedia) is required."
+#~ msgstr "{name} (या मल्टीमीडिया) आवश्यक है।"
+
+#~ msgid "{name} (or multimedia) is required for all languages."
+#~ msgstr "सभी भाषाओं के लिए {name} (या मल्टीमीडिया) आवश्यक है।"
+
+#~ msgid "{name} Itext ID is required."
+#~ msgstr "{name} Itext ID आवश्यक है।"
+
+#~ msgid "{name} is not a valid ID."
+#~ msgstr "{name} एक मान्य ID नहीं है।"
+
+#~ msgid "Multimedia was not copied; it must be uploaded separately."
+#~ msgstr "मल्टीमीडिया कॉपी नहीं किया गया; इसे अलग से अपलोड करना होगा।"
+
+#~ msgid "Discarded languages:"
+#~ msgstr "अस्वीकृत भाषाएँ:"
+
+#~ msgid "Validation Message"
+#~ msgstr "मान्यता संदेश"
+
+#~ msgid ""
+#~ "Can't have a Validation Message Itext ID without a Validation Condition"
+#~ msgstr "मान्यता शर्त के बिना मान्यता संदेश Itext ID नहीं हो सकता"
+
+#~ msgid "Validation Message Itext ID"
+#~ msgstr "मान्यता संदेश Itext ID"
+
+#~ msgid "Add Validation Media"
+#~ msgstr "मान्यता मीडिया जोड़ें"
+
+#~ msgid "Display Text Itext ID"
+#~ msgstr "डिस्प्ले टेक्स्ट Itext ID"
+
+#~ msgid "Hint Message"
+#~ msgstr "संकेत संदेश"
+
+#~ msgid "Hint Itext ID"
+#~ msgstr "संकेत Itext ID"
+
+#~ msgid "Help Message"
+#~ msgstr "सहायता संदेश"
+
+#~ msgid "Help Itext ID"
+#~ msgstr "सहायता Itext ID"
+
+#~ msgid "Add New Item Button Text"
+#~ msgstr "नया आइटम जोड़ें बटन टेक्स्ट"
+
+#~ msgid "Add New Itext ID"
+#~ msgstr "नया Itext ID जोड़ें"
+
+#~ msgid "Add Another Item Button Text"
+#~ msgstr "एक और आइटम जोड़ें बटन टेक्स्ट"
+
+#~ msgid "Add Another Itext ID"
+#~ msgstr "एक और Itext ID जोड़ें"
+
+#~ msgid "Add Other Content"
+#~ msgstr "अन्य सामग्री जोड़ें"
+
+#~ msgid "Add Multimedia"
+#~ msgstr "मल्टीमीडिया जोड़ें"
+
+#~ msgid "Add Help Media"
+#~ msgstr "सहायता मीडिया जोड़ें"
+
+#~ msgid "Edit Bulk Translations"
+#~ msgstr "थोक अनुवाद संपादित करें"
+
+#~ msgid "Update Translations"
+#~ msgstr "अनुवाद अपडेट करें"
+
+#~ msgid ""
+#~ "Copy these translations into a spreadsheet program like Excel. You can edit "
+#~ "them there and then paste them back here when you're done. These will update"
+#~ " the translations used in your form. Press 'Update Translations' to save "
+#~ "changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "इन अनुवादों को Excel जैसे स्प्रेडशीट प्रोग्राम में कॉपी करें। आप इन्हें वहाँ"
+#~ " संपादित कर सकते हैं और फिर यहाँ पेस्ट कर सकते हैं जब आप पूरा कर लें। ये "
+#~ "आपके फॉर्म में उपयोग किए गए अनुवादों को अपडेट करेंगे। परिवर्तनों को सहेजने "
+#~ "के लिए 'अनुवाद अपडेट करें' दबाएँ, या रद्द करने के लिए 'बंद करें' दबाएँ।"
+
+#~ msgid "App Properties"
+#~ msgstr "ऐप गुण"
+
+#~ msgid "Could not load app properties."
+#~ msgstr "ऐप गुण लोड नहीं किए जा सके।"
+
+#~ msgid "If this error persists, please report an issue."
+#~ msgstr "यदि यह त्रुटि बनी रहती है, तो कृपया एक समस्या रिपोर्ट करें।"
+
+#~ msgid ""
+#~ "The {questionid} is an internal identifier for a question. It does not "
+#~ "appear on the phone. It is the name of the question in data exports."
+#~ msgstr ""
+#~ "{questionid} एक प्रश्न के लिए आंतरिक पहचानकर्ता है। यह फोन पर दिखाई नहीं "
+#~ "देता। यह डेटा निर्यात में प्रश्न का नाम है।"
+
+#~ msgid "The date and time of the action, e.g., now() or today()"
+#~ msgstr "क्रिया की तिथि और समय, जैसे कि now() या today()"
+
+#~ msgid "Balance ID"
+#~ msgstr "बैलेंस आईडी"
+
+#~ msgid ""
+#~ "The name of the balance you are tracking. This is an internal identifier "
+#~ "which does not appear on the phone."
+#~ msgstr ""
+#~ "उस बैलेंस का नाम जिसे आप ट्रैक कर रहे हैं। यह एक आंतरिक पहचानकर्ता है जो फोन"
+#~ " पर दिखाई नहीं देता।"
+
+#~ msgid "Product"
+#~ msgstr "उत्पाद"
+
+#~ msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
+#~ msgstr "एक उत्पाद आईडी का संदर्भ, जैसे कि \"/data/products/current_product\""
+
+#~ msgid "Quantity"
+#~ msgstr "मात्रा"
+
+#~ msgid "A reference to an integer question in this form."
+#~ msgstr "इस फॉर्म में एक पूर्णांक प्रश्न का संदर्भ।"
+
+#~ msgid "XPath expression for the case ID associated with this balance."
+#~ msgstr "इस बैलेंस से संबंधित केस आईडी के लिए XPath अभिव्यक्ति।"
+
+#~ msgid "Transfer must have both Source Case and Destination Case defined."
+#~ msgstr "ट्रांसफर के लिए स्रोत केस और गंतव्य केस दोनों परिभाषित होने चाहिए।"
+
+#~ msgid "Cannot change $1 to $2"
+#~ msgstr "$1 को $2 में बदल नहीं सकते"
+
+#~ msgid "Source Case"
+#~ msgstr "स्रोत केस"
+
+#~ msgid "XPath expression for the case ID issuing the transaction."
+#~ msgstr "लेन-देन जारी करने वाले केस आईडी के लिए XPath अभिव्यक्ति।"
+
+#~ msgid "Destination Case"
+#~ msgstr "गंतव्य केस"
+
+#~ msgid "XPath expression for the case ID receiving the transaction."
+#~ msgstr "लेन-देन प्राप्त करने वाले केस आईडी के लिए XPath अभिव्यक्ति।"
+
+#~ msgid "Dispense must have a Source Case."
+#~ msgstr "डिस्पेंस के लिए एक स्रोत केस होना चाहिए।"
+
+#~ msgid "Receive must have a Destination Case."
+#~ msgstr "रिसीव के लिए एक गंतव्य केस होना चाहिए।"
+
+#~ msgid "Model Iteration ID Query"
+#~ msgstr "मॉडल इटरेशन आईडी क्वेरी"
+
+#~ msgid "Property Name"
+#~ msgstr "प्रॉपर्टी नाम"
+
+#~ msgid "Relevant"
+#~ msgstr "संबंधित"
+
+#~ msgid "Relationship Identifier (e.g. parent or host)"
+#~ msgstr "रिलेशनशिप पहचानकर्ता (जैसे parent या host)"
+
+#~ msgid "Referenced Case ID"
+#~ msgstr "संदर्भित केस आईडी"
+
+#~ msgid "Referenced Case Type"
+#~ msgstr "संदर्भित केस प्रकार"
+
+#~ msgid "Relationship (child or extension)"
+#~ msgstr "रिलेशनशिप (child या extension)"
+
+#~ msgid "Node Name"
+#~ msgstr "नोड नाम"
+
+#~ msgid "Source"
+#~ msgstr "स्रोत"
+
+#~ msgid "From"
+#~ msgstr "से"
+
+#~ msgid "Attachment Name"
+#~ msgstr "अटैचमेंट नाम"
+
+#~ msgid "Add Property"
+#~ msgstr "प्रॉपर्टी जोड़ें"
+
+#~ msgid "Date Modified"
+#~ msgstr "संशोधित तिथि"
+
+#~ msgid "User ID"
+#~ msgstr "यूज़र आईडी"
+
+#~ msgid "Case Type"
+#~ msgstr "केस प्रकार"
+
+#~ msgid "Create Case"
+#~ msgstr "केस बनाएं"
+
+#~ msgid "Properties To Create"
+#~ msgstr "बनाने के लिए प्रॉपर्टीज़"
+
+#~ msgid "You must include {columns} columns to create a case"
+#~ msgstr "केस बनाने के लिए आपको {columns} कॉलम शामिल करने होंगे"
+
+#~ msgid "You can only use the following properties:"
+#~ msgstr "आप केवल निम्न प्रॉपर्टीज़ का उपयोग कर सकते हैं:"
+
+#~ msgid "{props} are invalid properties"
+#~ msgstr "{props} अमान्य प्रॉपर्टीज़ हैं"
+
+#~ msgid "Close Case"
+#~ msgstr "केस बंद करें"
+
+#~ msgid "Close Condition"
+#~ msgstr "बंद करने की शर्त"
+
+#~ msgid "Update Case"
+#~ msgstr "केस अपडेट करें"
+
+#~ msgid "Properties To Update"
+#~ msgstr "अपडेट करने के लिए प्रॉपर्टीज़"
+
+#~ msgid "Use Index"
+#~ msgstr "इंडेक्स का उपयोग करें"
+
+#~ msgid "Index Properties"
+#~ msgstr "इंडेक्स प्रॉपर्टीज़"
+
+#~ msgid "Relationship must be child or extension"
+#~ msgstr "रिलेशनशिप child या extension होना चाहिए"
+
+#~ msgid "Use Attachments"
+#~ msgstr "अटैचमेंट्स का उपयोग करें"
+
+#~ msgid "Attachment Properties"
+#~ msgstr "अटैचमेंट प्रॉपर्टीज़"
+
+#~ msgid "The from attribute must be one of: local, remote, or inline"
+#~ msgstr "from एट्रिब्यूट निम्न में से एक होना चाहिए: local, remote, या inline"
+
+#~ msgid "Inlined attachments must have an attachment name"
+#~ msgstr "इनलाइन अटैचमेंट्स के लिए अटैचमेंट नाम होना आवश्यक है"
+
+#~ msgid "Update"
+#~ msgstr "अपडेट करें"
+
+#~ msgid "Index"
+#~ msgstr "सूची"
+
+#~ msgid "Attachments"
+#~ msgstr "अटैचमेंट्स"
+
+#~ msgid "An error occurred when parsing bind node [{path}]. Please fix this."
+#~ msgstr ""
+#~ "बाइंड नोड [{path}] को पार्स करते समय एक त्रुटि हुई। कृपया इसे ठीक करें।"
+
+#~ msgid "Upload"
+#~ msgstr "अपलोड करें"
+
+#~ msgid "Select new"
+#~ msgstr "नया चुनें"
+
+#~ msgid "Select File"
+#~ msgstr "फ़ाइल चुनें"
+
+#~ msgid "Current"
+#~ msgstr "वर्तमान"
+
+#~ msgid "Begin Upload"
+#~ msgstr "अपलोड प्रारंभ करें"
+
+#~ msgid "Replace"
+#~ msgstr "बदलें"
+
+#~ msgid "No Reference"
+#~ msgstr "कोई संदर्भ नहीं"
+
+#~ msgid "Advanced: Show Path"
+#~ msgstr "एडवांस्ड: पथ दिखाएँ"
+
+#~ msgid "Hide Path"
+#~ msgstr "पथ छुपाएँ"
+
+#~ msgid "Video"
+#~ msgstr "वीडियो"
+
+#~ msgid "Inline Video"
+#~ msgstr "इनलाइन वीडियो"
+
+#~ msgid "HTML"
+#~ msgstr "HTML"
+
+#~ msgid "Copying and Pasting Questions"
+#~ msgstr "प्रश्नों की कॉपी और पेस्टिंग"
+
+#~ msgid ""
+#~ "These actions are available via the browser's Edit menu, and you can also "
+#~ "use:"
+#~ msgstr ""
+#~ "ये क्रियाएँ ब्राउज़र के एडिट मेनू से उपलब्ध हैं, और आप इनका उपयोग भी कर सकते"
+#~ " हैं:"
+
+#~ msgid "for copy"
+#~ msgstr "कॉपी के लिए"
+
+#~ msgid "for paste"
+#~ msgstr "पेस्ट के लिए"
+
+#~ msgid "Copy from or Paste into this text box:"
+#~ msgstr "इस टेक्स्ट बॉक्स में से कॉपी करें या इसमें पेस्ट करें:"
+
+#~ msgid "Insert Questions"
+#~ msgstr "प्रश्न जोड़ें"
+
+#~ msgid "Selecting Multiple Questions"
+#~ msgstr "एक से अधिक प्रश्न चुनना"
+
+#~ msgid "Hold {key} and click on each question."
+#~ msgstr "{key} दबाएँ और प्रत्येक प्रश्न पर क्लिक करें।"
+
+#~ msgid "Other Tips"
+#~ msgstr "अन्य सुझाव"
+
+#~ msgid "Questions can be copied between forms, and even to other apps."
+#~ msgstr ""
+#~ "प्रश्नों को फॉर्म्स के बीच, और यहाँ तक कि अन्य ऐप्स में भी कॉपी किया जा सकता"
+#~ " है।"
+
+#~ msgid "Cannot insert {type} into tree root"
+#~ msgstr "ट्री रूट में {type} नहीं जोड़ा जा सकता"
+
+#~ msgid "Cannot insert $1 into or after $2"
+#~ msgstr "$2 में या उसके बाद $1 नहीं जोड़ा जा सकता"
+
+#~ msgid "Cannot insert $1 into $2"
+#~ msgstr "$2 में $1 नहीं जोड़ा जा सकता"
+
+#~ msgid "Unsupported paste format"
+#~ msgstr "असमर्थित पेस्ट प्रारूप"
+
+#~ msgid "Unsupported paste format:"
+#~ msgstr "असमर्थित पेस्ट प्रारूप:"
+
+#~ msgid "Unknown question type:"
+#~ msgstr "अज्ञात प्रश्न प्रकार:"
+
+#~ msgid "Enter command"
+#~ msgstr "कमांड दर्ज करें"
 
 #~ msgid "Module ID"
 #~ msgstr "मॉड्यूल आईडी"

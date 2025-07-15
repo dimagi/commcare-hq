@@ -239,7 +239,6 @@ msgstr "Aina hii ya kesi imeondolewa kwenye Kamusi ya Data."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add"
 msgstr "Ongeza"
 
@@ -285,14 +284,6 @@ msgstr ""
 "ufuatiliaji wa mazao."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "Chagua Hakuna"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "Chagua Zote"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "Jina la programu linahitajika"
 
@@ -328,7 +319,6 @@ msgstr "Chaguzi za Jedwali la Utafutaji"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Lookup Table"
 msgstr "Jedwali la Utafutaji"
 
@@ -353,9 +343,16 @@ msgid "Tab Name"
 msgstr "Jina la Tab"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display Condition"
 msgstr "Hali ya Kuonyesha"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"Onyo: Mali iliyohesabiwa inayotumika haitangamani na uhifadhi wa akiba na "
+"inaweza kusababisha data iliyopitwa na wakati kwenye mali za orodha ya kesi"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -534,7 +531,6 @@ msgid "Plain"
 msgstr "Nyororo"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Date"
 msgstr "Tarehe"
 
@@ -583,7 +579,6 @@ msgid "Picture"
 msgstr "Picha"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Audio"
 msgstr "Sauti"
 
@@ -600,7 +595,6 @@ msgid "Translatable Text"
 msgstr "Maandishi Yanayoweza Kutafsiriwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Image"
 msgstr "Picha"
 
@@ -797,7 +791,6 @@ msgid "Datum ID"
 msgstr "Kitambulisho cha Datum"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath Expression"
 msgstr "Usemi wa XPath"
 
@@ -970,7 +963,6 @@ msgid "Form"
 msgstr "Fomu"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Question"
 msgstr "Swali"
 
@@ -979,7 +971,6 @@ msgid "Name"
 msgstr "Jina"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Label"
 msgstr "Lebo"
 
@@ -1004,7 +995,6 @@ msgid "Display condition"
 msgstr "Hali ya Kuonyesha"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Required"
 msgstr "Inahitajika"
 
@@ -1013,17 +1003,14 @@ msgid "Question Comment"
 msgstr "Maoni ya Swali"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Default Value"
 msgstr "Thamani Chaguomsingi"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Condition"
 msgstr "Hali ya Uthibitisho"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Comment"
 msgstr "Maoni"
 
@@ -1109,912 +1096,87 @@ msgstr "Lugha inaonekana mara mbili"
 msgid "This conflicts with a current language"
 msgstr "Hii inakinzana na lugha iliyopo sasa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Questions"
-msgstr "Maswali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copy"
-msgstr "Nakili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expand All"
-msgstr "Panua Zote"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Collapse All"
-msgstr "Fupisha Zote"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Bulk Update All Questions"
-msgstr "Sasisha Maswali Yote kwa Wingi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Question"
-msgstr "Ongeza Swali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Click {btn} to start building your form."
-msgstr "Bofya {btn} kuanza kujenga fomu yako."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question Details"
-msgstr "Maelezo ya Swali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expression Editor"
-msgstr "Kihariri wa Usemi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot Change Question Type"
-msgstr "Haiwezekani Kubadilisha Aina ya Swali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Change Question Type To"
-msgstr "Badilisha Aina ya Swali Kuwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-msgid "Delete"
-msgstr "Futa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show"
-msgstr "Onyesha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Used By"
-msgstr "Inatumiwa Na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "In Property"
-msgstr "Katika Sifa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
-msgid "Search..."
-msgstr "Tafuta..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No match for {info} found!"
-msgstr "Hakuna inayolingana na {info} imepatikana!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple matches for {info} found!"
-msgstr "Mecano nyingi zinazolingana na {info} zimepatikana!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
-msgid "key"
-msgstr "ufunguo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
-msgid "value"
-msgstr "thamani"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Key&rarr;Value Pair"
-msgstr "Ongeza Jozi ya Ufunguo&rarr;Thamani"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "show in question list"
-msgstr "onyesha kwenye orodha ya maswali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date Format Options"
-msgstr "Chaguo za Muundo wa Tarehe"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Formatting"
-msgstr "Hakuna Muundo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Invalid XPath expression."
-msgstr "Kielezi cha XPath si sahihi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {property} for a question is not allowed to reference the question "
-"itself. Please remove the . from the {property} or your form will have "
-"errors."
-msgstr ""
-"{property} ya swali hairuhusiwi kurejelea swali lenyewe. Tafadhali ondoa . "
-"kwenye {property} au fomu yako itakuwa na makosa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown question:"
-msgstr "Swali lisilojulikana:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown questions:"
-msgstr "Maswali yasiyojulikana:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "no formatting"
-msgstr "hakuna muundo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
-msgid "Custom"
-msgstr "Imebinafsishwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} is required."
-msgstr "{question} inahitajika."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} is not allowed."
-msgstr "{question} hairuhusiwi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{question} validation failed"
-msgstr "Uhakiki wa {question} umeshindwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown (read-only) question type"
-msgstr "Aina ya swali isiyojulikana (soma-tu)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup Table Data"
-msgstr "Data ya Jedwali la Utafutaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Translation Data"
-msgstr "Hakuna Data ya Tafsiri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question ID"
-msgstr "Kitambulisho cha Swali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
-" pick a different Question ID."
-msgstr ""
-"Kitambulisho '{nodeID}' kinaweza kusababisha matatizo wakati wa kuchanganua "
-"fomu. Inashauriwa kuchagua Kitambulisho cha Swali tofauti."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"{nodeID} is not a valid Question ID. It must start with a letter and contain"
-" only letters, numbers, and '-' or '_' characters."
-msgstr ""
-"{nodeID} si Kitambulisho halali cha Swali. Lazima kianze na herufi na kiwe "
-"na herufi, nambari, na alama '-' au '_'."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "'meta' is not a valid Question ID."
-msgstr "'meta' si Kitambulisho halali cha Swali."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Making this change will create a new Question ID (and a new column in "
-"exports)."
-msgstr ""
-"Kubadilisha hii kutaongeza Kitambulisho kipya cha Swali (na safu mpya kwenye"
-" mauzo ya nje)."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This question has the same Question ID as another question in the same "
-"group. Please choose a unique Question ID."
-msgstr ""
-"Swali hili lina Kitambulisho sawa cha Swali na swali lingine kwenye kundi "
-"moja. Tafadhali chagua Kitambulisho cha Swali la kipekee."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Data Value"
-msgstr "Thamani Chaguomsingi ya Data"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Special Hidden Value XMLNS attribute"
-msgstr "Sifa Maalum ya XMLNS ya Thamani Iliyofichwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Data Attributes"
-msgstr "Sifa za Ziada za Data"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Calculate Condition"
-msgstr "Hali ya Kukokotoa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You cannot have a Validation Error Message with no Validation Condition!"
-msgstr "Huwezi kuwa na Ujumbe wa Hitilafu ya Uhakiki bila Hali ya Uhakiki!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Error Message"
-msgstr "Ujumbe wa Hitilafu ya Uhakiki"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Required Condition"
-msgstr "Hali Inayohitajika"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The condition will be ignored unless you mark the question required."
-msgstr "Hali hii itapuuzwa isipokuwa uweke swali hili kuwa lazima."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Bind Attributes"
-msgstr "Sifa za Ziada za Bind"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are referencing a node in this form. This can cause errors in the form"
-msgstr ""
-"Unarejelea nodi kwenye fomu hii. Hii inaweza kusababisha makosa kwenye fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Appearance Attribute"
-msgstr "Sifa ya Mwonekano"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Display Text"
-msgstr "Maandishi Chaguomsingi ya Kuonyesha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Default Display Text is required"
-msgstr "Maandishi Chaguomsingi ya Kuonyesha yanahitajika"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Display Text"
-msgstr "Maandishi ya Dokezo la Kuonyesha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Control Attributes"
-msgstr "Sifa za Ziada za Udhibiti"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Raw XML"
-msgstr "XML Halisi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Data Parent"
-msgstr "Mzazi wa Data"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be valid path"
-msgstr "Lazima iwe njia halali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} si mzazi halali wa data"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Data parent of question in repeat group must be (in) the same repeat group"
-msgstr ""
-"Mzazi wa data wa swali kwenye kundi la kurudia lazima uwe (ndani ya) kundi "
-"lile lile la kurudia"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "Create"
+msgid "createXML"
+msgstr "Unda"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hidden Value"
-msgstr "Thamani Iliyofichwa"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+#, fuzzy
+#| msgid "User Data"
+msgid "getData"
+msgstr "Data ya Mtumiaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Text"
-msgstr "Maandishi"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Phone Number or Numeric ID"
-msgstr "Nambari ya Simu au Kitambulisho cha Kihesabu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/motech/static/motech/js/connection_settings_detail.js
-msgid "Password"
-msgstr "Nenosiri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Integer"
-msgstr "Nambari Kamili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Audio Capture"
-msgstr "Kurekodi Sauti"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image Capture"
-msgstr "Kuchukua Picha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image Size"
-msgstr "Ukubwa wa Picha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Small"
-msgstr "Ndogo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Medium"
-msgstr "Wastani"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Large"
-msgstr "Kubwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Original"
-msgstr "Asili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This will resize the image before sending the form. Use this option to send "
-"smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
-"megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
-"megapixels</li></ul>"
-msgstr ""
-"Hii itabadilisha ukubwa wa picha kabla ya kutuma fomu. Tumia chaguo hili "
-"kutuma picha ndogo katika maeneo yenye muunganisho hafifu.<ul><li>Ndogo - "
-"megapikseli 0.1</li><li>Wastani - megapikseli 0.2</li><li>Kubwa - "
-"megapikseli 0.5</li></ul>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Micro-Image"
-msgstr "Picha Ndogo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Video Capture"
-msgstr "Kurekodi Video"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Signature Capture"
-msgstr "Kuchukua Sahihi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Document Upload"
-msgstr "Kupakia Hati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "GPS"
-msgstr "GPS"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Barcode Scan"
-msgstr "Kuskanisha Msimbopau"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date and Time"
-msgstr "Tarehe na Saa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
-msgid "Time"
-msgstr "Saa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Long"
-msgstr "Ndefu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Decimal"
-msgstr "Desimali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Choice"
-msgstr "Chaguo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Choice Value"
-msgstr "Thamani ya Chaguo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Whitespace in values is not allowed."
-msgstr "Nafasi tupu kwenye thamani haziruhusiwi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "This choice value has been used in the same question"
-msgstr "Thamani hii ya chaguo imetumika kwenye swali hili hili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Cannot change a Multiple/Single Choice question to a non-Choice question if "
-"it has Choices. Please remove all Choices and try again."
-msgstr ""
-"Haiwezi kubadilisha swali la Chaguo Nyingi/Moja kuwa swali lisilo la Chaguo "
-"ikiwa lina Machaguo. Tafadhali ondoa Machaguo yote na ujaribu tena."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Checkbox"
-msgstr "Kisanduku cha Kuhakiki"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple Choice"
-msgstr "Chaguo Nyingi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Group"
-msgstr "Kundi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Question List"
-msgstr "Orodha ya Maswali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Group"
-msgstr "Rudia Kundi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Count"
-msgstr "Idadi ya Marudio"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Repeat Count is required."
-msgstr "Idadi ya Marudio inahitajika."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra Repeat Attributes"
-msgstr "Sifa za Ziada za Marudio"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You have deleted a question."
-msgstr "Umefuta swali."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Undo"
-msgstr "Tengua"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Warning: {errs} is still referenced by other questions."
-msgid_plural "Warning: {errs} are still referenced by other questions."
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
 msgid "New Form"
 msgstr "Fomu Mpya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Bind Node [{path}] found but has no associated Data node. This bind node "
-"will be discarded!"
-msgstr ""
-"Bind Node [{path}] imepatikana lakini haina Data node inayohusiana. Bind "
-"node hii itatupiliwa mbali!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Not Found"
-msgstr "Haikupatikana"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"{type} nodes cannot be used in an output value. Please remove the output "
-"value for '{path}' or your form will have errors."
-msgstr ""
-"Nodi za {type} haziwezi kutumika kwenye thamani ya matokeo. Tafadhali ondoa "
-"thamani ya matokeo kwa '{path}' au fomu yako itakuwa na makosa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {field} for a question is not allowed to reference the question itself. "
-"Please remove the {ref} from the {field} or your form will have errors."
-msgstr ""
-"{field} ya swali hairuhusiwi kujirejelea yenyewe. Tafadhali ondoa {ref} "
-"kutoka kwenye {field} au fomu yako itakuwa na makosa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "output value"
-msgstr "thamani ya matokeo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Failed"
-msgstr "Uhakiki Umekosa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Please fix the error before leaving this page:"
-msgstr "Tafadhali rekebisha kosa kabla ya kuondoka kwenye ukurasa huu:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
-msgstr "Hariri <span class='property-name'>Mlinganyo</span> (Kitaalamu)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show Simple Mode"
-msgstr "Onyesha Njia Rahisi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are currently in Advanced Mode because your logic is too complicated for"
-" Simple Mode."
-msgstr ""
-"Kwa sasa uko kwenye Njia ya Kitaalamu kwa sababu mantiki yako ni ngumu sana "
-"kwa Njia Rahisi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You can drag a question into the box."
-msgstr "Unaweza kuburuta swali kwenye kisanduku."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Guide to Common Logic and Calculations"
-msgstr "Mwongozo wa Mantiki na Mahesabu ya Kawaida"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit <span class='property-name'>Expression</span>"
-msgstr "Hariri <span class='property-name'>Mlinganyo</span>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show Advanced Mode"
-msgstr "Onyesha Hali ya Juu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Result is"
-msgstr "Matokeo ni"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expression"
-msgstr "Kielezi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Expression"
-msgstr "Ongeza Kielezi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
-msgid "Save"
-msgstr "Hifadhi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "Cancel"
-msgstr "Ghairi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
 msgstr "Buruta swali hapa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is equal to"
 msgstr "ni sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is not equal to"
 msgstr "si sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is less than"
 msgstr "ni chini ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is less than or equal to"
 msgstr "ni chini au sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is greater than"
 msgstr "ni zaidi ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "is greater than or equal to"
 msgstr "ni zaidi au sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "has selected value"
 msgstr "ina thamani iliyochaguliwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ALL of the expressions are true."
 msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ANY of the expressions are true."
 msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Error"
-msgstr "Hitilafu"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Command Bar"
+msgstr "Upau wa Amri"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Warning"
-msgstr "Onyo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Warning"
-msgstr "Onyo la Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Notification"
-msgstr "Arifa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Holding the ALT key while clicking save invokes an inefficient save "
-"procedure. Do this only if a normal save fails."
-msgstr ""
-"Kushikilia kitufe cha ALT wakati wa kubofya hifadhi kunatumia utaratibu wa "
-"kuhifadhi usiofanisi. Fanya hivi tu ikiwa kuhifadhi kawaida kunashindwa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Are you sure you want to exit? All unsaved changes will be lost!"
-msgstr ""
-"Una uhakika unataka kutoka? Mabadiliko yote ambayo hayajahifadhiwa "
-"yatapotea!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Look for questions marked with $1 and check they don't reference deleted "
-"questions."
-msgstr ""
-"Tafuta maswali yaliyowekwa alama na $1 na hakikisha hayarejelei maswali "
-"yaliyofutwa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Errors in Form"
-msgstr "Hitilafu kwenye Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form has reference errors."
-msgstr "Fomu ina makosa ya marejeleo."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Look for questions marked with $1 and fix the errors."
-msgstr "Tafuta maswali yaliyowekwa alama na $1 na rekebisha makosa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form has validation errors."
-msgstr "Fomu ina makosa ya uthibitishaji."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
-msgstr "Ukamataji wa Vyombo vya Habari"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Number"
-msgstr "Nambari"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Groups"
-msgstr "Makundi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Advanced"
-msgstr "Juu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Make Required"
-msgstr "Fanya Liwe la Lazima"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are about to make all existing questions on this form required. This "
-"action will overwrite the current configuration of this form and can only be"
-" undone by editing individual questions."
-msgstr ""
-"Unakaribia kufanya maswali yote yaliyopo kwenye fomu hii kuwa ya lazima. "
-"Hatua hii itabadilisha mpangilio wa sasa wa fomu hii na inaweza kubatilishwa"
-" tu kwa kuhariri maswali mmoja mmoja."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Load Default Values"
-msgstr "Pakia Thamani Chaguo-msingi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You are about to set matching case properties as Default Values for all "
-"existing questions. This action will overwrite existing Default Values for "
-"all questions with matching case properties and can only be undone by "
-"editing individual questions."
-msgstr ""
-"Unakaribia kuweka sifa za kesi zinazolingana kama Thamani Chaguo-msingi kwa "
-"maswali yote yaliyopo. Hatua hii itabadilisha Thamani Chaguo-msingi zilizopo"
-" kwa maswali yote yenye sifa za kesi zinazolingana na inaweza kubatilishwa "
-"tu kwa kuhariri maswali mmoja mmoja."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Are you sure you want to perform this action?"
-msgstr "Una uhakika unataka kufanya hatua hii?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "Endelea"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Expand Editor"
-msgstr "Panua Kihariri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Shrink Editor"
-msgstr "Punguza Kihariri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Export Form Contents"
-msgstr "Hamisha Yaliyomo ya Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Source XML"
-msgstr "Hariri Chanzo cha XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Properties"
-msgstr "Sifa za Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Find Usages"
-msgstr "Tafuta Matumizi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation failed. Form may not perform correctly on your device!"
-msgstr ""
-"Uthibitishaji umeshindwa. Fomu huenda isifanye kazi ipasavyo kwenye kifaa "
-"chako!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Form's Source XML"
-msgstr "Hariri Chanzo cha XML cha Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Source"
-msgstr "Sasisha Chanzo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This is the raw XML. You can edit or paste into this box to make changes to "
-"your form. Press 'Update Source' to save changes, or 'Close' to cancel."
-msgstr ""
-"Hii ni XML ghafi. Unaweza kuhariri au kubandika kwenye kisanduku hiki ili "
-"kufanya mabadiliko kwenye fomu yako. Bonyeza 'Sasisha Chanzo' kuhifadhi "
-"mabadiliko, au 'Funga' kughairi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Copy and paste this content into a spreadsheet program like Excel to easily "
-"share your form with others."
-msgstr ""
-"Nakili na ubandike maudhui haya kwenye programu ya lahajedwali kama Excel "
-"ili kushiriki fomu yako kwa urahisi na wengine."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lost Work Warning"
-msgstr "Onyo la Kazi Iliyopotea"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Overwrite their work"
-msgstr "Andika upya kazi yao"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Show XML Differences"
-msgstr "Onyesha Tofauti za XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Looks like someone else has edited this form since you loaded the page. Are "
-"you sure you want to overwrite their work?"
-msgstr ""
-"Inaonekana mtu mwingine amehariri fomu hii tangu ulipofungua ukurasa. Una "
-"uhakika unataka kufuta kazi yao?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Form Properties"
-msgstr "Hariri Sifa za Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Disable Text Formatting"
-msgstr "Zima Uundaji wa Maandishi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Easy References"
-msgstr "Tumia Marejeleo Rahisi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use of each question"
-msgstr "Matumizi ya kila swali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
-msgid "Close"
-msgstr "Funga"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsaved Changes in Editor"
-msgstr "Mabadiliko Yasiyohifadhiwa kwenye Kihariri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You have UNSAVED changes in the Expression Editor. Please save changes "
-"before continuing."
-msgstr ""
-"Una mabadiliko AMBAYO HAYAJAHIFADHIWA kwenye Kihariri cha Maelezo. Tafadhali"
-" hifadhi mabadiliko kabla ya kuendelea."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Parsing Error. Please check that your form is valid XML."
-msgstr "Hitilafu ya Kuchambua. Tafadhali hakikisha fomu yako ni XML halali."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "OK"
-msgstr "Sawa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Sorry, {err}"
-msgstr "Samahani, {err}"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Choice"
-msgstr "Ongeza Chaguo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "and"
-msgstr "na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "There are errors in the form"
-msgstr "Kuna makosa kwenye fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix Manually"
-msgstr "Rekebisha Mwenyewe"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix Automatically"
-msgstr "Rekebisha Kiotomatiki"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"It looks like your form is not valid XML. This can often happen if you use a"
-" reserved character in one of your questions. Characters to look out for are"
-" <, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
-"you fix the XML by hand. What would you like to do?"
-msgstr ""
-"Inaonekana fomu yako si XML halali. Hili linaweza kutokea mara nyingi "
-"ukitumia herufi zilizohifadhiwa kwenye mojawapo ya maswali yako. Herufi za "
-"kuangalia ni <, >, na &. Unaweza bado kuhifadhi, lakini HUWEZI KUFUNGUA FOMU"
-" HII tena hadi utengeneze XML kwa mkono. Ungependa kufanya nini?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Form Validation Error"
-msgstr "Hitilafu ya Uthibitishaji wa Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Fix the problem (recommended)"
-msgstr "Rekebisha tatizo (inapendekezwa)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Save anyway"
-msgstr "Hifadhi hata hivyo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Basic"
 msgstr "Msingi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {displaytext} appears in the application. This text will not appear in "
-"data exports."
-msgstr ""
-"{displaytext} inaonekana kwenye programu. Maandishi haya hayatakuwepo kwenye"
-" uhamishaji wa data."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text"
-msgstr "Maandishi ya Kuonyesha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
-msgid "Data Source"
-msgstr "Chanzo cha Data"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You can configure an external data source like a case list or lookup table "
-"to use as the choices for a multiple choice question."
-msgstr ""
-"Unaweza kusanidi chanzo cha data cha nje kama orodha ya kesi au jedwali la "
-"kutafuta ili kutumia kama chaguo za swali la chaguo nyingi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Logic"
 msgstr "Mantiki"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -2023,743 +1185,6 @@ msgstr ""
 "Tumia mantiki kudhibiti lini maswali yanaulizwa na majibu gani ni halali. "
 "Unaweza kuongeza mantiki ili kuonyesha swali kulingana na jibu la awali, "
 "kufanya swali liwe la lazima au kuhakikisha jibu liko kwenye kiwango halali."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Media"
-msgstr "Vyombo vya Habari"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This will allow you to add images, audio or video media to a question, or "
-"other custom content."
-msgstr ""
-"Hii itakuwezesha kuongeza picha, sauti au video kwenye swali, au maudhui "
-"mengine maalum."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"These are advanced settings and are not needed for most applications.  "
-"Please only change these if you have a specific need!"
-msgstr ""
-"Haya ni mipangilio ya juu na haihitajiki kwa programu nyingi. Tafadhali "
-"badilisha haya tu ikiwa una hitaji maalum!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This question represents advanced content that is not supported by the form "
-"builder. Please only change it if you have a specific need!"
-msgstr ""
-"Swali hili linawakilisha maudhui ya juu ambayo hayatumiki kwenye "
-"mtengenezaji wa fomu. Tafadhali badilisha tu ikiwa una hitaji maalum!"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Ignored XML"
-msgstr "XML Iliyopuuzwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Android App Callout"
-msgstr "Mwito wa Programu ya Android"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "External App"
-msgstr "Programu ya Nje"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Insert Android Application ID"
-msgstr "Weka Kitambulisho cha Programu ya Android"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "change your subscription"
-msgstr "badilisha usajili wako"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You no longer have access to built in or external integration in your application.\n"
-"\n"
-"Built in integrations are available on the Pro plan and higher. External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
-msgstr ""
-"Huna tena ufikiaji wa muunganiko wa ndani au wa nje kwenye programu yako.\n"
-"\n"
-"Muunganiko wa ndani unapatikana kwenye mpango wa Pro na juu zaidi. Muunganiko wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au uondoe swali hili."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Your subscription only has access to built-in integration.\n"
-"\n"
-"External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
-msgstr ""
-"Usajili wako unaruhusu tu muunganiko wa ndani.\n"
-"\n"
-"Muunganiko wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au uondoe swali hili."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Android app callouts of the same type must have different question ids."
-msgstr ""
-"Mwito wa programu ya Android wa aina moja lazima uwe na vitambulisho tofauti"
-" vya maswali."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Extra"
-msgstr "Ziada"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Response"
-msgstr "Majibu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Special Intent XMLNS attribute"
-msgstr "Sifa Maalum ya XMLNS ya Intent"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Print"
-msgstr "Chapisha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Document Template"
-msgstr "Kiolezo cha Hati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Data Source"
-msgstr "Hariri Chanzo cha Data"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Query Expression"
-msgstr "Maelezo ya Hoja"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Optional Instance Properties"
-msgstr "Sifa za Hiari za Nakala"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Instance ID"
-msgstr "Kitambulisho cha Nakala"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Instance URI"
-msgstr "URI ya Nakala"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup table was not found in the project"
-msgstr "Jedwali la utafutaji halikupatikana kwenye mradi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
-msgid "Loading..."
-msgstr "Inapakia..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
-"Before you can make a new version of your application, you must {link} or delete this question"
-msgstr ""
-"Huna tena ufikiaji wa Jedwali la Utafutaji kwenye programu yako. Jedwali la Utafutaji linapatikana kwenye mpango wa Standard na juu zaidi.\n"
-"Kabla ya kuunda toleo jipya la programu yako, lazima {link} au ufute swali hili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A data source must be selected."
-msgstr "Chanzo cha data lazima kichaguliwe."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text Field"
-msgstr "Sehemu ya Maandishi ya Kuonyesha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Sort Field"
-msgstr "Sehemu ya Kupanga"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Filter"
-msgstr "Chuja"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"This is an XPath expression that will filter the set of choices from the "
-"lookup table"
-msgstr ""
-"Hii ni usemi wa XPath ambao utachuja seti ya chaguo kutoka kwenye jedwali la"
-" utafutaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Lookup Tables"
-msgstr "Majedwali ya Utafutaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Checkbox Lookup Table"
-msgstr "Jedwali la Utafutaji la Kisanduku cha Kuhakiki"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Cannot change to Multiple/Single Choice question if it has Choices. Please "
-"remove all Choices and try again."
-msgstr ""
-"Haiwezi kubadilisha kuwa swali la Chaguo Nyingi/Moja ikiwa lina Chaguo. "
-"Tafadhali ondoa Chaguo zote na ujaribu tena."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can only change to a Multiple Choice Lookup Table"
-msgstr "Inaweza kubadilishwa tu kuwa Jedwali la Utafutaji la Chaguo Nyingi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multiple Choice Lookup Table"
-msgstr "Jedwali la Utafutaji la Chaguo Nyingi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can only change to a Checkbox Lookup Table"
-msgstr ""
-"Inaweza kubadilishwa tu kuwa Jedwali la Utafutaji la Kisanduku cha Kuhakiki"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{attr} was not found in the lookup table"
-msgstr "{attr} haikupatikana kwenye jedwali la utafutaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display"
-msgstr "Onyesha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "auto?"
-msgstr "moja kwa moja?"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
-"use bulleted lists, and <a target='_blank' "
-"href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
-msgstr ""
-"Tumia uundaji wa maandishi kuweka maneno <strong>nene</strong> na <em>kuweka"
-" italiki</em>, tumia orodha za risasi, na <a target='_blank' "
-"href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>zaidi</a>"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Turn Off Text Formatting"
-msgstr "Zima Uundaji wa Maandishi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Turn On Text Formatting"
-msgstr "Washa Uundaji wa Maandishi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "custom..."
-msgstr "desturi..."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "New Content Type"
-msgstr "Aina Mpya ya Maudhui"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Content Type"
-msgstr "Aina ya Maudhui"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"You have languages in your form that are not specified in the \"Languages\" "
-"page of the application builder. The following language will be deleted on "
-"save unless you add it to the \"Languages\" page:"
-msgstr ""
-"Una lugha kwenye fomu yako ambazo hazijaainishwa kwenye ukurasa wa \"Lugha\""
-" wa mtengenezaji wa programu. Lugha ifuatayo itafutwa unapohifadhi isipokuwa"
-" uiongeze kwenye ukurasa wa \"Lugha\":"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} (or multimedia) is required."
-msgstr "{name} (au multimedia) inahitajika."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} (or multimedia) is required for all languages."
-msgstr "{name} (au multimedia) inahitajika kwa lugha zote."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} Itext ID is required."
-msgstr "Itext ID ya {name} inahitajika."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{name} is not a valid ID."
-msgstr "{name} si kitambulisho halali."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia was not copied; it must be uploaded separately."
-msgstr "Multimedia haikunakiliwa; lazima ipakwe kando."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Discarded languages:"
-msgstr "Lugha zilizotupiliwa mbali:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Message"
-msgstr "Ujumbe wa Uthibitishaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Can't have a Validation Message Itext ID without a Validation Condition"
-msgstr ""
-"Huwezi kuwa na Itext ID ya Ujumbe wa Uthibitishaji bila Masharti ya "
-"Uthibitishaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Validation Message Itext ID"
-msgstr "Itext ID ya Ujumbe wa Uthibitishaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Validation Media"
-msgstr "Ongeza Vyombo vya Habari vya Uthibitishaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Display Text Itext ID"
-msgstr "Itext ID ya Maandishi ya Kuonyesha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Message"
-msgstr "Ujumbe wa Dokezo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hint Itext ID"
-msgstr "Itext ID ya Dokezo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Help Message"
-msgstr "Ujumbe wa Msaada"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Help Itext ID"
-msgstr "Itext ID ya Msaada"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add New Item Button Text"
-msgstr "Maandishi ya Kitufe cha Ongeza Kipengee Kipya"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add New Itext ID"
-msgstr "Ongeza Itext ID Mpya"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Another Item Button Text"
-msgstr "Maandishi ya Kitufe cha Ongeza Kipengee Kingine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Another Itext ID"
-msgstr "Ongeza Itext ID Nyingine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Other Content"
-msgstr "Ongeza Maudhui Mengine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Multimedia"
-msgstr "Ongeza Multimedia"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Help Media"
-msgstr "Ongeza Vyombo vya Habari vya Msaada"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Edit Bulk Translations"
-msgstr "Hariri Tafsiri kwa Wingi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Translations"
-msgstr "Sasisha Tafsiri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"Copy these translations into a spreadsheet program like Excel. You can edit "
-"them there and then paste them back here when you're done. These will update"
-" the translations used in your form. Press 'Update Translations' to save "
-"changes, or 'Close' to cancel."
-msgstr ""
-"Nakili tafsiri hizi kwenye programu ya lahajedwali kama Excel. Unaweza "
-"kuzihariri huko na kisha uzirudishe hapa ukimaliza. Hizi zitasasisha tafsiri"
-" zinazotumika kwenye fomu yako. Bonyeza 'Sasisha Tafsiri' kuhifadhi "
-"mabadiliko, au 'Funga' kughairi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "App Properties"
-msgstr "Sifa za Programu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Could not load app properties."
-msgstr "Haikuweza kupakia sifa za programu."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "If this error persists, please report an issue."
-msgstr "Ikiwa kosa hili litaendelea, tafadhali ripoti tatizo."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The {questionid} is an internal identifier for a question. It does not "
-"appear on the phone. It is the name of the question in data exports."
-msgstr ""
-"{questionid} ni kitambulisho cha ndani cha swali. Hakiwezi kuonekana kwenye "
-"simu. Ni jina la swali katika usafirishaji wa data."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The date and time of the action, e.g., now() or today()"
-msgstr "Tarehe na saa ya tukio, mfano, now() au today()"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Balance ID"
-msgstr "Kitambulisho cha Mizania"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"The name of the balance you are tracking. This is an internal identifier "
-"which does not appear on the phone."
-msgstr ""
-"Jina la mizania unayofuatilia. Hiki ni kitambulisho cha ndani ambacho "
-"hakionekani kwenye simu."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Product"
-msgstr "Bidhaa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
-msgstr ""
-"Rejeleo la kitambulisho cha bidhaa, mfano, "
-"\"/data/products/current_product\""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Quantity"
-msgstr "Kiasi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "A reference to an integer question in this form."
-msgstr "Rejeleo la swali la nambari kamili katika fomu hii."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
-msgid "Case"
-msgstr "Kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID associated with this balance."
-msgstr ""
-"Msururu wa XPath kwa kitambulisho cha kesi kinachohusishwa na mizania hii."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Transfer must have both Source Case and Destination Case defined."
-msgstr ""
-"Uhamisho lazima uwe na Kesi Chanzo na Kesi Lengwa zikiwa zimeainishwa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot change $1 to $2"
-msgstr "Haiwezi kubadilisha $1 kuwa $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Source Case"
-msgstr "Kesi Chanzo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID issuing the transaction."
-msgstr "Msururu wa XPath kwa kitambulisho cha kesi kinachotoa muamala."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Destination Case"
-msgstr "Kesi Lengwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the case ID receiving the transaction."
-msgstr "Msururu wa XPath kwa kitambulisho cha kesi kinayopokea muamala."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Dispense must have a Source Case."
-msgstr "Ugawaji lazima uwe na Kesi Chanzo."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Receive must have a Destination Case."
-msgstr "Upokeaji lazima uwe na Kesi Lengwa."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Model Iteration ID Query"
-msgstr "Hojaji ya Kitambulisho cha Iteration ya Mfano"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Property Name"
-msgstr "Jina la Sifa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
-msgid "Calculation"
-msgstr "Hesabu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relevant"
-msgstr "Husika"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship Identifier (e.g. parent or host)"
-msgstr "Kitambulisho cha Uhusiano (mfano mzazi au mwenyeji)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Referenced Case ID"
-msgstr "Kitambulisho cha Kesi Inayorejelewa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Referenced Case Type"
-msgstr "Aina ya Kesi Inayorejelewa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship (child or extension)"
-msgstr "Uhusiano (mtoto au kiendelezi)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Node Name"
-msgstr "Jina la Node"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Source"
-msgstr "Chanzo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "From"
-msgstr "Kutoka"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachment Name"
-msgstr "Jina la Kiambatisho"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Add Property"
-msgstr "Ongeza Sifa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Date Modified"
-msgstr "Tarehe Iliyorekebishwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User ID"
-msgstr "Kitambulisho cha Mtumiaji"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Case Type"
-msgstr "Aina ya Kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
-msgid "Case ID"
-msgstr "Kitambulisho cha Kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Create Case"
-msgstr "Unda Kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Properties To Create"
-msgstr "Sifa za Kuunda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You must include {columns} columns to create a case"
-msgstr "Lazima ujumuisha safu wima za {columns} ili kuunda kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "You can only use the following properties:"
-msgstr "Unaweza kutumia tu sifa zifuatazo:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "{props} are invalid properties"
-msgstr "{props} ni sifa batili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Close Case"
-msgstr "Funga Kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Close Condition"
-msgstr "Hali ya Kufunga"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update Case"
-msgstr "Sasisha Kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Properties To Update"
-msgstr "Sifa za Kusasisha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Index"
-msgstr "Tumia Kiashiria"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Index Properties"
-msgstr "Sifa za Kiashiria"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Relationship must be child or extension"
-msgstr "Uhusiano lazima uwe mtoto au kiendelezi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Use Attachments"
-msgstr "Tumia Viambatisho"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachment Properties"
-msgstr "Sifa za Kiambatisho"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "The from attribute must be one of: local, remote, or inline"
-msgstr "Sifa ya from lazima iwe mojawapo ya: local, remote, au inline"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Inlined attachments must have an attachment name"
-msgstr "Viambatisho vilivyowekwa ndani lazima viwe na jina la kiambatisho"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
-msgid "Create"
-msgstr "Unda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Update"
-msgstr "Sasisha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Index"
-msgstr "Orodha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attachments"
-msgstr "Viambatisho"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "An error occurred when parsing bind node [{path}]. Please fix this."
-msgstr ""
-"Hitilafu imetokea wakati wa kuchanganua nodi ya bind [{path}]. Tafadhali "
-"rekebisha hili."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Upload"
-msgstr "Pakia"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Select new"
-msgstr "Chagua mpya"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Select File"
-msgstr "Chagua Faili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Current"
-msgstr "Iliyo Sasa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Begin Upload"
-msgstr "Anza Kupakia"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Replace"
-msgstr "Badilisha"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "No Reference"
-msgstr "Hakuna Rejeleo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Advanced: Show Path"
-msgstr "Ya Juu: Onyesha Njia"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hide Path"
-msgstr "Ficha Njia"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Video"
-msgstr "Video"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Inline Video"
-msgstr "Video Iliyounganishwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "HTML"
-msgstr "HTML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copying and Pasting Questions"
-msgstr "Kunakili na Kubandika Maswali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"These actions are available via the browser's Edit menu, and you can also "
-"use:"
-msgstr ""
-"Vitendo hivi vinapatikana kupitia menyu ya Hariri ya kivinjari, na pia "
-"unaweza kutumia:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "for copy"
-msgstr "kwa kunakili"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "for paste"
-msgstr "kwa kubandika"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Copy from or Paste into this text box:"
-msgstr "Nakili kutoka au Bandika kwenye kisanduku hiki cha maandishi:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Insert Questions"
-msgstr "Weka Maswali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Selecting Multiple Questions"
-msgstr "Kuchagua Maswali Mengi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Hold {key} and click on each question."
-msgstr "Shikilia {key} na ubofye kila swali."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Other Tips"
-msgstr "Vidokezo Vingine"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Questions can be copied between forms, and even to other apps."
-msgstr ""
-"Maswali yanaweza kunakiliwa kati ya fomu, na hata kwenye programu nyingine."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert {type} into tree root"
-msgstr "Haiwezi kuweka {type} kwenye mzizi wa mti"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert $1 into or after $2"
-msgstr "Haiwezi kuweka $1 ndani au baada ya $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Cannot insert $1 into $2"
-msgstr "Haiwezi kuweka $1 ndani ya $2"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsupported paste format"
-msgstr "Muundo wa kubandika hauungwa mkono"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unsupported paste format:"
-msgstr "Muundo wa kubandika hauungwa mkono:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Unknown question type:"
-msgstr "Aina isiyojulikana ya swali:"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter command"
-msgstr "Weka amri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Command Bar"
-msgstr "Upau wa Amri"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -2996,6 +1421,13 @@ msgstr ""
 "Imeshindikana kuunganishwa na huduma ya kucheza fomu. Tafadhali ripoti "
 "tatizo ikiwa utaendelea kuona ujumbe huu."
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Loading..."
+msgstr "Inapakia..."
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
 msgid "Fetching your location..."
 msgstr "Inachukua eneo lako..."
@@ -3089,8 +1521,21 @@ msgid "Confirm?"
 msgstr "Thibitisha?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "OK"
+msgstr "Sawa"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Cancel"
+msgstr "Ghairi"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Page <%- num %>"
 msgstr "Ukurasa <%- num %>"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Close"
+msgstr "Funga"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
@@ -3192,6 +1637,17 @@ msgstr ""
 "Una mabadiliko ambayo hujahifadhi kwenye aina hii ya kesi. Una uhakika "
 "ungependa kuendelea?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+"Umehifadhi sifa za kesi <%- count %> kwenye kesi ya aina ya '<%- type %>'. "
+"Tunapendekeza usizidi sifa za kesi <%- limit %> kwa kila aina ya kesi, "
+"vinginevyo unaweza kukutana na changamoto za utendaji wakati wa ukusanyaji "
+"na uchambuzi wa data."
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
@@ -3280,6 +1736,14 @@ msgid "IDs can be found in a <a href=\"<%- url %>\">case data export</a>"
 msgstr ""
 "Vitambulisho vinaweza kupatikana kwenye <a href=\"<%- url %>\">usafirishaji "
 "wa data ya kesi</a>"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+msgid "Case ID"
+msgstr "Kitambulisho cha Kesi"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Case found!"
@@ -3403,6 +1867,10 @@ msgstr "Siku 30 Zilizopita"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Month"
 msgstr "Mwezi Uliopita"
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Custom"
+msgstr "Imebinafsishwa"
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
 msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
@@ -3574,6 +2042,16 @@ msgstr ""
 "Watumiaji wote wanaweza kuhariri na kuhamisha."
 
 #: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Save"
+msgstr "Hifadhi"
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "Create"
+msgstr "Unda"
+
+#: corehq/apps/export/static/export/js/models.js
 msgid "The table path should end with []"
 msgstr "Njia ya jedwali inapaswa kuishia na []"
 
@@ -3731,6 +2209,12 @@ msgstr "Mfanyakazi wa Simu"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Case"
+msgstr "Kesi"
+
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
+#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
@@ -3822,16 +2306,6 @@ msgstr "Futa uteuzi"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Close the picker"
 msgstr "Funga kichagua"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "long"
-msgstr "ndefu"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "2-digit"
-msgstr "tarakimu 2"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3992,6 +2466,12 @@ msgstr "Jaribu Tena"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+msgid "Delete"
+msgstr "Futa"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Deleting..."
 msgstr "Inafuta..."
 
@@ -4097,6 +2577,16 @@ msgstr " hadi "
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "key"
+msgstr "ufunguo"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
+msgid "value"
+msgstr "thamani"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "blank"
 msgstr "wazi"
 
@@ -4116,6 +2606,11 @@ msgstr "Ongeza Kipengee"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
 msgid "Click <strong>Edit</strong> to Add Values</span>"
 msgstr "Bofya <strong>Hariri</strong> kuongeza Thamani</span>"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Calculation"
+msgstr "Hesabu"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
@@ -4366,6 +2861,10 @@ msgstr "Tafadhali weka maelezo."
 msgid "Please list your organization or company name."
 msgstr "Tafadhali orodhesha jina la shirika au kampuni yako."
 
+#: corehq/apps/registration/static/registration/js/user_login_form.js
+msgid "Continue"
+msgstr "Endelea"
+
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
 msgstr ""
@@ -4589,6 +3088,11 @@ msgstr "Kuanzia Wakati"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
+msgid "Time"
+msgstr "Saa"
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "Chagua lugha..."
@@ -4751,6 +3255,10 @@ msgstr "Hifadhi Vichujio"
 #: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
 msgid "Export Data"
 msgstr "Hamisha Data"
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js
+msgid "Search..."
+msgstr "Tafuta..."
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/columns.js
 msgid "Column Title"
@@ -5028,6 +3536,10 @@ msgstr "tulivu"
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "deactivated"
 msgstr "imezimwa"
+
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+msgid "Data Source"
+msgstr "Chanzo cha Data"
 
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
 msgid "Unknown error"
@@ -5696,6 +4208,10 @@ msgid "Username"
 msgstr "Jina la Mtumiaji"
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Password"
+msgstr "Nenosiri"
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client ID"
 msgstr "Kitambulisho cha Mteja"
 
@@ -5722,6 +4238,1168 @@ msgstr "Imeshindikana! Majibu ni: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
+
+#~ msgid "Select None"
+#~ msgstr "Chagua Hakuna"
+
+#~ msgid "Select All"
+#~ msgstr "Chagua Zote"
+
+#~ msgid "long"
+#~ msgstr "ndefu"
+
+#~ msgid "2-digit"
+#~ msgstr "tarakimu 2"
+
+#~ msgid "Questions"
+#~ msgstr "Maswali"
+
+#~ msgid "Copy"
+#~ msgstr "Nakili"
+
+#~ msgid "Expand All"
+#~ msgstr "Panua Zote"
+
+#~ msgid "Collapse All"
+#~ msgstr "Fupisha Zote"
+
+#~ msgid "Bulk Update All Questions"
+#~ msgstr "Sasisha Maswali Yote kwa Wingi"
+
+#~ msgid "Add Question"
+#~ msgstr "Ongeza Swali"
+
+#~ msgid "Click {btn} to start building your form."
+#~ msgstr "Bofya {btn} kuanza kujenga fomu yako."
+
+#~ msgid "Question Details"
+#~ msgstr "Maelezo ya Swali"
+
+#~ msgid "Expression Editor"
+#~ msgstr "Kihariri wa Usemi"
+
+#~ msgid "Cannot Change Question Type"
+#~ msgstr "Haiwezekani Kubadilisha Aina ya Swali"
+
+#~ msgid "Change Question Type To"
+#~ msgstr "Badilisha Aina ya Swali Kuwa"
+
+#~ msgid "Show"
+#~ msgstr "Onyesha"
+
+#~ msgid "Used By"
+#~ msgstr "Inatumiwa Na"
+
+#~ msgid "In Property"
+#~ msgstr "Katika Sifa"
+
+#~ msgid "No match for {info} found!"
+#~ msgstr "Hakuna inayolingana na {info} imepatikana!"
+
+#~ msgid "Multiple matches for {info} found!"
+#~ msgstr "Mecano nyingi zinazolingana na {info} zimepatikana!"
+
+#~ msgid "Add Key&rarr;Value Pair"
+#~ msgstr "Ongeza Jozi ya Ufunguo&rarr;Thamani"
+
+#~ msgid "show in question list"
+#~ msgstr "onyesha kwenye orodha ya maswali"
+
+#~ msgid "Date Format Options"
+#~ msgstr "Chaguo za Muundo wa Tarehe"
+
+#~ msgid "No Formatting"
+#~ msgstr "Hakuna Muundo"
+
+#~ msgid "Invalid XPath expression."
+#~ msgstr "Kielezi cha XPath si sahihi."
+
+#~ msgid ""
+#~ "The {property} for a question is not allowed to reference the question "
+#~ "itself. Please remove the . from the {property} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "{property} ya swali hairuhusiwi kurejelea swali lenyewe. Tafadhali ondoa . "
+#~ "kwenye {property} au fomu yako itakuwa na makosa."
+
+#~ msgid "Unknown question:"
+#~ msgstr "Swali lisilojulikana:"
+
+#~ msgid "Unknown questions:"
+#~ msgstr "Maswali yasiyojulikana:"
+
+#~ msgid "no formatting"
+#~ msgstr "hakuna muundo"
+
+#~ msgid "{question} is required."
+#~ msgstr "{question} inahitajika."
+
+#~ msgid "{question} is not allowed."
+#~ msgstr "{question} hairuhusiwi."
+
+#~ msgid "{question} validation failed"
+#~ msgstr "Uhakiki wa {question} umeshindwa"
+
+#~ msgid "Unknown (read-only) question type"
+#~ msgstr "Aina ya swali isiyojulikana (soma-tu)"
+
+#~ msgid "Lookup Table Data"
+#~ msgstr "Data ya Jedwali la Utafutaji"
+
+#~ msgid "No Translation Data"
+#~ msgstr "Hakuna Data ya Tafsiri"
+
+#~ msgid "Question ID"
+#~ msgstr "Kitambulisho cha Swali"
+
+#~ msgid ""
+#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
+#~ " pick a different Question ID."
+#~ msgstr ""
+#~ "Kitambulisho '{nodeID}' kinaweza kusababisha matatizo wakati wa kuchanganua "
+#~ "fomu. Inashauriwa kuchagua Kitambulisho cha Swali tofauti."
+
+#~ msgid ""
+#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
+#~ " only letters, numbers, and '-' or '_' characters."
+#~ msgstr ""
+#~ "{nodeID} si Kitambulisho halali cha Swali. Lazima kianze na herufi na kiwe "
+#~ "na herufi, nambari, na alama '-' au '_'."
+
+#~ msgid "'meta' is not a valid Question ID."
+#~ msgstr "'meta' si Kitambulisho halali cha Swali."
+
+#~ msgid ""
+#~ "Making this change will create a new Question ID (and a new column in "
+#~ "exports)."
+#~ msgstr ""
+#~ "Kubadilisha hii kutaongeza Kitambulisho kipya cha Swali (na safu mpya kwenye"
+#~ " mauzo ya nje)."
+
+#~ msgid ""
+#~ "This question has the same Question ID as another question in the same "
+#~ "group. Please choose a unique Question ID."
+#~ msgstr ""
+#~ "Swali hili lina Kitambulisho sawa cha Swali na swali lingine kwenye kundi "
+#~ "moja. Tafadhali chagua Kitambulisho cha Swali la kipekee."
+
+#~ msgid "Default Data Value"
+#~ msgstr "Thamani Chaguomsingi ya Data"
+
+#~ msgid "Special Hidden Value XMLNS attribute"
+#~ msgstr "Sifa Maalum ya XMLNS ya Thamani Iliyofichwa"
+
+#~ msgid "Extra Data Attributes"
+#~ msgstr "Sifa za Ziada za Data"
+
+#~ msgid "Calculate Condition"
+#~ msgstr "Hali ya Kukokotoa"
+
+#~ msgid ""
+#~ "You cannot have a Validation Error Message with no Validation Condition!"
+#~ msgstr "Huwezi kuwa na Ujumbe wa Hitilafu ya Uhakiki bila Hali ya Uhakiki!"
+
+#~ msgid "Validation Error Message"
+#~ msgstr "Ujumbe wa Hitilafu ya Uhakiki"
+
+#~ msgid "Required Condition"
+#~ msgstr "Hali Inayohitajika"
+
+#~ msgid "The condition will be ignored unless you mark the question required."
+#~ msgstr "Hali hii itapuuzwa isipokuwa uweke swali hili kuwa lazima."
+
+#~ msgid "Extra Bind Attributes"
+#~ msgstr "Sifa za Ziada za Bind"
+
+#~ msgid ""
+#~ "You are referencing a node in this form. This can cause errors in the form"
+#~ msgstr ""
+#~ "Unarejelea nodi kwenye fomu hii. Hii inaweza kusababisha makosa kwenye fomu"
+
+#~ msgid "Appearance Attribute"
+#~ msgstr "Sifa ya Mwonekano"
+
+#~ msgid "Default Display Text"
+#~ msgstr "Maandishi Chaguomsingi ya Kuonyesha"
+
+#~ msgid "Default Display Text is required"
+#~ msgstr "Maandishi Chaguomsingi ya Kuonyesha yanahitajika"
+
+#~ msgid "Hint Display Text"
+#~ msgstr "Maandishi ya Dokezo la Kuonyesha"
+
+#~ msgid "Extra Control Attributes"
+#~ msgstr "Sifa za Ziada za Udhibiti"
+
+#~ msgid "Raw XML"
+#~ msgstr "XML Halisi"
+
+#~ msgid "Data Parent"
+#~ msgstr "Mzazi wa Data"
+
+#~ msgid "Must be valid path"
+#~ msgstr "Lazima iwe njia halali"
+
+#~ msgid ""
+#~ "Data parent of question in repeat group must be (in) the same repeat group"
+#~ msgstr ""
+#~ "Mzazi wa data wa swali kwenye kundi la kurudia lazima uwe (ndani ya) kundi "
+#~ "lile lile la kurudia"
+
+#~ msgid "Hidden Value"
+#~ msgstr "Thamani Iliyofichwa"
+
+#~ msgid "Text"
+#~ msgstr "Maandishi"
+
+#~ msgid "Phone Number or Numeric ID"
+#~ msgstr "Nambari ya Simu au Kitambulisho cha Kihesabu"
+
+#~ msgid "Integer"
+#~ msgstr "Nambari Kamili"
+
+#~ msgid "Audio Capture"
+#~ msgstr "Kurekodi Sauti"
+
+#~ msgid "Image Capture"
+#~ msgstr "Kuchukua Picha"
+
+#~ msgid "Image Size"
+#~ msgstr "Ukubwa wa Picha"
+
+#~ msgid "Small"
+#~ msgstr "Ndogo"
+
+#~ msgid "Medium"
+#~ msgstr "Wastani"
+
+#~ msgid "Large"
+#~ msgstr "Kubwa"
+
+#~ msgid "Original"
+#~ msgstr "Asili"
+
+#~ msgid ""
+#~ "This will resize the image before sending the form. Use this option to send "
+#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+#~ "megapixels</li></ul>"
+#~ msgstr ""
+#~ "Hii itabadilisha ukubwa wa picha kabla ya kutuma fomu. Tumia chaguo hili "
+#~ "kutuma picha ndogo katika maeneo yenye muunganisho hafifu.<ul><li>Ndogo - "
+#~ "megapikseli 0.1</li><li>Wastani - megapikseli 0.2</li><li>Kubwa - "
+#~ "megapikseli 0.5</li></ul>"
+
+#~ msgid "Micro-Image"
+#~ msgstr "Picha Ndogo"
+
+#~ msgid "Video Capture"
+#~ msgstr "Kurekodi Video"
+
+#~ msgid "Signature Capture"
+#~ msgstr "Kuchukua Sahihi"
+
+#~ msgid "Document Upload"
+#~ msgstr "Kupakia Hati"
+
+#~ msgid "GPS"
+#~ msgstr "GPS"
+
+#~ msgid "Barcode Scan"
+#~ msgstr "Kuskanisha Msimbopau"
+
+#~ msgid "Date and Time"
+#~ msgstr "Tarehe na Saa"
+
+#~ msgid "Long"
+#~ msgstr "Ndefu"
+
+#~ msgid "Decimal"
+#~ msgstr "Desimali"
+
+#~ msgid "Choice"
+#~ msgstr "Chaguo"
+
+#~ msgid "Choice Value"
+#~ msgstr "Thamani ya Chaguo"
+
+#~ msgid "Whitespace in values is not allowed."
+#~ msgstr "Nafasi tupu kwenye thamani haziruhusiwi."
+
+#~ msgid "This choice value has been used in the same question"
+#~ msgstr "Thamani hii ya chaguo imetumika kwenye swali hili hili"
+
+#~ msgid ""
+#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
+#~ "it has Choices. Please remove all Choices and try again."
+#~ msgstr ""
+#~ "Haiwezi kubadilisha swali la Chaguo Nyingi/Moja kuwa swali lisilo la Chaguo "
+#~ "ikiwa lina Machaguo. Tafadhali ondoa Machaguo yote na ujaribu tena."
+
+#~ msgid "Checkbox"
+#~ msgstr "Kisanduku cha Kuhakiki"
+
+#~ msgid "Multiple Choice"
+#~ msgstr "Chaguo Nyingi"
+
+#~ msgid "Group"
+#~ msgstr "Kundi"
+
+#~ msgid "Question List"
+#~ msgstr "Orodha ya Maswali"
+
+#~ msgid "Repeat Group"
+#~ msgstr "Rudia Kundi"
+
+#~ msgid "Repeat Count"
+#~ msgstr "Idadi ya Marudio"
+
+#~ msgid "Repeat Count is required."
+#~ msgstr "Idadi ya Marudio inahitajika."
+
+#~ msgid "Extra Repeat Attributes"
+#~ msgstr "Sifa za Ziada za Marudio"
+
+#~ msgid "You have deleted a question."
+#~ msgstr "Umefuta swali."
+
+#~ msgid "Undo"
+#~ msgstr "Tengua"
+
+#~ msgid ""
+#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
+#~ "will be discarded!"
+#~ msgstr ""
+#~ "Bind Node [{path}] imepatikana lakini haina Data node inayohusiana. Bind "
+#~ "node hii itatupiliwa mbali!"
+
+#~ msgid "Not Found"
+#~ msgstr "Haikupatikana"
+
+#~ msgid ""
+#~ "{type} nodes cannot be used in an output value. Please remove the output "
+#~ "value for '{path}' or your form will have errors."
+#~ msgstr ""
+#~ "Nodi za {type} haziwezi kutumika kwenye thamani ya matokeo. Tafadhali ondoa "
+#~ "thamani ya matokeo kwa '{path}' au fomu yako itakuwa na makosa."
+
+#~ msgid ""
+#~ "The {field} for a question is not allowed to reference the question itself. "
+#~ "Please remove the {ref} from the {field} or your form will have errors."
+#~ msgstr ""
+#~ "{field} ya swali hairuhusiwi kujirejelea yenyewe. Tafadhali ondoa {ref} "
+#~ "kutoka kwenye {field} au fomu yako itakuwa na makosa."
+
+#~ msgid "output value"
+#~ msgstr "thamani ya matokeo"
+
+#~ msgid "Validation Failed"
+#~ msgstr "Uhakiki Umekosa"
+
+#~ msgid "Please fix the error before leaving this page:"
+#~ msgstr "Tafadhali rekebisha kosa kabla ya kuondoka kwenye ukurasa huu:"
+
+#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
+#~ msgstr "Hariri <span class='property-name'>Mlinganyo</span> (Kitaalamu)"
+
+#~ msgid "Show Simple Mode"
+#~ msgstr "Onyesha Njia Rahisi"
+
+#~ msgid ""
+#~ "You are currently in Advanced Mode because your logic is too complicated for"
+#~ " Simple Mode."
+#~ msgstr ""
+#~ "Kwa sasa uko kwenye Njia ya Kitaalamu kwa sababu mantiki yako ni ngumu sana "
+#~ "kwa Njia Rahisi."
+
+#~ msgid "You can drag a question into the box."
+#~ msgstr "Unaweza kuburuta swali kwenye kisanduku."
+
+#~ msgid "Guide to Common Logic and Calculations"
+#~ msgstr "Mwongozo wa Mantiki na Mahesabu ya Kawaida"
+
+#~ msgid "Edit <span class='property-name'>Expression</span>"
+#~ msgstr "Hariri <span class='property-name'>Mlinganyo</span>"
+
+#~ msgid "Show Advanced Mode"
+#~ msgstr "Onyesha Hali ya Juu"
+
+#~ msgid "Result is"
+#~ msgstr "Matokeo ni"
+
+#~ msgid "Expression"
+#~ msgstr "Kielezi"
+
+#~ msgid "Add Expression"
+#~ msgstr "Ongeza Kielezi"
+
+#~ msgid "Error"
+#~ msgstr "Hitilafu"
+
+#~ msgid "Warning"
+#~ msgstr "Onyo"
+
+#~ msgid "Form Warning"
+#~ msgstr "Onyo la Fomu"
+
+#~ msgid "Notification"
+#~ msgstr "Arifa"
+
+#~ msgid ""
+#~ "Holding the ALT key while clicking save invokes an inefficient save "
+#~ "procedure. Do this only if a normal save fails."
+#~ msgstr ""
+#~ "Kushikilia kitufe cha ALT wakati wa kubofya hifadhi kunatumia utaratibu wa "
+#~ "kuhifadhi usiofanisi. Fanya hivi tu ikiwa kuhifadhi kawaida kunashindwa."
+
+#~ msgid "Are you sure you want to exit? All unsaved changes will be lost!"
+#~ msgstr ""
+#~ "Una uhakika unataka kutoka? Mabadiliko yote ambayo hayajahifadhiwa "
+#~ "yatapotea!"
+
+#~ msgid ""
+#~ "Look for questions marked with $1 and check they don't reference deleted "
+#~ "questions."
+#~ msgstr ""
+#~ "Tafuta maswali yaliyowekwa alama na $1 na hakikisha hayarejelei maswali "
+#~ "yaliyofutwa."
+
+#~ msgid "Errors in Form"
+#~ msgstr "Hitilafu kwenye Fomu"
+
+#~ msgid "Form has reference errors."
+#~ msgstr "Fomu ina makosa ya marejeleo."
+
+#~ msgid "Look for questions marked with $1 and fix the errors."
+#~ msgstr "Tafuta maswali yaliyowekwa alama na $1 na rekebisha makosa."
+
+#~ msgid "Form has validation errors."
+#~ msgstr "Fomu ina makosa ya uthibitishaji."
+
+#~ msgid "Multimedia Capture"
+#~ msgstr "Ukamataji wa Vyombo vya Habari"
+
+#~ msgid "Number"
+#~ msgstr "Nambari"
+
+#~ msgid "Groups"
+#~ msgstr "Makundi"
+
+#~ msgid "Advanced"
+#~ msgstr "Juu"
+
+#~ msgid "Make Required"
+#~ msgstr "Fanya Liwe la Lazima"
+
+#~ msgid ""
+#~ "You are about to make all existing questions on this form required. This "
+#~ "action will overwrite the current configuration of this form and can only be"
+#~ " undone by editing individual questions."
+#~ msgstr ""
+#~ "Unakaribia kufanya maswali yote yaliyopo kwenye fomu hii kuwa ya lazima. "
+#~ "Hatua hii itabadilisha mpangilio wa sasa wa fomu hii na inaweza kubatilishwa"
+#~ " tu kwa kuhariri maswali mmoja mmoja."
+
+#~ msgid "Load Default Values"
+#~ msgstr "Pakia Thamani Chaguo-msingi"
+
+#~ msgid ""
+#~ "You are about to set matching case properties as Default Values for all "
+#~ "existing questions. This action will overwrite existing Default Values for "
+#~ "all questions with matching case properties and can only be undone by "
+#~ "editing individual questions."
+#~ msgstr ""
+#~ "Unakaribia kuweka sifa za kesi zinazolingana kama Thamani Chaguo-msingi kwa "
+#~ "maswali yote yaliyopo. Hatua hii itabadilisha Thamani Chaguo-msingi zilizopo"
+#~ " kwa maswali yote yenye sifa za kesi zinazolingana na inaweza kubatilishwa "
+#~ "tu kwa kuhariri maswali mmoja mmoja."
+
+#~ msgid "Are you sure you want to perform this action?"
+#~ msgstr "Una uhakika unataka kufanya hatua hii?"
+
+#~ msgid "Expand Editor"
+#~ msgstr "Panua Kihariri"
+
+#~ msgid "Shrink Editor"
+#~ msgstr "Punguza Kihariri"
+
+#~ msgid "Export Form Contents"
+#~ msgstr "Hamisha Yaliyomo ya Fomu"
+
+#~ msgid "Edit Source XML"
+#~ msgstr "Hariri Chanzo cha XML"
+
+#~ msgid "Form Properties"
+#~ msgstr "Sifa za Fomu"
+
+#~ msgid "Find Usages"
+#~ msgstr "Tafuta Matumizi"
+
+#~ msgid "Validation failed. Form may not perform correctly on your device!"
+#~ msgstr ""
+#~ "Uthibitishaji umeshindwa. Fomu huenda isifanye kazi ipasavyo kwenye kifaa "
+#~ "chako!"
+
+#~ msgid "Edit Form's Source XML"
+#~ msgstr "Hariri Chanzo cha XML cha Fomu"
+
+#~ msgid "Update Source"
+#~ msgstr "Sasisha Chanzo"
+
+#~ msgid ""
+#~ "This is the raw XML. You can edit or paste into this box to make changes to "
+#~ "your form. Press 'Update Source' to save changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "Hii ni XML ghafi. Unaweza kuhariri au kubandika kwenye kisanduku hiki ili "
+#~ "kufanya mabadiliko kwenye fomu yako. Bonyeza 'Sasisha Chanzo' kuhifadhi "
+#~ "mabadiliko, au 'Funga' kughairi."
+
+#~ msgid ""
+#~ "Copy and paste this content into a spreadsheet program like Excel to easily "
+#~ "share your form with others."
+#~ msgstr ""
+#~ "Nakili na ubandike maudhui haya kwenye programu ya lahajedwali kama Excel "
+#~ "ili kushiriki fomu yako kwa urahisi na wengine."
+
+#~ msgid "Lost Work Warning"
+#~ msgstr "Onyo la Kazi Iliyopotea"
+
+#~ msgid "Overwrite their work"
+#~ msgstr "Andika upya kazi yao"
+
+#~ msgid "Show XML Differences"
+#~ msgstr "Onyesha Tofauti za XML"
+
+#~ msgid ""
+#~ "Looks like someone else has edited this form since you loaded the page. Are "
+#~ "you sure you want to overwrite their work?"
+#~ msgstr ""
+#~ "Inaonekana mtu mwingine amehariri fomu hii tangu ulipofungua ukurasa. Una "
+#~ "uhakika unataka kufuta kazi yao?"
+
+#~ msgid "Edit Form Properties"
+#~ msgstr "Hariri Sifa za Fomu"
+
+#~ msgid "Disable Text Formatting"
+#~ msgstr "Zima Uundaji wa Maandishi"
+
+#~ msgid "Use Easy References"
+#~ msgstr "Tumia Marejeleo Rahisi"
+
+#~ msgid "Use of each question"
+#~ msgstr "Matumizi ya kila swali"
+
+#~ msgid "Unsaved Changes in Editor"
+#~ msgstr "Mabadiliko Yasiyohifadhiwa kwenye Kihariri"
+
+#~ msgid ""
+#~ "You have UNSAVED changes in the Expression Editor. Please save changes "
+#~ "before continuing."
+#~ msgstr ""
+#~ "Una mabadiliko AMBAYO HAYAJAHIFADHIWA kwenye Kihariri cha Maelezo. Tafadhali"
+#~ " hifadhi mabadiliko kabla ya kuendelea."
+
+#~ msgid "Parsing Error. Please check that your form is valid XML."
+#~ msgstr "Hitilafu ya Kuchambua. Tafadhali hakikisha fomu yako ni XML halali."
+
+#~ msgid "Sorry, {err}"
+#~ msgstr "Samahani, {err}"
+
+#~ msgid "Add Choice"
+#~ msgstr "Ongeza Chaguo"
+
+#~ msgid "and"
+#~ msgstr "na"
+
+#~ msgid "There are errors in the form"
+#~ msgstr "Kuna makosa kwenye fomu"
+
+#~ msgid "Fix Manually"
+#~ msgstr "Rekebisha Mwenyewe"
+
+#~ msgid "Fix Automatically"
+#~ msgstr "Rekebisha Kiotomatiki"
+
+#~ msgid ""
+#~ "It looks like your form is not valid XML. This can often happen if you use a"
+#~ " reserved character in one of your questions. Characters to look out for are"
+#~ " <, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
+#~ "you fix the XML by hand. What would you like to do?"
+#~ msgstr ""
+#~ "Inaonekana fomu yako si XML halali. Hili linaweza kutokea mara nyingi "
+#~ "ukitumia herufi zilizohifadhiwa kwenye mojawapo ya maswali yako. Herufi za "
+#~ "kuangalia ni <, >, na &. Unaweza bado kuhifadhi, lakini HUWEZI KUFUNGUA FOMU"
+#~ " HII tena hadi utengeneze XML kwa mkono. Ungependa kufanya nini?"
+
+#~ msgid "Form Validation Error"
+#~ msgstr "Hitilafu ya Uthibitishaji wa Fomu"
+
+#~ msgid "Fix the problem (recommended)"
+#~ msgstr "Rekebisha tatizo (inapendekezwa)"
+
+#~ msgid "Save anyway"
+#~ msgstr "Hifadhi hata hivyo"
+
+#~ msgid ""
+#~ "The {displaytext} appears in the application. This text will not appear in "
+#~ "data exports."
+#~ msgstr ""
+#~ "{displaytext} inaonekana kwenye programu. Maandishi haya hayatakuwepo kwenye"
+#~ " uhamishaji wa data."
+
+#~ msgid "Display Text"
+#~ msgstr "Maandishi ya Kuonyesha"
+
+#~ msgid ""
+#~ "You can configure an external data source like a case list or lookup table "
+#~ "to use as the choices for a multiple choice question."
+#~ msgstr ""
+#~ "Unaweza kusanidi chanzo cha data cha nje kama orodha ya kesi au jedwali la "
+#~ "kutafuta ili kutumia kama chaguo za swali la chaguo nyingi."
+
+#~ msgid "Media"
+#~ msgstr "Vyombo vya Habari"
+
+#~ msgid ""
+#~ "This will allow you to add images, audio or video media to a question, or "
+#~ "other custom content."
+#~ msgstr ""
+#~ "Hii itakuwezesha kuongeza picha, sauti au video kwenye swali, au maudhui "
+#~ "mengine maalum."
+
+#~ msgid ""
+#~ "These are advanced settings and are not needed for most applications.  "
+#~ "Please only change these if you have a specific need!"
+#~ msgstr ""
+#~ "Haya ni mipangilio ya juu na haihitajiki kwa programu nyingi. Tafadhali "
+#~ "badilisha haya tu ikiwa una hitaji maalum!"
+
+#~ msgid ""
+#~ "This question represents advanced content that is not supported by the form "
+#~ "builder. Please only change it if you have a specific need!"
+#~ msgstr ""
+#~ "Swali hili linawakilisha maudhui ya juu ambayo hayatumiki kwenye "
+#~ "mtengenezaji wa fomu. Tafadhali badilisha tu ikiwa una hitaji maalum!"
+
+#~ msgid "Ignored XML"
+#~ msgstr "XML Iliyopuuzwa"
+
+#~ msgid "Android App Callout"
+#~ msgstr "Mwito wa Programu ya Android"
+
+#~ msgid "External App"
+#~ msgstr "Programu ya Nje"
+
+#~ msgid "Insert Android Application ID"
+#~ msgstr "Weka Kitambulisho cha Programu ya Android"
+
+#~ msgid "change your subscription"
+#~ msgstr "badilisha usajili wako"
+
+#~ msgid ""
+#~ "You no longer have access to built in or external integration in your application.\n"
+#~ "\n"
+#~ "Built in integrations are available on the Pro plan and higher. External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
+#~ msgstr ""
+#~ "Huna tena ufikiaji wa muunganiko wa ndani au wa nje kwenye programu yako.\n"
+#~ "\n"
+#~ "Muunganiko wa ndani unapatikana kwenye mpango wa Pro na juu zaidi. Muunganiko wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au uondoe swali hili."
+
+#~ msgid ""
+#~ "Your subscription only has access to built-in integration.\n"
+#~ "\n"
+#~ "External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
+#~ msgstr ""
+#~ "Usajili wako unaruhusu tu muunganiko wa ndani.\n"
+#~ "\n"
+#~ "Muunganiko wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au uondoe swali hili."
+
+#~ msgid ""
+#~ "Android app callouts of the same type must have different question ids."
+#~ msgstr ""
+#~ "Mwito wa programu ya Android wa aina moja lazima uwe na vitambulisho tofauti"
+#~ " vya maswali."
+
+#~ msgid "Extra"
+#~ msgstr "Ziada"
+
+#~ msgid "Response"
+#~ msgstr "Majibu"
+
+#~ msgid "Special Intent XMLNS attribute"
+#~ msgstr "Sifa Maalum ya XMLNS ya Intent"
+
+#~ msgid "Print"
+#~ msgstr "Chapisha"
+
+#~ msgid "Document Template"
+#~ msgstr "Kiolezo cha Hati"
+
+#~ msgid "Edit Data Source"
+#~ msgstr "Hariri Chanzo cha Data"
+
+#~ msgid "Query Expression"
+#~ msgstr "Maelezo ya Hoja"
+
+#~ msgid "Optional Instance Properties"
+#~ msgstr "Sifa za Hiari za Nakala"
+
+#~ msgid "Instance ID"
+#~ msgstr "Kitambulisho cha Nakala"
+
+#~ msgid "Instance URI"
+#~ msgstr "URI ya Nakala"
+
+#~ msgid "Lookup table was not found in the project"
+#~ msgstr "Jedwali la utafutaji halikupatikana kwenye mradi"
+
+#~ msgid ""
+#~ "You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
+#~ "Before you can make a new version of your application, you must {link} or delete this question"
+#~ msgstr ""
+#~ "Huna tena ufikiaji wa Jedwali la Utafutaji kwenye programu yako. Jedwali la Utafutaji linapatikana kwenye mpango wa Standard na juu zaidi.\n"
+#~ "Kabla ya kuunda toleo jipya la programu yako, lazima {link} au ufute swali hili"
+
+#~ msgid "A data source must be selected."
+#~ msgstr "Chanzo cha data lazima kichaguliwe."
+
+#~ msgid "Display Text Field"
+#~ msgstr "Sehemu ya Maandishi ya Kuonyesha"
+
+#~ msgid "Sort Field"
+#~ msgstr "Sehemu ya Kupanga"
+
+#~ msgid "Filter"
+#~ msgstr "Chuja"
+
+#~ msgid ""
+#~ "This is an XPath expression that will filter the set of choices from the "
+#~ "lookup table"
+#~ msgstr ""
+#~ "Hii ni usemi wa XPath ambao utachuja seti ya chaguo kutoka kwenye jedwali la"
+#~ " utafutaji"
+
+#~ msgid "Lookup Tables"
+#~ msgstr "Majedwali ya Utafutaji"
+
+#~ msgid "Checkbox Lookup Table"
+#~ msgstr "Jedwali la Utafutaji la Kisanduku cha Kuhakiki"
+
+#~ msgid ""
+#~ "Cannot change to Multiple/Single Choice question if it has Choices. Please "
+#~ "remove all Choices and try again."
+#~ msgstr ""
+#~ "Haiwezi kubadilisha kuwa swali la Chaguo Nyingi/Moja ikiwa lina Chaguo. "
+#~ "Tafadhali ondoa Chaguo zote na ujaribu tena."
+
+#~ msgid "Can only change to a Multiple Choice Lookup Table"
+#~ msgstr "Inaweza kubadilishwa tu kuwa Jedwali la Utafutaji la Chaguo Nyingi"
+
+#~ msgid "Multiple Choice Lookup Table"
+#~ msgstr "Jedwali la Utafutaji la Chaguo Nyingi"
+
+#~ msgid "Can only change to a Checkbox Lookup Table"
+#~ msgstr ""
+#~ "Inaweza kubadilishwa tu kuwa Jedwali la Utafutaji la Kisanduku cha Kuhakiki"
+
+#~ msgid "{attr} was not found in the lookup table"
+#~ msgstr "{attr} haikupatikana kwenye jedwali la utafutaji"
+
+#~ msgid "Display"
+#~ msgstr "Onyesha"
+
+#~ msgid "auto?"
+#~ msgstr "moja kwa moja?"
+
+#~ msgid ""
+#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
+#~ "use bulleted lists, and <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
+#~ msgstr ""
+#~ "Tumia uundaji wa maandishi kuweka maneno <strong>nene</strong> na <em>kuweka"
+#~ " italiki</em>, tumia orodha za risasi, na <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>zaidi</a>"
+
+#~ msgid "Turn Off Text Formatting"
+#~ msgstr "Zima Uundaji wa Maandishi"
+
+#~ msgid "Turn On Text Formatting"
+#~ msgstr "Washa Uundaji wa Maandishi"
+
+#~ msgid "custom..."
+#~ msgstr "desturi..."
+
+#~ msgid "New Content Type"
+#~ msgstr "Aina Mpya ya Maudhui"
+
+#~ msgid "Content Type"
+#~ msgstr "Aina ya Maudhui"
+
+#~ msgid ""
+#~ "You have languages in your form that are not specified in the \"Languages\" "
+#~ "page of the application builder. The following language will be deleted on "
+#~ "save unless you add it to the \"Languages\" page:"
+#~ msgstr ""
+#~ "Una lugha kwenye fomu yako ambazo hazijaainishwa kwenye ukurasa wa \"Lugha\""
+#~ " wa mtengenezaji wa programu. Lugha ifuatayo itafutwa unapohifadhi isipokuwa"
+#~ " uiongeze kwenye ukurasa wa \"Lugha\":"
+
+#~ msgid "{name} (or multimedia) is required."
+#~ msgstr "{name} (au multimedia) inahitajika."
+
+#~ msgid "{name} (or multimedia) is required for all languages."
+#~ msgstr "{name} (au multimedia) inahitajika kwa lugha zote."
+
+#~ msgid "{name} Itext ID is required."
+#~ msgstr "Itext ID ya {name} inahitajika."
+
+#~ msgid "{name} is not a valid ID."
+#~ msgstr "{name} si kitambulisho halali."
+
+#~ msgid "Multimedia was not copied; it must be uploaded separately."
+#~ msgstr "Multimedia haikunakiliwa; lazima ipakwe kando."
+
+#~ msgid "Discarded languages:"
+#~ msgstr "Lugha zilizotupiliwa mbali:"
+
+#~ msgid "Validation Message"
+#~ msgstr "Ujumbe wa Uthibitishaji"
+
+#~ msgid ""
+#~ "Can't have a Validation Message Itext ID without a Validation Condition"
+#~ msgstr ""
+#~ "Huwezi kuwa na Itext ID ya Ujumbe wa Uthibitishaji bila Masharti ya "
+#~ "Uthibitishaji"
+
+#~ msgid "Validation Message Itext ID"
+#~ msgstr "Itext ID ya Ujumbe wa Uthibitishaji"
+
+#~ msgid "Add Validation Media"
+#~ msgstr "Ongeza Vyombo vya Habari vya Uthibitishaji"
+
+#~ msgid "Display Text Itext ID"
+#~ msgstr "Itext ID ya Maandishi ya Kuonyesha"
+
+#~ msgid "Hint Message"
+#~ msgstr "Ujumbe wa Dokezo"
+
+#~ msgid "Hint Itext ID"
+#~ msgstr "Itext ID ya Dokezo"
+
+#~ msgid "Help Message"
+#~ msgstr "Ujumbe wa Msaada"
+
+#~ msgid "Help Itext ID"
+#~ msgstr "Itext ID ya Msaada"
+
+#~ msgid "Add New Item Button Text"
+#~ msgstr "Maandishi ya Kitufe cha Ongeza Kipengee Kipya"
+
+#~ msgid "Add New Itext ID"
+#~ msgstr "Ongeza Itext ID Mpya"
+
+#~ msgid "Add Another Item Button Text"
+#~ msgstr "Maandishi ya Kitufe cha Ongeza Kipengee Kingine"
+
+#~ msgid "Add Another Itext ID"
+#~ msgstr "Ongeza Itext ID Nyingine"
+
+#~ msgid "Add Other Content"
+#~ msgstr "Ongeza Maudhui Mengine"
+
+#~ msgid "Add Multimedia"
+#~ msgstr "Ongeza Multimedia"
+
+#~ msgid "Add Help Media"
+#~ msgstr "Ongeza Vyombo vya Habari vya Msaada"
+
+#~ msgid "Edit Bulk Translations"
+#~ msgstr "Hariri Tafsiri kwa Wingi"
+
+#~ msgid "Update Translations"
+#~ msgstr "Sasisha Tafsiri"
+
+#~ msgid ""
+#~ "Copy these translations into a spreadsheet program like Excel. You can edit "
+#~ "them there and then paste them back here when you're done. These will update"
+#~ " the translations used in your form. Press 'Update Translations' to save "
+#~ "changes, or 'Close' to cancel."
+#~ msgstr ""
+#~ "Nakili tafsiri hizi kwenye programu ya lahajedwali kama Excel. Unaweza "
+#~ "kuzihariri huko na kisha uzirudishe hapa ukimaliza. Hizi zitasasisha tafsiri"
+#~ " zinazotumika kwenye fomu yako. Bonyeza 'Sasisha Tafsiri' kuhifadhi "
+#~ "mabadiliko, au 'Funga' kughairi."
+
+#~ msgid "App Properties"
+#~ msgstr "Sifa za Programu"
+
+#~ msgid "Could not load app properties."
+#~ msgstr "Haikuweza kupakia sifa za programu."
+
+#~ msgid "If this error persists, please report an issue."
+#~ msgstr "Ikiwa kosa hili litaendelea, tafadhali ripoti tatizo."
+
+#~ msgid ""
+#~ "The {questionid} is an internal identifier for a question. It does not "
+#~ "appear on the phone. It is the name of the question in data exports."
+#~ msgstr ""
+#~ "{questionid} ni kitambulisho cha ndani cha swali. Hakiwezi kuonekana kwenye "
+#~ "simu. Ni jina la swali katika usafirishaji wa data."
+
+#~ msgid "The date and time of the action, e.g., now() or today()"
+#~ msgstr "Tarehe na saa ya tukio, mfano, now() au today()"
+
+#~ msgid "Balance ID"
+#~ msgstr "Kitambulisho cha Mizania"
+
+#~ msgid ""
+#~ "The name of the balance you are tracking. This is an internal identifier "
+#~ "which does not appear on the phone."
+#~ msgstr ""
+#~ "Jina la mizania unayofuatilia. Hiki ni kitambulisho cha ndani ambacho "
+#~ "hakionekani kwenye simu."
+
+#~ msgid "Product"
+#~ msgstr "Bidhaa"
+
+#~ msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
+#~ msgstr ""
+#~ "Rejeleo la kitambulisho cha bidhaa, mfano, "
+#~ "\"/data/products/current_product\""
+
+#~ msgid "Quantity"
+#~ msgstr "Kiasi"
+
+#~ msgid "A reference to an integer question in this form."
+#~ msgstr "Rejeleo la swali la nambari kamili katika fomu hii."
+
+#~ msgid "XPath expression for the case ID associated with this balance."
+#~ msgstr ""
+#~ "Msururu wa XPath kwa kitambulisho cha kesi kinachohusishwa na mizania hii."
+
+#~ msgid "Transfer must have both Source Case and Destination Case defined."
+#~ msgstr ""
+#~ "Uhamisho lazima uwe na Kesi Chanzo na Kesi Lengwa zikiwa zimeainishwa."
+
+#~ msgid "Cannot change $1 to $2"
+#~ msgstr "Haiwezi kubadilisha $1 kuwa $2"
+
+#~ msgid "Source Case"
+#~ msgstr "Kesi Chanzo"
+
+#~ msgid "XPath expression for the case ID issuing the transaction."
+#~ msgstr "Msururu wa XPath kwa kitambulisho cha kesi kinachotoa muamala."
+
+#~ msgid "Destination Case"
+#~ msgstr "Kesi Lengwa"
+
+#~ msgid "XPath expression for the case ID receiving the transaction."
+#~ msgstr "Msururu wa XPath kwa kitambulisho cha kesi kinayopokea muamala."
+
+#~ msgid "Dispense must have a Source Case."
+#~ msgstr "Ugawaji lazima uwe na Kesi Chanzo."
+
+#~ msgid "Receive must have a Destination Case."
+#~ msgstr "Upokeaji lazima uwe na Kesi Lengwa."
+
+#~ msgid "Model Iteration ID Query"
+#~ msgstr "Hojaji ya Kitambulisho cha Iteration ya Mfano"
+
+#~ msgid "Property Name"
+#~ msgstr "Jina la Sifa"
+
+#~ msgid "Relevant"
+#~ msgstr "Husika"
+
+#~ msgid "Relationship Identifier (e.g. parent or host)"
+#~ msgstr "Kitambulisho cha Uhusiano (mfano mzazi au mwenyeji)"
+
+#~ msgid "Referenced Case ID"
+#~ msgstr "Kitambulisho cha Kesi Inayorejelewa"
+
+#~ msgid "Referenced Case Type"
+#~ msgstr "Aina ya Kesi Inayorejelewa"
+
+#~ msgid "Relationship (child or extension)"
+#~ msgstr "Uhusiano (mtoto au kiendelezi)"
+
+#~ msgid "Node Name"
+#~ msgstr "Jina la Node"
+
+#~ msgid "Source"
+#~ msgstr "Chanzo"
+
+#~ msgid "From"
+#~ msgstr "Kutoka"
+
+#~ msgid "Attachment Name"
+#~ msgstr "Jina la Kiambatisho"
+
+#~ msgid "Add Property"
+#~ msgstr "Ongeza Sifa"
+
+#~ msgid "Date Modified"
+#~ msgstr "Tarehe Iliyorekebishwa"
+
+#~ msgid "User ID"
+#~ msgstr "Kitambulisho cha Mtumiaji"
+
+#~ msgid "Case Type"
+#~ msgstr "Aina ya Kesi"
+
+#~ msgid "Create Case"
+#~ msgstr "Unda Kesi"
+
+#~ msgid "Properties To Create"
+#~ msgstr "Sifa za Kuunda"
+
+#~ msgid "You must include {columns} columns to create a case"
+#~ msgstr "Lazima ujumuisha safu wima za {columns} ili kuunda kesi"
+
+#~ msgid "You can only use the following properties:"
+#~ msgstr "Unaweza kutumia tu sifa zifuatazo:"
+
+#~ msgid "{props} are invalid properties"
+#~ msgstr "{props} ni sifa batili"
+
+#~ msgid "Close Case"
+#~ msgstr "Funga Kesi"
+
+#~ msgid "Close Condition"
+#~ msgstr "Hali ya Kufunga"
+
+#~ msgid "Update Case"
+#~ msgstr "Sasisha Kesi"
+
+#~ msgid "Properties To Update"
+#~ msgstr "Sifa za Kusasisha"
+
+#~ msgid "Use Index"
+#~ msgstr "Tumia Kiashiria"
+
+#~ msgid "Index Properties"
+#~ msgstr "Sifa za Kiashiria"
+
+#~ msgid "Relationship must be child or extension"
+#~ msgstr "Uhusiano lazima uwe mtoto au kiendelezi"
+
+#~ msgid "Use Attachments"
+#~ msgstr "Tumia Viambatisho"
+
+#~ msgid "Attachment Properties"
+#~ msgstr "Sifa za Kiambatisho"
+
+#~ msgid "The from attribute must be one of: local, remote, or inline"
+#~ msgstr "Sifa ya from lazima iwe mojawapo ya: local, remote, au inline"
+
+#~ msgid "Inlined attachments must have an attachment name"
+#~ msgstr "Viambatisho vilivyowekwa ndani lazima viwe na jina la kiambatisho"
+
+#~ msgid "Update"
+#~ msgstr "Sasisha"
+
+#~ msgid "Index"
+#~ msgstr "Orodha"
+
+#~ msgid "Attachments"
+#~ msgstr "Viambatisho"
+
+#~ msgid "An error occurred when parsing bind node [{path}]. Please fix this."
+#~ msgstr ""
+#~ "Hitilafu imetokea wakati wa kuchanganua nodi ya bind [{path}]. Tafadhali "
+#~ "rekebisha hili."
+
+#~ msgid "Upload"
+#~ msgstr "Pakia"
+
+#~ msgid "Select new"
+#~ msgstr "Chagua mpya"
+
+#~ msgid "Select File"
+#~ msgstr "Chagua Faili"
+
+#~ msgid "Current"
+#~ msgstr "Iliyo Sasa"
+
+#~ msgid "Begin Upload"
+#~ msgstr "Anza Kupakia"
+
+#~ msgid "Replace"
+#~ msgstr "Badilisha"
+
+#~ msgid "No Reference"
+#~ msgstr "Hakuna Rejeleo"
+
+#~ msgid "Advanced: Show Path"
+#~ msgstr "Ya Juu: Onyesha Njia"
+
+#~ msgid "Hide Path"
+#~ msgstr "Ficha Njia"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Inline Video"
+#~ msgstr "Video Iliyounganishwa"
+
+#~ msgid "HTML"
+#~ msgstr "HTML"
+
+#~ msgid "Copying and Pasting Questions"
+#~ msgstr "Kunakili na Kubandika Maswali"
+
+#~ msgid ""
+#~ "These actions are available via the browser's Edit menu, and you can also "
+#~ "use:"
+#~ msgstr ""
+#~ "Vitendo hivi vinapatikana kupitia menyu ya Hariri ya kivinjari, na pia "
+#~ "unaweza kutumia:"
+
+#~ msgid "for copy"
+#~ msgstr "kwa kunakili"
+
+#~ msgid "for paste"
+#~ msgstr "kwa kubandika"
+
+#~ msgid "Copy from or Paste into this text box:"
+#~ msgstr "Nakili kutoka au Bandika kwenye kisanduku hiki cha maandishi:"
+
+#~ msgid "Insert Questions"
+#~ msgstr "Weka Maswali"
+
+#~ msgid "Selecting Multiple Questions"
+#~ msgstr "Kuchagua Maswali Mengi"
+
+#~ msgid "Hold {key} and click on each question."
+#~ msgstr "Shikilia {key} na ubofye kila swali."
+
+#~ msgid "Other Tips"
+#~ msgstr "Vidokezo Vingine"
+
+#~ msgid "Questions can be copied between forms, and even to other apps."
+#~ msgstr ""
+#~ "Maswali yanaweza kunakiliwa kati ya fomu, na hata kwenye programu nyingine."
+
+#~ msgid "Cannot insert {type} into tree root"
+#~ msgstr "Haiwezi kuweka {type} kwenye mzizi wa mti"
+
+#~ msgid "Cannot insert $1 into or after $2"
+#~ msgstr "Haiwezi kuweka $1 ndani au baada ya $2"
+
+#~ msgid "Cannot insert $1 into $2"
+#~ msgstr "Haiwezi kuweka $1 ndani ya $2"
+
+#~ msgid "Unsupported paste format"
+#~ msgstr "Muundo wa kubandika hauungwa mkono"
+
+#~ msgid "Unsupported paste format:"
+#~ msgstr "Muundo wa kubandika hauungwa mkono:"
+
+#~ msgid "Unknown question type:"
+#~ msgstr "Aina isiyojulikana ya swali:"
+
+#~ msgid "Enter command"
+#~ msgstr "Weka amri"
 
 #~ msgid "Module ID"
 #~ msgstr "Kitambulisho cha Moduli"
