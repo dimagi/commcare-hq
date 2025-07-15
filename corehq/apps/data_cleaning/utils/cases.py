@@ -100,7 +100,7 @@ def _get_default_label(prop_id):
     return prop_id.replace('_', ' ').title()
 
 
-def _get_property_details_from_data_dictionary(domain, case_type):
+def get_property_details_from_data_dictionary(domain, case_type):
     if not domain_has_privilege(domain, privileges.DATA_DICTIONARY):
         return {}
     from corehq.apps.data_dictionary.models import CaseType
@@ -129,7 +129,7 @@ def get_case_property_details(domain, case_type):
         include_parent_properties=False,
         exclude_deprecated_properties=False,
     ).get(case_type, [])
-    data_dictionary_details = _get_property_details_from_data_dictionary(domain, case_type)
+    data_dictionary_details = get_property_details_from_data_dictionary(domain, case_type)
     properties = set(properties).union(data_dictionary_details.keys())
     for prop_id in properties:
         details[prop_id] = data_dictionary_details.get(
