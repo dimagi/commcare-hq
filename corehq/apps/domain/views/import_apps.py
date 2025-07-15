@@ -57,11 +57,11 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
                 cancel_url=request.path_info,
                 validated_data=validated_data
             )
-            next_action = 'process_second_step'
+            next_action = 'import_app'
         return self.get(request, form=form, next_action=next_action, *args, **kwargs)
 
     @hq_hx_action('post')
-    def process_second_step(self, request, *args, **kwargs):
+    def import_app(self, request, *args, **kwargs):
         from corehq.apps.app_manager.views.apps import clear_app_cache
 
         form = ImportAppForm(
@@ -71,7 +71,7 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
             files=request.FILES
         )
 
-        next_action = 'process_second_step'
+        next_action = 'import_app'
 
         if form.is_valid():
             clear_app_cache(request, self.domain)
