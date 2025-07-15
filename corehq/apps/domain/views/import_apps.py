@@ -37,14 +37,14 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
         context.update({
             'form': form or ExtractAppInfoForm(),
             'container_id': self.container_id,
-            'next_action': next_action or 'process_first_step',
+            'next_action': next_action or 'extract_app_info_from_url',
         })
         return context
 
     @hq_hx_action('post')
-    def process_first_step(self, request, *args, **kwargs):
+    def extract_app_info_from_url(self, request, *args, **kwargs):
         form = ExtractAppInfoForm(request.POST)
-        next_action = 'process_first_step'
+        next_action = 'extract_app_info_from_url'
         if form.is_valid():
             # Store the validated data for use in the second step
             validated_data = {
