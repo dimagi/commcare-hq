@@ -643,4 +643,6 @@ $(function () {
     $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
     $("#new-user-modal").koApplyBindings(newUserCreation);
     $("#new-users-list").koApplyBindings(newUserCreation);
+    // TODO update with new bindings similar to invitationsList in web_users.js
+    $("#mobile-worker-confirmation-panel").koApplyBindings(newUserCreation);
 });
