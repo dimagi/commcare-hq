@@ -59,6 +59,7 @@ from corehq.apps.domain.views.settings import (
     FeaturePreviewsView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
+    ImportAppFromAnotherServerView,
     logo,
 )
 from corehq.apps.domain.views.sms import PublicSMSRatesView, SMSRatesView
