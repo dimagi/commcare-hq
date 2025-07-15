@@ -3112,7 +3112,7 @@ class ExtractAppInfoForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
-            crispy.HTML(render_to_string('domain/partials/import_app_step_1_instruction.html', {})),
+            crispy.HTML(render_to_string('domain/partials/how_to_start_with_import_app_feature.html', {})),
             crispy.Field('app_url', placeholder="https://[server]/a/[domain]/apps/view/[app_id]/..."),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -3216,7 +3216,7 @@ class ImportAppForm(forms.Form):
         download_url = self.construct_download_url(source_server, source_domain, app_id)
 
         self.helper.layout = crispy.Layout(
-            crispy.HTML(render_to_string('domain/partials/import_app_step_2_instruction.html', {
+            crispy.HTML(render_to_string('domain/partials/how_to_download_app_json.html', {
                 'download_url': download_url,
             })),
             crispy.Field('app_name'),
