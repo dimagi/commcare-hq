@@ -74,7 +74,6 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
         next_action = 'process_second_step'
 
         if form.is_valid():
-            from corehq.apps.domain.views.settings import ImportAppFromAnotherServerView
             clear_app_cache(request, self.domain)
             name = form.cleaned_data.get('app_name')
             file = form.cleaned_data.get('app_file')
@@ -87,13 +86,21 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
             new_app_id = app._id
             response = self.import_app_step_3_response(request, source_server, source_domain, source_app_id,
                                                    new_app_id)
-            # Add query params to the url so user won't lost the instruction page if refresh the page accidentally
-            current_url = reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain])
-            query_params = (f"?source_server={source_server}&source_domain={source_domain}&"
-                            f"source_app_id={source_app_id}&new_app_id={new_app_id}")
-            response["HX-Push-Url"] = current_url + query_params
+            response["HX-Push-Url"] = self._add_params_to_url(
+                source_server, source_domain, source_app_id, new_app_id
+            )
             return response
         return self.get(request, form=form, next_action=next_action, *args, **kwargs)
+
+    def _add_params_to_url(self, source_server, source_domain, source_app_id, new_app_id):
+        # Add query params to the url so user won't lost the instruction page if refresh the page accidentally
+        from corehq.apps.domain.views.settings import ImportAppFromAnotherServerView
+        current_url = reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain])
+        query_params = (
+            f"?source_server={source_server}&source_domain={source_domain}&"
+            f"source_app_id={source_app_id}&new_app_id={new_app_id}"
+        )
+        return current_url + query_params
 
     def import_app_step_3_response(self, request, source_server, source_domain, source_app_id, new_app_id):
         from corehq.apps.app_manager.views.utils import back_to_main
