@@ -118,7 +118,7 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
         })
 
     @hq_hx_action('get')
-    def recent_import_details(self, request, *args, **kwargs):
+    def get_instructions(self, request, *args, **kwargs):
         source_server = request.GET.get('source_server')
         source_domain = request.GET.get('source_domain')
         source_app_id = request.GET.get('source_app_id')
