@@ -139,7 +139,7 @@ def get_case_property_details(domain, case_type):
                 data_type=DataType.TEXT,
                 prop_id=prop_id,
                 is_editable=True,
-                options=None,
+                options=[],
             )._asdict(),
         )
     details.update(_get_system_property_details())
