@@ -90,6 +90,7 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
         return self.get(request, form=form, next_action=next_action, *args, **kwargs)
 
     def import_app_step_3_response(self, request, source_server, source_domain, source_app_id, new_app_id):
+        from corehq.apps.app_manager.views.utils import back_to_main
         #TODO: make this a constant in later commit
         server_mapping = {
             'production': 'www',
@@ -99,9 +100,11 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
         source_multimedia_url = (f"https://{server_mapping[source_server]}.commcarehq.org/a/{source_domain}/apps/"
                                  f"view/{source_app_id}/settings/#multimedia-tab")
         current_multimedia_url = reverse(BulkUploadMultimediaView.urlname, args=[self.domain, new_app_id])
+        new_app_url = back_to_main(request, self.domain, new_app_id).url
         return self.render_htmx_partial_response(request, 'domain/import_app_step_3_instruction.html', {
             'source_multimedia_url': source_multimedia_url,
             'current_multimedia_url': current_multimedia_url,
+            'new_app_url': new_app_url,
         })
 
     @hq_hx_action('get')
