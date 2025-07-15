@@ -13,6 +13,12 @@ from corehq.apps.hqmedia.views import BulkUploadMultimediaView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
+SERVER_SUBDOMAIN_MAPPING = {
+    'production': 'www',
+    'india': 'india',
+    'eu': 'eu',
+}
+
 
 @method_decorator(
     [
@@ -91,14 +97,8 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
 
     def import_app_step_3_response(self, request, source_server, source_domain, source_app_id, new_app_id):
         from corehq.apps.app_manager.views.utils import back_to_main
-        #TODO: make this a constant in later commit
-        server_mapping = {
-            'production': 'www',
-            'india': 'india',
-            'eu': 'eu',
-        }
-        source_multimedia_url = (f"https://{server_mapping[source_server]}.commcarehq.org/a/{source_domain}/apps/"
-                                 f"view/{source_app_id}/settings/#multimedia-tab")
+        source_multimedia_url = (f"https://{SERVER_SUBDOMAIN_MAPPING[source_server]}.commcarehq.org/a/"
+                                 f"{source_domain}/apps/view/{source_app_id}/settings/#multimedia-tab")
         current_multimedia_url = reverse(BulkUploadMultimediaView.urlname, args=[self.domain, new_app_id])
         new_app_url = back_to_main(request, self.domain, new_app_id).url
         return self.render_htmx_partial_response(request, 'domain/import_app_step_3_instruction.html', {
