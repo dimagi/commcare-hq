@@ -221,6 +221,7 @@ class privilege_enabled:
         'corehq.apps.users.views.mobile.users.domain_has_privilege',
         'corehq.pillows.case_search.domain_has_privilege',
         'django_prbac.decorators.has_privilege',
+        'corehq.apps.data_cleaning.utils.cases.domain_has_privilege',
     )
 
     def __init__(self, privilege_slug):
