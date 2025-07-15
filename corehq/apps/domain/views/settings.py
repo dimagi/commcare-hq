@@ -10,6 +10,7 @@ from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetVie
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
@@ -58,6 +59,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -582,15 +584,28 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 messages.error(request, _(e.message))
                 return HttpResponseRedirect(request.path_info)
         response = super().post(request, *args, **kwargs)
-        uidb64 = kwargs.get('uidb64')
-        uid = urlsafe_base64_decode(uidb64)
-        user = User.objects.get(pk=uid)
-        couch_user = CouchUser.from_django_user(user)
-        clear_login_attempts(couch_user)
-        domain = couch_user.domain if couch_user.is_commcare_user() else None
-        log_user_change(by_domain=None, for_domain=domain, couch_user=couch_user, changed_by_user=couch_user,
-                        changed_via=USER_CHANGE_VIA_WEB, change_messages=UserChangeMessage.password_reset(),
-                        by_domain_required_for_log=False, for_domain_required_for_log=False)
+
+        if self.get_context_data().get('form').is_valid():
+            uidb64 = kwargs.get('uidb64')
+            uid = urlsafe_base64_decode(uidb64)
+            user = User.objects.get(pk=uid)
+            couch_user = CouchUser.from_django_user(user)
+            clear_login_attempts(couch_user)
+
+            domain = couch_user.domain if couch_user.is_commcare_user() else None
+            log_user_change(by_domain=None, for_domain=domain, couch_user=couch_user, changed_by_user=couch_user,
+                            changed_via=USER_CHANGE_VIA_WEB, change_messages=UserChangeMessage.password_reset(),
+                            by_domain_required_for_log=False, for_domain_required_for_log=False)
+            context = {'username': couch_user.raw_username}
+            email = couch_user.get_email()
+            send_html_email_async.delay(
+                subject=_('Successful password reset for {}').format(couch_user.raw_username),
+                recipient=email,
+                html_content=render_to_string('domain/email/password_reset_confirmation.html', context),
+                text_content=render_to_string('domain/email/password_reset_confirmation.txt', context),
+                domain=domain,
+                use_domain_gateway=True
+            )
         return response
 
 
