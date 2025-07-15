@@ -3146,8 +3146,8 @@ class ExtractAppInfoForm(forms.Form):
         current_server = settings.SERVER_ENVIRONMENT
         if source_server == current_server:
             self.add_error('app_url', _(
-                "The source app url is in the same server as current server. "
-                "To copy app in the same server, please use Copy Application feature."
+                "The source app url matches the current server. "
+                "To copy an app within the same server, please use the Copy Application feature."
             ))
 
         match = re.match(
