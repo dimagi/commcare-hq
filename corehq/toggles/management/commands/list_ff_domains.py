@@ -44,4 +44,4 @@ def get_enabled_domains(toggle_slug):
 
 def get_domain_subscription(domain):
     subs = Subscription.get_active_subscription_by_domain(domain)
-    return subs.plan_version.plan.name
+    return subs.plan_version.plan.name if subs else None
