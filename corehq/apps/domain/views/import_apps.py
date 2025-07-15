@@ -111,7 +111,7 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
         )
         current_multimedia_url = reverse(BulkUploadMultimediaView.urlname, args=[self.domain, new_app_id])
         new_app_url = back_to_main(request, self.domain, new_app_id).url
-        return self.render_htmx_partial_response(request, 'domain/import_app_step_3_instruction.html', {
+        return self.render_htmx_partial_response(request, 'domain/partials/import_app_step_3_instruction.html', {
             'source_multimedia_url': source_multimedia_url,
             'current_multimedia_url': current_multimedia_url,
             'new_app_url': new_app_url,
