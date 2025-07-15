@@ -3429,7 +3429,7 @@ msgid "Mobile Workers"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/export/forms.py corehq/apps/reports/models.py
+#: corehq/apps/export/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
 #: corehq/apps/users/views/mobile/custom_data_fields.py
@@ -3753,7 +3753,31 @@ msgid "You don't have permission to use connect_username field"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
+msgid "You must provide the user's email to send a confirmation email."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Users will provide their own password on confirmation."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "You must require account confirmation to send a confirmation email."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "The request resulted in the following errors: {}"
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"The confirmation email can not be sent because this user's account is "
+"already confirmed."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"This user has no email. You must provide the user's email to send a "
+"confirmation email."
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
@@ -4045,7 +4069,6 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
@@ -6581,15 +6604,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
 msgid "Import Application"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-#, python-format
-msgid ""
-"\n"
-"          <p>Import application <strong>%(app_name)s</strong> from domain "
-"<strong>%(app_domain)s</strong>?</p>\n"
-"        "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
@@ -10619,13 +10633,13 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
 "\n"
-"                                From CommCare ODK's install screen menu, "
-"bring up the\n"
-"                                application menu by hitting the three dots "
-"in the upper\n"
-"                                right or by hitting the menu button on your "
-"phone to\n"
-"                                select Offline Install\n"
+"                                Login to the CommCare App, tap the three "
+"dots in\n"
+"                                the top-right corner, select \"Update App,\" "
+"then\n"
+"                                tap the three-dot menu again and choose "
+"\"Offline\n"
+"                                Update.\"\n"
 "                              "
 msgstr ""
 
@@ -20153,6 +20167,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
+#, python-format
+msgid ""
+"\n"
+"        %(server_location)s Server\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
 msgid ""
 "\n"
 "          We are calling your phone right now, please enter the\n"
@@ -21140,6 +21163,10 @@ msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Last Access Date [UTC]"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Active in Project"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/users/bulk_download.py
@@ -27476,6 +27503,11 @@ msgid "Sign Out"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+msgid "Server Location"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 msgid "Help &amp; Resources"
 msgstr ""
 
@@ -33413,6 +33445,14 @@ msgstr ""
 msgid "Deactivated Mobile Workers"
 msgstr ""
 
+#: corehq/apps/reports/models.py
+msgid "Active Web Users"
+msgstr ""
+
+#: corehq/apps/reports/models.py
+msgid "Deactivated Web Users"
+msgstr ""
+
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
@@ -34392,6 +34432,10 @@ msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py
 msgid "is active"
+msgstr ""
+
+#: corehq/apps/reports/standard/users/reports.py
+msgid "is active in domain"
 msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py
@@ -42394,6 +42438,14 @@ msgid "Username contains invalid characters."
 msgstr ""
 
 #: corehq/apps/users/forms.py
+msgid "Password Reset Email"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "Send Password Reset Link"
+msgstr ""
+
+#: corehq/apps/users/forms.py
 msgid "Require Account Confirmation?"
 msgstr ""
 
@@ -44844,6 +44896,26 @@ msgstr ""
 msgid ""
 "You have successfully confirmed the {user.raw_username} account. You can now "
 "login"
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "This user is inactive and cannot reset their password."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "This user account cannot reset the password."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "This user does not have an email address set."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "Password reset email failed to send - "
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "Password reset email sent to {}"
 msgstr ""
 
 #: corehq/apps/users/views/utils.py
@@ -48234,6 +48306,10 @@ msgstr ""
 msgid "Forward Forms"
 msgstr ""
 
+#: corehq/motech/repeaters/models.py
+msgid "Forward Form Metadata to Commcare Connect"
+msgstr ""
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Cases"
 msgstr ""
@@ -49203,6 +49279,18 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "US"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "India"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "EU"
 msgstr ""
 
 #: corehq/util/jsonattrs.py

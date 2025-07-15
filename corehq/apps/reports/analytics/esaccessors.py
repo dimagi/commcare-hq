@@ -323,9 +323,8 @@ def get_groups_by_querystring(domain, query, case_sharing_only):
 def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
-        .user_ids(user_ids)
-        .show_inactive()
-        .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
+            .user_ids(user_ids)
+            .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):

@@ -2,7 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
-
 {% js_entry_b3 'app_manager/js/import_app' %}
 
 {% block page_navigation %}
@@ -15,31 +14,41 @@
   {% registerurl 'import_app' domain %}
   <div class="appmanager-content-single-page">
     <h1>{% trans "Import Application" %}</h1>
-    {% initial_page_data 'export_json' app.export_json %}
-    <form action="{% url "import_app" domain %}" id="app-import-form" method="post" enctype="multipart/form-data">
+    <form
+      action="{% url "import_app" domain %}"
+      id="app-import-form"
+      method="post"
+      enctype="multipart/form-data"
+    >
       {% csrf_token %}
-      {% if app %}
-        {% blocktrans with app_name=app.name app_domain=app.domain %}
-          <p>Import application <strong>{{ app_name }}</strong> from domain <strong>{{ app_domain }}</strong>?</p>
-        {% endblocktrans %}
-      {% endif %}
       <div class="form-horizontal">
         <div class="form-group">
           <label class="{% css_label_class %} control-label">Name</label>
           <div class="{% css_field_class %}">
-            <input class="form-control" type="text" name="name"/>
+            <input class="form-control" type="text" name="name" />
           </div>
         </div>
         <div class="form-group">
-          <label for="source_file" class="{% css_label_class %} control-label">{% trans "Application Source File" %}</label>
+          <label for="source_file" class="{% css_label_class %} control-label"
+            >{% trans "Application Source File" %}</label
+          >
           <div class="{% css_field_class %}">
-            <input id="source_file" type="file" name="source_file" data-bind="value: file"/>
+            <input
+              id="source_file"
+              type="file"
+              name="source_file"
+              data-bind="value: file"
+            />
           </div>
         </div>
         <div class="form-actions">
           <div class="{% css_action_class %}">
-            <a href="#" class="btn btn-default historyBack">{% trans "No, take me back." %}</a>
-            <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
+            <a href="#" class="btn btn-default historyBack"
+              >{% trans "No, take me back." %}</a
+            >
+            <button class="btn btn-primary" type="submit">
+              {% trans 'Yes, import application' %}
+            </button>
           </div>
         </div>
       </div>
