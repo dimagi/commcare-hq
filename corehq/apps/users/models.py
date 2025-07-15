@@ -1764,6 +1764,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # used by user provisioning workflow. defaults to true unless explicitly overridden during
     # user creation
     is_account_confirmed = BooleanProperty(default=True)
+    self_set_password = BooleanProperty(default=False)
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
@@ -2005,6 +2006,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.is_active = True
         self.is_account_confirmed = True
         self.set_password(password)
+        self.self_set_password = True
         self.save()
 
     def get_case_sharing_groups(self, domain=None):
