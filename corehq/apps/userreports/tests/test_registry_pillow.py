@@ -55,6 +55,30 @@ class RegistryDataSourceTableManagerTest(TestCase):
         table_manager._add_or_update_data_source(data_source_1)
         self.assertEqual(0, len(table_manager.relevant_domains))
 
+    def test_add_adapter_for_data_source_removes_old_configs(self, ignored_mock):
+        data_source_1, table_manager = self._bootstrap_manager_with_data_source()
+
+        table_manager._add_adapter_for_data_source(data_source_1)
+        table_manager._add_adapter_for_data_source(data_source_1)
+        assert len(table_manager.get_adapters(self.domain)) == 1
+
+    def test_add_adapter_for_data_source_removes_adapters_from_old_domains(self, ignored_mock):
+        data_source_1, table_manager = self._bootstrap_manager_with_data_source()
+        table_manager._add_adapter_for_data_source(data_source_1)
+        assert set(data_source_1.data_domains) == {self.domain, "granted-domain"}
+
+        self.registry_1.grants.create(
+            from_domain="new-domain",
+            to_domains=[self.domain],
+        )
+        self.registry_1.grants.filter(from_domain="granted-domain").delete()
+        assert set(data_source_1.data_domains) == {self.domain, "new-domain"}
+
+        table_manager._add_adapter_for_data_source(data_source_1)
+        assert len(table_manager.get_adapters(self.domain)) == 1
+        assert len(table_manager.get_adapters("new-domain")) == 1
+        assert not table_manager.get_adapters("granted-domain")
+
     def test_update_modified_since_add_adapter_same_domain(self, ignored_mock):
         data_source_1, table_manager = self._bootstrap_manager_with_data_source()
 
