@@ -84,8 +84,8 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
             source_domain = form.cleaned_data.get('source_domain')
             source_app_id = form.cleaned_data.get('app_id')
             new_app_id = app._id
-            response = self.import_app_step_3_response(request, source_server, source_domain, source_app_id,
-                                                   new_app_id)
+            response = self.render_import_multimedia_instructions(request, source_server, source_domain,
+                                                                  source_app_id, new_app_id)
             response["HX-Push-Url"] = self._add_params_to_url(
                 source_server, source_domain, source_app_id, new_app_id
             )
@@ -102,7 +102,8 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
         )
         return current_url + query_params
 
-    def import_app_step_3_response(self, request, source_server, source_domain, source_app_id, new_app_id):
+    def render_import_multimedia_instructions(self, request, source_server, source_domain, source_app_id,
+                                              new_app_id):
         from corehq.apps.app_manager.views.utils import back_to_main
         source_multimedia_url = (
             f"https://{SERVER_SUBDOMAIN_MAPPING[source_server]}.commcarehq.org/a/"
@@ -122,4 +123,5 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
         source_domain = request.GET.get('source_domain')
         source_app_id = request.GET.get('source_app_id')
         new_app_id = request.GET.get('new_app_id')
-        return self.import_app_step_3_response(request, source_server, source_domain, source_app_id, new_app_id)
+        return self.render_import_multimedia_instructions(request, source_server, source_domain, source_app_id,
+                                                          new_app_id)
