@@ -3,12 +3,14 @@ import sys
 from couchdbkit import ResourceNotFound
 from django.core.management.base import BaseCommand
 
+from corehq.apps.accounting.models import Subscription
 from corehq.toggles import StaticToggle, Toggle
 
 
 class Command(BaseCommand):
     help = """
-    Prints the list of domains that have <feature_flag> enabled.
+    Prints the list of domains that have <feature_flag> enabled, and
+    their subscriptions.
     """
 
     def add_arguments(self, parser):
@@ -22,7 +24,9 @@ class Command(BaseCommand):
 
         domains = get_enabled_domains(toggle_slug)
         self.stdout.write(f"{len(domains)} domain(s) enabled:")
-        self.stdout.write('\n'.join(domains))
+        for domain in domains:
+            subs = get_domain_subscription(domain)
+            self.stdout.write(f'{domain}\t({subs})')
 
 
 def toggle_exists(toggle_slug):
@@ -36,3 +40,8 @@ def toggle_exists(toggle_slug):
 def get_enabled_domains(toggle_slug):
     toggle = StaticToggle(toggle_slug.lower(), '', '')
     return toggle.get_enabled_domains()
+
+
+def get_domain_subscription(domain):
+    subs = Subscription.get_active_subscription_by_domain(domain)
+    return subs.plan_version.plan.name
