@@ -57,8 +57,6 @@ class Command(BaseCommand):
                     print(f'Failed to refresh app {app.get_id} in domain {domain}: {str(e)}')
                     success = False
                     domain_success = False
-                    # No need to continue if one app fails, we will have to restart the migration for this domain
-                    break
 
             clear_caches_case_data_cleaning(domain)
             if domain_success:
