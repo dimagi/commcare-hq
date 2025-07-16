@@ -197,3 +197,32 @@ def get_payment_batch_numbers_for_domain(domain):
         batch_numbers.update(chunk_batch_numbers)
 
     return [batch_number for batch_number in batch_numbers if batch_number]
+
+
+def revert_payment_verification(domain, case_ids: list):
+    if not case_ids:
+        return []
+
+    for case in CommCareCase.objects.iter_cases(case_ids, domain):
+        payment_status_value = case.get_case_property(PaymentProperties.PAYMENT_STATUS)
+        if PaymentStatus.from_value(payment_status_value) != PaymentStatus.PENDING_SUBMISSION:
+            raise PaymentRequestError(
+                _("Only payments in the 'Pending Submission' state are eligible for verification reversal.")
+            )
+
+    payment_properties_update = {
+        PaymentProperties.PAYMENT_VERIFIED: str(False),
+        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: '',
+        PaymentProperties.PAYMENT_VERIFIED_BY: '',
+        PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: '',
+        PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
+    }
+    updated_cases = []
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        case_changes = [(case_id, payment_properties_update, False) for case_id in case_ids_chunk]
+        xform, cases = bulk_update_cases(
+            domain, case_changes, 'momo_payment_verification_reverted'
+        )
+        updated_cases.extend(cases)
+
+    return updated_cases

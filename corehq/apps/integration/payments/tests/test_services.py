@@ -11,7 +11,8 @@ from corehq.apps.users.models import WebUser
 
 from corehq.motech.models import ConnectionSettings
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
-from corehq.apps.integration.payments.services import verify_payment_cases, request_payments_for_cases
+from corehq.apps.integration.payments.services import verify_payment_cases, request_payments_for_cases, \
+    revert_payment_verification
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.integration.payments.services import _request_payment
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
@@ -301,6 +302,91 @@ class TestRequestPaymentsForCases(TestCase):
         assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
         assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.REQUEST_FAILED
         assert payment_property_update[PaymentProperties.PAYMENT_ERROR] == 'Invalid payee details'
+
+
+class TestRevertPaymentVerification(TestCase):
+    domain = "test-domain"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = CaseFactory(cls.domain)
+
+    def setUp(self):
+        self.verified_case = _create_case(
+            self.factory,
+            name='verified_case',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+                PaymentProperties.PAYMENT_VERIFIED_BY: 'test_user',
+                PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: 'test_user_id',
+                PaymentProperties.PAYMENT_VERIFIED_ON_UTC: '2024-01-01',
+            }
+        )
+        self.addCleanup(self.verified_case.delete)
+
+    def test_revert_verification_success(self):
+        reverted_cases = revert_payment_verification(self.domain, [self.verified_case.case_id])
+        assert len(reverted_cases) == 1
+
+        self.verified_case.refresh_from_db()
+        case_json = self.verified_case.case_json
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED] == 'False'
+        assert PaymentStatus.from_value(case_json[PaymentProperties.PAYMENT_STATUS]) == PaymentStatus.NOT_VERIFIED
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY] == ''
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID] == ''
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_ON_UTC] == ''
+
+    def test_revert_verification_multiple_cases(self):
+        verified_case_2 = _create_case(
+            self.factory,
+            name='verified_case_2',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+                PaymentProperties.PAYMENT_VERIFIED_BY: 'test_user',
+                PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: 'test_user_id',
+                PaymentProperties.PAYMENT_VERIFIED_ON_UTC: '2024-01-01',
+            }
+        )
+        self.addCleanup(verified_case_2.delete)
+
+        case_ids = [self.verified_case.case_id, verified_case_2.case_id]
+
+        reverted_cases = revert_payment_verification(self.domain, case_ids)
+
+        assert len(reverted_cases) == 2
+        for case in [self.verified_case, verified_case_2]:
+            case.refresh_from_db()
+            case_json = case.case_json
+            assert case_json[PaymentProperties.PAYMENT_VERIFIED] == 'False'
+            status = PaymentStatus.from_value(case_json[PaymentProperties.PAYMENT_STATUS])
+            assert status == PaymentStatus.NOT_VERIFIED
+            assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY] == ''
+            assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID] == ''
+            assert case_json[PaymentProperties.PAYMENT_VERIFIED_ON_UTC] == ''
+
+    def test_revert_verification_invalid_status(self):
+        submitted_case = _create_case(
+            self.factory,
+            name='submitted_case',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+            }
+        )
+        self.addCleanup(submitted_case.delete)
+
+        with pytest.raises(
+            PaymentRequestError,
+            match="Only payments in the 'Pending Submission' state are eligible for verification reversal."
+        ):
+            revert_payment_verification(self.domain, [self.verified_case.case_id, submitted_case.case_id])
+
+    def test_revert_verification_empty_case_ids(self):
+        reverted_cases = revert_payment_verification(self.domain, [])
+        assert len(reverted_cases) == 0
 
 
 def _create_case(factory, name, data):
