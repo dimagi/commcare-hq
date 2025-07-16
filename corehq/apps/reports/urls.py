@@ -155,9 +155,6 @@ urlpatterns = [
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
 
-    # V2 Reports
-    url(r'^v2/', include('corehq.apps.reports.v2.urls')),
-
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
     url(r'^tableau/ticket/$', get_tableau_server_ticket, name='get_tableau_server_ticket'),
 
