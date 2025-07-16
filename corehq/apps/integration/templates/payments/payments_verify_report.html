@@ -36,6 +36,18 @@
       <span> {% trans "Verify Selected" %} </span>
     </button>
   </p>
+  <p>
+    <button
+      id="revert-verification-selected-btn"
+      class="btn btn-primary"
+      type="button"
+      disabled="true"
+      data-bs-toggle="modal"
+      data-bs-target="#revert-verification-confirmation-modal"
+    >
+      <span> {% trans "UnVerify Selected" %} </span>
+    </button>
+  </p>
   <div
     id="payment-verify-table"
     hx-trigger="load"
@@ -46,6 +58,7 @@
     </div>
   </div>
   {% include "payments/partials/payments_confirmation_modal.html" %}
+  {% include "payments/partials/payments_revert_verification_modal.html" %}
 {% endblock %}
 
 {% block modals %}
