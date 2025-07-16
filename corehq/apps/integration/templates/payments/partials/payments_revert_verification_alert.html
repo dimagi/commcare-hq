@@ -1,0 +1,10 @@
+{% load i18n %}
+<div class="alert alert-success alert-dismissable fade show" role="alert">
+  {% trans 'Successfully reverted verification for selected record(s). Status for these will be refreshed in a few seconds.' %}
+  <button
+    type="button"
+    class="btn-close float-end"
+    data-bs-dismiss="alert"
+    aria-label="{% trans Close %}"
+  ></button>
+</div>
