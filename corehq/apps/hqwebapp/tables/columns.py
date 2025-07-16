@@ -3,7 +3,7 @@ from datetime import date
 import pytz
 from django_tables2 import columns
 
-from corehq.apps.reports.v2.utils import report_date_to_json
+from corehq.apps.reports.util import report_date_to_json
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.timezones.utils import parse_date
 
