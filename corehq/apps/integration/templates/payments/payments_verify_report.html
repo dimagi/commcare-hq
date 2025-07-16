@@ -24,30 +24,34 @@
 
   <div id="verify-alert"></div>
   <div id="revert-verification-alert"></div>
-  <p>
-    <button
-      id="verify-selected-btn"
-      class="btn btn-primary"
-      type="button"
-      disabled="true"
-      data-bs-toggle="modal"
-      data-bs-target="#verify-confirmation-modal"
-    >
-      <span> {% trans "Verify Selected" %} </span>
-    </button>
-  </p>
-  <p>
-    <button
-      id="revert-verification-selected-btn"
-      class="btn btn-primary"
-      type="button"
-      disabled="true"
-      data-bs-toggle="modal"
-      data-bs-target="#revert-verification-confirmation-modal"
-    >
-      <span> {% trans "UnVerify Selected" %} </span>
-    </button>
-  </p>
+  <div class="col-5 mb-2 mt-4">
+    <div class="row">
+      <div class="col-3">
+        <button
+          id="verify-selected-btn"
+          class="btn btn-primary"
+          type="button"
+          disabled="true"
+          data-bs-toggle="modal"
+          data-bs-target="#verify-confirmation-modal"
+        >
+          <span> {% trans "Verify Selected" %} </span>
+        </button>
+      </div>
+      <div class="col-4">
+        <button
+          id="revert-verification-selected-btn"
+          class="btn btn-primary"
+          type="button"
+          disabled="true"
+          data-bs-toggle="modal"
+          data-bs-target="#revert-verification-confirmation-modal"
+        >
+          <span> {% trans "UnVerify Selected" %} </span>
+        </button>
+      </div>
+    </div>
+  </div>
   <div
     id="payment-verify-table"
     hx-trigger="load"
