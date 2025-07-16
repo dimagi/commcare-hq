@@ -1677,8 +1677,15 @@ msgstr "जब सभी केस प्रॉपर्टी मेल खा�
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
-msgstr "फ़िल्टर की सीमा से बाहर। पृष्ठ रीफ़्रेश पर दिखाई नहीं देगा।"
+msgid "Reassigned"
+msgstr "पुनः सौंपा गया"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Copied!"
+msgid "Copied"
+msgstr "कॉपी किया गया!"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1687,13 +1694,22 @@ msgstr "अद्यतित"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
-msgstr "केस कॉपी किया गया"
+msgid "Today"
+msgstr "आज"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
-msgstr "केस कॉपी किए गए"
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Reassigned <%- count %> cases"
+msgstr "<%- count %> स्थान डाउनलोड करें"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Copied <%- count %> cases"
+msgstr "<%- count %> स्थान डाउनलोड करें"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -4224,6 +4240,15 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr "फ़िल्टर की सीमा से बाहर। पृष्ठ रीफ़्रेश पर दिखाई नहीं देगा।"
+
+#~ msgid "Case copied"
+#~ msgstr "केस कॉपी किया गया"
+
+#~ msgid "Cases copied"
+#~ msgstr "केस कॉपी किए गए"
 
 #~ msgid "Select None"
 #~ msgstr "कोई नहीं चुनें"

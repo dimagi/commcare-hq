@@ -1560,7 +1560,12 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
+msgid "Reassigned"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Copied"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
@@ -1570,12 +1575,17 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
+msgid "Today"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
+msgid "Reassigned <%- count %> cases"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Copied <%- count %> cases"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
