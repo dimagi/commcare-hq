@@ -55,14 +55,14 @@ def term(field, value):
 def OR(*filters):
     """Filter docs to match any of the filters passed in"""
     if len(filters) > MAX_FILTER_COUNT:
-        notify_error("Exceeded max number of filters allowed")
+        notify_error("Exceeded max number of filters allowed", details={"count": len(filters)})
     return {"bool": {"should": filters}}
 
 
 def AND(*filters):
     """Filter docs to match all of the filters passed in"""
     if len(filters) > MAX_FILTER_COUNT:
-        notify_error("Exceeded max number of filters allowed")
+        notify_error("Exceeded max number of filters allowed", details={"count": len(filters)})
     return {"bool": {"filter": filters}}
 
 
