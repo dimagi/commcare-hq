@@ -221,21 +221,26 @@ class InvalidPropertyException(Exception):
         super().__init__(message)
 
 
-class MissingPropertyException(Exception):
-    def __init__(self, *missing_properties):
-        self.missing_properties = missing_properties
-        if self.missing_properties:
-            message = f"The following properties were not found: {', '.join(self.missing_properties)}"
+class MissingPropertyMapException(Exception):
+    def __init__(self, *missing_mappings):
+        self.missing_mappings = missing_mappings
+        if self.missing_mappings:
+            mappings = [
+                f"{mapping['case_property']}->{mapping['question_path']}"
+                for mapping in self.missing_mappings
+            ]
+            message = f"The following mappings were not found: {', '.join(mappings)}"
         else:
-            message = "No missing properties specified"
+            message = "Missing properties were not found"
         super().__init__(message)
 
 
 class DiffConflictException(Exception):
-    def __init__(self, *conflicting_keys):
-        self.conflicting_keys = conflicting_keys
-        if self.conflicting_keys:
-            message = f"The following keys were affected by multiple actions: {', '.join(self.conflicting_keys)}"
+    def __init__(self, *conflicting_mappings):
+        self.conflicting_mappings = conflicting_mappings
+        if self.conflicting_mappings:
+            mappings = ', '.join(self.conflicting_mappings)
+            message = f"The following mappings were affected by multiple actions: {mappings}"
         else:
-            message = "No conflicting keys specified"
+            message = "No conflicting mappings specified"
         super().__init__(message)

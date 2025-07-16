@@ -96,7 +96,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationError,
     InvalidPropertyException,
     DiffConflictException,
-    MissingPropertyException,
+    MissingPropertyMapException,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -404,8 +404,23 @@ class UpdateCaseAction(FormAction):
             # must continue to use `update_multi`, as there are multiple questions saving to the same case property
             return False
 
-        normalized_update = {k: v[0] for (k, v) in self.update_multi.items()}
+        normalized_update = {k: v[0] for (k, v) in self.update_multi.items() if v}
         self.update = normalized_update
+        self.update_multi = None
+
+        return True
+
+    def make_single(self):
+        '''
+        Force `update_multi` into `update`, even if it means losing values
+        '''
+        if not self.update_multi:
+            return False
+
+        for case_property, updates in self.update_multi.items():
+            if updates:
+                self.update[case_property] = updates[0]
+
         self.update_multi = None
 
         return True
@@ -416,46 +431,104 @@ class UpdateCaseAction(FormAction):
 
     DIFF_VALUE_UPDATED = 'updated'
 
-    def apply_updates(self, updates, diffs):
+    def apply_updates(self, updates, diffs, allow_conflicts=True):
         self.check_for_duplicate_keys(diffs)
-        self.check_for_invalid_updates(diffs)
 
         self.update_object(updates)
 
+        self.make_multi()
+        self.check_for_invalid_updates(diffs)
+
         if self.DIFF_ACTION_ADD in diffs:
-            for (key, value) in diffs[self.DIFF_ACTION_ADD].items():
-                self.update[key] = ConditionalCaseUpdate(value)
+            for (key, updates) in diffs[self.DIFF_ACTION_ADD].items():
+                additions = [ConditionalCaseUpdate(value) for value in updates]
+                existing = self.update_multi.get(key, [])
+                existing = [item for item in existing if not self.find_matching_update(item, additions)]
+                additions.extend(existing)
+                self.update_multi[key] = additions
 
         if self.DIFF_ACTION_DELETE in diffs:
-            for key in diffs[self.DIFF_ACTION_DELETE]:
-                if key in self.update:
-                    del self.update[key]
+            for (key, deletions) in diffs[self.DIFF_ACTION_DELETE].items():
+                existing = self.update_multi.get(key, [])
+                for deletion in deletions:
+                    existing = [item for item in existing if item.question_path != deletion['question_path']]
+                self.update_multi[key] = existing
 
         if self.DIFF_ACTION_UPDATE in diffs:
-            for (key, value) in diffs[self.DIFF_ACTION_UPDATE].items():
-                self.update[key] = ConditionalCaseUpdate(value[self.DIFF_VALUE_UPDATED])
+            all_missing_mappings = []
+            for (key, updates) in diffs[self.DIFF_ACTION_UPDATE].items():
+                incoming_updates = {
+                    value['question_path']: ConditionalCaseUpdate(value)
+                    for value in diffs[self.DIFF_ACTION_UPDATE][key]
+                }
+                existing_updates = self.update_multi.get(key, [])
+
+                for update in existing_updates:
+                    if update.question_path in incoming_updates:
+                        update.update_mode = incoming_updates[update.question_path].update_mode
+                        incoming_updates.pop(update.question_path)
+
+                missing_mappings = [
+                    {
+                        'case_property': 'name',
+                        'question_path': value.question_path
+                    } for value in incoming_updates.values()
+                ]
+                all_missing_mappings.extend(missing_mappings)
+
+            if all_missing_mappings:
+                raise MissingPropertyMapException(*all_missing_mappings)
+
+        if allow_conflicts:
+            self.normalize_update()
+        else:
+            self.make_single()
+
+    @classmethod
+    def find_matching_update(cls, target, updates):
+        updates = updates or []
+
+        for update in updates:
+            if update.question_path == target['question_path']:
+                return update
+
+        return None
 
     def check_for_duplicate_keys(self, diffs):
-        addition_keys = set(diffs.get(self.DIFF_ACTION_ADD, {}).keys())
-        deletion_keys = set(diffs.get(self.DIFF_ACTION_DELETE, []))
-        update_keys = set(diffs.get(self.DIFF_ACTION_UPDATE, {}).keys())
+        addition_mappings = set()
+        for case_property, additions in diffs.get(self.DIFF_ACTION_ADD, {}).items():
+            for addition in additions:
+                addition_mappings.add(f'{case_property}->{addition["question_path"]}')
 
-        overlapping_addition_keys = addition_keys & (deletion_keys | update_keys)
-        overlapping_deletion_keys = deletion_keys & update_keys
-        overlapping_keys = overlapping_addition_keys | overlapping_deletion_keys
+        deletion_mappings = set()
+        for case_property, deletions in diffs.get(self.DIFF_ACTION_DELETE, {}).items():
+            for deletion in deletions:
+                deletion_mappings.add(f'{case_property}->{deletion["question_path"]}')
 
-        if overlapping_keys:
-            raise DiffConflictException(*overlapping_keys)
+        update_mappings = set()
+        for case_property, updates in diffs.get(self.DIFF_ACTION_UPDATE, {}).items():
+            for update in updates:
+                update_mappings.add(f'{case_property}->{update["question_path"]}')
+
+        overlapping_addition_mappings = addition_mappings & (deletion_mappings | update_mappings)
+        overlapping_deletion_mappings = deletion_mappings & update_mappings
+        overlapping_mappings = overlapping_addition_mappings | overlapping_deletion_mappings
+
+        if overlapping_mappings:
+            raise DiffConflictException(*overlapping_mappings)
 
     def check_for_invalid_updates(self, diffs):
-        missing_keys = []
+        missing_mappings = []
         if self.DIFF_ACTION_UPDATE in diffs:
-            for key in diffs[self.DIFF_ACTION_UPDATE].keys():
-                if key not in self.update:
-                    missing_keys.append(key)
+            for case_property, updates in diffs[self.DIFF_ACTION_UPDATE].items():
+                existing_question_paths = [item.question_path for item in self.update_multi.get(case_property, [])]
+                for incoming_update in updates:
+                    question_path = incoming_update['question_path']
+                    if (case_property not in self.update_multi) or (question_path not in existing_question_paths):
+                        missing_mappings.append({'case_property': case_property, 'question_path': question_path})
 
-            if missing_keys:
-                raise MissingPropertyException(*missing_keys)
+            if missing_mappings:
+                raise MissingPropertyMapException(*missing_mappings)
 
 
 class PreloadAction(FormAction):
@@ -493,22 +566,84 @@ class OpenCaseAction(FormAction):
     name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
 
-    DIFF_VALUE_UPDATED = 'updated'
+    DIFF_ACTION_ADD = 'add'
+    DIFF_ACTION_DELETE = 'del'
+    DIFF_ACTION_UPDATE = 'update'
 
-    def apply_updates(self, updates, diffs):
+    def apply_updates(self, updates, diffs, allow_conflicts=True):
         self.update_object(updates)
-        if self.DIFF_VALUE_UPDATED in diffs:
-            self.name_update = ConditionalCaseUpdate(diffs[self.DIFF_VALUE_UPDATED])
+        self.make_multi()
+
+        if self.DIFF_ACTION_ADD in diffs:
+            additions = {
+                value['question_path']: ConditionalCaseUpdate(value) for value in diffs[self.DIFF_ACTION_ADD]
+            }
+            name_updates = []
+            for update in self.name_update_multi:
+                update_to_insert = additions.pop(update.question_path, update)
+                name_updates.append(update_to_insert)
+
+            for update in additions.values():
+                name_updates.append(update)
+
+            self.name_update_multi = name_updates
+
+        if self.DIFF_ACTION_DELETE in diffs:
+            deletions = {
+                value['question_path']: ConditionalCaseUpdate(value) for value in diffs[self.DIFF_ACTION_DELETE]
+            }
+
+            name_updates = []
+            for update in self.name_update_multi:
+                if update.question_path not in deletions:
+                    name_updates.append(update)
+
+            self.name_update_multi = name_updates
+
+        if self.DIFF_ACTION_UPDATE in diffs:
+            updates = {
+                value['question_path']: ConditionalCaseUpdate(value) for value in diffs[self.DIFF_ACTION_UPDATE]
+            }
+
+            for update in self.name_update_multi:
+                if update.question_path in updates:
+                    update.update_mode = updates[update.question_path].update_mode
+                    updates.pop(update.question_path)
+
+            missing_mappings = [
+                {'case_property': 'name', 'question_path': value.question_path} for value in updates.values()
+            ]
+            if missing_mappings:
+                raise MissingPropertyMapException(*missing_mappings)
+
+        if allow_conflicts:
+            self.normalize_name_update()
+        else:
+            self.make_single()
 
     def make_multi(self):
         '''
         Moves any updates from `name_update` into `name_update_multi`
         '''
-        if not (self.name_update):
+        if self.name_update_multi:
             return
 
         self.name_update_multi = [self.name_update]
         self.name_update = None
+
+    def make_single(self):
+        '''
+        Force `update_name_multi` into `update_name`, even if it means losing values
+        '''
+        if not self.name_update_multi:
+            return False
+
+        if self.name_update_multi:
+            self.name_update = self.name_update_multi[-1]
+
+        self.name_update_multi = None
+
+        return True
 
     def normalize_name_update(self):
         '''
@@ -573,7 +708,7 @@ class FormActions(UpdateableDocument):
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
 
-    def with_updates(self, updates, diffs):
+    def with_updates(self, updates, diffs, allow_conflicts=True):
         '''
         Produce a new FormActions object containing all updates, including
         'open_case' and 'update_case', affected by the diffs
@@ -582,11 +717,11 @@ class FormActions(UpdateableDocument):
 
         update_case_updates = updates.pop('update_case', {})
         update_case_diffs = diffs.get('update_case', {})
-        dest.update_case.apply_updates(update_case_updates, update_case_diffs)
+        dest.update_case.apply_updates(update_case_updates, update_case_diffs, allow_conflicts)
 
         open_case_updates = updates.pop('open_case', {})
         open_case_diffs = diffs.get('open_case', {})
-        dest.open_case.apply_updates(open_case_updates, open_case_diffs)
+        dest.open_case.apply_updates(open_case_updates, open_case_diffs, allow_conflicts)
 
         dest.update_object(updates)
 

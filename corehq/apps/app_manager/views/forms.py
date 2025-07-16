@@ -231,7 +231,8 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
 
-    form.actions = _get_updates(form.actions, request.POST)
+    allow_conflicts = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -251,10 +252,10 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     return json_response(response_json)
 
 
-def _get_updates(existing_actions, data):
+def _get_updates(existing_actions, data, allow_conflicts):
     updates = json.loads(data['actions'])
     update_diff = json.loads(data['update_diff']) if 'update_diff' in data else {}
-    return existing_actions.with_updates(updates, update_diff)
+    return existing_actions.with_updates(updates, update_diff, allow_conflicts)
 
 
 @waf_allow('XSS_BODY')
