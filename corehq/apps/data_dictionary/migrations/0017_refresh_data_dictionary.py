@@ -10,7 +10,7 @@ from corehq.apps.domain_migration_flags.api import (
 
 @skip_on_fresh_install
 def refresh_data_dictionary(apps, schema_editor):
-    while not get_migration_complete(ALL_DOMAINS, MIGRATION_SLUG):
+    if not get_migration_complete(ALL_DOMAINS, MIGRATION_SLUG):
         call_command("refresh_data_dictionary")
 
 
