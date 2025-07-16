@@ -6,6 +6,9 @@ SIZE_LIMIT = 1000000
 # value if we want to support querying over more domains
 MAX_CLAUSE_COUNT = 1024
 
+# restricts how large a query can be
+MAX_FILTER_COUNT = 1000
+
 # Default scroll parameters (same values hard-coded in elasticsearch-py's
 # `scan()` helper).
 SCROLL_KEEPALIVE = '5m'
