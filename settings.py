@@ -7,6 +7,8 @@ import importlib
 import os
 
 from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
+
 import settingshelper as helper
 
 DEBUG = True
@@ -62,15 +64,15 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
-    ('ara', 'Arabic'),
-    ('en', 'English'),
-    ('es', 'Spanish'),
-    ('fra', 'French'),  # we need this alias
-    ('hin', 'Hindi'),
-    ('ita', 'Italian'),
-    ('por', 'Portuguese'),
-    ('sw', 'Swahili'),
-    ('ukr', 'Ukrainian'),
+    ('ara', _('Arabic')),
+    ('en', _('English')),
+    ('es', _('Spanish')),
+    ('fra', _('French')),  # we need this alias
+    ('hin', _('Hindi')),
+    ('ita', _('Italian')),
+    ('por', _('Portuguese')),
+    ('sw', _('Swahili')),
+    ('ukr', _('Ukrainian')),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'

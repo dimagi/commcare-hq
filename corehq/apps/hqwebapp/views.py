@@ -39,7 +39,7 @@ from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop, activate
+from django.utils.translation import check_for_language, gettext_noop, activate
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
@@ -1551,3 +1551,32 @@ def check_sso_login_status(request):
         'sso_url': sso_url,
         'continue_text': continue_text,
     })
+
+
+@require_POST
+def set_language(request):
+    """
+    Greatly simplified version of django.views.i18n.set_language
+
+    Redirect to a given URL while setting the chosen language in the session
+    (if enabled) and in a cookie. The URL and the language code need to be
+    specified in the request parameters.
+    """
+    next_url = request.POST.get("next", request.GET.get("next"))
+    if not next_url:
+        # try to return to previous page
+        next_url = request.META.get("HTTP_REFERER")
+    response = HttpResponseRedirect(next_url) if next_url else HttpResponse(status=204)
+    lang_code = request.POST.get('language')
+    if lang_code and check_for_language(lang_code):
+        response.set_cookie(
+            settings.LANGUAGE_COOKIE_NAME,
+            lang_code,
+            max_age=settings.LANGUAGE_COOKIE_AGE,
+            path=settings.LANGUAGE_COOKIE_PATH,
+            domain=settings.LANGUAGE_COOKIE_DOMAIN,
+            secure=settings.LANGUAGE_COOKIE_SECURE,
+            httponly=settings.LANGUAGE_COOKIE_HTTPONLY,
+            samesite=settings.LANGUAGE_COOKIE_SAMESITE,
+        )
+    return response
