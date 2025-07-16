@@ -221,7 +221,7 @@ var usersListModel = function () {
                 page: page || 1,
                 query: self.query(),
                 limit: self.itemsPerPage(),
-                showDeactivatedUsers: self.deactivatedOnly(),
+                showDeactivatedAndConfirmedUsers: self.deactivatedOnly(),
             },
             success: function (data) {
                 self.totalItems(data.total);
