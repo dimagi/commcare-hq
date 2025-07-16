@@ -20,8 +20,9 @@ from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.models import KycConfig
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
+from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig
-from corehq.apps.integration.payments.services import verify_payment_cases
+from corehq.apps.integration.payments.services import revert_payment_verification, verify_payment_cases
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
@@ -30,7 +31,7 @@ from corehq.apps.reports.standard.cases.utils import add_case_owners_and_locatio
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action, HtmxResponseException
 from corehq.util.timezones.utils import get_timezone
 
 
@@ -194,6 +195,21 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             request,
             'payments/partials/payments_verify_alert.html',
             context,
+        )
+
+    @hq_hx_action('post')
+    def revert_verification(self, request, *args, **kwargs):
+        case_ids = request.POST.getlist('selected_ids')
+
+        try:
+            revert_payment_verification(request.domain, case_ids=case_ids)
+        except PaymentRequestError as e:
+            raise HtmxResponseException(str(e), status_code=400)
+
+        return self.render_htmx_partial_response(
+            request,
+            'payments/partials/payments_revert_verification_alert.html',
+            {}
         )
 
 
