@@ -6,6 +6,11 @@ import { multiCheckboxSelectionHandler } from "integration/js/checkbox_selection
 import htmx from 'htmx.org';
 
 
+function updateVerifyAndRevertButton(selectedIds) {
+    updateVerifyButton(selectedIds);
+    updateRevertVerificationButton(selectedIds);
+}
+
 function updateVerifyButton(selectedIds) {
     const $verifySelectedBtn = $('#verify-selected-btn');
     const $verifyConfirmationBtn = $('#verify-confirmation-btn');
@@ -17,7 +22,18 @@ function updateVerifyButton(selectedIds) {
     $verifyConfirmationBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
 }
 
-const handler = new multiCheckboxSelectionHandler('selection', 'select_all', updateVerifyButton);
+function updateRevertVerificationButton(selectedIds) {
+    const $revertVerificationBtn = $('#revert-verification-selected-btn');
+    const $revertVerificationConfirmationBtn = $('#revert-verification-confirmation-btn');
+
+    let revertVerificationVals = JSON.parse($revertVerificationConfirmationBtn.attr('hx-vals'));
+
+    $revertVerificationBtn.prop('disabled', !(selectedIds.length));
+    revertVerificationVals['selected_ids'] = selectedIds;
+    $revertVerificationConfirmationBtn.attr('hx-vals', JSON.stringify(revertVerificationVals));
+}
+
+const handler = new multiCheckboxSelectionHandler('selection', 'select_all', updateVerifyAndRevertButton);
 $(function () {
     handler.init();
 });
