@@ -48,6 +48,7 @@ var Invitation = function (options) {
     self.actionInProgress = ko.observable(false);
 
     self.visible = ko.observable(true);
+    // JT NOTE this is what triggers the deletion
     self.remove = function () {
         self.actionInProgress(true);
         $.ajax(initialPageData.reverse("delete_invitation"), {
@@ -102,6 +103,7 @@ var invitationsList = function (invitations) {
         self.invitationToRemove(model);
     };
     self.removeInvitation = function () {
+        // invitationToRemove is an instance of Invitation. this .remove calls the ajax function
         self.invitationToRemove().remove();
         self.invitationToRemove(null);
     };

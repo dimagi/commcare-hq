@@ -974,6 +974,7 @@ def send_confirmation_sms(request, domain, user_id):
     return JsonResponse(data={'success': True})
 
 
+# JT NOTE this is the view that hits to get mobile workers
 @require_can_edit_or_view_commcare_users
 @require_GET
 @location_safe
@@ -1006,10 +1007,10 @@ def paginate_mobile_workers(request, domain):
     result = query.run()
     users = result.hits
 
-    if deactivated_and_confirmed_only:
-        users = [user for user in users if user['is_account_confirmed']]
-    elif unconfirmed_only:
-        users = [user for user in users if not user['is_account_confirmed']]
+    # if deactivated_and_confirmed_only:
+    #     users = [user for user in users if user['is_account_confirmed']]
+    # elif unconfirmed_only:
+    #     users = [user for user in users if not user['is_account_confirmed']]
 
     def _status_string(user_data):
         if user_data['is_active']:
