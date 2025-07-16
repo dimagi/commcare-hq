@@ -122,7 +122,7 @@ def pkce_required(client_id):
         return False
 
 
-class ServerLocation(object):
+class ServerLocation:
     PRODUCTION = 'production'
     INDIA = 'india'
     EU = 'eu'
