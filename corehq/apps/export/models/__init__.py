@@ -42,7 +42,6 @@ from .new import (
     StockItem,
     TableConfiguration,
     UserDefinedExportColumn,
-    DataSourceExportInstance,
 )
 
 from .deid_export import (
