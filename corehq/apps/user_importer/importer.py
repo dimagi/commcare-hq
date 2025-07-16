@@ -9,6 +9,7 @@ from corehq.util.soft_assert.api import soft_assert
 from memoized import memoized
 from django.db import DEFAULT_DB_ALIAS
 
+from corehq.apps.analytics.tasks import record_event
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
@@ -725,6 +726,8 @@ class CCUserRow(BaseUserRow):
 
 class WebUserRow(BaseUserRow):
 
+    USER_IMPORTER_USER_ENABLED_STATUS_CHANGED = 'user_importer_user_enabled_status_changed'
+
     def _process_column_values(self):
         self.column_values = {
             'username': self.row.get('username'),
@@ -821,6 +824,11 @@ class WebUserRow(BaseUserRow):
 
         imported_is_active = cv['is_active_in_domain']
         if str(current_user.is_active_in_domain(self.domain)) != imported_is_active:
+            record_event(WebUserRow.USER_IMPORTER_USER_ENABLED_STATUS_CHANGED, self.importer.upload_user, {
+                'domain': self.domain,
+                'username': current_user.username,
+                'enabled': imported_is_active == 'True'
+            })
             if imported_is_active == 'True':
                 current_user.reactivate(self.domain, changed_by=web_user_importer.upload_user)
             elif imported_is_active == 'False':
