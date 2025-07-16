@@ -251,6 +251,54 @@ var usersListModel = function () {
     return self;
 };
 
+var usersConfirmationModel = function () {
+    var self = {};
+    // JT TODO if no users, hide entire panel
+    self.users = ko.observableArray([]);
+    self.query = ko.observable('');
+    // Visibility of spinners, messages, and user table
+    self.hasError = ko.observable(false);
+    self.showLoadingSpinner = ko.observable(true);
+    self.showPaginationSpinner = ko.observable(false);
+    self.projectHasUsers = ko.observable(true);
+    
+    self.goToPage = function (page) {
+        self.users.removeAll();
+        self.hasError(false);
+        self.showPaginationSpinner(true);
+        $.ajax({
+            method: 'GET',
+            url: initialPageData.reverse('paginate_mobile_workers'),
+            data: {
+                page: page || 1,
+                query: self.query(),
+                limit: self.itemsPerPage(),
+                showUnconfirmedUsers: true,
+            },
+            success: function (data) {
+                self.totalItems(data.total);
+                self.users(_.map(data.users, function (user) {
+                    return userModel(user);
+                }));
+
+                if (!self.query()) {
+                    self.projectHasUsers(!!data.users.length);
+                }
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+                self.hasError(false);
+            },
+            error: function () {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+                self.hasError(true);
+            },
+        });
+    };
+
+    return self;
+};
+
 var newUserCreationModel = function (options) {
     assertProperties.assertRequired(options, [
         'custom_fields_slugs',
@@ -644,5 +692,5 @@ $(function () {
     $("#new-user-modal").koApplyBindings(newUserCreation);
     $("#new-users-list").koApplyBindings(newUserCreation);
     // TODO update with new bindings similar to invitationsList in web_users.js
-    $("#mobile-worker-confirmation-panel").koApplyBindings(newUserCreation);
+    $("#mobile-worker-confirmation-panel").koApplyBindings(usersConfirmationModel);
 });
