@@ -7,7 +7,6 @@ import importlib
 import os
 
 from django.contrib import messages
-from django.utils.translation import gettext_lazy as _
 
 import settingshelper as helper
 
@@ -64,15 +63,15 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
-    ('ara', _('Arabic')),
-    ('en', _('English')),
-    ('es', _('Spanish')),
-    ('fra', _('French')),  # we need this alias
-    ('hin', _('Hindi')),
-    ('ita', _('Italian')),
-    ('por', _('Portuguese')),
-    ('sw', _('Swahili')),
-    ('ukr', _('Ukrainian')),
+    ('ara', 'Arabic'),
+    ('en', 'English'),
+    ('es', 'Spanish'),
+    ('fra', 'French'),  # we need this alias
+    ('hin', 'Hindi'),
+    ('ita', 'Italian'),
+    ('por', 'Portuguese'),
+    ('sw', 'Swahili'),
+    ('ukr', 'Ukrainian'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
@@ -1261,6 +1260,7 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('eu', 'india', 'production', 'staging')
+IS_SAAS_ENVIRONMENT = True
 
 if 'KAFKA_URL' in globals():
     import warnings
