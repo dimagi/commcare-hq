@@ -75,6 +75,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
@@ -1578,11 +1579,24 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
                 f'You have successfully confirmed the {user.raw_username} account. '
                 'You can now login'
             ))
-            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.user,
-                            changed_by_user=self.user, changed_via=USER_CHANGE_VIA_WEB,
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=user,
+                            changed_by_user=user, changed_via=USER_CHANGE_VIA_WEB,
                             change_messages=UserChangeMessage.mobile_account_confirmed_for_domain(self.domain))
             if hasattr(self, 'send_success_sms'):
                 self.send_success_sms()
+            else:
+                context = {
+                    "new_mobile_worker": user.raw_username,
+                    "domain": self.domain
+                }
+                send_html_email_async.delay(
+                    subject=_('Successful account confirmation for {}').format(user.raw_username),
+                    recipient=user.email,
+                    html_content=render_to_string('users/email/mobile_worker_account_confirmation.html', context),
+                    text_content=render_to_string('users/email/mobile_worker_account_confirmation.txt', context),
+                    domain=self.domain,
+                    use_domain_gateway=True
+                )
             return HttpResponseRedirect('{}?username={}'.format(
                 reverse('domain_login', args=[self.domain]),
                 user.raw_username,

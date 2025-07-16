@@ -1171,18 +1171,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
         reindex_case_search_for_domain.delay(domain)
 
 
-EXPLORE_CASE_DATA = StaticToggle(
-    'explore_case_data',
-    'Show the Explore Case Data report (in dev)',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    description='Show the Explore Case Data report (in dev). Please make sure the project '
-    'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.\n\n'
-    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
-    'This will be deprecated once the Feature Preview is in full swing.',
-)
-
 SAAS_PROTOTYPE = StaticToggle(
     'saas_prototype',
     'Use allowed to view SaaS prototypes',
@@ -1197,26 +1185,6 @@ FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_USER],
     description='Allows users to save questions to case properties within the Form Builder'
-)
-
-ECD_MIGRATED_DOMAINS = StaticToggle(
-    'ecd_migrated_domains',
-    'Explore Case Data for domains that have undergone migration',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Domains that have undergone migration for Explore Case Data and have a '
-    'CaseSearch elasticsearch index created.\n\n'
-    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
-)
-
-ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
-    'ecd_enterprise_domains',
-    'Explore Case Data feature preview for Enterprise domains',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Enterprise Domains that are eligible to view the Explore Case Data '
-    'Feature Preview. By default, this feature will only be available for '
-    'domains that are Advanced or Pro and have undergone the ECD migration.'
 )
 
 ACTION_TIMES_API = StaticToggle(
@@ -1993,20 +1961,6 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     When an individual project is having problems with rate limiting,
     use this toggle to lift the restriction for them on a temporary basis,
     just to unblock them while we sort out the conversation with the client.
-    """
-)
-
-RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
-    'rate_limit_repeaters',
-    'Apply rate limiting to data forwarding (repeaters)',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-    description="""
-    Rate limits are based on aggregate time spent waiting on data forwarding responses
-    within tasks for each project within the last second, minute, hour, day, and week windows.
-    Project allowances are based on the number of mobile workers in the project or subscription.
-    Rate limits are only applied (to any project) when global thresholds are surpassed.
-    The specific per-domain and global thresholds can be dynamically updated within the Django Admin.
     """
 )
 

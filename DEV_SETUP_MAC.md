@@ -141,7 +141,7 @@ Note: `kafka` will be very cranky on start up. You might have to restart it if y
 
 ### Installing and running Elasticsearch 6.8.23 outside of Docker
 
-First, ensure that you have Java 8 running. `java -version` should output something like `openjdk version "1.8.0_322"`.
+First, ensure that you have Java 17 running. `java -version` should output something like `openjdk version "17.0.7" 2023-04-18 LTS"`.
 Use `sdkman` or `jenv` to manage your local java versions.
 
 Download the `tar` file for elasticsearch 6.8.23
