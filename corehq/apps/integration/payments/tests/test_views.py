@@ -256,6 +256,60 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
             self.case_linked_to_payment_case.case_id: KycVerificationStatus.PASSED
         }
 
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_revert_verification_success(self):
+        verified_case = _create_case(
+            self.factory,
+            name='verified_case',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+                PaymentProperties.PAYMENT_VERIFIED_BY: 'test_user',
+                PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: 'test_user_id',
+                PaymentProperties.PAYMENT_VERIFIED_ON_UTC: '2024-01-01',
+            }
+        )
+        self.addCleanup(verified_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [verified_case.case_id]},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 200
+        verified_case.refresh_from_db()
+        case_json = verified_case.case_json
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED] == 'False'
+        assert case_json[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.NOT_VERIFIED
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY] == ''
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID] == ''
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_ON_UTC] == ''
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_revert_verification_invalid_status(self):
+        submitted_case = _create_case(
+            self.factory,
+            name='submitted_case',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+            }
+        )
+        self.addCleanup(submitted_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [submitted_case.case_id]},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 400
+        assert (b"Only payments in the 'Pending Submission' state are eligible for verification reversal."
+                in response.content)
+
 
 @es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
