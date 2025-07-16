@@ -9,6 +9,9 @@
     <div
       class="mt-3"
       hx-get="{{ htmx_import_app_steps_view_url }}"
+      {% if import_details %}
+        hq-hx-action="recent_import_details" hx-vals="{{ import_details }}"
+      {% endif %}
       hx-trigger="load"
     ></div>
   </div>

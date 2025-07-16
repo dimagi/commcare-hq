@@ -1,5 +1,6 @@
 import json
 
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
@@ -8,8 +9,15 @@ from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.forms import ExtractAppInfoForm, ImportAppForm
 from corehq.apps.domain.views.base import DomainViewMixin
+from corehq.apps.hqmedia.views import BulkUploadMultimediaView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+
+SERVER_SUBDOMAIN_MAPPING = {
+    'production': 'www',
+    'india': 'india',
+    'eu': 'eu',
+}
 
 
 @method_decorator(
@@ -55,7 +63,6 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
     @hq_hx_action('post')
     def process_second_step(self, request, *args, **kwargs):
         from corehq.apps.app_manager.views.apps import clear_app_cache
-        from corehq.apps.app_manager.views.utils import back_to_main
 
         form = ImportAppForm(
             self.container_id,
@@ -73,6 +80,46 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
             file.seek(0)  # rewind to the beginning becaues the file has already been read once when validating
             source = json.load(file)
             app = import_app_util(source, self.domain, {'name': name}, request=request)
-            response = back_to_main(request, self.domain, app_id=app._id)
-            return self.render_htmx_redirect(response.url)
+            source_server = form.cleaned_data.get('source_server')
+            source_domain = form.cleaned_data.get('source_domain')
+            source_app_id = form.cleaned_data.get('app_id')
+            new_app_id = app._id
+            response = self.import_app_step_3_response(request, source_server, source_domain, source_app_id,
+                                                   new_app_id)
+            response["HX-Push-Url"] = self._add_params_to_url(
+                source_server, source_domain, source_app_id, new_app_id
+            )
+            return response
         return self.get(request, form=form, next_action=next_action, *args, **kwargs)
+
+    def _add_params_to_url(self, source_server, source_domain, source_app_id, new_app_id):
+        # Add query params to the url so user won't lost the instruction page if refresh the page accidentally
+        from corehq.apps.domain.views.settings import ImportAppFromAnotherServerView
+        current_url = reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain])
+        query_params = (
+            f"?source_server={source_server}&source_domain={source_domain}&"
+            f"source_app_id={source_app_id}&new_app_id={new_app_id}"
+        )
+        return current_url + query_params
+
+    def import_app_step_3_response(self, request, source_server, source_domain, source_app_id, new_app_id):
+        from corehq.apps.app_manager.views.utils import back_to_main
+        source_multimedia_url = (
+            f"https://{SERVER_SUBDOMAIN_MAPPING[source_server]}.commcarehq.org/a/"
+            f"{source_domain}/apps/view/{source_app_id}/settings/#multimedia-tab"
+        )
+        current_multimedia_url = reverse(BulkUploadMultimediaView.urlname, args=[self.domain, new_app_id])
+        new_app_url = back_to_main(request, self.domain, new_app_id).url
+        return self.render_htmx_partial_response(request, 'domain/import_app_step_3_instruction.html', {
+            'source_multimedia_url': source_multimedia_url,
+            'current_multimedia_url': current_multimedia_url,
+            'new_app_url': new_app_url,
+        })
+
+    @hq_hx_action('get')
+    def recent_import_details(self, request, *args, **kwargs):
+        source_server = request.GET.get('source_server')
+        source_domain = request.GET.get('source_domain')
+        source_app_id = request.GET.get('source_app_id')
+        new_app_id = request.GET.get('new_app_id')
+        return self.import_app_step_3_response(request, source_server, source_domain, source_app_id, new_app_id)

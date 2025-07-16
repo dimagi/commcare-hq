@@ -3258,10 +3258,6 @@ class ImportAppForm(forms.Form):
         return app_file
 
     def construct_download_url(self, source_server, source_domain, app_id):
-        server_mapping = {
-            'production': 'www',
-            'india': 'india',
-            'eu': 'eu',
-        }
-        server_address = server_mapping[source_server]
+        from corehq.apps.domain.views.import_apps import SERVER_SUBDOMAIN_MAPPING
+        server_address = SERVER_SUBDOMAIN_MAPPING[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
