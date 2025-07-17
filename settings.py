@@ -7,6 +7,7 @@ import importlib
 import os
 
 from django.contrib import messages
+
 import settingshelper as helper
 
 DEBUG = True
@@ -1259,6 +1260,7 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('eu', 'india', 'production', 'staging')
+IS_SAAS_ENVIRONMENT = True
 
 if 'KAFKA_URL' in globals():
     import warnings
