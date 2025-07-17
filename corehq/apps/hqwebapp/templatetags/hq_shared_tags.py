@@ -14,11 +14,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
-
+from django.utils.translation import get_language_info, gettext as _
 from django_prbac.utils import has_privilege
 
 from dimagi.utils.web import json_handler
+from langcodes import langs_by_code
 
 from corehq import privileges
 from corehq.apps.hqwebapp.exceptions import (
@@ -598,6 +598,17 @@ def html_attr(value):
     if not isinstance(value, str):
         value = JSON(value)
     return conditional_escape(value)
+
+
+@register.filter
+def language_name_local(lang_code):
+    """
+    Override django.templatetags.i18n.language_name_local to explicitly look up
+    two-letter lang codes when available.
+    """
+    lang = langs_by_code.get(lang_code)
+    lang_code = lang["two"] if lang and lang["two"] else lang_code
+    return get_language_info(lang_code)["name_local"]
 
 
 def _create_page_data(parser, original_token, node_slug):
