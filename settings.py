@@ -1295,7 +1295,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain',
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
-                'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',

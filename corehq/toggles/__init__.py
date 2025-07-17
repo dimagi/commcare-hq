@@ -1883,13 +1883,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
 
-HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
-    'hide_hq_on_mobile_experience',
-    'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
 COPY_CASES = StaticToggle(
     'copy_cases',
     'Enable users to copy cases between mobile workers',
