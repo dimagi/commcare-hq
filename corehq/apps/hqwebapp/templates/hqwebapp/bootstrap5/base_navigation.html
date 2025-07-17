@@ -68,18 +68,18 @@
                 aria-haspopup="true"
                 aria-expanded="false"
               >
-                {{ LANGUAGE_CODE }} <span class="caret"></span>
+                {{ LANGUAGE_CODE|language_name_local|title }} <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
-                {% for lang in LANGUAGES %}
+                {% for lang_code, name in LANGUAGES %}
                   <li>
                     <form action="{% url 'set_language' %}" method="post">
                       {% csrf_token %}
                       <button
                         type="submit"
                         name="language"
-                        value="{{ lang.0 }}"
-                      >{{ lang.1 }}</button>
+                        value="{{ lang_code }}"
+                      >{{ lang_code|language_name_local|title }}</button>
                     </form>
                   </li>
                 {% endfor %}
