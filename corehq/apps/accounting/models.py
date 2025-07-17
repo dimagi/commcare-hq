@@ -661,7 +661,7 @@ class BillingContactInfo(models.Model):
         verbose_name=_("Company / Organization")
     )
     first_line = models.CharField(
-        max_length=50, null=False,
+        max_length=50, null=False, blank=True,
         verbose_name=_("Address First Line")
     )
     second_line = models.CharField(
@@ -669,17 +669,17 @@ class BillingContactInfo(models.Model):
         verbose_name=_("Address Second Line")
     )
     city = models.CharField(
-        max_length=50, null=False, verbose_name=_("City")
+        max_length=50, null=False, blank=True, verbose_name=_("City")
     )
     state_province_region = models.CharField(
-        max_length=50, null=False,
+        max_length=50, null=False, blank=True,
         verbose_name=_("State / Province / Region"),
     )
     postal_code = models.CharField(
-        max_length=20, null=False, verbose_name=_("Postal Code")
+        max_length=20, null=False, blank=True, verbose_name=_("Postal Code")
     )
     country = models.CharField(
-        max_length=50, null=False, verbose_name=_("Country")
+        max_length=50, null=False, blank=True, verbose_name=_("Country")
     )
     last_modified = models.DateTimeField(auto_now=True)
 
