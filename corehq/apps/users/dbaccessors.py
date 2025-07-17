@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from corehq import toggles
 from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
@@ -289,11 +290,15 @@ def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
     if include_inactive:
         states.append('inactive')
 
+    view_name = 'users/by_domain'
+    if toggles.DEACTIVATE_WEB_USERS.enabled(domain):
+        view_name = 'users_by_domain/view'
+
     for flag in states:
         for doc_type in doc_types:
             key = [flag, domain, doc_type]
             for row in CommCareUser.get_db().view(
-                    'users/by_domain',
+                    view_name,
                     startkey=key,
                     endkey=key + [{}],
                     reduce=count_only,
