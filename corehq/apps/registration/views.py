@@ -95,7 +95,8 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             reg_form,
             created_by=None,
             created_via=USER_CHANGE_VIA_WEB,
-            ip=get_ip(self.request)
+            ip=get_ip(self.request),
+            language=self.request.LANGUAGE_CODE
         )
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],

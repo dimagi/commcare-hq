@@ -181,6 +181,7 @@ class UserInvitationView(object):
                         created_via=USER_CHANGE_VIA_INVITATION,
                         domain=invitation.domain,
                         is_domain_admin=False,
+                        language=request.LANGUAGE_CODE,
                         commit=False
                     )
                     invitation.accept_invitation_and_join_domain(user)
