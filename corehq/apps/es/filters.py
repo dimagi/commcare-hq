@@ -15,6 +15,9 @@ Contributing:
 Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
+from dimagi.utils.logging import notify_error
+
+from .const import MAX_FILTER_COUNT
 from .utils import es_format_datetime
 
 
@@ -51,11 +54,15 @@ def term(field, value):
 
 def OR(*filters):
     """Filter docs to match any of the filters passed in"""
+    if len(filters) > MAX_FILTER_COUNT:
+        notify_error("Exceeded max number of filters allowed", details={"count": len(filters)})
     return {"bool": {"should": filters}}
 
 
 def AND(*filters):
     """Filter docs to match all of the filters passed in"""
+    if len(filters) > MAX_FILTER_COUNT:
+        notify_error("Exceeded max number of filters allowed", details={"count": len(filters)})
     return {"bool": {"filter": filters}}
 
 
