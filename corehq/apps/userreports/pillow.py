@@ -222,17 +222,13 @@ class ConfigurableReportTableManager(UcrTableManager):
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
-    def get_all_configs(self):
-        return [
-            source
-            for provider in self.data_source_providers
-            for source in provider.get_data_sources()
-        ]
-
     def get_filtered_configs(self, configs=None):
-
         if configs is None:
-            configs = self.get_all_configs()
+            configs = [
+                source
+                for provider in self.data_source_providers
+                for source in provider.get_data_sources()
+            ]
 
         if configs:
             if self.exclude_ucrs:
@@ -322,12 +318,9 @@ class RegistryDataSourceTableManager(UcrTableManager):
         self.adapters_by_domain = defaultdict(list)
         self.domains_to_skip = None
 
-    def get_all_configs(self):
-        return self.data_source_provider.get_data_sources()
-
     def get_filtered_configs(self, configs=None):
         if configs is None:
-            configs = self.get_all_configs()
+            configs = self.data_source_provider.get_data_sources()
         configs = _filter_invalid_config(configs)
         return configs
 
