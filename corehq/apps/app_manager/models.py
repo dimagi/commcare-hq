@@ -6307,6 +6307,28 @@ class ApplicationReleaseLog(models.Model):
         }
 
 
+class CredentialAppication(models.Model):
+    """
+    Represents an application that issues credentials to users when
+    they have been active for a certain activity_level.
+    """
+    class ActivityLevelChoices(models.IntegerChoices):
+        ONE_MONTH = 1, _('1 Month')
+        TWO_MONTHS = 2, _('2 Months')
+        THREE_MONTHS = 3, _('3 Months')
+        FOUR_MONTHS = 4, _('4 Months')
+        FIVE_MONTHS = 5, _('5 Months')
+        SIX_MONTHS = 6, _('6 Months')
+
+    domain = models.CharField(max_length=255)
+    app_id = models.CharField(max_length=255)
+    activity_level = models.CharField(
+        max_length=1,
+        choices=ActivityLevelChoices.choices,
+        default=ActivityLevelChoices.THREE_MONTHS.value,
+    )
+
+
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
 FormBase.get_locale_id = lambda self: id_strings.form_locale(self)
