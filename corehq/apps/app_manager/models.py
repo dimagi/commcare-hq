@@ -6307,7 +6307,7 @@ class ApplicationReleaseLog(models.Model):
         }
 
 
-class CredentialAppication(models.Model):
+class CredentialApplication(models.Model):
     """
     Represents an application that issues credentials to users when
     they have been active for a certain activity_level.
