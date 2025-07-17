@@ -15,10 +15,12 @@ from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+from django.templatetags import i18n
 
 from django_prbac.utils import has_privilege
 
 from dimagi.utils.web import json_handler
+from langcodes import langs_by_code
 
 from corehq import privileges
 from corehq.apps.hqwebapp.exceptions import (
@@ -598,6 +600,14 @@ def html_attr(value):
     if not isinstance(value, str):
         value = JSON(value)
     return conditional_escape(value)
+
+
+@register.filter
+def language_name_local(lang_code):
+    #override built-in template filter to be usable with our custom langcodes
+    lang = langs_by_code.get(lang_code)
+    lang_code = lang['two'] if lang else ''
+    return i18n.language_name_local(lang_code)
 
 
 def _create_page_data(parser, original_token, node_slug):
