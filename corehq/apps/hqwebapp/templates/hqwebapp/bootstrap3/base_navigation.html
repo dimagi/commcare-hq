@@ -37,6 +37,30 @@
       {% if not request.user.is_authenticated %}
         <nav class="navbar-menus navbar-signin" role="navigation">
           <div class="nav-settings-bar pull-right">
+            <div class="navbar-nav dropdown">
+              <button
+                class="dropdown-toggle btn btn-default navbar-btn"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                {{ LANGUAGE_CODE }} <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                {% for lang in LANGUAGES %}
+                  <li>
+                    <form action="{% url 'set_language' %}" method="post">
+                      {% csrf_token %}
+                      <button
+                        type="submit"
+                        name="language"
+                        value="{{ lang.0 }}"
+                      >{{ lang.1 }}</button>
+                    </form>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
             {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
               <a href="#cta-form-get-demo"
