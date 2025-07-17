@@ -634,6 +634,10 @@ class CCUserRow(BaseUserRow):
         if cv["email"]:
             self.import_helper.update_email(cv["email"])
         if cv["is_active"] is not None:
+            if cv["is_active"]:
+                self.importer.enabled_count += 1
+            else:
+                self.importer.disabled_count += 1
             self.import_helper.update_status(cv["is_active"])
 
         # Do this here so that we validate the location code before we
@@ -725,8 +729,6 @@ class CCUserRow(BaseUserRow):
 
 
 class WebUserRow(BaseUserRow):
-
-    USER_IMPORTER_USER_ENABLED_STATUS_CHANGED = 'user_importer_user_enabled_status_changed'
 
     def _process_column_values(self):
         self.column_values = {
@@ -824,14 +826,11 @@ class WebUserRow(BaseUserRow):
 
         imported_is_active = cv['is_active_in_domain']
         if str(current_user.is_active_in_domain(self.domain)) != imported_is_active:
-            record_event(WebUserRow.USER_IMPORTER_USER_ENABLED_STATUS_CHANGED, self.importer.upload_user, {
-                'domain': self.domain,
-                'username': current_user.username,
-                'enabled': imported_is_active == 'True'
-            })
             if imported_is_active == 'True':
+                self.importer.enabled_count += 1
                 current_user.reactivate(self.domain, changed_by=web_user_importer.upload_user)
             elif imported_is_active == 'False':
+                self.importer.disabled_count += 1
                 current_user.deactivate(self.domain, changed_by=web_user_importer.upload_user)
 
         # Try saving
@@ -905,6 +904,8 @@ class WebUserRow(BaseUserRow):
 
 class WebImporter:
 
+    STATUS_CHANGED = 'user_importer_web_user_enabled_status_changed'
+
     row_cls = WebUserRow
 
     def __init__(self, upload_domain, user_specs, upload_user, upload_record_id,
@@ -915,6 +916,8 @@ class WebImporter:
         self.upload_record_id = upload_record_id
         self.update_progress = update_progress
         self.is_web_upload = True
+        self.disabled_count = 0
+        self.enabled_count = 0
 
     @memoized
     def domain_info(self, domain):
@@ -930,10 +933,18 @@ class WebImporter:
             ret["rows"].append(user_row.status_row)
             if user_row.error:
                 ret["errors"].append(user_row.error)
+        if self.enabled_count > 0 or self.disabled_count > 0:
+            record_event(self.STATUS_CHANGED, self.upload_user, {
+                'domain': self.upload_domain,
+                'enabled_count': self.enabled_count,
+                'disabled_count': self.disabled_count,
+            })
         return ret
 
 
 class CCImporter(WebImporter):
+
+    STATUS_CHANGED = 'user_importer_mobile_worker_enabled_status_changed'
 
     row_cls = CCUserRow
 
