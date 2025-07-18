@@ -5,7 +5,6 @@ its Atom Feed (daily or more) to track changes.
 """
 import re
 import uuid
-from collections import namedtuple
 from datetime import datetime
 
 from django.conf import settings
@@ -23,7 +22,7 @@ from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.bulk import case_block_submitter
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner
@@ -47,7 +46,6 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import get_basic_requests
 from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 
-RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 # The location metadata key that maps to its corresponding OpenMRS location UUID
 LOCATION_OPENMRS = 'openmrs_uuid'
 
@@ -176,41 +174,38 @@ def import_patients_of_owner(requests, importer, domain_name, owner_id, location
             f'using {importer}: Unexpected response format: {err}'
         )
         return
-    case_blocks = []
-    for i, patient in enumerate(openmrs_patients):
-        try:
-            patient_id = str(patient[importer.external_id_column])
-        except KeyError:
-            raise ConfigurationError(
-                f'Error importing patients for project space "{importer.domain}" '
-                f'from OpenMRS Importer "{importer}": External ID column '
-                f'"{importer.external_id_column}" not found in patient data.'
-            )
-        case, error = importer_util.lookup_case(
-            EXTERNAL_ID,
-            patient_id,
-            domain_name,
-            importer.case_type
-        )
-        if error is None:
-            case_block = get_updatepatient_caseblock(case, patient, importer)
-            case_blocks.append(RowAndCase(i, case_block))
-        elif error == LookupErrors.NotFound:
-            case_block = get_addpatient_caseblock(patient, importer, owner_id)
-            case_blocks.append(RowAndCase(i, case_block))
-        elif error == LookupErrors.MultipleResults:
-            raise ConfigurationError(
-                f'Error importing patients for project space "{importer.domain}" '
-                f'from OpenMRS Importer "{importer}": {importer.case_type}'
-                f'.{EXTERNAL_ID} "{patient_id}" is not unique.'
-            )
-
-    submit_case_blocks(
-        [cb.case.as_text() for cb in case_blocks],
+    with case_block_submitter(
         domain_name,
         device_id=f'{OPENMRS_IMPORTER_DEVICE_ID_PREFIX}{importer.get_id}',
         xmlns=XMLNS_OPENMRS,
-    )
+    ) as submitter:
+        for patient in openmrs_patients:
+            try:
+                patient_id = str(patient[importer.external_id_column])
+            except KeyError:
+                raise ConfigurationError(
+                    f'Error importing patients for project space "{importer.domain}" '
+                    f'from OpenMRS Importer "{importer}": External ID column '
+                    f'"{importer.external_id_column}" not found in patient data.'
+                )
+            case, error = importer_util.lookup_case(
+                EXTERNAL_ID,
+                patient_id,
+                domain_name,
+                importer.case_type
+            )
+            if error is None:
+                case_block = get_updatepatient_caseblock(case, patient, importer)
+                submitter.send(case_block)
+            elif error == LookupErrors.NotFound:
+                case_block = get_addpatient_caseblock(patient, importer, owner_id)
+                submitter.send(case_block)
+            elif error == LookupErrors.MultipleResults:
+                raise ConfigurationError(
+                    f'Error importing patients for project space "{importer.domain}" '
+                    f'from OpenMRS Importer "{importer}": {importer.case_type}'
+                    f'.{EXTERNAL_ID} "{patient_id}" is not unique.'
+                )
 
 
 def import_patients_to_domain(domain_name, force=False):

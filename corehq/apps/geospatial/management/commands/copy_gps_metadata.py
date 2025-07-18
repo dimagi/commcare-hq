@@ -7,10 +7,9 @@ from casexml.apps.case.xform import extract_case_blocks
 
 from corehq.apps.es import FormES
 from corehq.apps.geospatial.utils import get_geo_case_property
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.bulk import case_block_submitter
 
 FORMS_CHUNK_SIZE = 1000
-CASE_BLOCK_CHUNK_SIZE = 100
 
 
 class Command(BaseCommand):
@@ -33,44 +32,41 @@ class Command(BaseCommand):
         geo_case_property = get_geo_case_property(domain)
 
         latest_case_gps = {}
-        case_blocks_chunk = []
         total_case_updates = 0
-        for form in iter_forms_with_location(domain, options.get('xmlns')):
-            cases = get_form_cases(form, options.get('case_type'))
-            if options['flag_multiple'] and len(cases) > 1:
-                print(
-                    f"Form {form['@id']} has multiple cases: "
-                    f"{', '.join([case['@case_id'] for case in cases])}",
-                    file=self.stderr,
-                )
-                # To log output to STDERR, use
-                #     $ ./manage.py copy_gps_metadata ... 2> errors.log
-                continue
-
-            for case in cases:
-                gps_taken_at = as_datetime(form['meta']['timeStart'])
-                if (
-                    case['@case_id'] in latest_case_gps
-                    and gps_taken_at < latest_case_gps[case['@case_id']]
-                ):
-                    # This form has an older location
+        with case_block_submitter(
+            domain,
+            device_id='corehq.apps.geospatial...copy_gps_metadata',
+        ) as submitter:
+            for form in iter_forms_with_location(domain, options.get('xmlns')):
+                cases = get_form_cases(form, options.get('case_type'))
+                if options['flag_multiple'] and len(cases) > 1:
+                    print(
+                        f"Form {form['@id']} has multiple cases: "
+                        f"{', '.join([case['@case_id'] for case in cases])}",
+                        file=self.stderr,
+                    )
+                    # To log output to STDERR, use
+                    #     $ ./manage.py copy_gps_metadata ... 2> errors.log
                     continue
 
-                total_case_updates += 1
-                latest_case_gps[case['@case_id']] = gps_taken_at
-                case_block = get_case_block(
-                    case['@case_id'],
-                    case_property=geo_case_property,
-                    value=form_location(form),
-                )
-                case_blocks_chunk.append(case_block)
-                if len(case_blocks_chunk) >= CASE_BLOCK_CHUNK_SIZE:
+                for case in cases:
+                    gps_taken_at = as_datetime(form['meta']['timeStart'])
+                    if (
+                        case['@case_id'] in latest_case_gps
+                        and gps_taken_at < latest_case_gps[case['@case_id']]
+                    ):
+                        # This form has an older location
+                        continue
+
+                    total_case_updates += 1
+                    latest_case_gps[case['@case_id']] = gps_taken_at
+                    case_block = CaseBlock(
+                        case_id=case['@case_id'],
+                        create=False,
+                        update={geo_case_property: form_location(form)},
+                    )
                     if not is_dry_run:
-                        submit_chunk(domain, case_blocks_chunk)
-                    case_blocks_chunk = []
-        if case_blocks_chunk:
-            if not is_dry_run:
-                submit_chunk(domain, case_blocks_chunk)
+                        submitter.send(case_block)
         print(f'Submitted {total_case_updates} case updates')
 
 
@@ -140,19 +136,3 @@ def as_datetime(js_datetime_str):
 
     """
     return datetime.strptime(js_datetime_str, '%Y-%m-%dT%H:%M:%S.%fZ')
-
-
-def get_case_block(case_id, case_property, value):
-    return CaseBlock(
-        case_id=case_id,
-        create=False,
-        update={case_property: value},
-    )
-
-
-def submit_chunk(domain, case_blocks):
-    submit_case_blocks(
-        [cb.as_text() for cb in case_blocks],
-        domain,
-        device_id='corehq.apps.geospatial...copy_gps_metadata',
-    )
