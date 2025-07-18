@@ -991,8 +991,9 @@ def paginate_mobile_workers(request, domain):
              .domain(domain, include_inactive=True)
              .mobile_users()
              .search_string_query(query, ["base_username", "last_name", "first_name"]))
-    query = query.is_inactive(domain) if (deactivated_and_confirmed_only or unconfirmed_only) else query.is_active(domain)
+    query = query.is_inactive(domain) if (deactivated_and_confirmed_only) else query.is_active(domain)
     query = (filter_user_query_by_locations_accessible_to_user(query, domain, request.couch_user)
+             .account_confirmed(not unconfirmed_only)
              .source([
                  '_id',
                  'first_name',
