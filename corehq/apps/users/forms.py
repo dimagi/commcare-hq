@@ -681,7 +681,10 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
     )
     email = forms.EmailField(
-        label=gettext_noop("Email"),
+        label=format_html_lazy(
+            '{} <span data-bind="visible: $root.stagedUser().emailRequired">*</span>',
+            gettext_noop("Email"),
+        ),
         required=False,
         help_text="""
             <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">

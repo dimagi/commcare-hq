@@ -346,16 +346,14 @@ var newUserCreationModel = function (options) {
             return self.STATUS.NONE;
         }
 
-        if (self.requiredEmailMissing() || self.emailIsInvalid()) {
+        if (self.emailIsInvalid()) {
             return self.STATUS.ERROR;
         }
     });
 
     self.emailStatusMessage = ko.computed(function () {
 
-        if (self.requiredEmailMissing()) {
-            return gettext('Email address is required when users confirm their own accounts.');
-        } else if (self.emailIsInvalid()) {
+        if (self.emailIsInvalid()) {
             return gettext('Please enter a valid email address.');
         }
         return "";
