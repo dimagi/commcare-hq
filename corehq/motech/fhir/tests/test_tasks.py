@@ -1016,7 +1016,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
 
     def test_no_child_cases(self):
         child_cases = []
-        with patch('corehq.motech.fhir.tasks.submit_case_blocks') as \
+        with patch('corehq.apps.hqcase.bulk.submit_case_blocks') as \
                 submit_case_blocks:
             create_parent_indices(self.import_config, child_cases)
             submit_case_blocks.assert_not_called()
@@ -1041,8 +1041,8 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
         child_cases = [
             ParentInfo(child_case_id, parent_ref, self.patient_type)
         ]
-        with patch('corehq.motech.fhir.tasks.'
-                   'submit_case_blocks') as submit_case_blocks:
+        with patch('corehq.apps.hqcase.bulk.submit_case_blocks') as \
+                submit_case_blocks:
             create_parent_indices(self.import_config, child_cases)
 
             ([case_block], domain), kwargs = submit_case_blocks.call_args
