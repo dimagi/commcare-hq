@@ -221,7 +221,7 @@ var usersListModel = function () {
                 page: page || 1,
                 query: self.query(),
                 limit: self.itemsPerPage(),
-                showDeactivatedAndConfirmedUsers: self.deactivatedOnly(),
+                showDeactivatedUsers: self.deactivatedOnly(),
             },
             success: function (data) {
                 self.totalItems(data.total);
@@ -237,6 +237,7 @@ var usersListModel = function () {
                 self.hasError(false);
             },
             error: function () {
+                console.log("error");
                 self.showLoadingSpinner(false);
                 self.showPaginationSpinner(false);
                 self.hasError(true);
@@ -256,12 +257,20 @@ var usersConfirmationModel = function () {
     // JT TODO if no users, hide entire panel
     self.users = ko.observableArray([]);
     self.query = ko.observable('');
+
+    self.itemsPerPage = ko.observable(5);
+    self.totalItems = ko.observable();
+
+
     // Visibility of spinners, messages, and user table
     self.hasError = ko.observable(false);
     self.showLoadingSpinner = ko.observable(true);
     self.showPaginationSpinner = ko.observable(false);
     self.projectHasUsers = ko.observable(true);
     
+    self.showPagination = ko.computed(function () {
+        return self.totalItems() > self.itemsPerPage();
+    });
     self.goToPage = function (page) {
         self.users.removeAll();
         self.hasError(false);
@@ -273,6 +282,7 @@ var usersConfirmationModel = function () {
                 page: page || 1,
                 query: self.query(),
                 limit: self.itemsPerPage(),
+                showDeactivatedUsers: true,
                 showUnconfirmedUsers: true,
             },
             success: function (data) {
@@ -280,7 +290,7 @@ var usersConfirmationModel = function () {
                 self.users(_.map(data.users, function (user) {
                     return userModel(user);
                 }));
-
+                console.log("self.users", self.users());
                 if (!self.query()) {
                     self.projectHasUsers(!!data.users.length);
                 }
@@ -294,6 +304,9 @@ var usersConfirmationModel = function () {
                 self.hasError(true);
             },
         });
+    };
+    self.onPaginationLoad = function () {
+        self.goToPage(1);
     };
 
     return self;

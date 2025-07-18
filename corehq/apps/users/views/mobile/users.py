@@ -984,14 +984,15 @@ def paginate_mobile_workers(request, domain):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     query = request.GET.get('query')
-    deactivated_and_confirmed_only = json.loads(request.GET.get('showDeactivatedAndConfirmedUsers', "false"))
+    # TODO reconsider variable name
+    deactivated_only = json.loads(request.GET.get('showDeactivatedUsers', "false"))
     unconfirmed_only = json.loads(request.GET.get('showUnconfirmedUsers', "false"))
 
     query = (UserES()
              .domain(domain, include_inactive=True)
              .mobile_users()
              .search_string_query(query, ["base_username", "last_name", "first_name"]))
-    query = query.is_inactive(domain) if (deactivated_and_confirmed_only) else query.is_active(domain)
+    query = query.is_inactive(domain) if (deactivated_only) else query.is_active(domain)
     query = (filter_user_query_by_locations_accessible_to_user(query, domain, request.couch_user)
              .account_confirmed(not unconfirmed_only)
              .source([
@@ -1009,6 +1010,7 @@ def paginate_mobile_workers(request, domain):
 
     result = query.run()
     users = result.hits
+    print("users", users)
 
     # if deactivated_and_confirmed_only:
     #     users = [user for user in users if user['is_account_confirmed']]
