@@ -288,7 +288,8 @@ class ConfigurableReportTableManager(UcrTableManager):
             for source in provider.get_data_sources_modified_since(timestamp)
         ]
         filtered_data_sources = self.get_filtered_configs(new_data_sources)
-        invalid_data_sources = {ds._id for ds in new_data_sources} - {ds._id for ds in filtered_data_sources}
+        filtered_ids = {ds._id for ds in filtered_data_sources}
+        invalid_data_sources = [ds for ds in new_data_sources if ds._id not in filtered_ids]
         self._add_data_sources_to_table_adapters(filtered_data_sources, invalid_data_sources)
 
     def _add_data_sources_to_table_adapters(self, new_data_sources, invalid_data_sources):
@@ -306,7 +307,7 @@ class ConfigurableReportTableManager(UcrTableManager):
         for data_source in invalid_data_sources:
             new_adapters = [
                 adapter for adapter in self.table_adapters_by_domain[data_source.domain]
-                if adapter._id != data_source._id
+                if adapter.config._id != data_source._id
             ]
             self.table_adapters_by_domain[data_source.domain] = new_adapters
 
@@ -318,9 +319,6 @@ class RegistryDataSourceTableManager(UcrTableManager):
         """
         super().__init__(bootstrap_interval, run_migrations)
         self.data_source_provider = RegistryDataSourceProvider()
-        self.adapters = []
-        self.adapters_by_domain = defaultdict(list)
-        self.domains_to_skip = None
 
     def get_all_configs(self):
         return self.data_source_provider.get_data_sources()
@@ -332,50 +330,55 @@ class RegistryDataSourceTableManager(UcrTableManager):
         return configs
 
     def _do_bootstrap(self, configs=None):
-        configs = self.get_filtered_configs(configs)
+        adapters_by_domain = defaultdict(dict)
+        for config in self.get_filtered_configs(configs):
+            adapter = _get_indicator_adapter_for_pillow(config)
+            for domain in config.data_domains:
+                adapters_by_domain[domain][config._id] = adapter
 
-        for config in configs:
-            self._add_adapter_for_data_source(config)
-
+        self.adapters_by_domain = adapters_by_domain
         self.domains_to_skip = all_domains_with_migrations_in_progress()
 
     def _add_adapter_for_data_source(self, config):
         adapter = _get_indicator_adapter_for_pillow(config)
-        self.adapters.append(adapter)
-        for domain in config.data_domains:
-            self.adapters_by_domain[domain].append(adapter)
+        config_id = config._id
+        new_domains = set(config.data_domains)
+        for domain, adapters in list(self.adapters_by_domain.items()):
+            if domain not in new_domains:
+                adapters.pop(config_id, None)
+                if not adapters:
+                    self.adapters_by_domain.pop(domain)
+        for domain in new_domains:
+            self.adapters_by_domain[domain][config_id] = adapter
 
     @property
     def relevant_domains(self):
         return set(self.adapters_by_domain) - self.domains_to_skip
 
     def get_adapters(self, domain):
-        return list(self.adapters_by_domain.get(domain, []))
+        adapters = self.adapters_by_domain.get(domain)
+        return list(adapters.values()) if adapters else []
 
     def get_all_adapters(self):
-        return list(self.adapters)
+        def iter_unique_adapters():
+            seen = set()
+            for adapters in self.adapters_by_domain.values():
+                for config_id, adapter in adapters.items():
+                    if config_id not in seen:
+                        seen.add(config_id)
+                        yield adapter
+        return list(iter_unique_adapters())
 
     def remove_adapter(self, domain, adapter):
         self._remove_adapters_for_data_source(adapter.config)
 
     def _remove_adapters_for_data_source(self, config):
         """Remove all adapters for for the given config"""
-
-        def _filter_adapters(adapters):
-            return [
-                adapter for adapter in adapters
-                if adapter.config.get_id != config.get_id
-            ]
-
-        self.adapters = _filter_adapters(self.adapters)
-
-        # iterate over all domains in case the list of domains for the data source has changed
-        for domain in list(self.adapters_by_domain):
-            filtered_adapters = _filter_adapters(self.adapters_by_domain[domain])
-            if filtered_adapters:
-                self.adapters_by_domain[domain] = filtered_adapters
-            else:
-                del self.adapters_by_domain[domain]
+        config_id = config._id
+        for domain, adapters in list(self.adapters_by_domain.items()):
+            adapters.pop(config_id, None)
+            if not adapters:
+                self.adapters_by_domain.pop(domain)
 
     def _update_modified_since(self, timestamp):
         """
@@ -387,8 +390,9 @@ class RegistryDataSourceTableManager(UcrTableManager):
             self._add_or_update_data_source(data_source)
 
     def _add_or_update_data_source(self, config):
-        self._remove_adapters_for_data_source(config)
-        if not config.is_deactivated:
+        if config.is_deactivated:
+            self._remove_adapters_for_data_source(config)
+        else:
             self._add_adapter_for_data_source(config)
 
 

@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
 
 from pillowtop.feed.interface import Change, ChangeMeta
-from pillowtop.pillow.interface import PillowBase
+from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import BulkElasticProcessor
 from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
@@ -34,7 +34,7 @@ class BulkTest(SimpleTestCase):
             Change(4, 'a'),
             Change(1, 'b'),
         ]
-        deduped = PillowBase._deduplicate_changes(changes)
+        deduped = ConstructedPillow._deduplicate_changes(changes)
         self.assertEqual(
             [(change.id, change.sequence_id) for change in deduped],
             [(3, 'a'), (2, 'b'), (4, 'a'), (1, 'b')]
