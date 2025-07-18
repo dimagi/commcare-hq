@@ -1,4 +1,5 @@
 import logging
+import time
 from collections import namedtuple
 
 import six
@@ -30,7 +31,34 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
         index_design_docs(db, docid, design_name_)
 
 
+def verify_design_doc(db, design_doc_id, max_retries=5, retry_delay_s=1):
+    """
+    Verify that a design document is properly uploaded and can be accessed.
+
+    Returns:
+        bool: True if verified, raises exception if verification fails after retries
+    """
+    for attempt in range(max_retries):
+        try:
+            doc = db.get(design_doc_id)
+            if 'views' in doc and doc['views']:
+                log.info(f"Design document {design_doc_id} verified successfully")
+                return True
+
+            log.warning(f"Design document {design_doc_id} exists but "
+                f"appears incomplete, retrying... (attempt {attempt + 1}/{max_retries})")
+        except (ResourceNotFound, HTTPError) as e:
+            log.warning(f"Error verifying design document {design_doc_id}: {e}. "
+                f"Retrying... (attempt {attempt + 1}/{max_retries})")
+
+        time.sleep(retry_delay_s * (2 ** attempt))  # Exponential backoff
+
+    raise RuntimeError(f"Failed to verify design document {design_doc_id} after {max_retries} attempts")
+
+
 def index_design_docs(db, docid, design_name, wait=True):
+    verify_design_doc(db, docid)
+
     # found in the innards of couchdbkit
     view_names = list(db[docid].get('views', {}))
     if view_names:
