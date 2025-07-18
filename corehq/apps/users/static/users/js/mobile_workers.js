@@ -77,7 +77,7 @@ var userModel = function (options) {
 
     // used by two-stage provisioning
     self.emailRequired = ko.observable(self.force_account_confirmation());
-    self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
+    self.requireAccountConfirmation = ko.observable(self.force_account_confirmation());
 
     // used by two-stage sms provisioning
     self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
@@ -488,13 +488,13 @@ var newUserCreationModel = function (options) {
                 // clear and disable password input
                 user.password('');
                 user.passwordVisible(false);
-                user.sendConfirmationEmailEnabled(true);
+                user.requireAccountConfirmation(true);
             } else {
                 // make email optional
                 user.emailRequired(false);
                 // enable password input
                 user.passwordVisible(true);
-                user.sendConfirmationEmailEnabled(false);
+                user.requireAccountConfirmation(false);
                 // uncheck email confirmation box if it was checked
                 user.send_account_confirmation_email(false);
             }
@@ -506,13 +506,13 @@ var newUserCreationModel = function (options) {
                 // clear and disable password input
                 user.password('');
                 user.passwordVisible(false);
-                user.sendConfirmationEmailEnabled(true);
+                user.requireAccountConfirmation(true);
             } else {
                 // make phone number optional
                 user.phoneRequired(false);
                 // enable password input
                 user.passwordVisible(true);
-                user.sendConfirmationEmailEnabled(false);
+                user.requireAccountConfirmation(false);
                 user.send_account_confirmation_email(false);
             }
         });

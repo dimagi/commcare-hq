@@ -800,9 +800,9 @@ class NewMobileWorkerForm(forms.Form):
             send_email_field = crispy.Div(
                 crispy.Field(
                     'send_account_confirmation_email',
-                    data_bind='checked: send_account_confirmation_email, enable: sendConfirmationEmailEnabled',
+                    data_bind='checked: send_account_confirmation_email, enable: requireAccountConfirmation',
                 ),
-                data_bind='visible: sendConfirmationEmailEnabled'
+                data_bind='visible: requireAccountConfirmation'
             )
         else:
             confirm_account_field = crispy.Hidden(
