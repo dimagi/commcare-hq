@@ -1115,6 +1115,7 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+# TODO: GA or Bust: See CaseSearchConfig.dynamically_update_results
 DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     'dynamically_update_search_results',
     "In case search with split screen case search enabled, search results update when a search field is updated"
