@@ -7791,22 +7791,6 @@ msgstr ""
 "Usted no ha creado un formulario todavía. Cree un formulario para poder "
 "visualizar y editar las Propiedades del Usuario."
 
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Import Application"
-msgstr "Importe la Aplicación"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Application Source File"
-msgstr "Archivo fuente de la aplicación"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "No, take me back."
-msgstr "No, llévame de regreso."
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Yes, import application"
-msgstr "Sí, importe la apliación"
-
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 #: corehq/apps/sms/templates/sms/languages.html
 msgid "Language List"
@@ -9597,6 +9581,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
 #: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 msgid "Go Back"
@@ -13592,18 +13577,6 @@ msgstr ""
 "ID de aplicación inválido solicitado para la importación de intercambio"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "You must submit a name for the application you are importing."
-msgstr "Usted debe ingresar un nombre para la aplicación a importar."
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "You must upload the app source file."
-msgstr "Debes subir el archivo fuente de la aplicación."
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "The file uploaded is an invalid JSON file"
-msgstr "El archivo subido no es un archivo JSON válido"
-
-#: corehq/apps/app_manager/views/apps.py
 msgid "The form is incompatible with the destination menu and was not moved."
 msgstr "El formulario es incompatible con el menú de destino y no fue movido."
 
@@ -17097,6 +17070,7 @@ msgid "Select a Case Type"
 msgstr "Selecciona un Tipo de Caso"
 
 #: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -21559,6 +21533,70 @@ msgstr ""
 msgid "Using project's timezone: {}"
 msgstr "Usando la zona horaria del proyecto: {}"
 
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Copy URL"
+msgid "App URL"
+msgstr "Copiar URL"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Copy and paste the full URL of the application from the source server. You "
+"can find this URL in your browser's address bar when viewing the app."
+msgstr ""
+"Copia y pega la URL completa de la aplicación desde el servidor de origen. "
+"Puedes encontrar esta URL en la barra de direcciones de tu navegador al ver "
+"la aplicación."
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must start with https://"
+msgstr "La URL debe comenzar con https://"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"The source app url is in the same server as current server. To copy app in "
+"the same server, please use Copy Application feature."
+msgstr ""
+"La URL de la aplicación de origen está en el mismo servidor que el servidor "
+"actual. Para copiar una aplicación en el mismo servidor, utiliza la función "
+"Copiar Aplicación."
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Invalid phone number format."
+msgid "Invalid app URL format."
+msgstr "Formato de número de teléfono inválido."
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must be from a valid CommCare server."
+msgstr "La URL debe ser de un servidor válido de CommCare."
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Application"
+msgid "Application Name"
+msgstr "Aplicación"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The name of the application from the user's last request."
+msgid "Choose a name for the imported application on this server."
+msgstr "El nombre de la aplicación de la última solicitud del usuario."
+
+#: corehq/apps/domain/forms.py
+msgid "Application Source File"
+msgstr "Archivo fuente de la aplicación"
+
+#: corehq/apps/domain/forms.py
+msgid "Import Application"
+msgstr "Importe la Aplicación"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The file uploaded is an invalid JSON file"
+msgid "The file uploaded is an invalid JSON file."
+msgstr "El archivo subido no es un archivo JSON válido"
+
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
 msgstr "La solicitud de transferencia de dominio ya no está activa"
@@ -22792,17 +22830,23 @@ msgstr "Uso Actual"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
-msgid "Domain Temporarily Unavailable"
-msgstr "Dominio No Disponible Temporalmente"
+#, fuzzy
+#| msgid "Project Space Name"
+msgid "Project Space Unavailable"
+msgstr "Nombre del espacio del proyecto"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
 msgid ""
-"The page you requested is currently unavailable due to a\n"
-"    data migration. Please check back later."
+"\n"
+"      The page you requested is unavailable because the project space is being\n"
+"      or has been migrated to a different hosting environment.\n"
+"    "
 msgstr ""
-"La página que solicitó no está disponible actualmente debido a una\n"
-"    migración de datos. Por favor, vuelva a intentarlo más tarde."
+"\n"
+"      La página que solicitaste no está disponible porque el espacio de proyecto está siendo\n"
+"      o ha sido migrado a un entorno de alojamiento diferente.\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
 #: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
@@ -23662,6 +23706,53 @@ msgstr ""
 "\n"
 "Si crees que has recibido esto por error, puedes ignorar este correo electrónico. Para obtener más información sobre CommCare HQ visita http://www.commcarehq.org/.\n"
 
+#: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your request to join %(domain_name)s has been approved.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    You may now visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully reset your password for the account %(username)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    Tu solicitud para unirte a %(domain_name)s ha sido aprobada.\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    Ahora puedes visitar %(url)s.\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    Gracias,<br />\n"
+"    CommCare HQ\n"
+"  </p>\n"
+
+#: corehq/apps/domain/templates/domain/import_app_from_another_server_main.html
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Import a new build from the build server"
+msgid "Import App from Another Server"
+msgstr "Importar un nuevo desarrollo del servidor de desarrollo"
+
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load EVERYTHING"
 msgstr "Cargar TODO"
@@ -23830,6 +23921,92 @@ msgstr ""
 "            Para cumplir con esta condición, puedes decidir no publicar el contenido multimedia\n"
 "            o seleccionar una de las siguientes licencias:\n"
 "          "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid ""
+"This tool helps you import an app from another CommCare server to your "
+"current CommCare server."
+msgstr ""
+"Esta herramienta te ayuda a importar una aplicación desde otro servidor de "
+"CommCare a tu servidor actual de CommCare."
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "To start, simply paste the URL of the app you want to import."
+msgstr ""
+"Para comenzar, simplemente pega la URL de la aplicación que deseas importar."
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+#, fuzzy
+#| msgid "Import"
+msgid "Important to Note:"
+msgstr "Importar"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy users and groups."
+msgstr "Esto no copiará usuarios ni grupos."
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+#, fuzzy
+#| msgid "Preparing organization structure download."
+msgid "This will not copy organization structure or levels."
+msgstr "Diagnóstico de Casos"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy user fields."
+msgstr "Esto no copiará campos de usuario."
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy lookup tables (aka fixtures)."
+msgstr "Esto no copiará tablas de búsqueda (también conocidas como fixtures)."
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+#, fuzzy
+#| msgid "Application Source File"
+msgid "Download the Application Source File"
+msgstr "Archivo fuente de la aplicación"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has no reports.\n"
+#| "              "
+msgid ""
+"\n"
+"        Open\n"
+"        <a href=\"%(download_url)s\" target=\"_blank\">%(download_url)s</a> in a\n"
+"        new tab.\n"
+"      "
+msgstr ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                no tiene informes.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid ""
+"\n"
+"        Click on the browser’s File menu at the top (e.g. File → Save As…).\n"
+"      "
+msgstr ""
+"\n"
+"        Haz clic en el menú Archivo del navegador en la parte superior (por ejemplo, Archivo 2 Guardar como2).\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid ""
+"\n"
+"        In the dialog: Change the name to end with .json (e.g., my_app.json)\n"
+"      "
+msgstr ""
+"\n"
+"        En el diálogo: Cambia el nombre para que termine en .json (por ejemplo, mi_app.json)\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid "Click Save."
+msgstr "Haz clic en Guardar."
 
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
@@ -24972,6 +25149,12 @@ msgid "Password for {} has successfully been reset. You can now login."
 msgstr ""
 "La contraseña para {} se ha restablecido correctamente. Ahora puedes iniciar"
 " sesión."
+
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Successfully restored report \"{name}\""
+msgid "Successful password reset for {}"
+msgstr "Reporte \"{name}\" restaurado exitosamente "
 
 #: corehq/apps/domain/views/settings.py
 msgid "Recovery Measures History"
@@ -34045,6 +34228,12 @@ msgstr "Mensaje del pagador"
 #: corehq/apps/integration/payments/tables.py
 msgid "Verified By"
 msgstr "Verificado por"
+
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Submitted [UTC]"
+msgid "Submitted At"
+msgstr "Enviado [UTC]"
 
 #: corehq/apps/integration/payments/tables.py
 msgid "Unavailable"
@@ -50522,6 +50711,37 @@ msgstr "Actualizar Configuraciones de Ubicación"
 msgid "Update Tableau Configuration"
 msgstr "Actualizar configuración de Tableau"
 
+#: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
+#, python-format
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully confirmed the account %(new_mobile_worker)s for the\n"
+"    project space %(domain)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    If you think you have received this by mistake, you can go ahead and ignore\n"
+"    this email.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    Has confirmado exitosamente la cuenta %(new_mobile_worker)s para el\n"
+"    espacio de proyecto %(domain)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    Si crees que recibiste esto por error, puedes ignorar\n"
+"    este correo electrónico.\n"
+"  </p>\n"
+"  <p>\n"
+"    Gracias,<br />\n"
+"    El equipo de CommCare HQ\n"
+"  </p>\n"
+
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
 msgid ""
@@ -52594,6 +52814,12 @@ msgid ""
 msgstr ""
 "La contraseña para {} se ha restablecido correctamente. Ahora puedes iniciar"
 " sesión."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Send Account Confirmaton SMS"
+msgid "Successful account confirmation for {}"
+msgstr "Enviar SMS de confirmación de cuenta"
 
 #: corehq/apps/users/views/mobile/users.py
 #, fuzzy
@@ -58174,6 +58400,28 @@ msgstr "Las columnas requeridas son {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Ingrese un JSON válido"
+
+#~ msgid "No, take me back."
+#~ msgstr "No, llévame de regreso."
+
+#~ msgid "Yes, import application"
+#~ msgstr "Sí, importe la apliación"
+
+#~ msgid "You must submit a name for the application you are importing."
+#~ msgstr "Usted debe ingresar un nombre para la aplicación a importar."
+
+#~ msgid "You must upload the app source file."
+#~ msgstr "Debes subir el archivo fuente de la aplicación."
+
+#~ msgid "Domain Temporarily Unavailable"
+#~ msgstr "Dominio No Disponible Temporalmente"
+
+#~ msgid ""
+#~ "The page you requested is currently unavailable due to a\n"
+#~ "    data migration. Please check back later."
+#~ msgstr ""
+#~ "La página que solicitó no está disponible actualmente debido a una\n"
+#~ "    migración de datos. Por favor, vuelva a intentarlo más tarde."
 
 #, python-format
 #~ msgid ""

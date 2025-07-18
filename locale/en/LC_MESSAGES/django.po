@@ -6601,22 +6601,6 @@ msgid ""
 "User Properties."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Import Application"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Application Source File"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "No, take me back."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Yes, import application"
-msgstr ""
-
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 #: corehq/apps/sms/templates/sms/languages.html
 msgid "Language List"
@@ -7744,7 +7728,7 @@ msgid "* You can change the Case Type later by going to the menu settings page"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
-#: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/data_cleaning/forms/start_session.py corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 msgid "Go Back"
@@ -11309,18 +11293,6 @@ msgid "Invalid application id requested for exchange import"
 msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "You must submit a name for the application you are importing."
-msgstr ""
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "You must upload the app source file."
-msgstr ""
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "The file uploaded is an invalid JSON file"
-msgstr ""
-
-#: corehq/apps/app_manager/views/apps.py
 msgid "The form is incompatible with the destination menu and was not moved."
 msgstr ""
 
@@ -14349,7 +14321,7 @@ msgstr ""
 msgid "Select a Case Type"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/data_cleaning/forms/start_session.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -18102,6 +18074,54 @@ msgstr ""
 msgid "Using project's timezone: {}"
 msgstr ""
 
+#: corehq/apps/domain/forms.py
+msgid "App URL"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Copy and paste the full URL of the application from the source server. You "
+"can find this URL in your browser's address bar when viewing the app."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must start with https://"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"The source app url is in the same server as current server. To copy app in "
+"the same server, please use Copy Application feature."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Invalid app URL format."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must be from a valid CommCare server."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Application Name"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Choose a name for the imported application on this server."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Application Source File"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Import Application"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "The file uploaded is an invalid JSON file."
+msgstr ""
+
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
 msgstr ""
@@ -19116,14 +19136,17 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
-msgid "Domain Temporarily Unavailable"
+msgid "Project Space Unavailable"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
 msgid ""
-"The page you requested is currently unavailable due to a\n"
-"    data migration. Please check back later."
+"\n"
+"      The page you requested is unavailable because the project space is "
+"being\n"
+"      or has been migrated to a different hosting environment.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
@@ -19788,6 +19811,24 @@ msgid ""
 "org/.\n"
 msgstr ""
 
+#: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
+#, python-format
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully reset your password for the account %(username)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/import_app_from_another_server_main.html
+#: corehq/apps/domain/views/settings.py
+msgid "Import App from Another Server"
+msgstr ""
+
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load EVERYTHING"
 msgstr ""
@@ -19932,6 +19973,70 @@ msgid ""
 "the multimedia\n"
 "            or select one of the following licenses:\n"
 "          "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid ""
+"This tool helps you import an app from another CommCare server to your "
+"current CommCare server."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "To start, simply paste the URL of the app you want to import."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "Important to Note:"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy users and groups."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy organization structure or levels."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy user fields."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy lookup tables (aka fixtures)."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid "Download the Application Source File"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+#, python-format
+msgid ""
+"\n"
+"        Open\n"
+"        <a href=\"%(download_url)s\" target=\"_blank\">%(download_url)s</a> "
+"in a\n"
+"        new tab.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid ""
+"\n"
+"        Click on the browser’s File menu at the top (e.g. File → Save As…).\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid ""
+"\n"
+"        In the dialog: Change the name to end with .json (e.g., my_app."
+"json)\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid "Click Save."
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
@@ -20903,6 +21008,10 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py
 msgid "Password for {} has successfully been reset. You can now login."
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "Successful password reset for {}"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
@@ -28870,6 +28979,10 @@ msgstr ""
 
 #: corehq/apps/integration/payments/tables.py
 msgid "Verified By"
+msgstr ""
+
+#: corehq/apps/integration/payments/tables.py
+msgid "Submitted At"
 msgstr ""
 
 #: corehq/apps/integration/payments/tables.py
@@ -43282,6 +43395,26 @@ msgstr ""
 msgid "Update Tableau Configuration"
 msgstr ""
 
+#: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
+#, python-format
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully confirmed the account %(new_mobile_worker)s for "
+"the\n"
+"    project space %(domain)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    If you think you have received this by mistake, you can go ahead and "
+"ignore\n"
+"    this email.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
 msgid ""
@@ -44899,6 +45032,10 @@ msgstr ""
 msgid ""
 "You have successfully confirmed the {user.raw_username} account. You can now "
 "login"
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+msgid "Successful account confirmation for {}"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py

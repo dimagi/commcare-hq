@@ -593,6 +593,9 @@ class CustomPasswordResetView(PasswordResetConfirmView):
             user = User.objects.get(pk=uid)
             couch_user = CouchUser.from_django_user(user)
             clear_login_attempts(couch_user)
+            if couch_user.is_commcare_user():
+                couch_user.self_set_password = True
+                couch_user.save()
 
             domain = couch_user.domain if couch_user.is_commcare_user() else None
             log_user_change(by_domain=None, for_domain=domain, couch_user=couch_user, changed_by_user=couch_user,
@@ -813,14 +816,33 @@ class ImportAppFromAnotherServerView(BaseAdminProjectSettingsView):
     urlname = 'import_app_from_another_server_main'
     template_name = 'domain/import_app_from_another_server_main.html'
 
+    def get_recent_import_details(self):
+        """
+        Returns the details of the most recent import app steps.
+        """
+        if self.request.GET.get('source_domain'):
+            return {
+                'source_server': self.request.GET.get('source_server'),
+                'source_domain': self.request.GET.get('source_domain'),
+                'source_app_id': self.request.GET.get('source_app_id'),
+                'new_app_id': self.request.GET.get('new_app_id'),
+            }
+        return {}
+
     @property
     def page_context(self):
-        return {
+        context = {
             'htmx_import_app_steps_view_url': reverse(
                 ImportAppStepsView.urlname,
                 args=[self.domain,],
             ),
         }
+        recent_import_details = self.get_recent_import_details()
+        if recent_import_details:
+            context.update({
+                'import_details': json.dumps(recent_import_details),
+            })
+        return context
 
 
 @require_POST

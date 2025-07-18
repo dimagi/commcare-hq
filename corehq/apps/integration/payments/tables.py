@@ -72,6 +72,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     )
     payment_status = columns.Column(
         verbose_name=_("Payment Status"),
+        empty_values=(),
     )
     payment_timestamp = DateTimeStringColumn(
         verbose_name=_("Submitted At"),
@@ -92,7 +93,10 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         return mark_safe('<input %s/>' % flatatt(default_attrs))
 
     def render_payment_status(self, record, value):
-        return PaymentStatus(value).label
+        try:
+            return PaymentStatus.from_value(value).label
+        except ValueError:
+            return _("Invalid Status")
 
     def render_kyc_status(self, record, value):
         user_or_case_id = record.record.get('user_or_case_id')

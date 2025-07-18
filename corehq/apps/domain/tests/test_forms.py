@@ -646,7 +646,7 @@ class TestExtractAppInfoForm(SimpleTestCase):
         url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
         form = forms.ExtractAppInfoForm(data={'app_url': url})
         self.assertFalse(form.is_valid())
-        self.assertIn('The source app url is in the same server as current server', str(form.errors['app_url']))
+        self.assertIn('The source app url matches the current server', str(form.errors['app_url']))
 
     @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'india')
     def test_clean_app_url_different_server_validation(self):

@@ -140,10 +140,7 @@ class TestCreateIndex(BaseCase):
         migration = TestMigration(CreateIndex(*self.create_index_args))
         with self.assertRaises(RequestError) as context:
             migration.apply()
-        if manager.elastic_major_version >= 6:
-            self.assertEqual(context.exception.error, "resource_already_exists_exception")
-        else:
-            self.assertEqual(context.exception.error, "index_already_exists_exception")
+        self.assertEqual(context.exception.error, "resource_already_exists_exception")
 
     def test_reverse_deletes_index(self):
         migration = TestMigration(CreateIndex(*self.create_index_args))
@@ -476,10 +473,7 @@ class TestDeleteIndex(BaseCase):
         )
         with self.assertRaises(RequestError) as context:
             migration.unapply()
-        if manager.elastic_major_version >= 6:
-            self.assertEqual(context.exception.error, "resource_already_exists_exception")
-        else:
-            self.assertEqual(context.exception.error, "index_already_exists_exception")
+        self.assertEqual(context.exception.error, "resource_already_exists_exception")
 
     def test_describe(self):
         operation = DeleteIndex(self.index)
@@ -643,7 +637,7 @@ class TestUpdateIndexMapping(BaseCase):
             self.type,
             {"prop": {"type": "integer"}},
         ))
-        error_type = "RequestError" if manager.elastic_major_version >= 6 else "TransportError"
+        error_type = "RequestError"
         literal = (
             f"{error_type}(400, 'illegal_argument_exception', 'mapper [prop] "
             "of different type, current_type [text], merged_type [integer]')"
@@ -661,7 +655,7 @@ class TestUpdateIndexMapping(BaseCase):
             self.type,
             {"prop": {"type": "keyword"}},
         ))
-        error_type = "RequestError" if manager.elastic_major_version >= 6 else "TransportError"
+        error_type = "RequestError"
         literal = (
             f"{error_type}(400, 'illegal_argument_exception', "
             "'mapper [prop] of different type, current_type [text], merged_type [keyword]')"

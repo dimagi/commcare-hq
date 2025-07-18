@@ -58,7 +58,7 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
         transaction_id = _request_payment(payment_case, config)
         payment_update.update({
             'transaction_id': transaction_id,  # can be used to check payment status
-            PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUESTED,
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
         })
     except PaymentRequestError as e:
         payment_update.update({
@@ -112,7 +112,7 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
         PaymentProperties.PAYMENT_VERIFIED_ON_UTC: str(datetime.now()),
         PaymentProperties.PAYMENT_VERIFIED_BY: verifying_user.username,
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: verifying_user.user_id,
-        PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING,
+        PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
     }
 
     updated_cases = []
@@ -178,7 +178,8 @@ def _payment_is_verified(case_data: dict):
 
 
 def _payment_already_requested(case_data: dict):
-    return case_data.get(PaymentProperties.PAYMENT_STATUS) == PaymentStatus.REQUESTED
+    status = case_data.get(PaymentProperties.PAYMENT_STATUS)
+    return PaymentStatus.from_value(status) == PaymentStatus.SUBMITTED
 
 
 def get_payment_batch_numbers_for_domain(domain):

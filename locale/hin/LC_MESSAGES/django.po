@@ -7597,22 +7597,6 @@ msgstr ""
 "आपने अभी तक कोई फॉर्म नहीं बनाया है। यूज़र प्रॉपर्टीज़ देखने और संपादित करने"
 " के लिए एक फॉर्म बनाएं।"
 
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Import Application"
-msgstr "ऐप्लिकेशन आयात करें"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Application Source File"
-msgstr "ऐप्लिकेशन स्रोत फ़ाइल"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "No, take me back."
-msgstr "नहीं, मुझे वापस ले जाएँ।"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Yes, import application"
-msgstr "हाँ, ऐप्लिकेशन आयात करें"
-
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 #: corehq/apps/sms/templates/sms/languages.html
 msgid "Language List"
@@ -9388,6 +9372,7 @@ msgstr "* आप बाद में केस प्रकार को मे�
 
 #: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
 #: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 msgid "Go Back"
@@ -13340,18 +13325,6 @@ msgid "Invalid application id requested for exchange import"
 msgstr "एक्सचेंज इम्पोर्ट के लिए अमान्य एप्लिकेशन आईडी अनुरोधित की गई है"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "You must submit a name for the application you are importing."
-msgstr "आपको उस एप्लिकेशन का नाम सबमिट करना होगा जिसे आप इम्पोर्ट कर रहे हैं।"
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "You must upload the app source file."
-msgstr "आपको ऐप स्रोत फ़ाइल अपलोड करनी होगी।"
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "The file uploaded is an invalid JSON file"
-msgstr "अपलोड की गई फ़ाइल एक अमान्य JSON फ़ाइल है"
-
-#: corehq/apps/app_manager/views/apps.py
 msgid "The form is incompatible with the destination menu and was not moved."
 msgstr "फ़ॉर्म गंतव्य मेनू के साथ असंगत है और स्थानांतरित नहीं किया गया।"
 
@@ -16781,6 +16754,7 @@ msgid "Select a Case Type"
 msgstr "कोई केस प्रकार चुनें"
 
 #: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -21206,6 +21180,68 @@ msgstr "प्रोफ़ाइल {profile} के लिए प्रति�
 msgid "Using project's timezone: {}"
 msgstr "प्रोजेक्ट का टाइमज़ोन उपयोग किया जा रहा है: {}"
 
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Copy URL"
+msgid "App URL"
+msgstr "URL कॉपी करें"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Copy and paste the full URL of the application from the source server. You "
+"can find this URL in your browser's address bar when viewing the app."
+msgstr ""
+"सोर्स सर्वर से एप्लिकेशन का पूरा URL कॉपी और पेस्ट करें। जब आप ऐप देख रहे "
+"हों, तो अपने ब्राउज़र के एड्रेस बार में यह URL मिल जाएगा।"
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must start with https://"
+msgstr "URL https:// से शुरू होना चाहिए"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"The source app url is in the same server as current server. To copy app in "
+"the same server, please use Copy Application feature."
+msgstr ""
+"सोर्स ऐप URL वर्तमान सर्वर के समान सर्वर में है। एक ही सर्वर में ऐप कॉपी "
+"करने के लिए कृपया 'कॉपी एप्लिकेशन' फीचर का उपयोग करें।"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Invalid phone number format."
+msgid "Invalid app URL format."
+msgstr "अमान्य फ़ोन नंबर प्रारूप।"
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must be from a valid CommCare server."
+msgstr "URL एक मान्य CommCare सर्वर से होना चाहिए।"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Application"
+msgid "Application Name"
+msgstr "एप्लिकेशन"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The name of the application from the user's last request."
+msgid "Choose a name for the imported application on this server."
+msgstr "उपयोगकर्ता के अंतिम अनुरोध से एप्लिकेशन का नाम।"
+
+#: corehq/apps/domain/forms.py
+msgid "Application Source File"
+msgstr "ऐप्लिकेशन स्रोत फ़ाइल"
+
+#: corehq/apps/domain/forms.py
+msgid "Import Application"
+msgstr "ऐप्लिकेशन आयात करें"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The file uploaded is an invalid JSON file"
+msgid "The file uploaded is an invalid JSON file."
+msgstr "अपलोड की गई फ़ाइल एक अमान्य JSON फ़ाइल है"
+
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
 msgstr "डोमेन ट्रांसफर अनुरोध अब सक्रिय नहीं है"
@@ -22430,17 +22466,23 @@ msgstr "वर्तमान उपयोग"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
-msgid "Domain Temporarily Unavailable"
-msgstr "डोमेन अस्थायी रूप से अनुपलब्ध है"
+#, fuzzy
+#| msgid "Project Space Name"
+msgid "Project Space Unavailable"
+msgstr "प्रोजेक्ट स्पेस नाम"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
 msgid ""
-"The page you requested is currently unavailable due to a\n"
-"    data migration. Please check back later."
+"\n"
+"      The page you requested is unavailable because the project space is being\n"
+"      or has been migrated to a different hosting environment.\n"
+"    "
 msgstr ""
-"आपके द्वारा अनुरोधित पृष्ठ वर्तमान में डेटा माइग्रेशन के कारण अनुपलब्ध है। "
-"कृपया बाद में पुनः प्रयास करें।"
+"\n"
+"      आपके द्वारा अनुरोधित पेज उपलब्ध नहीं है क्योंकि प्रोजेक्ट स्पेस को\n"
+"      या तो माइग्रेट किया जा रहा है या किसी अन्य होस्टिंग वातावरण में माइग्रेट किया जा चुका है।\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
 #: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
@@ -23294,6 +23336,53 @@ msgstr ""
 "\n"
 "यदि आपको लगता है कि यह संदेश गलती से मिला है, तो आप इस ईमेल को अनदेखा कर सकते हैं। CommCare HQ के बारे में अधिक जानने के लिए http://www.commcarehq.org/ पर जाएँ।\n"
 
+#: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your request to join %(domain_name)s has been approved.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    You may now visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully reset your password for the account %(username)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    %(domain_name)s से जुड़ने का आपका अनुरोध स्वीकृत कर लिया गया है।\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    अब आप %(url)s पर जा सकते हैं।\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    धन्यवाद,<br />\n"
+"    CommCare HQ\n"
+"  </p>\n"
+
+#: corehq/apps/domain/templates/domain/import_app_from_another_server_main.html
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Import a new build from the build server"
+msgid "Import App from Another Server"
+msgstr "बिल्ड सर्वर से नया बिल्ड आयात करें"
+
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load EVERYTHING"
 msgstr "सभी कुछ लोड करें"
@@ -23461,6 +23550,92 @@ msgstr ""
 "            इस शर्त को पूरा करने के लिए, आप या तो मल्टीमीडिया प्रकाशित न करने का निर्णय ले सकते हैं\n"
 "            या निम्नलिखित में से कोई एक लाइसेंस चुन सकते हैं:\n"
 "          "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid ""
+"This tool helps you import an app from another CommCare server to your "
+"current CommCare server."
+msgstr ""
+"यह टूल आपको किसी अन्य CommCare सर्वर से अपने वर्तमान CommCare सर्वर में ऐप "
+"आयात करने में मदद करता है।"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "To start, simply paste the URL of the app you want to import."
+msgstr ""
+"शुरू करने के लिए, बस उस ऐप का URL पेस्ट करें जिसे आप आयात करना चाहते हैं।"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+#, fuzzy
+#| msgid "Import"
+msgid "Important to Note:"
+msgstr "आयात करें"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy users and groups."
+msgstr "यह उपयोगकर्ता और समूहों की कॉपी नहीं करेगा।"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+#, fuzzy
+#| msgid "Preparing organization structure download."
+msgid "This will not copy organization structure or levels."
+msgstr "Diagnóstico de Casos"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy user fields."
+msgstr "यह उपयोगकर्ता फ़ील्ड्स की कॉपी नहीं करेगा।"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy lookup tables (aka fixtures)."
+msgstr "यह लुकअप टेबल्स (जिसे फिक्स्चर भी कहते हैं) की कॉपी नहीं करेगा।"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+#, fuzzy
+#| msgid "Application Source File"
+msgid "Download the Application Source File"
+msgstr "ऐप्लिकेशन स्रोत फ़ाइल"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has no reports.\n"
+#| "              "
+msgid ""
+"\n"
+"        Open\n"
+"        <a href=\"%(download_url)s\" target=\"_blank\">%(download_url)s</a> in a\n"
+"        new tab.\n"
+"      "
+msgstr ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                में कोई रिपोर्ट नहीं है।\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid ""
+"\n"
+"        Click on the browser’s File menu at the top (e.g. File → Save As…).\n"
+"      "
+msgstr ""
+"\n"
+"        ब्राउज़र के फ़ाइल मेनू पर क्लिक करें (जैसे, फ़ाइल 2 सहेजें रूप में026)।\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid ""
+"\n"
+"        In the dialog: Change the name to end with .json (e.g., my_app.json)\n"
+"      "
+msgstr ""
+"\n"
+"        डायलॉग में: नाम को .json पर समाप्त होने के लिए बदलें (जैसे, my_app.json)\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid "Click Save."
+msgstr "सेव पर क्लिक करें।"
 
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
@@ -24585,6 +24760,12 @@ msgstr "गोपनीयता और सुरक्षा"
 msgid "Password for {} has successfully been reset. You can now login."
 msgstr ""
 "{} के लिए पासवर्ड सफलतापूर्वक रीसेट कर दिया गया है। अब आप लॉगिन कर सकते हैं।"
+
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Successfully restored report \"{name}\""
+msgid "Successful password reset for {}"
+msgstr "रिपोर्ट \"{name}\" सफलतापूर्वक पुनर्स्थापित की गई"
 
 #: corehq/apps/domain/views/settings.py
 msgid "Recovery Measures History"
@@ -33533,6 +33714,12 @@ msgstr "भुगतानकर्ता संदेश"
 #: corehq/apps/integration/payments/tables.py
 msgid "Verified By"
 msgstr "सत्यापित किया गया द्वारा"
+
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Submitted [UTC]"
+msgid "Submitted At"
+msgstr "सबमिट किया गया [UTC]"
 
 #: corehq/apps/integration/payments/tables.py
 msgid "Unavailable"
@@ -49771,6 +49958,36 @@ msgstr "स्थान सेटिंग अपडेट करें"
 msgid "Update Tableau Configuration"
 msgstr "Tableau कॉन्फ़िगरेशन अपडेट करें"
 
+#: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
+#, python-format
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully confirmed the account %(new_mobile_worker)s for the\n"
+"    project space %(domain)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    If you think you have received this by mistake, you can go ahead and ignore\n"
+"    this email.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    आपने सफलतापूर्वक %(new_mobile_worker)s खाते की पुष्टि की है\n"
+"    प्रोजेक्ट स्पेस %(domain)s के लिए।\n"
+"  </p>\n"
+"  <p>\n"
+"    यदि आपको लगता है कि यह ईमेल गलती से मिला है, तो आप इसे अनदेखा कर सकते हैं।\n"
+"  </p>\n"
+"  <p>\n"
+"    धन्यवाद,<br />\n"
+"    CommCare HQ टीम\n"
+"  </p>\n"
+
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
 msgid ""
@@ -51820,6 +52037,12 @@ msgid ""
 " login"
 msgstr ""
 "{} के लिए पासवर्ड सफलतापूर्वक रीसेट कर दिया गया है। अब आप लॉगिन कर सकते हैं।"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Send Account Confirmaton SMS"
+msgid "Successful account confirmation for {}"
+msgstr "खाता पुष्टि एसएमएस भेजें"
 
 #: corehq/apps/users/views/mobile/users.py
 #, fuzzy
@@ -57307,6 +57530,28 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "No, take me back."
+#~ msgstr "नहीं, मुझे वापस ले जाएँ।"
+
+#~ msgid "Yes, import application"
+#~ msgstr "हाँ, ऐप्लिकेशन आयात करें"
+
+#~ msgid "You must submit a name for the application you are importing."
+#~ msgstr "आपको उस एप्लिकेशन का नाम सबमिट करना होगा जिसे आप इम्पोर्ट कर रहे हैं।"
+
+#~ msgid "You must upload the app source file."
+#~ msgstr "आपको ऐप स्रोत फ़ाइल अपलोड करनी होगी।"
+
+#~ msgid "Domain Temporarily Unavailable"
+#~ msgstr "डोमेन अस्थायी रूप से अनुपलब्ध है"
+
+#~ msgid ""
+#~ "The page you requested is currently unavailable due to a\n"
+#~ "    data migration. Please check back later."
+#~ msgstr ""
+#~ "आपके द्वारा अनुरोधित पृष्ठ वर्तमान में डेटा माइग्रेशन के कारण अनुपलब्ध है। "
+#~ "कृपया बाद में पुनः प्रयास करें।"
 
 #, python-format
 #~ msgid ""

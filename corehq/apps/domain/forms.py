@@ -3118,7 +3118,7 @@ class ExtractAppInfoForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
-            crispy.HTML(render_to_string('domain/partials/import_app_step_1_instruction.html', {})),
+            crispy.HTML(render_to_string('domain/partials/how_to_start_with_import_app_feature.html', {})),
             crispy.Field('app_url', placeholder="https://[server]/a/[domain]/apps/view/[app_id]/..."),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -3152,8 +3152,8 @@ class ExtractAppInfoForm(forms.Form):
         current_server = settings.SERVER_ENVIRONMENT
         if source_server == current_server:
             self.add_error('app_url', _(
-                "The source app url is in the same server as current server. "
-                "To copy app in the same server, please use Copy Application feature."
+                "The source app url matches the current server. "
+                "To copy an app within the same server, please use the Copy Application feature."
             ))
 
         match = re.match(
@@ -3222,7 +3222,7 @@ class ImportAppForm(forms.Form):
         download_url = self.construct_download_url(source_server, source_domain, app_id)
 
         self.helper.layout = crispy.Layout(
-            crispy.HTML(render_to_string('domain/partials/import_app_step_2_instruction.html', {
+            crispy.HTML(render_to_string('domain/partials/how_to_download_app_json.html', {
                 'download_url': download_url,
             })),
             crispy.Field('app_name'),
@@ -3258,10 +3258,6 @@ class ImportAppForm(forms.Form):
         return app_file
 
     def construct_download_url(self, source_server, source_domain, app_id):
-        server_mapping = {
-            'production': 'www',
-            'india': 'india',
-            'eu': 'eu',
-        }
-        server_address = server_mapping[source_server]
+        from corehq.apps.domain.views.import_apps import SERVER_SUBDOMAIN_MAPPING
+        server_address = SERVER_SUBDOMAIN_MAPPING[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"

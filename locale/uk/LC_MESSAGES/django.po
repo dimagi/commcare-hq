@@ -8031,22 +8031,6 @@ msgstr ""
 "Ви ще не створили форму. Створіть форму, щоб переглядати та редагувати "
 "Властивості користувача."
 
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Import Application"
-msgstr "Імпортувати додаток"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Application Source File"
-msgstr "Файл джерела додатку"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "No, take me back."
-msgstr "Ні, повернутися назад."
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Yes, import application"
-msgstr "Так, імпортувати додаток"
-
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 #: corehq/apps/sms/templates/sms/languages.html
 msgid "Language List"
@@ -10094,7 +10078,7 @@ msgid "* You can change the Case Type later by going to the menu settings page"
 msgstr "* Ви можете змінити тип справи пізніше на сторінці налаштувань меню"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
-#: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/data_cleaning/forms/start_session.py corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 msgid "Go Back"
@@ -14314,18 +14298,6 @@ msgid "Invalid application id requested for exchange import"
 msgstr "Запитано некоректний ідентифікатор додатку для імпорту з обміну"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "You must submit a name for the application you are importing."
-msgstr "Ви повинні вказати назву для додатку, який імпортуєте."
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "You must upload the app source file."
-msgstr "Ви повинні завантажити вихідний файл додатку."
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "The file uploaded is an invalid JSON file"
-msgstr "Завантажений файл є некоректним JSON-файлом"
-
-#: corehq/apps/app_manager/views/apps.py
 msgid "The form is incompatible with the destination menu and was not moved."
 msgstr "Форма несумісна з меню призначення і не була переміщена."
 
@@ -17913,7 +17885,7 @@ msgstr "Тип даних '{}' не може мати тип співпадін�
 msgid "Select a Case Type"
 msgstr "Виберіть тип справи"
 
-#: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/data_cleaning/forms/start_session.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -22503,6 +22475,64 @@ msgstr "Не вдалося встановити обмеження для пр�
 msgid "Using project's timezone: {}"
 msgstr "Використовується часовий пояс проєкту: {}"
 
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Copy URL"
+msgid "App URL"
+msgstr "Скопіювати URL"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Copy and paste the full URL of the application from the source server. You "
+"can find this URL in your browser's address bar when viewing the app."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must start with https://"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"The source app url is in the same server as current server. To copy app in "
+"the same server, please use Copy Application feature."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Invalid phone number format."
+msgid "Invalid app URL format."
+msgstr "Неправильний формат номера телефону."
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must be from a valid CommCare server."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Application"
+msgid "Application Name"
+msgstr "Додаток"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The name of the application from the user's last request."
+msgid "Choose a name for the imported application on this server."
+msgstr "Назва застосунку з останнього запиту користувача."
+
+#: corehq/apps/domain/forms.py
+msgid "Application Source File"
+msgstr "Файл джерела додатку"
+
+#: corehq/apps/domain/forms.py
+msgid "Import Application"
+msgstr "Імпортувати додаток"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The file uploaded is an invalid JSON file"
+msgid "The file uploaded is an invalid JSON file."
+msgstr "Завантажений файл є некоректним JSON-файлом"
+
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
 msgstr "Запит на передачу домену більше не активний"
@@ -23845,17 +23875,20 @@ msgstr "Поточне використання"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
-msgid "Domain Temporarily Unavailable"
-msgstr "Домен тимчасово недоступний"
+#, fuzzy
+#| msgid "Project Space Name"
+msgid "Project Space Unavailable"
+msgstr "Назва простору проєкту"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
 msgid ""
-"The page you requested is currently unavailable due to a\n"
-"    data migration. Please check back later."
+"\n"
+"      The page you requested is unavailable because the project space is "
+"being\n"
+"      or has been migrated to a different hosting environment.\n"
+"    "
 msgstr ""
-"Сторінка, яку ви запитали, наразі недоступна через\n"
-"    міграцію даних. Будь ласка, спробуйте пізніше."
 
 #: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
 #: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
@@ -24803,6 +24836,53 @@ msgstr ""
 "цей лист. Щоб дізнатися більше про CommCare HQ, відвідайте http://www."
 "commcarehq.org/.\n"
 
+#: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your request to join %(domain_name)s has been approved.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    You may now visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully reset your password for the account %(username)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    Ваш запит на приєднання до %(domain_name)s було схвалено.\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    Тепер ви можете відвідати %(url)s.\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    Дякуємо,<br />\n"
+"    CommCare HQ\n"
+"  </p>\n"
+
+#: corehq/apps/domain/templates/domain/import_app_from_another_server_main.html
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Import a new build from the build server"
+msgid "Import App from Another Server"
+msgstr "Імпортувати нову збірку з сервера збірок"
+
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load EVERYTHING"
 msgstr "Завантажити ВСЕ"
@@ -24998,6 +25078,85 @@ msgstr ""
 "мультимедіа,\n"
 "            або обрати одну з наступних ліцензій:\n"
 "          "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid ""
+"This tool helps you import an app from another CommCare server to your "
+"current CommCare server."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "To start, simply paste the URL of the app you want to import."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+#, fuzzy
+#| msgid "Import"
+msgid "Important to Note:"
+msgstr "Імпортувати"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy users and groups."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+#, fuzzy
+#| msgid "Preparing organization structure download."
+msgid "This will not copy organization structure or levels."
+msgstr "Підготовка завантаження структури організації."
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy user fields."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_1_instruction.html
+msgid "This will not copy lookup tables (aka fixtures)."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+#, fuzzy
+#| msgid "Application Source File"
+msgid "Download the Application Source File"
+msgstr "Файл джерела додатку"
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has no reports.\n"
+#| "              "
+msgid ""
+"\n"
+"        Open\n"
+"        <a href=\"%(download_url)s\" target=\"_blank\">%(download_url)s</a> "
+"in a\n"
+"        new tab.\n"
+"      "
+msgstr ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                не має звітів.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid ""
+"\n"
+"        Click on the browser’s File menu at the top (e.g. File → Save As…).\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid ""
+"\n"
+"        In the dialog: Change the name to end with .json (e.g., my_app."
+"json)\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/import_app_step_2_instruction.html
+msgid "Click Save."
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
@@ -26140,6 +26299,12 @@ msgstr "Конфіденційність і безпека"
 #: corehq/apps/domain/views/settings.py
 msgid "Password for {} has successfully been reset. You can now login."
 msgstr "Пароль для {} успішно скинуто. Тепер ви можете увійти."
+
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Successfully restored report \"{name}\""
+msgid "Successful password reset for {}"
+msgstr "Звіт \"{name}\" успішно відновлено"
 
 #: corehq/apps/domain/views/settings.py
 msgid "Recovery Measures History"
@@ -35633,6 +35798,12 @@ msgstr "Повідомлення від платника"
 #: corehq/apps/integration/payments/tables.py
 msgid "Verified By"
 msgstr "Перевірено"
+
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Submitted [UTC]"
+msgid "Submitted At"
+msgstr "Відправлено [UTC]"
 
 #: corehq/apps/integration/payments/tables.py
 msgid "Unavailable"
@@ -52562,6 +52733,26 @@ msgstr "Оновити налаштування розташування"
 msgid "Update Tableau Configuration"
 msgstr "Оновити конфігурацію Tableau"
 
+#: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
+#, python-format
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully confirmed the account %(new_mobile_worker)s for "
+"the\n"
+"    project space %(domain)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    If you think you have received this by mistake, you can go ahead and "
+"ignore\n"
+"    this email.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
 msgid ""
@@ -54773,6 +54964,12 @@ msgid ""
 "You have successfully confirmed the {user.raw_username} account. You can now "
 "login"
 msgstr "Пароль для {} успішно скинуто. Тепер ви можете увійти."
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Send Account Confirmaton SMS"
+msgid "Successful account confirmation for {}"
+msgstr "Надіслати SMS-підтвердження облікового запису"
 
 #: corehq/apps/users/views/mobile/users.py
 #, fuzzy
@@ -60470,6 +60667,28 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "No, take me back."
+#~ msgstr "Ні, повернутися назад."
+
+#~ msgid "Yes, import application"
+#~ msgstr "Так, імпортувати додаток"
+
+#~ msgid "You must submit a name for the application you are importing."
+#~ msgstr "Ви повинні вказати назву для додатку, який імпортуєте."
+
+#~ msgid "You must upload the app source file."
+#~ msgstr "Ви повинні завантажити вихідний файл додатку."
+
+#~ msgid "Domain Temporarily Unavailable"
+#~ msgstr "Домен тимчасово недоступний"
+
+#~ msgid ""
+#~ "The page you requested is currently unavailable due to a\n"
+#~ "    data migration. Please check back later."
+#~ msgstr ""
+#~ "Сторінка, яку ви запитали, наразі недоступна через\n"
+#~ "    міграцію даних. Будь ласка, спробуйте пізніше."
 
 #, python-format
 #~ msgid ""
