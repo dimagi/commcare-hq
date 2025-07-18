@@ -6,17 +6,16 @@ from django import template
 from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
-from django.template.base import (
-    Variable,
-    VariableDoesNotExist,
-)
+from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
+from django.templatetags import i18n
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from django_prbac.utils import has_privilege
+from langcodes import langs_by_code
 
 from dimagi.utils.web import json_handler
 
@@ -255,8 +254,14 @@ def css_field_class():
 
 @register.simple_tag
 def css_action_class():
-    from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS, get_form_action_class
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+    from corehq.apps.hqwebapp.crispy import (
+        CSS_ACTION_CLASS,
+        get_form_action_class,
+    )
+    from corehq.apps.hqwebapp.utils.bootstrap import (
+        BOOTSTRAP_5,
+        get_bootstrap_version,
+    )
     if get_bootstrap_version() == BOOTSTRAP_5:
         return get_form_action_class()
     return CSS_ACTION_CLASS
@@ -600,6 +605,14 @@ def html_attr(value):
     return conditional_escape(value)
 
 
+@register.filter
+def language_name_local(lang_code):
+    #override built-in template filter to be usable with our custom langcodes
+    lang = langs_by_code.get(lang_code)
+    lang_code = lang['two'] if lang else ''
+    return i18n.language_name_local(lang_code)
+
+
 def _create_page_data(parser, original_token, node_slug):
     split_contents = original_token.split_contents()
     tag = split_contents[0]
@@ -711,8 +724,15 @@ class WebpackMainNode(template.Node):
 
 @register.filter
 def webpack_bundles(entry_name):
-    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
+    from corehq.apps.hqwebapp.utils.bootstrap import (
+        BOOTSTRAP_3,
+        BOOTSTRAP_5,
+        get_bootstrap_version,
+    )
+    from corehq.apps.hqwebapp.utils.webpack import (
+        WebpackManifestNotFoundError,
+        get_webpack_manifest,
+    )
     bootstrap_version = get_bootstrap_version()
 
     try:
@@ -783,8 +803,8 @@ def breadcrumbs(page, section, parents=None):
 
 @register.filter
 def request_has_privilege(request, privilege_name):
-    from corehq.apps.accounting.utils import domain_has_privilege
     from corehq import privileges
+    from corehq.apps.accounting.utils import domain_has_privilege
     privilege = _get_obj_from_name_or_instance(privileges, privilege_name)
     return domain_has_privilege(request.domain, privilege)
 
