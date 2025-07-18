@@ -148,22 +148,42 @@ def domain(domain, *, include_active=True, include_inactive=False):
 
 
 def is_active(domain):
-    return filters.AND(
-        filters.term("is_active", True),
-        filters.nested('user_domain_memberships', filters.AND(
-            filters.term('user_domain_memberships.domain.exact', domain),
-            filters.NOT(filters.term('user_domain_memberships.is_active', False)),
-        ))
+    return filters.OR(
+        filters.AND(
+            filters.doc_type("CommCareUser"),
+            filters.term("is_active", True),
+            filters.nested('user_domain_memberships',
+                filters.term('user_domain_memberships.domain.exact', domain)),
+        ),
+        filters.AND(
+            filters.doc_type("WebUser"),
+            filters.term("is_active", True),
+            filters.nested('user_domain_memberships', filters.AND(
+                filters.term('user_domain_memberships.domain.exact', domain),
+                filters.NOT(filters.term('user_domain_memberships.is_active', False)),
+            ))
+        )
     )
 
 
 def is_inactive(domain):
     return filters.OR(
-        filters.term("is_active", False),
-        filters.nested('user_domain_memberships', filters.AND(
-            filters.term('user_domain_memberships.domain.exact', domain),
-            filters.term('user_domain_memberships.is_active', False),
-        ))
+        filters.AND(
+            filters.doc_type("CommCareUser"),
+            filters.term("is_active", False),
+            filters.nested('user_domain_memberships',
+                filters.term('user_domain_memberships.domain.exact', domain)),
+        ),
+        filters.AND(
+            filters.doc_type("WebUser"),
+            filters.OR(
+                filters.term("is_active", False),
+                filters.nested('user_domain_memberships', filters.AND(
+                    filters.term('user_domain_memberships.domain.exact', domain),
+                    filters.term('user_domain_memberships.is_active', False),
+                ))
+            )
+        )
     )
 
 
