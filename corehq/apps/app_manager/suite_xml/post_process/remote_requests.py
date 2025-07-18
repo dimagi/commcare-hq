@@ -27,13 +27,17 @@ from django.utils.functional import cached_property
 
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.suite_xml.contributors import (
-    PostProcessor,
+from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
+from corehq.apps.app_manager.suite_xml.post_process.endpoints import (
+    EndpointsHelper,
 )
-from corehq.apps.app_manager.suite_xml.post_process.endpoints import EndpointsHelper
-from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta
+from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+    WorkflowDatumMeta,
+)
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
-from corehq.apps.app_manager.suite_xml.utils import get_ordered_case_types_for_module
+from corehq.apps.app_manager.suite_xml.utils import (
+    get_ordered_case_types_for_module,
+)
 from corehq.apps.app_manager.suite_xml.xml_models import (
     CalculatedPropertyXPath,
     Command,
@@ -60,29 +64,32 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.util import (
     is_linked_app,
-    module_offers_search,
-    module_uses_smart_links,
     module_offers_registry_search,
-    module_uses_inline_search,
+    module_offers_search,
     module_uses_include_all_related_cases,
+    module_uses_inline_search,
     module_uses_inline_search_with_parent_relationship_parent_select,
+    module_uses_smart_links,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
     CaseIDXPath,
-    SearchSelectedCasesInstanceXpath,
     CaseTypeXpath,
     InstanceXpath,
+    SearchSelectedCasesInstanceXpath,
+    XPath,
     interpolate_xpath,
     session_var,
-    XPath,
 )
-from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
+from corehq.apps.case_search.const import (
+    COMMCARE_PROJECT,
+    EXCLUDE_RELATED_CASES_FILTER,
+)
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
-    CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
+    CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_SORT_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
 )
