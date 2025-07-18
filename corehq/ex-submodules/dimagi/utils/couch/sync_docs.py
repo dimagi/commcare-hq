@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from collections import namedtuple
 
@@ -27,11 +28,14 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
     docid = "_design/%s" % design_name_
     push(design_dir, db, force=True, docid=docid)
     log.info("synced '%s' in couchdb", design_name)
+
     if temp:
-        index_design_docs(db, docid, design_name_)
+        # Check if the design directory has a views subdirectory
+        has_views = os.path.exists(os.path.join(design_dir, 'views'))
+        index_design_docs(db, docid, design_name_, expect_views=has_views)
 
 
-def verify_design_doc(db, design_doc_id, max_retries=5, retry_delay_s=1):
+def verify_design_doc(db, design_doc_id, max_retries=5, retry_delay_s=1, expect_views=False):
     """
     Verify that a design document is properly uploaded and can be accessed.
 
@@ -41,7 +45,7 @@ def verify_design_doc(db, design_doc_id, max_retries=5, retry_delay_s=1):
     for attempt in range(max_retries):
         try:
             doc = db.get(design_doc_id)
-            if 'views' in doc and doc['views']:
+            if (not expect_views) or ('views' in doc and doc['views']):
                 log.info(f"Design document {design_doc_id} verified successfully")
                 return True
 
@@ -56,8 +60,8 @@ def verify_design_doc(db, design_doc_id, max_retries=5, retry_delay_s=1):
     raise RuntimeError(f"Failed to verify design document {design_doc_id} after {max_retries} attempts")
 
 
-def index_design_docs(db, docid, design_name, wait=True):
-    verify_design_doc(db, docid)
+def index_design_docs(db, docid, design_name, wait=True, expect_views=True):
+    verify_design_doc(db, docid, expect_views=expect_views)
 
     # found in the innards of couchdbkit
     view_names = list(db[docid].get('views', {}))
