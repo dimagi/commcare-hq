@@ -1,5 +1,5 @@
 from django.db import migrations, models
-from corehq.toggles import StaticToggle
+from corehq.toggles import get_enabled_domains
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
@@ -12,11 +12,6 @@ def populate_split_screen_ui(apps, schema_editor):
             pk=domain,
             defaults={'split_screen_ui': True},
         )
-
-
-def get_enabled_domains(toggle_slug):
-    toggle = StaticToggle(toggle_slug, '', '')
-    return toggle.get_enabled_domains()
 
 
 class Migration(migrations.Migration):

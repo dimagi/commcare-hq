@@ -639,6 +639,11 @@ def toggle_values_by_name(username, domain):
     }
 
 
+def get_enabled_domains(toggle_slug):
+    toggle = StaticToggle(toggle_slug.lower(), '', '')
+    return toggle.get_enabled_domains()
+
+
 @quickcache(["domain"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
 def toggles_enabled_for_domain(domain):
     """Return set of toggle names that are enabled for the given domain"""
