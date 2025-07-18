@@ -62,8 +62,8 @@ def index_design_docs(db, docid, design_name, wait=True):
     # found in the innards of couchdbkit
     view_names = list(db[docid].get('views', {}))
     if view_names:
-        log.info('Triggering view rebuild')
         view = '%s/%s' % (design_name, view_names[0])
+        log.info(f'Triggering view rebuild: {view}')
         while True:
             try:
                 if wait:
