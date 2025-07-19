@@ -117,13 +117,16 @@ def get_all_data_sources():
     return data_sources
 
 
-def get_registry_data_sources_by_domain(domain):
+def get_registry_data_sources_by_domain(domain, slug=None):
     from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    key = [domain]
+    if slug:
+        key.append(slug)
     return sorted(
         RegistryDataSourceConfiguration.view(
             'registry_data_sources/view',
-            startkey=[domain],
-            endkey=[domain, {}],
+            startkey=key,
+            endkey=key + [{}],
             reduce=False,
             include_docs=True,
         ),

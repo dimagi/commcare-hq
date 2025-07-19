@@ -5,6 +5,7 @@ from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation, Grant
+from corehq.apps.userreports.data_source_providers import RegistryDataSourceProvider
 from corehq.apps.userreports.pillow import (
     RegistryDataSourceTableManager, get_kafka_ucr_registry_pillow,
 )
@@ -219,3 +220,40 @@ class RegistryUcrPillowTest(TestCase):
             for row in adapter.get_query_object()
         }
         self.assertDictEqual(actual, expected)
+
+
+class RegistryDataSourceProviderTest(TestCase):
+    domain = "user-reports"
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = create_user("admin", "123")
+
+        cls.registry_1 = create_registry_for_test(cls.user, 'foo_bar', invitations=[
+            Invitation(cls.domain), Invitation("granted-domain"),
+        ], grants=[Grant("granted-domain", to_domains=[cls.domain])], name='test')
+
+        cls.registry_2 = create_registry_for_test(cls.user, 'bazz', invitations=[
+            Invitation(cls.domain), Invitation("other-domain"),
+        ], grants=[Grant("other-domain", to_domains=[cls.domain])], name='bazz')
+
+        cls.data_source_1 = get_sample_registry_data_source(domain=cls.domain, registry_slug=cls.registry_1.slug)
+        cls.data_source_1.save()
+        cls.addClassCleanup(cleanup_ucr, cls.data_source_1)
+
+        cls.data_source_2 = get_sample_registry_data_source(domain=cls.domain, registry_slug=cls.registry_2.slug)
+        cls.data_source_2.save()
+        cls.addClassCleanup(cleanup_ucr, cls.data_source_2)
+
+    def test_get_by_owning_domain(self):
+        provider = RegistryDataSourceProvider()
+        data_sources = provider.get_all_data_sources(self.domain)
+        assert {ds._id for ds in data_sources} == {
+            self.data_source_1._id,
+            self.data_source_2._id,
+        }
+
+    def test_get_by_granted_domain(self):
+        provider = RegistryDataSourceProvider()
+        data_sources = provider.get_all_data_sources('granted-domain')
+        assert {ds._id for ds in data_sources} == {self.data_source_1._id}
