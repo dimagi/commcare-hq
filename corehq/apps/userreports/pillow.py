@@ -177,12 +177,6 @@ class UcrTableManager(ABC):
         """Override this method to check for updated data sources and update the manager."""
         pass
 
-    @property
-    @abstractmethod
-    def relevant_domains(self):
-        """Return a list of domains that are relevant to the data sources in this manager."""
-        pass
-
     @abstractmethod
     def get_adapters(self, domain):
         """Get the list of table adapters for the given domain."""
@@ -255,10 +249,6 @@ class ConfigurableReportTableManager(UcrTableManager):
             self.table_adapters_by_domain[config.domain].append(
                 _get_indicator_adapter_for_pillow(config)
             )
-
-    @property
-    def relevant_domains(self):
-        return set(self.table_adapters_by_domain)
 
     def get_adapters(self, domain):
         return list(self.table_adapters_by_domain.get(domain, []))
@@ -338,11 +328,9 @@ class RegistryDataSourceTableManager(UcrTableManager):
         for domain in config.data_domains:
             self.adapters_by_domain[domain].append(adapter)
 
-    @property
-    def relevant_domains(self):
-        return set(self.adapters_by_domain) - self.domains_to_skip
-
     def get_adapters(self, domain):
+        if domain in self.domains_to_skip:
+            return []
         return list(self.adapters_by_domain.get(domain, []))
 
     def get_all_adapters(self):
@@ -424,21 +412,23 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
             if is_couch_change_for_sql_domain(change):
                 continue
             # skip if no domain or no UCR tables in the domain
-            if change.metadata.domain and change.metadata.domain in self.table_manager.relevant_domains:
+            if change.metadata.domain:
                 changes_by_domain[change.metadata.domain].append(change)
 
         retry_changes = set()
         change_exceptions = []
         for domain, changes_chunk in changes_by_domain.items():
+            adapters = self.table_manager.get_adapters(domain)
+            if not adapters:
+                continue
             with WarmShutdown():
-                failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
+                failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk, adapters)
             retry_changes.update(failed)
             change_exceptions.extend(exceptions)
 
         return retry_changes, change_exceptions
 
-    def _process_chunk_for_domain(self, domain, changes_chunk):
-        adapters = self.table_manager.get_adapters(domain)
+    def _process_chunk_for_domain(self, domain, changes_chunk, adapters):
         changes_by_id = {change.id: change for change in changes_chunk}
         to_delete_by_adapter = defaultdict(list)
         rows_to_save_by_adapter = defaultdict(list)
@@ -532,12 +522,14 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
         self.bootstrap_if_needed()
 
         domain = change.metadata.domain
-        if not domain or domain not in self.table_manager.relevant_domains:
+        if not domain:
             # if no domain we won't save to any UCR table
+            return
+        adapters = self.table_manager.get_adapters(domain)
+        if not adapters:
             return
 
         if change.deleted:
-            adapters = self.table_manager.get_adapters(domain)
             for table in adapters:
                 table.delete({'_id': change.metadata.document_id})
 
@@ -551,8 +543,6 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
 
         with TimingContext() as timer:
             eval_context = EvaluationContext(doc)
-            # make copy to avoid modifying list during iteration
-            adapters = self.table_manager.get_adapters(domain)
             doc_subtype = change.metadata.document_subtype
             for table in adapters:
                 if table.config.filter(doc, eval_context):
