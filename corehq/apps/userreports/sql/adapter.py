@@ -279,6 +279,10 @@ class MultiDBSqlAdapter(object):
         return getattr(self.main_adapter, attr)
 
     @property
+    def config_id(self):
+        return self.config._id
+
+    @property
     def table_id(self):
         return self.config.table_id
 
