@@ -126,6 +126,7 @@ var userModel = function (options) {
     }
 
     self.sendConfirmationEmail = function () {
+        console.log("sendConfirmationEmail", self.user_id());
         var urlName = 'send_confirmation_email';
         var $modal = $('#confirm_' + self.user_id());
         $modal.find(".btn").disableButton();
@@ -222,6 +223,7 @@ var usersListModel = function () {
                 query: self.query(),
                 limit: self.itemsPerPage(),
                 showDeactivatedUsers: self.deactivatedOnly(),
+                // showUnconfirmedUsers: true,
             },
             success: function (data) {
                 self.totalItems(data.total);
