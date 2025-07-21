@@ -1,6 +1,7 @@
 from django.urls import include, re_path as url
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.views.i18n import set_language
 
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from two_factor.urls import urlpatterns as tf_urls
@@ -69,6 +70,7 @@ urlpatterns = [
 
     url(r'^no_permissions/$', no_permissions, name='no_permissions'),
 
+    url(r'^set_language/$', set_language, name='set_language'),
     url(r'^accounts/login/$', login, name="login"),
     url(r'^accounts/logout/$', logout, name="logout"),
     url(r'^reports/$', redirect_to_default),
