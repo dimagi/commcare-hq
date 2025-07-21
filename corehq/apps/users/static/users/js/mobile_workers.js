@@ -618,6 +618,31 @@ var newUserCreationModel = function (options) {
 var usersConfirmationModel = function () {
     var self = {};
     self.users = ko.observableArray();
+    self.itemsPerPage = ko.observable(5);
+    self.totalItems = ko.observable();
+
+    self.goToPage = function (page) {
+        self.users.removeAll();
+        $.ajax({
+            method: 'GET',
+            url: initialPageData.reverse('paginate_mobile_workers'),
+            data: {
+                page: page || 1,
+                limit: self.itemsPerPage(),
+                showDeactivatedUsers: true,
+            },
+            success: function (data) {
+                self.totalItems(data.total);
+                self.users(_.map(data.users, function (user) {
+                    return userModel(user);
+                }));
+            },
+        });
+    };
+    self.onPaginationLoad = function () {
+        self.goToPage(1);
+    };
+
     return self;
 };
 
