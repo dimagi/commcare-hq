@@ -156,6 +156,7 @@ from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
+    USER_DATETIME_FORMAT
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_cbc_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
@@ -1003,6 +1004,7 @@ def paginate_mobile_workers(request, domain):
                  'created_on',
                  'is_active',
                  'is_account_confirmed',
+                 'last_confirmation_sent_at',
              ])
              .start((page - 1) * limit)  # backend pages start at 0
              .size(limit)
@@ -1045,6 +1047,10 @@ def paginate_mobile_workers(request, domain):
         date_registered = user.pop('created_on', '')
         if date_registered:
             date_registered = iso_string_to_datetime(date_registered).strftime(USER_DATE_FORMAT)
+        last_confirmation_sent_at = user.get('last_confirmation_sent_at', '')
+        if last_confirmation_sent_at:
+            last_confirmation_sent_at = iso_string_to_datetime(last_confirmation_sent_at).strftime(USER_DATETIME_FORMAT)
+        print("last_confirmation_sent_at", last_confirmation_sent_at)
         # make sure these are always set and default to true
         user['is_active'] = user.get('is_active', True)
         user['is_account_confirmed'] = user.get('is_account_confirmed', True)
@@ -1052,6 +1058,7 @@ def paginate_mobile_workers(request, domain):
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
+            'last_confirmation_sent_at': last_confirmation_sent_at if last_confirmation_sent_at else '---',
             'date_registered': date_registered,
             'status': _status_string(user),
             'is_personalid_link_active': personalid_link.is_active if personalid_link else None,
