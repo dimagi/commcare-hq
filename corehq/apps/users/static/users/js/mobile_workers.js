@@ -615,6 +615,12 @@ var newUserCreationModel = function (options) {
     return self;
 };
 
+var usersConfirmationModel = function () {
+    var self = {};
+    self.users = ko.observableArray();
+    return self;
+};
+
 $(function () {
     var rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
     rmi = function (remoteMethod, data) {
@@ -634,4 +640,5 @@ $(function () {
     $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
     $("#new-user-modal").koApplyBindings(newUserCreation);
     $("#new-users-list").koApplyBindings(newUserCreation);
+    $("#mobile-worker-confirmation-panel").koApplyBindings(usersConfirmationModel);
 });
