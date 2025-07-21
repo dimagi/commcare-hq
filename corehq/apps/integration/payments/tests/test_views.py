@@ -238,6 +238,31 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.context['failure_count'] == 0
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_no_cases(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': []},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        assert b"One or more case IDs are required for verification." in response.content
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_limit_crossed(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': ['abcd'] * 101},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        limit = PaymentsVerificationTableView.VERIFICATION_ROWS_LIMIT
+        assert "You can only verify for up to {} cases at a time.".format(limit) in str(response.content)
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_verification_status(self):
         response = self._make_request()
 

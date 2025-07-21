@@ -103,6 +103,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
 
+    VERIFICATION_ROWS_LIMIT = 100
     REVERT_VERIFICATION_ROWS_LIMIT = 100
 
     def get_queryset(self):
@@ -178,10 +179,24 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
         return query
 
+    def _validate_verification_request(self, case_ids):
+        if not case_ids:
+            raise PaymentRequestError(_("One or more case IDs are required for verification."))
+
+        if len(case_ids) > self.VERIFICATION_ROWS_LIMIT:
+            raise PaymentRequestError(
+                _("You can only verify for up to {} cases at a time.").format(self.VERIFICATION_ROWS_LIMIT)
+            )
+
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
         web_user = WebUser.get_by_username(request.user.username)
         case_ids = request.POST.getlist('selected_ids')
+
+        try:
+            self._validate_verification_request(case_ids)
+        except PaymentRequestError as e:
+            raise HtmxResponseException(str(e), status_code=400)
 
         verified_cases = verify_payment_cases(
             request.domain,
