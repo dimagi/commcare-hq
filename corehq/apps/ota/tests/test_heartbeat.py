@@ -161,7 +161,7 @@ class HeartbeatTests(TestCase):
 
     @patch("corehq.apps.ota.views.deterministic_random")
     def test_incude_user_for_integrity_reporting(self, deterministic_random_mock):
-        deterministic_random_mock.return_value = 0.005
+        deterministic_random_mock.return_value = 0.001
         resp = self._do_request(
             self.user,
             device_id='4',
