@@ -2127,3 +2127,5 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 # make sure you add it before localsettings are imported (from localsettings import *)
 
 MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000
+
+APP_INTEGRITY_SAMPLE_PERCENT = 1  # % of users

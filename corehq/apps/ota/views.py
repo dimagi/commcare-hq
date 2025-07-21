@@ -418,8 +418,8 @@ def heartbeat(request, domain, app_build_id):
     if _should_force_log_submission(request):
         info['force_logs'] = True
 
-    # Select 0.01% of app users to report app integrity to PersonalID server
-    if (deterministic_random(request.couch_user.user_id) * 100) < 1:
+    # Select % of app users to report app integrity to PersonalID server
+    if (deterministic_random(request.couch_user.user_id) * 100) < settings.APP_INTEGRITY_SAMPLE_PERCENT:
         info["report_integrity"] = request.couch_user.user_id
 
     return JsonResponse(info)
