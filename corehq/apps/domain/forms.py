@@ -3171,11 +3171,8 @@ class ExtractAppInfoForm(forms.Form):
         return cleaned_data
 
     def _get_source_server(self, parsed_url):
-        server_mapping = {
-            'www': 'production',
-            'india': 'india',
-            'eu': 'eu',
-        }
+        server_mapping = {subdomain: server for server, subdomain
+                          in ServerLocation.SUBDOMAINS.items()}
 
         netloc = parsed_url.netloc.split(".")
 
