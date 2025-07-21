@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 
 from django_tables2 import columns
 
+from corehq.apps.hqwebapp.tables.columns import DateTimeStringColumn
 from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
@@ -16,6 +17,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'payment_verified',
         'payment_verified_by',
         'payment_status',
+        'payment_timestamp',
         'kyc_status',
     ]
 
@@ -70,6 +72,10 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     )
     payment_status = columns.Column(
         verbose_name=_("Payment Status"),
+        empty_values=(),
+    )
+    payment_timestamp = DateTimeStringColumn(
+        verbose_name=_("Submitted At"),
     )
 
     def render_verify_select(self, record, value):
@@ -87,7 +93,10 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         return mark_safe('<input %s/>' % flatatt(default_attrs))
 
     def render_payment_status(self, record, value):
-        return PaymentStatus(value).label
+        try:
+            return PaymentStatus.from_value(value).label
+        except ValueError:
+            return _("Invalid Status")
 
     def render_kyc_status(self, record, value):
         user_or_case_id = record.record.get('user_or_case_id')

@@ -517,7 +517,9 @@ class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):
     """
     For Mobile Workers to confirm their accounts using Email.
     """
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs['readonly'] = 'readonly'
 
 
 class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):

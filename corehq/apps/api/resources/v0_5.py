@@ -36,7 +36,6 @@ from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource
 
-
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -113,11 +112,13 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
     get_report_config_or_not_found,
 )
+from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
     get_user_id_by_username,
 )
 from corehq.apps.users.exceptions import ModifyUserStatusException
+from corehq.apps.users.forms import generate_strong_password
 from corehq.apps.users.models import (
     CommCareUser,
     ConnectIDUserLink,
@@ -238,6 +239,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 class CommCareUserResource(v0_1.CommCareUserResource):
     primary_location = fields.CharField()
     locations = fields.ListField()
+    require_account_confirmation = fields.BooleanField(default=False)
+    send_confirmation_email_now = fields.BooleanField(default=False)
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -267,8 +270,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
-
-        if not (bundle.data.get('password') or bundle.data.get('connect_username')):
+        require_account_confirmation = bundle.data.pop('require_account_confirmation', False)
+        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
+        password = bundle.data.get('password')
+        if not (password or bundle.data.get('connect_username')) and not require_account_confirmation:
             raise BadRequest(_('Password or connect username required'))
 
         if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
@@ -278,14 +283,31 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         except ValidationError as e:
             raise BadRequest(e.message)
         try:
-            bundle.obj = CommCareUser.create(
-                domain=kwargs['domain'],
-                username=username,
-                password=bundle.data.get('password'),
-                created_by=bundle.request.couch_user,
-                created_via=USER_CHANGE_VIA_API,
-                email=bundle.data.get('email', '').lower(),
-            )
+            email = bundle.data.get('email', '').lower()
+            if (toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain'])
+                    and (require_account_confirmation or send_confirmation_email)):
+                self.validate_new_user_input(require_account_confirmation, send_confirmation_email,
+                                             email, password)
+                bundle.obj = CommCareUser.create(
+                    domain=kwargs['domain'],
+                    username=username,
+                    password=generate_strong_password(),
+                    created_by=bundle.request.couch_user,
+                    created_via=USER_CHANGE_VIA_API,
+                    email=email,
+                    is_account_confirmed=not require_account_confirmation
+                )
+                if require_account_confirmation and send_confirmation_email:
+                    send_account_confirmation_if_necessary(bundle.obj)
+            else:
+                bundle.obj = CommCareUser.create(
+                    domain=kwargs['domain'],
+                    username=username,
+                    password=password,
+                    created_by=bundle.request.couch_user,
+                    created_via=USER_CHANGE_VIA_API,
+                    email=email,
+                )
             # password was just set
             bundle.data.pop('password', None)
             # do not call update with username key
@@ -311,15 +333,34 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             )
         return bundle
 
+    @staticmethod
+    def validate_new_user_input(require_account_confirmation, send_confirmation_email, email, password):
+        if require_account_confirmation and not email:
+            raise BadRequest(_("You must provide the user's email to send a confirmation email."))
+        if require_account_confirmation and password:
+            raise BadRequest(_("Users will provide their own password on confirmation."))
+        if send_confirmation_email and not require_account_confirmation:
+            raise BadRequest(_("You must require account confirmation to send a confirmation email."))
+
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
+        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
             formatted_errors = ', '.join(errors)
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
+
+        if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']) and send_confirmation_email:
+            if bundle.obj.is_account_confirmed:
+                raise BadRequest(_("The confirmation email can not be sent "
+                                   "because this user's account is already confirmed."))
+            if not bundle.obj.email:
+                raise BadRequest(_("This user has no email. "
+                                   "You must provide the user's email to send a confirmation email."))
+            send_account_confirmation_if_necessary(bundle.obj)
         bundle.obj.save()
         user_change_logger.save()
         return bundle
@@ -336,6 +377,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def dehydrate_locations(self, bundle):
         return bundle.obj.get_location_ids(bundle.obj.domain)
+
+    def dehydrate(self, bundle):
+        bundle.data.pop('require_account_confirmation', None)
+        bundle.data.pop('send_confirmation_email_now', None)
+        return super(v0_1.CommCareUserResource, self).dehydrate(bundle)
 
     @classmethod
     def _update(cls, bundle, user_change_logger=None):
@@ -518,6 +564,40 @@ class WebUserResource(v0_1.WebUserResource):
                 errors.append(e.message)
 
         return errors
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<pk>\w[\w/-]*)/enable/$", self.wrap_view('enable_user'), name="api_enable_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/disable/$", self.wrap_view('disable_user'), name="api_disable_web_user"),
+        ]
+
+    def enable_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, enabled=True)
+
+    def disable_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, enabled=False)
+
+    def _modify_user_status(self, request, enabled, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+        self.throttle_check(request)
+
+        domain = kwargs["domain"]
+
+        user = WebUser.get_by_user_id(kwargs['pk'], domain)
+        if not user:
+            raise NotFound()
+
+        dm = user.get_domain_membership(domain)
+
+        dm.is_active = enabled
+        user.save()
+        log_user_change(by_domain=domain, for_domain=domain,
+                        couch_user=user, changed_by_user=request.couch_user,
+                        changed_via=USER_CHANGE_VIA_API, fields_changed={'domain_membership.is_active': enabled})
+
+        self.log_throttled_access(request)
+        return self.create_response(request, {}, response_class=http.HttpAccepted)
 
 
 class AdminWebUserResource(v0_1.UserResource):

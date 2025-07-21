@@ -77,8 +77,7 @@ def test_get_number_of_active_mobile_workers(user_es_patch):
 
     user_es.domain.assert_called_once()
     user_es.domain.return_value.mobile_users.assert_called_once()
-    user_es.domain.return_value.mobile_users.return_value.is_active.assert_called_once()
-    user_es.domain.return_value.mobile_users.return_value.is_active.return_value.count.assert_called_once()
+    user_es.domain.return_value.mobile_users.return_value.count.assert_called_once()
 
 
 @patch('corehq.apps.campaign.services.UserES')
@@ -95,10 +94,9 @@ def test_get_number_of_inactive_mobile_workers(user_es_patch):
 
     get_gauge_metric_value(gauge)
 
-    user_es.domain.assert_called_once()
+    user_es.domain.assert_called_once_with(gauge.dashboard.domain, include_active=False, include_inactive=True)
     user_es.domain.return_value.mobile_users.assert_called_once()
-    user_es.domain.return_value.mobile_users.return_value.is_active.assert_called_once_with(active=False)
-    user_es.domain.return_value.mobile_users.return_value.is_active.return_value.count.assert_called_once()
+    user_es.domain.return_value.mobile_users.return_value.count.assert_called_once()
 
 
 @patch('corehq.apps.campaign.services.FormES')
