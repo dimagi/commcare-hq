@@ -1055,6 +1055,7 @@ def paginate_mobile_workers(request, domain):
         user['is_active'] = user.get('is_active', True)
         user['is_account_confirmed'] = user.get('is_account_confirmed', True)
         personalid_link = personalid_links.get(user['base_username'])
+        # JT TO DO need to check if last_conirmation_sent at is past expiration time
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
