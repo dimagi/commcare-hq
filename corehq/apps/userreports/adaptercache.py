@@ -21,10 +21,10 @@ class TTLCache:
     """
     TTL_48_HOURS = 48 * 60 * 60  # in seconds
 
-    def __init__(self, iter_adapters, timeout=TTL_48_HOURS):
+    def __init__(self, iter_adapters, adapter_cache=None, timeout=TTL_48_HOURS):
         self.iter_adapters = iter_adapters
         self.domain_last_seen = {}
-        self.adapters = AdapterCache()
+        self.adapters = adapter_cache or AdapterCache()
         self.timeout = timeout
         self.last_refresh = datetime.now(UTC)
 

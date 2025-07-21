@@ -107,7 +107,7 @@ class UcrTableManagerTest(SimpleTestCase):
             def iter_configs_since(self, timestamp):
                 raise NotImplementedError
 
-        manager = TestManager(None, False)
+        manager = TestManager(None, False, None)
         adapters = list(manager.iter_adapters('one'))
         assert adapters == [
             ('one', Adapter(Config(1))),
@@ -126,7 +126,7 @@ class UcrTableManagerTest(SimpleTestCase):
                 yield 'one', Config(1)
                 yield 'two', Config(1)
 
-        manager = TestManager(None, False)
+        manager = TestManager(None, False, None)
         adapters = list(manager.iter_adapters(since=datetime.now(UTC)))
         assert adapters == [
             ('one', Adapter(Config(1))),
