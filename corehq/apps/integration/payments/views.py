@@ -103,6 +103,8 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
 
+    REVERT_VERIFICATION_ROWS_LIMIT = 100
+
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
@@ -197,11 +199,23 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             context,
         )
 
+    def _validate_revert_verification_request(self, case_ids):
+        if not case_ids:
+            raise PaymentRequestError(_("One or more case IDs are required to revert verification."))
+
+        if len(case_ids) > self.REVERT_VERIFICATION_ROWS_LIMIT:
+            raise PaymentRequestError(
+                _("You can only revert verification for up to {} cases at a time.").format(
+                    self.REVERT_VERIFICATION_ROWS_LIMIT
+                ),
+            )
+
     @hq_hx_action('post')
     def revert_verification(self, request, *args, **kwargs):
         case_ids = request.POST.getlist('selected_ids')
 
         try:
+            self._validate_revert_verification_request(case_ids)
             revert_payment_verification(request.domain, case_ids=case_ids)
         except PaymentRequestError as e:
             raise HtmxResponseException(str(e), status_code=400)

@@ -310,6 +310,35 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert (b"Only payments in the 'Pending Submission' state are eligible for verification reversal."
                 in response.content)
 
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_revert_verification_no_cases(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': []},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 400
+        assert b"One or more case IDs are required to revert verification." in response.content
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_revert_verification_limit_crossed(self):
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': ['abcd'] * 101},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 400
+        limit = PaymentsVerificationTableView.REVERT_VERIFICATION_ROWS_LIMIT
+        assert (
+            "You can only revert verification for up to {} cases at a time.".format(limit)
+            in str(response.content)
+        )
+
 
 @es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
