@@ -119,6 +119,7 @@ from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReferen
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import (
     BootstrapCheckboxInput,
@@ -3258,6 +3259,5 @@ class ImportAppForm(forms.Form):
         return app_file
 
     def construct_download_url(self, source_server, source_domain, app_id):
-        from corehq.apps.domain.views.import_apps import SERVER_SUBDOMAIN_MAPPING
-        server_address = SERVER_SUBDOMAIN_MAPPING[source_server]
+        server_address = ServerLocation.SUBDOMAINS[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
