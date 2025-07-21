@@ -762,6 +762,9 @@ class MultiMembershipMixin(_AuthorizableMixin):
 
     @memoized
     def is_active_in_domain(self, domain):
+        # user.is_active concerns authentication - can a user log in?
+        # domain_membership.is_active controls whether a user can access a domain
+        # CommCareUsers are only in a single domain, so there's no distinction
         domain_membership = self.get_domain_membership(domain)
         if domain_membership and self.is_active:
             return domain_membership.is_active
