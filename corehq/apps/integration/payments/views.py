@@ -195,14 +195,14 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
         try:
             self._validate_verification_request(case_ids)
+            verified_cases = verify_payment_cases(
+                request.domain,
+                case_ids=case_ids,
+                verifying_user=web_user,
+            )
         except PaymentRequestError as e:
             raise HtmxResponseException(str(e), status_code=400)
 
-        verified_cases = verify_payment_cases(
-            request.domain,
-            case_ids=case_ids,
-            verifying_user=web_user,
-        )
         success_count = len(verified_cases)
         context = {
             'success_count': success_count,

@@ -238,6 +238,31 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.context['failure_count'] == 0
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_invalid_status(self):
+        submitted_case = _create_case(
+            self.factory,
+            name='submitted_case',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+            }
+        )
+        self.addCleanup(submitted_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [submitted_case.case_id]},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        assert (
+            b"Only payments in 'Not Verified' or 'Request failed' state are eligible for verification."
+            in response.content
+        )
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_verification_no_cases(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.post(

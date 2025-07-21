@@ -107,6 +107,15 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     if not case_ids:
         return []
 
+    for case in CommCareCase.objects.iter_cases(case_ids, domain):
+        payment_status_value = case.get_case_property(PaymentProperties.PAYMENT_STATUS)
+        if PaymentStatus.from_value(payment_status_value) not in [
+            PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED
+        ]:
+            raise PaymentRequestError(
+                _("Only payments in 'Not Verified' or 'Request failed' state are eligible for verification.")
+            )
+
     payment_properties_update = {
         PaymentProperties.PAYMENT_VERIFIED: str(True),
         PaymentProperties.PAYMENT_VERIFIED_ON_UTC: str(datetime.now()),
@@ -118,7 +127,7 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     updated_cases = []
     for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
         cases_updates = _get_cases_updates(case_ids_chunk, payment_properties_update)
-        _, cases = handle_case_update(
+        xform, cases = handle_case_update(
             domain, cases_updates, verifying_user, 'momo_payment_verified', is_creation=False,
         )
         updated_cases.extend(cases)
