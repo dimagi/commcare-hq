@@ -1670,13 +1670,13 @@ class UserFilterForm(forms.Form):
                 data_bind="slideVisible: !isCrossDomain() && location_id",
             ),
         ]
-        if DEACTIVATE_WEB_USERS.enabled(self.domain):
-            fields += ["user_active_status"]
+        if self.user_type == MOBILE_USER_TYPE or DEACTIVATE_WEB_USERS.enabled(self.domain):
+            fields.append("user_active_status")
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
             fieldset_label = _('Filter and Download Mobile Workers')
-            fields += [crispy.Field("columns", data_bind="value: columns")]
+            fields.append(crispy.Field("columns", data_bind="value: columns"))
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
