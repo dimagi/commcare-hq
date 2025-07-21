@@ -37,6 +37,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq import toggles
+from corehq.toggles import deterministic_random
 from corehq.apps.app_manager.dbaccessors import (
     get_app_cached,
     get_latest_released_app_version,
@@ -418,7 +419,7 @@ def heartbeat(request, domain, app_build_id):
         info['force_logs'] = True
 
     # Select 0.01% of app users to report app integrity to PersonalID server
-    if (toggles.deterministic_random(request.couch_user.user_id) * 100) < 1:
+    if (deterministic_random(request.couch_user.user_id) * 100) < 1:
         info["report_integrity"] = request.couch_user.user_id
 
     return JsonResponse(info)

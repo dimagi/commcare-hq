@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime
 from uuid import uuid4
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls.base import reverse
@@ -157,3 +158,12 @@ class HeartbeatTests(TestCase):
         device = CommCareUser.get(self.user.get_id).get_device('4')
         self.assertIsNone(device.fcm_token)
         self.assertIsNone(device.fcm_token_timestamp)
+
+    @patch("corehq.apps.ota.views.deterministic_random")
+    def test_incude_user_for_integrity_reporting(self, deterministic_random_mock):
+        deterministic_random_mock.return_value = 0.005
+        resp = self._do_request(
+            self.user,
+            device_id='4',
+        )
+        self.assertTrue(resp.json()["report_integrity"] == self.user.user_id)
