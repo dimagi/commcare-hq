@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from dimagi.utils.logging import notify_error
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
@@ -181,7 +181,7 @@ def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slug
         # temporary code to understand usages of this function that result in a lot of owner_ids
         limit = SystemLimit.get_limit_for_key("owner_id_limit", 1000, domain=domain)
         if len(owner_ids) > limit:
-            notify_error("Exceeded recommended owner id count", details={"count": len(owner_ids)})
+            notify_exception(None, "Exceeded recommended owner id count", details={"count": len(owner_ids)})
     return owner_ids
 
 
