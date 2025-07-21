@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -9,7 +10,11 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.pillow import get_location_pillow
+from corehq.apps.userreports.pillow import (
+    _SHARED_ADAPTER_CACHES,
+    AdapterCache,
+    get_location_pillow,
+)
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -53,7 +58,10 @@ class TestLocationDataSource(TestCase):
         adapter = get_indicator_adapter(self.data_source_config)
         self.addCleanup(adapter.drop_table)
 
-        self.pillow = get_location_pillow(ucr_configs=[self.data_source_config])
+        cache = AdapterCache()
+        with patch.dict(_SHARED_ADAPTER_CACHES, {get_location_pillow: cache}):
+            self.pillow = get_location_pillow(ucr_configs=[self.data_source_config])
+        assert self.pillow.processors[0].table_manager.cache.adapters_by_domain is cache
         self.pillow.get_change_feed().get_latest_offsets()
 
     def _make_loc(self, name, location_type):

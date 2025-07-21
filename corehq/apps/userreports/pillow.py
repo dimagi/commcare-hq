@@ -32,6 +32,7 @@ from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from corehq.util.timer import TimingContext
 
+from .adaptercache import AdapterCache, MigrationCache, TTLCache
 from .const import KAFKA_TOPICS
 from .data_source_providers import (
     DynamicDataSourceProvider,
@@ -46,6 +47,7 @@ from .util import get_indicator_adapter
 
 REBUILD_CHECK_INTERVAL = 3 * 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
+_SHARED_ADAPTER_CACHES = defaultdict(AdapterCache)
 
 
 class WarmShutdown(object):
@@ -97,10 +99,9 @@ def _filter_domains_to_skip(configs):
     """Return a list of configs whose domain exists on this environment"""
     domain_names = list({config.domain for config in configs if config.is_static})
     existing_domains = list(get_domain_ids_by_names(domain_names))
-    migrating_domains = all_domains_with_migrations_in_progress()
     return [
         config for config in configs
-        if config.domain not in migrating_domains and (not config.is_static or config.domain in existing_domains)
+        if not config.is_static or config.domain in existing_domains
     ]
 
 
@@ -123,16 +124,60 @@ def _get_indicator_adapter_for_pillow(config):
 class UcrTableManager(ABC):
     """Base class for table managers that encapsulates the bootstrap and refresh
     functionality."""
-    def __init__(self, bootstrap_interval, run_migrations):
+    def __init__(self, bootstrap_interval, run_migrations, adapter_cache):
         """
         :param bootstrap_interval: time in seconds when the pillow checks for any data source changes
         :param run_migrations: If True, rebuild tables if the data source changes. Otherwise,
             do not attempt to change database
+        :param adapter_cache: AdapterCache. May be shared across multiple table managers.
         """
         self.bootstrapped = False
         self.last_bootstrapped = self.last_imported = datetime.utcnow()
         self.bootstrap_interval = bootstrap_interval or REBUILD_CHECK_INTERVAL
         self.run_migrations = run_migrations
+        Cache = MigrationCache if run_migrations else TTLCache
+        self.cache = Cache(self.iter_adapters, adapter_cache or AdapterCache())
+        if self.run_migrations:
+            assert self.cache.timeout > self.bootstrap_interval
+
+    def iter_adapters(self, domain=None, *, since=None):
+        """Generate (domain, adapter) tuples for domain or since timestamp
+
+        Generate adapters for every domain when both domain and since
+        are None. This is a special case used only by the migration
+        process.
+        """
+        def get_adapter(config):
+            adapter = seen.get(config._id)
+            if adapter is None:
+                adapter = seen[config._id] = _get_indicator_adapter_for_pillow(config)
+            return adapter
+
+        if since is None:
+            pairs = self.iter_configs(domain)
+        else:
+            assert domain is None, domain
+            pairs = self.iter_configs_since(since)
+
+        seen = {}
+        config = None
+        for domain, config in pairs:
+            yield domain, get_adapter(config)
+        if config is None:
+            pillow_logging.warning("UCR pillow has no configs to process")
+
+    @abstractmethod
+    def iter_configs(self, domain):
+        """Generate (domain, config) tuples for the domain
+
+        The yielded domain may differ from the provided domain.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def iter_configs_since(self, timestamp):
+        """Generate (domain, config) tuples of configs that have changed since timestamp"""
+        raise NotImplementedError
 
     def needs_bootstrap(self):
         """Returns True if the manager needs to be bootstrapped"""
@@ -146,59 +191,45 @@ class UcrTableManager(ABC):
 
     def bootstrap_if_needed(self):
         """Bootstrap the manager with data sources or else check for updated data sources"""
+        self.cache.refresh() # TODO maybe only do this every few minutes rather than for every change?
         if self.needs_bootstrap():
             self.bootstrap()
-        else:
-            self._update_modified_data_sources()
 
-    def bootstrap(self, configs=None):
+    def bootstrap(self):
         """Initialize the manager with data sources and adapters"""
-        self._do_bootstrap(configs=configs)
-
         if self.run_migrations:
-            rebuild_sql_tables(self.get_all_adapters())
+            rebuild_sql_tables(self.cache.get_adapters())
+        else:
+            self.domains_to_skip_temporarily = all_domains_with_migrations_in_progress()
 
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
-    @abstractmethod
-    def _do_bootstrap(self, configs=None):
-        """Override this method to actually perform the bootstrapping"""
-        pass
-
-    def _update_modified_data_sources(self):
-        """Update the manager with any data sources that have been modified since the last call."""
-        new_last_imported = datetime.utcnow()
-        self._update_modified_since(self.last_imported)
-        self.last_imported = new_last_imported
-
-    @abstractmethod
-    def _update_modified_since(self, timestamp):
-        """Override this method to check for updated data sources and update the manager."""
-        pass
-
-    @abstractmethod
     def get_adapters(self, domain):
-        """Get the list of table adapters for the given domain."""
-        pass
+        """Get the list of table adapters for the given domain.
 
-    @abstractmethod
-    def get_all_adapters(self):
-        """Get all table adapters managed by this manager."""
-        pass
+        This is only called by non-migration processes.
+        """
+        if domain in self.domains_to_skip_temporarily:
+            return []
+        return self.cache.get_adapters(domain)
 
-    @abstractmethod
     def remove_adapter(self, domain, adapter):
-        """Remove an adapter from the list of managed adapters. This is called if there is an error
-        writing to the adapter. The adapter will get re-added on next bootstrap."""
-        pass
+        """Remove an adapter from the list of managed adapters.
+
+        This is called if there is an error writing to the adapter. The
+        adapter will get re-added the next time the adapter is yielded
+        by iter_configs_since (after the data source changes).
+        This is only called by non-migration processes.
+        """
+        self.cache.remove(domain, adapter)
 
 
 class ConfigurableReportTableManager(UcrTableManager):
 
     def __init__(self, data_source_providers, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=None,
-                 run_migrations=True):
+                 run_migrations=True, adapter_cache=None):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -208,7 +239,7 @@ class ConfigurableReportTableManager(UcrTableManager):
         include_ucrs -- list of ucr 'table_ids' to be included in this processor
         exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
         """
-        super().__init__(bootstrap_interval, run_migrations)
+        super().__init__(bootstrap_interval, run_migrations, adapter_cache)
         self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
@@ -216,14 +247,19 @@ class ConfigurableReportTableManager(UcrTableManager):
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
-    def get_filtered_configs(self, configs=None):
-        if configs is None:
-            configs = [
-                source
-                for provider in self.data_source_providers
-                for source in provider.get_data_sources()
-            ]
+    def iter_configs(self, domain):
+        for provider in self.data_source_providers:
+            configs = provider.get_data_sources(domain)
+            for config in self.get_filtered_configs(configs):
+                yield (config.domain, config)
 
+    def iter_configs_since(self, timestamp):
+        for provider in self.data_source_providers:
+            configs = provider.get_data_sources_modified_since(timestamp)
+            for config in self.get_filtered_configs(configs):
+                yield (config.domain, config)
+
+    def get_filtered_configs(self, configs):
         if configs:
             if self.exclude_ucrs:
                 configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
@@ -238,139 +274,42 @@ class ConfigurableReportTableManager(UcrTableManager):
 
         return configs
 
-    def _do_bootstrap(self, configs=None):
-        configs = self.get_filtered_configs(configs)
-        if not configs:
-            pillow_logging.warning("UCR pillow has no configs to process")
-
-        self.table_adapters_by_domain = defaultdict(list)
-
-        for config in configs:
-            self.table_adapters_by_domain[config.domain].append(
-                _get_indicator_adapter_for_pillow(config)
-            )
-
-    def get_adapters(self, domain):
-        return list(self.table_adapters_by_domain.get(domain, []))
-
-    def get_all_adapters(self):
-        return [
-            adapter
-            for adapter_list in self.table_adapters_by_domain.values()
-            for adapter in adapter_list
-        ]
-
-    def remove_adapter(self, domain, adapter):
-        self.table_adapters_by_domain[domain].remove(adapter)
-
-    def _update_modified_since(self, timestamp):
-        """
-        Find any data sources that have been modified since the last time this was bootstrapped
-        and update the in-memory references.
-        """
-        new_data_sources = [
-            source
-            for provider in self.data_source_providers
-            for source in provider.get_data_sources_modified_since(timestamp)
-        ]
-        filtered_data_sources = self.get_filtered_configs(new_data_sources)
-        invalid_data_sources = {ds._id for ds in new_data_sources} - {ds._id for ds in filtered_data_sources}
-        self._add_data_sources_to_table_adapters(filtered_data_sources, invalid_data_sources)
-
-    def _add_data_sources_to_table_adapters(self, new_data_sources, invalid_data_sources):
-        for new_data_source in new_data_sources:
-            pillow_logging.info(f'updating modified data source: {new_data_source.domain}: {new_data_source._id}')
-            domain_adapters = self.table_adapters_by_domain[new_data_source.domain]
-            # remove any previous adapters if they existed
-            domain_adapters = [
-                adapter for adapter in domain_adapters if adapter.config._id != new_data_source._id
-            ]
-            # add a new one
-            domain_adapters.append(_get_indicator_adapter_for_pillow(new_data_source))
-            # update dictionary
-            self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
-        for data_source in invalid_data_sources:
-            new_adapters = [
-                adapter for adapter in self.table_adapters_by_domain[data_source.domain]
-                if adapter._id != data_source._id
-            ]
-            self.table_adapters_by_domain[data_source.domain] = new_adapters
-
 
 class RegistryDataSourceTableManager(UcrTableManager):
 
-    def __init__(self, bootstrap_interval=None, run_migrations=True):
+    def __init__(self, bootstrap_interval=None, run_migrations=True, adapter_cache=None):
         """Initializes the processor for UCRs backed by a data registry
         """
-        super().__init__(bootstrap_interval, run_migrations)
+        super().__init__(bootstrap_interval, run_migrations, adapter_cache)
         self.data_source_provider = RegistryDataSourceProvider()
         self.adapters = []
         self.adapters_by_domain = defaultdict(list)
         self.domains_to_skip = None
 
-    def get_filtered_configs(self, configs=None):
-        if configs is None:
-            configs = self.data_source_provider.get_data_sources()
-        configs = _filter_invalid_config(configs)
-        return configs
+    def iter_configs(self, domain):
+        configs = self.data_source_provider.get_data_sources(domain)
+        for config in self.get_filtered_configs(configs):
+            for domain_ in config.data_domains:
+                yield (domain_, config)
 
-    def _do_bootstrap(self, configs=None):
-        configs = self.get_filtered_configs(configs)
+    def iter_configs_since(self, timestamp):
+        configs = self.data_source_provider.get_data_sources_modified_since(timestamp)
+        for config in self.get_filtered_configs(configs):
+            for domain in config.data_domains:
+                yield domain, config
 
-        for config in configs:
-            self._add_adapter_for_data_source(config)
+    def get_filtered_configs(self, configs):
+        return _filter_invalid_config(configs)
 
-        self.domains_to_skip = all_domains_with_migrations_in_progress()
-
-    def _add_adapter_for_data_source(self, config):
-        adapter = _get_indicator_adapter_for_pillow(config)
-        self.adapters.append(adapter)
-        for domain in config.data_domains:
-            self.adapters_by_domain[domain].append(adapter)
-
-    def get_adapters(self, domain):
-        if domain in self.domains_to_skip:
-            return []
-        return list(self.adapters_by_domain.get(domain, []))
-
-    def get_all_adapters(self):
-        return list(self.adapters)
-
-    def remove_adapter(self, domain, adapter):
-        self._remove_adapters_for_data_source(adapter.config)
-
-    def _remove_adapters_for_data_source(self, config):
-        """Remove all adapters for for the given config"""
-
-        def _filter_adapters(adapters):
-            return [
-                adapter for adapter in adapters
-                if adapter.config.get_id != config.get_id
-            ]
-
-        self.adapters = _filter_adapters(self.adapters)
-
-        # iterate over all domains in case the list of domains for the data source has changed
-        for domain in list(self.adapters_by_domain):
-            filtered_adapters = _filter_adapters(self.adapters_by_domain[domain])
-            if filtered_adapters:
-                self.adapters_by_domain[domain] = filtered_adapters
-            else:
-                del self.adapters_by_domain[domain]
-
-    def _update_modified_since(self, timestamp):
-        """
-        Find any data sources that have been modified since the last time this was bootstrapped
-        and update the in-memory references.
-        """
-        for data_source in self.data_source_provider.get_data_sources_modified_since(timestamp):
-            pillow_logging.info(f'updating modified registry data source: {data_source.domain}: {data_source._id}')
-            self._add_or_update_data_source(data_source)
-
-    def _add_or_update_data_source(self, config):
-        self._remove_adapters_for_data_source(config)
-        if not config.is_deactivated:
-            self._add_adapter_for_data_source(config)
+    def bootstrap(self):
+        super().bootstrap()
+        # Remove deactivated adapters from the cache.
+        # rebuild_sql_tables, which happens earlier in super().bootstrap(),
+        # has its own is-active check that skips deactivated adapters
+        for domain, adapters in self.cache.adapters.entries.items():
+            for adapter in list(adapters.values()):
+                if adapter.config.is_deactivated:
+                    self.cache.remove(domain, adapter)
 
 
 class ConfigurableReportPillowProcessor(BulkPillowProcessor):
@@ -628,6 +567,7 @@ def get_ucr_processor(data_source_providers,
         exclude_ucrs=exclude_ucrs,
         bootstrap_interval=bootstrap_interval,
         run_migrations=run_migrations,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_ucr_processor],
     )
     if ucr_configs:
         table_manager.bootstrap([
@@ -639,7 +579,8 @@ def get_ucr_processor(data_source_providers,
 
 def get_data_registry_ucr_processor(run_migrations, ucr_configs):
     table_manager = RegistryDataSourceTableManager(
-        run_migrations=run_migrations
+        run_migrations=run_migrations,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_data_registry_ucr_processor],
     )
     if ucr_configs:
         table_manager.bootstrap([
@@ -666,7 +607,8 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
-        run_migrations=(process_num == 0)  # only first process runs migrations
+        run_migrations=(process_num == 0),  # only first process runs migrations
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_kafka_ucr_pillow],
     )
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(table_manager),
@@ -699,7 +641,8 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
-        run_migrations=(process_num == 0)  # only first process runs migrations
+        run_migrations=(process_num == 0),  # only first process runs migrations
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_kafka_ucr_static_pillow],
     )
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(table_manager),
@@ -730,7 +673,8 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
             DynamicDataSourceProvider('Location'),
             StaticDataSourceProvider('Location')
         ],
-        include_ucrs=include_ucrs
+        include_ucrs=include_ucrs,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_location_pillow],
     )
     ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     if ucr_configs:
