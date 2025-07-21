@@ -303,6 +303,7 @@
           </div>
           <div class="col-sm-6">
             <button
+              id="gtm-show-disabled-mobile-workers"
               type="button"
               class="btn btn-default pull-right"
               data-bind="visible: !deactivatedOnly(), click: function() { deactivatedOnly(true); }"
@@ -310,6 +311,7 @@
               {% trans 'Show Deactivated Mobile Workers' %}
             </button>
             <button
+              id="gtm-show-enabled-mobile-workers"
               type="button"
               class="btn btn-default pull-right"
               data-bind="visible: deactivatedOnly(), click: function() { deactivatedOnly(false); }"
@@ -524,7 +526,7 @@
                           </button>
                           <button
                             type="button"
-                            class="btn btn-primary"
+                            class="btn btn-primary gtm-mobile-worker-enable"
                             data-bind="click: function(user) { user.is_active(true); }"
                           >
                             {% trans 'Reactivate' %}
@@ -588,7 +590,7 @@
                           </button>
                           <button
                             type="button"
-                            class="btn btn-danger"
+                            class="btn btn-danger gtm-mobile-worker-disable"
                             data-bind="click: function(user) { user.is_active(false); }"
                           >
                             {% trans 'Deactivate' %}

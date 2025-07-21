@@ -108,5 +108,7 @@ de39f16b1d92bedd249c corehq/couchapps/saved_apps_auto_generated/views/view/map.j
 5d590c9bbdcebeae61d2 corehq/couchapps/schemas_by_xmlns_or_case_type/views/view/map.js
 ae04d8c82218a9543491 corehq/couchapps/schemas_by_xmlns_or_case_type/views/view/reduce.js
 7d2e8e33683a7c27a8df corehq/couchapps/tests/test_all_docs.py
+c79dd53f9846a70ba388 corehq/couchapps/users_by_domain/views/view/map.js
+ae04d8c82218a9543491 corehq/couchapps/users_by_domain/views/view/reduce.js
 7ae2e00ba081690d86c3 corehq/couchapps/users_extra/views/users_by_location_id/map.js
 ae04d8c82218a9543491 corehq/couchapps/users_extra/views/users_by_location_id/reduce.js
