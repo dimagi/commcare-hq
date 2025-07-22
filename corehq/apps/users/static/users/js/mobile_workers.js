@@ -630,6 +630,7 @@ var usersConfirmationModel = function () {
                 page: page || 1,
                 limit: self.itemsPerPage(),
                 showDeactivatedUsers: true,
+                showUnconfirmedUsers: true,
             },
             success: function (data) {
                 self.totalItems(data.total);
