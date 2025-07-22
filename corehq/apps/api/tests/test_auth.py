@@ -133,9 +133,9 @@ class LoginAuthenticationTest(AuthenticationTestBase):
 
     def test_login_with_deactivated_user(self):
         def reactivate_user():
-            self.user.set_is_active(self.domain, True)
+            self.user.is_active = True
             self.user.save()
-        self.user.set_is_active(self.domain, False)
+        self.user.is_active = False
         self.user.save()
         self.addCleanup(reactivate_user)
         self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())
@@ -199,6 +199,16 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
         self.addCleanup(project.delete)
         self.assertAuthenticationFail(LoginAndDomainAuthentication(),
                                       self._get_request_with_api_key(domain=project.name))
+
+    def test_login_with_domain_deactivated_user(self):
+        def reactivate_user():
+            self.user.set_is_active(self.domain, True)
+            self.user.save()
+        self.user.set_is_active(self.domain, False)
+        self.user.save()
+        self.addCleanup(reactivate_user)
+        self.assertAuthenticationFail(LoginAndDomainAuthentication(),
+                                      self._get_request_with_api_key(domain=self.domain))
 
     @softer_assert()  # prevent "None is invalid domain" asserts
     def test_auth_type_basic_no_domain(self):
