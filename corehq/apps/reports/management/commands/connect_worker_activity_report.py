@@ -101,8 +101,6 @@ def augment_activity_results(months_activity):
     """Augment the activity data with total users per app on a domain."""
     print("Augmenting activity results...")
 
-    domain_users_count = {}
-
     for _, activity_list in months_activity.items():
         for activity in activity_list:
             domain_name = activity.get('domain_name')
@@ -113,13 +111,11 @@ def augment_activity_results(months_activity):
             activity['default_language'] = app_lang
             activity['deployment_countries'] = domain_countries
 
-            if domain_name not in domain_users_count:
-                total_users = domain_users_count[domain_name] = (
-                    UserES().domain(domain_name).mobile_users().run().total
-                )
-            else:
-                total_users = domain_users_count[domain_name]
-            activity['total_mobile_workers'] = total_users
+            # Get total active users for the app
+            app_user_ids = MALTRow.objects.filter(
+                app_id=app_id,
+            ).distinct('user_id').values_list("user_id", flat=True)
+            activity['total_app_users'] = UserES().user_ids(app_user_ids).is_active(domain_name).run().total
 
     return months_activity
 
@@ -143,7 +139,7 @@ def generate_csv_report(months_activity):
 
     for month, activity_list in months_activity.items():
         ws = wb.create_sheet(title=month)
-        ws.append(['Domain Name', 'Countries', 'App name', 'App ID', 'App default lang', 'Active User Count', 'Total Mobile Workers'])  # noqa E501
+        ws.append(['Domain Name', 'Countries', 'App name', 'App ID', 'App default lang', 'Active User Count', 'Total App Users'])  # noqa E501
         for row in activity_list:
             ws.append([
                 row.get('domain_name', ''),
@@ -152,7 +148,7 @@ def generate_csv_report(months_activity):
                 row.get('app_id', ''),
                 row.get('default_language', ''),
                 row.get('user_count', 0),
-                row.get('total_mobile_workers', 0)
+                row.get('total_app_users', 0)
             ])
     output = BytesIO()
     wb.save(output)
@@ -171,13 +167,21 @@ def send_email_report(csv_workbook, recipient_email):
     email.send()
 
 
-def filter_users_with_complete_months(data, months):
+def filter_users_with_complete_months(users_months_activity, months):
     """
     Filter data to only include records where each user has entries for all distinct months.
+    
+    The "users_months_activity" argument is a list of dictionaries like this: 
+    {
+        'domain_name': 'domain_b',
+        'app_id': 'app_b2',
+        'user_id': 'user_5',
+        'month': datetime.date(2025, 4, 22)
+    }
     """
 
     user_months = defaultdict(set)
-    for record in data:
+    for record in users_months_activity:
         user_months[record['user_id']].add(record['month'])
 
     complete_users = set()
@@ -187,7 +191,7 @@ def filter_users_with_complete_months(data, months):
             complete_users.add(user_id)
 
     filtered_data = [
-        record for record in data
+        record for record in users_months_activity
         if record['user_id'] in complete_users
     ]
 
