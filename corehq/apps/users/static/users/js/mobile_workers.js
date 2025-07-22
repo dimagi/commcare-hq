@@ -628,9 +628,18 @@ var usersConfirmationModel = function () {
     self.hasError = ko.observable(false);
     self.showLoadingSpinner = ko.observable(true);
     self.showPaginationSpinner = ko.observable(false);
+    self.projectHasUsers = ko.observable(true);
+
+    self.showProjectHasNoUsers = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError() && !self.projectHasUsers();
+    });
+
+    self.showNoUsers = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
+    });
 
     self.showTable = ko.computed(function () {
-        return !self.showLoadingSpinner() && !self.hasError();
+        return !self.showLoadingSpinner() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
     });
 
     self.goToPage = function (page) {
@@ -653,6 +662,9 @@ var usersConfirmationModel = function () {
                 self.showLoadingSpinner(false);
                 self.showPaginationSpinner(false);
                 self.hasError(false);
+                if (!self.query()) {
+                    self.projectHasUsers(!!data.users.length);
+                }
             },
             error: function () {
                 self.showLoadingSpinner(false);
