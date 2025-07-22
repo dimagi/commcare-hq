@@ -48,7 +48,6 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
-from langcodes import langs_by_code
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
@@ -1566,7 +1565,8 @@ def set_language(request):
         response = HttpResponse(status=204)
 
     lang_code = request.POST.get("language")
-    if lang_code and lang_code in langs_by_code.keys():
+    valid_lang_codes = [lang_code for lang_code, __ in settings.LANGUAGES]
+    if lang_code and lang_code in valid_lang_codes:
         response.set_cookie(
             settings.LANGUAGE_COOKIE_NAME,
             lang_code,
