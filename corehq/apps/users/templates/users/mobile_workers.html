@@ -782,6 +782,7 @@
             <th>{% trans "Username" %}</th>
             <th>{% trans "First Name" %}</th>
             <th>{% trans "Last Name" %}</th>
+            <th>{% trans "Pending Since(UTC)" %}</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: users">
@@ -794,6 +795,7 @@
             </td>
             <td data-bind="text: first_name"></td>
             <td data-bind="text: last_name"></td>
+            <td data-bind="text: confirmation_sent_at"></td>
           </tr>
         </tbody>
       </table>
