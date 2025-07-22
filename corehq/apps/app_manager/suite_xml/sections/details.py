@@ -55,6 +55,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.apps.case_search.models import split_screen_ui_enabled_for_domain
 from corehq.util.timer import time_method
 
 from ..const import FIELD_TYPE_LEDGER
@@ -407,7 +408,7 @@ class DetailContributor(SectionContributor):
         in_search = module_loads_registry_case(module) or "search" in detail_id
 
         # don't add search again action in split screen
-        if in_search and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(module.get_app().domain):
+        if in_search and split_screen_ui_enabled_for_domain(module.get_app().domain):
             return None
 
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)

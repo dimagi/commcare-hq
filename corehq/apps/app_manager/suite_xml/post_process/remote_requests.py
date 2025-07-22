@@ -92,6 +92,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_SORT_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
+    split_screen_ui_enabled_for_domain,
 )
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -226,9 +227,15 @@ class RemoteRequestFactory(object):
             "default_search": self.module.search_config.default_search,
             "dynamic_search": self.app.split_screen_dynamic_search and not self.module.is_auto_select()
         }
-        if self.module.search_config.search_on_clear and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain):
-            kwargs["search_on_clear"] = (self.module.search_config.search_on_clear
-                and not self.module.is_auto_select())
+
+        if (
+            self.module.search_config.search_on_clear
+            and split_screen_ui_enabled_for_domain(self.app.domain)
+        ):
+            kwargs["search_on_clear"] = (
+                self.module.search_config.search_on_clear
+                and not self.module.is_auto_select()
+            )
         return [
             RemoteRequestQuery(**kwargs)
         ]
