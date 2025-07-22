@@ -177,7 +177,7 @@ def _get_expected_changes_json(user):
         'is_staff': False,
         'is_superuser': False,
         'language': None,
-        'last_confirmation_sent_at': None,
+        'confirmation_sent_at': None,
         'last_login': None,
         'last_modified': user_json['last_modified'],
         'last_name': '',
