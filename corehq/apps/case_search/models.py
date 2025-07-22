@@ -392,6 +392,24 @@ def case_search_sync_cases_on_form_entry_enabled_for_domain(domain):
     return config.sync_cases_on_form_entry if config else False
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
+def split_screen_ui_enabled_for_domain(domain):
+    from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
+
+    config = CaseSearchConfig.objects.get_or_none(pk=domain)
+    if not config:
+        return False
+    if not config.split_screen_ui:
+        return False
+    subs = Subscription.get_active_subscription_by_domain(domain)
+    if not subs:
+        return False
+    return subs.plan_version.plan.edition in (
+        SoftwarePlanEdition.ADVANCED,
+        SoftwarePlanEdition.ENTERPRISE,
+    )
+
+
 def enable_case_search(domain):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
 
