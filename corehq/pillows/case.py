@@ -74,7 +74,7 @@ def get_case_pillow(
     exclude_ucrs=None,
     num_processes=1,
     process_num=0,
-    ucr_configs=None,
+    ucr_configs=None,  # this parameter is only used by tests
     skip_ucr=False,
     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
     topics=None,

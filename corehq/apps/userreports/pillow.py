@@ -98,10 +98,15 @@ def _filter_domains_to_skip(configs):
     """Return a list of configs whose domain exists on this environment"""
     domain_names = list({config.domain for config in configs if config.is_static})
     existing_domains = list(get_domain_ids_by_names(domain_names))
+    #return [
+    #    config for config in configs
+    #    if not config.is_static or config.domain in existing_domains
+    #]
     migrating_domains = all_domains_with_migrations_in_progress()
     return [
         config for config in configs
         if config.domain not in migrating_domains and (not config.is_static or config.domain in existing_domains)
+        if not config.is_static or config.domain in existing_domains
     ]
 
 
@@ -160,8 +165,22 @@ class UcrTableManager(ABC):
             pairs = self.iter_configs_since(since)
 
         seen = {}
+#        deactivated = []
         for domain, config in pairs:
             yield domain, get_adapter(config)
+#            adapter = get_adapter(config)
+#            if config.is_deactivated:
+#                deactivated.append((domain, adapter))
+#            else:
+#                yield domain, adapter
+#
+#        # Remove deactivated adapters after cache refresh.
+#        # Necessary when a previously active adapter is deactivated.
+#        # HACK it is surprising for this generator method to mutate the cache.
+#        # Justification: it is only ever called when populating the cache.
+#        for domain, adapter in deactivated:
+#            self.cache.remove(domain, adapter)
+#
         if not seen and not since and self.run_migrations:
             pillow_logging.warning("UCR pillow has no configs to process")
 
@@ -186,19 +205,29 @@ class UcrTableManager(ABC):
                 datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
                 and self.run_migrations
             )
+            #or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
         )
 
     def bootstrap_if_needed(self):
         """Bootstrap the manager with data sources or else check for updated data sources"""
         if self.needs_bootstrap():
+            # previously, all configs were reloaded from the database in
+            # ConfigurableReportTableManager.bootstrap -> _do_bootstrap
+            # which was only done on startup in non-migration processes
             self.bootstrap()
         else:
+            # was the equivalent of this previously done on every change? yes
+            # old code: self._update_modified_data_sources()
             self.cache.refresh()
 
-    def bootstrap(self):
+    def bootstrap(self):  # TODO fix tests that pass configs=...
         """Initialize the manager with data sources and adapters"""
         if self.run_migrations:
             rebuild_sql_tables(self.cache.get_adapters())
+        #else:
+        #    # TODO possibly non-sensical place to do this since it only happens
+        #    # on initial bootstrap because of `and self.run_migrations` in needs_bootstrap
+        #    self.domains_to_skip = all_domains_with_migrations_in_progress()
 
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
@@ -208,6 +237,8 @@ class UcrTableManager(ABC):
 
         This is only called by non-migration processes.
         """
+        #if domain in self.domains_to_skip:
+        #    return []
         return self.cache.get_adapters(domain)
 
     def remove_adapter(self, domain, adapter):
