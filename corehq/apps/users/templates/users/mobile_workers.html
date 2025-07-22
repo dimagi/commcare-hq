@@ -418,20 +418,20 @@
               {% endif %}
               {% if not request.is_view_only %}
                 <td>
-                    <div data-bind="visible: !is_active()">
-                      <button
-                        type="button"
-                        class="btn btn-default"
-                        data-toggle="modal"
-                        data-bind="attr: {'data-target': '#activate_' + user_id()}"
-                      >
-                        {% trans "Reactivate" %}
-                      </button>
-                      <p data-bind="visible: action_error">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <span data-bind="text: action_error"></span>
-                      </p>
-                    </div>
+                  <div data-bind="visible: !is_active()">
+                    <button
+                      type="button"
+                      class="btn btn-default"
+                      data-toggle="modal"
+                      data-bind="attr: {'data-target': '#activate_' + user_id()}"
+                    >
+                      {% trans "Reactivate" %}
+                    </button>
+                    <p data-bind="visible: action_error">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                      <span data-bind="text: action_error"></span>
+                    </p>
+                  </div>
                   {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
                     {% include "users/partials/bootstrap3/personalid_activation_modals.html" %}
                     <div data-bind="visible: is_personalid_link_active">
