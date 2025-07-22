@@ -18,20 +18,32 @@ from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.models import KycConfig
-from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
-from corehq.apps.integration.payments.forms import PaymentConfigureForm
+from corehq.apps.integration.payments.const import (
+    PaymentProperties,
+    PaymentStatus,
+)
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
+from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.integration.payments.models import MoMoConfig
-from corehq.apps.integration.payments.services import revert_payment_verification, verify_payment_cases
+from corehq.apps.integration.payments.services import (
+    revert_payment_verification,
+    verify_payment_cases,
+)
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import get_filter_classes
-from corehq.apps.reports.standard.cases.utils import add_case_owners_and_location_access
+from corehq.apps.reports.standard.cases.utils import (
+    add_case_owners_and_location_access,
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action, HtmxResponseException
+from corehq.util.htmx_action import (
+    HqHtmxActionMixin,
+    HtmxResponseException,
+    hq_hx_action,
+)
 from corehq.util.timezones.utils import get_timezone
 
 

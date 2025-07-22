@@ -4,28 +4,38 @@ from django.test import TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory
-from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 
+from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.groups import group_adapter
-from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.integration.kyc.models import KycVerificationStatus, UserDataStore, KycConfig
-from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
+from corehq.apps.es.users import user_adapter
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycVerificationStatus,
+    UserDataStore,
+)
+from corehq.apps.integration.payments.const import (
+    PaymentProperties,
+    PaymentStatus,
+)
+from corehq.apps.integration.payments.filters import (
+    BatchNumberFilter,
+    PaymentVerifiedByFilter,
+)
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.views import (
+    PaymentConfigurationView,
     PaymentsVerificationReportView,
     PaymentsVerificationTableView,
-    PaymentConfigurationView,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
-from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
 from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
-from corehq.apps.integration.payments.filters import BatchNumberFilter, PaymentVerifiedByFilter
 
 
 class BaseTestPaymentsView(TestCase):

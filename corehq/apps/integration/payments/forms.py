@@ -4,9 +4,12 @@ from django.utils.translation import gettext_lazy as _
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from corehq.apps.hqwebapp import crispy as hqcrispy
 
-from corehq.apps.integration.payments.models import MoMoConfig, MoMoEnvironments
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.integration.payments.models import (
+    MoMoConfig,
+    MoMoEnvironments,
+)
 from corehq.motech.models import ConnectionSettings
 
 

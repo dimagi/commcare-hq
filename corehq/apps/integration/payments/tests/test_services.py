@@ -1,21 +1,28 @@
 import uuid
 from unittest.mock import patch
 
-import pytest
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseFactory
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.integration.payments.models import MoMoConfig
-from corehq.apps.users.models import WebUser
+import pytest
 
-from corehq.motech.models import ConnectionSettings
+from casexml.apps.case.mock import CaseFactory
+
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
-from corehq.apps.integration.payments.services import verify_payment_cases, request_payments_for_cases, \
-    revert_payment_verification
-from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
-from corehq.apps.integration.payments.services import _request_payment
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.integration.payments.const import (
+    PaymentProperties,
+    PaymentStatus,
+)
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
+from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.apps.integration.payments.services import (
+    _request_payment,
+    request_payments_for_cases,
+    revert_payment_verification,
+    verify_payment_cases,
+)
+from corehq.apps.users.models import WebUser
+from corehq.motech.models import ConnectionSettings
 
 
 class TestVerifyPaymentCases(TestCase):

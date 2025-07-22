@@ -11,8 +11,8 @@ from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
-    PAYMENT_SUCCESS_STATUS_CODE,
     PAYMENT_SUBMITTED_DEVICE_ID,
+    PAYMENT_SUCCESS_STATUS_CODE,
     PaymentProperties,
     PaymentStatus,
 )
