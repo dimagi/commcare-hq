@@ -485,7 +485,7 @@ class EnterpriseUsersUtils(EmwfUtils):
                 name = f"{report_username} [Active Web User]"
             else:
                 name = f"{report_username} [Deactivated Web User]"
-        elif user_obj.is_active_in_domain(self.domain):
+        elif user_obj.is_active_in_domain(user['domain']):
             is_active = True
             name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
         else:
