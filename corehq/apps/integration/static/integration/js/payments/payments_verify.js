@@ -48,7 +48,7 @@ $(document).on('htmx:afterRequest', function (event) {
     const method = event.detail.requestConfig.verb;
     if (method === 'get') {
         handler.selectedIds = [];
-        updateVerifyButton([]);
+        updateVerifyAndRevertButton([]);
     } else if (method === 'post') {
         const endpoint = requestPath + window.location.search;
         // The timeout is to allow the verification request enough time to update the affected cases in ES before
