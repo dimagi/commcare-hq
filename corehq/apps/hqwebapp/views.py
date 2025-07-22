@@ -38,6 +38,7 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, activate
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -1551,11 +1552,19 @@ def check_sso_login_status(request):
 def set_language(request):
     """
     Redirect to the current page while setting the chosen language, if valid.
-    If no http referer is available, just set the language. Based on
-    django.views.i18n.set_language.
+    If no http referer is available or it is not safe, just set the language.
+    Based on django.views.i18n.set_language.
     """
     next_url = request.META.get("HTTP_REFERER")
-    response = HttpResponseRedirect(next_url) if next_url else HttpResponse(status=204)
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        response = HttpResponseRedirect(next_url)
+    else:
+        response = HttpResponse(status=204)
+
     lang_code = request.POST.get("language")
     if lang_code and lang_code in langs_by_code.keys():
         response.set_cookie(
