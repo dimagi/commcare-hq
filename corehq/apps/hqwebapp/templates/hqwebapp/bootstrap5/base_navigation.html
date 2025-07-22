@@ -67,13 +67,12 @@
           <div class="nav-settings-bar">
             <div class="navbar-nav dropdown">
               <button
-                class="dropdown-toggle btn btn-default navbar-btn"
+                class="dropdown-toggle btn btn-outline-primary navbar-btn"
                 data-bs-toggle="dropdown"
                 aria-haspopup="true"
                 aria-expanded="false"
               >
                 {{ LANGUAGE_CODE|language_name_local }}
-                <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
                 {% for lang_code, name in LANGUAGES %}
@@ -81,6 +80,7 @@
                     <form action="{% url 'set_language' %}" method="post">
                       {% csrf_token %}
                       <button
+                        class="dropdown-item"
                         type="submit"
                         name="language"
                         value="{{ lang_code }}"
