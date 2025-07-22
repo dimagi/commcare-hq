@@ -1,7 +1,6 @@
 from django.urls import include, re_path as url
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from django.views.i18n import set_language
 
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from two_factor.urls import urlpatterns as tf_urls
@@ -39,6 +38,7 @@ from corehq.apps.hqwebapp.views import (
     OauthApplicationRegistration,
     retrieve_download,
     server_up,
+    set_language,
     temporary_google_verify,
     check_sso_login_status,
 )

@@ -46,6 +46,8 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
+
+from langcodes import langs_by_code
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
@@ -1543,3 +1545,27 @@ def check_sso_login_status(request):
         'sso_url': sso_url,
         'continue_text': continue_text,
     })
+
+
+@require_POST
+def set_language(request):
+    """
+    Redirect to the current page while setting the chosen language, if valid.
+    If no http referer is available, just set the language. Based on
+    django.views.i18n.set_language.
+    """
+    next_url = request.META.get("HTTP_REFERER")
+    response = HttpResponseRedirect(next_url) if next_url else HttpResponse(status=204)
+    lang_code = request.POST.get("language")
+    if lang_code and lang_code in langs_by_code.keys():
+        response.set_cookie(
+            settings.LANGUAGE_COOKIE_NAME,
+            lang_code,
+            max_age=settings.LANGUAGE_COOKIE_AGE,
+            path=settings.LANGUAGE_COOKIE_PATH,
+            domain=settings.LANGUAGE_COOKIE_DOMAIN,
+            secure=settings.LANGUAGE_COOKIE_SECURE,
+            httponly=settings.LANGUAGE_COOKIE_HTTPONLY,
+            samesite=settings.LANGUAGE_COOKIE_SAMESITE,
+        )
+    return response
