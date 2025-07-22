@@ -648,7 +648,7 @@
       </div>
     </div>
     <div class="panel-body">
-      <table class="table table-striped table-responsive">
+      <table class="table table-striped table-responsive" data-bind="visible: showTable">
         <thead>
           <tr>
             <th>{% trans "Username" %}</th>
@@ -786,6 +786,7 @@
         {% endblocktrans %}
       </div>
       <pagination data-apply-bindings="false"
+                  data-bind="visible: showTable"
                   params="goToPage: goToPage,
                           perPage: itemsPerPage,
                           maxPagesShown: 10,

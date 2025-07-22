@@ -629,6 +629,10 @@ var usersConfirmationModel = function () {
     self.showLoadingSpinner = ko.observable(true);
     self.showPaginationSpinner = ko.observable(false);
 
+    self.showTable = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError();
+    });
+
     self.goToPage = function (page) {
         self.users.removeAll();
         $.ajax({
