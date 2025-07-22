@@ -624,6 +624,11 @@ var usersConfirmationModel = function () {
 
     self.query = ko.observable('');
 
+    // Visibility of spinners, messages, and user table
+    self.hasError = ko.observable(false);
+    self.showLoadingSpinner = ko.observable(true);
+    self.showPaginationSpinner = ko.observable(false);
+
     self.goToPage = function (page) {
         self.users.removeAll();
         $.ajax({
@@ -641,7 +646,16 @@ var usersConfirmationModel = function () {
                 self.users(_.map(data.users, function (user) {
                     return userModel(user);
                 }));
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+                self.hasError(false);
             },
+            error: function () {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+                self.hasError(true);
+            },
+
         });
     };
     self.onPaginationLoad = function () {
