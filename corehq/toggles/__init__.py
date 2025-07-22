@@ -1940,6 +1940,19 @@ PROCESS_REPEATERS = FeatureRelease(
     [NAMESPACE_DOMAIN],
     owner='Norman Hooper',
     description="""
+    Limits the number of repeat records that can be queued in celery for a
+    single repeater, effectively processing repeaters instead of inidividual records.
+    """
+)
+
+BACKOFF_REPEATERS = FeatureRelease(
+    'backoff_repeaters',
+    'Backoff an entire repeater instead of individual repeat records',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    owner='Norman Hooper',
+    description="""
+    This feature flag is only relevant if PROCESS_REPEATERS is also enabled.
     Manages repeat records through their repeater in order to make
     smarter decisions about remote endpoints.
     """
