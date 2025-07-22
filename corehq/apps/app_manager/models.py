@@ -375,6 +375,91 @@ class ConditionalCaseUpdate(DocumentSchema):
     )
 
 
+def apply_diffs(current_mappings, diffs):
+    '''
+    Expects `current_mappings` to be a dictionary of `ConditionalCaseUpdate` lists.
+    Expects `diffs` to be an `UpdateCaseDiff`
+    '''
+    _check_for_duplicate_keys(diffs)
+
+    _apply_additions(current_mappings, diffs.add)
+    _apply_deletions(current_mappings, diffs.delete)
+    _apply_updates(current_mappings, diffs.update)
+
+    return current_mappings
+
+
+def _check_for_duplicate_keys(diffs):
+    addition_mappings = set()
+    for case_property, additions in diffs.add.items():
+        for addition in additions:
+            addition_mappings.add(f'{case_property}->{addition.question_path}')
+
+    deletion_mappings = set()
+    for case_property, deletions in diffs.delete.items():
+        for deletion in deletions:
+            deletion_mappings.add(f'{case_property}->{deletion.question_path}')
+
+    update_mappings = set()
+    for case_property, updates in diffs.update.items():
+        for update in updates:
+            update_mappings.add(f'{case_property}->{update.question_path}')
+
+    overlapping_addition_mappings = addition_mappings & (deletion_mappings | update_mappings)
+    overlapping_deletion_mappings = deletion_mappings & update_mappings
+    overlapping_mappings = overlapping_addition_mappings | overlapping_deletion_mappings
+
+    if overlapping_mappings:
+        raise DiffConflictException(*overlapping_mappings)
+
+
+def _apply_additions(current_mappings, additions):
+    for (key, questions) in additions.items():
+        additions_map = {
+            question['question_path']: question for question in questions
+        }
+        all_updates = []
+        for existing_update in current_mappings.get(key, []):
+            incoming_update = additions_map.pop(existing_update.question_path, None)
+            update_to_insert = incoming_update if incoming_update else existing_update
+            all_updates.append(update_to_insert)
+
+        for incoming_update in additions_map.values():
+            all_updates.append(incoming_update)
+
+        current_mappings[key] = all_updates
+
+
+def _apply_deletions(current_mappings, deletions):
+    for (key, questions) in deletions.items():
+        existing_updates = current_mappings.get(key, [])
+        for deletion in questions:
+            existing_updates = [item for item in existing_updates if item.question_path != deletion.question_path]
+        current_mappings[key] = existing_updates
+
+
+def _apply_updates(current_mappings, updates):
+    all_missing_mappings = []
+    for (key, questions) in updates.items():
+        incoming_updates_map = {value['question_path']: value for value in questions}
+        existing_updates = current_mappings.get(key, [])
+
+        for existing_update in existing_updates:
+            if existing_update.question_path in incoming_updates_map:
+                incoming_update = incoming_updates_map[existing_update.question_path]
+                existing_update.update_mode = incoming_update.update_mode
+                incoming_updates_map.pop(existing_update.question_path)
+
+        missing_mappings = [
+            {'case_property': key, 'question_path': value.question_path}
+            for value in incoming_updates_map.values()
+        ]
+        all_missing_mappings.extend(missing_mappings)
+
+    if all_missing_mappings:
+        raise MissingPropertyMapException(*all_missing_mappings)
+
+
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
     update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
@@ -419,116 +504,21 @@ class UpdateCaseAction(FormAction):
 
         for case_property, updates in self.update_multi.items():
             if updates:
-                self.update[case_property] = updates[0]
+                self.update[case_property] = updates[-1]
 
         self.update_multi = None
 
         return True
 
-    DIFF_ACTION_ADD = 'add'
-    DIFF_ACTION_DELETE = 'del'
-    DIFF_ACTION_UPDATE = 'update'
-
-    DIFF_VALUE_UPDATED = 'updated'
-
     def apply_updates(self, updates, diffs, allow_conflicts=True):
-        self.check_for_duplicate_keys(diffs)
-
         self.update_object(updates)
-
         self.make_multi()
-        self.check_for_invalid_updates(diffs)
-
-        if self.DIFF_ACTION_ADD in diffs:
-            for (key, updates) in diffs[self.DIFF_ACTION_ADD].items():
-                additions = [ConditionalCaseUpdate(value) for value in updates]
-                existing = self.update_multi.get(key, [])
-                existing = [item for item in existing if not self.find_matching_update(item, additions)]
-                additions.extend(existing)
-                self.update_multi[key] = additions
-
-        if self.DIFF_ACTION_DELETE in diffs:
-            for (key, deletions) in diffs[self.DIFF_ACTION_DELETE].items():
-                existing = self.update_multi.get(key, [])
-                for deletion in deletions:
-                    existing = [item for item in existing if item.question_path != deletion['question_path']]
-                self.update_multi[key] = existing
-
-        if self.DIFF_ACTION_UPDATE in diffs:
-            all_missing_mappings = []
-            for (key, updates) in diffs[self.DIFF_ACTION_UPDATE].items():
-                incoming_updates = {
-                    value['question_path']: ConditionalCaseUpdate(value)
-                    for value in diffs[self.DIFF_ACTION_UPDATE][key]
-                }
-                existing_updates = self.update_multi.get(key, [])
-
-                for update in existing_updates:
-                    if update.question_path in incoming_updates:
-                        update.update_mode = incoming_updates[update.question_path].update_mode
-                        incoming_updates.pop(update.question_path)
-
-                missing_mappings = [
-                    {
-                        'case_property': 'name',
-                        'question_path': value.question_path
-                    } for value in incoming_updates.values()
-                ]
-                all_missing_mappings.extend(missing_mappings)
-
-            if all_missing_mappings:
-                raise MissingPropertyMapException(*all_missing_mappings)
+        apply_diffs(self.update_multi, diffs)
 
         if allow_conflicts:
             self.normalize_update()
         else:
             self.make_single()
-
-    @classmethod
-    def find_matching_update(cls, target, updates):
-        updates = updates or []
-
-        for update in updates:
-            if update.question_path == target['question_path']:
-                return update
-
-        return None
-
-    def check_for_duplicate_keys(self, diffs):
-        addition_mappings = set()
-        for case_property, additions in diffs.get(self.DIFF_ACTION_ADD, {}).items():
-            for addition in additions:
-                addition_mappings.add(f'{case_property}->{addition["question_path"]}')
-
-        deletion_mappings = set()
-        for case_property, deletions in diffs.get(self.DIFF_ACTION_DELETE, {}).items():
-            for deletion in deletions:
-                deletion_mappings.add(f'{case_property}->{deletion["question_path"]}')
-
-        update_mappings = set()
-        for case_property, updates in diffs.get(self.DIFF_ACTION_UPDATE, {}).items():
-            for update in updates:
-                update_mappings.add(f'{case_property}->{update["question_path"]}')
-
-        overlapping_addition_mappings = addition_mappings & (deletion_mappings | update_mappings)
-        overlapping_deletion_mappings = deletion_mappings & update_mappings
-        overlapping_mappings = overlapping_addition_mappings | overlapping_deletion_mappings
-
-        if overlapping_mappings:
-            raise DiffConflictException(*overlapping_mappings)
-
-    def check_for_invalid_updates(self, diffs):
-        missing_mappings = []
-        if self.DIFF_ACTION_UPDATE in diffs:
-            for case_property, updates in diffs[self.DIFF_ACTION_UPDATE].items():
-                existing_question_paths = [item.question_path for item in self.update_multi.get(case_property, [])]
-                for incoming_update in updates:
-                    question_path = incoming_update['question_path']
-                    if (case_property not in self.update_multi) or (question_path not in existing_question_paths):
-                        missing_mappings.append({'case_property': case_property, 'question_path': question_path})
-
-            if missing_mappings:
-                raise MissingPropertyMapException(*missing_mappings)
 
 
 class PreloadAction(FormAction):
@@ -566,55 +556,16 @@ class OpenCaseAction(FormAction):
     name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
 
-    DIFF_ACTION_ADD = 'add'
-    DIFF_ACTION_DELETE = 'del'
-    DIFF_ACTION_UPDATE = 'update'
+    _NAME_UPDATE_MULTI_FIELD_NAME = 'name_update_multi'
 
     def apply_updates(self, updates, diffs, allow_conflicts=True):
         self.update_object(updates)
         self.make_multi()
 
-        if self.DIFF_ACTION_ADD in diffs:
-            additions = {
-                value['question_path']: ConditionalCaseUpdate(value) for value in diffs[self.DIFF_ACTION_ADD]
-            }
-            name_updates = []
-            for update in self.name_update_multi:
-                update_to_insert = additions.pop(update.question_path, update)
-                name_updates.append(update_to_insert)
-
-            for update in additions.values():
-                name_updates.append(update)
-
-            self.name_update_multi = name_updates
-
-        if self.DIFF_ACTION_DELETE in diffs:
-            deletions = {
-                value['question_path']: ConditionalCaseUpdate(value) for value in diffs[self.DIFF_ACTION_DELETE]
-            }
-
-            name_updates = []
-            for update in self.name_update_multi:
-                if update.question_path not in deletions:
-                    name_updates.append(update)
-
-            self.name_update_multi = name_updates
-
-        if self.DIFF_ACTION_UPDATE in diffs:
-            updates = {
-                value['question_path']: ConditionalCaseUpdate(value) for value in diffs[self.DIFF_ACTION_UPDATE]
-            }
-
-            for update in self.name_update_multi:
-                if update.question_path in updates:
-                    update.update_mode = updates[update.question_path].update_mode
-                    updates.pop(update.question_path)
-
-            missing_mappings = [
-                {'case_property': 'name', 'question_path': value.question_path} for value in updates.values()
-            ]
-            if missing_mappings:
-                raise MissingPropertyMapException(*missing_mappings)
+        mappings = {self._NAME_UPDATE_MULTI_FIELD_NAME: self.name_update_multi}
+        normalized_diffs = diffs.convert_to_update_diff()
+        apply_diffs(mappings, normalized_diffs)
+        self.name_update_multi = mappings[self._NAME_UPDATE_MULTI_FIELD_NAME]
 
         if allow_conflicts:
             self.normalize_name_update()
@@ -654,7 +605,7 @@ class OpenCaseAction(FormAction):
             return
 
         self.name_update = self.name_update_multi[0]
-        self.name_update_multi = []
+        self.name_update_multi = None
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
@@ -675,8 +626,31 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
         return 'subcase_{}'.format(self.id)
 
 
-class FormActions(UpdateableDocument):
+class OpenCaseDiff(DocumentSchema):
+    add = SchemaListProperty(ConditionalCaseUpdate)
+    delete = SchemaListProperty(ConditionalCaseUpdate)
+    update = SchemaListProperty(ConditionalCaseUpdate)
 
+    def convert_to_update_diff(self):
+        return UpdateCaseDiff(
+            add={OpenCaseAction._NAME_UPDATE_MULTI_FIELD_NAME: self.add} if self.add else {},
+            delete={OpenCaseAction._NAME_UPDATE_MULTI_FIELD_NAME: self.delete} if self.delete else {},
+            update={OpenCaseAction._NAME_UPDATE_MULTI_FIELD_NAME: self.update} if self.update else {}
+        )
+
+
+class UpdateCaseDiff(DocumentSchema):
+    add = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+    delete = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+    update = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+
+
+class FormActionsDiff(DocumentSchema):
+    open_case = SchemaProperty(OpenCaseDiff)
+    update_case = SchemaProperty(UpdateCaseDiff)
+
+
+class FormActions(UpdateableDocument):
     open_case = SchemaProperty(OpenCaseAction)
     update_case = SchemaProperty(UpdateCaseAction)
     close_case = SchemaProperty(FormAction)
@@ -716,16 +690,34 @@ class FormActions(UpdateableDocument):
         dest = FormActions(self.to_json())  # clone object
 
         update_case_updates = updates.pop('update_case', {})
-        update_case_diffs = diffs.get('update_case', {})
-        dest.update_case.apply_updates(update_case_updates, update_case_diffs, allow_conflicts)
+        dest.update_case.apply_updates(update_case_updates, diffs.update_case, allow_conflicts)
 
         open_case_updates = updates.pop('open_case', {})
-        open_case_diffs = diffs.get('open_case', {})
-        dest.open_case.apply_updates(open_case_updates, open_case_diffs, allow_conflicts)
+        dest.open_case.apply_updates(open_case_updates, diffs.open_case, allow_conflicts)
 
         dest.update_object(updates)
 
         return dest
+
+    def make_multi(self):
+        if self.open_case:
+            self.open_case.make_multi()
+
+        if self.update_case:
+            self.update_case.make_multi()
+
+    def make_single(self, allow_conflicts=True):
+        if self.open_case:
+            if allow_conflicts:
+                self.open_case.normalize_name_update()
+            else:
+                self.open_case.make_single()
+
+        if self.update_case:
+            if allow_conflicts:
+                self.update_case.normalize_update()
+            else:
+                self.update_case.make_single()
 
 
 class CaseIndex(DocumentSchema):

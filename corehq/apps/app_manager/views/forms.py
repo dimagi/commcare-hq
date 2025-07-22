@@ -72,6 +72,7 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
+    FormActionsDiff,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
@@ -254,7 +255,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
 def _get_updates(existing_actions, data, allow_conflicts):
     updates = json.loads(data['actions'])
-    update_diff = json.loads(data['update_diff']) if 'update_diff' in data else {}
+    update_diff = FormActionsDiff(json.loads(data['update_diff']) if 'update_diff' in data else {})
     return existing_actions.with_updates(updates, update_diff, allow_conflicts)
 
 
@@ -875,6 +876,8 @@ def get_form_view_context(
                 'schedule_options': schedule_options,
             })
     else:
+        # TODO: figure out a cleaner method
+        form.actions.make_multi()
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
         })
