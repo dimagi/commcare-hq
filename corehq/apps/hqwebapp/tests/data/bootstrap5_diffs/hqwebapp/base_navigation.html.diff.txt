@@ -9,7 +9,7 @@
    {% if show_trial_banner %}
      {% include "hqwebapp/partials/trial_banner.html" %}
    {% endif %}
-@@ -17,33 +17,58 @@
+@@ -17,38 +17,62 @@
  {% endblock pre_navigation_content %}
  
  {% block navigation %}
@@ -78,12 +78,26 @@
 +          <div class="nav-settings-bar">
              <div class="navbar-nav dropdown">
                <button
-                 class="dropdown-toggle btn btn-default navbar-btn"
+-                class="dropdown-toggle btn btn-default navbar-btn"
 -                data-toggle="dropdown"
++                class="dropdown-toggle btn btn-outline-primary navbar-btn"
 +                data-bs-toggle="dropdown"
                  aria-haspopup="true"
                  aria-expanded="false"
                >
+                 {{ LANGUAGE_CODE|language_name_local }}
+-                <span class="caret"></span>
+               </button>
+               <ul class="dropdown-menu">
+                 {% for lang_code, name in LANGUAGES %}
+@@ -56,6 +80,7 @@
+                     <form action="{% url 'set_language' %}" method="post">
+                       {% csrf_token %}
+                       <button
++                        class="dropdown-item"
+                         type="submit"
+                         name="language"
+                         value="{{ lang_code }}"
 @@ -73,7 +98,7 @@
              {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
                <a
