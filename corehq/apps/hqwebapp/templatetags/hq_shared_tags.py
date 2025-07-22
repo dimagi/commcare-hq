@@ -607,10 +607,13 @@ def html_attr(value):
 
 @register.filter
 def language_name_local(lang_code):
-    #override built-in template filter to be usable with our custom langcodes
+    """
+    Override built-in language_name_local filter to work with languages defined
+    in langcodes and always title case its output.
+    """
     lang = langs_by_code.get(lang_code)
     lang_code = lang['two'] if lang else ''
-    return i18n.language_name_local(lang_code)
+    return i18n.language_name_local(lang_code).title()
 
 
 def _create_page_data(parser, original_token, node_slug):

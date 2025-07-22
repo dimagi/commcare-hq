@@ -47,7 +47,7 @@
                 aria-haspopup="true"
                 aria-expanded="false"
               >
-                {{ LANGUAGE_CODE|language_name_local|title }}
+                {{ LANGUAGE_CODE|language_name_local }}
                 <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
@@ -60,7 +60,7 @@
                         name="language"
                         value="{{ lang_code }}"
                       >
-                        {{ lang_code|language_name_local|title }}
+                        {{ lang_code|language_name_local }}
                       </button>
                     </form>
                   </li>
