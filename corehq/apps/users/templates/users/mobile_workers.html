@@ -648,6 +648,9 @@
             <th>{% trans "First Name" %}</th>
             <th>{% trans "Last Name" %}</th>
             <th>{% trans "Pending Since (UTC)" %}</th>
+            {% if not request.is_view_only %}
+              <th>{% trans "Actions" %}</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody data-bind="foreach: users">
@@ -661,6 +664,102 @@
             <td data-bind="text: first_name"></td>
             <td data-bind="text: last_name"></td>
             <td data-bind="text: confirmation_sent_at"></td>
+            <td>
+              <button
+                type="button"
+                class="btn btn-default"
+                data-toggle="modal"
+                data-bind="attr: {'data-target': '#confirm_' + user_id()}"
+              >
+                {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
+                  {% trans "Send Confirmation SMS" %}
+                {% else %}
+                  {% trans "Send Confirmation Email" %}
+                {% endif %}
+              </button>
+              <div
+                class="modal fade"
+                data-bind="attr: {id: 'confirm_' + user_id()}"
+              >
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button
+                        type="button"
+                        class="close"
+                        data-dismiss="modal"
+                      >
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">{% trans "Close" %}</span>
+                      </button>
+                      <h4 class="modal-title">
+                        {% trans "Confirm Account" %}
+                      </h4>
+                    </div>
+                    <div class="modal-body">
+                      <p class="lead">
+                        {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
+                          {% blocktrans %}
+                            Would you like to send the account
+                            confirmation SMS to this account?
+                          {% endblocktrans %}
+                        {% else %}
+                          {% blocktrans %}
+                            Would you like to send the account
+                            confirmation email to this account?
+                          {% endblocktrans %}
+                        {% endif %}
+                      </p>
+                      <p class="lead">
+                        <i class="fa fa-user"></i>
+                        <strong data-bind="text: username"></strong>
+                      </p>
+                      <p>
+                        {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
+                          {% blocktrans %}
+                          The user will be sent a SMS with instructions
+                          to set a password and be able to login to this
+                          project.
+                          {% endblocktrans %}
+                        {% else %}
+                          {% blocktrans %}
+                            The user will be sent an email with
+                            instructions to set a password and be able to
+                            login to this project.
+                          {% endblocktrans %}
+                        {% endif %}
+                      </p>
+                    </div>
+                    <div class="modal-footer">
+                      <button
+                        type="button"
+                        class="btn btn-default"
+                        data-dismiss="modal"
+                      >
+                        {% trans "Cancel" %}
+                      </button>
+                      {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
+                        <button
+                          type="button"
+                          class="btn btn-primary"
+                          data-bind="click: sendConfirmationSMS"
+                        >
+                          {% trans 'Send Account Confirmaton SMS' %}
+                        </button>
+                      {% else %}
+                        <button
+                          type="button"
+                          class="btn btn-primary"
+                          data-bind="click: sendConfirmationEmail"
+                        >
+                          {% trans 'Send Account Confirmaton Email' %}
+                        </button>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
