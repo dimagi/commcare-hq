@@ -638,6 +638,13 @@
         <div class="col-sm-6">
           <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Pending Account Confirmation' %}</h3>
         </div>
+        <div class="col-sm-6">
+          <search-box data-apply-bindings="false"
+                      params="value: query,
+                              action: function() { goToPage(1); },
+                              immediate: true,
+                              placeholder: '{% trans_html_attr "Search Pending Account Confirmations..." %}'"></search-box>
+        </div>
       </div>
     </div>
     <div class="panel-body">

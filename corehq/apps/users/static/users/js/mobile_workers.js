@@ -618,8 +618,11 @@ var newUserCreationModel = function (options) {
 var usersConfirmationModel = function () {
     var self = {};
     self.users = ko.observableArray();
+
     self.itemsPerPage = ko.observable(5);
     self.totalItems = ko.observable();
+
+    self.query = ko.observable('');
 
     self.goToPage = function (page) {
         self.users.removeAll();
@@ -628,6 +631,7 @@ var usersConfirmationModel = function () {
             url: initialPageData.reverse('paginate_mobile_workers'),
             data: {
                 page: page || 1,
+                query: self.query(),
                 limit: self.itemsPerPage(),
                 showDeactivatedUsers: true,
                 showUnconfirmedUsers: true,
