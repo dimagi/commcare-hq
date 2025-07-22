@@ -418,56 +418,6 @@
               {% endif %}
               {% if not request.is_view_only %}
                 <td>
-                  {% if two_stage_user_confirmation %}
-                    {% comment %}
-                      This block should work regardless of feature flag status,
-                      but putting it behind the flag to minimize the chance of
-                      any regressions.
-                    {% endcomment %}
-                    <div
-                      data-bind="visible: !is_active() && is_account_confirmed()"
-                    >
-                      <button
-                        type="button"
-                        class="btn btn-default"
-                        data-toggle="modal"
-                        data-bind="attr: {'data-target': '#activate_' + user_id()}"
-                      >
-                        {% trans "Reactivate" %}
-                      </button>
-                      <p data-bind="visible: action_error">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <span data-bind="text: action_error"></span>
-                      </p>
-                    </div>
-                    <div
-                      data-bind="visible: !is_active() && !is_account_confirmed()"
-                    >
-                      {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
-                        <button
-                          type="button"
-                          class="btn btn-default"
-                          data-toggle="modal"
-                          data-bind="attr: {'data-target': '#confirm_' + user_id()}"
-                        >
-                          {% trans "Send Confirmation Email" %}
-                        </button>
-                      {% else %}
-                        <button
-                          type="button"
-                          class="btn btn-default"
-                          data-toggle="modal"
-                          data-bind="attr: {'data-target': '#confirm_' + user_id()}"
-                        >
-                          {% trans "Send Confirmation SMS" %}
-                        </button>
-                      {% endif %}
-                      <p data-bind="visible: action_error">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <span data-bind="text: action_error"></span>
-                      </p>
-                    </div>
-                  {% else %}
                     <div data-bind="visible: !is_active()">
                       <button
                         type="button"
@@ -482,7 +432,6 @@
                         <span data-bind="text: action_error"></span>
                       </p>
                     </div>
-                  {% endif %}
                   {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
                     {% include "users/partials/bootstrap3/personalid_activation_modals.html" %}
                     <div data-bind="visible: is_personalid_link_active">
@@ -650,90 +599,6 @@
                       </div>
                     </div>
                   </div>
-                  {% if two_stage_user_confirmation %}
-                    <div
-                      class="modal fade"
-                      data-bind="attr: {id: 'confirm_' + user_id()}"
-                    >
-                      <div class="modal-dialog">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <button
-                              type="button"
-                              class="close"
-                              data-dismiss="modal"
-                            >
-                              <span aria-hidden="true">&times;</span>
-                              <span class="sr-only">{% trans "Close" %}</span>
-                            </button>
-                            <h4 class="modal-title">
-                              {% trans "Confirm Account" %}
-                            </h4>
-                          </div>
-                          <div class="modal-body">
-                            <p class="lead">
-                              {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
-                                {% blocktrans %}
-                                  Would you like to send the account
-                                  confirmation email to this account?
-                                {% endblocktrans %}
-                              {% else %}
-                                {% blocktrans %}
-                                  Would you like to send the account
-                                  confirmation SMS to this account?
-                                {% endblocktrans %}
-                              {% endif %}
-                            </p>
-                            <p class="lead">
-                              <i class="fa fa-user"></i>
-                              <strong data-bind="text: username"></strong>
-                            </p>
-                            <p>
-                              {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
-                                {% blocktrans %}
-                                  The user will be sent an email with
-                                  instructions to set a password and be able to
-                                  login to this project.
-                                {% endblocktrans %}
-                              {% else %}
-                                {% blocktrans %}
-                                  The user will be sent a SMS with instructions
-                                  to set a password and be able to login to this
-                                  project.
-                                {% endblocktrans %}
-                              {% endif %}
-                            </p>
-                          </div>
-                          <div class="modal-footer">
-                            <button
-                              type="button"
-                              class="btn btn-default"
-                              data-dismiss="modal"
-                            >
-                              {% trans "Cancel" %}
-                            </button>
-                            {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
-                              <button
-                                type="button"
-                                class="btn btn-primary"
-                                data-bind="click: sendConfirmationEmail"
-                              >
-                                {% trans 'Send Account Confirmaton Email' %}
-                              </button>
-                            {% else %}
-                              <button
-                                type="button"
-                                class="btn btn-primary"
-                                data-bind="click: sendConfirmationSMS"
-                              >
-                                {% trans 'Send Account Confirmaton SMS' %}
-                              </button>
-                            {% endif %}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  {% endif %}
                 </td>
               {% endif %}
             </tr>
