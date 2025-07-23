@@ -62,7 +62,7 @@ var userModel = function (options) {
         is_account_confirmed: true,
         is_personalid_link_active: null,
         deactivate_after_date: '',
-        confirmation_sent_at: '',
+        confirmation_sent_at: null,
     });
 
     var self = ko.mapping.fromJS(options);
@@ -87,6 +87,9 @@ var userModel = function (options) {
         return (expirationDate - new Date()) / (60 * 1000);
     });
     self.isExpired = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return false;
+        }
         return self.minutesRemaining() < 0;
     });
     self.minutesRemainingText = ko.computed(function () {
