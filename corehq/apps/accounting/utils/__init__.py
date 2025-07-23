@@ -513,29 +513,8 @@ def self_signup_workflow_in_progress(domain):
 
 
 def is_date_range_overlapping(start_1, end_1, start_2, end_2):
-    range_2_has_no_end = end_2 is None
-    range_1_has_no_end = end_1 is None
-    start_1_before_end_2 = end_2 is not None and start_1 < end_2
-    start_1_before_start_2 = start_1 < start_2
-    start_1_after_start_2 = start_1 > start_2
-    end_1_before_end_2 = (
-        end_1 is not None and end_2 is not None
-        and end_1 < end_2
-    )
-    end_1_after_end_2 = (
-        end_1 is not None and end_2 is not None
-        and end_1 > end_2
-    )
-    end_1_after_start_2 = end_1 is not None and end_1 > start_2
-
-    if (
-        (start_1_before_end_2 and start_1_after_start_2)
-        or (start_1_after_start_2 and range_2_has_no_end)
-        or (end_1_after_start_2 and end_1_before_end_2)
-        or (end_1_after_start_2 and range_2_has_no_end)
-        or (start_1_before_start_2 and end_1_after_end_2)
-        or (start_1_before_end_2 and range_1_has_no_end)
-        or (range_1_has_no_end and range_2_has_no_end)
-    ):
-        return True
-    return False
+    if end_1 is None:
+        end_1 = datetime.date.max
+    if end_2 is None:
+        end_2 = datetime.date.max
+    return start_1 < end_2 and start_2 < end_1
