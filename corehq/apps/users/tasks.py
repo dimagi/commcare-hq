@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timezone, date
 from dateutil.relativedelta import relativedelta
 from uuid import uuid4
@@ -456,7 +457,28 @@ def _get_credentials_for_timeframe(months, app_ids):
         .values('app_id', 'user_id', 'month')
         .distinct()
     )
-    # TODO: Filter for users with required consecutive months of activity
+    return _filter_users_with_complete_months(user_months_activity, months)
+
+
+def _filter_users_with_complete_months(data, months):
+    """
+    Filter data to only include records where each user has entries for all distinct months.
+    """
+    from corehq.apps.users.models import UserCredential
+
+    user_months = defaultdict(set)
+    user_credentials = []
+    combined_user_app_ids = set()  # Keep track of which user-app combos have had creds created
+    for record in data:
+        combined_user_app_id = record["user_id"] + record["app_id"]
+        user_months[combined_user_app_id].add(record["month"])
+
+        has_required_months = len(user_months[combined_user_app_id]) >= months
+        if has_required_months and combined_user_app_id not in combined_user_app_ids:
+            user_credentials.append(UserCredential(user_id=record["user_id"], app_id=record["app_id"]))
+            combined_user_app_ids.add(combined_user_app_id)
+
+    return user_credentials
 
 
 def _get_app_ids_by_activity_level():
