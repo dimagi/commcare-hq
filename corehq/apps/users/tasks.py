@@ -416,3 +416,35 @@ def remove_users_test_cases(domain, owner_ids):
 
     test_case_ids = domain_copied_cases_by_owner(domain, owner_ids)
     tag_cases_as_deleted_and_remove_indices(domain, test_case_ids, uuid4().hex)
+
+
+@periodic_task(
+    run_every=crontab(hour=1, minute=0),
+    queue='background_queue',
+)
+def process_mobile_worker_credentials():
+    """
+    Calculates which new applicable credentials are available for mobile workers,
+    and creates `UserCredential` instances for them.
+    """
+    from corehq.apps.users.models import UserCredential
+
+    app_ids_by_levels = _get_app_ids_by_activity_level()
+    applicable_credentials = []
+    for activity_level, app_ids in app_ids_by_levels.items():
+        if not app_ids:
+            continue
+        # TODO: Fetch applicable credentials
+
+    UserCredential.objects.bulk_create(applicable_credentials, ignore_conflicts=True)
+
+
+def _get_app_ids_by_activity_level():
+    from corehq.apps.app_manager.models import CredentialApplication
+
+    credential_apps = CredentialApplication.objects.all()
+    app_ids_by_level = defaultdict(list)
+    for app in credential_apps:
+        activity_level = int(app.activity_level)
+        app_ids_by_level[activity_level].append(app.app_id)
+    return app_ids_by_level
