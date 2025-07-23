@@ -71,7 +71,17 @@ Request & Response Details
    * - locations
      - A list of location_ids that the mobile worker will be assigned to.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
+   * - require_account_confirmation
+     - If True, creates an unconfirmed account (similar to a deactivated account).
+     - True or False
+   * - send_confirmation_email_now
+     - If True, immediately sends an account confirmation email*.
+     - True or False
 
+\* To send a confirmation email, the following must be true:
+    - 'password' should be excluded from the input
+    - 'email' should be included in the input
+    - 'require_account_confirmation' must be True
 
 **Output Parameters**
 
@@ -107,6 +117,24 @@ Request & Response Details
        ],
        "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e", 
        "locations": ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"],
+       "user_data": {
+          "chw_id": "13/43/DFA"
+       }
+    }
+
+**Sample Input - Unconfirmed User (JSON Format)**
+
+.. code-block:: json
+
+    {
+       "username": "jdoe",
+       "first_name": "John",
+       "last_name": "Doe",
+       "email": "jdoe@example.org",
+       "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
+       "locations": ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"],
+       "require_account_confirmation": "True",
+       "send_confirmation_email_now": "True",
        "user_data": {
           "chw_id": "13/43/DFA"
        }
@@ -190,6 +218,9 @@ Request & Response Details
    * - locations
      - A list of location_ids that the mobile worker will be assigned to. To remove all assigned locations, pass an empty array.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
+   * - send_confirmation_email_now
+     - If True and the user is an unconfirmed account, immediately sends an account confirmation email.
+     - True or False
 
 **Sample Input**
 
@@ -211,6 +242,7 @@ Request & Response Details
        ],
        "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e", 
        "locations": ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"],
+       "send_confirmation_email_now": "True",
        "user_data": {
           "chw_id": "13/43/DFA"
        }
