@@ -205,9 +205,8 @@ def arbitrary_user(domain_name, is_active=True, is_webuser=False, **kwargs):
         username = unique_name()
         user_cls = CommCareUser
         email = None
-    commcare_user = user_cls.create(domain_name, username, 'test123', None, None, email, **kwargs)
-    commcare_user.is_active = is_active
-    return commcare_user
+    return user_cls.create(domain_name, username, 'test123', None, None, email,
+                           is_active=is_active, **kwargs)
 
 
 @unit_testing_only

@@ -116,7 +116,9 @@ def require_permission(permission,
                        login_decorator=login_and_domain_required,
                        view_only_permission=None):
     permission = get_permission_name(permission) or permission
-    permission_check = lambda couch_user, domain: couch_user.has_permission(domain, permission, data=data)
+
+    def permission_check(couch_user, domain):
+        return couch_user.has_permission(domain, permission, data=data)
 
     view_only_check = None
     if view_only_permission is not None:
@@ -158,7 +160,8 @@ def require_permission_to_edit_user(view_func):
         go_ahead = False
         if hasattr(request, "couch_user"):
             user = request.couch_user
-            if user.is_superuser or user.user_id == couch_user_id or (hasattr(user, "is_domain_admin") and user.is_domain_admin()):
+            if user.is_superuser or user.user_id == couch_user_id or (
+                    hasattr(user, "is_domain_admin") and user.is_domain_admin()):
                 go_ahead = True
             else:
                 couch_user = CouchUser.get_by_user_id(couch_user_id)
@@ -192,7 +195,7 @@ def can_use_filtered_user_download(domain):
     return False
 
 
-def ensure_active_user_by_username(username):
+def ensure_active_user_by_username(username, domain):
     """
     :param username: ex: jordan@testapp-9.commcarehq.org
     :return
@@ -200,9 +203,9 @@ def ensure_active_user_by_username(username):
         error_code: mapping in app_string for the user
         default_response: english description of the error to be used in case error_code missing
     """
-    ccu = CommCareUser.get_by_username(username)
+    user = CommCareUser.get_by_username(username)
     valid, message, error_code = True, None, None
-    if ccu and not ccu.is_active:
+    if user and not user.is_active_in_domain(domain):
         valid, message, error_code = False, 'Your account has been deactivated, please contact your domain admin '\
                                             'to reactivate', 'user.deactivated'
     elif get_deleted_user_by_username(CommCareUser, username):
