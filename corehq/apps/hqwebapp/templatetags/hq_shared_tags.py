@@ -612,8 +612,16 @@ def language_name_local(lang_code):
     in langcodes and always title case its output.
     """
     lang = langs_by_code.get(lang_code)
-    lang_code = lang['two'] if lang else ''
-    return i18n.language_name_local(lang_code).title()
+    if lang:
+        lang_code = lang.get('two', lang_code)
+        try:
+            lang_name = i18n.language_name_local(lang_code)
+        except KeyError:
+            # fall back to English name from langcodes
+            lang_name = lang['names'][0]
+    else:
+        lang_name = ''
+    return lang_name.title()
 
 
 def _create_page_data(parser, original_token, node_slug):
