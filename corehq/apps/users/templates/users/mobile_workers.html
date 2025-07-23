@@ -633,18 +633,25 @@
     </div>
   </div>
   {% if two_stage_user_confirmation %}
-    <div class="panel panel-info ko-template" id="mobile-worker-confirmation-panel">
+    <div
+      class="panel panel-info ko-template"
+      id="mobile-worker-confirmation-panel"
+    >
       <div class="panel-heading">
         <div class="row">
           <div class="col-sm-6">
-            <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Pending Account Confirmations' %}</h3>
+            <h3 class="panel-title" style="padding-top: 7px;">
+              {% trans 'Pending Account Confirmations' %}
+            </h3>
           </div>
           <div class="col-sm-6">
-            <search-box data-apply-bindings="false"
-                        params="value: query,
+            <search-box
+              data-apply-bindings="false"
+              params="value: query,
                                 action: function() { goToPage(1); },
                                 immediate: true,
-                                placeholder: '{% trans_html_attr "Search Pending Account Confirmations..." %}'"></search-box>
+                                placeholder: '{% trans_html_attr "Search Pending Account Confirmations..." %}'"
+            ></search-box>
           </div>
         </div>
       </div>
@@ -661,8 +668,8 @@
           {% if request.is_view_only %}
             {% blocktrans %}
               <strong
-                >There are no pending account confirmations visible to you at this
-                time.</strong
+                >There are no pending account confirmations visible to you at
+                this time.</strong
               >
               Please contact your project's administrator if this is incorrect.
             {% endblocktrans %}
@@ -677,13 +684,17 @@
             {% else %}
               {% blocktrans %}
                 <strong
-                  >No users with pending account confirmations are assigned to your user's location.</strong
+                  >No users with pending account confirmations are assigned to
+                  your user's location.</strong
                 >
               {% endblocktrans %}
             {% endif %}
           {% endif %}
         </div>
-        <table class="table table-striped table-responsive" data-bind="visible: showTable">
+        <table
+          class="table table-striped table-responsive"
+          data-bind="visible: showTable"
+        >
           <thead>
             <tr>
               <th>{% trans "Username" %}</th>
@@ -707,8 +718,15 @@
               <td data-bind="text: last_name"></td>
               <td>
                 <!-- ko text: confirmationSentAtText --><!-- /ko -->
-                <span class="label label-default" data-bind="visible: !isExpired(), text: minutesRemainingText()"></span>
-                <span class="label label-danger" data-bind="visible: isExpired()">{% trans "Expired" %}</span>
+                <span
+                  class="label label-default"
+                  data-bind="visible: !isExpired(), text: minutesRemainingText()"
+                ></span>
+                <span
+                  class="label label-danger"
+                  data-bind="visible: isExpired()"
+                  >{% trans "Expired" %}</span
+                >
               </td>
               <td>
                 <button
@@ -746,13 +764,13 @@
                         <p class="lead">
                           {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
                             {% blocktrans %}
-                              Would you like to send the account
-                              confirmation SMS to this account?
+                              Would you like to send the account confirmation
+                              SMS to this account?
                             {% endblocktrans %}
                           {% else %}
                             {% blocktrans %}
-                              Would you like to send the account
-                              confirmation email to this account?
+                              Would you like to send the account confirmation
+                              email to this account?
                             {% endblocktrans %}
                           {% endif %}
                         </p>
@@ -763,15 +781,15 @@
                         <p>
                           {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
                             {% blocktrans %}
-                            The user will be sent a SMS with instructions
-                            to set a password and be able to login to this
-                            project.
+                              The user will be sent a SMS with instructions to
+                              set a password and be able to login to this
+                              project.
                             {% endblocktrans %}
                           {% else %}
                             {% blocktrans %}
-                              The user will be sent an email with
-                              instructions to set a password and be able to
-                              login to this project.
+                              The user will be sent an email with instructions
+                              to set a password and be able to login to this
+                              project.
                             {% endblocktrans %}
                           {% endif %}
                         </p>
@@ -810,8 +828,8 @@
           </tbody>
         </table>
         <div
-        class="alert alert-info"
-        data-bind="visible: showLoadingSpinner() && !hasError()"
+          class="alert alert-info"
+          data-bind="visible: showLoadingSpinner() && !hasError()"
         >
           <i class="fa fa-spin fa-spinner"></i>
           {% trans "Loading Pending Account Confirmations..." %}
@@ -824,13 +842,16 @@
             <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
           {% endblocktrans %}
         </div>
-        <pagination data-apply-bindings="false"
-                    data-bind="visible: showTable"
-                    params="goToPage: goToPage,
+        <pagination
+          data-apply-bindings="false"
+          data-bind="visible: showTable"
+          params="goToPage: goToPage,
                             perPage: itemsPerPage,
                             maxPagesShown: 10,
                             onLoad: onPaginationLoad,
-                            totalItems: totalItems"></pagination>
+                            totalItems: totalItems"
+        ></pagination>
+      </div>
     </div>
   {% endif %}
 {% endblock page_content %}
