@@ -163,6 +163,7 @@ var userModel = function (options) {
                 $modal.modal('hide');
                 if (data.success) {
                     self.action_error('');
+                    self.confirmation_sent_at(new Date());
                 } else {
                     self.action_error(data.error);
                 }
@@ -188,6 +189,7 @@ var userModel = function (options) {
                 $modal.modal('hide');
                 if (data.success) {
                     self.action_error('');
+                    self.confirmation_sent_at(new Date());
                 } else {
                     self.action_error(data.error);
                 }
