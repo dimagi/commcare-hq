@@ -22,5 +22,5 @@ class Migration(migrations.Migration):
                 ('percentage', models.FloatField(default=0.1)),
             ],
         ),
-        migrations.RunPython(create_integrity_sample_percentage),
+        migrations.RunPython(create_integrity_sample_percentage, migrations.RunPython.noop),
     ]
