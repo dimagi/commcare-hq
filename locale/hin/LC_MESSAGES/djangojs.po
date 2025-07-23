@@ -3602,11 +3602,6 @@ msgid "Error determining number of matching users"
 msgstr "मिलते-जुलते उपयोगकर्ताओं की संख्या निर्धारित करने में त्रुटि"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"जब उपयोगकर्ता अपने खाते की पुष्टि स्वयं करते हैं, तो ईमेल पता आवश्यक है।"
-
-#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "कृपया एक मान्य ईमेल पता दर्ज करें।"
 
@@ -4240,6 +4235,10 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "जब उपयोगकर्ता अपने खाते की पुष्टि स्वयं करते हैं, तो ईमेल पता आवश्यक है।"
 
 #~ msgid "Out of range of filter. Will not appear on page refresh."
 #~ msgstr "फ़िल्टर की सीमा से बाहर। पृष्ठ रीफ़्रेश पर दिखाई नहीं देगा।"
