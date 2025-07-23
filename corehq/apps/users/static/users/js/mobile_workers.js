@@ -75,7 +75,27 @@ var userModel = function (options) {
 
     self.confirmationSentAt = ko.observable(new Date(self.confirmation_sent_at()));
     self.confirmationSentAtText = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return '';
+        }
         return moment(self.confirmation_sent_at()).format("MMMM Do YYYY, h:mm a");
+    });
+
+    self.minutesRemaining = ko.computed(function () {
+        var expirationDate = new Date(self.confirmation_sent_at());
+        expirationDate.setHours(expirationDate.getHours() + 1);
+        return (expirationDate - new Date()) / (60 * 1000);
+    });
+    self.isExpired = ko.computed(function () {
+        return self.minutesRemaining() < 0;
+    });
+    self.minutesRemainingText = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return '';
+        }
+        return _.template(gettext("<%- minutes %> minutes remaining"))({
+            minutes: Math.floor(self.minutesRemaining()),
+        });
     });
 
     self.email.extend({

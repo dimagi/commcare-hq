@@ -705,7 +705,11 @@
               </td>
               <td data-bind="text: first_name"></td>
               <td data-bind="text: last_name"></td>
-              <td data-bind="text: confirmationSentAtText"></td>
+              <td>
+                <!-- ko text: confirmationSentAtText --><!-- /ko -->
+                <span class="label label-default" data-bind="visible: !isExpired(), text: minutesRemainingText()"></span>
+                <span class="label label-danger" data-bind="visible: isExpired()">{% trans "Expired" %}</span>
+              </td>
               <td>
                 <button
                   type="button"
