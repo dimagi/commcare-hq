@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone, date
+from dateutil.relativedelta import relativedelta
 from uuid import uuid4
 
 from django.conf import settings
@@ -24,6 +25,7 @@ from soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import (
@@ -434,9 +436,27 @@ def process_mobile_worker_credentials():
     for activity_level, app_ids in app_ids_by_levels.items():
         if not app_ids:
             continue
-        # TODO: Fetch applicable credentials
+        applicable_credentials += _get_credentials_for_timeframe(activity_level, app_ids)
 
     UserCredential.objects.bulk_create(applicable_credentials, ignore_conflicts=True)
+
+
+def _get_credentials_for_timeframe(months, app_ids):
+    now = datetime.now(timezone.utc)
+    start_date = date(now.year, now.month, now.day) - relativedelta(months=months)
+    user_months_activity = (
+        MALTRow.objects
+        .filter(
+            month__gte=start_date,
+            num_of_forms__gte=1,
+            app_id__in=app_ids,
+            user_type='CommCareUser',
+            is_app_deleted=False,
+        )
+        .values('app_id', 'user_id', 'month')
+        .distinct()
+    )
+    # TODO: Filter for users with required consecutive months of activity
 
 
 def _get_app_ids_by_activity_level():
