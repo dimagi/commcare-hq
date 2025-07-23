@@ -1110,16 +1110,6 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
-    'split_screen_case_search',
-    "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
-    " on the right.",
-    TAG_CUSTOM,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
-)
-
 # TODO: GA or Bust: See CaseSearchConfig.dynamically_update_results
 DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     'dynamically_update_search_results',
@@ -1128,7 +1118,7 @@ DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
+    parent_toggles=[]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
