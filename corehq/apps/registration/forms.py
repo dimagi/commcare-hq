@@ -21,6 +21,7 @@ from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed,
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.models import TableauUser
 from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
@@ -31,7 +32,20 @@ from corehq.apps.users.models import CouchUser
 class RegisterWebUserForm(forms.Form):
     # Use: NewUserRegistrationView
     # Not inheriting from other forms to de-obfuscate the role of this form.
-
+    if settings.SERVER_ENVIRONMENT in ServerLocation.ENVS:
+        server_location = forms.ChoiceField(
+            label=_("Server Location"),
+            required=False,
+            widget=forms.RadioSelect,
+            choices=ServerLocation.choices(),
+            help_text=_(
+                "*Once created, a project space cannot be transferred from one server to another. "
+                "For more information, visit <a href='{help_link}' target='_blank'>this help page</a>."
+            ).format(
+                help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/"
+                           "CommCare+Cloud+Server+Locations")
+            ),
+        )
     full_name = forms.CharField(label=_("Full Name"))
     email = forms.CharField(label=_("Professional Email"))
     password = forms.CharField(
@@ -89,6 +103,15 @@ class RegisterWebUserForm(forms.Form):
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
             self.fields['password'].required = False
 
+        server_location_field = []
+        if self.fields.get('server_location'):
+            server_location_field = [
+                hqcrispy.RadioSelect(
+                    'server_location',
+                    data_bind="checked: serverLocation"
+                ),
+            ]
+
         saas_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
             persona_fields = [
@@ -140,6 +163,7 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Fieldset(
                     _('Create Your Account'),
                     hqcrispy.FormStepNumber(1, 2),
+                    *server_location_field,
                     hqcrispy.InlineField(
                         'full_name',
                         css_class="input-lg",
