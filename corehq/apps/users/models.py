@@ -3416,3 +3416,13 @@ class ConnectIDMessagingKey(models.Model):
                 name='unique_active_messaging_key_per_user_and_domain'
             )
         ]
+
+
+class UserCredential(models.Model):
+    user_id = models.CharField(max_length=50)
+    app_id = models.CharField(max_length=50)
+    created_on = models.DateTimeField(auto_now_add=True)
+    issued_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("user_id", "app_id")
