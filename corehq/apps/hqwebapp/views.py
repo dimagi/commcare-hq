@@ -526,8 +526,11 @@ class HQLoginView(LoginView):
 
     def can_select_server(self):
         env = settings.SERVER_ENVIRONMENT
-        domain = self.extra_context.get('domain')
-        return env in ServerLocation.ENVS and not domain
+        is_domain_login = self.extra_context.get('domain')
+        has_next_url = self.request.GET.get('next')
+        return (env in ServerLocation.ENVS
+                and not is_domain_login
+                and not has_next_url)
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
