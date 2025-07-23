@@ -156,7 +156,6 @@ from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
-    USER_DATETIME_FORMAT,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_cbc_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
@@ -1042,15 +1041,10 @@ def paginate_mobile_workers(request, domain):
         # make sure these are always set and default to true
         user['is_active'] = user.get('is_active', True)
         user['is_account_confirmed'] = user.get('is_account_confirmed', True)
-        confirmation_sent_at = user.pop('confirmation_sent_at', '')
-        if confirmation_sent_at:
-            confirmation_sent_at = (iso_string_to_datetime(confirmation_sent_at)
-                                    .strftime(USER_DATETIME_FORMAT))
         personalid_link = personalid_links.get(user['base_username'])
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
-            'confirmation_sent_at': confirmation_sent_at,
             'date_registered': date_registered,
             'status': _status_string(user),
             'is_personalid_link_active': personalid_link.is_active if personalid_link else None,

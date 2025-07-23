@@ -19,6 +19,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import moment from "moment/moment";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import assertProperties from "hqwebapp/js/assert_properties";
 import googleAnalytics from "analytix/js/google";
@@ -61,6 +62,7 @@ var userModel = function (options) {
         is_account_confirmed: true,
         is_personalid_link_active: null,
         deactivate_after_date: '',
+        confirmation_sent_at: '',
     });
 
     var self = ko.mapping.fromJS(options);
@@ -69,6 +71,11 @@ var userModel = function (options) {
         profile_slug: initialPageData.get('custom_fields_profile_slug'),
         slugs: initialPageData.get('custom_fields_slugs'),
         can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
+    });
+
+    self.confirmationSentAt = ko.observable(new Date(self.confirmation_sent_at()));
+    self.confirmationSentAtText = ko.computed(function () {
+        return moment(self.confirmation_sent_at()).format("MMMM Do YYYY, h:mm a");
     });
 
     self.email.extend({
