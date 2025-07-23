@@ -12,6 +12,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import domain_tombstone_patch, suspend
 from corehq.apps.hqmedia.models import (
     CommCareImage,
@@ -20,6 +21,7 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.hqmedia.views import ViewMultimediaFile
 from corehq.apps.registration.models import SelfSignupWorkflow
 from corehq.apps.registration.utils import (
+    activate_new_user,
     project_logo_emails_context,
     request_new_domain,
 )
@@ -183,3 +185,57 @@ def _cleanup_domain(name):
     domain = Domain.get_by_name(name)
     if domain is not None:
         domain.delete(leave_tombstone=False)
+
+
+class TestActivateNewUser(TestCase):
+
+    def setUp(self):
+        self.domain = create_domain('test-domain')
+        self.addCleanup(self.domain.delete)
+
+    def _activate_new_user(self, username='testuser@example.com', **kwargs):
+        new_user = activate_new_user(username, 'password', None, None, **kwargs)
+        self.addCleanup(new_user.delete, None, None)
+        return new_user
+
+    def test_basic_properties(self):
+        new_user = self._activate_new_user('usertest@example.com')
+
+        self.assertEqual(new_user.email, 'usertest@example.com')
+        self.assertEqual(new_user.subscribed_to_commcare_users, False)
+        self.assertEqual(new_user.eula.signed, True)
+        self.assertEqual(new_user.eula.type, 'End User License Agreement')
+        self.assertEqual(new_user.is_staff, False)
+        self.assertEqual(new_user.is_active, True)
+        self.assertEqual(new_user.is_superuser, False)
+
+    def test_kwargs_default_properties(self):
+        new_user = self._activate_new_user()
+
+        self.assertIsNone(new_user.first_name, None)
+        self.assertIsNone(new_user.last_name, None)
+        self.assertEqual(new_user.domains, [])
+        self.assertEqual(new_user.is_domain_admin(), False)
+        self.assertIsNone(new_user.eula.user_ip, None)
+        self.assertEqual(new_user.atypical_user, False)
+        self.assertIsNone(new_user.language, None)
+
+    def test_kwargs_assigned_properties(self):
+        kwargs = {
+            'first_name': 'Testy',
+            'last_name': 'McTesterson',
+            'domain': self.domain.name,
+            'is_domain_admin': True,
+            'ip': '127.0.0.1',
+            'atypical_user': True,
+            'language': 'fr',
+        }
+        new_user = self._activate_new_user(**kwargs)
+
+        self.assertEqual(new_user.first_name, kwargs['first_name'])
+        self.assertEqual(new_user.last_name, kwargs['last_name'])
+        self.assertEqual(new_user.domains, [kwargs['domain']])
+        self.assertEqual(new_user.is_domain_admin(domain=kwargs['domain']), True)
+        self.assertEqual(new_user.eula.user_ip, kwargs['ip'])
+        self.assertEqual(new_user.atypical_user, kwargs['atypical_user'])
+        self.assertEqual(new_user.language, kwargs['language'])
