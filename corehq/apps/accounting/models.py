@@ -1343,11 +1343,8 @@ class Subscription(models.Model):
         ):
             if is_date_range_overlapping(date_start, date_end, sub.date_start, sub.date_end):
                 raise SubscriptionAdjustmentError(
-                    "The start date of %(start_date)s conflicts with the "
-                    "subscription dates to %(related_sub)s." % {
-                        'start_date': self.date_start.strftime(USER_DATE_FORMAT),
-                        'related_sub': sub,
-                    }
+                    "The start date and end date of the new subscription "
+                    f"conflicts with the subscription dates to {sub}."
                 )
 
     def update_subscription(self, date_start, date_end,
