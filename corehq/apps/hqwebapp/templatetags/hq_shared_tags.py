@@ -608,19 +608,13 @@ def html_attr(value):
 @register.filter
 def language_name_local(lang_code):
     """
-    Override built-in language_name_local filter to work with languages defined
-    in langcodes and always title case its output.
+    Override built-in language_name_local filter to work with 3-letter lang
+    codes and always title case its output. KeyError will be raised if language
+    is missing from either langs_by_code or django.conf.locale.LANG_INFO.
     """
-    lang = langs_by_code.get(lang_code)
-    if lang:
-        lang_code = lang.get('two', lang_code)
-        try:
-            lang_name = i18n.language_name_local(lang_code)
-        except KeyError:
-            # fall back to English name from langcodes
-            lang_name = lang['names'][0]
-    else:
-        lang_name = ''
+    lang = langs_by_code[lang_code]
+    lang_code = lang.get('two', lang_code)
+    lang_name = i18n.language_name_local(lang_code)
     return lang_name.title()
 
 
