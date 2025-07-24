@@ -73,7 +73,6 @@ var userModel = function (options) {
         can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
     });
 
-    self.confirmationSentAt = ko.observable(new Date(self.confirmation_sent_at()));
     self.confirmationSentAtText = ko.computed(function () {
         if (!self.confirmation_sent_at()) {
             return '';
