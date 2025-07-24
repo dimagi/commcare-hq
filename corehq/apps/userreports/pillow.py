@@ -587,8 +587,7 @@ def get_ucr_processor(data_source_providers,
                       include_ucrs=None,
                       exclude_ucrs=None,
                       bootstrap_interval=None,
-                      run_migrations=True,
-                      ucr_configs=None):
+                      run_migrations=True):
     table_manager = ConfigurableReportTableManager(
         data_source_providers=data_source_providers,
         ucr_division=ucr_division,
@@ -597,23 +596,13 @@ def get_ucr_processor(data_source_providers,
         bootstrap_interval=bootstrap_interval,
         run_migrations=run_migrations,
     )
-    if ucr_configs:
-        table_manager.bootstrap([
-            config for config in ucr_configs
-            if config.doc_type == "DataSourceConfiguration"
-        ])
     return ConfigurableReportPillowProcessor(table_manager)
 
 
-def get_data_registry_ucr_processor(run_migrations, ucr_configs):
+def get_data_registry_ucr_processor(run_migrations):
     table_manager = RegistryDataSourceTableManager(
         run_migrations=run_migrations
     )
-    if ucr_configs:
-        table_manager.bootstrap([
-            config for config in ucr_configs
-            if config.doc_type == "RegistryDataSourceConfiguration"
-        ])
     return ConfigurableReportPillowProcessor(table_manager)
 
 
@@ -682,7 +671,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
 
 
 def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
-                        num_processes=1, process_num=0, ucr_configs=None, **kwargs):
+                        num_processes=1, process_num=0, **kwargs):
     """Processes updates to locations for UCR
 
     Note this is only applicable if a domain on the environment has `LOCATIONS_IN_UCR` flag enabled.
@@ -701,8 +690,6 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
         include_ucrs=include_ucrs
     )
     ucr_processor = ConfigurableReportPillowProcessor(table_manager)
-    if ucr_configs:
-        table_manager.bootstrap(ucr_configs)
     checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
@@ -723,7 +710,6 @@ def get_kafka_ucr_registry_pillow(
     process_num=0,
     dedicated_migration_process=False,
     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
-    ucr_configs=None,
     **kwargs,
 ):
     """UCR pillow that reads from all 'case' Kafka topics and writes data into the UCR database tables
@@ -735,7 +721,6 @@ def get_kafka_ucr_registry_pillow(
     """
     ucr_processor = get_data_registry_ucr_processor(
         run_migrations=(process_num == 0),  # only first process runs migrations
-        ucr_configs=ucr_configs
     )
 
     return ConfigurableReportKafkaPillow(

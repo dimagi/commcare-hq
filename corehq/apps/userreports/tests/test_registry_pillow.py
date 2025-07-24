@@ -39,10 +39,14 @@ class RegistryDataSourceTableManagerTest(TestCase):
 
     def test_update_modified_since_remove_deactivated(self):
         data_source_1, table_manager = self._bootstrap_manager_with_data_source()
+        data_source_1 = type(data_source_1).get(data_source_1._id)  # HACK prevent ResourceConflict on save
         data_source_1.is_deactivated = True
+        data_source_1.save()
 
-        table_manager._add_or_update_data_source(data_source_1)
-        self.assertEqual(0, len(table_manager.relevant_domains))
+        table_manager.refresh_cache()
+
+        for domain in [self.domain, "granted-domain"]:
+            assert table_manager.get_adapters(domain) == []
 
     def test_update_modified_since_add_adapter_same_domain(self):
         data_source_1, table_manager = self._bootstrap_manager_with_data_source()
@@ -50,14 +54,14 @@ class RegistryDataSourceTableManagerTest(TestCase):
         # test in same domain, same registry
         data_source_2 = get_sample_registry_data_source(domain=self.domain, registry_slug=self.registry_1.slug)
         data_source_2.save()
-        table_manager._add_or_update_data_source(data_source_2)
         self.addCleanup(cleanup_ucr, data_source_2)
+        table_manager.refresh_cache()
+
         expected_domains = {self.domain, "granted-domain"}
-        self.assertEqual(expected_domains, table_manager.relevant_domains)
         for domain in expected_domains:
             self.assertEqual(
-                {data_source_1, data_source_2},
-                {adapter.config for adapter in table_manager.get_adapters(domain)}
+                {data_source_1._id, data_source_2._id},
+                {adapter.config_id for adapter in table_manager.get_adapters(domain)}
             )
 
     def test_update_modified_since_add_adapter_different_domain(self):
@@ -65,37 +69,35 @@ class RegistryDataSourceTableManagerTest(TestCase):
 
         data_source_2 = get_sample_registry_data_source(domain=self.domain, registry_slug=self.registry_2.slug)
         data_source_2.save()
-        table_manager._add_or_update_data_source(data_source_2)
         self.addCleanup(cleanup_ucr, data_source_2)
-        expected_domains = {self.domain, "granted-domain", "other-domain"}
-        self.assertEqual(expected_domains, table_manager.relevant_domains)
+        table_manager.refresh_cache()
 
         self.assertEqual(
-            {data_source_2},
-            {table_adapter.config for table_adapter in table_manager.get_adapters("other-domain")}
+            {data_source_2._id},
+            {table_adapter.config_id for table_adapter in table_manager.get_adapters("other-domain")}
         )
         self.assertEqual(
-            {data_source_1, data_source_2},
-            {table_adapter.config for table_adapter in table_manager.get_adapters(self.domain)}
+            {data_source_1._id, data_source_2._id},
+            {table_adapter.config_id for table_adapter in table_manager.get_adapters(self.domain)}
         )
 
     def test_update_modified_since_refresh_same_configs(self):
         data_source_1, table_manager = self._bootstrap_manager_with_data_source()
 
         # add a new grant and check that it get's picked up
+        self.registry_1.invitations.create(domain="new-domain").accept(self.user)
         grant = self.registry_1.grants.create(
             from_domain="new-domain",
             to_domains=[self.domain],
         )
         self.addCleanup(grant.delete)
 
-        table_manager._add_or_update_data_source(data_source_1)
         expected_domains = {self.domain, "granted-domain", "new-domain"}
-        self.assertEqual(expected_domains, table_manager.relevant_domains)
         for domain in expected_domains:
             self.assertEqual(
-                {data_source_1},
-                {table_adapter.config for table_adapter in table_manager.get_adapters(domain)}
+                {data_source_1._id},
+                {table_adapter.config_id for table_adapter in table_manager.get_adapters(domain)},
+                domain,
             )
 
     def _bootstrap_manager_with_data_source(self):
@@ -103,16 +105,11 @@ class RegistryDataSourceTableManagerTest(TestCase):
         data_source_1.save()
         self.addCleanup(cleanup_ucr, data_source_1)
         table_manager = RegistryDataSourceTableManager()
-        table_manager.bootstrap([data_source_1])
 
         # the data source domain + domains it has been granted access to
-        expected_domains = {self.domain, "granted-domain"}
-        self.assertEqual(expected_domains, table_manager.relevant_domains)
-        for domain in expected_domains:
-            self.assertEqual(
-                {data_source_1},
-                {adapter.config for adapter in table_manager.get_adapters(domain)}
-            )
+        for domain in [self.domain, "granted-domain"]:
+            adapters = table_manager.get_adapters(domain)
+            assert [data_source_1._id] == [a.config_id for a in adapters]
 
         return data_source_1, table_manager
 
@@ -152,7 +149,7 @@ class RegistryUcrPillowTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.addClassCleanup(cls.adapter.drop_table)
-        cls.pillow = get_kafka_ucr_registry_pillow(ucr_configs=[cls.config], processor_chunk_size=100)
+        cls.pillow = get_kafka_ucr_registry_pillow(processor_chunk_size=100)
 
     def tearDown(self):
         self.adapter.clear_table()
@@ -198,7 +195,7 @@ class RegistryUcrPillowTest(TestCase):
         adapter.build_table()
         self.addCleanup(adapter.drop_table)
 
-        pillow = get_kafka_ucr_registry_pillow(ucr_configs=[config], processor_chunk_size=100)
+        pillow = get_kafka_ucr_registry_pillow(processor_chunk_size=100)
 
         expected = {}
         with process_pillow_changes(pillow):
