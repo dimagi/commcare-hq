@@ -72,11 +72,11 @@ Request & Response Details
      - A list of location_ids that the mobile worker will be assigned to.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
    * - require_account_confirmation
-     - If True, creates an unconfirmed account (similar to a deactivated account).
-     - True or False
+     - If True, creates an unconfirmed account (similar to a deactivated account). False by default.
+     - True
    * - send_confirmation_email_now
-     - If True, immediately sends an account confirmation email*.
-     - True or False
+     - If True, immediately sends an account confirmation email*. False by default.
+     - True
 
 \* To send a confirmation email, the following must be true:
     - 'password' should be excluded from the input
@@ -219,8 +219,8 @@ Request & Response Details
      - A list of location_ids that the mobile worker will be assigned to. To remove all assigned locations, pass an empty array.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
    * - send_confirmation_email_now
-     - If True and the user is an unconfirmed account, immediately sends an account confirmation email.
-     - True or False
+     - If True and the user is an unconfirmed account, immediately sends an account confirmation email. False by default.
+     - True
 
 **Sample Input**
 
