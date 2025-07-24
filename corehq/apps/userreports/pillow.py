@@ -142,8 +142,6 @@ class UcrTableManager(ABC):
         self.run_migrations = run_migrations
         Cache = MigrationCache if run_migrations else TTLCache
         self.cache = Cache(self.iter_adapters)
-        if self.run_migrations:
-            assert self.cache.timeout > self.bootstrap_interval
 
     def iter_adapters(self, domain=None, *, since=None):
         """Generate (domain, adapter) tuples for domain *or* since timestamp
