@@ -15,9 +15,15 @@ def refresh_data_dictionary(apps, schema_editor):
             call_command("refresh_data_dictionary")
         except Exception as e:
             print("\n[Migration Instruction]")
-            print("Migration failed due to:", str(e))
-            print("To recover, please run the following command manually:")
-            print("./manage.py refresh_data_dictionary")
+            print("Migration step `refresh_data_dictionary` failed:")
+            print(f"    {e}\n\n")
+            print("This step is *resumable* and safe to retry.\n\n")
+            print("To resume:")
+            print("    ./manage.py refresh_data_dictionary")
+            print("    ./manage.py migrate\n\n")
+            print("If the failure was due to malformed domains or apps,")
+            print("you can skip them by passing:")
+            print("    --domain-to-skip <domain> --app-id-to-skip <app_id>")
             raise
 
 
