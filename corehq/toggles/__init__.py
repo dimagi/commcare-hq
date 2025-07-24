@@ -823,7 +823,7 @@ BIOMETRIC_INTEGRATION = StaticToggle(
 CASE_DETAIL_PRINT = StaticToggle(
     'case_detail_print',
     'MLabour: Allowing printing of the case detail, based on an HTML template',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1263,7 +1263,7 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description='Allows printing from CommCare on the device',
     help_link='https://confluence.dimagi.com/display/saas/Printing+from+a+form+in+CommCare+Android',
@@ -1319,7 +1319,7 @@ MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
      'through the app builder'),
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
