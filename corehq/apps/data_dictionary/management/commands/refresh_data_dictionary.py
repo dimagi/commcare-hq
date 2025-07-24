@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.tasks import _refresh_data_dictionary_from_app
@@ -20,12 +20,25 @@ MIGRATION_SLUG = "refresh_data_dictionary"
 
 
 class Command(BaseCommand):
-    help = 'Refreshes data dictionary for all domains and their apps. ' \
-           'For specific domains, ./manage.py refresh_data_dictionary domain1 domain2'
+    help = (
+        "Refreshes data dictionary for all domains and their apps. "
+        "This command will not re-run on domains that have already been processed and marked as complete. "
+        "Use --domain-to-skip and --app-id-to-skip to skip known bad domains or apps."
+    )
 
     def add_arguments(self, parser):
-        parser.add_argument('domains', nargs='*',
-            help="Domain name(s). If blank, will refresh for all domains")
+        parser.add_argument(
+            '--domain-to-skip',
+            nargs='*',
+            default=[],
+            help="Domain(s) to skip (e.g. malformed domains), separated by commas"
+        )
+        parser.add_argument(
+            '--app-id-to-skip',
+            nargs='*',
+            default=[],
+            help="App ID(s) to skip (e.g. malformed apps), separated by commas"
+        )
 
     def handle(self, **options):
         migration_status = get_migration_status(ALL_DOMAINS, MIGRATION_SLUG)
@@ -35,33 +48,42 @@ class Command(BaseCommand):
         elif migration_status == MigrationStatus.NOT_STARTED:
             set_migration_started(ALL_DOMAINS, MIGRATION_SLUG)
 
-        domains = options['domains'] or Domain.get_all_names()
-        success = True
+        domains_to_skip = set(options['domain_to_skip'])
+        app_ids_to_skip = set(options['app_id_to_skip'])
 
-        for domain in with_progress_bar(domains):
+        all_domains = Domain.get_all_names()
+
+        for domain in with_progress_bar(all_domains):
+            if domain in domains_to_skip:
+                print(f"[Domain: {domain}] Skipping domain")
+                set_migration_complete(domain, MIGRATION_SLUG)
             if get_migration_complete(domain, MIGRATION_SLUG):
                 continue
             set_migration_started(domain, MIGRATION_SLUG)
             try:
                 apps = get_apps_in_domain(domain)
             except Exception as e:
-                print(f'Failed to get apps in domain {domain}: {str(e)}')
-                success = False
-                continue
+                raise CommandError(
+                    f"[Domain: {domain}] Failed to get apps: {e}\n"
+                    "If you believe this is due to the apps in this domain being malformed, "
+                    "rerun the command and add the domain to the --domain-to-skip flag"
+                )
 
-            domain_success = True
             for app in apps:
+                if app.get_id in app_ids_to_skip:
+                    print(f"[Domain: {domain}] Skipping app {app.get_id}")
+                    continue
                 try:
                     _refresh_data_dictionary_from_app(domain, app.get_id)
                 except Exception as e:
-                    print(f'Failed to refresh app {app.get_id} in domain {domain}: {str(e)}')
-                    success = False
-                    domain_success = False
+                    raise CommandError(
+                        f"[Domain: {domain}] Failed to refresh app {app.get_id}: {e}\n"
+                        "If you believe this is due to this app being malformed, "
+                        "rerun the command and add the app id to --app-id-to-skip."
+                    )
 
             clear_caches_case_data_cleaning(domain)
-            if domain_success:
-                set_migration_complete(domain, MIGRATION_SLUG)
+            set_migration_complete(domain, MIGRATION_SLUG)
 
-        if success and not options['domains']:
-            set_migration_complete(ALL_DOMAINS, MIGRATION_SLUG)
-            print("All domains and apps processed successfully!")
+        set_migration_complete(ALL_DOMAINS, MIGRATION_SLUG)
+        print("All valid domains and apps processed successfully!")

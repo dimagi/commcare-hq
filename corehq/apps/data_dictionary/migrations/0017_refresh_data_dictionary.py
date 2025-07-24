@@ -11,7 +11,14 @@ from corehq.apps.domain_migration_flags.api import (
 @skip_on_fresh_install
 def refresh_data_dictionary(apps, schema_editor):
     if not get_migration_complete(ALL_DOMAINS, MIGRATION_SLUG):
-        call_command("refresh_data_dictionary")
+        try:
+            call_command("refresh_data_dictionary")
+        except Exception as e:
+            print("\n[Migration Instruction]")
+            print("Migration failed due to:", str(e))
+            print("To recover, please run the following command manually:")
+            print("./manage.py refresh_data_dictionary")
+            raise
 
 
 class Migration(migrations.Migration):
