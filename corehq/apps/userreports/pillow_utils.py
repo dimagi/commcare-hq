@@ -1,6 +1,9 @@
 from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 
 from couchdbkit import ResourceNotFound
+
+from django.core.cache import cache as _django_cache
 
 from pillowtop.logger import pillow_logging
 
@@ -15,6 +18,8 @@ from .rebuild import (
 )
 from .sql import get_metadata
 from .tasks import rebuild_indicators
+
+LAST_TASK_RUN_KEY_PREFIX = 'last-task-run'
 
 
 def _is_datasource_active(adapter):
@@ -117,3 +122,60 @@ def rebuild_table(adapter, diffs=None):
         diffs=diff_dicts,
         domain=config.domain,
     )
+
+
+class TaskCoordinator:
+    """Coordinate tasks that need to be run on a periodic basis
+
+    Answer the question of whether a task should run based on time
+    elapsed since it was last run. For multiple concurrent actors,
+    exactly one will be allowed to run a task during each interval.
+    """
+
+    def __init__(self, name, interval, django_cache=None):
+        self.name = name
+        self.interval = timedelta(seconds=interval)
+        self.django_cache = django_cache or _django_cache
+        self.local_cache = {}
+
+    def should_run(self, task_key):
+        """Return True if the task should be run
+
+        :param task_key: A unique key for the task. The string value of
+            the key must be unique for each task, so for example '100'
+            (str) and 100 (int) have the same key value.
+        """
+        now = datetime.now(UTC)
+        last_run = self.local_cache.get(task_key)
+        if last_run and last_run + self.interval > now:
+            return False
+
+        key = f"{LAST_TASK_RUN_KEY_PREFIX}:{self.name}:{task_key}"
+        timeout = self.interval.total_seconds()
+        for i in range(2):
+            if self.django_cache.add(key, now, timeout=timeout):
+                self._update_local_cache(task_key, now)
+                return True
+
+            last_run = self.django_cache.get(key, now)
+            buffer = timedelta(seconds=10)  # avoid expiration after add
+            if last_run + self.interval + buffer > now:
+                break  # key timeout in django cache is not too long
+
+            assert i == 0, f"tried to delete {key!r} with too long timeout " \
+                "twice, this should never happen"
+            # Current interval is shorter than the cache timeout. This
+            # can happen if the interval is changed to a shorter value.
+            # Delete it and try again.
+            self.django_cache.delete(key)
+
+        return False
+
+    def _update_local_cache(self, task_key, now):
+        """Remove expired entries from local cache"""
+        cache = self.local_cache
+        cache[task_key] = now
+        cutoff = now - self.interval
+        for key, last_rebuild in list(cache.items()):
+            if last_rebuild < cutoff:
+                cache.pop(key, None)
