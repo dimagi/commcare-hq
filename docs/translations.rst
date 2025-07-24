@@ -285,7 +285,7 @@ Keeping translations up to date
 Once a string has been added to the code, we can update the .po file by
 running `makemessages`.
 
-To do this for all langauges::
+To do this for all languages::
 
         $ django-admin makemessages --all
 

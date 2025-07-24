@@ -23,6 +23,7 @@ import "app_manager/js/settings/translations";
 import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/select_toggle";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
+import "jquery-textchange/jquery.textchange";   // textchange is referenced in ko bindings in app_settings.html
 
 $(function () {
     // App name

@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import connection, models, router
+from django.db import connection, models, router, IntegrityError
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -87,7 +87,7 @@ from corehq.apps.users.util import (
     bulk_auto_deactivate_commcare_users,
     is_dimagi_email,
 )
-from corehq.const import INVITATION_CHANGE_VIA_WEB
+from corehq.const import INVITATION_CHANGE_VIA_WEB, USER_CHANGE_VIA_WEB
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
@@ -424,6 +424,7 @@ class DomainMembership(Membership):
     assigned_location_ids = StringListProperty()
     program_id = StringProperty()
     last_accessed = DateProperty()
+    is_active = BooleanProperty(default=True)  # At present, only used for WebUsers
 
     @property
     def permissions(self):
@@ -463,7 +464,9 @@ class DomainMembership(Membership):
         return None
 
     def has_permission(self, permission, data=None):
-        return self.is_admin or self.permissions.has(permission, data)
+        return self.is_active and (
+            self.is_admin or self.permissions.has(permission, data)
+        )
 
     def viewable_reports(self):
         return self.permissions.view_report_list
@@ -657,8 +660,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
         # is_admin is the same as having all the permissions set
         if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
-        elif self.is_domain_admin(domain):
-            return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
@@ -743,10 +744,20 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
+    def is_active_in_domain(self, domain):
+        return self.is_active
+
 
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+
+    @memoized
+    def is_active_in_domain(self, domain):
+        domain_membership = self.get_domain_membership(domain)
+        if domain_membership:
+            return domain_membership.is_active
+        return False
 
 
 class LowercaseStringProperty(StringProperty):
@@ -1753,6 +1764,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # used by user provisioning workflow. defaults to true unless explicitly overridden during
     # user creation
     is_account_confirmed = BooleanProperty(default=True)
+    self_set_password = BooleanProperty(default=False)
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
@@ -1994,6 +2006,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.is_active = True
         self.is_account_confirmed = True
         self.set_password(password)
+        self.self_set_password = True
         self.save()
 
     def get_case_sharing_groups(self, domain=None):
@@ -2496,6 +2509,30 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         for user_doc in iter_docs(cls.get_db(), user_ids):
             if is_dimagi_email(user_doc['email']):
                 yield user_doc['email']
+
+    def deactivate(self, domain, changed_by):
+        from corehq.apps.sso.models import IdentityProvider
+        if IdentityProvider.get_required_identity_provider(self.username):
+            return
+        membership = self.get_domain_membership(domain)
+        if membership.is_active:
+            membership.is_active = False
+            self.save()
+            log_user_change(by_domain=domain, for_domain=domain, couch_user=self,
+                            changed_by_user=changed_by, changed_via=USER_CHANGE_VIA_WEB,
+                            fields_changed={'is_active_in_domain': False})
+
+    def reactivate(self, domain, changed_by):
+        from corehq.apps.sso.models import IdentityProvider
+        if IdentityProvider.get_required_identity_provider(self.username):
+            return
+        membership = self.get_domain_membership(domain)
+        if not membership.is_active:
+            membership.is_active = True
+            self.save()
+            log_user_change(by_domain=domain, for_domain=domain, couch_user=self,
+                            changed_by_user=changed_by, changed_via=USER_CHANGE_VIA_WEB,
+                            fields_changed={'is_active_in_domain': True})
 
     def save(self, fire_signals=True, **params):
         super().save(fire_signals=fire_signals, **params)
@@ -3332,6 +3369,7 @@ class ConnectIDUserLink(models.Model):
     domain = models.TextField()
     messaging_consent = models.BooleanField(default=False)
     channel_id = models.CharField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
@@ -3339,9 +3377,20 @@ class ConnectIDUserLink(models.Model):
     @cached_property
     def messaging_key(self):
         key = generate_aes_key().decode("utf-8")
-        messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
-            connectid_user_link=self, domain=self.domain, active=True, defaults={"key": key}
-        )
+        try:
+            messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
+                connectid_user_link=self,
+                domain=self.domain,
+                active=True,
+                defaults={"key": key}
+            )
+        except IntegrityError:
+            # Another process might have created it, so fetch it
+            messaging_key = ConnectIDMessagingKey.objects.get(
+                connectid_user_link=self,
+                domain=self.domain,
+                active=True
+            )
         return messaging_key
 
     @cached_property
@@ -3360,3 +3409,12 @@ class ConnectIDMessagingKey(models.Model):
     key = models.CharField(max_length=44, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['connectid_user_link', 'domain'],
+                condition=models.Q(active=True),
+                name='unique_active_messaging_key_per_user_and_domain'
+            )
+        ]

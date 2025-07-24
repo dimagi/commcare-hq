@@ -8,7 +8,7 @@ from corehq.apps.users.util import log_user_change
 from dimagi.utils.web import get_ip
 
 from corehq.apps.analytics.tasks import (
-    track_workflow,
+    track_workflow_noop,
     track_web_user_registration_hubspot,
     send_hubspot_form,
     HUBSPOT_NEW_USER_INVITE_FORM,
@@ -126,6 +126,7 @@ class SsoBackend(ModelBackend):
             last_name=get_sso_user_last_name_from_session(request),
             domain=domain,
             ip=get_ip(request),
+            language=getattr(request, 'LANGUAGE_CODE', None),
         )
         request.sso_new_user_messages['success'].append(
             _("User account for {} created.").format(new_web_user.username)
@@ -143,7 +144,7 @@ class SsoBackend(ModelBackend):
         """
         if not async_signup:
             if settings.IS_SAAS_ENVIRONMENT:
-                track_workflow(
+                track_workflow_noop(
                     new_web_user.username,
                     "Requested New Account via SSO (Bypassed Signup Form)",
                     {
@@ -160,7 +161,7 @@ class SsoBackend(ModelBackend):
             new_web_user.save()
 
         if settings.IS_SAAS_ENVIRONMENT:
-            track_workflow(
+            track_workflow_noop(
                 new_web_user.username,
                 "Requested New Account via SSO",
                 {
@@ -168,7 +169,7 @@ class SsoBackend(ModelBackend):
                 }
             )
             if async_signup.persona:
-                track_workflow(
+                track_workflow_noop(
                     new_web_user.username,
                     "Persona Field Filled Out via SSO",
                     {
@@ -182,7 +183,7 @@ class SsoBackend(ModelBackend):
                     async_signup.additional_hubspot_data,
                 )
             else:
-                track_workflow(
+                track_workflow_noop(
                     new_web_user.username,
                     "New User created through SSO, but Persona info missing"
                 )
@@ -210,11 +211,12 @@ class SsoBackend(ModelBackend):
         )
 
         if settings.IS_SAAS_ENVIRONMENT and is_new_user:
-            track_workflow(
+            track_workflow_noop(
                 web_user.username,
                 "New User Accepted a project invitation with SSO",
                 {"New User Accepted a project invitation": "yes"}
             )
+        if settings.ANALYTICS_IDS.get("HUBSPOT_API_ID") and is_new_user:
             send_hubspot_form(
                 HUBSPOT_NEW_USER_INVITE_FORM,
                 request,

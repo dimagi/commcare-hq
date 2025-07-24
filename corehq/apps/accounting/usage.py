@@ -3,8 +3,9 @@ import datetime
 
 from corehq.apps.accounting.models import FeatureType
 from corehq.apps.accounting.utils import count_form_submitting_mobile_workers
+from corehq.apps.es.users import UserES
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser
 
 
 class FeatureUsageCalculator(object):
@@ -49,8 +50,14 @@ class FeatureUsageCalculator(object):
         ).count()
 
     def _get_web_user_usage(self):
-        web_user_in_account = set(WebUser.ids_by_domain(self.domain))
-        return len(web_user_in_account)
+        return get_web_user_usage([self.domain])
 
     def _get_form_submitting_mobile_worker_user_usage(self):
         return count_form_submitting_mobile_workers(self.domain, self.start_date, self.end_date)
+
+
+def get_web_user_usage(domains):
+    return (UserES()
+            .domain(domains)
+            .web_users()
+            .count())

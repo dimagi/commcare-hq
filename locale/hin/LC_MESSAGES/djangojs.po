@@ -285,14 +285,6 @@ msgstr ""
 " शामिल हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "कोई नहीं चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "सभी चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "एप्लिकेशन नाम आवश्यक है"
 
@@ -353,6 +345,14 @@ msgstr "टैब नाम"
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
 msgstr "प्रदर्शन शर्त"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"चेतावनी: प्रयुक्त गणना की गई संपत्ति कैशिंग के अनुकूल नहीं है और इससे केस "
+"सूची गुणों में पुराना डेटा आ सकता है"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -1638,6 +1638,16 @@ msgstr ""
 "इस केस प्रकार में आपके असहेजे गए परिवर्तन हैं। क्या आप वाकई जारी रखना चाहते "
 "हैं?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+"आपने '<%- type %>' केस में <%- count %> केस प्रॉपर्टीज़ सेव की हैं। हम सलाह "
+"देते हैं कि प्रति केस टाइप अधिकतम <%- limit %> केस प्रॉपर्टीज़ ही रखें, "
+"अन्यथा डेटा संग्रहण और विश्लेषण के समय प्रदर्शन संबंधी समस्याएँ आ सकती हैं।"
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
@@ -1667,8 +1677,15 @@ msgstr "जब सभी केस प्रॉपर्टी मेल खा�
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
-msgstr "फ़िल्टर की सीमा से बाहर। पृष्ठ रीफ़्रेश पर दिखाई नहीं देगा।"
+msgid "Reassigned"
+msgstr "पुनः सौंपा गया"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Copied!"
+msgid "Copied"
+msgstr "कॉपी किया गया!"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1677,13 +1694,22 @@ msgstr "अद्यतित"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
-msgstr "केस कॉपी किया गया"
+msgid "Today"
+msgstr "आज"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
-msgstr "केस कॉपी किए गए"
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Reassigned <%- count %> cases"
+msgstr "<%- count %> स्थान डाउनलोड करें"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Copied <%- count %> cases"
+msgstr "<%- count %> स्थान डाउनलोड करें"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3576,11 +3602,6 @@ msgid "Error determining number of matching users"
 msgstr "मिलते-जुलते उपयोगकर्ताओं की संख्या निर्धारित करने में त्रुटि"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"जब उपयोगकर्ता अपने खाते की पुष्टि स्वयं करते हैं, तो ईमेल पता आवश्यक है।"
-
-#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "कृपया एक मान्य ईमेल पता दर्ज करें।"
 
@@ -4214,6 +4235,25 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "जब उपयोगकर्ता अपने खाते की पुष्टि स्वयं करते हैं, तो ईमेल पता आवश्यक है।"
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr "फ़िल्टर की सीमा से बाहर। पृष्ठ रीफ़्रेश पर दिखाई नहीं देगा।"
+
+#~ msgid "Case copied"
+#~ msgstr "केस कॉपी किया गया"
+
+#~ msgid "Cases copied"
+#~ msgstr "केस कॉपी किए गए"
+
+#~ msgid "Select None"
+#~ msgstr "कोई नहीं चुनें"
+
+#~ msgid "Select All"
+#~ msgstr "सभी चुनें"
 
 #~ msgid "long"
 #~ msgstr "लंबा"

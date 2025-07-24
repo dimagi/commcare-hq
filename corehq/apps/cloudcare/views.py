@@ -101,6 +101,7 @@ class FormplayerMain(View):
 
     @xframe_options_sameorigin
     @use_bootstrap5
+    @method_decorator(login_and_domain_required)
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):

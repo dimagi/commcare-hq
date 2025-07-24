@@ -4,21 +4,21 @@
 
 {% block modal_title %}
   {% trans "Clear all edits?" %}
-{% endblock %}
+{% endblock modal_title %}
 
-{% block modal_continue_attrs %}
+{% block modal_continue_attrs %}{# prettier-ignore-start #}
   hx-post="{{ request.path_info }}{% querystring %}"
   hq-hx-action="clear_all_changes"
   hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
   hx-swap="outerHTML"
   hq-hx-loading="{{ table.loading_indicator_id }}"
   hx-disable-elt="this"
-{% endblock %}
+{# prettier-ignore-end #}{% endblock modal_continue_attrs %}
 
 {% block modal_continue_text %}
   <i class="fa-solid fa-close"></i>
   {% trans "Clear All Edits" %}
-{% endblock %}
+{% endblock modal_continue_text %}
 
 {% block modal_body %}
   <div
@@ -30,4 +30,4 @@
     {% include "data_cleaning/summary/clear_changes.html" %}
     {% include "data_cleaning/partials/loading_indicator.html" %}
   </div>
-{% endblock %}
+{% endblock modal_body %}

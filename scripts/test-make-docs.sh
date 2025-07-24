@@ -23,6 +23,7 @@ WHITELIST_PATTERNS=(
     '^\s*$'  # ignore lines containing only whitespace
     'logger is being changed to' # ignore error when FIX_LOGGER_ERROR_OBFUSCATION is true
     'yacc table file version is out of date' # warning whenever building docs on a freshly created virtual environment
+    "^<unknown>:[0-9]+: SyntaxWarning: invalid escape sequence '\\\\_'$"  # ignore '\_' syntax warning
     # Only whitelist docs build warnings/errors when absolutely necessary
 )
 
@@ -32,10 +33,10 @@ function main {
     # sed -E 's/\|$//' - remove a single trailing pipe character (|) from any lines on STDIN
     local whitelist=$(printf '%s|' "${WHITELIST_PATTERNS[@]}" | sed -E 's/\|$//')
 
-    # make docs 2>&1 1>/dev/null - redirect STDERR to STDOUT, and then STDOUT to /dev/null
+    # make docs 2> >(grep ...) - grep STDERR of `make docs` command
     # grep -Ev "(${whitelist})" - only match lines that do not match regex patterns of whitelisted items
     local log_file='./make-docs-errors.log'
-    make docs 2>&1 1>/dev/null | grep -Ev "(${whitelist})" | tee $log_file
+    make docs 2> >(grep -Ev "(${whitelist})" | tee $log_file)
 
     # move docs build and log file to artifacts if running inside github action
     if [ -n "$GITHUB_ACTIONS" ]; then
@@ -47,6 +48,7 @@ function main {
 
     # fail if log file is not empty
     if [ -s $log_file ]; then
+        echo "Build failed"
         return 1
     fi
 }

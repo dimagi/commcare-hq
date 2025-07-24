@@ -94,6 +94,9 @@ from corehq.apps.app_manager.exceptions import (
     VersioningError,
     XFormException,
     XFormValidationError,
+    InvalidPropertyException,
+    DiffConflictException,
+    MissingPropertyException,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -314,7 +317,19 @@ class FormActionCondition(DocumentSchema):
         return self.type in ('if', 'always')
 
 
-class FormAction(DocumentSchema):
+class UpdateableDocument(DocumentSchema):
+    def update_object(self, updates):
+        '''
+        Apply all 'updates' to the current object.
+        'updates' is expected to be a collection of properties which already exist on this document
+        '''
+        for key, value in updates.items():
+            if key not in self:
+                raise InvalidPropertyException(key)
+            self.set_raw_value(key, value)
+
+
+class FormAction(UpdateableDocument):
     """
     Corresponds to Case XML
 
@@ -362,6 +377,79 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
+    update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+
+    def make_multi(self):
+        '''
+        Moves any updates from `update` into `update_multi`
+        '''
+        if not (self.update and len(self.update)):
+            # update contains no items, so no changes are necessary
+            return
+
+        self.update_multi = {k: [v] for (k, v) in self.update.items()}
+        self.update = {}
+
+    def normalize_update(self):
+        '''
+        Attempt to move `update_multi` to `update`
+        If `update_multi` contains multiple updates mapped to the same case property, no changes will occur
+        '''
+        multi_question_cases = ((k, v) for (k, v) in self.update_multi.items() if len(v) > 1)
+        if any(multi_question_cases):
+            # must continue to use `update_multi`, as there are multiple questions saving to the same case property
+            return
+
+        normalized_update = {k: v[0] for (k, v) in self.update_multi.items()}
+        self.update = normalized_update
+        self.update_multi = None
+
+    DIFF_ACTION_ADD = 'add'
+    DIFF_ACTION_DELETE = 'del'
+    DIFF_ACTION_UPDATE = 'update'
+
+    DIFF_VALUE_UPDATED = 'updated'
+
+    def apply_updates(self, updates, diffs):
+        self.check_for_duplicate_keys(diffs)
+        self.check_for_invalid_updates(diffs)
+
+        self.update_object(updates)
+
+        if self.DIFF_ACTION_ADD in diffs:
+            for (key, value) in diffs[self.DIFF_ACTION_ADD].items():
+                self.update[key] = ConditionalCaseUpdate(value)
+
+        if self.DIFF_ACTION_DELETE in diffs:
+            for key in diffs[self.DIFF_ACTION_DELETE]:
+                if key in self.update:
+                    del self.update[key]
+
+        if self.DIFF_ACTION_UPDATE in diffs:
+            for (key, value) in diffs[self.DIFF_ACTION_UPDATE].items():
+                self.update[key] = ConditionalCaseUpdate(value[self.DIFF_VALUE_UPDATED])
+
+    def check_for_duplicate_keys(self, diffs):
+        addition_keys = set(diffs.get(self.DIFF_ACTION_ADD, {}).keys())
+        deletion_keys = set(diffs.get(self.DIFF_ACTION_DELETE, []))
+        update_keys = set(diffs.get(self.DIFF_ACTION_UPDATE, {}).keys())
+
+        overlapping_addition_keys = addition_keys & (deletion_keys | update_keys)
+        overlapping_deletion_keys = deletion_keys & update_keys
+        overlapping_keys = overlapping_addition_keys | overlapping_deletion_keys
+
+        if overlapping_keys:
+            raise DiffConflictException(*overlapping_keys)
+
+    def check_for_invalid_updates(self, diffs):
+        missing_keys = []
+        if self.DIFF_ACTION_UPDATE in diffs:
+            for key in diffs[self.DIFF_ACTION_UPDATE].keys():
+                if key not in self.update:
+                    missing_keys.append(key)
+
+            if missing_keys:
+                raise MissingPropertyException(*missing_keys)
 
 
 class PreloadAction(FormAction):
@@ -391,8 +479,41 @@ class OpenReferralAction(UpdateReferralAction):
 
 class OpenCaseAction(FormAction):
 
+    # `name_update` is the "official" version, while `name_update_multi` is intended as a temporary option
+    # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
+    # buildable state, where `name_update` is specified, or conflicts are waiting to be resolved, where
+    # `name_updatd_multi` will hold the updates.
     name_update = SchemaProperty(ConditionalCaseUpdate)
+    name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
+
+    DIFF_VALUE_UPDATED = 'updated'
+
+    def apply_updates(self, updates, diffs):
+        self.update_object(updates)
+        if self.DIFF_VALUE_UPDATED in diffs:
+            self.name_update = ConditionalCaseUpdate(diffs[self.DIFF_VALUE_UPDATED])
+
+    def make_multi(self):
+        '''
+        Moves any updates from `name_update` into `name_update_multi`
+        '''
+        if not (self.name_update):
+            return
+
+        self.name_update_multi = [self.name_update]
+        self.name_update = None
+
+    def normalize_name_update(self):
+        '''
+        Attempt to move `name_update_multi` to `name_update`
+        If `name_update_multi` contains multiple updates, no changes will occur
+        '''
+        if len(self.name_update_multi) > 1:
+            return
+
+        self.name_update = self.name_update_multi[0]
+        self.name_update_multi = []
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
@@ -413,7 +534,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
         return 'subcase_{}'.format(self.id)
 
 
-class FormActions(DocumentSchema):
+class FormActions(UpdateableDocument):
 
     open_case = SchemaProperty(OpenCaseAction)
     update_case = SchemaProperty(UpdateCaseAction)
@@ -445,6 +566,25 @@ class FormActions(DocumentSchema):
 
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
+
+    def with_updates(self, updates, diffs):
+        '''
+        Produce a new FormActions object containing all updates, including
+        'open_case' and 'update_case', affected by the diffs
+        '''
+        dest = FormActions(self.to_json())  # clone object
+
+        update_case_updates = updates.pop('update_case', {})
+        update_case_diffs = diffs.get('update_case', {})
+        dest.update_case.apply_updates(update_case_updates, update_case_diffs)
+
+        open_case_updates = updates.pop('open_case', {})
+        open_case_diffs = diffs.get('open_case', {})
+        dest.open_case.apply_updates(open_case_updates, open_case_diffs)
+
+        dest.update_object(updates)
+
+        return dest
 
 
 class CaseIndex(DocumentSchema):
@@ -4400,18 +4540,15 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
-            if bitly.BITLY_CONFIGURED:
-                view_url = reverse(view_name, args=[self.domain, self._id])
-                if build_profile_id is not None:
-                    long_url = urljoin(
-                        self.url_base,
-                        f'{view_url}?profile={build_profile_id}'
-                    )
-                else:
-                    long_url = urljoin(self.url_base, view_url)
-                shortened_url = bitly.shorten(long_url)
+            view_url = reverse(view_name, args=[self.domain, self._id])
+            if build_profile_id is not None:
+                long_url = urljoin(
+                    self.url_base,
+                    f'{view_url}?profile={build_profile_id}'
+                )
             else:
-                shortened_url = None
+                long_url = urljoin(self.url_base, view_url)
+            shortened_url = bitly.shorten(long_url)
         except Exception:
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
         else:
@@ -4539,7 +4676,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
-        from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.analytics.tasks import track_workflow_noop, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
         from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
@@ -4560,7 +4697,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
-            track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
+            track_workflow_noop(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))

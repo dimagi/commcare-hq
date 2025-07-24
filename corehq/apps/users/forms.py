@@ -2,12 +2,12 @@ import datetime
 import json
 import secrets
 import string
-
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.tokens import default_token_generator
 from django.core.validators import EmailValidator, validate_email
-from django.template.loader import get_template
+from django.template.loader import get_template, render_to_string
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -20,6 +20,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 
+from corehq import toggles
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
 from corehq.apps.analytics.tasks import set_analytics_opt_out
@@ -27,7 +28,7 @@ from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
+from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password, send_password_reset_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import (
     EnterpriseMobileWorkerSettings,
@@ -41,7 +42,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.reports.models import TableauUser
+from corehq.apps.reports.models import CommCareUser, TableauUser
 from corehq.apps.reports.util import (
     TableauGroupTuple,
     get_all_tableau_groups,
@@ -57,6 +58,7 @@ from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.toggles import (
+    DEACTIVATE_WEB_USERS,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -65,7 +67,7 @@ from corehq.util.global_request import get_request_domain
 from ..hqwebapp.signals import clear_login_attempts
 from .audit.change_messages import UserChangeMessage
 from .dbaccessors import user_exists
-from .models import CouchUser, DeactivateMobileWorkerTrigger, UserRole
+from .models import ConnectIDUserLink, CouchUser, DeactivateMobileWorkerTrigger, UserRole
 from .util import cc_user_domain, format_username, log_user_change
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -313,10 +315,10 @@ class BaseUserInfoForm(forms.Form):
         required=False,
         help_text=gettext_lazy(
             "<i class=\"fa fa-info-circle\"></i> "
-            "Becomes default language seen in Web Apps and reports (if applicable), "
-            "but does not affect mobile applications. "
-            "Supported languages for reports are en, fra (partial), and hin (partial)."
-        )
+            "Changes the default language seen in Web Apps and reports (if supported). "
+            "CommCare HQ supports <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3085697055/Account+Level+CommCare+HQ+UI+Translations'>these languages</a>. "  # noqa: E501
+            "Please reach out to {support_email} if you notice any mistakes in our translations."
+        ).format(support_email=settings.SUPPORT_EMAIL),
     )
 
     def load_language(self, language_choices=None):
@@ -543,6 +545,8 @@ class SetUserPasswordForm(SetPasswordForm):
         self.helper.form_method = 'POST'
         self.helper.form_tag = False
 
+        has_personalid_link = self.user_has_active_personalid_link(user_id)
+
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_action = reverse("change_password", args=[project.name, user_id])
@@ -550,31 +554,48 @@ class SetUserPasswordForm(SetPasswordForm):
             submitButton = hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     Submit('submit', _('Reset Password'),
-                           data_bind="enable: passwordSufficient(), click: submitCheck")
+                           data_bind="enable: passwordSufficient(), click: submitCheck",
+                           **({'disabled': 'disabled'} if has_personalid_link else {}))
                 )
             )
         else:
             submitButton = hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', _('Reset Password'))
+                    Submit('submit', _('Reset Password'),
+                           **({'disabled': 'disabled'} if has_personalid_link else {}))
                 )
             )
+
+        alert_message = render_to_string("users/partials/bootstrap3/personalid_password_locked_banner.html")
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Reset Password for Mobile Worker"),
+                crispy.HTML(alert_message) if has_personalid_link else None,
                 crispy.Field(
                     'new_password1',
                     data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
                     value=initial_password,
+                    **({'readonly': True} if has_personalid_link else {}),
                 ),
                 crispy.Field(
                     'new_password2',
                     value=initial_password,
+                    **({'readonly': True} if has_personalid_link else {}),
                 ),
                 submitButton,
                 css_class="check-password",
             ),
         )
+
+    def user_has_active_personalid_link(self, user_id):
+        if toggles.COMMCARE_CONNECT.enabled(self.project.name):
+            user = CommCareUser.get_by_user_id(user_id)
+            try:
+                personalid_link = ConnectIDUserLink.objects.get(commcare_user=user.get_django_user())
+                return personalid_link.is_active
+            except ConnectIDUserLink.DoesNotExist:
+                pass
+        return False
 
     def clean_new_password1(self):
         password1 = self.cleaned_data.get('new_password1')
@@ -590,6 +611,33 @@ class SetUserPasswordForm(SetPasswordForm):
 
 
 validate_username = EmailValidator(message=gettext_lazy('Username contains invalid characters.'))
+
+
+class SendCommCareUserPasswordResetEmailForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Password Reset Email"),
+            ),
+            crispy.ButtonHolder(
+                Submit(
+                    'send_password_reset_link',
+                    _("Send Password Reset Link"),
+                ),
+            ),
+        )
+        super(SendCommCareUserPasswordResetEmailForm, self).__init__(*args, **kwargs)
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             use_https=False, token_generator=default_token_generator, request=None):
+        user_id = self.data.get('user_id')
+        django_user = CommCareUser.get(user_id).get_django_user()
+
+        send_password_reset_email([django_user], domain_override, subject_template_name,
+                                  email_template_name, use_https, token_generator, request)
 
 
 class NewMobileWorkerForm(forms.Form):
@@ -633,7 +681,10 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
     )
     email = forms.EmailField(
-        label=gettext_noop("Email"),
+        label=format_html_lazy(
+            '{} <span data-bind="visible: $root.stagedUser().emailRequired">*</span>',
+            gettext_noop("Email"),
+        ),
         required=False,
         help_text="""
             <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
@@ -749,9 +800,12 @@ class NewMobileWorkerForm(forms.Form):
                     },
                 '''
             )
-            send_email_field = crispy.Field(
-                'send_account_confirmation_email',
-                data_bind='checked: send_account_confirmation_email, enable: sendConfirmationEmailEnabled',
+            send_email_field = crispy.Div(
+                crispy.Field(
+                    'send_account_confirmation_email',
+                    data_bind='checked: send_account_confirmation_email, enable: requireAccountConfirmation',
+                ),
+                data_bind='visible: requireAccountConfirmation'
             )
         else:
             confirm_account_field = crispy.Hidden(
@@ -829,15 +883,15 @@ class NewMobileWorkerForm(forms.Form):
                 location_field,
                 confirm_account_field,
                 email_field,
-                send_email_field,
                 confirm_account_by_sms_field,
                 phone_number_field,
+                send_email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
                         InlineField(
                             'new_password',
-                            data_bind="value: password, valueUpdate: 'input', enable: passwordEnabled",
+                            data_bind="value: password, valueUpdate: 'input'",
                         ),
                         crispy.HTML('''
                             <p class="help-block" data-bind="if: $root.isSuggestedPassword">
@@ -864,15 +918,6 @@ class NewMobileWorkerForm(forms.Form):
                                 <!-- ko if: $root.skipStandardValidations() -->
                                     <i class="fa fa-info-circle"></i> {custom_warning}
                                 <!-- /ko -->
-                                <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
-                                    <!-- ko if: $root.stagedUser().force_account_confirmation() -->
-                                        <i class="fa fa-warning"></i> {disabled_email}
-                                    <!-- /ko -->
-                                    <!-- ko if: !($root.stagedUser().force_account_confirmation())
-                                    && $root.stagedUser().force_account_confirmation_by_sms() -->
-                                        <i class="fa fa-warning"></i> {disabled_phone}
-                                    <!-- /ko -->
-                                <!-- /ko -->
                             </p>
                         '''.format(
                             suggested=_(
@@ -884,28 +929,22 @@ class NewMobileWorkerForm(forms.Form):
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
-                            disabled_email=_(
-                                "Setting a password is disabled. The user "
-                                "will set their own password on confirming "
-                                "their account email."
-                            ),
-                            disabled_phone=_(
-                                "Setting a password is disabled. The user "
-                                "will set their own password on confirming "
-                                "their account phone number."
-                            ),
                             short=_("Password must have at least {password_length} characters."
                                     ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
                         required=True,
                     ),
-                    data_bind='''
-                        css: {
-                            'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS,
-                            'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
-                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR,
-                        }
-                    ''' if not has_custom_clean_password() else ''
+                    data_bind=(
+                        "visible: passwordVisible"
+                        + (
+                            ", css: {"
+                            "'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS, "
+                            "'has-warning': $root.passwordStatus() === $root.STATUS.WARNING, "
+                            "'has-error': $root.passwordStatus() === $root.STATUS.ERROR"
+                            "}"
+                            if not has_custom_clean_password() else ""
+                        )
+                    )
                 ),
             )
         )
@@ -1620,16 +1659,15 @@ class UserFilterForm(forms.Form):
                     data_bind="checked: selected_location_only"
                 ),
                 data_bind="slideVisible: !isCrossDomain() && location_id",
-            )
+            ),
         ]
+        if self.user_type == MOBILE_USER_TYPE or DEACTIVATE_WEB_USERS.enabled(self.domain):
+            fields.append("user_active_status")
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
             fieldset_label = _('Filter and Download Mobile Workers')
-            fields += [
-                "user_active_status",
-                crispy.Field("columns", data_bind="value: columns"),
-            ]
+            fields.append(crispy.Field("columns", data_bind="value: columns"))
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(

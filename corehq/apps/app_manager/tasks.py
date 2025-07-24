@@ -100,6 +100,11 @@ def _refresh_data_dictionary_from_app(domain, app_id):
         # If there's no app in the domain, there's nothing to do
         return
 
+    # RemoteApp does not implement get_modules()/get_forms() (would raise AttributeError).
+    # As RemoteApp has not been actively used since 2016, it's safe to skip syncing it.
+    if app.is_remote_app():
+        return
+
     from corehq.apps.app_manager.util import actions_use_usercase
     from corehq.apps.data_dictionary.util import create_properties_for_case_types
 

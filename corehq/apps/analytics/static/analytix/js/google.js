@@ -3,7 +3,7 @@
  *  Handles communication with the google analytics API. gtag is the replacement
  *  for Google's old analytics.js (ga).
  */
-hqDefine('analytix/js/google', [
+define('analytix/js/google', [
     'jquery',
     'underscore',
     'analytix/js/initial',

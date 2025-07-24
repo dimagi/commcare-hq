@@ -101,6 +101,7 @@ from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
+    SUBMISSION_HISTORY_PERMISSION,
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
@@ -149,7 +150,7 @@ require_case_export_permission = require_permission(
 
 require_form_view_permission = require_permission(
     HqPermissions.view_report,
-    'corehq.apps.reports.standard.inspect.SubmitHistory',
+    SUBMISSION_HISTORY_PERMISSION,
     login_decorator=None,
 )
 
@@ -778,7 +779,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         web_user_emails = [
             WebUser.wrap(row['doc']).get_email()
             for row in get_all_user_rows(self.domain, include_web_users=True,
-                                         include_mobile_users=False, include_docs=True)
+                                         include_inactive=False, include_mobile_users=False,
+                                         include_docs=True)
         ]
         for email in selected_emails:
             if email not in web_user_emails:
@@ -2033,29 +2035,51 @@ def get_or_create_filter_hash(request, domain):
 @location_safe
 def copy_cases(request, domain, *args, **kwargs):
     from corehq.apps.hqcase.case_helper import CaseCopier
-    body = json.loads(request.body)
-
-    case_ids = body.get('case_ids')
-    if not case_ids:
-        return JsonResponse({'error': _("Missing case ids")}, status=400)
-
-    new_owner = body.get('owner_id')
-    if not new_owner:
-        return JsonResponse({'error': _("Missing new owner id")}, status=400)
+    data, error = _get_case_action_data(request)
+    if error:
+        assert data is None, data
+        return JsonResponse({'error': error}, status=400)
 
     censor_data = {
         prop['name']: prop['label']
-        for prop in body.get('sensitive_properties', [])
+        for prop in data['body'].get('sensitive_properties', [])
     }
 
     case_copier = CaseCopier(
         domain,
-        to_owner=new_owner,
+        to_owner=data['owner_id'],
         censor_data=censor_data,
     )
-    case_id_pairs, errors = case_copier.copy_cases(case_ids)
+    case_id_pairs, errors = case_copier.copy_cases(data['case_ids'])
     count = len(case_id_pairs)
     return JsonResponse(
-        {'copied_cases': count, 'error': errors},
+        {'case_count': count, 'error': errors},
         status=400 if count == 0 else 200,
     )
+
+
+@require_POST
+@require_permission(HqPermissions.edit_data)
+@location_safe
+def reassign_cases(request, domain, *args, **kwargs):
+    from corehq.apps.data_interfaces.tasks import reassign_cases
+    data, error = _get_case_action_data(request)
+    if error:
+        assert data is None, data
+        return JsonResponse({'error': error}, status=400)
+    result = reassign_cases(domain, request.couch_user, data['owner_id'], data['case_ids'])
+    return JsonResponse(result, status=200)
+
+
+def _get_case_action_data(request):
+    body = json.loads(request.body)
+
+    case_ids = body.get('case_ids')
+    if not case_ids:
+        return None, _("Missing case ids")
+
+    owner_id = body.get('owner_id')
+    if not owner_id:
+        return None, _("Missing new owner id")
+
+    return {"owner_id": owner_id, "case_ids": case_ids, "body": body}, None

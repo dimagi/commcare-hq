@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
+from django.utils.translation import gettext_lazy
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
@@ -175,6 +176,28 @@ def commcare_hq_names(request=None):
     }
 
 
+def server_location_display(request):
+    SERVER_LOCATION_DISPLAY = {
+        'production': {
+            'flag': "🇺🇸",
+            'hr_name': gettext_lazy("US"),
+        },
+        'india': {
+            'flag': "🇮🇳",
+            'hr_name': gettext_lazy("India"),
+        },
+        'eu': {
+            'flag': "🇪🇺",
+            'hr_name': gettext_lazy("EU"),
+        },
+    }
+    context = {}
+    env = settings.SERVER_ENVIRONMENT
+    if env in SERVER_LOCATION_DISPLAY.keys():
+        context = {'server_display': SERVER_LOCATION_DISPLAY[env]}
+    return context
+
+
 def emails(request=None):
     """
     Emails commonly referenced in user-facing templates.
@@ -211,35 +234,6 @@ def _get_cc_name(request, var):
     return value.get(host) or value['default']
 
 
-def mobile_experience(request):
-    show_mobile_ux_warning = False
-    mobile_ux_cookie_name = ''
-    if (hasattr(request, 'couch_user')
-            and hasattr(request, 'user_agent')
-            and settings.SERVER_ENVIRONMENT in ['production', 'staging', settings.LOCAL_SERVER_ENVIRONMENT]):
-        mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
-        show_mobile_ux_warning = (
-            not request.COOKIES.get(mobile_ux_cookie_name)
-            and request.user_agent.is_mobile
-            and request.user.is_authenticated
-            and request.user.is_active
-            and not mobile_experience_hidden_by_toggle(request)
-        )
-    return {
-        'show_mobile_ux_warning': show_mobile_ux_warning,
-        'mobile_ux_cookie_name': mobile_ux_cookie_name,
-    }
-
-
-def mobile_experience_hidden_by_toggle(request):
-    from corehq import toggles
-    user = request.couch_user
-    for project in user.domains:
-        if toggles.HIDE_HQ_ON_MOBILE_EXPERIENCE.enabled(project, toggles.NAMESPACE_DOMAIN):
-            return True
-    return False
-
-
 def subscription_banners(request):
     is_logged_in_user = hasattr(request, 'user') and request.user.is_authenticated
     has_subscription = hasattr(request, 'subscription')
@@ -271,7 +265,7 @@ def get_demo(request):
     is_user_logged_in = getattr(request, 'user', None) and request.user.is_authenticated
     is_hubspot_enabled = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     context = {}
-    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and not is_user_logged_in:
+    if is_hubspot_enabled and not is_user_logged_in:
         context.update({
             'is_demo_visible': True,
         })

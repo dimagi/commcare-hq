@@ -1022,19 +1022,6 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     """
 )
 
-CASE_SEARCH_INDEXED_METADATA = StaticToggle(
-    'CASE_SEARCH_INDEXED_METADATA',
-    "Case Search: Search against indexed system metadata fields when possible",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This is a performance optimization. When creating filters from CSQL
-    expressions and the property being queried is a standard system metadata
-    property, query against the top-level location of that property rather than
-    the nested document inside case_properties.
-    """
-)
-
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
@@ -1184,18 +1171,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
         reindex_case_search_for_domain.delay(domain)
 
 
-EXPLORE_CASE_DATA = StaticToggle(
-    'explore_case_data',
-    'Show the Explore Case Data report (in dev)',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    description='Show the Explore Case Data report (in dev). Please make sure the project '
-    'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.\n\n'
-    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
-    'This will be deprecated once the Feature Preview is in full swing.',
-)
-
 SAAS_PROTOTYPE = StaticToggle(
     'saas_prototype',
     'Use allowed to view SaaS prototypes',
@@ -1204,24 +1179,12 @@ SAAS_PROTOTYPE = StaticToggle(
     description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
-ECD_MIGRATED_DOMAINS = StaticToggle(
-    'ecd_migrated_domains',
-    'Explore Case Data for domains that have undergone migration',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Domains that have undergone migration for Explore Case Data and have a '
-    'CaseSearch elasticsearch index created.\n\n'
-    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
-)
-
-ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
-    'ecd_enterprise_domains',
-    'Explore Case Data feature preview for Enterprise domains',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Enterprise Domains that are eligible to view the Explore Case Data '
-    'Feature Preview. By default, this feature will only be available for '
-    'domains that are Advanced or Pro and have undergone the ECD migration.'
+FORMBUILDER_SAVE_TO_CASE = StaticToggle(
+    'saas_formbuilder_save_to_case',
+    'Form Builder - Save Questions to Case Properties',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Allows users to save questions to case properties within the Form Builder'
 )
 
 ACTION_TIMES_API = StaticToggle(
@@ -1565,7 +1528,7 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application.',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="Main use case is to allow migrating projects to a new cluster."
 )
@@ -1920,17 +1883,10 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
 
-HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
-    'hide_hq_on_mobile_experience',
-    'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
 COPY_CASES = StaticToggle(
     'copy_cases',
     'Enable users to copy cases between mobile workers',
-    TAG_SOLUTIONS_OPEN,
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1998,20 +1954,6 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     When an individual project is having problems with rate limiting,
     use this toggle to lift the restriction for them on a temporary basis,
     just to unblock them while we sort out the conversation with the client.
-    """
-)
-
-RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
-    'rate_limit_repeaters',
-    'Apply rate limiting to data forwarding (repeaters)',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-    description="""
-    Rate limits are based on aggregate time spent waiting on data forwarding responses
-    within tasks for each project within the last second, minute, hour, day, and week windows.
-    Project allowances are based on the number of mobile workers in the project or subscription.
-    Rate limits are only applied (to any project) when global thresholds are surpassed.
-    The specific per-domain and global thresholds can be dynamically updated within the Django Admin.
     """
 )
 
@@ -2843,6 +2785,14 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
                'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
+DEACTIVATE_WEB_USERS = StaticToggle(
+    slug='deactivate_web_users',
+    label='USH: Deactivate Web Users',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow domains to deactivate web users just for that domain',
+)
+
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
@@ -2979,16 +2929,6 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-DEVICE_RATE_LIMITER = FeatureRelease(
-    slug='device_rate_limiter',
-    label='Apply rate limiting to the number of devices a single user can use in a one minute time window.',
-    description='Form submissions, restores, and heartbeat requests count towards usage. View and update in the '
-                'django admin under the SystemLimit table. The key is "device_limit_per_user"',
-    tag=TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Graham Herceg',
-)
-
 KYC_VERIFICATION = StaticToggle(
     slug='kyc_verification',
     label='Enable KYC verification',
@@ -3006,6 +2946,13 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
+    slug='convert_xml_group_separator',
+    label='Convert the group separator to a symbol XML can support',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

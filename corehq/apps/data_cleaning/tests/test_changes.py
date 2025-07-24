@@ -1,12 +1,12 @@
+from casexml.apps.case.mock import CaseFactory
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseFactory
 from corehq.apps.data_cleaning.models import (
     BulkEditChange,
-    EditActionType,
-    BulkEditSession,
     BulkEditRecord,
+    BulkEditSession,
+    EditActionType,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -46,10 +46,14 @@ class BulkEditChangeTest(TestCase):
             replace_string='Esperanza',
         )
         self.assertEqual(change.edited_value(self.case), 'Esperanza')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'town': 'Segunda',
-            }), 'Esperanza'
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'town': 'Segunda',
+                },
+            ),
+            'Esperanza',
         )
 
     def test_replace_none(self):
@@ -68,10 +72,14 @@ class BulkEditChangeTest(TestCase):
             replace_string='Punta',
         )
         self.assertEqual(change.edited_value(self.case), 'Punta Bastimento')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'favorite_beach': 'Bastimento Playa',
-            }), 'Bastimento Punta'
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'favorite_beach': 'Bastimento Playa',
+                },
+            ),
+            'Bastimento Punta',
         )
 
     def test_find_replace_none(self):
@@ -92,10 +100,14 @@ class BulkEditChangeTest(TestCase):
             replace_string=' ',
         )
         self.assertEqual(change.edited_value(self.case), 'Brittney Claasen')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'friend': 'brittney \t\nclaasen',
-            }), 'brittney claasen'
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'friend': 'brittney \t\nclaasen',
+                },
+            ),
+            'brittney claasen',
         )
 
     def test_find_replace_regex_none(self):
@@ -114,10 +126,14 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.STRIP,
         )
         self.assertEqual(change.edited_value(self.case), ':)')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'art': '    :-)\t\n  ',
-            }), ':-)'
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'art': '    :-)\t\n  ',
+                },
+            ),
+            ':-)',
         )
 
     def test_strip_none(self):
@@ -134,11 +150,15 @@ class BulkEditChangeTest(TestCase):
             copy_from_prop_id='favorite_beach',
         )
         self.assertEqual(change.edited_value(self.case), 'Playa Bastimento')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'favorite_beach': 'playa bastimento',
-                'nearest_ocean': 'Atlantic',
-            }), 'playa bastimento'
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'favorite_beach': 'playa bastimento',
+                    'nearest_ocean': 'Atlantic',
+                },
+            ),
+            'playa bastimento',
         )
 
     def test_copy_replace_none(self):
@@ -155,10 +175,14 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.TITLE_CASE,
         )
         self.assertEqual(change.edited_value(self.case), 'Atlantic')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'nearest_ocean': 'atlantic  ',
-            }), 'Atlantic  '
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'nearest_ocean': 'atlantic  ',
+                },
+            ),
+            'Atlantic  ',
         )
 
     def test_title_case_none(self):
@@ -174,10 +198,14 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.UPPER_CASE,
         )
         self.assertEqual(change.edited_value(self.case), 'ISABEL SEGUNDA')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'town': 'isbel',
-            }), 'ISBEL'
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'town': 'isbel',
+                },
+            ),
+            'ISBEL',
         )
 
     def test_upper_case_none(self):
@@ -193,10 +221,14 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.LOWER_CASE,
         )
         self.assertEqual(change.edited_value(self.case), 'isabel segunda')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'town': 'SEGUNDA',
-            }), 'segunda'
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'town': 'SEGUNDA',
+                },
+            ),
+            'segunda',
         )
 
     def test_lower_case_none(self):
@@ -212,10 +244,14 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.MAKE_EMPTY,
         )
         self.assertEqual(change.edited_value(self.case), '')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'nearest_ocean': 'pacific',
-            }), ''
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'nearest_ocean': 'pacific',
+                },
+            ),
+            '',
         )
 
     def test_empty_none(self):
@@ -231,10 +267,14 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.MAKE_NULL,
         )
         self.assertEqual(change.edited_value(self.case), None)
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'nearest_ocean': 'pacific',
-            }), None
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'nearest_ocean': 'pacific',
+                },
+            ),
+            None,
         )
 
     def test_make_null_none(self):
@@ -250,10 +290,14 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.RESET,
         )
         self.assertEqual(change.edited_value(self.case), 'atlantic')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
-                'nearest_ocean': 'pacific',
-            }), 'atlantic'
+        self.assertEqual(
+            change.edited_value(
+                self.case,
+                edited_properties={
+                    'nearest_ocean': 'pacific',
+                },
+            ),
+            'atlantic',
         )
 
     def test_reset_none(self):
@@ -274,17 +318,13 @@ class BulkEditRecordChangesTest(TestCase):
         cls.domain = create_domain(cls.domain_name)
         cls.addClassCleanup(cls.domain.delete)
 
-        cls.web_user = WebUser.create(
-            cls.domain.name, 'leaf@treeeeees.com', 'testpwd', None, None
-        )
+        cls.web_user = WebUser.create(cls.domain.name, 'leaf@treeeeees.com', 'testpwd', None, None)
         cls.user = User.objects.get(username=cls.web_user.username)
         cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.objects.new_case_session(
-            self.user, self.domain_name, self.case_type
-        )
+        self.session = BulkEditSession.objects.new_case_session(self.user, self.domain_name, self.case_type)
         factory = CaseFactory(domain=self.domain_name)
         self.case = factory.create_case(
             case_type=self.case_type,
@@ -304,7 +344,7 @@ class BulkEditRecordChangesTest(TestCase):
                 'pot_type': 'terra Cotta',
                 'friend': 'sugar  \n  wormWood  ',
                 'light_level': 'full_sun',
-            }
+            },
         )
 
     def tearDown(self):

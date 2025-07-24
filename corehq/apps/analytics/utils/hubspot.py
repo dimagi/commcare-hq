@@ -108,9 +108,6 @@ def get_blocked_hubspot_accounts():
     ]
 
 
-
-
-
 def _delete_hubspot_contact(vid, retry_num=0):
     """
     Permanently deletes a Hubspot contact.
@@ -323,7 +320,13 @@ def is_hubspot_js_allowed_for_request(request):
     :param request: HttpRequest
     :return: boolean (True if Hubspot javascript is allowed)
     """
-    if not settings.IS_SAAS_ENVIRONMENT:
+
+    if getattr(request, 'couch_user', None):
+        # This is a blanket restriction to prevent hubspot js
+        # from being on any page after login
+        return False
+
+    if not settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
         return False
 
     is_hubspot_js_allowed = True

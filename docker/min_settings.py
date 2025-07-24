@@ -39,7 +39,6 @@ redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
     # match production settings
-    'PARSER_CLASS': 'redis.connection.HiredisParser',
     'REDIS_CLIENT_KWARGS': {
         'health_check_interval': 15,
     },
@@ -56,9 +55,9 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch5'
-ELASTICSEARCH_PORT = 9200  # ES 5 port
-ELASTICSEARCH_MAJOR_VERSION = 5
+ELASTICSEARCH_HOST = 'elasticsearch6'
+ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 6
 
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))

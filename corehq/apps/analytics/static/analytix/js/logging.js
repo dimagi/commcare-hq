@@ -1,5 +1,5 @@
 
-hqDefine('analytix/js/logging', [
+define('analytix/js/logging', [
     'underscore',
     'analytix/js/initial',
 ], function (

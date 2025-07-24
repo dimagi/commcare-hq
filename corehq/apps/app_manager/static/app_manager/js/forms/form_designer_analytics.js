@@ -1,12 +1,16 @@
+/*
+    This file uses AMD because it is ultimately imported by Vellum,
+    which is still on AMD.
+*/
 define("app_manager/js/forms/form_designer_analytics", [
     'analytix/js/google',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
 ], function (
     google,
-    kissmetrics,
+    noopMetrics,
 ) {
     function workflow(message) {
-        kissmetrics.track.event(message);
+        noopMetrics.track.event(message);
     }
 
     function usage(label, group, message) {

@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
       - master
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -14,7 +15,12 @@ jobs:
         with:
           version: '0.7.2'
       - name: Install docs requirements
-        run: uv sync --group=docs --no-group=sso --locked --compile-bytecode --no-progress
+        # HACK install lxml separately to work around no-binary-package in pyproject.toml
+        # no-binary-package (lxml) is only needed for xmlsec, which is excluded by --no-group=sso
+        run: |
+          uv sync --group=docs --no-group=sso --locked --compile-bytecode --no-progress --no-install-package=lxml
+          uv pip install --no-config --python=.venv/bin/python \
+            $(uv export --format=requirements.txt --no-hashes | grep ^lxml==)
       - name: Test docs build
         run: |
           source .venv/bin/activate

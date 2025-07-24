@@ -38,6 +38,7 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, activate
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -46,6 +47,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
+
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
@@ -404,11 +406,13 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'next': req_params.get('next', '/a/%s/' % domain_name),
             'allow_domain_requests': domain_obj.allow_domain_requests,
             'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
+            'default_password_reset_link': reverse('domain_password_reset_email', kwargs={'domain': domain_name}),
         })
     else:
         commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
         context.update({
             'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
+            'default_password_reset_link': reverse('password_reset_email'),
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
@@ -560,8 +564,9 @@ def logout(req, default_domain_redirect='domain_login'):
     LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
-        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
-        return HttpResponseRedirect('%s' % domain_login_url)
+        if not (req.couch_user.is_web_user() and not req.couch_user.is_active_in_domain(domain)):
+            domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
+            return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
 
@@ -771,13 +776,13 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
 
     other_recipients = [el.strip() for el in report['cc'].split(",") if el]
 
-    message = (
+    message_parts = [(
         f"username: {report['username']}\n"
         f"full name: {report['full_name']}\n"
         f"domain: {report['domain']}\n"
         f"url: {report['url']}\n"
         f"recipients: {', '.join(other_recipients)}\n"
-    )
+    )]
 
     domain_object = Domain.get_by_name(domain) if report['domain'] else None
     debug_context = {
@@ -795,7 +800,7 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
             domain_object.project_description = new_project_description
             domain_object.save()
 
-        message += ((
+        message_parts.append((
             "software plan: {software_plan}\n"
         ).format(
             software_plan=Subscription.get_subscribed_plan_by_domain(domain),
@@ -804,7 +809,6 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
         debug_context.update({
             'self_started': domain_object.internal.self_started,
             'has_handoff_info': bool(domain_object.internal.partner_contact),
-            'project_description': domain_object.project_description,
         })
 
     subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
@@ -819,7 +823,10 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
     if settings.HQ_ACCOUNT_ROOT in reply_to:
         reply_to = settings.SERVER_EMAIL
 
-    message += "Message:\n\n{message}\n".format(message=report['message'])
+    message_parts.append("Message:\n\n{message}\n".format(message=report['message']))
+    if domain_object and domain_object.project_description:
+        message_parts.append(f"Project description: {domain_object.project_description}\n")
+
     if post_params.get('five-hundred-report'):
         extra_message = ("This message was reported from a 500 error page! "
                          "Please fix this ASAP (as if you wouldn't anyway)...")
@@ -827,13 +834,13 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
             "datetime: {datetime}\n"
             "Is self start: {self_started}\n"
             "Has Support Hand-off Info: {has_handoff_info}\n"
-            "Project description: {project_description}\n"
             "Sentry Error: {sentry_error}\n"
         ).format(**debug_context)
         traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
         cache.cache.delete(report['500traceback'])
-        message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
+        message_parts.append("\n\n".join([extra_debug_info, extra_message, traceback_info]))
 
+    message = "".join(message_parts)
     email = EmailMessage(
         subject=subject,
         body=message,
@@ -1538,3 +1545,36 @@ def check_sso_login_status(request):
         'sso_url': sso_url,
         'continue_text': continue_text,
     })
+
+
+@require_POST
+def set_language(request):
+    """
+    Redirect to the current page while setting the chosen language, if valid.
+    If no http referer is available or it is not safe, just set the language.
+    Based on django.views.i18n.set_language.
+    """
+    next_url = request.META.get("HTTP_REFERER")
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        response = HttpResponseRedirect(next_url)
+    else:
+        response = HttpResponse(status=204)
+
+    lang_code = request.POST.get("language")
+    valid_lang_codes = [lang_code for lang_code, __ in settings.LANGUAGES]
+    if lang_code and lang_code in valid_lang_codes:
+        response.set_cookie(
+            settings.LANGUAGE_COOKIE_NAME,
+            lang_code,
+            max_age=settings.LANGUAGE_COOKIE_AGE,
+            path=settings.LANGUAGE_COOKIE_PATH,
+            domain=settings.LANGUAGE_COOKIE_DOMAIN,
+            secure=settings.LANGUAGE_COOKIE_SECURE,
+            httponly=settings.LANGUAGE_COOKIE_HTTPONLY,
+            samesite=settings.LANGUAGE_COOKIE_SAMESITE,
+        )
+    return response
