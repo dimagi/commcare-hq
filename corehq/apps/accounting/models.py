@@ -1343,7 +1343,7 @@ class Subscription(models.Model):
         ):
             if is_date_range_overlapping(date_start, date_end, sub.date_start, sub.date_end):
                 raise SubscriptionAdjustmentError(
-                    "The start date and end date of the new subscription "
+                    "The start date and/or end date of the new subscription "
                     f"conflicts with the subscription dates to {sub}."
                 )
 
