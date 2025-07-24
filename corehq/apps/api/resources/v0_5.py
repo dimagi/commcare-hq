@@ -6,6 +6,7 @@ from collections import namedtuple
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
+from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
@@ -270,10 +271,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
-        require_account_confirmation = bundle.data.pop('require_account_confirmation', False)
-        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
+        require_account_confirmation = string_to_boolean(bundle.data.pop('require_account_confirmation', False))
+        send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         password = bundle.data.get('password')
         if not (password or bundle.data.get('connect_username')) and not require_account_confirmation:
+            if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']) and send_confirmation_email:
+                raise BadRequest(_("You must require account confirmation to send a confirmation email."))
             raise BadRequest(_('Password or connect username required'))
 
         if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
@@ -345,7 +348,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
-        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
+        send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
