@@ -3,6 +3,7 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.test import TestCase
+import pytest
 
 from corehq.apps.data_cleaning.models import (
     BulkEditRecord,
@@ -182,7 +183,11 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         filters = session.filters.all()
         # the form that uses this method will always fetch a list of strings, and the field is a UUID
         new_order = [str(filter_id) for filter_id in [filters[1].filter_id, filters[2].filter_id]]
-        with self.assertRaises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match='The lengths of provided_ids and ALL existing objects do not match. '
+            'Please provide a list of ALL existing object ids in the desired order.',
+        ):
             session.update_filter_order(new_order)
 
     def test_reorder_filters(self):
@@ -213,7 +218,11 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         columns = session.columns.all()
         # the form that uses this method will always fetch a list of strings, and the field is a UUID
         new_order = [str(col_id) for col_id in [columns[1].column_id, columns[2].column_id]]
-        with self.assertRaises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match='The lengths of provided_ids and ALL existing objects do not match. '
+            'Please provide a list of ALL existing object ids in the desired order.',
+        ):
             session.update_column_order(new_order)
 
     def test_update_column_order(self):
