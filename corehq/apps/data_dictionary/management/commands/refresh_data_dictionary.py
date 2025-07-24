@@ -57,6 +57,7 @@ class Command(BaseCommand):
             if domain in domains_to_skip:
                 print(f"[Domain: {domain}] Skipping domain")
                 set_migration_complete(domain, MIGRATION_SLUG)
+                continue
             if get_migration_complete(domain, MIGRATION_SLUG):
                 continue
             set_migration_started(domain, MIGRATION_SLUG)
