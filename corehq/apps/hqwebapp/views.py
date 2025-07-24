@@ -38,6 +38,7 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, activate
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -46,6 +47,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
+
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
@@ -1543,3 +1545,36 @@ def check_sso_login_status(request):
         'sso_url': sso_url,
         'continue_text': continue_text,
     })
+
+
+@require_POST
+def set_language(request):
+    """
+    Redirect to the current page while setting the chosen language, if valid.
+    If no http referer is available or it is not safe, just set the language.
+    Based on django.views.i18n.set_language.
+    """
+    next_url = request.META.get("HTTP_REFERER")
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        response = HttpResponseRedirect(next_url)
+    else:
+        response = HttpResponse(status=204)
+
+    lang_code = request.POST.get("language")
+    valid_lang_codes = [lang_code for lang_code, __ in settings.LANGUAGES]
+    if lang_code and lang_code in valid_lang_codes:
+        response.set_cookie(
+            settings.LANGUAGE_COOKIE_NAME,
+            lang_code,
+            max_age=settings.LANGUAGE_COOKIE_AGE,
+            path=settings.LANGUAGE_COOKIE_PATH,
+            domain=settings.LANGUAGE_COOKIE_DOMAIN,
+            secure=settings.LANGUAGE_COOKIE_SECURE,
+            httponly=settings.LANGUAGE_COOKIE_HTTPONLY,
+            samesite=settings.LANGUAGE_COOKIE_SAMESITE,
+        )
+    return response
