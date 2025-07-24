@@ -25,6 +25,17 @@ class TestAddColumnForm(TestCase):
         cls.web_user = WebUser.create(cls.domain, 'tester@datacleaning.org', 'testpwd', None, None)
         cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
 
+        cls._case_props_patcher = mock.patch(
+            'corehq.apps.data_cleaning.utils.cases.all_case_properties_by_domain',
+            return_value={
+                cls.case_type: [
+                    'soil_mix',
+                ]
+            },
+        )
+        cls._case_props_patcher.start()
+        cls.addClassCleanup(cls._case_props_patcher.stop)
+
     def setUp(self):
         super().setUp()
         self.session = BulkEditSession.objects.new_case_session(
@@ -44,91 +55,71 @@ class TestAddColumnForm(TestCase):
     def test_validation_fails_column_prop_id_is_required(self):
         data = self._get_post_data('', 'Test', DataType.TEXT)
         form = AddColumnForm(self.session, data)
-        assert form.is_valid() is False
-        assert form.errors['column_prop_id'] == ['Please specify a case property.']
+        assert not form.is_valid()
+        self.assertFormError(
+            form,
+            field='column_prop_id',
+            errors=['Please specify a case property.']
+        )
 
     def test_validation_ok_new_property(self):
         data = self._get_post_data('soil_mix', 'Soil Mix', DataType.TEXT)
-        with mock.patch(
-            'corehq.apps.data_cleaning.utils.cases.all_case_properties_by_domain',
-            return_value={
-                self.case_type: [
-                    'soil_mix',
-                ],
-            },
-        ):
-            form = AddColumnForm(self.session, data)
-            assert form.is_valid() is True
+        form = AddColumnForm(self.session, data)
+        assert form.is_valid()
 
     def test_form_add_column(self):
         data = self._get_post_data('soil_mix', 'Soil Mix', DataType.TEXT)
-        with mock.patch(
-            'corehq.apps.data_cleaning.utils.cases.all_case_properties_by_domain',
-            return_value={
-                self.case_type: [
-                    'soil_mix',
-                ],
-            },
-        ):
-            form = AddColumnForm(self.session, data)
-            form.is_valid()
-            form.add_column()
-            assert self.session.columns.filter(prop_id='soil_mix').exists() is True
+        form = AddColumnForm(self.session, data)
+        form.is_valid()
+        form.add_column()
+        assert self.session.columns.filter(prop_id='soil_mix').exists()
+        created_column = self.session.columns.get(prop_id='soil_mix')
+        assert created_column.prop_id == 'soil_mix'
+        assert created_column.label == 'Soil Mix'
+        assert created_column.data_type == DataType.TEXT
 
     def test_validation_fails_column_prop_id_exists(self):
         self.session.add_column('soil_mix', 'Soil Mixture', DataType.TEXT)
         data = self._get_post_data('soil_mix', 'Soil Mix', DataType.TEXT)
-        with mock.patch(
-            'corehq.apps.data_cleaning.utils.cases.all_case_properties_by_domain',
-            return_value={
-                self.case_type: [
-                    'soil_mix',
-                ],
-            },
-        ):
-            form = AddColumnForm(self.session, data)
-            assert form.is_valid() is False
-            assert form.errors['column_prop_id'] == [
-                'Select a valid choice. soil_mix is not one of the available choices.'
-            ]
+        form = AddColumnForm(self.session, data)
+        assert not form.is_valid()
+        self.assertFormError(
+            form,
+            field='column_prop_id',
+            errors=['Select a valid choice. soil_mix is not one of the available choices.']
+        )
 
     def test_validation_fails_column_data_type_is_required(self):
         data = self._get_post_data('soil_mix', 'Soil Mix', '')
-        with mock.patch(
-            'corehq.apps.data_cleaning.utils.cases.all_case_properties_by_domain',
-            return_value={
-                self.case_type: [
-                    'soil_mix',
-                ],
-            },
-        ):
-            form = AddColumnForm(self.session, data)
-            assert form.is_valid() is False
-            assert form.errors['column_data_type'] == ['Please specify a data type.']
+        form = AddColumnForm(self.session, data)
+        assert not form.is_valid()
+        self.assertFormError(
+            form,
+            field='column_data_type',
+            errors=['Please specify a data type.']
+        )
 
     def test_validation_fails_column_label_is_required(self):
         data = self._get_post_data('soil_mix', '', DataType.TEXT)
-        with mock.patch(
-            'corehq.apps.data_cleaning.utils.cases.all_case_properties_by_domain',
-            return_value={
-                self.case_type: [
-                    'soil_mix',
-                ],
-            },
-        ):
-            form = AddColumnForm(self.session, data)
-            assert form.is_valid() is False
-            assert form.errors['column_label'] == ['Please specify a label for the column.']
+        form = AddColumnForm(self.session, data)
+        assert not form.is_valid()
+        self.assertFormError(
+            form,
+            field='column_label',
+            errors=['Please specify a label for the column.']
+        )
 
     def test_validation_fails_system_property_incorrect_type(self):
         data = self._get_post_data('closed_on', 'Closed On', DataType.TEXT)
         form = AddColumnForm(self.session, data)
-        assert form.is_valid() is False
-        assert form.errors['column_data_type'] == [
-            f"Incorrect data type for 'closed_on', should be '{DataType.DATETIME}'"
-        ]
+        assert not form.is_valid()
+        self.assertFormError(
+            form,
+            field='column_data_type',
+            errors=[f"Incorrect data type for 'closed_on', should be '{DataType.DATETIME}'"]
+        )
 
     def test_validation_ok_system_property_correct_type(self):
         data = self._get_post_data('closed_on', 'Closed On', DataType.DATETIME)
         form = AddColumnForm(self.session, data)
-        assert form.is_valid() is True
+        assert form.is_valid()
