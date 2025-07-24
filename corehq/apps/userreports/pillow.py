@@ -633,7 +633,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
 
 
 def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
-                        num_processes=1, process_num=0, ucr_configs=None, **kwargs):
+                        num_processes=1, process_num=0, **kwargs):
     """Processes updates to locations for UCR
 
     Note this is only applicable if a domain on the environment has `LOCATIONS_IN_UCR` flag enabled.
@@ -652,8 +652,6 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
         include_ucrs=include_ucrs
     )
     ucr_processor = ConfigurableReportPillowProcessor(table_manager)
-    if ucr_configs:
-        table_manager.bootstrap(ucr_configs)
     checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
