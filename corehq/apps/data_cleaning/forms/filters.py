@@ -389,9 +389,10 @@ class AddFilterForm(forms.Form):
         cleaned_data['value'] = value
         # one last check
         if not BulkEditFilter.is_data_and_match_type_valid(match_type, data_type):
+            # will only get to this error if the user manually edited the form
             self.add_error(
                 'data_type',
-                _("Data type '{}' cannot have match type '{}'.").format(data_type, match_type),
+                _('The selected data type cannot have the selected match type.'),
             )
         return cleaned_data
 
