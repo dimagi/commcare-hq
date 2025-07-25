@@ -65,6 +65,7 @@ from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     get_privileges,
     is_active_subscription,
+    is_date_range_overlapping,
     log_accounting_error,
     log_accounting_info,
     quantize_accounting_decimal,
@@ -1340,36 +1341,10 @@ class Subscription(models.Model):
         ).exclude(
             id=self.id,
         ):
-            related_has_no_end = sub.date_end is None
-            current_has_no_end = date_end is None
-            start_before_related_end = sub.date_end is not None and date_start < sub.date_end
-            start_before_related_start = date_start < sub.date_start
-            start_after_related_start = date_start > sub.date_start
-            end_before_related_end = (
-                date_end is not None and sub.date_end is not None
-                and date_end < sub.date_end
-            )
-            end_after_related_end = (
-                date_end is not None and sub.date_end is not None
-                and date_end > sub.date_end
-            )
-            end_after_related_start = date_end is not None and date_end > sub.date_start
-
-            if (
-                (start_before_related_end and start_after_related_start)
-                or (start_after_related_start and related_has_no_end)
-                or (end_after_related_start and end_before_related_end)
-                or (end_after_related_start and related_has_no_end)
-                or (start_before_related_start and end_after_related_end)
-                or (start_before_related_end and current_has_no_end)
-                or (current_has_no_end and related_has_no_end)
-            ):
+            if is_date_range_overlapping(date_start, date_end, sub.date_start, sub.date_end):
                 raise SubscriptionAdjustmentError(
-                    "The start date of %(start_date)s conflicts with the "
-                    "subscription dates to %(related_sub)s." % {
-                        'start_date': self.date_start.strftime(USER_DATE_FORMAT),
-                        'related_sub': sub,
-                    }
+                    "The start date and/or end date of the new subscription "
+                    f"conflicts with the subscription dates to {sub}."
                 )
 
     def update_subscription(self, date_start, date_end,
