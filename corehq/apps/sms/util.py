@@ -296,7 +296,7 @@ def is_user_contact_active(domain, user_id):
     if not user:
         return False
 
-    return user.is_active
+    return user.is_active_in_domain(domain)
 
 
 def is_contact_active(domain, contact_doc_type, contact_id):

@@ -900,7 +900,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
             self.upload_record.pk,
             False
         )
-        self.assertTrue(self.user.is_active)
+        self.assertTrue(self.user.is_active_in_domain(self.domain.name))
 
     def test_password_is_not_string(self):
         import_users_and_groups(
@@ -957,7 +957,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         )
         user = self.user
         self.assertIsNotNone(user)
-        self.assertEqual(False, user.is_active)
+        self.assertEqual(False, user.is_active_in_domain(self.domain.name))
         self.assertEqual(False, user.is_account_confirmed)
 
     @patch('corehq.apps.user_importer.importer.send_account_confirmation_if_necessary')
