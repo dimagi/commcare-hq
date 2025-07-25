@@ -163,9 +163,4 @@
   {% include 'app_manager/partials/modules/style_configuration_modal.html' %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
-  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
-    {% with print_uploader as uploader %}
-      {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
-    {% endwith %}
-  {% endif %}
 {% endblock modals %}
