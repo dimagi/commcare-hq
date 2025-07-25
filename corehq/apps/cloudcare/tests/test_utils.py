@@ -126,7 +126,7 @@ class TestCanUserAccessWebApp(TestCase):
     def test_commcare_user_has_access_if_assigned_role_that_can_access_all_web_apps(self):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(access_web_apps=True))
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -134,7 +134,7 @@ class TestCanUserAccessWebApp(TestCase):
         # mobile users have not historically required this new permission, so we need to assume they have access
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(access_web_apps=False))
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -143,28 +143,28 @@ class TestCanUserAccessWebApp(TestCase):
             self.commcare_user, HqPermissions(web_apps_list=[self.build_doc["copy_of"]])
         )
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
     def test_commcare_user_does_not_have_access_if_assigned_role_that_can_access_different_app(self):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(web_apps_list=["random-app"]))
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
     def test_web_user_has_access_if_assigned_role_that_can_access_all_web_apps(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(access_web_apps=True))
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
     def test_web_user_does_not_have_access_if_assigned_role_that_cannot_access_web_apps(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(access_web_apps=False))
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
@@ -173,7 +173,7 @@ class TestCanUserAccessWebApp(TestCase):
             self.web_user, HqPermissions(web_apps_list=[self.build_doc["copy_of"]])
         )
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -182,21 +182,21 @@ class TestCanUserAccessWebApp(TestCase):
             self.web_user, HqPermissions(web_apps_list=[self.build_doc["copy_of"]])
         )
 
-        has_access = can_user_access_web_app(self.web_user, self.app_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.app_doc['_id'])
 
         self.assertTrue(has_access)
 
     def test_web_user_does_not_have_access_if_assigned_role_that_can_access_different_app(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(web_apps_list=["random-app"]))
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
     def test_web_user_does_not_have_access_to_canonical_if_assigned_role_that_can_access_different_app(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(web_apps_list=["random-app"]))
 
-        has_access = can_user_access_web_app(self.web_user, self.app_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.app_doc['_id'])
 
         self.assertFalse(has_access)
 
@@ -205,7 +205,7 @@ class TestCanUserAccessWebApp(TestCase):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(access_web_apps=False))
         self.add_user_to_group_for_app_id(self.commcare_user, self.build_doc['_id'])
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -215,7 +215,7 @@ class TestCanUserAccessWebApp(TestCase):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(web_apps_list=["random-app"]))
         self.add_user_to_group_for_app_id(self.commcare_user, self.build_doc['_id'])
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
@@ -224,7 +224,7 @@ class TestCanUserAccessWebApp(TestCase):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(web_apps_list=["random-app"]))
         self.add_user_to_group_for_app_id(self.commcare_user, 'random-app')
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
@@ -235,7 +235,7 @@ class TestCanUserAccessWebApp(TestCase):
         )
         self.add_user_to_group_for_app_id(self.commcare_user, self.build_doc['_id'])
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -246,7 +246,7 @@ class TestCanUserAccessWebApp(TestCase):
         )
         self.add_user_to_group_for_app_id(self.commcare_user, "random-app")
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -255,7 +255,7 @@ class TestCanUserAccessWebApp(TestCase):
         # web users always have permission via groups
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(web_apps_list=["random-app"]))
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 

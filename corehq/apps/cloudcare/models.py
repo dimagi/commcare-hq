@@ -26,17 +26,15 @@ class ApplicationAccess(models.Model):
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
 
-    def user_can_access_app(self, user, app):
-        user_id = user['_id']
-        app_id = app['_id']
+    def user_can_access_app(self, user, app_id):
         if not self.restrict or user['doc_type'] == 'WebUser':
             return True
         app_group = None
         for app_group in self.sqlappgroup_set.all():
-            if app_group.app_id in (app_id, app['copy_of'] or ()):
+            if app_group.app_id == app_id:
                 break
         if app_group:
-            return Group.user_in_group(user_id, app_group.group_id)
+            return Group.user_in_group(user['_id'], app_group.group_id)
         else:
             return False
 

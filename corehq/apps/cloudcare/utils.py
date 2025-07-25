@@ -12,16 +12,13 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.util.quickcache import quickcache
 
 
-def can_user_access_web_app(user, app):
+def can_user_access_web_app(domain, user, app_id):
     """
-    :param user: either a WebUser or CommCareUser
-    :param app: app doc (not wrapped Application)
+    :param app_id: canonical app ID, _not_ build ID
     """
-    domain = app["domain"]
     # Backwards-compatibility - mobile users haven't historically required this permission
     has_access_via_permission = user.is_commcare_user()
     if user.is_web_user() or user.can_access_any_web_apps(domain):
-        app_id = app.get("copy_of") or app.get("_id")
         has_access_via_permission = user.can_access_web_app(domain, app_id)
 
     has_access_via_group = True  # permission takes precedence over groups, so default to True
@@ -30,7 +27,7 @@ def can_user_access_web_app(user, app):
             get_application_access_for_domain,
         )
         app_access = get_application_access_for_domain(domain)
-        has_access_via_group = app_access.user_can_access_app(user, app)
+        has_access_via_group = app_access.user_can_access_app(user, app_id)
 
     return has_access_via_permission and has_access_via_group
 
@@ -60,7 +57,7 @@ def get_web_apps_available_to_user(domain, user, is_preview=False, fetch_app_fn=
     app_ids = get_app_ids_in_domain(domain)
     for app_id in app_ids:
         app = fetch_app_fn(domain, user.username, app_id)
-        if app and is_web_app(app) and can_user_access_web_app(user, app):
+        if app and is_web_app(app) and can_user_access_web_app(domain, user, app_id):
             apps.append(app)
 
     return apps
