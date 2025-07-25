@@ -19,7 +19,7 @@ const serverLocationSelect = function (options) {
     const url = options.url || window.location.href;
     const initialValue = options.initialValue || currentSubdomain(url);
 
-    self.setWindowHref = function (newUrl) {
+    self.navigateTo = function (newUrl) {
         window.location.href = newUrl;
     };
 
@@ -27,7 +27,7 @@ const serverLocationSelect = function (options) {
     self.serverLocation.subscribe(function (value) {
         if (subdomainMatch(url)) {
             const newUrl = replaceSubdomain(value, url);
-            self.setWindowHref(newUrl);
+            self.navigateTo(newUrl);
         }
     });
     return self;
