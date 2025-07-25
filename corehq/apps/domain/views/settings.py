@@ -567,7 +567,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                     )
                 )
                 return '{}?username={}'.format(
-                    reverse('domain_login', args=[couch_user.domain]),
+                    reverse('commcare_user_account_confirmed', args=[couch_user.domain]),
                     couch_user.raw_username,
                 )
         return super().get_success_url()
