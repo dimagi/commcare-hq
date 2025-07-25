@@ -639,6 +639,11 @@ def toggle_values_by_name(username, domain):
     }
 
 
+def get_enabled_domains(toggle_slug):
+    toggle = StaticToggle(toggle_slug.lower(), '', '')
+    return toggle.get_enabled_domains()
+
+
 @quickcache(["domain"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
 def toggles_enabled_for_domain(domain):
     """Return set of toggle names that are enabled for the given domain"""
@@ -1105,16 +1110,7 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
-    'split_screen_case_search',
-    "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
-    " on the right.",
-    TAG_CUSTOM,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
-)
-
+# TODO: GA or Bust: See CaseSearchConfig.dynamically_update_results
 DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     'dynamically_update_search_results',
     "In case search with split screen case search enabled, search results update when a search field is updated"
@@ -1122,7 +1118,7 @@ DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
+    parent_toggles=[]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
