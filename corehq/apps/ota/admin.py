@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 
-from .models import DemoUserRestore, MobileRecoveryMeasure, DeviceLogRequest
+from .models import DemoUserRestore, MobileRecoveryMeasure, DeviceLogRequest, IntegritySamplePercentage
 from .views import get_recovery_measures_cached
 
 
@@ -70,6 +70,18 @@ class DeviceLogRequestAdmin(admin.ModelAdmin):
     list_filter = ['domain', 'username']
 
 
+class IntegritySamplePercentageAdmin(admin.ModelAdmin):
+    model = IntegritySamplePercentage
+    list_display = ['percentage']
+    fields = ['percentage']
+
+    def save_model(self, request, obj, form, change):
+        if obj.percentage < 0 or obj.percentage > 100:
+            raise ValidationError("Percentage must be between 0 and 100.")
+        super().save_model(request, obj, form, change)
+
+
 admin.site.register(DemoUserRestore, DemoUserRestoreAdmin)
 admin.site.register(MobileRecoveryMeasure, MobileRecoveryMeasureAdmin)
 admin.site.register(DeviceLogRequest, DeviceLogRequestAdmin)
+admin.site.register(IntegritySamplePercentage, IntegritySamplePercentageAdmin)

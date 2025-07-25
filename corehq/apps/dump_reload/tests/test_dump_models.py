@@ -172,6 +172,7 @@ UNKNOWN_MODELS = {
     "users.InvitationHistory",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
+    'ota.IntegritySamplePercentage',
 }
 
 
