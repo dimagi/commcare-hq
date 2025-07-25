@@ -795,6 +795,7 @@ ota
  0009_devicelogrequest
  0010_alter_devicelogrequest
  0011_remove_devicelogrequest_deviceid
+ 0012_integritysamplepercentage
 otp_static
  0001_initial
  0002_throttling
