@@ -2,11 +2,11 @@
 {% load i18n %}
 {% load field_tags %}
 {% load hq_shared_tags %}
-
 {% js_entry_b3 'users/js/accept_invite' %}
 
 {% block title %}{% blocktrans %}Account Confirmed{% endblocktrans %}{% endblock title %}
-{% block tabs %}{% endblock %}
+{% block tabs %}
+{% endblock %}
 
 {% block login-content %}
   <div class="container-fluid">
@@ -14,14 +14,13 @@
       <div class="col-xs-12">
         <div class="reg-form-container sign-in-container">
           <div class="form-bubble form-bubble-lg">
-              <h3>
-                {% trans "Now you can log into the mobile app." %}
-              </h3>
-              <h4>
-                {% blocktrans %}
-                To log into CommCare HQ on the web, click <a href="{{ login_url }}">here</a>.
-                {% endblocktrans %}
-              </h4>
+            <h3>{% trans "Now you can log into the mobile app." %}</h3>
+            <h4>
+              {% blocktrans %}
+                To log into CommCare HQ on the web, click
+                <a href="{{ login_url }}">here</a>.
+              {% endblocktrans %}
+            </h4>
           </div>
         </div>
       </div>
