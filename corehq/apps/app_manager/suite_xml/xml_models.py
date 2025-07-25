@@ -865,7 +865,6 @@ class Field(OrderedXmlObject):
     ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node', 'alt_text')
 
     sort = StringField('@sort')
-    print_id = StringField('@print-id')
     lazy_loading = BooleanField('@lazy_loading', required=False)
     cache_enabled = BooleanField('@cache_enabled', required=False)
     style = NodeField('style', Style)
