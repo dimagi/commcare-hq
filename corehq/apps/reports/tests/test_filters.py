@@ -266,9 +266,11 @@ class TestEMWFilterOutput(TestCase):
         cls.addClassCleanup(cls.domain_obj.delete)
         cls.location_type = LocationType.objects.create(domain=cls.domain, name='Place')
         cls.accessible_location = SQLLocation.objects.create(
-            site_code='accessible place', domain=cls.domain, location_type=cls.location_type)
+            location_id='accessible', site_code='accessible place',
+            domain=cls.domain, location_type=cls.location_type)
         cls.inaccessible_location = SQLLocation.objects.create(
-            site_code='inaccessible place', domain=cls.domain, location_type=cls.location_type)
+            location_id='inaccessible', site_code='inaccessible place',
+            domain=cls.domain, location_type=cls.location_type)
 
         cls.user = WebUser.create(cls.domain, 'test@cchq.com', 'password', None, None)
         cls.user.set_location(cls.domain, cls.accessible_location)
@@ -321,6 +323,11 @@ DEACTIVATED_WEB = f't__{HQUserType.DEACTIVATED_WEB}'
 
 
 @generate_cases([
+    ([], [
+        'active', 'active_accessible', 'active_inaccessible',
+        'deactive', 'deactive_accessible', 'deactive_inaccessible',
+        'web', 'web_accessible', 'web_inaccessible', 'web_deactive',
+    ]),
     ([ACTIVE], ['active', 'active_accessible', 'active_inaccessible']),
     ([DEACTIVATED], ['deactive', 'deactive_accessible', 'deactive_inaccessible']),
     ([WEB], ['web', 'web_accessible', 'web_inaccessible']),
@@ -329,6 +336,11 @@ DEACTIVATED_WEB = f't__{HQUserType.DEACTIVATED_WEB}'
     ([DEACTIVATED, 'u__active'], ['deactive', 'deactive_accessible', 'deactive_inaccessible', 'active']),
     ([WEB, 'u__active', 'u__deactive'], ['web', 'web_accessible', 'web_inaccessible', 'active', 'deactive']),
     (['u__active_inaccessible'], ['active_inaccessible']),
+    (['l__accessible'], ['active_accessible', 'web_accessible', 'deactive_accessible', 'web_deactive']),
+    (['l__accessible', 'u__deactive_inaccessible'],
+     ['active_accessible', 'web_accessible', 'deactive_inaccessible', 'deactive_accessible', 'web_deactive']),
+    ([ACTIVE, 'l__accessible'], ['active', 'active_accessible', 'active_inaccessible']),
+    ([DEACTIVATED, 'l__accessible'], ['deactive', 'deactive_accessible', 'deactive_inaccessible']),
 ], TestEMWFilterOutput)
 def test_user_es_query(self, slugs, expected_ids):
     user_query = ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
