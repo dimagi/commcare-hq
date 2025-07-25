@@ -336,9 +336,9 @@ DEACTIVATED_WEB = f't__{HQUserType.DEACTIVATED_WEB}'
     ([DEACTIVATED, 'u__active'], ['deactive', 'deactive_accessible', 'deactive_inaccessible', 'active']),
     ([WEB, 'u__active', 'u__deactive'], ['web', 'web_accessible', 'web_inaccessible', 'active', 'deactive']),
     (['u__active_inaccessible'], ['active_inaccessible']),
-    (['l__accessible'], ['active_accessible', 'web_accessible', 'deactive_accessible', 'web_deactive']),
+    (['l__accessible'], ['active_accessible', 'web_accessible']),
     (['l__accessible', 'u__deactive_inaccessible'],
-     ['active_accessible', 'web_accessible', 'deactive_inaccessible', 'deactive_accessible', 'web_deactive']),
+     ['active_accessible', 'web_accessible', 'deactive_inaccessible']),
     ([ACTIVE, 'l__accessible'], ['active', 'active_accessible', 'active_inaccessible']),
     ([DEACTIVATED, 'l__accessible'], ['deactive', 'deactive_accessible', 'deactive_inaccessible']),
 ], TestEMWFilterOutput)

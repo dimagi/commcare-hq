@@ -416,7 +416,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         else:
             group_and_location_filter = filters.OR(
                 group_id_filter,
-                user_es.location(location_ids),
+                filters.AND(
+                    user_es.is_active(domain),
+                    user_es.location(location_ids),
+                ),
             )
 
         id_filter = filters.OR(
