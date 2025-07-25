@@ -46,6 +46,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app_doc,
     get_build_doc_by_build_id,
 )
+from corehq.apps.case_search.models import split_screen_ui_enabled_for_domain
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
@@ -235,6 +236,7 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "split_screen_case_search": split_screen_ui_enabled_for_domain(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
             "lang_code_name_mapping": lang_code_name_mapping,
         }

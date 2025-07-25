@@ -242,7 +242,7 @@
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
             <!-- /ko -->
           </div>
-            {% if not request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' %}
+            {% if not split_screen_case_search %}
             <div class="form-group" data-bind="hidden: inlineSearchActive">
               <label for="search_again_label" class="{% css_label_class %} control-label">
                 {% trans "Label for Searching Again" %}
@@ -489,7 +489,7 @@
             </div>
           </div>
           {% endif %}
-          {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search%}
+          {% if split_screen_case_search and not app.split_screen_dynamic_search %}
           <div class="form-group">
             <label class="control-label {% css_label_class %}">
               {% trans "Clearing search terms resets search results" %}

@@ -464,6 +464,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'enabled': request_json.get('enable'),
             'synchronous_web_apps': request_json.get('synchronous_web_apps'),
             'sync_cases_on_form_entry': request_json.get('sync_cases_on_form_entry'),
+            'split_screen_ui': request_json.get('split_screen_ui'),
         })
         case_search_synchronous_web_apps_for_domain.clear(self.domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(self.domain)
@@ -483,6 +484,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 'enabled': config.enabled,
                 'synchronous_web_apps': config.synchronous_web_apps,
                 'sync_cases_on_form_entry': config.sync_cases_on_form_entry,
+                'split_screen_ui': config.split_screen_ui,
                 'fuzzy_properties': {
                     fp.case_type: fp.properties for fp in config.fuzzy_properties.all()
                 },
