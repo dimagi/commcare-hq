@@ -977,7 +977,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_xml',
         'case_tile_configuration',
         'multi_select',
-        'print_template',
         'search_properties',
         'search_default_properties',
         'search_claim_options',
