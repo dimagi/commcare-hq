@@ -1212,6 +1212,7 @@ toggle_ui
  0002_toggleaudit
 toggles
  0001_toggle_edit_permission
+ 0002_assign_permissions_superusers
 translations
  0001_initial
  0002_transifexblacklist
