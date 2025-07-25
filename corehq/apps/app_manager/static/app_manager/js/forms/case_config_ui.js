@@ -645,12 +645,16 @@ $(function () {
     var HQFormActions = {
         normalize: function (o) {
             var self = {};
+            const openCase = o.open_case || {};
             self.open_case = {
-                condition: (o.open_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
-                name_update: (o.open_case || {}).name_update || DEFAULT_UPDATE_ALWAYS,
+                condition: openCase.condition || DEFAULT_CONDITION_ALWAYS,
+                name_update: openCase.name_update || DEFAULT_UPDATE_ALWAYS,
+                name_update_multi: openCase.name_update_multi || [DEFAULT_UPDATE_ALWAYS],
             };
+            const updateCase = o.update_case || {};
             self.update_case = {
-                update: (o.update_case || {}).update || {},
+                update: updateCase.update || {},
+                update_multi: updateCase.update_multi || {},
             };
             self.case_preload = {
                 preload: (o.case_preload || {}).preload || {},
@@ -658,8 +662,10 @@ $(function () {
             self.close_case = {
                 condition: (o.close_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
             };
+            const usercaseUpdate  = o.usercase_update || {};
             self.usercase_update = {
-                update: (o.usercase_update || {}).update || {},
+                update: usercaseUpdate.update || {},
+                update_multi: usercaseUpdate.update_multi || {},
             };
             self.usercase_preload = {
                 preload: (o.usercase_preload || {}).preload || {},
@@ -668,17 +674,27 @@ $(function () {
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
+
+            const nameProperties = self.open_case.name_update_multi.map(update => ({
+                key: 'name',
+                path: update.question_path,
+                required: false,
+                isOpenCase: true,
+                save_only_if_edited: update.update_mode === 'edit',
+            }));
+
+            if (nameProperties.length) {
+                // multiple names exist to resolve a conflict, but we only mark the first as required
+                // to allow the user to eventually fix the conflict
+                nameProperties[0].required = true;
+            }
+
             var requiredProperties = (caseConfig.requires() === 'none' &&
                 caseConfig.actions.open_case.condition.type !== "never" &&
-                !o.update_case.update.name) ? [{
-                    key: 'name',
-                    path: self.open_case.name_update.question_path,
-                    required: true,
-                    save_only_if_edited: self.open_case.name_update.update_mode === 'edit',
-                }] : [];
-            var caseProperties = caseConfigUtils.propertyDictToArray(
+                !o.update_case.update.name) ? nameProperties : [];
+            var caseProperties = caseConfigUtils.propertyMultiDictToArray(
                 requiredProperties,
-                self.update_case.update,
+                self.update_case.update_multi,
                 caseConfig,
             );
             var casePreload = caseConfigUtils.preloadDictToArray(
@@ -714,7 +730,7 @@ $(function () {
         },
         from_case_transaction: function (caseTransaction) {
             var o = ko.mapping.toJS(caseTransaction, caseTransactionMapping(caseTransaction));
-            var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
+            var x = caseConfigUtils.propertyArrayToMultiDict(['name'], o.case_properties);
             var caseProperties = x[0],
                 openNameUpdate = x[1].name;
             var casePreload = caseConfigUtils.preloadArrayToDict(o.case_preload);
@@ -737,10 +753,10 @@ $(function () {
             return {
                 open_case: {
                     condition: cleanCondition(openCondition),
-                    name_update: openNameUpdate,
+                    name_update_multi: openNameUpdate,
                 },
                 update_case: {
-                    update: caseProperties,
+                    update_multi: caseProperties,
                     condition: cleanCondition(updateCondition),
                 },
                 case_preload: {
