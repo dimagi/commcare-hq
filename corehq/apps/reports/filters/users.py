@@ -406,31 +406,28 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             location_query = location_query.accessible_to_user(domain, request_user)
         location_ids = list(location_query.location_ids())
 
-        group_id_filter = filters.term("__group_ids", group_ids)
-
         if toggles.FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
             group_and_location_filter = filters.AND(
-                group_id_filter,
+                filters.term("__group_ids", group_ids),
                 user_es.location(location_ids),
             )
         else:
             group_and_location_filter = filters.OR(
-                group_id_filter,
-                filters.AND(
-                    user_es.is_active(domain),
-                    user_es.location(location_ids),
-                ),
+                filters.term("__group_ids", group_ids),
+                user_es.location(location_ids),
             )
 
         id_filter = filters.OR(
             filters.term("_id", user_ids),
-            group_and_location_filter,
+            filters.AND(
+                user_es.is_active(domain),
+                group_and_location_filter,
+            ),
         )
 
         if user_type_filters:
             return q.OR(
                 id_filter,
-                group_and_location_filter,
                 filters.OR(*user_type_filters),
             )
         return q.filter(id_filter)
