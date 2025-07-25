@@ -1181,7 +1181,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     case_tile_template = params.get('caseTileTemplate', None)
-    print_template = params.get('printTemplate', None)
     custom_variables_dict = {
         'short': params.get("short_custom_variables_dict", None),
         'long': params.get("long_custom_variables_dict", None)
@@ -1210,8 +1209,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.long.columns = list(map(DetailColumn.from_json, long_))
         if tabs is not None:
             detail.long.tabs = list(map(DetailTab.wrap, tabs))
-        if print_template is not None:
-            detail.long.print_template = print_template
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
