@@ -1146,7 +1146,7 @@ class FormValidator(IndexedFormBaseValidator):
             subcase_names.update(subcase_action.case_properties)
 
         if self.form.requires == 'none' and self.form.actions.open_case.is_active() \
-                and not self.form.actions.open_case.name_update.question_path:
+                and not self.form.actions.open_case.has_name_update():
             errors.append({'type': 'case_name required'})
 
         errors.extend(self.check_case_properties(

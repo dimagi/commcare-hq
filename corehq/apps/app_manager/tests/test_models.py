@@ -5,7 +5,7 @@ from corehq.apps.app_manager.exceptions import (
     InvalidPropertyException
 )
 from corehq.apps.app_manager.models import (
-    FormActions, UpdateCaseAction, OpenCaseAction, OpenCaseDiff, UpdateCaseDiff, FormActionsDiff
+    FormAction, FormActions, UpdateCaseAction, OpenCaseAction, OpenCaseDiff, UpdateCaseDiff, FormActionsDiff
 )
 
 
@@ -131,6 +131,34 @@ class OpenCaseActionTests(SimpleTestCase):
         action.make_single()
         self.assertEqual(action.name_update.question_path, 'name2')
         self.assertEqual(action.name_update_multi, None)
+
+    def test_has_name_update_returns_true_with_name_update(self):
+        action = OpenCaseAction({
+            'name_update': {'question_path': 'name'}
+        })
+
+        self.assertTrue(action.has_name_update())
+
+    def test_has_name_update_returns_false_with_empty_path(self):
+        action = OpenCaseAction({
+            'name_update': {'question_path': ''}
+        })
+
+        self.assertFalse(action.has_name_update())
+
+    def test_has_name_update_looks_at_name_update_multi(self):
+        action = OpenCaseAction({
+            'name_update_multi': [{'question_path': 'name1'}, {'question_path': 'name2'}]
+        })
+
+        self.assertTrue(action.has_name_update())
+
+    def test_has_name_update_requires_name_update_multi_to_have_a_path(self):
+        action = OpenCaseAction({
+            'name_update_multi': [{'question_path': ''}]
+        })
+
+        self.assertFalse(action.has_name_update())
 
 
 class OpenCaseAction_ApplyUpdates_Tests(SimpleTestCase):
@@ -696,3 +724,29 @@ class FormActionsDiffTests(SimpleTestCase):
 
         assert diff.open_case.add[0].question_path == 'one'
         assert diff.update_case.delete['case_two'][0].question_path == 'two'
+
+
+class FormActionTests(SimpleTestCase):
+    def test_get_action_properties_for_name_update(self):
+        action = OpenCaseAction({'name_update': {'question_path': '/data/name'}})
+        properties = list(FormAction.get_action_properties(action))
+
+        assert properties == [('name', '/data/name')]
+
+    def test_get_action_properties_ignores_name_update_multi(self):
+        action = OpenCaseAction({'name_update_multi': [{'question_path': 'name1'}, {'question_path': 'name2'}]})
+        properties = list(FormAction.get_action_properties(action))
+
+        assert properties == []
+
+    def test_get_action_properties_for_update(self):
+        action = UpdateCaseAction({'update': {'one': {'question_path': 'q1'}}})
+        properties = list(FormAction.get_action_properties(action))
+
+        assert properties == [('one', 'q1')]
+
+    def test_get_action_properties_ignores_update_multi(self):
+        action = UpdateCaseAction({'update_multi': {'one': [{'question_path': 'q1'}, {'question_path': 'q2'}]}})
+        properties = list(FormAction.get_action_properties(action))
+
+        assert properties == []

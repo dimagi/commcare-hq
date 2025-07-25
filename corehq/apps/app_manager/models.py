@@ -352,11 +352,11 @@ class FormAction(UpdateableDocument):
         action_properties = action.properties()
         if 'name_path' in action_properties and action.name_path:
             yield 'name', action.name_path
-        if action_properties.get('name_update') and action.name_update.question_path:
+        if action_properties.get('name_update') and action.name_update and action.name_update.question_path:
             yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
-        if 'update' in action_properties:
+        if 'update' in action_properties and action.update:
             for name, conditional_case_update in action.update.items():
                 yield name, conditional_case_update.question_path
         if 'case_properties' in action_properties:
@@ -606,6 +606,15 @@ class OpenCaseAction(FormAction):
 
         self.name_update = self.name_update_multi[0]
         self.name_update_multi = None
+
+    def has_name_update(self):
+        if self.name_update_multi:
+            return any([self._update_has_name(update) for update in self.name_update_multi])
+
+        return self.name_update and self._update_has_name(self.name_update)
+
+    def _update_has_name(self, update):
+        return bool(update.question_path)
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
