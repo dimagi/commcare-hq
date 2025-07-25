@@ -28,6 +28,7 @@ var Toggle = function (data) {
     self.userEnabled = ko.observable(data['user_enabled']);
     self.hasDomainNamespace = data['has_domain_namespace'];
     self.editLink = initialPageData.reverse('edit_toggle', self.slug);
+    self.canEdit = data['can_edit'];
 
     self.expanded = ko.observable(false);
     self.showHideDescription = function () { self.expanded(!self.expanded()); };
