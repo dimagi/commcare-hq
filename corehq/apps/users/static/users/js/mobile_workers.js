@@ -38,7 +38,6 @@ var STATUS = {
     SUCCESS: 'success',
     WARNING: 'warning',
     ERROR: 'danger',
-    DISABLED: 'disabled',
 };
 
 var rmi = function () {};
@@ -60,6 +59,7 @@ var userModel = function (options) {
         phone_number: '',
         is_active: true,
         is_account_confirmed: true,
+        is_personalid_link_active: null,
         deactivate_after_date: '',
     });
 
@@ -77,12 +77,12 @@ var userModel = function (options) {
 
     // used by two-stage provisioning
     self.emailRequired = ko.observable(self.force_account_confirmation());
-    self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
+    self.requireAccountConfirmation = ko.observable(self.force_account_confirmation());
 
     // used by two-stage sms provisioning
     self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
 
-    self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
+    self.passwordVisible = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
 
     self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -93,11 +93,22 @@ var userModel = function (options) {
     self.is_active.subscribe(function (newValue) {
         var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
             $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
+        toggleActive($modal, urlName, self.user_id());
+    });
 
+    self.is_personalid_link_active.subscribe(function (newValue) {
+        const urlName = 'set_personalid_link_status';
+        const modalNamePrefix = newValue ? 'activate_personalid_link' : 'deactivate_personalid_link';
+        const $modal = $(`#${modalNamePrefix}_${self.username()}`);
+        toggleActive($modal, urlName, self.username(), { is_active: newValue });
+    });
+
+    function toggleActive($modal, urlName, userIdOrName, bodyData = {}) {
         $modal.find(".btn").addSpinnerToButton();
         $.ajax({
             method: 'POST',
-            url: initialPageData.reverse(urlName, self.user_id()),
+            url: initialPageData.reverse(urlName, userIdOrName),
+            data: bodyData,
             success: function (data) {
                 $modal.modal('hide');
                 if (data.success) {
@@ -111,7 +122,7 @@ var userModel = function (options) {
                 self.action_error(gettext("Issue communicating with server. Try again."));
             },
         });
-    });
+    }
 
     self.sendConfirmationEmail = function () {
         var urlName = 'send_confirmation_email';
@@ -275,14 +286,6 @@ var newUserCreationModel = function (options) {
             return self.STATUS.NONE;
         }
 
-        if (self.stagedUser().force_account_confirmation()) {
-            return self.STATUS.DISABLED;
-        }
-
-        if (self.stagedUser().force_account_confirmation_by_sms()) {
-            return self.STATUS.DISABLED;
-        }
-
         if (!self.useStrongPasswords()) {
             // No validation
             return self.STATUS.NONE;
@@ -343,16 +346,14 @@ var newUserCreationModel = function (options) {
             return self.STATUS.NONE;
         }
 
-        if (self.requiredEmailMissing() || self.emailIsInvalid()) {
+        if (self.emailIsInvalid()) {
             return self.STATUS.ERROR;
         }
     });
 
     self.emailStatusMessage = ko.computed(function () {
 
-        if (self.requiredEmailMissing()) {
-            return gettext('Email address is required when users confirm their own accounts.');
-        } else if (self.emailIsInvalid()) {
+        if (self.emailIsInvalid()) {
             return gettext('Please enter a valid email address.');
         }
         return "";
@@ -484,14 +485,14 @@ var newUserCreationModel = function (options) {
                 user.emailRequired(true);
                 // clear and disable password input
                 user.password('');
-                user.passwordEnabled(false);
-                user.sendConfirmationEmailEnabled(true);
+                user.passwordVisible(false);
+                user.requireAccountConfirmation(true);
             } else {
                 // make email optional
                 user.emailRequired(false);
                 // enable password input
-                user.passwordEnabled(true);
-                user.sendConfirmationEmailEnabled(false);
+                user.passwordVisible(true);
+                user.requireAccountConfirmation(false);
                 // uncheck email confirmation box if it was checked
                 user.send_account_confirmation_email(false);
             }
@@ -502,13 +503,15 @@ var newUserCreationModel = function (options) {
                 user.phoneRequired(true);
                 // clear and disable password input
                 user.password('');
-                user.passwordEnabled(false);
-                user.sendConfirmationEmailEnabled(true);
+                user.passwordVisible(false);
+                user.requireAccountConfirmation(true);
             } else {
                 // make phone number optional
                 user.phoneRequired(false);
                 // enable password input
-                user.passwordEnabled(true);
+                user.passwordVisible(true);
+                user.requireAccountConfirmation(false);
+                user.send_account_confirmation_email(false);
             }
         });
     });
@@ -550,7 +553,7 @@ var newUserCreationModel = function (options) {
         if (!self.stagedUser().username()) {
             return false;
         }
-        if (self.stagedUser().passwordEnabled()) {
+        if (self.stagedUser().passwordVisible()) {
             if  (!self.stagedUser().password()) {
                 return false;
             }
@@ -586,7 +589,7 @@ var newUserCreationModel = function (options) {
         self.newUsers.push(newUser);
         newUser.creation_status(STATUS.PENDING);
         // if we disabled the password, set it just in time before going to the server
-        if (!newUser.passwordEnabled()) {
+        if (!newUser.passwordVisible()) {
             newUser.password(self.generateStrongPassword());
         }
         rmi('create_mobile_worker', {

@@ -1,7 +1,7 @@
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
-hqDefine("cloudcare/js/formplayer/app", [
+define("cloudcare/js/formplayer/app", [
     'jquery',
     'knockout',
     'underscore',
@@ -10,9 +10,8 @@ hqDefine("cloudcare/js/formplayer/app", [
     'markdown-it/dist/markdown-it',
     'bootstrap5',
     'hqwebapp/js/initial_page_data',
-    'analytix/js/appcues',
     'analytix/js/google',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/utils',
     'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/constants',
@@ -33,9 +32,8 @@ hqDefine("cloudcare/js/formplayer/app", [
     markdowner,
     bootstrap,
     initialPageData,
-    appcues,
     GGAnalytics,
-    Kissmetrics,
+    noopMetrics,
     CloudcareUtils,
     AppsAPI,
     Const,
@@ -229,7 +227,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 CloudcareUtils.showError(message, $("#cloudcare-notifications"), resp.reportToHq);
             }
         };
-        Kissmetrics.track.event('Viewed Form', {
+        noopMetrics.track.event('Viewed Form', {
             domain: data.domain,
             name: data.title,
         });
@@ -251,7 +249,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                                 _.each(analyticsLinks, function (link) {
                                     if (href.match(RegExp(link.url))) {
                                         $target.attr("target", "_blank");
-                                        Kissmetrics.track.event(link.text);
+                                        noopMetrics.track.event(link.text);
                                     }
                                 });
                             }
@@ -275,13 +273,11 @@ hqDefine("cloudcare/js/formplayer/app", [
                 }
 
                 if (user.isAppPreview) {
-                    Kissmetrics.track.event("[app-preview] User submitted a form");
+                    noopMetrics.track.event("[app-preview] User submitted a form");
                     GGAnalytics.track.event("App Preview", "User submitted a form");
-                    appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
                 } else if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
-                    Kissmetrics.track.event("[web apps] User submitted a form");
+                    noopMetrics.track.event("[web apps] User submitted a form");
                     GGAnalytics.track.event("Web Apps", "User submitted a form");
-                    appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
                 }
 
                 // After end of form nav, we want to clear everything except app and sesson id
@@ -302,9 +298,6 @@ hqDefine("cloudcare/js/formplayer/app", [
                     FormplayerUtils.navigate('/apps', { trigger: true });
                 }
             } else {
-                if (user.isAppPreview) {
-                    appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: false });
-                }
                 CloudcareUtils.showError(resp.output, $("#cloudcare-notifications"));
             }
         };

@@ -7,11 +7,12 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import utils from "hqwebapp/js/bootstrap3/main";
 import assertProperties from "hqwebapp/js/assert_properties";
 
-var PricingTable = function (options) {
+const PricingTable = function (options) {
     assertProperties.assert(options, [
         'editions',
         'planOptions',
-        'currentPlan',
+        'currentEdition',
+        'currentIsAnnualPlan',
         'isRenewal',
         'startDateAfterMinimum',
         'isSubscriptionBelowMin',
@@ -21,48 +22,55 @@ var PricingTable = function (options) {
         'currentPrice',
     ]);
 
-    var self = {};
+    const self = {};
 
-    self.oCurrentPlan = ko.observable(options.currentPlan);
-    self.oNextSubscription = ko.observable(options.nextSubscriptionEdition);
-    self.oStartDateAfterMinimumSubscription = ko.observable(options.startDateAfterMinimum);
-    self.oCurrentPrice = ko.observable(options.currentPrice);
-    self.oIsPriceDiscounted = ko.observable(options.isPriceDiscounted);
+    self.currentEdition = options.currentEdition;
+    self.nextSubscription = options.nextSubscriptionEdition;
+    self.startDateAfterMinimumSubscription = options.startDateAfterMinimum;
+    self.currentPrice = options.currentPrice;
+    self.isPriceDiscounted = options.isPriceDiscounted;
+    self.currentIsAnnualPlan = options.currentIsAnnualPlan;
     self.editions = options.editions;
     self.isRenewal = options.isRenewal;
     self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
     self.invoicingContact = options.invoicingContact;
 
-    self.oSelectedPlan = ko.observable(options.currentPlan);
+    self.isCurrentPlanFreeEdition = options.currentEdition === 'free';
+    self.isCurrentPlanPaused = options.currentEdition === 'paused';
 
-    self.oShowAnnualPricing = ko.observable(false);
+    self.isNextPlanPaused = self.nextSubscription === 'Paused';
+    self.isNextPlanDowngrade = self.nextSubscription && !self.isNextPlanPaused;
+
+    self.oSelectedEdition = ko.observable(options.currentEdition);
+    self.oShowAnnualPricing = ko.observable(
+        self.currentIsAnnualPlan || self.isCurrentPlanFreeEdition || self.isCurrentPlanPaused);
+
+    self.oIsAnnualPlanSelected = ko.computed(function () {
+        return self.oShowAnnualPricing() && self.oSelectedEdition() !== 'paused';
+    });
+
+    self.oIsSameEdition = ko.computed(function () {
+        return self.oSelectedEdition() === self.currentEdition;
+    });
+
+    self.oIsSamePaySchedule = ko.computed(function () {
+        return self.currentIsAnnualPlan === self.oShowAnnualPricing();
+    });
+
+    self.oIsDowngrade = ko.computed(function () {
+        return self.editions.indexOf(self.oSelectedEdition()) < self.editions.indexOf(self.currentEdition);
+    });
 
     self.oIsSubmitDisabled = ko.computed(function () {
-        var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription(),
-            isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
-        return !self.oSelectedPlan() || isNextPlan || isCurrentPlan;
+        const isSubscribablePlan = !!self.oSelectedEdition() && !['free', 'enterprise'].includes(self.oSelectedEdition());
+        const isCurrentPlan = self.oIsSameEdition() && self.oIsSamePaySchedule() && !self.nextSubscription;
+        const isDisallowedPayAnnuallyChange = self.currentIsAnnualPlan && (self.oIsDowngrade() || self.oIsSameEdition());
+        const isNextPlan = self.nextSubscription && self.oSelectedEdition() === self.nextSubscription.toLowerCase();
+        return !isSubscribablePlan || isCurrentPlan || isDisallowedPayAnnuallyChange || isNextPlan;
     });
-
-    self.oIsCurrentPlanFreeEdition = ko.observable(options.currentPlan === 'free');
-    self.oIsCurrentPlanPaused = ko.observable(options.currentPlan === 'paused');
-
-    self.oIsNextPlanPaused = ko.computed(function () {
-        return self.oNextSubscription() === 'Paused';
-    });
-
-    self.oIsNextPlanDowngrade = ko.computed(function () {
-        return self.oNextSubscription() && !self.oIsNextPlanPaused();
-    });
-
-    self.selectPausedPlan = function () {
-        self.oSelectedPlan('paused');
-    };
-    self.isDowngrade = function () {
-        return self.editions.indexOf(self.oSelectedPlan()) < self.editions.indexOf(self.oCurrentPlan());
-    };
 
     self.oPausedCss = ko.computed(function () {
-        if (self.oSelectedPlan() === 'paused') {
+        if (self.oSelectedEdition() === 'paused') {
             return "selected-plan";
         }
         return "";
@@ -72,23 +80,23 @@ var PricingTable = function (options) {
         return new PlanOption(opt, self);
     }));
 
-    self.oShowNext = ko.computed(function () {
-        return !self.oShowAnnualPricing();
-    });
+    self.selectPausedPlan = function () {
+        self.oSelectedEdition('paused');
+    };
 
     self.form = undefined;
     self.openMinimumSubscriptionModal = function (pricingTable, e) {
         self.form = $(e.currentTarget).closest("form");
 
-        var invoicingContact = _.escape(self.invoicingContact);
-        if (self.isDowngrade() && self.subscriptionBelowMinimum) {
-            var oldPlan = utils.capitalize(self.oCurrentPlan());
-            var newPlan = utils.capitalize(self.oSelectedPlan());
-            var newStartDate = self.oStartDateAfterMinimumSubscription();
+        const invoicingContact = _.escape(self.invoicingContact);
+        if (self.oIsDowngrade() && self.subscriptionBelowMinimum) {
+            const oldPlan = utils.capitalize(self.currentEdition);
+            const newPlan = utils.capitalize(self.oSelectedEdition());
+            const newStartDate = self.startDateAfterMinimumSubscription;
 
-            var message = "",
+            let message = "",
                 title = gettext("Downgrading?");
-            if (self.oSelectedPlan() === 'paused') {
+            if (self.oSelectedEdition() === 'paused') {
                 title = gettext("Pausing Subscription?");
                 message = _.template(gettext(
                     "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
@@ -102,7 +110,7 @@ var PricingTable = function (options) {
                     oldPlan: oldPlan,
                     invoicingContact: invoicingContact,
                 });
-            } else if (self.oIsNextPlanPaused()) {
+            } else if (self.isNextPlanPaused) {
                 message = _.template(gettext(
                     "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                     "<p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to be paused " +
@@ -118,7 +126,7 @@ var PricingTable = function (options) {
                     newPlan: newPlan,
                     invoicingContact: invoicingContact,
                 });
-            } else if (self.oIsNextPlanDowngrade()) {
+            } else if (self.isNextPlanDowngrade) {
                 message = _.template(gettext(
                     "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                     "<p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to be downgraded " +
@@ -130,7 +138,7 @@ var PricingTable = function (options) {
                     "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>",
                 ))({
                     oldPlan: oldPlan,
-                    nextSubscription: self.oNextSubscription(),
+                    nextSubscription: self.nextSubscription,
                     date: newStartDate,
                     newPlan: newPlan,
                     invoicingContact: invoicingContact,
@@ -150,7 +158,7 @@ var PricingTable = function (options) {
                     invoicingContact: invoicingContact,
                 });
             }
-            var $modal = $("#modal-minimum-subscription");
+            const $modal = $("#modal-minimum-subscription");
             $modal.find('.modal-body')[0].innerHTML = message;
             $modal.find('.modal-title')[0].innerHTML = title;
             $modal.modal('show');
@@ -165,15 +173,6 @@ var PricingTable = function (options) {
         }
     };
 
-    self.contactSales = function (pricingTable, e) {
-        var $button = $(e.currentTarget);
-        $button.disableButton();
-
-        self.form = $(e.currentTarget).closest("form");
-        self.oCurrentPlan(self.oCurrentPlan() + " - annual pricing");
-        self.form.submit();
-    };
-
     self.init = function () {
         self.form = $("#select-plan-form");
     };
@@ -181,7 +180,7 @@ var PricingTable = function (options) {
     return self;
 };
 
-var planDisplayName = function (name) {
+const planDisplayName = function (name) {
     const plans = {
         'Free': gettext('Free edition'),
         'Standard': 'Standard',
@@ -191,55 +190,40 @@ var planDisplayName = function (name) {
     return plans[name] || '';
 };
 
-var PlanOption = function (data, parent) {
-    var self = this;
+const PlanOption = function (data, parent) {
+    const self = this;
 
-    self.oName = ko.observable(planDisplayName(data.name));
-    self.oSlug = ko.observable(data.name.toLowerCase());
+    self.name = planDisplayName(data.name);
+    self.slug = data.name.toLowerCase();
 
-    self.oMonthlyPrice = ko.observable(data.monthly_price);
-    self.oAnnualPrice = ko.observable(data.annual_price);
-    self.oDescription = ko.observable(data.description);
+    self.monthlyPrice = data.monthly_price;
+    self.annualPrice = data.annual_price;
+    self.description = data.description;
 
-    self.oIsFreeEdition = ko.computed(function () {
-        return self.oSlug() === 'free';
-    });
+    self.isFreeEdition = self.slug === 'free';
+    self.isCurrentEdition = self.slug === parent.currentEdition;
+
+    self.nextPlan = parent.nextSubscription;
+    self.nextDate = parent.startDateAfterMinimumSubscription;
+
+    self.showPausedNotice = parent.isNextPlanPaused && self.isCurrentEdition;
+    self.showDowngradeNotice = self.isCurrentEdition && parent.isNextPlanDowngrade;
 
     self.oIsCurrentPlan = ko.computed(function () {
-        return self.oSlug() === parent.oCurrentPlan();
+        return self.isCurrentEdition && parent.oIsSamePaySchedule();
     });
 
     self.oIsSelectedPlan = ko.computed(function () {
-        return self.oSlug() === parent.oSelectedPlan();
-    });
-
-    self.oShowDowngradeNotice = ko.computed(function () {
-        return self.oIsCurrentPlan() && parent.oIsNextPlanDowngrade();
-    });
-
-    self.oNextPlan = ko.computed(function () {
-        return parent.oNextSubscription();
-    });
-
-    self.oNextDate = ko.computed(function () {
-        return parent.oStartDateAfterMinimumSubscription();
-    });
-
-    self.oShowPausedNotice = ko.computed(function () {
-        return parent.oIsNextPlanPaused() && self.oIsCurrentPlan();
+        return self.slug === parent.oSelectedEdition();
     });
 
     self.oCssClass = ko.computed(function () {
-        var cssClass = "tile-" + self.oSlug();
+        let cssClass = "tile-" + self.slug;
         if (self.oIsSelectedPlan()) {
             cssClass = cssClass + " selected-plan";
         }
         return cssClass;
     });
-
-    self.selectPlan = function () {
-        parent.oSelectedPlan(self.oSlug());
-    };
 
     self.oPricingTypeText = ko.computed(function () {
         if (parent.oShowAnnualPricing()) {
@@ -256,27 +240,31 @@ var PlanOption = function (data, parent) {
     });
 
     self.oDisplayDiscountNotice = ko.computed(function () {
-        return self.oIsCurrentPlan() && parent.oIsPriceDiscounted() && !parent.oShowAnnualPricing();
+        return self.oIsCurrentPlan() && parent.isPriceDiscounted && !parent.oShowAnnualPricing();
     });
 
     self.oDisplayPrice = ko.computed(function () {
         if (self.oDisplayDiscountNotice()) {
-            return parent.oCurrentPrice();
+            return parent.currentPrice;
         }
         if (parent.oShowAnnualPricing()) {
-            return self.oAnnualPrice();
+            return self.annualPrice;
         }
-        return self.oMonthlyPrice();
+        return self.monthlyPrice;
     });
 
+    self.selectPlan = function () {
+        parent.oSelectedEdition(self.slug);
+    };
 };
 
 
 $(function () {
-    var pricingTable = new PricingTable({
+    const pricingTable = new PricingTable({
         editions: initialPageData.get('editions'),
         planOptions: initialPageData.get('planOptions'),
-        currentPlan: initialPageData.get('currentPlan'),
+        currentEdition: initialPageData.get('currentEdition'),
+        currentIsAnnualPlan: initialPageData.get('currentIsAnnualPlan'),
         isRenewal: initialPageData.get('is_renewal'),
         startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
         isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),

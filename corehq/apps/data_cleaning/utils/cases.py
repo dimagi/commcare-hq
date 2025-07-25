@@ -46,22 +46,22 @@ def get_system_property_data_type(prop_id):
 
 def get_system_property_label(prop_id):
     return {
-        '@case_id': _("Case ID"),
-        '@case_type': _("Case Type"),
-        '@owner_id': _("Owner ID"),
-        '@status': _("Open/Closed Status"),
-        'name': _("Name"),
-        'external_id': _("External ID"),
-        'date_opened': _("Date Opened"),
-        'closed_on': _("Closed On"),
-        'last_modified': _("Last Modified On"),
-        'closed_by_username': _("Closed By"),
-        'last_modified_by_user_username': _("Last Modified By"),
-        'opened_by_username': _("Opened By"),
-        'owner_name': _("Owner"),
-        'closed_by_user_id': _("Closed By User ID"),
-        'opened_by_user_id': _("Opened By User ID"),
-        'server_last_modified_date': _("Last Modified (UTC)"),
+        '@case_id': _('Case ID'),
+        '@case_type': _('Case Type'),
+        '@owner_id': _('Owner ID'),
+        '@status': _('Open/Closed Status'),
+        'name': _('Name'),
+        'external_id': _('External ID'),
+        'date_opened': _('Date Opened'),
+        'closed_on': _('Closed On'),
+        'last_modified': _('Last Modified On'),
+        'closed_by_username': _('Closed By'),
+        'last_modified_by_user_username': _('Last Modified By'),
+        'opened_by_username': _('Opened By'),
+        'owner_name': _('Owner'),
+        'closed_by_user_id': _('Closed By User ID'),
+        'opened_by_user_id': _('Opened By User ID'),
+        'server_last_modified_date': _('Last Modified (UTC)'),
     }.get(prop_id, prop_id)
 
 
@@ -82,6 +82,7 @@ def _get_system_property_details():
 
 def _get_data_type_from_data_dictionary(case_property):
     from corehq.apps.data_dictionary.models import CaseProperty
+
     return {
         CaseProperty.DataType.DATE: DataType.DATE,
         CaseProperty.DataType.PLAIN: DataType.TEXT,
@@ -99,10 +100,11 @@ def _get_default_label(prop_id):
     return prop_id.replace('_', ' ').title()
 
 
-def _get_property_details_from_data_dictionary(domain, case_type):
+def get_property_details_from_data_dictionary(domain, case_type):
     if not domain_has_privilege(domain, privileges.DATA_DICTIONARY):
         return {}
     from corehq.apps.data_dictionary.models import CaseType
+
     try:
         case_properties = CaseType.objects.get(domain=domain, name=case_type).properties.all()
         details = {}
@@ -127,17 +129,18 @@ def get_case_property_details(domain, case_type):
         include_parent_properties=False,
         exclude_deprecated_properties=False,
     ).get(case_type, [])
-    data_dictionary_details = _get_property_details_from_data_dictionary(domain, case_type)
+    data_dictionary_details = get_property_details_from_data_dictionary(domain, case_type)
     properties = set(properties).union(data_dictionary_details.keys())
     for prop_id in properties:
         details[prop_id] = data_dictionary_details.get(
-            prop_id, PropertyDetail(
+            prop_id,
+            PropertyDetail(
                 label=_get_default_label(prop_id),
                 data_type=DataType.TEXT,
                 prop_id=prop_id,
                 is_editable=True,
-                options=None,
-            )._asdict()
+                options=[],
+            )._asdict(),
         )
     details.update(_get_system_property_details())
     return details

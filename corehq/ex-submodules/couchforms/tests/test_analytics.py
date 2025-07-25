@@ -2,7 +2,8 @@ import datetime
 import uuid
 
 from django.test import TestCase
-from corehq.apps.app_manager.tests.util import delete_all_apps
+
+from freezegun import freeze_time
 
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
@@ -14,6 +15,7 @@ from couchforms.analytics import (
     get_number_of_forms_in_domain,
 )
 
+from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.client import manager
 from corehq.apps.es.forms import form_adapter
@@ -214,8 +216,11 @@ class CouchformsESAnalyticsTest(TestCase):
         )
 
     def test_domain_has_submission_in_last_30_days(self):
-        self.assertEqual(
-            domain_has_submission_in_last_30_days(self.domain), True)
+        self.assertTrue(domain_has_submission_in_last_30_days(self.domain))
+
+    def test_not_domain_has_submission_in_last_30_days(self):
+        with freeze_time(self.now + self._60_days):
+            self.assertFalse(domain_has_submission_in_last_30_days(self.domain))
 
     def test_get_first_form_submission_received(self):
         self.assertEqual(

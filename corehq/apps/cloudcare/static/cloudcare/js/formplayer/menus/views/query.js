@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/formplayer/menus/views/query", [
+define("cloudcare/js/formplayer/menus/views/query", [
     'jquery',
     'underscore',
     'backbone',
@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/tempus_dominus',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
@@ -30,7 +30,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     initialPageData,
     hqTempusDominus,
     toggles,
-    kissmetrics,
+    noopMetrics,
     markdown,
     cloudcareUtils,
     formEntryConstants,
@@ -140,7 +140,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         },
         geocoderItemCallback = function (addressTopic, model) {
             return function (item) {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
+                noopMetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
                 const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
@@ -153,7 +153,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         },
         geocoderOnClearCallback = function (addressTopic) {
             return function () {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
+                noopMetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 $.publish(addressTopic, formEntryConstants.NO_ANSWER);
             };
         },
@@ -212,7 +212,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 inputId = id + "_mapbox",
                 $field = $("#" + inputId);
             $(function () {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
+                noopMetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
             });
             const queryKey = sessionStorage.queryKey;
             const storedGeocoderValues = sessionStorage.geocoderValues;

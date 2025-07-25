@@ -41,7 +41,11 @@ from corehq.motech.repeaters.views import (
     pause_repeater,
     resume_repeater,
 )
-from corehq.motech.repeaters.views.repeaters import EditDataRegistryCaseUpdateRepeater, EditReferCaseRepeaterView
+from corehq.motech.repeaters.views.repeaters import (
+    EditConnectFormRepeaterView,
+    EditDataRegistryCaseUpdateRepeater,
+    EditReferCaseRepeaterView
+)
 from corehq.motech.views import (
     ConnectionSettingsDetailView,
     ConnectionSettingsListView,
@@ -64,6 +68,8 @@ urlpatterns = [
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(),
         {'repeater_type': 'FormRepeater'}, name=AddFormRepeaterView.urlname),
+    url(r'^forwarding/new/ConnectFormRepeater/$', AddFormRepeaterView.as_view(),
+        {'repeater_type': 'ConnectFormRepeater'}, name=AddFormRepeaterView.urlname),
     url(r'^forwarding/new/CaseRepeater/$', AddCaseRepeaterView.as_view(),
         {'repeater_type': 'CaseRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/OpenmrsRepeater/$', AddOpenmrsRepeaterView.as_view(),
@@ -92,6 +98,8 @@ urlpatterns = [
         {'repeater_type': 'CaseRepeater'}, name=EditCaseRepeaterView.urlname),
     url(r'^forwarding/edit/FormRepeater/(?P<repeater_id>\w+)/$', EditFormRepeaterView.as_view(),
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
+    url(r'^forwarding/edit/ConnectFormRepeater/(?P<repeater_id>\w+)/$', EditConnectFormRepeaterView.as_view(),
+        {'repeater_type': 'ConnectFormRepeater'}, name=EditConnectFormRepeaterView.urlname),
     url(r'^forwarding/edit/ReferCaseRepeater/(?P<repeater_id>\w+)/$', EditReferCaseRepeaterView.as_view(),
         {'repeater_type': 'ReferCaseRepeater'}, name=EditReferCaseRepeaterView.urlname),
     url(

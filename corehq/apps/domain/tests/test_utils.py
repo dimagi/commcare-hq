@@ -13,12 +13,13 @@ from corehq.apps.domain.utils import (
     encrypt_account_confirmation_info,
     get_domain_url_slug,
     get_serializable_wire_invoice_general_credit,
+    get_serializable_wire_invoice_prepaid_item,
     guess_domain_language,
     guess_domain_language_for_sms,
     is_domain_in_use,
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.motech.utils import b64_aes_decrypt
+from corehq.motech.utils import b64_aes_cbc_decrypt
 from corehq.tests.tools import nottest
 from corehq.tests.util.context import testcontextmanager
 from corehq.util.test_utils import generate_cases, unit_testing_only
@@ -102,7 +103,7 @@ class UtilsTests(TestCase):
         commcare_user = CommCareUser.create("22", ''.join(str(randint(1, 100))
                                             for i in range(3)), "pass22", None, None)
         encrypted_string = encrypt_account_confirmation_info(commcare_user)
-        decrypted = json.loads(b64_aes_decrypt(encrypted_string))
+        decrypted = json.loads(b64_aes_cbc_decrypt(encrypted_string))
         self.assertIsInstance(decrypted, dict)
         self.assertIsNotNone(decrypted.get("user_id"))
         self.assertIsNotNone(decrypted.get("time"))
@@ -124,6 +125,27 @@ class TestGetSerializableWireInvoiceItem(SimpleTestCase):
 
     def test_return_value_is_json_serializable(self):
         items = get_serializable_wire_invoice_general_credit(1.5, 'credit', 1.5, 1)
+        # exception would be raised here if there is an issue
+        serialized_items = json.dumps(items)
+        self.assertTrue(serialized_items)
+
+
+class TestGetSerializableWireInvoicePrepaidItem(SimpleTestCase):
+
+    def test_empty_list_is_returned_if_prepaid_amount_is_zero(self):
+        items = get_serializable_wire_invoice_prepaid_item(0, 'credit', 1)
+        self.assertFalse(items)
+
+    def test_empty_list_is_returned_if_prepaid_amount_is_greater_than_zero(self):
+        items = get_serializable_wire_invoice_prepaid_item(1, 'credit', 1)
+        self.assertFalse(items)
+
+    def test_item_is_returned_if_prepaid_amount_is_less_than_zero(self):
+        items = get_serializable_wire_invoice_prepaid_item(-1, 'credit', -1)
+        self.assertTrue(items)
+
+    def test_return_value_is_json_serializable(self):
+        items = get_serializable_wire_invoice_prepaid_item(-1.5, 'credit', -1.5)
         # exception would be raised here if there is an issue
         serialized_items = json.dumps(items)
         self.assertTrue(serialized_items)

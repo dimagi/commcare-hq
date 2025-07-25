@@ -275,14 +275,6 @@ msgstr ""
 "الأمثلة الشائعة: صحة الأم، حضور الطلاب، أو مراقبة المحاصيل."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "عدم اختيار أي"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "اختيار الكل"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "اسم التطبيق مطلوب"
 
@@ -343,6 +335,12 @@ msgstr "اسم التبويب"
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
 msgstr "شرط العرض"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -1607,6 +1605,13 @@ msgid ""
 msgstr ""
 "لديك تغييرات غير محفوظة في نوع الحالة هذا. هل أنت متأكد أنك تريد المتابعة؟"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
@@ -1636,8 +1641,15 @@ msgstr "صحيح عندما تتطابق جميع خصائص الحالة"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
-msgstr "خارج نطاق عامل التصفية. لن يظهر عند تحديث الصفحة."
+msgid "Reassigned"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Copied!"
+msgid "Copied"
+msgstr "تم النسخ!"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1646,13 +1658,22 @@ msgstr "تم التحديث"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
-msgstr "تم نسخ الحالة"
+msgid "Today"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
-msgstr "تم نسخ الحالات"
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Reassigned <%- count %> cases"
+msgstr "تنزيل <%- count %> مواقع"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Copied <%- count %> cases"
+msgstr "تنزيل <%- count %> مواقع"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3520,10 +3541,6 @@ msgid "Error determining number of matching users"
 msgstr "حدث خطأ أثناء تحديد عدد المستخدمين المطابقين"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr "عنوان البريد الإلكتروني مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم."
-
-#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "يرجى إدخال عنوان بريد إلكتروني صالح."
 
@@ -4145,6 +4162,25 @@ msgstr "فشل! الاستجابة هي: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "عنوان البريد الإلكتروني مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم."
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr "خارج نطاق عامل التصفية. لن يظهر عند تحديث الصفحة."
+
+#~ msgid "Case copied"
+#~ msgstr "تم نسخ الحالة"
+
+#~ msgid "Cases copied"
+#~ msgstr "تم نسخ الحالات"
+
+#~ msgid "Select None"
+#~ msgstr "عدم اختيار أي"
+
+#~ msgid "Select All"
+#~ msgstr "اختيار الكل"
 
 #~ msgid "long"
 #~ msgstr "طويل"

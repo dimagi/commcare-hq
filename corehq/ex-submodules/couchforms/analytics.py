@@ -2,12 +2,11 @@ import datetime
 
 from corehq.apps.es import AppES, FormES
 from corehq.apps.es.aggregations import TermsAggregation
-from corehq.apps.experiments import Experiment, ES_FOR_EXPORTS
+from corehq.apps.experiments import ES_FOR_EXPORTS, Experiment
 from corehq.const import MISSING_APP_ID
-from corehq.util.quickcache import quickcache
-
 from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.quickcache import quickcache
 
 experiment = Experiment(
     campaign=ES_FOR_EXPORTS,
@@ -17,14 +16,13 @@ experiment = Experiment(
 )
 
 
+@quickcache(['domain'], timeout=10 * 60)
 def domain_has_submission_in_last_30_days(domain):
-    last_submission = get_last_form_submission_received(domain)
-    # if there have been any submissions in the past 30 days
-    if last_submission:
-        _30_days = datetime.timedelta(days=30)
-        return datetime.datetime.utcnow() <= last_submission + _30_days
-    else:
-        return False
+    thirty_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+    return (FormES()
+            .domain(domain)
+            .submitted(gte=thirty_days_ago)
+            .exists())
 
 
 def get_number_of_forms_in_domain(domain):

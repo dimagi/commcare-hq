@@ -1,5 +1,5 @@
-from datetime import date, datetime, timedelta
-from unittest.mock import Mock, patch
+from datetime import date, timedelta
+from unittest.mock import Mock, patch, MagicMock
 
 from django.test import SimpleTestCase, TestCase
 
@@ -353,7 +353,7 @@ class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
     def setUp(self):
         super().setUp()
         self.subscription = generator.generate_domain_subscription(
-            self.account, self.domain, datetime.today(), datetime.today() + timedelta(days=7), is_active=True
+            self.account, self.domain, date.today(), date.today() + timedelta(days=7), is_active=True
         )
 
     def create_form(self, new_plan_version, **kwargs):
@@ -387,3 +387,331 @@ class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
         self.assertTrue(form.is_valid())
         self.assertTrue(self.subscription.is_renewed)
         self.assertEqual(self.subscription.next_subscription.plan_version, next_plan_version)
+
+
+class TestUsernameOrEmailField(SimpleTestCase):
+    def setUp(self):
+        self.field = forms.UsernameOrEmailField()
+
+    def test_valid_email_address(self):
+        valid_emails = ['test@example.com', 'user.name@domain.org',
+                        'admin+tag@subdomain.example.co.uk']
+        for email in valid_emails:
+            with self.subTest(email=email):
+                self.field.validate(email)
+
+    def test_valid_username(self):
+        valid_usernames = ['username', 'user123', 'user_name', 'user-name']
+        for username in valid_usernames:
+            with self.subTest(username=username):
+                self.field.validate(username)
+
+    def test_invalid_email_format(self):
+        invalid_emails = ['@example.com', 'user@', 'user@@example.com', 'user name@example.com']
+        for email in invalid_emails:
+            with self.subTest(email=email):
+                with self.assertRaises(forms.ValidationError):
+                    self.field.validate(email)
+
+
+class TestHQPasswordResetForm(SimpleTestCase):
+    def setUp(self):
+        self.get_active_users_patcher = patch('corehq.apps.domain.forms.get_active_users_by_email')
+        self.mock_get_active_users = self.get_active_users_patcher.start()
+
+        self.send_email_patcher = patch('corehq.apps.domain.forms.send_html_email_async')
+        self.mock_send_email = self.send_email_patcher.start()
+
+    def tearDown(self):
+        self.get_active_users_patcher.stop()
+        self.send_email_patcher.stop()
+
+    @patch('corehq.apps.domain.forms.get_user_model')
+    def test_valid_email_submission(self, mock_get_user_model):
+        mock_user = MagicMock(is_active=True, password='somepassword')
+        mock_manager = MagicMock(filter=MagicMock(return_value=[mock_user]))
+        mock_user_model = MagicMock(_default_manager=mock_manager)
+        mock_get_user_model.return_value = mock_user_model
+
+        form_data = {'email': 'test@example.com'}
+        form = forms.HQPasswordResetForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+    def test_username_like_input_validation(self):
+        form_data = {'email': 'username'}
+        form = forms.HQPasswordResetForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('email', form.errors)
+        self.assertIn('username', form.errors['email'][0].lower())
+
+    def test_invalid_email_format(self):
+        form_data = {'email': 'invalid.email'}
+        form = forms.HQPasswordResetForm(data=form_data)
+        self.assertFalse(form.is_valid())
+
+    def test_empty_email_field(self):
+        form_data = {'email': ''}
+        form = forms.HQPasswordResetForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('email', form.errors)
+
+
+class TestDomainPasswordResetForm(SimpleTestCase):
+    def setUp(self):
+        self.domain = 'test-domain'
+
+        self.get_user_model_patcher = patch('corehq.apps.domain.forms.get_user_model')
+        self.mock_get_user_model = self.get_user_model_patcher.start()
+
+        self.mock_user = MagicMock(is_active=True, password='somepassword')
+        self.mock_manager = MagicMock(filter=MagicMock(return_value=[self.mock_user]))
+        self.mock_user_model = MagicMock(_default_manager=self.mock_manager)
+        self.mock_get_user_model.return_value = self.mock_user_model
+
+        self.get_active_users_patcher = patch('corehq.apps.domain.forms.get_active_users_by_email')
+        self.mock_get_active_users = self.get_active_users_patcher.start()
+
+        self.generate_username_patcher = patch('corehq.apps.domain.forms.generate_mobile_username')
+        self.mock_generate_username = self.generate_username_patcher.start()
+
+        self.send_email_patcher = patch('corehq.apps.domain.forms.send_html_email_async')
+        self.mock_send_email = self.send_email_patcher.start()
+
+    def tearDown(self):
+        self.get_user_model_patcher.stop()
+        self.get_active_users_patcher.stop()
+        self.generate_username_patcher.stop()
+        self.send_email_patcher.stop()
+
+    def test_valid_email_submission(self):
+        form_data = {'email': 'test@example.com'}
+        form = forms.DomainPasswordResetForm(data=form_data, domain=self.domain)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['email'], 'test@example.com')
+
+    def test_valid_username_submission(self):
+        """Test form with valid username (gets converted to mobile username)."""
+        form_data = {'email': 'testuser'}
+        self.mock_generate_username.return_value = 'testuser@test-domain.commcarehq.org'
+
+        form = forms.DomainPasswordResetForm(data=form_data, domain=self.domain)
+        self.assertTrue(form.is_valid())
+
+        self.mock_generate_username.assert_called_once_with('testuser', self.domain, False)
+        self.assertEqual(form.cleaned_data['email'], 'testuser@test-domain.commcarehq.org')
+
+    def test_clean_email_handles_email_input(self):
+        form_data = {'email': 'test@example.com'}
+        form = forms.DomainPasswordResetForm(data=form_data, domain=self.domain)
+        form.full_clean()
+
+        self.mock_generate_username.assert_not_called()
+
+    def test_clean_email_handles_username_input(self):
+        form_data = {'email': 'testuser'}
+        self.mock_generate_username.return_value = 'testuser@test-domain.commcarehq.org'
+
+        form = forms.DomainPasswordResetForm(data=form_data, domain=self.domain)
+        form.full_clean()
+
+        self.mock_generate_username.assert_called_once_with('testuser', self.domain, False)
+
+    def test_save_method_calls_get_active_users_with_domain(self):
+        form_data = {'email': 'test@example.com'}
+        form = forms.DomainPasswordResetForm(data=form_data, domain=self.domain)
+        self.assertTrue(form.is_valid())
+
+        mock_request = Mock()
+        form.save(request=mock_request)
+
+        self.mock_get_active_users.assert_called_once_with('test@example.com', self.domain)
+
+    def test_invalid_email_format(self):
+        form_data = {'email': 'invalid@email@format.com'}
+        form = forms.DomainPasswordResetForm(data=form_data, domain=self.domain)
+        self.assertFalse(form.is_valid())
+
+
+class TestConfidentialDomainPasswordResetForm(SimpleTestCase):
+    def setUp(self):
+        self.domain = 'test-domain'
+
+        self.get_active_users_patcher = patch('corehq.apps.domain.forms.get_active_users_by_email')
+        self.mock_get_active_users = self.get_active_users_patcher.start()
+
+        self.generate_username_patcher = patch('corehq.apps.domain.forms.generate_mobile_username')
+        self.mock_generate_username = self.generate_username_patcher.start()
+
+        self.send_email_patcher = patch('corehq.apps.domain.forms.send_html_email_async')
+        self.mock_send_email = self.send_email_patcher.start()
+
+    def tearDown(self):
+        self.get_active_users_patcher.stop()
+        self.generate_username_patcher.stop()
+        self.send_email_patcher.stop()
+
+    def test_clean_email_suppresses_validation_errors(self):
+        with patch.object(forms.HQPasswordResetForm, 'clean_email') as mock_parent_clean:
+            mock_parent_clean.side_effect = forms.ValidationError("User does not exist")
+
+            form_data = {'email': 'nonexistent@example.com'}
+            form = forms.ConfidentialPasswordResetForm(data=form_data)
+            form.full_clean()
+
+        with patch.object(forms.DomainPasswordResetForm, 'clean_email') as mock_parent_clean:
+            mock_parent_clean.side_effect = forms.ValidationError("User does not exist")
+
+            form_data = {'email': 'nonexistent@example.com'}
+            form = forms.ConfidentialDomainPasswordResetForm(data=form_data, domain=self.domain)
+            form.full_clean()
+
+
+class TestPasswordResetFormsNoAutocompleteMixin(SimpleTestCase):
+    @patch('corehq.apps.domain.forms.settings')
+    def test_confidential_forms_autocomplete(self, mock_settings):
+        mock_settings.DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = True
+        form1 = forms.ConfidentialPasswordResetForm()
+        self.assertEqual(form1.fields['email'].widget.attrs.get('autocomplete'), 'off')
+        form2 = forms.ConfidentialDomainPasswordResetForm(domain='test')
+        self.assertEqual(form2.fields['email'].widget.attrs.get('autocomplete'), 'off')
+
+        mock_settings.DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
+        form1 = forms.ConfidentialPasswordResetForm()
+        self.assertNotEqual(form1.fields['email'].widget.attrs.get('autocomplete'), 'off')
+        form2 = forms.ConfidentialDomainPasswordResetForm(domain='test')
+        self.assertNotEqual(form2.fields['email'].widget.attrs.get('autocomplete'), 'off')
+
+
+class TestExtractAppInfoForm(SimpleTestCase):
+    def test_clean_app_url_with_valid_production_server(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_valid_india_server(self):
+        url = 'https://india.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'india')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_valid_eu_server(self):
+        url = 'https://eu.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'eu')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_without_trailing_slash(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_additional_path_segments(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/settings/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_http_protocol(self):
+        url = 'http://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must start with https://', str(form.errors['app_url']))
+
+    def test_clean_app_url_with_invalid_subdomain(self):
+        url = 'https://invalid.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
+
+    def test_clean_app_url_with_non_commcare_domain(self):
+        url = 'https://india.foo.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
+
+    @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'production')
+    def test_clean_app_url_same_server_validation(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The source app url matches the current server', str(form.errors['app_url']))
+
+    @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'india')
+    def test_clean_app_url_different_server_validation(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+
+    def test_clean_app_url_missing_path_segments(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_invalid_path_structure(self):
+        url = 'https://www.commcarehq.org/b/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_missing_apps_segment(self):
+        url = 'https://www.commcarehq.org/a/test-domain/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_missing_view_segment(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_invalid_app_id_format(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/invalid-app-id/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid app URL format', str(form.errors['app_url']))
+
+    def test_clean_app_url_with_query_parameters(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/?param=value'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_fragment(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/#section'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_forms_open_in_app(self):
+        url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/form/'
+        '545858ed6a3449ccb377ba6f0c8a3c61/source/#form/name'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'production')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+
+    def test_clean_app_url_with_port_number(self):
+        url = 'https://www.commcarehq.org:443/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))

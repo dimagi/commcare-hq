@@ -7,7 +7,7 @@ version = "1.0.0"
 # The version of Python that will be installed when creating a new venv is
 # stored in .python-version, and may need to be updated if requires-python is
 # changed here. Use `uv python pin VERSION`
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 
 dependencies = [
     "alembic",
@@ -55,7 +55,6 @@ dependencies = [
     "django>=4.2.16,<5.0",
     "djangorestframework",
     "dropbox",
-    "elasticsearch5>=5.0.0,<6.0.0",
     "elasticsearch6>=6.0.0,<7.0.0",
     "ethiopian-date-converter",
     "eulxml",
@@ -89,7 +88,6 @@ dependencies = [
     "prometheus-client",
     "psycogreen",
     "psycopg2-binary>=2.9.10",
-    "py-KISSmetrics",
     "pycryptodome>=3.6.6", # security update
     "python-dateutil",
     "python-imap",
@@ -135,8 +133,14 @@ Documentation = "https://commcare-hq.readthedocs.io"
 Repository = "https://github.com/dimagi/commcare-hq"
 
 [tool.uv]
-default-groups = ["dev", "sso"]
 required-version = ">=0.7.0"
+default-groups = ["dev", "sso"]
+no-binary-package = [
+    # fixes xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
+    # revisit if new lxml or xmlsec versions are released
+    # https://github.com/xmlsec/python-xmlsec/issues/316
+    "lxml",
+]
 
 [dependency-groups]
 dev = [

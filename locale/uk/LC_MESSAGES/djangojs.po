@@ -284,14 +284,6 @@ msgstr ""
 "моніторинг врожаю."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "Не вибирати"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "Вибрати все"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "Потрібна назва застосунку"
 
@@ -354,6 +346,12 @@ msgstr "Назва вкладки"
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
 msgstr "Умова відображення"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -1640,6 +1638,13 @@ msgstr ""
 "У вас є незбережені зміни для цього типу справи. Ви впевнені, що хочете "
 "продовжити?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
@@ -1669,8 +1674,15 @@ msgstr "Правда, якщо ВСІ властивості справи збі
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
-msgstr "Поза діапазоном фільтра. Не з’явиться після оновлення сторінки."
+msgid "Reassigned"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Copied!"
+msgid "Copied"
+msgstr "Скопійовано!"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1679,13 +1691,22 @@ msgstr "оновлено"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
-msgstr "Справу скопійовано"
+msgid "Today"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
-msgstr "Справи скопійовано"
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Reassigned <%- count %> cases"
+msgstr "Завантажити <%- count %> локацій"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Copied <%- count %> cases"
+msgstr "Завантажити <%- count %> локацій"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3584,12 +3605,6 @@ msgid "Error determining number of matching users"
 msgstr "Помилка при визначенні кількості відповідних користувачів"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"Електронна адреса обов'язкова, якщо користувачі підтверджують свої облікові "
-"записи самостійно."
-
-#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Будь ласка, введіть дійсну електронну адресу."
 
@@ -4226,6 +4241,26 @@ msgstr "Помилка! Відповідь: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ не вдалося виконати запит: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "Електронна адреса обов'язкова, якщо користувачі підтверджують свої "
+#~ "облікові записи самостійно."
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr "Поза діапазоном фільтра. Не з’явиться після оновлення сторінки."
+
+#~ msgid "Case copied"
+#~ msgstr "Справу скопійовано"
+
+#~ msgid "Cases copied"
+#~ msgstr "Справи скопійовано"
+
+#~ msgid "Select None"
+#~ msgstr "Не вибирати"
+
+#~ msgid "Select All"
+#~ msgstr "Вибрати все"
 
 #~ msgid "long"
 #~ msgstr "довгий"

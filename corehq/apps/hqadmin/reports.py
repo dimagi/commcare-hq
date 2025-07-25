@@ -14,7 +14,8 @@ from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
-from corehq.apps.auditcare.utils.export import navigation_events_by_user
+from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.auditcare.utils.export import filters_for_navigation_event_query, navigation_events_by_user
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
@@ -98,6 +99,8 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 class UserAuditReport(AdminReport, DatespanMixin):
     slug = 'user_audit_report'
     name = gettext_lazy("User Audit Events")
+    MAX_RECORDS = 4000  # Tuned based on performance testing and user experience
+    report_template_path = "hqadmin/user_audit_report.html"
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -130,21 +133,54 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @property
     def rows(self):
+        # Either domain or user must have a value
+        if not (self.selected_domain or self.selected_user):
+            return []
+
+        if self._is_limit_exceeded():
+            return []
+
         rows = []
         events = navigation_events_by_user(
-            self.selected_user, self.datespan.startdate, self.datespan.enddate
+            self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate
         )
         for event in events:
-            if not self.selected_domain or self.selected_domain == event.domain:
-                rows.append([
-                    event.event_date,
-                    event.user,
-                    event.domain or '',
-                    event.ip_address,
-                    event.request_method,
-                    event.request_path
-                ])
+            rows.append([
+                event.event_date,
+                event.user,
+                event.domain or '',
+                event.ip_address,
+                event.request_method,
+                event.request_path
+            ])
         return rows
+
+    @memoized
+    def _is_limit_exceeded(self):
+        where = filters_for_navigation_event_query(
+            user=self.selected_user,
+            domain=self.selected_domain,
+            start_date=self.datespan.startdate,
+            end_date=self.datespan.enddate
+        )
+        return NavigationEventAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
+
+    @property
+    def report_context(self):
+        context = super().report_context
+
+        if not (self.selected_domain or self.selected_user):
+            context['warning_message'] = _("You must specify either a username or a domain. "
+                    "Requesting all audit events across all users and domains would exceed system limits.")
+        elif self._is_limit_exceeded():
+            context['warning_message'] = self._get_limit_exceeded_message()
+
+        return context
+
+    def _get_limit_exceeded_message(self):
+        return _("Your search returned more than {max_records} records. "
+                 "Please narrow down your search by selecting a specific user, domain, or a shorter date range."
+                 ).format(max_records=self.MAX_RECORDS)
 
 
 class UserListReport(GetParamsMixin, AdminReport):

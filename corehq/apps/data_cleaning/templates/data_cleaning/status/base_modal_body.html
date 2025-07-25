@@ -10,10 +10,12 @@
     {% block task-status-progress %}
       <div class="alert alert-success">
         {% include "data_cleaning/status/partial/task_progress_bar.html" %}
-        {% block task-status-text %}{% endblock task-status-text %}
+        {% block task-status-text %}
+        {% endblock task-status-text %}
       </div>
     {% endblock task-status-progress %}
-    {% block modal-body %}{% endblock modal-body %}
+    {% block modal-body %}
+    {% endblock modal-body %}
   </div>
   <div class="modal-footer">
     <a
@@ -24,11 +26,7 @@
       {% trans "Exit session" %}
     </a>
     {% block continue-button %}
-      <button
-        type="button"
-        class="btn btn-primary"
-        disabled="disabled"
-      >
+      <button type="button" class="btn btn-primary" disabled="disabled">
         {% trans "Continue editing" %}
       </button>
     {% endblock continue-button %}

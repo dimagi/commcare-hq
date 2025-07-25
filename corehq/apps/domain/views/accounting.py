@@ -286,6 +286,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 subscription.previous_subscription.plan_version.plan.edition
                 if subscription.previous_subscription else ""
             ),
+            'upgrade_available': plan_version.plan.edition in SoftwarePlanEdition.SELF_SERVICE_ORDER[:-1],
         }
         info['has_account_level_credit'] = (
             any(
@@ -1174,6 +1175,8 @@ class PlanViewBase(DomainAccountingSettings):
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
+            'current_is_annual_plan': (self.current_subscription.plan_version.plan.is_annual_plan
+                                       if self.current_subscription is not None else False),
             'current_price': "${0:.0f}".format(current_price),
             'is_price_discounted': current_price < default_price,
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
@@ -1187,17 +1190,6 @@ class SelectPlanView(PlanViewBase):
     template_name = 'domain/bootstrap3/select_plan.html'
     urlname = 'domain_select_plan'
     step_title = gettext_lazy("Select Plan")
-
-    def dispatch(self, request, *args, **kwargs):
-        if not self.can_change_subscription:
-            raise Http404()
-        return super().dispatch(request, *args, **kwargs)
-
-    @property
-    def can_change_subscription(self):
-        subscription = self.current_subscription
-        is_annual_plan = subscription.plan_version.plan.is_annual_plan
-        return not is_annual_plan
 
     @property
     def page_context(self):
@@ -1278,27 +1270,12 @@ class SelectedAnnualPlanView(ContactFormViewBase):
     request_type = 'Annual Plan Request'
 
     @property
-    def on_annual_plan(self):
-        if self.current_subscription is None:
-            return False
-        else:
-            return self.current_subscription.plan_version.plan.is_annual_plan
-
-    @property
-    @memoized
     def edition(self):
-        if self.on_annual_plan:
-            return self.current_subscription.plan_version.plan.edition
-        edition = self.request.GET.get('plan_edition').title()
-        if edition not in [e[0] for e in SoftwarePlanEdition.CHOICES]:
-            raise Http404()
-        return edition
+        return self.current_subscription.plan_version.plan.edition
 
     @property
     def back_button(self):
-        if self.on_annual_plan:
-            return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-        return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
+        return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
 
 
 class SelectedCustomPlanView(ContactFormViewBase):
@@ -1314,6 +1291,22 @@ class SelectedCustomPlanView(ContactFormViewBase):
     @property
     def back_button(self):
         return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+
+
+class GeneralPlanQuestionView(ContactFormViewBase):
+    urlname = 'select_plan_general_question'
+    request_type = 'Plan Question'
+
+    @property
+    def edition(self):
+        return (
+            self.current_subscription.plan_version.plan.edition
+            if self.current_subscription is not None else ''
+        )
+
+    @property
+    def back_button(self):
+        return (_("Back to Select Plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
 
 
 class ConfirmSelectedPlanView(PlanViewBase):
@@ -1341,7 +1334,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
 
     @property
     def is_annual_plan(self):
-        return self.request.POST.get('is_annual_plan') == 'true'
+        return self.request.POST.get('is_annual_plan', '').lower() == 'true'
 
     @property
     @memoized
@@ -1413,6 +1406,8 @@ class ConfirmSelectedPlanView(PlanViewBase):
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
+            'current_is_annual_plan': (self.current_subscription.plan_version.plan.is_annual_plan
+                                       if self.current_subscription is not None else False),
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'new_plan_edition': self.edition,
@@ -1429,8 +1424,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
     def main_context(self):
         context = super(ConfirmSelectedPlanView, self).main_context
         context.update({
-            'plan': (self.current_subscription.plan_version.user_facing_description if self.is_same_edition
-                     else self.selected_plan_version.user_facing_description),
+            'plan': self.selected_plan_version.user_facing_description,
         })
         return context
 
@@ -1539,9 +1533,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
             if is_saved:
                 if not request.user.is_superuser:
-                    if self.billing_account_info_form.is_same_edition():
-                        self.send_keep_subscription_email()
-                    elif self.billing_account_info_form.is_downgrade_from_paid_plan():
+                    if self.billing_account_info_form.is_downgrade_from_paid_plan():
                         self.send_downgrade_email()
                 if self.billing_account_info_form.is_same_edition():
                     # Choosing to keep the same subscription
@@ -1601,22 +1593,6 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         )
         send_mail_async.delay(
             '{}Subscription downgrade for {}'.format(
-                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
-                self.request.domain
-            ), message, [settings.GROWTH_EMAIL]
-        )
-
-    def send_keep_subscription_email(self):
-        message = '\n'.join([
-            '{user} decided to keep their subscription for {domain} of {new_plan}',
-        ]).format(
-            user=self.request.couch_user.username,
-            domain=self.request.domain,
-            old_plan=self.request.POST.get('old_plan', 'unknown'),
-        )
-
-        send_mail_async.delay(
-            '{}Subscription kept for {}'.format(
                 '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
                 self.request.domain
             ), message, [settings.GROWTH_EMAIL]

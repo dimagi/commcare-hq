@@ -13,8 +13,7 @@ from corehq.apps.case_search.const import METADATA_IN_REPORTS
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.util import get_user_id_from_form
-from corehq.apps.reports.v2.utils import report_date_to_json
+from corehq.apps.reports.util import get_user_id_from_form, report_date_to_json
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.form_processor.models import CommCareCase

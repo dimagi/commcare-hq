@@ -29,7 +29,7 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.casegroups.dbaccessors import (
     get_case_groups_in_domain,
@@ -71,7 +71,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.models import PageInfoContext
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import (
@@ -82,9 +81,6 @@ from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.reports.standard.cases.filters import CaseListExplorerColumns
-from corehq.apps.reports.v2.reports.explore_case_data import (
-    ExploreCaseDataReport,
-)
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -163,45 +159,6 @@ class DataInterfaceSection(BaseDomainView):
     @property
     def section_url(self):
         return reverse("data_interfaces_default", args=[self.domain])
-
-
-@location_safe
-class ExploreCaseDataView(BaseDomainView):
-    template_name = "data_interfaces/bootstrap3/explore_case_data.html"
-    urlname = "explore_case_data"
-    page_title = gettext_lazy("Explore Case Data")
-
-    def dispatch(self, request, *args, **kwargs):
-        if hasattr(request, 'couch_user') and not self.report_config.has_permission:
-            raise Http404()
-        return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse("data_interfaces_default", args=[self.domain])
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-    @property
-    @memoized
-    def report_config(self):
-        return ExploreCaseDataReport(self.request, self.domain)
-
-    @property
-    def page_context(self):
-        return {
-            'report': self.report_config.context,
-            'section': PageInfoContext(
-                title=DataInterfaceSection.section_name,
-                url=reverse(DataInterfaceSection.urlname, args=[self.domain]),
-            ),
-            'page': PageInfoContext(
-                title=self.page_title,
-                url=reverse(self.urlname, args=[self.domain]),
-            ),
-        }
 
 
 class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
@@ -635,9 +592,11 @@ class BulkCaseActionSatusView(DataInterfaceSection):
 
     def get(self, request, *args, **kwargs):
         if self.is_copy_action:
-            action_text = "Copying"
+            progress_text = _('Copying cases. This may take some time.')
+            error_text = _('Bulk case copying failed. We have logged this failure.')
         else:
-            action_text = "Reassigning"
+            progress_text = _('Reassigning cases. This may take some time.')
+            error_text = _('Bulk case reassigning failed. We have logged this failure.')
 
         context = super(BulkCaseActionSatusView, self).main_context
         context.update({
@@ -645,10 +604,8 @@ class BulkCaseActionSatusView(DataInterfaceSection):
             'download_id': kwargs['download_id'],
             'poll_url': self.poll_url(kwargs['download_id']),
             'title': _(self.page_title),
-            'progress_text': _("{action_text} Cases. This may take some time...").format(action_text=action_text),
-            'error_text': _(
-                "Bulk Case {action_text} failed for some reason and we have noted this failure."
-            ).format(action_text=action_text),
+            'progress_text': progress_text,
+            'error_text': error_text,
         })
         return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
@@ -1237,7 +1194,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         subscription = Subscription.get_active_subscription_by_domain(rule.domain)
         managed_by_saas = bool(subscription and subscription.service_type == SubscriptionType.PRODUCT)
 
-        track_workflow(
+        track_workflow_noop(
             username,
             'Created Dedupe Rule',
             {

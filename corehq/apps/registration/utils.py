@@ -41,7 +41,6 @@ from corehq.toggles import USE_LOGO_IN_SYSTEM_EMAILS
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
-APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
 
 _soft_assert_registration_issues = soft_assert(
     to=[
@@ -53,7 +52,7 @@ _soft_assert_registration_issues = soft_assert(
 
 
 def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=False, domain=None, ip=None,
-                                   commit=True):
+                                   language=None, commit=True):
     full_name = form.cleaned_data['full_name']
     new_user = activate_new_user(
         username=form.cleaned_data['email'],
@@ -66,14 +65,15 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
         domain=domain,
         ip=ip,
         atypical_user=form.cleaned_data.get('atypical_user', False),
+        language=language,
         commit=commit
     )
     return new_user
 
 
 def activate_new_user(
-    username, password, created_by, created_via, first_name=None, last_name=None,
-    is_domain_admin=False, domain=None, ip=None, atypical_user=False, commit=True
+    username, password, created_by, created_via, first_name=None, last_name=None, is_domain_admin=False,
+    domain=None, ip=None, atypical_user=False, language=None, commit=True
 ):
     from corehq.apps.analytics.tasks import record_event
     now = datetime.utcnow()
@@ -106,6 +106,7 @@ def activate_new_user(
     new_user.date_joined = now
     new_user.last_password_set = now
     new_user.atypical_user = atypical_user
+    new_user.language = language
     if commit:
         new_user.save()
 

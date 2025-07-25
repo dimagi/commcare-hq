@@ -10,7 +10,7 @@ import { Modal } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import toggles from "hqwebapp/js/toggles";
 import googleAnalytics from "analytix/js/google";
-import kissmetricsAnalytics from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import constants from "export/js/const";
 import utils from "export/js/utils";
 import "hqwebapp/js/bootstrap5/validators.ko";  // needed for validation of customPathString
@@ -430,7 +430,7 @@ ExportInstance.prototype.recordSaveAnalytics = function (callback) {
     if (this.isNew()) {
         eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
         googleAnalytics.track.event(eventCategory, 'Custom export creation', '');
-        kissmetricsAnalytics.track.event("Clicked 'Create' in export edit page", {}, callback);
+        noopMetrics.track.event("Clicked 'Create' in export edit page", {}, callback);
     } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
         callback();
     }

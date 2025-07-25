@@ -4,7 +4,7 @@ import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManagerUtils from "app_manager/js/app_manager";
-import kissmetrix from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import formWorkflow from "app_manager/js/forms/form_workflow";
 import toggles from "hqwebapp/js/toggles";
 import customInstancesModule from "app_manager/js/forms/custom_instances";
@@ -18,6 +18,7 @@ import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable binding
+import casePropertyWarningViewModel from "data_dictionary/js/partials/case_property_warning";
 
 appManagerUtils.setPrependedPageTitle("\u2699 ", true);
 appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
@@ -109,7 +110,7 @@ $(function () {
 
     // Analytics for renaming form
     $(".appmanager-edit-title").on('click', '.btn-primary', function () {
-        kissmetrix.track.event("Renamed form from form settings page");
+        noopMetrics.track.event("Renamed form from form settings page");
     });
 
     // Settings > Logic
@@ -169,6 +170,14 @@ $(function () {
 
     // Case Management > Data dictionary descriptions for case properties
     $('.property-description').popover();
+
+
+    var $casePropertyWarning = $('#case-property-warning');
+    const initialWarningData = initialPageData.get('case_property_warning');
+    const warningViewModel = new casePropertyWarningViewModel(initialWarningData.limit);
+    warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count);
+    $casePropertyWarning.koApplyBindings(warningViewModel);
+
 
     // Advanced > XForm > Upload
     $("#xform_file_input").change(function () {

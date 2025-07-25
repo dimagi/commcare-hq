@@ -287,14 +287,6 @@ msgstr ""
 "materna, asistencia estudiantil o monitoreo de cultivos."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select None"
-msgstr "Seleccionar Ninguno"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-msgid "Select All"
-msgstr "Seleccionar Todos"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr "El nombre de la aplicación es obligatorio"
 
@@ -357,6 +349,15 @@ msgstr "Nombre de la pestaña"
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Display Condition"
 msgstr "Condición de Visualización"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"Advertencia: La propiedad calculada utilizada no es compatible con el "
+"almacenamiento en caché y puede resultar en datos obsoletos en las "
+"propiedades de la lista de casos"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Oct 31, "
@@ -1653,6 +1654,17 @@ msgstr ""
 "Tiene cambios sin guardar en este tipo de caso. ¿Está seguro de que desea "
 "continuar?"
 
+#: corehq/apps/data_dictionary/static/data_dictionary/js/partials/case_property_warning.js
+msgid ""
+"You've saved <%- count %> case properties to the '<%- type %>' case. We "
+"recommend at most <%- limit %> case properties per case type, otherwise you "
+"may run into performance issues at the time of data collection and analysis."
+msgstr ""
+"Has guardado <%- count %> propiedades de caso en el caso '<%- type %>'. "
+"Recomendamos un máximo de <%- limit %> propiedades de caso por tipo de caso;"
+" de lo contrario, podrías experimentar problemas de rendimiento al momento "
+"de la recolección y análisis de datos."
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
@@ -1682,8 +1694,15 @@ msgstr "Verdadero cuando TODAS las propiedades del caso coinciden"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
-msgstr "Fuera del rango del filtro. No aparecerá al actualizar la página."
+msgid "Reassigned"
+msgstr "Reasignado"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Copied!"
+msgid "Copied"
+msgstr "¡Copiado!"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1692,13 +1711,22 @@ msgstr "actualizado"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
-msgstr "Caso copiado"
+msgid "Today"
+msgstr "Hoy"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
-msgstr "Casos copiados"
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Reassigned <%- count %> cases"
+msgstr "Descargar <%- count %> ubicaciones"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Copied <%- count %> cases"
+msgstr "Descargar <%- count %> ubicaciones"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3625,12 +3653,6 @@ msgid "Error determining number of matching users"
 msgstr "Error al determinar el número de usuarios coincidentes"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"La dirección de correo electrónico es obligatoria cuando las personas "
-"confirman sus propias cuentas."
-
-#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Por favor ingrese una dirección de correo válida."
 
@@ -4276,6 +4298,26 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ no pudo realizar la solicitud: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "La dirección de correo electrónico es obligatoria cuando las personas "
+#~ "confirman sus propias cuentas."
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr "Fuera del rango del filtro. No aparecerá al actualizar la página."
+
+#~ msgid "Case copied"
+#~ msgstr "Caso copiado"
+
+#~ msgid "Cases copied"
+#~ msgstr "Casos copiados"
+
+#~ msgid "Select None"
+#~ msgstr "Seleccionar Ninguno"
+
+#~ msgid "Select All"
+#~ msgstr "Seleccionar Todos"
 
 #~ msgid "long"
 #~ msgstr "largo"
