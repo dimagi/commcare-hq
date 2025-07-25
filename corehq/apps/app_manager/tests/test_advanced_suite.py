@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.const import (
@@ -363,6 +365,7 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             "./entry[2]"
         )
 
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
     def test_advanced_module_remote_request(self, *args):
         factory = AppFactory(domain='domain', build_version='2.53.0')
         factory.app._id = "123"
