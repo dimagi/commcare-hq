@@ -59,6 +59,7 @@ class RegistryDataSourceProvider(DataSourceProvider):
 
     def get_all_data_sources(self, domain=None):
         if domain:
+            # TODO support lookup by items in config.data_domains
             for doc in get_registry_data_sources_by_domain(domain):
                 if not doc.is_deactivated:
                     yield doc

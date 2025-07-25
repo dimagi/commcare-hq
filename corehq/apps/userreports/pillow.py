@@ -2,7 +2,7 @@ import hashlib
 import signal
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from django.conf import settings
 
@@ -41,7 +41,7 @@ from .data_source_providers import (
 )
 from .exceptions import UserReportsWarning
 from .models import AsyncIndicator
-from .pillow_utils import rebuild_sql_tables
+from .pillow_utils import TaskCoordinator, rebuild_sql_tables
 from .specs import EvaluationContext
 from .util import get_indicator_adapter
 
@@ -136,12 +136,10 @@ class UcrTableManager(ABC):
         :param run_migrations: If True, rebuild tables if the data source changes. Otherwise,
             do not attempt to change database
         """
-        self.bootstrapped = False
-        self.last_bootstrapped = self.last_imported = datetime.utcnow()
         self.bootstrap_interval = bootstrap_interval or REBUILD_CHECK_INTERVAL
         self.run_migrations = run_migrations
-        Cache = MigrationCache if run_migrations else TTLCache
-        self.cache = Cache(self.iter_adapters)
+        self.rebuilds = TaskCoordinator('rebuild-ucr', self.bootstrap_interval)
+        self.cache = TTLCache(self.iter_adapters)
 
     def iter_adapters(self, domain=None, *, since=None):
         """Generate (domain, adapter) tuples for domain *or* since timestamp
@@ -195,40 +193,11 @@ class UcrTableManager(ABC):
         """Generate (domain, config) tuples of configs that have changed since timestamp"""
         raise NotImplementedError
 
-    def needs_bootstrap(self):
-        """Returns True if the manager needs to be bootstrapped"""
-        return (
-            not self.bootstrapped
-            or (
-                datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
-                and self.run_migrations
-            )
-            #or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
-        )
-
-    def bootstrap_if_needed(self):
-        """Bootstrap the manager with data sources or else check for updated data sources"""
-        if self.needs_bootstrap():
-            # previously, all configs were reloaded from the database in
-            # ConfigurableReportTableManager.bootstrap -> _do_bootstrap
-            # which was only done on startup in non-migration processes
-            self.bootstrap()
-        else:
-            # was the equivalent of this previously done on every change? yes
-            # old code: self._update_modified_data_sources()
-            self.cache.refresh()
-
-    def bootstrap(self):  # TODO fix tests that pass configs=...
-        """Initialize the manager with data sources and adapters"""
-        if self.run_migrations:
-            rebuild_sql_tables(self.cache.get_adapters())
-        #else:
-        #    # TODO possibly non-sensical place to do this since it only happens
-        #    # on initial bootstrap because of `and self.run_migrations` in needs_bootstrap
+    def refresh_cache(self):
+        self.cache.refresh()
+        #if self.domains_updated + self.domains_interval < datetime.now(UTC):
         #    self.domains_to_skip = all_domains_with_migrations_in_progress()
-
-        self.bootstrapped = True
-        self.last_bootstrapped = datetime.utcnow()
+        #    self.domains_updated = datetime.now(UTC)
 
     def get_adapters(self, domain):
         """Get the list of table adapters for the given domain.
@@ -237,7 +206,17 @@ class UcrTableManager(ABC):
         """
         #if domain in self.domains_to_skip:
         #    return []
-        return self.cache.get_adapters(domain)
+        adapters = self.cache.get_adapters(domain)
+        self._bootstrap(adapters)
+        return adapters
+
+    def _bootstrap(self, adapters):
+        """Initialize the manager with data sources and adapters"""
+        if self.run_migrations:
+            needs_rebuild = self.rebuilds.should_run
+            to_rebuild = [a for a in adapters if needs_rebuild(a.config_id)]
+            if to_rebuild:
+                rebuild_sql_tables(to_rebuild)
 
     def remove_adapter(self, domain, adapter):
         """Remove an adapter from the list of managed adapters.
@@ -527,7 +506,7 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
         self.domain_timing_context.clear()
 
     def bootstrap_if_needed(self):
-        self.table_manager.bootstrap_if_needed()
+        self.table_manager.refresh_cache()
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
@@ -696,7 +675,7 @@ def get_kafka_ucr_registry_pillow(
     process_num=0,
     dedicated_migration_process=False,
     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
-    ucr_configs=None,
+    ucr_configs=None,  # TODO remove test arg
     **kwargs,
 ):
     """UCR pillow that reads from all 'case' Kafka topics and writes data into the UCR database tables
