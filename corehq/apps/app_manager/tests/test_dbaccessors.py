@@ -19,6 +19,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_current_app,
     get_latest_app_ids_and_versions,
+    get_latest_app_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
     get_latest_released_app_version,
@@ -273,6 +274,7 @@ class TestAppGetters(TestCase):
         factory.new_basic_module("case", "case")
         other_app = factory.app
         other_app.save()
+        cls.other_app_id = other_app._id
 
         app_adapter.bulk_index([app, cls.v2_build, cls.v4_build, other_app], refresh=True)
 
@@ -344,3 +346,21 @@ class TestAppGetters(TestCase):
     def test_get_case_types_from_apps(self):
         res = get_case_types_from_apps(self.domain)
         self.assertEqual(res, {'bar', 'case'})
+
+    def test_get_latest_apps_save(self):
+        self.assertItemsEqual(
+            get_latest_app_ids(self.domain, 'save'),
+            [self.app_id, self.other_app_id],
+        )
+
+    def test_get_latest_apps_build(self):
+        self.assertItemsEqual(
+            get_latest_app_ids(self.domain, 'build'),
+            [self.v4_build._id],
+        )
+
+    def test_get_latest_apps_release(self):
+        self.assertItemsEqual(
+            get_latest_app_ids(self.domain, 'release'),
+            [self.v4_build._id],
+        )
