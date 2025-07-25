@@ -657,7 +657,7 @@ class BillingContactInfo(models.Model):
         max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
     )
     company_name = models.CharField(
-        max_length=50, null=True, blank=True,
+        max_length=100, null=True, blank=True,
         verbose_name=_("Company / Organization")
     )
     first_line = models.CharField(

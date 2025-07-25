@@ -125,6 +125,7 @@ accounting
  0103_bulk_data_cleaning_priv
  0104_fix_priv_community_rename
  0105_alter_billingcontactinfo_city_and_more
+ 0106_alter_billingcontactinfo_company_name
 admin
  0001_initial
  0002_logentry_remove_auto_add
