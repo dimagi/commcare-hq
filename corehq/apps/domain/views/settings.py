@@ -572,6 +572,13 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 )
         return super().get_success_url()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {"username": self.user.username}
+        )
+        return context
+
     def get(self, request, *args, **kwargs):
 
         self.extra_context['hide_password_feedback'] = has_custom_clean_password()
