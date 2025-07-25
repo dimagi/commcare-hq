@@ -15,7 +15,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed, with_prefix
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
@@ -434,7 +434,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         try:
             return clean_password(self.cleaned_data.get('password'))
         except forms.ValidationError:
-            track_workflow(self.cleaned_data.get('email'), 'Password Failure')
+            track_workflow_noop(self.cleaned_data.get('email'), 'Password Failure')
             raise
 
     def clean(self):
@@ -493,7 +493,9 @@ class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):
     """
     For Mobile Workers to confirm their accounts using Email.
     """
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs['readonly'] = 'readonly'
 
 
 class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):

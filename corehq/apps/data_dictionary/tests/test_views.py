@@ -15,6 +15,8 @@ from corehq.apps.data_dictionary.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.es import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.util.test_utils import flag_enabled, privilege_enabled
@@ -367,8 +369,8 @@ class TestDeprecateOrRestoreCaseTypeView(DataDictionaryViewTestBase):
         self.assertEqual(case_prop_group_count, 0)
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
 @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
-@patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonTest(DataDictionaryViewTestBase):
@@ -521,7 +523,8 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                     group_data.update({
                         "id": group.id,
                         "description": "",
-                        "deprecated": False
+                        "deprecated": False,
+                        "index": group.index,
                     })
                 expected_output["groups"].append(group_data)
         return expected_output

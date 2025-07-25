@@ -221,6 +221,7 @@ class privilege_enabled:
         'corehq.apps.users.views.mobile.users.domain_has_privilege',
         'corehq.pillows.case_search.domain_has_privilege',
         'django_prbac.decorators.has_privilege',
+        'corehq.apps.data_cleaning.utils.cases.domain_has_privilege',
     )
 
     def __init__(self, privilege_slug):
@@ -254,6 +255,17 @@ class privilege_enabled:
     def __exit__(self, exc_type, exc_val, exc_tb):
         for patch in self.patches:
             patch.stop()
+
+
+def has_permissions(**kwargs):
+    """
+    Patch permissions checks by passing in the kwargs you'd use to init HqPermissions
+
+        with has_permissions(edit_commcare_users=True, edit_web_users=False):
+            ...
+    """
+    from corehq.apps.users.models import HqPermissions
+    return mock.patch("corehq.apps.users.models.DomainMembership.permissions", HqPermissions(**kwargs))
 
 
 class DocTestMixin(object):

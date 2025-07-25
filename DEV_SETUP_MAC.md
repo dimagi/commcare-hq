@@ -6,39 +6,23 @@
 - You will need `brew` aka [Homebrew](https://brew.sh) for package management.
 
 
-- It is highly recommended that you install a python environment manager. Two options are:
+- First, install [uv](https://docs.astral.sh/uv/) to manage Python versions and virtualenvs.
 
-  - [pyenv](https://github.com/pyenv/pyenv#installation) (recommended) and `pyenv-virtualenv`
+  ```sh
+  brew install uv
+  ```
 
-    ```sh
-    brew install pyenv pyenv-virtualenv
-    ```
+  To create a new HQ virtual environment, you can do the following:
 
-    To create a new HQ virtual environment running Python 3.9.11, you can do the following:
+  ```sh
+  uv venv
+  ```
 
-    ```sh
-    pyenv virtualenv 3.9.11 hq
-    ```
+  Then to enter the environment:
 
-    Then to enter the environment:
-
-    ```sh
-    pyenv activate hq
-    ```
-
-  - [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
-
-    Please note that if you use `virtualenvwrapper`, you also need to install `pip`
-
-    To install `pip`:
-
-    ```sh
-    sudo python get-pip.py
-    ```
-    Then install `virtualenvwrapper` with `pip`:
-    ```sh
-    sudo python3 -m pip install virtualenvwrapper
-    ```
+  ```sh
+  source .venv/bin/activate
+  ```
 
 - Java (JDK 17)
 
@@ -88,7 +72,7 @@
 
   [oracle_jdk17]: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 
-## Issues Installing `requirements/requirements.txt`
+## Issues With `uv sync`
 
 - `psycopg2` will complain
 
@@ -96,7 +80,7 @@
   ```sh
   brew install libpq --build-from-source
   export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
-  pip install psycopg2-binary
+  uv pip install psycopg2-binary
   ```
   
   Or try: ([reference](https://rogulski.it/blog/install-psycopg2-on-apple-m1/)). Used on Mac OS 12.X Monterey.
@@ -105,16 +89,16 @@
     export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
   ```
 
-- `pip install xmlsec` gives `ImportError`
+- `uv pip install xmlsec` gives `ImportError`
 
-  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `pip install xmlsec` is currently broken.
+  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `uv pip install xmlsec` is currently broken.
   This is a workaround. This solution also assumes your `homebrew` version is greater than `4.0.13`*:
 
 1. run `brew unlink libxmlsec1`
 2. overwrite the contents of `/opt/homebrew/opt/libxmlsec1/.brew/libxmlsec1.rb` with
     [this formula](https://raw.githubusercontent.com/Homebrew/homebrew-core/7f35e6ede954326a10949891af2dba47bbe1fc17/Formula/libxmlsec1.rb).
 3. install that formula (`brew install /opt/homebrew/opt/libxmlsec1/.brew/libxmlsec1.rb`)
-4. run `pip install xmlsec`
+4. run `uv pip install xmlsec`
 
 (*)The path to `libxmlsec1.rb` might differ on older versions of homebrew
 
@@ -130,7 +114,7 @@ and [thread](https://github.com/xmlsec/python-xmlsec/issues/254) are good starti
 
   This can be fixed by installing a version of `pynacl` specific to the system architecture:
   ```sh
-  arch -arm64 pip install --upgrade --force-reinstall pynacl
+  arch -arm64 uv pip install --upgrade --force-reinstall pynacl
   ```
 
 
@@ -157,7 +141,7 @@ Note: `kafka` will be very cranky on start up. You might have to restart it if y
 
 ### Installing and running Elasticsearch 6.8.23 outside of Docker
 
-First, ensure that you have Java 8 running. `java -version` should output something like `openjdk version "1.8.0_322"`.
+First, ensure that you have Java 17 running. `java -version` should output something like `openjdk version "17.0.7" 2023-04-18 LTS"`.
 Use `sdkman` or `jenv` to manage your local java versions.
 
 Download the `tar` file for elasticsearch 6.8.23

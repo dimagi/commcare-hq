@@ -26,7 +26,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_APP_TEMPLATE_FORM_ID,
     send_hubspot_form,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.app_manager import add_ons, id_strings
 from corehq.apps.app_manager.commcare_settings import (
@@ -91,7 +91,6 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     track_domain_request,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -104,7 +103,6 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.toggles.shortcuts import set_toggles
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -151,7 +149,7 @@ def default_new_app(request, domain):
     annoying for the Dashboard.
     """
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow(request.couch_user.username, "User created a new blank application")
+    track_workflow_noop(request.couch_user.username, "User created a new blank application")
 
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
@@ -451,10 +449,6 @@ def copy_app(request, domain):
     def _inner(request, to_domain, data, from_domain=domain):
         clear_app_cache(request, to_domain)
 
-        if data['toggles']:
-            toggle_slugs = data['toggles'].split(",")
-            set_toggles(toggle_slugs, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
-
         linked = data.get('linked')
         if linked:
             return _create_linked_app(request, app_id, data['build_id'], from_domain, to_domain, data['name'])
@@ -510,7 +504,7 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow(request.couch_user.username, "User created an application from a template")
+    track_workflow_noop(request.couch_user.username, "User created an application from a template")
     clear_app_cache(request, domain)
 
     build = load_app_from_slug(domain, request.user.username, slug)
@@ -623,66 +617,6 @@ def _valid_exchange_record_exists_helper(app_id, records):
             if version["id"] == app_id:
                 return True
     return False
-
-
-@require_can_edit_apps
-def import_app(request, domain):
-    template = "app_manager/import_app.html"
-    if request.method == "POST":
-        clear_app_cache(request, domain)
-        name = request.POST.get('name')
-        file = request.FILES.get('source_file')
-
-        valid_request = True
-        if not name:
-            messages.error(request, _("You must submit a name for the application you are importing."))
-            valid_request = False
-        if not file:
-            messages.error(request, _("You must upload the app source file."))
-            valid_request = False
-
-        try:
-            if valid_request:
-                source = json.load(file)
-        except json.decoder.JSONDecodeError:
-            messages.error(request, _("The file uploaded is an invalid JSON file"))
-            valid_request = False
-
-        if not valid_request:
-            return render(request, template, {'domain': domain})
-
-        assert (source is not None)
-        app = import_app_util(source, domain, {'name': name}, request=request)
-
-        return back_to_main(request, domain, app_id=app._id)
-    else:
-        app_id = request.GET.get('app')
-        redirect_domain = request.GET.get('domain') or None
-        if redirect_domain is not None:
-            redirect_domain = redirect_domain.lower()
-            if Domain.get_by_name(redirect_domain):
-                return HttpResponseRedirect(
-                    reverse('import_app', args=[redirect_domain])
-                    + "?app={app_id}".format(app_id=app_id)
-                )
-            else:
-                if redirect_domain:
-                    messages.error(request, "We can't find a project called \"%s\"." % redirect_domain)
-                else:
-                    messages.error(request, "You left the project name blank.")
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
-
-        if app_id:
-            app = get_app(None, app_id)
-            assert (app.get_doc_type() in ('Application', 'RemoteApp'))
-            assert (request.couch_user.is_member_of(app.domain))
-        else:
-            app = None
-
-        return render(request, template, {
-            'domain': domain,
-            'app': app,
-        })
 
 
 @require_GET
@@ -1061,5 +995,5 @@ def pull_upstream_app(request, domain, app_id):
             messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
-    track_workflow(request.couch_user.username, "Linked domain: upstream app pulled")
+    track_workflow_noop(request.couch_user.username, "Linked domain: upstream app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

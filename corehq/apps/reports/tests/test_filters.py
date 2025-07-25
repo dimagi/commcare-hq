@@ -20,13 +20,10 @@ from corehq.apps.reports.filters.forms import (
     FormsByApplicationFilterParams,
 )
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
-from corehq.apps.users.models import (
-    CommCareUser,
-    CouchUser,
-    DomainMembership,
-    WebUser,
-)
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.util.test_utils import generate_cases, has_permissions
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -137,7 +134,7 @@ class TestExpandedMobileWorkerFilter(TestCase):
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
         self.user_assigned_locations = [
-            make_loc('root', domain=self.domain.name, type=self.location_type.code).sql_location
+            make_loc('root', domain=self.domain.name, type=self.location_type.code)
         ]
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
@@ -163,7 +160,7 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
         self.user_assigned_locations = [
-            make_loc('root', domain=self.domain.name, type=self.location_type.code).sql_location
+            make_loc('root', domain=self.domain.name, type=self.location_type.code)
         ]
         self.request = RequestFactory().get('/a/{self.domain}/')
         self.request.couch_user = WebUser()
@@ -228,7 +225,7 @@ class TestCaseListFilter(TestCase):
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
         self.user_assigned_locations = [
-            make_loc('root', domain=self.domain.name, type=self.location_type.code).sql_location
+            make_loc('root', domain=self.domain.name, type=self.location_type.code)
         ]
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
@@ -243,8 +240,7 @@ class TestCaseListFilter(TestCase):
         self.request.can_access_all_locations = True
         self.request.project = self.domain
         emwf = self.subject(self.request)
-        default_selections = emwf.get_default_selections()
-        self.assertEqual(default_selections, emwf.default_selections)
+        emwf.get_default_selections()
         assert not assigned_locations_patch.called
 
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')
@@ -260,106 +256,96 @@ def _make_filter(slug, value):
     return {'slug': slug, 'value': value}
 
 
-@es_test(requires=[user_adapter])
+@es_test(requires=[user_adapter], setup_class=True)
 class TestEMWFilterOutput(TestCase):
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setUpTestData(cls):
         cls.domain = 'emwf-filter-output-test'
-        cls.user = WebUser(username='test@cchq.com', domains=[cls.domain])
-        cls.user.domain_memberships = [DomainMembership(domain=cls.domain, role_id='MYROLE')]
-        from corehq.apps.reports.tests.filters.user_list import dummy_user_list
+        cls.domain_obj = Domain(name=cls.domain, is_active=True)
+        cls.domain_obj.save()
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.location_type = LocationType.objects.create(domain=cls.domain, name='Place')
+        cls.accessible_location = SQLLocation.objects.create(
+            site_code='accessible place', domain=cls.domain, location_type=cls.location_type)
+        cls.inaccessible_location = SQLLocation.objects.create(
+            site_code='inaccessible place', domain=cls.domain, location_type=cls.location_type)
 
-        for user in dummy_user_list:
-            user_obj = CouchUser.get_by_username(user['username'])
-            if user_obj:
-                user_obj.delete('')
+        cls.user = WebUser.create(cls.domain, 'test@cchq.com', 'password', None, None)
+        cls.user.set_location(cls.domain, cls.accessible_location)
+
         cls.user_list = []
-        for user in dummy_user_list:
-            user_obj = CommCareUser.create(**user) if user['doc_type'] == 'CommcareUser'\
-                else WebUser.create(**user)
-            user_obj.save()
+        for UserClass, user_id, is_active, location in [
+                (CommCareUser, 'active', True, None),
+                (CommCareUser, 'active_accessible', True, cls.accessible_location),
+                (CommCareUser, 'active_inaccessible', True, cls.inaccessible_location),
+                (CommCareUser, 'deactive', False, None),
+                (CommCareUser, 'deactive_accessible', False, cls.accessible_location),
+                (CommCareUser, 'deactive_inaccessible', False, cls.inaccessible_location),
+                (WebUser, 'web', True, None),
+                (WebUser, 'web_accessible', True, cls.accessible_location),
+                (WebUser, 'web_inaccessible', True, cls.inaccessible_location),
+                (WebUser, 'web_deactive', False, cls.accessible_location),
+        ]:
+            user_obj = UserClass.create(
+                domain=cls.domain,
+                uuid=user_id,
+                username=user_id,
+                password='Some secret Pass',
+                created_by=None,
+                created_via=None,
+                timezone="UTC",
+                is_active=is_active,
+                commit=False,
+            )
+            if location and UserClass is CommCareUser:
+                user_obj.set_location(location, commit=False)
+            if location and UserClass is WebUser:
+                user_obj.set_location(cls.domain, location, commit=False)
+            user_obj.save(fire_signals=False)
             cls.user_list.append(user_obj)
-
-    def setUp(self):
-        super().setUp()
-        self._send_users_to_es()
-
-    @classmethod
-    def tearDownClass(cls):
-        for user in cls.user_list:
-            user.delete(cls.domain, deleted_by=None)
-        super().tearDownClass()
-
-    def _send_users_to_es(self):
-        for user_obj in self.user_list:
             user_adapter.index(
                 user_obj,
                 refresh=True
             )
+            cls.addClassCleanup(user_obj.delete, None, None)
 
-    def test_with_active_slug(self):
-        mobile_user_and_group_slugs = ['t__0']
-        user_query = ExpandedMobileWorkerFilter.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-            self.user,
-        )
-        user_ids = user_query.values_list('_id', flat=True)
-        expected_ids = ['active1', 'active2']
-        self.assertCountEqual(user_ids, expected_ids)
 
-    def test_with_deactivated_slug(self):
-        mobile_user_and_group_slugs = ['t__5']
-        user_query = ExpandedMobileWorkerFilter.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-            self.user,
-        )
-        user_ids = user_query.values_list('_id', flat=True)
-        expected_ids = ['deactive2', 'deactive1']
-        self.assertCountEqual(user_ids, expected_ids)
+ACTIVE = f't__{HQUserType.ACTIVE}'
+DEMO_USER = f't__{HQUserType.DEMO_USER}'
+ADMIN = f't__{HQUserType.ADMIN}'
+UNKNOWN = f't__{HQUserType.UNKNOWN}'
+COMMTRACK = f't__{HQUserType.COMMTRACK}'
+DEACTIVATED = f't__{HQUserType.DEACTIVATED}'
+WEB = f't__{HQUserType.WEB}'
+DEACTIVATED_WEB = f't__{HQUserType.DEACTIVATED_WEB}'
 
-    def test_with_webuser_slug(self):
-        mobile_user_and_group_slugs = ['t__6']
-        user_query = ExpandedMobileWorkerFilter.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-            self.user,
-        )
-        user_ids = user_query.values_list('_id', flat=True)
-        expected_ids = ['web1']
-        self.assertCountEqual(user_ids, expected_ids)
 
-    def test_with_active_type_and_inactive_user_slug(self):
-        mobile_user_and_group_slugs = ['t__0', 'u__deactive1']
-        user_query = ExpandedMobileWorkerFilter.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-            self.user,
-        )
-        user_ids = user_query.values_list('_id', flat=True)
-        expected_ids = ['active1', 'active2', 'deactive1']
-        self.assertCountEqual(user_ids, expected_ids)
+@generate_cases([
+    ([ACTIVE], ['active', 'active_accessible', 'active_inaccessible']),
+    ([DEACTIVATED], ['deactive', 'deactive_accessible', 'deactive_inaccessible']),
+    ([WEB], ['web', 'web_accessible', 'web_inaccessible']),
+    ([DEACTIVATED_WEB], ['web_deactive']),
+    ([ACTIVE, 'u__deactive'], ['active', 'active_accessible', 'active_inaccessible', 'deactive']),
+    ([DEACTIVATED, 'u__active'], ['deactive', 'deactive_accessible', 'deactive_inaccessible', 'active']),
+    ([WEB, 'u__active', 'u__deactive'], ['web', 'web_accessible', 'web_inaccessible', 'active', 'deactive']),
+    (['u__active_inaccessible'], ['active_inaccessible']),
+], TestEMWFilterOutput)
+def test_user_es_query(self, slugs, expected_ids):
+    user_query = ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
+    self.assertCountEqual(user_query.values_list('_id', flat=True), expected_ids)
 
-    def test_with_deactivated_type_and_active_user_slug(self):
-        mobile_user_and_group_slugs = ['t__5', 'u__active1']
-        user_query = ExpandedMobileWorkerFilter.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-            self.user,
-        )
-        user_ids = user_query.values_list('_id', flat=True)
-        expected_ids = ['deactive1', 'deactive2', 'active1']
-        self.assertCountEqual(user_ids, expected_ids)
 
-    def test_with_web_type_and_active_deactivated_user_slug(self):
-        mobile_user_and_group_slugs = ['t__6', 'u__active1', 'u__deactive1']
-        user_query = ExpandedMobileWorkerFilter.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-            self.user,
-        )
-        user_ids = user_query.values_list('_id', flat=True)
-        expected_ids = ['web1', 'active1', 'deactive1']
-        self.assertCountEqual(user_ids, expected_ids)
+@generate_cases([
+    ([ACTIVE], ['active_accessible']),
+    ([DEACTIVATED], ['deactive_accessible']),
+    (['u__active_accessible'], ['active_accessible']),
+    (['u__deactive_accessible'], ['deactive_accessible']),
+    ([WEB], ['web_accessible']),
+    (['u__web_accessible'], ['web_accessible']),
+    ([ACTIVE, 'u__deactive_accessible'], ['active_accessible', 'deactive_accessible']),
+    (['u__active_inaccessible'], []),
+], TestEMWFilterOutput)
+def test_restricted_user_es_query(self, slugs, expected_ids):
+    with has_permissions(access_all_locations=False):
+        user_query = ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
+        self.assertCountEqual(user_query.values_list('_id', flat=True), expected_ids)

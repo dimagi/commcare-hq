@@ -1,7 +1,7 @@
 from unittest.mock import patch
 from django.test import SimpleTestCase, RequestFactory, override_settings
 
-from ..context_processors import js_api_keys
+from ..context_processors import js_api_keys, server_location_display
 
 
 class FakeCouchUser:
@@ -55,3 +55,25 @@ class TestJsApiKeys(SimpleTestCase):
         normal_js_keys = js_api_keys(blocked_request)
         self.assertIsNotNone(normal_js_keys['ANALYTICS_IDS'].get('HUBSPOT_API_ID'))
         self.assertIsNotNone(normal_js_keys['ANALYTICS_IDS'].get('HUBSPOT_ACCESS_TOKEN'))
+
+
+class TestServerLocationDisplay(SimpleTestCase):
+
+    @override_settings(SERVER_ENVIRONMENT='production')
+    def test_environment_in_display_options(self):
+        request = RequestFactory().get('/test')
+        context = server_location_display(request)
+        expected_context = {
+            'server_display': {
+                'flag': "🇺🇸",
+                'hr_name': "US",
+            },
+        }
+        self.assertEqual(context, expected_context)
+
+    @override_settings(SERVER_ENVIRONMENT='notarealserver')
+    def test_environment_not_in_display_options(self):
+        request = RequestFactory().get('/test')
+        context = server_location_display(request)
+        expected_context = {}
+        self.assertEqual(context, expected_context)

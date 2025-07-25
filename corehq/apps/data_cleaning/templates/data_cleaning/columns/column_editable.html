@@ -1,7 +1,6 @@
 {% load i18n %}
 {% load django_tables2 %}
 {% load data_cleaning %}
-
 {% get_edited_value record column as edited_value %}
 <div
   class="editable-column-container"
@@ -13,7 +12,12 @@
   <div
     class="dc-inline-edit-block"
     x-show="!isEditing"
-    @dblclick="isEditing = !isSubmitting"
+    @dblclick="
+      isEditing = !isSubmitting;
+      $store.gtm.sendEvent('bulk_edit_cell_inline_edit_start', {
+        dblclick: true,
+      });
+    "
   >
     {% if edited_value|has_edits %}
       <div class="d-flex align-items-center me-3">
@@ -55,9 +59,10 @@
             hx-target="closest .editable-column-container"
             hx-swap="outerHTML"
             hx-disabled-elt="this"
+            @click="$store.gtm.sendEvent('bulk_edit_cell_reset_edits');"
           >
             <i class="fa fa-close"></i>
-            <span class="visually-hidden">{% trans "Reset Changes" %}</span>
+            <span class="visually-hidden">{% trans "Reset Edits" %}</span>
           </button>
         </div>
       </div>
@@ -67,7 +72,10 @@
     <button
       class="btn btn-link btn-sm dc-inline-edit-action"
       type="button"
-      @click="isEditing = true"
+      @click="
+        isEditing = true;
+        $store.gtm.sendEvent('bulk_edit_cell_inline_edit_start');
+      "
       :disabled="isSubmitting"
     >
       <i class="fa fa-pencil"></i>
@@ -101,7 +109,10 @@
           class="btn btn-primary"
           type="submit"
           :disabled="cellValue === initialValue"
-          @click="isSubmitting = true"
+          @click="
+            isSubmitting = true;
+            $store.gtm.sendEvent('bulk_edit_cell_inline_edit_submit');
+          "
         >
           <i class="fa fa-check"></i>
           <span class="visually-hidden">{% trans "Apply Edit" %}</span>
@@ -113,6 +124,7 @@
           @click="
             isEditing = false;
             cellValue = initialValue;
+            $store.gtm.sendEvent('bulk_edit_cell_inline_edit_cancel');
           "
         >
           <i class="fa fa-close"></i>

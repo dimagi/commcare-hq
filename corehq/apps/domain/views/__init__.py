@@ -15,7 +15,6 @@ from corehq.apps.domain.views.accounting import (
     DomainBillingStatementsView,
     DomainSubscriptionView,
     EditExistingBillingAccountView,
-    EmailOnDowngradeView,
     InternalSubscriptionManagementView,
     InvoiceStripePaymentView,
     SelectedAnnualPlanView,
@@ -60,6 +59,7 @@ from corehq.apps.domain.views.settings import (
     FeaturePreviewsView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
+    ImportAppFromAnotherServerView,
     logo,
 )
 from corehq.apps.domain.views.sms import PublicSMSRatesView, SMSRatesView

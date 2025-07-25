@@ -398,6 +398,8 @@ class SubmitCaseBlockHandler:
         record_form_callback=None,
         throttle=False,
         add_inferred_props_to_schema=True,
+        form_name=None,
+        device_id=__name__,
     ):
         """
         Initialize ``SubmitCaseBlockHandler``.
@@ -426,6 +428,8 @@ class SubmitCaseBlockHandler:
         self.add_inferred_props_to_schema = add_inferred_props_to_schema
         self.case_type = case_type
         self.user = user
+        self.form_name = form_name
+        self.device_id = device_id
 
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
@@ -518,10 +522,11 @@ class SubmitCaseBlockHandler:
             self.domain,
             self.user.username,
             self.user.user_id,
-            device_id=__name__ + ".do_import",
+            device_id=self.device_id,
             # Skip the rate-limiting because this importing code will
             # take care of any rate-limiting
             max_wait=None,
+            form_name=self.form_name,
         )
 
 

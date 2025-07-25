@@ -1,6 +1,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import "jquery-textchange/jquery.textchange";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import uiElementInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input";
 import uiElementLangcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";

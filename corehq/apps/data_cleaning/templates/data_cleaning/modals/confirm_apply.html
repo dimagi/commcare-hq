@@ -4,30 +4,43 @@
 
 {% block modal_title %}
   {% trans "Apply all edits?" %}
-{% endblock %}
+{% endblock modal_title %}
 
-{% block modal_continue_attrs %}
+{% block modal_continue_attrs %}{# prettier-ignore-start #}
   hx-post="{{ request.path_info }}{% querystring %}"
   hq-hx-action="apply_all_changes"
   hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
-  hx-swap="outerHTML"
+  hx-swap="none"
   hq-hx-loading="{{ table.loading_indicator_id }}"
   hx-disable-elt="this"
-{% endblock %}
+{# prettier-ignore-end #}{% endblock modal_continue_attrs %}
 
 {% block modal_continue_text %}
   <i class="fa-solid fa-check-double"></i>
   {% trans "Apply All Edits" %}
-{% endblock %}
+{% endblock modal_continue_text %}
 
 {% block modal_body %}
+  {% if table.num_visible_selected_records != table.num_selected_records %}
+    <div class="alert alert-info">
+      <h5>
+        {% blocktrans %}You have selected cases which have been filtered out.{% endblocktrans %}
+      </h5>
+      <p class="mb-0">
+        {% blocktrans %}
+          "Apply" will apply all previewed edits in the session, regardless of
+          filters.
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
   <div
     hx-trigger="updateApplySummaryMessage from:window"
     hx-swap="innerHTML"
-    hx-post="{% url "data_cleaning_changes_summary" table.session.domain table.session.session_id %}"
+    hx-post="{% url "bulk_edit_changes_summary" table.session.domain table.session.session_id %}"
     hq-hx-action="apply_changes_summary"
   >
     {% include "data_cleaning/summary/apply_changes.html" %}
     {% include "data_cleaning/partials/loading_indicator.html" %}
   </div>
-{% endblock %}
+{% endblock modal_body %}

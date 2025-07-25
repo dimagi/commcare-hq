@@ -2,21 +2,9 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.integration.payments.services import get_payment_batch_numbers_for_domain
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import WebUserFilter
 from corehq.apps.integration.payments.const import PaymentStatus
-
-
-class PaymentVerificationStatusFilter(BaseSingleOptionFilter):
-    slug = 'payment_verification_status'
-    label = _("Verification Status")
-    default_text = _('Show all')
-
-    verified = 'verified'
-    unverified = 'unverified'
-    options = [
-        (verified, _("Verified")),
-        (unverified, _("Unverified")),
-    ]
 
 
 class BatchNumberFilter(BaseSingleOptionFilter):
@@ -42,3 +30,7 @@ class PaymentStatusFilter(BaseSingleOptionFilter):
     label = _('Payment status')
     default_text = _('Show all')
     options = PaymentStatus.choices
+
+
+class PaymentCaseListFilter(CaseListFilter):
+    default_selections = [("all_data", _("[All Data]"))]

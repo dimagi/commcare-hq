@@ -69,18 +69,22 @@ import traceback
 import uuid
 from collections import defaultdict
 from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.db import models, router
+from django.db.models import Min
 from django.db.models.base import Deferred
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property, classproperty
 from django.utils.translation import gettext_lazy as _
 
+import architect
 from couchdbkit.exceptions import ResourceNotFound
 from jsonfield import JSONField
 from memoized import memoized
@@ -136,6 +140,7 @@ from .repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
     CaseRepeaterXMLPayloadGenerator,
+    ConnectFormRepeaterPayloadGenerator,
     DataRegistryCaseUpdatePayloadGenerator,
     DataSourcePayloadGenerator,
     FormRepeaterJsonPayloadGenerator,
@@ -484,7 +489,6 @@ class Repeater(RepeaterSuperProxy):
             # to prevent serializing the repeater in the celery task payload
             repeat_record.__dict__["repeater"] = self
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
-        return repeat_record
 
     def allowed_to_forward(self, payload):
         """
@@ -676,6 +680,28 @@ class FormRepeater(Repeater):
         return headers
 
 
+class ConnectFormRepeater(FormRepeater):
+    """
+    A repeater that only forwards form metadata and commcare connect question blocks
+    """
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Forward Form Metadata to Commcare Connect")
+
+    payload_generator_classes = (ConnectFormRepeaterPayloadGenerator,)
+
+    def form_class_name(self):
+        # Note this class does not exist but this property is only used to construct the URL
+        return 'ConnectFormRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return toggles.COMMCARE_CONNECT.enabled(domain)
+
+
 class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
@@ -691,6 +717,21 @@ class CaseRepeater(Repeater):
     friendly_name = _("Forward Cases")
 
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
+
+    def register(self, payload, fire_synchronously=False):
+        if (
+            self.repeat_records_ready
+            .filter(payload_id=payload.get_id)
+            .exists()
+        ):
+            # There is already a repeat record for this payload waiting
+            # to be sent. We pull the case from the database just before
+            # forwarding it. This means that any updates made to that
+            # case since the repeat record was created will be reflected
+            # when that attempt to forward is made, regardless of when
+            # that repeat record was created.
+            return
+        super().register(payload, fire_synchronously)
 
     @property
     def form_class_name(self):
@@ -729,6 +770,11 @@ class CreateCaseRepeater(CaseRepeater):
         proxy = True
 
     friendly_name = _("Forward Cases on Creation Only")
+
+    def register(self, payload, fire_synchronously=False):
+        # `CaseRepeater.register()` skips duplicate payloads, but
+        # `CreateCaseRepeater` will never have duplicates.
+        Repeater.register(self, payload, fire_synchronously)
 
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
@@ -924,6 +970,54 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+class DataSourceUpdateManager(models.Manager):
+
+    def get_oldest_date(self):
+        return self.aggregate(Min('modified_at'))['modified_at__min']
+
+
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='month',
+    column='modified_at',
+)
+class DataSourceUpdate(models.Model):
+    """
+    ``DataSourceUpdate`` is the payload for ``DataSourceRepeater`` (as
+    ``XFormInstance`` is the payload for ``FormRepeater``).
+    """
+    id = models.BigAutoField(primary_key=True)
+    domain = CharIdField(max_length=126, db_index=True)
+    data_source_id = models.UUIDField()
+    doc_ids = JSONField(default=list)
+    rows = JSONField(default=list, blank=True, null=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    objects = DataSourceUpdateManager()
+
+    class Meta:
+        db_table = 'repeaters_datasourceupdate'
+
+    MAX_AGE = timedelta(days=93)
+
+    @property
+    def get_id(self):
+        return self.id
+
+    def to_json(self):
+        """
+        Used by DataSourcePayloadGenerator.get_payload()
+        """
+        return {
+            "data": self.rows,
+            "data_source_id": self.data_source_id.hex,
+            "doc_id": "",  # CCA `DataSetChange` expects this key
+            "doc_ids": self.doc_ids,
+        }
+
+
 class DataSourceRepeater(Repeater):
     """
     Forwards the UCR data source rows that are updated by a form
@@ -940,31 +1034,56 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
-    def allowed_to_forward(
-        self,
-        payload,  # type DataSourceUpdateLog
-    ):
-        return payload.data_source_id == self.data_source_id
+    def allowed_to_forward(self, payload):
+        return payload.data_source_id == uuid.UUID(self.data_source_id)
 
     def payload_doc(self, repeat_record):
         from corehq.apps.userreports.models import get_datasource_config
-        from corehq.apps.userreports.util import (
-            DataSourceUpdateLog,
-            get_indicator_adapter,
-        )
+        from corehq.apps.userreports.util import get_indicator_adapter
+
+        Row = dict[str, Any]
+
+        @dataclass
+        class DataSourceUpdateLog:
+            # Legacy payload format
+            # TODO: Drop after old repeat records are sent
+            domain: str
+            data_source_id: str
+            doc_id: str
+            rows: Optional[list[Row]] = None
+
+            def to_json(self):
+                # Used by DataSourcePayloadGenerator.get_payload()
+                return {
+                    "data": self.rows,
+                    "data_source_id": self.data_source_id,
+                    "doc_id": self.doc_id,
+                }
 
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
-        return DataSourceUpdateLog(
-            domain=self.domain,
-            data_source_id=self.data_source_id,
-            doc_id=repeat_record.payload_id,
-            rows=rows,
-        )
+        try:
+            datasource_update_id = int(repeat_record.payload_id)
+        except ValueError:
+            # repeat_record.payload_id is not a DataSourceUpdate ID. It
+            # must an old repeat record. `payload_id` is a form/case ID.
+            # TODO: Drop this block after old repeat records are sent.
+            rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+            return DataSourceUpdateLog(
+                domain=self.domain,
+                data_source_id=self.data_source_id,
+                doc_id=repeat_record.payload_id,
+                rows=rows,
+            )
+        datasource_update = DataSourceUpdate.objects.get(pk=datasource_update_id)
+        datasource_update.rows = [
+            row for doc_id in datasource_update.doc_ids
+            for row in datasource_adapter.get_rows_by_doc_id(doc_id)
+        ]
+        return datasource_update
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)

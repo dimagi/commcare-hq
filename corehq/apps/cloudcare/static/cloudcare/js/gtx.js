@@ -1,4 +1,4 @@
-hqDefine('cloudcare/js/gtx', [
+define('cloudcare/js/gtx', [
     'underscore',
     'analytix/js/gtx',
 ], function (
@@ -46,18 +46,55 @@ hqDefine('cloudcare/js/gtx', [
         }
     };
 
-    const logCaseList = function (menuResponse) {
+    const logCaseList = function (menuResponse, searchFieldList) {
         const selections = extractSelections(menuResponse);
-        const gtxEventData = {
+        let gtxEventData = {
             selections: selections,
             moduleName: menuResponse.title,
         };
+        if (searchFieldList.length > 0) {
+            let searchFieldData = formatSearchFieldData(searchFieldList);
+            searchFieldData.searchFieldsLength = searchFieldList.join(",").length;
+            gtxEventData = Object.assign(gtxEventData, searchFieldData);
+        }
         if (selections !== lastCaseListSelections) {
             lastCaseListSelections = selections;
             lastCaseListTimeMs = Date.now();
             lastCaseListModuleName = menuResponse.title;
         }
         gtx.sendEvent("web_apps_viewed_case_list", gtxEventData);
+    };
+
+    // Google Analytics can only display up 100 characters. This splits the search field across 3 strings,
+    // the first 2 capped at 100 characters and the third holding the rest, so that we can show more data in GA.
+    var formatSearchFieldData = function (searchFields) {
+        const concatFields = {};
+        const maxFields = 3;
+        let currentField = 1;
+        let currentString = '';
+        let maxStringLength = 100;
+        for (var i = 0; i < searchFields.length; i++) {
+            const field = searchFields[i];
+            if (currentField < maxFields) {
+                if (currentString.length === 0) {
+                    currentString = field;
+                } else if (currentString.length + 1 + field.length <= maxStringLength) {
+                    currentString += "," + field;
+                } else {
+                    concatFields['searchFields' + currentField] = currentString;
+                    currentField += 1;
+                    currentString = field;
+                }
+            } else {
+                const remainingFields = searchFields.slice(i - 1).join(",");
+                concatFields['searchFields' + maxFields] = remainingFields;
+                return concatFields;
+            }
+        }
+        if (currentString.length > 0) {
+            concatFields['searchFields' + currentField] = currentString;
+        }
+        return concatFields;
     };
 
     const logFormSubmit = function (gtxEventData) {

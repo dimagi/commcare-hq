@@ -35,19 +35,10 @@
        class="alert alert-warning text-center"
 -      style="margin-top: 20px;"
 +      style="margin-top: 20px;"  {# todo B5: inline-style #}
-       data-bind="visible: oIsNextPlanDowngrade"
+       data-bind="visible: isNextPlanDowngrade"
      >
        <i class="fa fa-warning"></i>
-@@ -242,7 +242,7 @@
-       id="select-plan-form"
-       method="post"
-       data-bind="visible: oShowNext"
--      style="display: none;"
-+      style="display: none;"  {# todo B5: inline-style #}
-       action="{% url 'confirm_selected_plan' domain %}"
-     >
-       {% csrf_token %}
-@@ -308,9 +308,9 @@
+@@ -301,9 +301,9 @@
          <div class="modal-header">
            <button
              type="button"
@@ -60,7 +51,7 @@
              <span aria-hidden="true">&times;</span>
              <span class="sr-only">{% trans "Close" %}</span>
            </button>
-@@ -321,13 +321,13 @@
+@@ -314,13 +314,13 @@
            <button
              type="button"
              class="btn btn-primary"

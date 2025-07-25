@@ -35,6 +35,7 @@ from corehq.form_processor.models import XFormInstance
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
 
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
@@ -384,12 +385,16 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, recipient, link, subject=None, domain=None):
+def send_report_download_email(title, recipient, link, subject=None, domain=None, limit=None):
     if subject is None:
         subject = _("%s: Requested export excel data") % title
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
+
+    if limit:
+        body += f"<br><br>This download is limited to {limit:,d} rows. " \
+                "If you need to export more than this, please use filters to create multiple exports."
 
     send_HTML_email(
         subject,
@@ -1066,3 +1071,14 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
         date_of_use = DateTimeProperty.deserialize(date_of_use)
 
     return version_in_use, date_of_use
+
+
+def report_date_to_json(date, timezone, date_format, is_phonetime=True):
+    if date:
+        if is_phonetime:
+            user_time = PhoneTime(date, timezone).user_time(timezone)
+        else:
+            user_time = ServerTime(date).user_time(timezone)
+        return user_time.ui_string(date_format)
+    else:
+        return ''

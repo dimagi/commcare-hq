@@ -47,62 +47,26 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     sudo apt install git
     ```
 
-- [Python 3.9](https://www.python.org/downloads/)
+- Python dependency managment with `uv`
 
-  - **Linux**:
+  - There are [several ways to install `uv`](https://docs.astral.sh/uv/getting-started/installation/).
+    Use whatever method works best for your platform.
 
-    In Ubuntu you will also need to install the modules for `python-dev`, `pip`, and `venv` explicitly.
+  - **Linux**
 
-    The [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa)
-    allows you to use multiple versions of Python on your own machine as we do
-    in production environments. The deadsnakes PPA supports Ubuntu LTS
-    releases, but you can use their Python versions on interim Ubuntu releases
-    as follows:
+    Ubuntu:
 
-    1. Find the name of your Ubuntu release if you don't already know it:
-       ```shell
-       $ cat /etc/lsb-release
-       DISTRIB_ID=Ubuntu
-       DISTRIB_RELEASE=23.04
-       DISTRIB_CODENAME=lunar  # <-- This is the name you want
-       DISTRIB_DESCRIPTION="Ubuntu 23.04"
-       ```
-
-    2. Pin your release's package priority to 1001 so that deadsnakes packages
-       can't replace official packages, even if they are newer:
-       ```shell
-       $ cat << EOF | sudo tee /etc/apt/preferences.d/99lunar
-       Package: *
-       Pin: release lunar
-       Pin-Priority: 1001
-       EOF
-       ```
-       but change "lunar" to the name of the release you are using.
-
-    3. Add the deadsnakes PPA, and install the Python version that CommCare HQ
-       requires:
-       ```shell
-       $ sudo add-apt-repository ppa:deadsnakes/ppa
-       ```
-       This will create a file in `/etc/apt/sources.list.d/` with the name of your
-       release. Change the filename, and the name inside the file, to the latest
-       LTS release instead (e.g. "jammy").
-
-    4. Install the version of Python that CommCare HQ requires.
-       ```shell
-       $ sudo apt update
-       $ sudo apt install python3.9 python3.9-dev python3-pip python3.9-venv
-       ```
+    ```sh
+    sudo snap install astral-uv
+    ```
 
   - **Mac**:
 
-    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!). First install [homebrew](https://brew.sh/)
-    
+    First install [homebrew](https://brew.sh/). Then use it to install `uv`.
 
     ```sh
-    brew install python@3.9
+    brew install uv
     ```
-
 
 - Requirements of Python libraries, if they aren't already installed.  Some of this comes from
   [pyenv's recommendations](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
@@ -154,7 +118,7 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     ```
 
     Possible alternative to installing postgres (from [this SO answer](https://stackoverflow.com/a/39800677)).
-    Prior to `pip install` commands (outlined later in this doc):
+    Do this prior to `uv` commands (outlined later in this doc):
 
     ```sh
     xcode-select --install
@@ -165,7 +129,7 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
 ##### Notes on `xmlsec`
 
-`xmlsec` is a `pip` dependency that will require some non-`pip`-installable
+`xmlsec` is a dependency that will require some non-`pip`-installable
 packages. The above notes should have covered these requirements for linux and
 macOS, but if you are on a different platform or still experiencing issues,
 please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
@@ -178,114 +142,17 @@ outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commca
 
 ### Step 1: Create your virtual environment and activate it
 
-#### Option A: With `pyenv` and `pyenv-virtualenv`
+Create a virtualenv with `uv`:
+```sh
+uv venv
+```
+Note: creating a virtualenv this way is not strictly necessary. It would be done
+automatically when `uv sync` is run below. However, `uv sync` does not activate
+the vitualenv.
 
-1. Install `pyenv`
-
-  Full installation instructions are [here](https://github.com/pyenv/pyenv#installation)
-  and [here](https://github.com/pyenv/pyenv-installer#installation--update--uninstallation).
-  Check [here](https://github.com/pyenv/pyenv/wiki#troubleshooting--faq)
-  and [here](https://github.com/pyenv/pyenv/wiki/Common-build-problems) to troubleshoot.
-
-  - **Linux**:
-
-    ```sh
-    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
-    exec $SHELL
-    ```
-
-  - **macOS**:
-
-    [see installation guide linked above](https://github.com/pyenv/pyenv#installation)
-
-  - Install python 3.9 with `pyenv`:
-
-    ```sh
-    pyenv install 3.9:latest
-    ```
-
-    To set Python 3.9 as the global `python`, run:
-    ```sh
-    pyenv global 3.9.xx  # or whatever version was just installed - it should tab complete
-    ```
-    Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
-
-
-2. Create the virtualenv `hq` with Python 3.9.xx:
-   ```sh
-   pyenv virtualenv 3.9.xx hq
-   ```
-   Then to enter the environment:
-   ```sh
-   pyenv activate hq
-   ```
-   That's it! You may now proceed to Step 2.
-
-#### Option B: With `virtualenvwrapper`
-
-1. Set the `WORKON_HOME` environment variable to the path where you keep
-   your virtual environments. If you don't already have a home for your
-   virtual environments, ~/venv is not a bad choice:
-
-    ```sh
-    export WORKON_HOME=$HOME/venv
-    mkdir -p $WORKON_HOME
-    ```
-
-1. Create a virtual environment for CommCare HQ. "commcare-hq" is a good
-   name, but naming it "hq" might save you some typing in the future:
-
-    ```sh
-    python3 -m venv $WORKON_HOME/hq
-    ```
-
-1. Ubuntu no longer ships with Python 2 and its Python binary is named
-   "python3" to avoid ambiguity. You may need to tell virtualenvwrapper
-   where to find Python:
-
-    ```sh
-    export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-    ```
-
-1. Enable virtualenvwrapper:
-
-    ```sh
-    source /usr/local/bin/virtualenvwrapper.sh
-    ```
-
-1. You will want to add virtualenvwrapper settings to your startup
-   script, say, ~/.bashrc, or ~/.zshrc. For example:
-
-    ```sh
-    $ cat <<EOF >> ~/.bashrc
-    export WORKON_HOME=~/venv
-    export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-    source /usr/local/bin/virtualenvwrapper.sh
-    EOF
-    ```
-
-1. Activate your virtual environment:
-
-    ```sh
-    workon hq
-    ```
-
-1. Ensure your vitualenv `pip` is up-to-date:
-
-    ```sh
-    python3 -m pip install --upgrade pip
-    ```
-
-#### Option C: With standard Python venv
-
-Virtual environments were introduced as a standard in Python 3.3 [with PEP 405](https://peps.python.org/pep-0405/).
-
-By convention, virtual environments use a ".venv" or "venv" directory in the
-root of the codebase. Once you have cloned the CommCare HQ repo in "Step 2"
-below, create a Python 3.9 virtual environment in the root of the codebase
-with:
-```shell
-$ python3.9 -m venv .venv
+To activate the environment:
+```sh
+source .venv/bin/activate
 ```
 
 For convenience, you can create an alias to activate virtual environments in
@@ -299,7 +166,6 @@ Then you can activate virtual environments with
 $ venv
 ```
 
-
 ### Step 2: Clone this repo and install requirements
 
 1. Once all the dependencies are in order, please do the following:
@@ -309,7 +175,6 @@ $ venv
     cd commcare-hq
     git submodule update --init --recursive
     git-hooks/install.sh
-    setvirtualenvproject  # optional, virtualenvwrapper only - sets this directory as the project root
     ```
 
 2. Next, install the appropriate requirements (**only one is necessary**).
@@ -321,24 +186,37 @@ $ venv
   - Recommended for those developing CommCare HQ
 
     ```sh
-    pip install -r requirements/dev-requirements.txt
+    uv sync --compile-bytecode
     ```
 
-    - Recommended for developers or others with custom requirements. Use this `pip
-      install ...` workflow for initial setup only. Then create a copy of local.in.sample,
+    - Recommended for developers or others with custom requirements: create a
+      copy of local.txt.sample,
       ```sh
-      cp requirements/local.in.sample requirements/local.in
+      cp requirements/local.txt.sample requirements/local.txt
       ```
-      and follow the instructions in `local.in` to keep requirements in sync.
-
-    If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
+      and follow the instructions in `local.txt` to keep requirements in sync.
+      The one-liner to keep requirements up to date is:
+      ```sh
+      uv sync --compile-bytecode && uv pip install -r requirements/local.txt
+      ```
 
     - If you have ARM64 architecture (Apple M1 chip) and you're having trouble installing ReportLab:
-        ```sh
-        CFLAGS="-Wno-error=implicit-function-declaration" pip install -r requirements/local.in
-        ```
-        [Source](https://stackoverflow.com/questions/64871133/reportlab-installation-failed-after-upgrading-to-macos-big-sur)
+      ```sh
+      CFLAGS="-Wno-error=implicit-function-declaration" uv sync --compile-bytecode
+      ```
+      [Source](https://stackoverflow.com/questions/64871133/reportlab-installation-failed-after-upgrading-to-macos-big-sur)
 
+    - If `uv sync` fails with compiler errors, ensure the virtualenv is active
+      and try:
+      ```sh
+      CC=gcc LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" uv sync --compile-bytecode
+      ```
+      `uv` caches compiled dependencies, so this is only necessary when a new
+      dependency with a compiled binary is installed.
+    - If `uv sync` fails to build `lxml`, where it mentions incompatible pointer types, try rebuilding via:
+      ```sh
+      CC=gcc CFLAGS="-Wno-error=incompatible-pointer-types" LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" uv sync --compile-bytecode
+      ```
 
 Note that once you're up and running, you'll want to periodically re-run these
 steps, and a few others, to keep your environment up to date. Some developers
@@ -370,7 +248,7 @@ mkdir sharedfiles
 
 Once you have completed the above steps, you can use Docker to build and run all
 of the service containers. There are detailed instructions for setting up Docker
-in the [docker folder](docker/README.md). But the following should cover the
+in the [docker folder](docker/README.rst). But the following should cover the
 needs of most developers.
 
 
@@ -391,15 +269,8 @@ needs of most developers.
     # log in as yourself again to activate membership of the "docker" group
     su - $USER
 
-    # re-activate your virtualenv (with your venv tool of choice)
-    # (virtualenvwrapper)
-    workon hq
-
-    # or (pyenv)
-    pyenv activate hq
-
-    # or (virtualenv)
-    source $WORKON_HOME/hq/bin/activate
+    # re-activate your virtualenv (presuming uv)
+    source .venv/bin/activate
     ```
 
 3. Install `docker compose`
@@ -416,7 +287,18 @@ needs of most developers.
     chmod 0644 ./docker/files/elasticsearch*.yml
     ```
 
-5. Bring up the docker containers.
+    If the elasticsearch container fails to start, complaining about permissions for `/usr/share/elasticsearch/data`, you'll need to update your local folder's permissions:
+   ```sh
+   chown -R 1000:root ~/.local/share/dockerhq/elasticsearch6
+   ```
+   If the above local path does not exist, you can determine where the volume is mounted via:
+   ```sh
+   docker inspect <elasticsearch6 container id> | grep /usr/share/elasticsearch/data | head -1
+   ```
+   
+   
+
+6. Bring up the docker containers.
 
     In either of the following commands, omit the `-d` option to keep the
     containers attached in the foreground.
@@ -424,14 +306,14 @@ needs of most developers.
     ```sh
     ./scripts/docker up -d
     # Optionally, start only specific containers.
-    ./scripts/docker up -d postgres couch redis elasticsearch5 zookeeper kafka minio formplayer
+    ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio formplayer
     ```
 
    **Mac OS:** Note that you will encounter many issues at this stage.
    We recommend visiting the Docker section in the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
-6. If you are planning on running Formplayer from a binary or source, stop the
+7. If you are planning on running Formplayer from a binary or source, stop the
    formplayer container to avoid port collisions.
 
     ```sh
@@ -523,7 +405,13 @@ commcarehq=# CREATE DATABASE commcarehq_p2;
 CREATE DATABASE
 commcarehq=# \q
 ```
+If you are running formplayer through docker, you will need to create the
+database for the service
 
+```sh
+commcarehq=# CREATE DATABASE formplayer;
+CREATE DATABASE
+```
 Populate your database:
 
 ```sh
@@ -588,7 +476,7 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
   is relying on the `site-packages` directory of your local Python installation
   for some of its requirements. (Creating your virtualenv with the
   `--no-site-packages` flag should prevent this, but it seems that it does not
-  always work). You can check if this is the case by running `pip show
+  always work). You can check if this is the case by running `uv pip show
   {name-of-module-that-is-erroring}`. This will show the location that your
   virtualenv is pulling that module from; if the location is somewhere other
   than the path to your virtualenv, then something is wrong. The easiest
@@ -610,7 +498,7 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 - If you get errors saying "Segmentation fault (core dumped)", with a warning like
   "RuntimeWarning: greenlet.greenlet size changed, may indicate binary incompatibility.
   Expected 144 from C header, got 152 from PyObject" check that your Python version is correct (3.9).
-  Alternatively, you can try upgrading `gevent` (`pip install --upgrade gevent`) to fix this error
+  Alternatively, you can try upgrading `gevent` (`uv pip install --upgrade gevent`) to fix this error
   on Python 3.8, but you may run into other issues!
 
 ### Step 6: Populate Elasticsearch
@@ -762,7 +650,18 @@ This can also be used to promote a user created by signing up to a superuser.
 Note that promoting a user to superuser status using this command will also give them the
 ability to assign other users as superuser in the in-app Superuser Management page.
 
-### Step 11: Running `yarn dev`
+### Step 11: Bootstrap a local build
+
+If you are going to build CommCare applications, you should generally ensure that CommCareHQ
+has at least one CommCare app version installed and available in the 
+[build manager](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/builds#adding-commcare-builds-to-commcare-hq).
+
+The easiest way to do this is to just grab the latest build available. 
+```sh
+./manage.py add_commcare_build --latest
+```
+
+### Step 12: Running `yarn dev`
 
 In order to build JavaScript bundles with Webpack, you will need to have `yarn dev`
 running in the background. It will watch any existing Webpack Entry Point, aka modules
@@ -778,7 +677,7 @@ changes to javascript files bundled by Webpack.
 For more information about JavaScript and Static Files, please see the
 [Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) on Read the Docs.
 
-### Step 12: Running CommCare HQ
+### Step 13: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
@@ -954,7 +853,7 @@ files from Vellum directly, do the following.
   `localsettings.py`:
 
     ```python
-    VELLUM_DEBUG = "dev"
+    VELLUM_DEBUG = True
     ```
 
 - Clone (or symlink to repo elsewhere on disk) the Vellum repostory into/at the

@@ -26,7 +26,7 @@ from corehq.apps.analytics.tasks import (
     HUBSPOT_EXISTING_USER_INVITE_FORM,
     HUBSPOT_NEW_USER_INVITE_FORM,
     send_hubspot_form,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
@@ -135,9 +135,9 @@ class UserInvitationView(object):
                     changed_via=USER_CHANGE_VIA_INVITATION,
                     change_messages=UserChangeMessage.domain_addition(invitation.domain)
                 )
-                track_workflow(request.couch_user.get_email(),
-                               "Current user accepted a project invitation",
-                               {"Current user accepted a project invitation": "yes"})
+                track_workflow_noop(request.couch_user.get_email(),
+                                    "Current user accepted a project invitation",
+                                    {"Current user accepted a project invitation": "yes"})
                 send_hubspot_form(HUBSPOT_EXISTING_USER_INVITE_FORM, request)
                 return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
             else:
@@ -181,6 +181,7 @@ class UserInvitationView(object):
                         created_via=USER_CHANGE_VIA_INVITATION,
                         domain=invitation.domain,
                         is_domain_admin=False,
+                        language=getattr(request, 'LANGUAGE_CODE', None),
                         commit=False
                     )
                     invitation.accept_invitation_and_join_domain(user)
@@ -194,9 +195,9 @@ class UserInvitationView(object):
                                                  password=form.cleaned_data["password"], request=request)
                     if authenticated is not None and authenticated.is_active:
                         login(request, authenticated)
-                    track_workflow(request.POST['email'],
-                                   "New User Accepted a project invitation",
-                                   {"New User Accepted a project invitation": "yes"})
+                    track_workflow_noop(request.POST['email'],
+                                        "New User Accepted a project invitation",
+                                        {"New User Accepted a project invitation": "yes"})
                     send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:

@@ -16,7 +16,7 @@ from memoized import memoized
 
 from corehq.blobs import get_blob_db, CODES, NotFound
 from corehq.blobs.models import BlobMeta
-from corehq.util.metrics import metrics_counter
+from corehq.util.metrics import metrics_counter, limit_domains
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
@@ -69,13 +69,13 @@ def get_cached_fixture_items(key):
 
 def clear_fixture_cache(domain, bucket_prefix):
     key = bucket_prefix + '/' + domain
-    record_datadog_metric('cache_clear', key)
+    record_datadog_metric('cache_clear', domain)
     get_blob_db().delete(key=key)
 
 
-def record_datadog_metric(name, cache_key):
+def record_datadog_metric(name, domain):
     metrics_counter('commcare.fixture.{}'.format(name), tags={
-        'cache_key': cache_key,
+        'domain': limit_domains(domain),
     })
 
 

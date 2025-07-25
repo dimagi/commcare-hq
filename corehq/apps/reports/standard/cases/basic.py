@@ -17,10 +17,7 @@ from corehq.apps.reports.standard import (
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
-    all_project_data_filter,
-    deactivated_case_owners,
-    get_case_owners,
-    query_location_restricted_cases,
+    add_case_owners_and_location_access,
 )
 from corehq.elastic import ESError
 from corehq.util.es.elasticsearch import TransportError
@@ -69,37 +66,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        case_owner_filters = []
-
-        if (
-            self.request.can_access_all_locations
-            and EMWF.show_project_data(mobile_user_and_group_slugs)
-        ):
-            case_owner_filters.append(all_project_data_filter(self.domain, mobile_user_and_group_slugs))
-
-        if (
-            self.request.can_access_all_locations
-            and EMWF.show_deactivated_data(mobile_user_and_group_slugs)
-        ):
-            case_owner_filters.append(deactivated_case_owners(self.domain))
-
-        # Only show explicit matches
-        if (
-            EMWF.selected_user_ids(mobile_user_and_group_slugs)
-            or EMWF.selected_user_types(mobile_user_and_group_slugs)
-            or EMWF.selected_group_ids(mobile_user_and_group_slugs)
-            or EMWF.selected_location_ids(mobile_user_and_group_slugs)
-        ):
-            case_owner_filters.append(case_es.owner(self.case_owners))
-
-        query = query.OR(*case_owner_filters)
-
-        if not self.request.can_access_all_locations:
-            query = query_location_restricted_cases(
-                query,
-                self.request.domain,
-                self.request.couch_user,
-            )
+        query = add_case_owners_and_location_access(
+            query,
+            self.request.domain,
+            self.request.couch_user,
+            self.request.can_access_all_locations,
+            mobile_user_and_group_slugs
+        )
 
         search_string = CaseSearchFilter.get_value(self.request, self.domain)
         if search_string:
@@ -122,14 +95,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     def _run_es_query(self):
         return self._build_query().run().raw
-
-    @property
-    @memoized
-    def case_owners(self):
-        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
-        return get_case_owners(
-            self.request.can_access_all_locations, self.domain, mobile_user_and_group_slugs
-        )
 
     def get_case(self, row):
         if '_source' in row:
@@ -163,6 +128,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
     # request. but currently these are too tightly bound to decouple
 
     name = gettext_lazy('Case List')
+    description = gettext_lazy('View all cases within your project space.')
     slug = 'case_list'
     use_bootstrap5 = True
 

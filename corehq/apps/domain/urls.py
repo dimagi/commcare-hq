@@ -28,7 +28,7 @@ from corehq.apps.domain.views.accounting import (
     DomainBillingStatementsView,
     DomainSubscriptionView,
     EditExistingBillingAccountView,
-    EmailOnDowngradeView,
+    GeneralPlanQuestionView,
     InternalSubscriptionManagementView,
     InvoiceStripePaymentView,
     SelectedAnnualPlanView,
@@ -41,6 +41,7 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.domain.views.base import select, accept_all_invitations
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
+from corehq.apps.domain.views.import_apps import ImportAppStepsView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
     DeactivateTransferDomainView,
@@ -75,6 +76,7 @@ from corehq.apps.domain.views.settings import (
     ManageDomainMobileWorkersView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
+    ImportAppFromAnotherServerView,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -91,7 +93,9 @@ PASSWORD_RESET_KWARGS = {
     'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
-    'extra_context': {'current_page': {'page_name': _('Password Reset')}}
+    'extra_context': {'current_page': {'page_name': _('Password Reset')},
+                      'form_submit_url_name': 'password_reset_email',
+                      'login_url_name': 'login'}
 }
 
 PASSWORD_RESET_DONE_KWARGS = {
@@ -153,10 +157,11 @@ domain_settings = [
         name=SelectedAnnualPlanView.urlname),
     url(r'^subscription/change/request_custom/$', SelectedCustomPlanView.as_view(),
         name=SelectedCustomPlanView.urlname),
+    url(r'^subscription/change/request_general/$', GeneralPlanQuestionView.as_view(),
+        name=GeneralPlanQuestionView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),
-    url(r'^subscription/change/email/$', EmailOnDowngradeView.as_view(), name=EmailOnDowngradeView.urlname),
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
@@ -221,5 +226,9 @@ domain_settings = [
         name='activate_release_restriction'),
     url(r'^toggle_release_restriction_by_app_profile/(?P<restriction_id>[\w-]+)/$',
         toggle_release_restriction_by_app_profile, name='toggle_release_restriction_by_app_profile'),
+    url(r'^import_app/$', ImportAppFromAnotherServerView.as_view(),
+        name=ImportAppFromAnotherServerView.urlname),
+    url(r'^import_app/steps/$', ImportAppStepsView.as_view(),
+        name=ImportAppStepsView.urlname),
     DomainReportDispatcher.url_pattern()
 ]

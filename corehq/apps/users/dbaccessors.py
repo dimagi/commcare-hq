@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from corehq import toggles
 from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
@@ -75,18 +76,18 @@ def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
-    # The following two filters applies only to MOBILE_USER_TYPE
-    selected_location_only = user_filters.get('selected_location_only', False)
     user_active_status = user_filters.get('user_active_status', None)
+    # The following filter applies only to MOBILE_USER_TYPE
+    selected_location_only = user_filters.get('selected_location_only', False)
 
     if user_active_status is None:
         # Show all users in domain - will always be true for WEB_USER_TYPE
-        query = UserES().domain(domain).remove_default_filter('active')
+        query = UserES().domain(domain, include_inactive=True)
     elif user_active_status:
         # Active users filtered by default
         query = UserES().domain(domain)
     else:
-        query = UserES().domain(domain).show_only_inactive()
+        query = UserES().domain(domain, include_active=False, include_inactive=True)
 
     if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()
@@ -183,6 +184,11 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
     support ES search syntax, it's just a case-insensitive substring search.
     Ignores any other filters.
     """
+    only_active = user_filters.get("user_active_status", None)
+    if only_active is False:  # only want deactivated users; invited users are considered active
+        if count_only:
+            return 0
+        return []
     filters = {}
     search_string = user_filters.get("search_string", None)
     if search_string:
@@ -230,7 +236,7 @@ def get_active_web_usernames_by_domain(domain):
 
 
 def get_web_user_count(domain, include_inactive=True):
-    return sum([
+    total = sum([
         row['value']
         for row in get_all_user_rows(
             domain,
@@ -240,6 +246,7 @@ def get_web_user_count(domain, include_inactive=True):
             count_only=True
         ) if row
     ])
+    return total
 
 
 def get_mobile_user_count(domain, include_inactive=True):
@@ -283,11 +290,15 @@ def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
     if include_inactive:
         states.append('inactive')
 
+    view_name = 'users/by_domain'
+    if toggles.DEACTIVATE_WEB_USERS.enabled(domain):
+        view_name = 'users_by_domain/view'
+
     for flag in states:
         for doc_type in doc_types:
             key = [flag, domain, doc_type]
             for row in CommCareUser.get_db().view(
-                    'users/by_domain',
+                    view_name,
                     startkey=key,
                     endkey=key + [{}],
                     reduce=count_only,

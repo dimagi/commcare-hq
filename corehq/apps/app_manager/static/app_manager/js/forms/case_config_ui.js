@@ -1,13 +1,15 @@
-import $ from "jquery";
+
 import ko from "knockout";
 import _ from "underscore";
+import "jquery-textchange/jquery.textchange";
 import caseConfigUtils from "app_manager/js/case_config_utils";
+import { getBaseline, getDiff } from "app_manager/js/forms/form_action_diffs";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import privileges from "hqwebapp/js/privileges";
 import toggles from "hqwebapp/js/toggles";
 import main from "hqwebapp/js/bootstrap3/main";
 import appManager from "app_manager/js/app_manager";
-import kissmetrix from "analytix/js/kissmetrix";
+import noopMetrics from "analytix/js/noopMetrics";
 import google from "analytix/js/google";
 
 $(function () {
@@ -66,32 +68,38 @@ $(function () {
         self.descriptionDict = params.propertyDescriptions;
         self.deprecatedPropertiesDict = params.deprecatedProperties;
 
+        self.baseline = getBaseline(params.actions);
+
         self.saveButton = main.initSaveButton({
             unsavedMessage: gettext("You have unchanged case settings"),
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
                 var subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
-                var actions = JSON.stringify(_(self.actions).extend(
-                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction), {
-                        subcases: subcases,
-                    },
-                ));
+                const updatedActions = Object.assign(
+                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
+                    {subcases: subcases},
+                );
+                const diff = getDiff(self.baseline, updatedActions);
 
                 self.saveButton.ajax({
                     type: 'post',
                     url: self.save_url,
                     data: {
                         requires: requires,
-                        actions: actions,
+                        actions: JSON.stringify(updatedActions),
+                        update_diff: JSON.stringify(diff),
                     },
                     dataType: 'json',
                     success: function (data) {
                         appManager.updateDOM(data.update);
                         self.requires(requires);
                         self.setPropertiesMap(data.propertiesMap);
+                        // update the "original" state so that subsequent changes prior to a reload
+                        // can generate a correct diff
+                        self.baseline = getBaseline(updatedActions);
 
                         if (_(data.propertiesMap).has(self.caseType)) {
-                            kissmetrix.track.event("Saved question as a Case Property", {
+                            noopMetrics.track.event("Saved question as a Case Property", {
                                 questionsSaved: _.property(self.caseType)(data.propertiesMap).length,
                             });
                         }
@@ -103,9 +111,9 @@ $(function () {
         self.saveUsercaseButton = main.initSaveButton({
             unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
-                var actions = JSON.stringify(_(self.actions).extend(
+                const actions = JSON.stringify(
                     HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction),
-                ));
+                );
                 self.saveUsercaseButton.ajax({
                     type: 'post',
                     url: self.save_url,

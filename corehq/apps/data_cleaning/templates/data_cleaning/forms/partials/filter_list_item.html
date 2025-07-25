@@ -5,16 +5,10 @@
   <div class="d-flex">
     <div class="p-2 align-self-center fs-5">
       <i class="fa-solid fa-up-down"></i>
-      <input
-        type="hidden"
-        name="filter_ids"
-        value="{{ filter.filter_id }}"
-      />
+      <input type="hidden" name="filter_ids" value="{{ filter.filter_id }}" />
     </div>
     <div class="p-2 flex-fill">
-      <h5 class="mb-1">
-        {{ filter.prop_id }}
-      </h5>
+      <h5 class="mb-1">{{ filter.prop_id }}</h5>
       <div class="mb-1 d-flex align-items-center">
         <div>
           <span class="badge text-bg-secondary fs-6">
@@ -22,12 +16,8 @@
           </span>
         </div>
         {% if filter.value %}
-          <div class="ps-2">
-            {{ filter.data_type|dc_data_type_icon }}
-          </div>
-          <div class="ps-2">
-            {{ filter|dc_filter_value }}
-          </div>
+          <div class="ps-2">{{ filter.data_type|dc_data_type_icon }}</div>
+          <div class="ps-2">{{ filter|dc_filter_value }}</div>
         {% endif %}
       </div>
     </div>

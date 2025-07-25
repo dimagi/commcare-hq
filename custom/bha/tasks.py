@@ -12,8 +12,8 @@ from corehq.apps.formplayer_api.tasks import (
 )
 
 
-# Include users that have synced in the last week
-SYNC_WINDOW_HOURS = 24 * 7
+# Include users that have synced in the last 2 weeks
+SYNC_WINDOW_HOURS = 24 * 14
 
 # 10th percentile of first form submission occurs by 7AM GMT-7. The task should be completed by then to be useful.
 # Don't allow tasks to run beyond then (2PM UTC).

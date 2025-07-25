@@ -60,7 +60,7 @@ class TestNavigationEventsQueries(AuditcareTest):
     def test_navigation_events_date_range_query(self):
         start = datetime(2021, 2, 5)
         end = datetime(2021, 2, 15)
-        events = list(navigation_events_by_user(self.username, start, end))
+        events = list(navigation_events_by_user(self.username, start_date=start, end_date=end))
         self.assertEqual({e.user for e in events}, {self.username})
         self.assertEqual({e.event_date for e in events}, set(self.event_dates[4:15]))
         self.assertEqual(len(events), 11)

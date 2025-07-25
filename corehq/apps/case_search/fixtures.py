@@ -49,16 +49,6 @@ def _run_query(domain, csql, index):
                .count())
 
 
-def _get_indicator_nodes(restore_state, indicators):
-    with restore_state.timing_context('_get_template_renderer'):
-        renderer = _get_template_renderer(restore_state.restore_user)
-    index = _get_index(restore_state.domain)
-    for name, csql_template in indicators:
-        with restore_state.timing_context(name):
-            value = _run_query(restore_state.domain, renderer.render(csql_template), index)
-        yield E.value(value, name=name)
-
-
 def _get_index(domain):
     return (CaseSearchConfig.objects
             .filter(domain=domain)
@@ -72,14 +62,30 @@ class CaseSearchFixtureProvider(FixtureProvider):
     def __call__(self, restore_state):
         if not CSQL_FIXTURE.enabled(restore_state.domain):
             return
-        indicators = _get_indicators(restore_state.domain)
+        indicators = _get_indicators_for_user(restore_state.domain,
+                                              restore_state.restore_user._couch_user)
         if indicators:
-            nodes = _get_indicator_nodes(restore_state, indicators)
-            yield E.fixture(E.values(*nodes), id=self.id)
+            with restore_state.timing_context('_get_template_renderer'):
+                renderer = _get_template_renderer(restore_state.restore_user)
+            index = _get_index(restore_state.domain)
+            for name, csql_template in indicators:
+                with restore_state.timing_context(name):
+                    value = _run_query(restore_state.domain, renderer.render(csql_template), index)
+                yield self._to_xml(name, value)
+
+    def _to_xml(self, name, value):
+        return E.fixture(E.value(value), id=f"{self.id}:{name}")
 
 
-def _get_indicators(domain):
-    return list(CSQLFixtureExpression.by_domain(domain).values_list('name', 'csql'))
+def _get_indicators_for_user(domain, user):
+    user_data = user.get_user_data(domain)
+    expressions = CSQLFixtureExpression.by_domain(domain).values_list('name', 'csql', 'user_data_criteria')
+
+    return [
+        (name, csql)
+        for name, csql, user_data_criteria in expressions
+        if CSQLFixtureExpression.matches_user_data_criteria(user_data, user_data_criteria)
+    ]
 
 
 case_search_fixture_generator = CaseSearchFixtureProvider()
