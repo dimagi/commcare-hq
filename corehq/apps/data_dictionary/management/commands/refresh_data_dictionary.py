@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
+from jsonobject.exceptions import BadValueError
+
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.tasks import _refresh_data_dictionary_from_app
 from corehq.apps.data_cleaning.utils.cases import (
@@ -64,6 +66,11 @@ class Command(BaseCommand):
             try:
                 apps = get_apps_in_domain(domain)
             except Exception as e:
+                if isinstance(e, BadValueError) and "does not comply with the x.y.z schema" in str(e):
+                    print(f"[Domain: {domain}] Skipping this domain because it has app "
+                          f"referencing unsupported CommCare Version: {e}")
+                    set_migration_complete(domain, MIGRATION_SLUG)
+                    continue
                 raise CommandError(
                     f"[Domain: {domain}] Failed to get apps: {e}\n"
                     "If you believe this is due to the apps in this domain being malformed, "
