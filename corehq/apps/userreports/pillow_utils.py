@@ -150,7 +150,7 @@ class TaskCoordinator:
         if last_run and last_run + self.interval > now:
             return False
 
-        key = f"{LAST_TASK_RUN_KEY_PREFIX}:{self.name}:{task_key}"
+        key = self._get_key(task_key)
         timeout = self.interval.total_seconds()
         for i in range(2):
             if self.django_cache.add(key, now, timeout=timeout):
@@ -170,6 +170,16 @@ class TaskCoordinator:
             self.django_cache.delete(key)
 
         return False
+
+    def reset(self, task_key):
+        """Reset the task so that it should run again"""
+        key = self._get_key(task_key)
+        self.django_cache.delete(key)
+        self.local_cache.pop(task_key, None)
+
+    def _get_key(self, task_key):
+        """Get the django cache key for the task"""
+        return f"{LAST_TASK_RUN_KEY_PREFIX}:{self.name}:{task_key}"
 
     def _update_local_cache(self, task_key, now):
         """Remove expired entries from local cache"""

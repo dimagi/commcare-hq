@@ -9,11 +9,11 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.models import LocationType, SQLLocation
 
 from ..app_manager.helpers import clean_table_name
-from ..data_source_providers import StaticDataSourceProvider
 from ..models import DataSourceConfiguration
 from ..pillow import get_location_pillow
 from ..tasks import rebuild_indicators
 from ..util import get_indicator_adapter
+from ..tests.utils import bootstrap_pillow
 
 
 @es_test(requires=[user_adapter])
@@ -57,14 +57,7 @@ class TestLocationDataSource(TestCase):
 
         self.pillow = get_location_pillow()
         self.pillow.get_change_feed().get_latest_offsets()
-
-        # HACK remove the static data source provider because it tries to load
-        # things from ES that we don't need and that causes an error.
-        proc, = self.pillow.processors
-        dsp = proc.table_manager.data_source_providers.pop()
-        assert isinstance(dsp, StaticDataSourceProvider)
-
-        proc.table_manager.get_adapters(self.domain)  # bootstrap adapters
+        bootstrap_pillow(self.pillow, self.data_source_config)
 
     def _make_loc(self, name, location_type):
         return SQLLocation.objects.create(

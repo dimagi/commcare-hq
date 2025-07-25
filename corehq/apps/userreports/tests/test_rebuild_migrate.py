@@ -10,6 +10,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
 )
 from corehq.apps.userreports.tests.utils import (
+    bootstrap_pillow,
     get_sample_data_source,
     skip_domain_filter_patch,
 )
@@ -44,7 +45,7 @@ class RebuildTableTest(TestCase):
     def _setup_data_source(self, extra_id):
         self.config = self._get_config(extra_id)
         self.config.save()
-        get_case_pillow(ucr_configs=[self.config])
+        bootstrap_pillow(get_case_pillow(), self.config, rebuild_adapters=True)
         self.adapter = get_indicator_adapter(self.config)
         self.engine = self.adapter.engine
 
@@ -70,7 +71,7 @@ class RebuildTableTest(TestCase):
         ) as rebuild_table, mock.patch(
             'corehq.apps.userreports.pillow_utils.migrate_tables_with_logging'
         ) as migrate_table:
-            get_case_pillow(ucr_configs=[config])
+            bootstrap_pillow(get_case_pillow(), self.config, rebuild_adapters=True)
             self.assertFalse(rebuild_table.called)
             self.assertTrue(migrate_table.called)
 
@@ -129,7 +130,7 @@ class RebuildTableTest(TestCase):
         ) as rebuild_table, mock.patch(
             'corehq.apps.userreports.pillow_utils.migrate_tables'
         ) as migrate_table:
-            get_case_pillow(ucr_configs=[config])
+            bootstrap_pillow(get_case_pillow(), config, rebuild_adapters=True)
             # Let's make sure a rebuild isn't triggered
             self.assertFalse(rebuild_table.called)
 
@@ -172,14 +173,14 @@ class RebuildTableTest(TestCase):
         with mock.patch(
             'corehq.apps.userreports.pillow_utils.rebuild_table'
         ) as rebuild_table:
-            get_case_pillow(ucr_configs=[config])
+            bootstrap_pillow(get_case_pillow(), config, rebuild_adapters=True)
             self.assertTrue(rebuild_table.called)
         # column doesn't exist because rebuild table was mocked
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0)
 
         # Another time without the mock to ensure the column is there
-        get_case_pillow(ucr_configs=[config])
+        bootstrap_pillow(get_case_pillow(), config, rebuild_adapters=True)
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1)
 
@@ -212,7 +213,7 @@ class RebuildTableTest(TestCase):
         with mock.patch(
             'corehq.apps.userreports.pillow_utils.rebuild_table'
         ) as rebuild_table:
-            get_case_pillow(ucr_configs=[config])
+            bootstrap_pillow(get_case_pillow(), config, rebuild_adapters=True)
             self.assertFalse(rebuild_table.called)
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1)
@@ -223,7 +224,7 @@ class RebuildTableTest(TestCase):
         self.config.disable_destructive_rebuild = True
         self.config.save()
 
-        get_case_pillow(ucr_configs=[self.config])
+        bootstrap_pillow(get_case_pillow(), self.config, rebuild_adapters=True)
         self.adapter = get_indicator_adapter(self.config)
         self.engine = self.adapter.engine
 
@@ -252,7 +253,7 @@ class RebuildTableTest(TestCase):
         self.config = DataSourceConfiguration.get(self.config.data_source_id)
 
         # bootstrap to trigger rebuild
-        get_case_pillow(ucr_configs=[self.config])
+        bootstrap_pillow(get_case_pillow(), self.config, rebuild_adapters=True)
 
         logs = DataSourceActionLog.objects.filter(
             indicator_config_id=self.config.data_source_id,
@@ -277,7 +278,7 @@ class RebuildTableTest(TestCase):
         )
 
         # bootstrap to trigger rebuild
-        get_case_pillow(ucr_configs=[self.config])
+        bootstrap_pillow(get_case_pillow(), self.config, rebuild_adapters=True)
 
         # make sure we didn't add any more logs
         self.assertEqual(
@@ -314,7 +315,7 @@ class RebuildTableTest(TestCase):
         config.sql_settings.primary_key = ['pk_key', 'doc_id']
         config.save()
 
-        get_case_pillow(ucr_configs=[config])
+        bootstrap_pillow(get_case_pillow(), config, rebuild_adapters=True)
         adapter = get_indicator_adapter(config)
         engine = adapter.engine
         insp = reflection.Inspector.from_engine(engine)

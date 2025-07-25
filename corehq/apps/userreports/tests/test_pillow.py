@@ -73,9 +73,8 @@ def _get_pillow(configs, processor_chunk_size=0):
     table_manager = ConfigurableReportTableManager(data_source_providers=[
         MockDataSourceProvider(configs_by_domain)
     ])
-    for config in configs:
-        # pre-populate adapters, similar to what .bootstrap(configs) did previously
-        table_manager.get_adapters(config.domain)
+    for domain in configs_by_domain:
+        table_manager.get_adapters(domain)  # bootstrap adapters
     ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     pillow.processors = [ucr_processor]
     return pillow

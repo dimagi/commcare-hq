@@ -585,15 +585,10 @@ def get_ucr_processor(data_source_providers,
     return ConfigurableReportPillowProcessor(table_manager)
 
 
-def get_data_registry_ucr_processor(run_migrations, ucr_configs):
+def get_data_registry_ucr_processor(run_migrations):
     table_manager = RegistryDataSourceTableManager(
         run_migrations=run_migrations
     )
-    if ucr_configs:
-        table_manager.bootstrap([
-            config for config in ucr_configs
-            if config.doc_type == "RegistryDataSourceConfiguration"
-        ])
     return ConfigurableReportPillowProcessor(table_manager)
 
 

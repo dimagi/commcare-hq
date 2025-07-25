@@ -21,6 +21,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_report_config,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.tests.utils import bootstrap_pillow
 from corehq.pillows.case import get_case_pillow
 from corehq.sql_db import connections
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID
@@ -96,7 +97,8 @@ class UCRMultiDBTest(TestCase):
 
     def test_pillow_save_to_multiple_databases(self):
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
-        pillow = get_case_pillow(ucr_configs=[self.ds_1, self.ds_2])
+        pillow = get_case_pillow()
+        bootstrap_pillow(pillow, self.ds_1, self.ds_2)
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))
@@ -105,7 +107,8 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
 
     def test_pillow_save_to_one_database_at_a_time(self):
-        pillow = get_case_pillow(ucr_configs=[self.ds_1])
+        pillow = get_case_pillow()
+        bootstrap_pillow(pillow, self.ds_1)
 
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))
@@ -114,7 +117,8 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(0, self.ds2_adapter.get_query_object().count())
 
         # save to the other
-        pillow = get_case_pillow(ucr_configs=[self.ds_2])
+        pillow = get_case_pillow()
+        bootstrap_pillow(pillow, self.ds_2)
         orig_id = sample_doc['_id']
         sample_doc['_id'] = uuid.uuid4().hex
         pillow.process_change(doc_to_change(sample_doc))
@@ -172,7 +176,8 @@ class UCRMultiDBTest(TestCase):
             patch('pillowtop.models.KafkaCheckpoint.get_or_create_for_checkpoint_id'),
             patch('corehq.apps.userreports.pillow_utils._is_datasource_active', return_value=True)
         ):
-            pillow = get_case_pillow(ucr_configs=[ds3])
+            pillow = get_case_pillow()
+            bootstrap_pillow(pillow, ds3)
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))
 
