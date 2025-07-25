@@ -240,6 +240,26 @@ class UserChangeMessage(object):
                 CONFIRM_MOBILE_ACCOUNT: {"domain": domain}
             }
         }
+    
+    @staticmethod
+    def toggle_edit_permissions_added(toggle_tags):
+        return {
+            TOGGLE_EDIT_PERMISSIONS_FIELD: {
+                ADD_TOGGLE_EDIT_PERMISSIONS: {
+                    "toggle_tags": toggle_tags
+                }
+            }
+        }
+
+    @staticmethod
+    def toggle_edit_permissions_removed(toggle_tags):
+        return {
+            TOGGLE_EDIT_PERMISSIONS_FIELD: {
+                REMOVE_TOGGLE_EDIT_PERMISSIONS: {
+                    "toggle_tags": toggle_tags
+                }
+            }
+        }
 
 
 class UserChangeFormatter(object):
@@ -275,6 +295,14 @@ class UserChangeFormatter(object):
             return _(raw_message).format(**_params)
         return _formatter
 
+    @staticmethod
+    def toggle_edit_permissions_formatter(raw_message):
+        def _formatter(params):
+            _params = params.copy()
+            _params['toggle_tags'] = ", ".join(params['toggle_tags'])
+            return _(raw_message).format(**_params)
+        return _formatter
+
 
 # fields
 PROGRAM_FIELD = "program"
@@ -293,6 +321,7 @@ DEACTIVATE_AFTER_FIELD = "deactivate_after"
 DEACTIVATE_AFTER_DATE = "deactivate_after_date"
 DEACTIVATE_AFTER_DATE_DELETED = 'deactivate_after_date_deleted'
 ACCOUNT_FIELD = "account"
+TOGGLE_EDIT_PERMISSIONS_FIELD = 'toggle_edit_permissions'
 
 CHANGE_MESSAGES_FIELDS = [
     PROGRAM_FIELD,
@@ -308,7 +337,8 @@ CHANGE_MESSAGES_FIELDS = [
     GROUPS_FIELD,
     DOMAIN_INVITATION_FIELD,
     DEACTIVATE_AFTER_FIELD,
-    ACCOUNT_FIELD
+    ACCOUNT_FIELD,
+    TOGGLE_EDIT_PERMISSIONS_FIELD,
 ]
 
 # message slugs
@@ -337,6 +367,8 @@ CLEAR_GROUPS = 'clear_groups'
 ADD_DOMAIN_INVITATION = 'add_domain_invitation'
 REMOVE_DOMAIN_INVITATION = 'remove_domain_invitation'
 CONFIRM_MOBILE_ACCOUNT = 'confirm_mobile_account'
+ADD_TOGGLE_EDIT_PERMISSIONS = 'add_toggle_edit_permissions'
+REMOVE_TOGGLE_EDIT_PERMISSIONS = 'remove_toggle_edit_permissions'
 
 MESSAGES = {
     SET_PROGRAM: UserChangeFormatter.simple_formatter(noop("Program: {name}[{id}]")),
@@ -381,6 +413,12 @@ MESSAGES = {
     ),
     CONFIRM_MOBILE_ACCOUNT: UserChangeFormatter.simple_formatter(
         noop("Mobile Worker account confirmed for domain '{domain}'")
+    ),
+    ADD_TOGGLE_EDIT_PERMISSIONS: UserChangeFormatter.toggle_edit_permissions_formatter(
+        noop('Added toggle edit permissions(s) for {toggle_tags}')
+    ),
+    REMOVE_TOGGLE_EDIT_PERMISSIONS: UserChangeFormatter.toggle_edit_permissions_formatter(
+        noop('Removed toggle edit permissions(s) for {toggle_tags}')
     ),
 }
 
