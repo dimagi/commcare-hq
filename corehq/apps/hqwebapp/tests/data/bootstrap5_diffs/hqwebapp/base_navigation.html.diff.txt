@@ -174,8 +174,8 @@
          {% if messages %}
            {% for message in messages %}
              <div
--              class="alert alert-margin-top fade in{% if message.tags %}{{ message.tags }}{% endif %}"
-+              class="alert alert-dismissible alert-margin-top fade show{% if message.tags %}{{ message.tags }}{% endif %}"
+-              class="alert alert-margin-top fade in {% if message.tags %}{{ message.tags }}{% endif %}"
++              class="alert alert-dismissible alert-margin-top fade show {% if message.tags %}{{ message.tags }}{% endif %}"
              >
 -              <a class="close" data-dismiss="alert" href="#">&times;</a>
                {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
