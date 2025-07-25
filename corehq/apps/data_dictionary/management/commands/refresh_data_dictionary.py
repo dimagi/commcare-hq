@@ -65,14 +65,20 @@ class Command(BaseCommand):
             set_migration_started(domain, MIGRATION_SLUG)
             try:
                 apps = get_apps_in_domain(domain)
-            except Exception as e:
-                if isinstance(e, BadValueError) and "does not comply with the x.y.z schema" in str(e):
+            except BadValueError as e:
+                if "does not comply with the x.y.z schema" in str(e):
                     print(f"[Domain: {domain}] Skipping this domain because it has app "
                           f"referencing unsupported CommCare Version: {e}")
                     set_migration_complete(domain, MIGRATION_SLUG)
                     continue
+                error_to_report = e
+            except Exception as e:
+                error_to_report = e
+            else:
+                error_to_report = None
+            if error_to_report:
                 raise CommandError(
-                    f"[Domain: {domain}] Failed to get apps: {e}\n"
+                    f"[Domain: {domain}] Failed to get apps: {error_to_report}\n"
                     "If you believe this is due to the apps in this domain being malformed, "
                     "rerun the command and add the domain to the --domain-to-skip flag"
                 )
