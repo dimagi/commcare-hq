@@ -434,7 +434,7 @@
         {
           "order": 111,
           "id": 57,
-          "name": "Manage-Case",
+          "name": "manage-case",
           "prevSize": 32,
           "code": 59656,
           "tempChar": ""
