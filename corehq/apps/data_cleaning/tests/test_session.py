@@ -1,9 +1,10 @@
 import datetime
 import uuid
+from unittest import mock
 
+import pytest
 from django.contrib.auth.models import User
 from django.test import TestCase
-import pytest
 
 from corehq.apps.data_cleaning.models import (
     BulkEditRecord,
@@ -12,6 +13,7 @@ from corehq.apps.data_cleaning.models import (
     DataType,
     FilterMatchType,
 )
+from corehq.apps.data_cleaning.tests.mixins import CaseDataTestMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES, group_adapter, user_adapter
 from corehq.apps.es.case_search import (
@@ -375,8 +377,10 @@ class BulkEditSessionCaseColumnTests(BaseBulkEditSessionTest):
         assert new_column.is_system
 
 
-class BulkEditSessionSelectionTests(BaseBulkEditSessionTest):
+@es_test(requires=[case_search_adapter])
+class BulkEditSessionSelectionCountTests(CaseDataTestMixin, BaseBulkEditSessionTest):
     domain_name = 'session-test-selection'
+    case_type = 'plant'
 
     def test_get_num_selected_records(self):
         self.session.select_record(str(uuid.uuid4()))
@@ -389,6 +393,64 @@ class BulkEditSessionSelectionTests(BaseBulkEditSessionTest):
         )
         num_selected_records = self.session.get_num_selected_records()
         assert num_selected_records == 2
+
+    def test_get_num_selected_records_in_queryset_no_filter(self):
+        case_ids = ['c1', 'c2', 'c3', 'c4', 'c5']
+        cases = [{'_id': case_id, 'case_type': self.case_type} for case_id in case_ids]
+        self.bootstrap_cases_in_es_for_domain(self.domain_name, cases)
+        self.session.select_multiple_records(case_ids[:-1])
+        num_selected = self.session.get_num_selected_records_in_queryset()
+        assert num_selected == 4
+
+    def test_get_num_selected_records_in_queryset_with_filter(self):
+        self.bootstrap_cases_in_es_for_domain(
+            self.domain_name, [
+                {'_id': 'c1', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+                {'_id': 'c2', 'case_type': self.case_type, 'soil_mix': 'sandy'},
+                {'_id': 'c3', 'case_type': self.case_type, 'soil_mix': 'fine'},
+                {'_id': 'c4', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+                {'_id': 'c5', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+            ]
+        )
+        self.session.add_filter('soil_mix', DataType.TEXT, FilterMatchType.EXACT, 'chunky')
+        self.session.select_multiple_records(['c1', 'c2', 'c3', 'c4'])
+        num_selected = self.session.get_num_selected_records_in_queryset()
+        assert num_selected == 2
+
+    def test_get_num_unrecorded(self):
+        case_ids = ['c1', 'c2', 'c3', 'c4', 'c5']
+        cases = [{'_id': case_id, 'case_type': self.case_type} for case_id in case_ids]
+        self.bootstrap_cases_in_es_for_domain(self.domain_name, cases)
+        self.session.select_multiple_records(['c1', 'c3'])
+        # simulated record with changes
+        BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id='c4',
+            calculated_change_id=uuid.uuid4(),
+            is_selected=False,
+        )
+        num_unrecorded = self.session._get_num_unrecorded()
+        assert num_unrecorded == 2  # c2 and c5
+
+    @mock.patch('corehq.apps.data_cleaning.models.session.MAX_RECORDED_LIMIT', 5)
+    def test_can_select_all_is_true(self):
+        case_ids = ['c1', 'c2', 'c3', 'c4', 'c5']
+        cases = [{'_id': case_id, 'case_type': self.case_type} for case_id in case_ids]
+        self.bootstrap_cases_in_es_for_domain(self.domain_name, cases)
+        self.session.select_multiple_records(['c1', 'c3'])
+        assert self.session.can_select_all()
+
+    @mock.patch('corehq.apps.data_cleaning.models.session.MAX_RECORDED_LIMIT', 3)
+    def test_can_select_all_is_false(self):
+        case_ids = ['c1', 'c2', 'c3', 'c4', 'c5']
+        cases = [{'_id': case_id, 'case_type': self.case_type} for case_id in case_ids]
+        self.bootstrap_cases_in_es_for_domain(self.domain_name, cases)
+        self.session.select_multiple_records(['c1', 'c3'])
+        assert not self.session.can_select_all()
+
+    @mock.patch('corehq.apps.data_cleaning.models.session.MAX_RECORDED_LIMIT', 3)
+    def test_can_select_all_false_table_num_records(self):
+        assert not self.session.can_select_all(table_num_records=4)
 
 
 class BulkEditSessionChangesTests(BaseBulkEditSessionTest):
