@@ -157,6 +157,7 @@ $info:      $teal;
 $warning:   $yellow;
 $light:     $gray-100;
 $dark:      $gray-800;
+$periwinkle: #6F76AC;
 
 $theme-colors: (
   "primary":    $primary,
@@ -167,6 +168,7 @@ $theme-colors: (
   "dark":       $dark,
   "secondary":  $secondary,
   "light":      $light,
+  "periwinkle": $periwinkle,
 );
 
 $body-color: $dark;
