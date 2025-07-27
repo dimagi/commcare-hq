@@ -1,8 +1,8 @@
 {% extends "error_base.html" %}
 {% load i18n %}
-{% block title %}{% trans "Cookies Required for CSRF" %}{% endblock %}
+{% block title %}{% trans "Cookies Required for CSRF" %}{% endblock title %}
 {% block tabs %}{% endblock tabs %}
-{% block page_name %}{% trans "Cookies must be enabled to use CommCare" %}{% endblock %}
+{% block page_name %}{% trans "Cookies must be enabled to use CommCare" %}{% endblock page_name %}
 {% block page_content %}
   {% blocktrans %}
     <p>
@@ -15,4 +15,4 @@
       If you believe you received this error as a mistake, please contact <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
     </p>
   {% endblocktrans %}
-{% endblock %}
+{% endblock page_content %}
