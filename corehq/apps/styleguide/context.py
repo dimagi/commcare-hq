@@ -252,7 +252,7 @@ def get_custom_icons():
                 'fcc-settings', 'fcc-help', 'fcc-exchange', 'fcc-messaging', 'fcc-chart-report',
                 'fcc-form-report', 'fcc-datatable-report', 'fcc-piegraph-report', 'fcc-survey',
                 'fcc-casemgt', 'fcc-blankapp', 'fcc-globe', 'fcc-app-createform', 'fcc-app-updateform',
-                'fcc-app-completeform', 'fcc-app-biometrics', 'fcc-incomplete',
+                'fcc-app-completeform', 'fcc-app-biometrics', 'fcc-incomplete', 'fcc-Manage-Case',
             ]),
         },
         {
