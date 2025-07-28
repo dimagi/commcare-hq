@@ -13,7 +13,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.tasks import add_inferred_export_properties
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.bulk import case_block_submitter
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import user_location_data
 from corehq.form_processor.models import CommCareCase
@@ -40,8 +40,12 @@ class _UserCaseHelper:
         assert len({h.user_id for h in helpers}) == 1
         assert len({h.domain for h in helpers}) == 1
 
-        case_blocks = [cb.as_text() for cb in case_blocks]
-        submit_case_blocks(case_blocks, helpers[0].domain, device_id=cls.CASE_SOURCE_ID)
+        with case_block_submitter(
+            helpers[0].domain,
+            device_id=cls.CASE_SOURCE_ID
+        ) as submitter:
+            for case_block in case_blocks:
+                submitter.send(case_block)
         for task, task_args in chain.from_iterable([h.tasks for h in helpers]):
             task.delay(*task_args)
 

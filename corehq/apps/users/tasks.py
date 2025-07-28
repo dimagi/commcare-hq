@@ -200,22 +200,22 @@ def _remove_indices_from_deleted_cases_task(domain, case_ids):
 
 
 def remove_indices_from_deleted_cases(domain, case_ids):
-    from corehq.apps.hqcase.utils import submit_case_blocks
+    from corehq.apps.hqcase.bulk import case_block_submitter
+
     deleted_ids = set(case_ids)
     indexes_referencing_deleted_cases = \
         CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, list(case_ids))
-    case_updates = [
-        CaseBlock(
-            case_id=index_info.case_id,
-            index={
-                index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
-            }
-        ).as_text()
-        for index_info in indexes_referencing_deleted_cases
-        if index_info.case_id not in deleted_ids
-    ]
     device_id = __name__ + ".remove_indices_from_deleted_cases"
-    submit_case_blocks(case_updates, domain, device_id=device_id)
+    with case_block_submitter(domain, device_id=device_id) as submitter:
+        for index_info in indexes_referencing_deleted_cases:
+            if index_info.case_id not in deleted_ids:
+                case_block = CaseBlock(
+                    case_id=index_info.case_id,
+                    index={
+                        index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
+                    }
+                )
+                submitter.send(case_block)
 
 
 @task(serializer='pickle', bind=True, queue='background_queue', ignore_result=True,
