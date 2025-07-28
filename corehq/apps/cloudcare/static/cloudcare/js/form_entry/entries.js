@@ -361,7 +361,7 @@ define("cloudcare/js/form_entry/entries", [
     function IntEntry(question, options) {
         var self = this;
         FreeTextEntry.call(self, question, options);
-        self.templateType = 'str';
+        self.templateType = 'numeric';
         self.inputmode = 'numeric';
         self.lengthLimit = options.lengthLimit || constants.INT_LENGTH_LIMIT;
         var valueLimit = options.valueLimit || constants.INT_VALUE_LIMIT;
@@ -394,7 +394,7 @@ define("cloudcare/js/form_entry/entries", [
 
     function PhoneEntry(question, options) {
         FreeTextEntry.call(this, question, options);
-        this.templateType = 'str';
+        this.templateType = 'numeric';
         this.inputmode = 'tel';
         this.lengthLimit = options.lengthLimit;
 
@@ -416,7 +416,7 @@ define("cloudcare/js/form_entry/entries", [
      */
     function FloatEntry(question, options) {
         IntEntry.call(this, question, options);
-        this.templateType = 'str';
+        this.templateType = 'numeric';
         this.inputmode = 'decimal';
         this.lengthLimit = options.lengthLimit || constants.FLOAT_LENGTH_LIMIT;
         var valueLimit = options.valueLimit || constants.FLOAT_VALUE_LIMIT;
