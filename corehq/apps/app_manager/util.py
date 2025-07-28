@@ -635,7 +635,7 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
             _("User {username} has been deleted, you can't use that user as practice user").format(
                 username=user.username)
         )
-    if not user.is_active:
+    if not user.is_active_in_domain(domain):
         raise PracticeUserException(
             _("User {username} has been deactivated, you can't use that user as practice user").format(
                 username=user.username)
