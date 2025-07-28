@@ -304,7 +304,7 @@ class CaseSearchConfig(models.Model):
     index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
         "Name or alias of alternative index to use for case search"))
     # Show the search filters in a sidebar on the left and the results
-    # on the right. Available in Advanced Plan and up.
+    # on the right.
     split_screen_ui = models.BooleanField(blank=False, null=False, default=False)
     # TODO: GA or Bust:
     #   # When split_screen_ui is True, search results update when a search
