@@ -17,7 +17,7 @@ from corehq.util.test_utils import flag_enabled
 class SplitScreenCaseSearchTest(SimpleTestCase, SuiteMixin):
 
     @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
-    def test_split_screen_case_search_removes_search_again(self, __):
+    def test_split_screen_case_search_removes_search_again(self, *args):
         factory = AppFactory.case_claim_app_factory()
         suite = factory.app.create_suite()
         # case list actions unaffected
