@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq import privileges
@@ -39,7 +41,11 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
     def test_3_tiered_select(self, *args):
         self._test_generic_suite('tiered-select-3', 'tiered-select-3')
 
-    def test_case_search_action(self):
+    @patch(
+        'corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain',
+        return_value=False,
+    )
+    def test_case_search_action(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.modules[0].search_config = CaseSearch(
             search_label=CaseSearchLabel(
@@ -278,6 +284,7 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
             "entry[1]/instance"
         )
 
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
     def test_sync_cases_on_form_entry_disabled(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
@@ -292,6 +299,7 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(factory.app.create_suite(), "./entry/post")
 
     @case_search_sync_cases_on_form_entry_enabled_for_domain()
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
     def test_sync_cases_on_form_entry_enabled(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
