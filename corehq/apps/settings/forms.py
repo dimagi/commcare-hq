@@ -269,7 +269,7 @@ class HQPhoneNumberForm(PhoneNumberForm):
 
 
 class HQApiKeyForm(forms.Form):
-    ALL_DOMAINS = ''
+    ALL_DOMAINS = 'ALL_DOMAINS'  # This value is safe to use because we normalize all domain names
     name = forms.CharField()
     ip_allowlist = SimpleArrayField(
         forms.GenericIPAddressField(
@@ -279,7 +279,7 @@ class HQApiKeyForm(forms.Form):
         required=False,
     )
     domain = forms.ChoiceField(
-        required=False,
+        required=True,
         help_text=gettext_lazy("Limit the key's access to a single project space")
     )
     expiration_date = forms.DateTimeField(
@@ -292,7 +292,8 @@ class HQApiKeyForm(forms.Form):
 
         user_domains = user_domains or []
         all_domains = (self.ALL_DOMAINS, _('All Projects'))
-        self.fields['domain'].choices = [all_domains] + [(d, d) for d in user_domains]
+        default_empty_choice = ('', '')
+        self.fields['domain'].choices = [default_empty_choice] + [(d, d) for d in user_domains] + [all_domains]
 
         self.maximum_expiration_date = None
         self.timezone = timezone or ZoneInfo('UTC')
@@ -344,11 +345,15 @@ class HQApiKeyForm(forms.Form):
             HQApiKey.all_objects.get(name=self.cleaned_data['name'], user=user)
             raise DuplicateApiKeyName
         except HQApiKey.DoesNotExist:
+            if self.cleaned_data['domain'] == self.ALL_DOMAINS:
+                domain = ''
+            else:
+                domain = self.cleaned_data['domain']
             new_key = HQApiKey.objects.create(
                 name=self.cleaned_data['name'],
                 ip_allowlist=self.cleaned_data['ip_allowlist'],
                 user=user,
-                domain=self.cleaned_data['domain'] or '',
+                domain=domain,
                 expiration_date=self.cleaned_data['expiration_date'],
             )
             return new_key
