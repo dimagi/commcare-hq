@@ -59,6 +59,7 @@ class UserES(HQESQuery):
             role_id,
             is_active,
             is_inactive,
+            account_confirmed,
             username,
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
@@ -165,6 +166,10 @@ def is_inactive(domain):
             filters.term('user_domain_memberships.is_active', False),
         ))
     )
+
+
+def account_confirmed(is_confirmed=False):
+    return filters.term("is_account_confirmed", is_confirmed)
 
 
 def active_on_any_domain():

@@ -88,14 +88,6 @@
 
     {% block modals %}{% endblock %}
 
-    {% if show_mobile_ux_warning %}
-      {% if use_bootstrap5 %}
-        {% include "hqwebapp/partials/bootstrap5/mobile_ux_warning.html" %}
-      {% else %}
-        {% include "hqwebapp/partials/bootstrap3/mobile_ux_warning.html" %}
-      {% endif %}
-    {% endif %}
-
     {# Report Issue #}
     {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
       {% if use_bootstrap5 %}
@@ -152,8 +144,6 @@
         awkward or impossible to include it in another block
       {% endcomment %}
     {% endblock %}
-    {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
-    {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
     {% initial_page_data 'toggles_dict' toggles_dict %}
     {% initial_page_data 'previews_dict' previews_dict %}
     {% initial_page_data 'secure_cookies' secure_cookies %}

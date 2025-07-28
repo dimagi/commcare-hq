@@ -185,6 +185,7 @@ def _get_expected_changes_json(user):
         'login_attempts': 0,
         'phone_numbers': [],
         'registering_device_id': '',
+        'self_set_password': False,
         'status': None,
         'subscribed_to_commcare_users': False,
         'two_factor_auth_disabled_until': None,

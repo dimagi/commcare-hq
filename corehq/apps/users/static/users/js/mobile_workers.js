@@ -38,7 +38,6 @@ var STATUS = {
     SUCCESS: 'success',
     WARNING: 'warning',
     ERROR: 'danger',
-    DISABLED: 'disabled',
 };
 
 var rmi = function () {};
@@ -78,12 +77,12 @@ var userModel = function (options) {
 
     // used by two-stage provisioning
     self.emailRequired = ko.observable(self.force_account_confirmation());
-    self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
+    self.requireAccountConfirmation = ko.observable(self.force_account_confirmation());
 
     // used by two-stage sms provisioning
     self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
 
-    self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
+    self.passwordVisible = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
 
     self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -287,14 +286,6 @@ var newUserCreationModel = function (options) {
             return self.STATUS.NONE;
         }
 
-        if (self.stagedUser().force_account_confirmation()) {
-            return self.STATUS.DISABLED;
-        }
-
-        if (self.stagedUser().force_account_confirmation_by_sms()) {
-            return self.STATUS.DISABLED;
-        }
-
         if (!self.useStrongPasswords()) {
             // No validation
             return self.STATUS.NONE;
@@ -355,16 +346,14 @@ var newUserCreationModel = function (options) {
             return self.STATUS.NONE;
         }
 
-        if (self.requiredEmailMissing() || self.emailIsInvalid()) {
+        if (self.emailIsInvalid()) {
             return self.STATUS.ERROR;
         }
     });
 
     self.emailStatusMessage = ko.computed(function () {
 
-        if (self.requiredEmailMissing()) {
-            return gettext('Email address is required when users confirm their own accounts.');
-        } else if (self.emailIsInvalid()) {
+        if (self.emailIsInvalid()) {
             return gettext('Please enter a valid email address.');
         }
         return "";
@@ -496,14 +485,14 @@ var newUserCreationModel = function (options) {
                 user.emailRequired(true);
                 // clear and disable password input
                 user.password('');
-                user.passwordEnabled(false);
-                user.sendConfirmationEmailEnabled(true);
+                user.passwordVisible(false);
+                user.requireAccountConfirmation(true);
             } else {
                 // make email optional
                 user.emailRequired(false);
                 // enable password input
-                user.passwordEnabled(true);
-                user.sendConfirmationEmailEnabled(false);
+                user.passwordVisible(true);
+                user.requireAccountConfirmation(false);
                 // uncheck email confirmation box if it was checked
                 user.send_account_confirmation_email(false);
             }
@@ -514,13 +503,15 @@ var newUserCreationModel = function (options) {
                 user.phoneRequired(true);
                 // clear and disable password input
                 user.password('');
-                user.passwordEnabled(false);
-                user.sendConfirmationEmailEnabled(true);
+                user.passwordVisible(false);
+                user.requireAccountConfirmation(true);
             } else {
                 // make phone number optional
                 user.phoneRequired(false);
                 // enable password input
-                user.passwordEnabled(true);
+                user.passwordVisible(true);
+                user.requireAccountConfirmation(false);
+                user.send_account_confirmation_email(false);
             }
         });
     });
@@ -562,7 +553,7 @@ var newUserCreationModel = function (options) {
         if (!self.stagedUser().username()) {
             return false;
         }
-        if (self.stagedUser().passwordEnabled()) {
+        if (self.stagedUser().passwordVisible()) {
             if  (!self.stagedUser().password()) {
                 return false;
             }
@@ -598,7 +589,7 @@ var newUserCreationModel = function (options) {
         self.newUsers.push(newUser);
         newUser.creation_status(STATUS.PENDING);
         // if we disabled the password, set it just in time before going to the server
-        if (!newUser.passwordEnabled()) {
+        if (!newUser.passwordVisible()) {
             newUser.password(self.generateStrongPassword());
         }
         rmi('create_mobile_worker', {

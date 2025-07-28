@@ -6,6 +6,7 @@ from collections import namedtuple
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
+from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
@@ -270,13 +271,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
-        require_account_confirmation = bundle.data.pop('require_account_confirmation', False)
-        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
+        require_account_confirmation = string_to_boolean(bundle.data.pop('require_account_confirmation', False))
+        send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         password = bundle.data.get('password')
-        if not (password or bundle.data.get('connect_username')) and not require_account_confirmation:
-            raise BadRequest(_('Password or connect username required'))
+        connect_username = bundle.data.get('connect_username')
 
-        if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
+        if connect_username and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
         try:
             validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
@@ -300,6 +300,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 if require_account_confirmation and send_confirmation_email:
                     send_account_confirmation_if_necessary(bundle.obj)
             else:
+                if not (password or connect_username):
+                    raise BadRequest(_('Password or connect username required'))
                 bundle.obj = CommCareUser.create(
                     domain=kwargs['domain'],
                     username=username,
@@ -325,10 +327,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             else:
                 django_user.delete()
             raise
-        if bundle.data.get('connect_username'):
+        if connect_username:
             ConnectIDUserLink.objects.create(
                 domain=bundle.request.domain,
-                connectid_username=bundle.data['connect_username'],
+                connectid_username=connect_username,
                 commcare_user=bundle.obj.get_django_user()
             )
         return bundle
@@ -345,7 +347,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
-        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
+        send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:

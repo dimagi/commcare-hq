@@ -218,6 +218,14 @@ class DeviceLogRequest(models.Model):
         return (domain, raw_username(username)) in _all_device_log_requests()
 
 
+class IntegritySamplePercentage(models.Model):
+    """
+    Model to store the percentage of users to sample for app integrity reporting.
+    This is used to control the sampling rate for reporting app integrity to the PersonalID server.
+    """
+    percentage = models.FloatField(default=0.1)  # Default to 0.1%
+
+
 @memoized
 def _all_device_log_requests():
     # This is expected to be very small, usually empty, but it's accessed

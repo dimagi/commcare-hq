@@ -222,6 +222,9 @@ USER_MAPPING = {
         "is_active": {
             "type": "boolean"
         },
+        "is_account_confirmed": {
+            "type": "boolean"
+        },
         "is_demo_user": {
             "type": "boolean"
         },

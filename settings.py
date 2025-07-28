@@ -489,7 +489,7 @@ SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'accounts@example.com'
-GROWTH_EMAIL = 'growth@example.com'
+GROWTH_EMAIL = 'saas-revenue-team@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
@@ -1293,7 +1293,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain',
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
-                'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',

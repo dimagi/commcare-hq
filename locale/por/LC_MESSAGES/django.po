@@ -1102,10 +1102,8 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -4893,10 +4891,8 @@ msgstr "Últimas 10 Execuções"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -6781,7 +6777,6 @@ msgstr "Entrada de Texto"
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Text"
 msgstr "Texto"
 
@@ -7435,8 +7430,6 @@ msgstr "Problemas:"
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Case Property"
 msgstr "Propriedade do Caso"
@@ -7762,22 +7755,6 @@ msgstr ""
 "Você ainda não criou um formulário. Crie um formulário para visualizar e "
 "editar as Propriedades do Usuário."
 
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Import Application"
-msgstr "Importar Aplicativo"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Application Source File"
-msgstr "Arquivo fonte do aplicativo"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "No, take me back."
-msgstr "Não, quero voltar."
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Yes, import application"
-msgstr "Sim, importa o aplicativo"
-
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 #: corehq/apps/sms/templates/sms/languages.html
 msgid "Language List"
@@ -7898,8 +7875,6 @@ msgstr "Instalar CommCare"
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
@@ -9527,7 +9502,6 @@ msgstr "Por favor, defina um tipo de caso para sua lista de casos."
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/v2/filters/case_report.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 #: corehq/motech/openmrs/forms.py
@@ -9569,6 +9543,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
 #: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 msgid "Go Back"
@@ -13056,8 +13031,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Learn more."
 msgstr "Saiba mais."
 
@@ -13165,8 +13138,6 @@ msgstr "Enviar e-mail ao finalizar (recomendado para aplicativos grandes)"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/models.py
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 #: corehq/apps/integration/forms.py
@@ -13558,19 +13529,6 @@ msgstr "{} versão"
 #: corehq/apps/app_manager/views/apps.py
 msgid "Invalid application id requested for exchange import"
 msgstr "ID de aplicativo inválido solicitado para importação de troca"
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "You must submit a name for the application you are importing."
-msgstr ""
-"Você deve submeter um nome para o aplicativo que você está importando."
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "You must upload the app source file."
-msgstr "Você deve enviar o arquivo fonte do aplicativo."
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "The file uploaded is an invalid JSON file"
-msgstr "O arquivo enviado é um arquivo JSON inválido"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "The form is incompatible with the destination menu and was not moved."
@@ -14289,10 +14247,7 @@ msgstr "Número de usuários web inativos"
 msgid "Number of forms submitted by mobile workers"
 msgstr "Número de formulários enviados por trabalhadores móveis"
 
-#: corehq/apps/campaign/forms.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/reports/views.py
+#: corehq/apps/campaign/forms.py corehq/apps/reports/views.py
 msgid "Title"
 msgstr "Título"
 
@@ -15380,8 +15335,6 @@ msgid "CSQL Fixture Configuration"
 msgstr "Configuração de Fixture CSQL"
 
 #: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Add Expression"
 msgstr "Adicionar Expressão"
 
@@ -15418,11 +15371,8 @@ msgstr "A pesquisa aproximada não é suportada com múltiplos valores"
 msgid "Data"
 msgstr "Dados"
 
-#: corehq/apps/case_search/views.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/domain/views/settings.py corehq/apps/registry/models.py
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/case_search/views.py corehq/apps/domain/views/settings.py
+#: corehq/apps/registry/models.py corehq/tabs/tabclasses.py
 msgid "Case Search"
 msgstr "Pesquisa de Caso"
 
@@ -16954,8 +16904,6 @@ msgstr "Selecione uma Propriedade do Caso"
 
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/manage_columns_form.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Add Column"
 msgstr "Adicionar Coluna"
 
@@ -17052,6 +17000,7 @@ msgid "Select a Case Type"
 msgstr "Selecione um Tipo de Caso"
 
 #: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -17412,8 +17361,8 @@ msgid "Completed"
 msgstr "Concluído"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
-#: corehq/apps/integration/payments/const.py corehq/apps/registry/models.py
-#: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
+#: corehq/apps/registry/models.py corehq/apps/sms/models.py
+#: corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
@@ -19015,7 +18964,6 @@ msgstr "Reatribuir"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
-#: corehq/apps/reports/v2/reports/explore_case_data.py
 msgid "Case Name"
 msgstr "Nome do Caso"
 
@@ -19277,195 +19225,6 @@ msgstr "para o valor exato"
 msgid "to the value from other case property"
 msgstr "para o valor de outra propriedade do caso"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/tabs/tabclasses.py
-msgid "Explore Case Data (Preview)"
-msgstr "Explorar Dados do Caso (Prévia)"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"      This feature allows you to quickly explore your case data for ad-hoc data\n"
-"      queries or to identify unclean data.<br />\n"
-"      This is an Add-On.\n"
-"    "
-msgstr ""
-"\n"
-"      Este recurso permite explorar rapidamente seus dados de caso para consultas ad-hoc\n"
-"      ou para identificar dados inconsistentes.<br />\n"
-"      Este é um Complemento.\n"
-"    "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"              Preparing your case data for exploration...\n"
-"            "
-msgstr ""
-"\n"
-"              Preparando seus dados de caso para exploração...\n"
-"            "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/tabs/tabclasses.py
-msgid "Export Data"
-msgstr "Exportar Dados"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid "Save Filters"
-msgstr "Salvar Filtros"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/reports/templates/reports/async/bootstrap3/filters.html
-#: corehq/apps/reports/templates/reports/async/bootstrap5/filters.html
-#: corehq/apps/reports_core/templates/reports_core/partials/bootstrap3/filter_panel.html
-#: corehq/apps/reports_core/templates/reports_core/partials/bootstrap5/filter_panel.html
-msgid "Report Filters"
-msgstr "Filtros do Relatório"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"          Loading...\n"
-"        "
-msgstr ""
-"\n"
-"          Carregando...\n"
-"        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"          Our system is experiencing an unusually large load on resources at the moment,\n"
-"          so data is not being received in a timely fashion. We are working on the problem, but\n"
-"          if you continue to experience this issue, please contact support.\n"
-"        "
-msgstr ""
-"\n"
-"          Nosso sistema está enfrentando uma carga de recursos incomumente alta no momento,\n"
-"          por isso os dados não estão sendo recebidos de forma oportuna. Estamos trabalhando no problema, mas\n"
-"          se você continuar enfrentando essa questão, entre em contato com o suporte.\n"
-"        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"          No cases found.\n"
-"        "
-msgstr ""
-"\n"
-"          Nenhum caso encontrado.\n"
-"        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"          There was an issue fetching cases with these filters.\n"
-"          Please check your filters and try again.\n"
-"        "
-msgstr ""
-"\n"
-"          Houve um problema ao buscar casos com esses filtros.\n"
-"          Verifique seus filtros e tente novamente.\n"
-"        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid "Edit Column"
-msgstr "Edição da Coluna"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid "Filter Data in Column"
-msgstr "Filtrar Dados na Coluna"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-msgid ""
-"\n"
-"                      Treat this property as\n"
-"                      <select class=\"form-control filter-type\"\n"
-"                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-"                                         optionsText: function (val) {\n"
-"                                           return $root.editColumnController.filterTitleByName[val];\n"
-"                                         },\n"
-"                                         value: filterName,\n"
-"                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-"                      and match\n"
-"                      <select data-bind=\"value: $parent.clause,\n"
-"                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-"                              class=\"form-control filter-clause\">\n"
-"                        <option value=\"all\">\n"
-"                          all of the\n"
-"                        </option>\n"
-"                        <option value=\"any\">\n"
-"                          any of the\n"
-"                        </option>\n"
-"                      </select>\n"
-"                      following conditions:\n"
-"                    "
-msgstr ""
-"\n"
-"                      Tratar esta propriedade como\n"
-"                      <select class=\"form-control filter-type\"\n"
-"                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-"                                         optionsText: function (val) {\n"
-"                                           return $root.editColumnController.filterTitleByName[val];\n"
-"                                         },\n"
-"                                         value: filterName,\n"
-"                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-"                      e corresponder\n"
-"                      <select data-bind=\"value: $parent.clause,\n"
-"                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-"                              class=\"form-control filter-clause\">\n"
-"                        <option value=\"all\">\n"
-"                          todas as\n"
-"                        </option>\n"
-"                        <option value=\"any\">\n"
-"                          quaisquer das\n"
-"                        </option>\n"
-"                      </select>\n"
-"                      seguintes condições:\n"
-"                    "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-#: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py
-msgid "Add"
-msgstr "Adicionar"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"              This task is currently not supported, but we are happy to\n"
-"              learn about your interest.\n"
-"            "
-msgstr ""
-"\n"
-"              Esta tarefa atualmente não é suportada, mas ficaremos felizes em\n"
-"              saber do seu interesse.\n"
-"            "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
-msgid "Ok"
-msgstr "Ok"
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/find_by_id.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/find_by_id.html
 msgid ""
@@ -19683,54 +19442,6 @@ msgstr ""
 "          Esta regra de deduplicação está atualmente preenchendo dados retroativamente. Você poderá editá-la assim que for concluída. <strong>%(progress)s%%</strong> (%(complete)s / %(total)s) casos processados.  \n"
 "          Recarregue a página para ver o progresso atualizado.\n"
 "        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"                      Treat this property as\n"
-"                      <select class=\"form-select filter-type\"\n"
-"                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-"                                         optionsText: function (val) {\n"
-"                                           return $root.editColumnController.filterTitleByName[val];\n"
-"                                         },\n"
-"                                         value: filterName,\n"
-"                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-"                      and match\n"
-"                      <select data-bind=\"value: $parent.clause,  \n"
-"                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-"                              class=\"form-control filter-clause\">\n"
-"                        <option value=\"all\">\n"
-"                          all of the\n"
-"                        </option>\n"
-"                        <option value=\"any\">\n"
-"                          any of the\n"
-"                        </option>\n"
-"                      </select>\n"
-"                      following conditions:\n"
-"                    "
-msgstr ""
-"\n"
-"                      Tratar esta propriedade como\n"
-"                      <select class=\"form-select filter-type\"\n"
-"                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-"                                         optionsText: function (val) {\n"
-"                                           return $root.editColumnController.filterTitleByName[val];\n"
-"                                         },\n"
-"                                         value: filterName,\n"
-"                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-"                      e corresponder\n"
-"                      <select data-bind=\"value: $parent.clause,  \n"
-"                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-"                              class=\"form-control filter-clause\">\n"
-"                        <option value=\"all\">\n"
-"                          todas as\n"
-"                        </option>\n"
-"                        <option value=\"any\">\n"
-"                          quaisquer das\n"
-"                        </option>\n"
-"                      </select>\n"
-"                      seguintes condições:\n"
-"                    "
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
 msgid "cases processed. Please do not refresh or btn-close this page."
@@ -20255,10 +19966,6 @@ msgstr "Não foi possível realizar a ação para o registro repetido (id={}): {
 #, python-brace-format
 msgid "Successfully performed {action} action on {count} form(s)"
 msgstr "Ação {action} realizada com sucesso em {count} formulário(s)"
-
-#: corehq/apps/data_interfaces/views.py corehq/feature_previews.py
-msgid "Explore Case Data"
-msgstr "Explorar Dados de Casos"
 
 #: corehq/apps/data_interfaces/views.py corehq/messaging/scheduling/forms.py
 msgid "Case Groups"
@@ -21503,6 +21210,74 @@ msgstr "Falha ao definir restrição para o perfil {profile}: {message}"
 msgid "Using project's timezone: {}"
 msgstr "Usando o fuso horário do projeto: {}"
 
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Copy URL"
+msgid "App URL"
+msgstr "Copiar URL"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Copy and paste the full URL of the application from the source server. You "
+"can find this URL in your browser's address bar when viewing the app."
+msgstr ""
+"Copie e cole a URL completa do aplicativo do servidor de origem. Você pode "
+"encontrar esta URL na barra de endereços do seu navegador ao visualizar o "
+"app."
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must start with https://"
+msgstr "A URL deve começar com https://"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "The source app url is in the same server as current server. To copy app in "
+#| "the same server, please use Copy Application feature."
+msgid ""
+"The source app url matches the current server. To copy an app within the "
+"same server, please use the Copy Application feature."
+msgstr ""
+"A URL do aplicativo de origem está no mesmo servidor que o servidor atual. "
+"Para copiar o aplicativo no mesmo servidor, utilize o recurso Copiar "
+"Aplicativo."
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Invalid phone number format."
+msgid "Invalid app URL format."
+msgstr "Formato de número de telefone inválido."
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must be from a valid CommCare server."
+msgstr "A URL deve ser de um servidor CommCare válido."
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Application"
+msgid "Application Name"
+msgstr "Aplicação"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The name of the application from the user's last request."
+msgid "Choose a name for the imported application on this server."
+msgstr "O nome do aplicativo do último pedido do usuário."
+
+#: corehq/apps/domain/forms.py
+msgid "Application Source File"
+msgstr "Arquivo fonte do aplicativo"
+
+#: corehq/apps/domain/forms.py
+msgid "Import Application"
+msgstr "Importar Aplicativo"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The file uploaded is an invalid JSON file"
+msgid "The file uploaded is an invalid JSON file."
+msgstr "O arquivo enviado é um arquivo JSON inválido"
+
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
 msgstr "Solicitação de transferência de domínio não está mais ativa"
@@ -22744,17 +22519,23 @@ msgstr "Uso Atual"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
-msgid "Domain Temporarily Unavailable"
-msgstr "Domínio Temporariamente Indisponível"
+#, fuzzy
+#| msgid "Project Space Name"
+msgid "Project Space Unavailable"
+msgstr "Nome do Espaço do Projeto"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
 msgid ""
-"The page you requested is currently unavailable due to a\n"
-"    data migration. Please check back later."
+"\n"
+"      The page you requested is unavailable because the project space is being\n"
+"      or has been migrated to a different hosting environment.\n"
+"    "
 msgstr ""
-"A página solicitada está indisponível no momento devido a uma\n"
-"    migração de dados. Por favor, tente novamente mais tarde."
+"\n"
+"      A página solicitada está indisponível porque o espaço do projeto está sendo\n"
+"      ou foi migrado para um ambiente de hospedagem diferente.\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
 #: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
@@ -22862,6 +22643,14 @@ msgstr ""
 "      Seu projeto está atualmente inscrito no plano %(plan_name)s.\n"
 "    </h3>\n"
 "  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
+#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+#: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+#: corehq/apps/translations/forms.py
+msgid "Add"
+msgstr "Adicionar"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
@@ -23613,6 +23402,53 @@ msgstr ""
 "\n"
 "Se você acha que recebeu isto por engano, pode simplesmente ignorar este e-mail. Para saber mais sobre o CommCare HQ, visite http://www.commcarehq.org/.\n"
 
+#: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your request to join %(domain_name)s has been approved.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    You may now visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully reset your password for the account %(username)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    Seu pedido para ingressar em %(domain_name)s foi aprovado.\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    Agora você pode acessar %(url)s.\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    Obrigado,<br />\n"
+"    CommCare HQ\n"
+"  </p>\n"
+
+#: corehq/apps/domain/templates/domain/import_app_from_another_server_main.html
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Import a new build from the build server"
+msgid "Import App from Another Server"
+msgstr "Importar um novo build do servidor de builds"
+
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load EVERYTHING"
 msgstr "Carregar TUDO"
@@ -23781,6 +23617,265 @@ msgstr ""
 "            Para atender a esta condição, você pode optar por não publicar a multimídia\n"
 "            ou selecionar uma das seguintes licenças:\n"
 "          "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+#, fuzzy
+#| msgid "Application Source File"
+msgid "Download the Application Source File"
+msgstr "Arquivo fonte do aplicativo"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has no reports.\n"
+#| "              "
+msgid ""
+"\n"
+"        Open\n"
+"        <a href=\"%(download_url)s\" target=\"_blank\">%(download_url)s</a> in a\n"
+"        new tab.\n"
+"      "
+msgstr ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                não possui relatórios.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+msgid ""
+"\n"
+"        Click on the browser’s File menu at the top (e.g. File → Save As…).\n"
+"      "
+msgstr ""
+"\n"
+"        Clique no menu Arquivo do navegador no topo (ex.: Arquivo 2 Salvar como5).\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+msgid ""
+"\n"
+"        In the dialog: Change the name to end with .json (e.g., my_app.json)\n"
+"      "
+msgstr ""
+"\n"
+"        Na janela: Altere o nome para terminar com .json (ex.: meu_app.json)\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+msgid "Click Save."
+msgstr "Clique em Salvar."
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Configuration saved successfully!\n"
+#| "      "
+msgid ""
+"\n"
+"        Your application has been successfully imported!\n"
+"      "
+msgstr ""
+"\n"
+"        Configuração salva com sucesso!\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+msgid ""
+"\n"
+"        You're almost done — if your application contains multimedia files,\n"
+"        follow these steps to copy them to your new application.\n"
+"      "
+msgstr ""
+"\n"
+"        Você está quase terminando — se seu aplicativo contém arquivos multimídia,\n"
+"        siga estes passos para copiá-los para seu novo aplicativo.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Download %(plural_noun)s\n"
+#| "        "
+msgid ""
+"\n"
+"        Step 1: Download Multimedia from Source App\n"
+"      "
+msgstr ""
+"\n"
+"          Baixar %(plural_noun)s\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Would you like to edit roles and add new,\n"
+#| "          custom roles?\n"
+#| "        "
+msgid ""
+"\n"
+"          Go to the source application's multimedia page and download the\n"
+"          multimedia files as a ZIP:\n"
+"        "
+msgstr ""
+"\n"
+"          Gostaria de editar funções e adicionar novas\n"
+"          funções personalizadas?\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+msgid ""
+"\n"
+"          Go to Source App Multimedia Download Page\n"
+"        "
+msgstr ""
+"\n"
+"          Vá para a Página de Download de Multimídia do App de Origem\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          No cases found.\n"
+#| "        "
+msgid ""
+"\n"
+"          Click \"Download ZIP\".\n"
+"        "
+msgstr ""
+"\n"
+"          Nenhum caso encontrado.\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
+msgid ""
+"\n"
+"        Step 2: Upload Multimedia to New App\n"
+"      "
+msgstr ""
+"\n"
+"Carregar Tabelas de Pesquisa"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Would you like to edit roles and add new,\n"
+#| "          custom roles?\n"
+#| "        "
+msgid ""
+"\n"
+"          Go to your new application's multimedia page and upload the downloaded\n"
+"          files:\n"
+"        "
+msgstr ""
+"\n"
+"          Gostaria de editar funções e adicionar novas\n"
+"          funções personalizadas?\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              Not Active\n"
+#| "            "
+msgid ""
+"\n"
+"          Go to New App Multimedia Upload Page\n"
+"        "
+msgstr ""
+"\n"
+"              Não Ativo\n"
+"            "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
+msgid ""
+"\n"
+"          Upload Multimedia Files under Step 3.\n"
+"        "
+msgstr ""
+"\n"
+"Carregar Tabelas de Pesquisa"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+msgid ""
+"\n"
+"      All done? Click below to go to your new application.\n"
+"    "
+msgstr ""
+"\n"
+"      Tudo pronto? Clique abaixo para ir para seu novo aplicativo.\n"
+"    "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid "To Application"
+msgid "Go to Application"
+msgstr "Para o Aplicativo"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+#, fuzzy
+#| msgid ""
+#| "This tool helps you import an app from another CommCare server to your "
+#| "current CommCare server."
+msgid ""
+"\n"
+"      This tool helps you import an app from another CommCare server to your\n"
+"      current CommCare server.\n"
+"    "
+msgstr ""
+"Esta ferramenta ajuda você a importar um app de outro servidor CommCare para"
+" seu servidor CommCare atual."
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+#, fuzzy
+#| msgid "To start, simply paste the URL of the app you want to import."
+msgid ""
+"\n"
+"      To start, simply paste the URL of the app you want to import.\n"
+"    "
+msgstr "Para começar, basta colar a URL do app que deseja importar."
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+#, fuzzy
+#| msgid "Import"
+msgid "Important to Note:"
+msgstr "Importar"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+msgid "This will not copy users and groups."
+msgstr "Isto não copiará usuários e grupos."
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+#, fuzzy
+#| msgid "Preparing organization structure download."
+msgid "This will not copy organization structure or levels."
+msgstr "Diagnóstico de Casos"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+msgid "This will not copy user fields."
+msgstr "Isto não copiará campos de usuário."
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+msgid "This will not copy lookup tables (aka fixtures)."
+msgstr ""
+"Isto não copiará tabelas de consulta (também conhecidas como fixtures)."
 
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
@@ -24916,6 +25011,12 @@ msgstr "Privacidade e Segurança"
 msgid "Password for {} has successfully been reset. You can now login."
 msgstr ""
 "A senha de {} foi redefinida com sucesso. Agora você pode fazer login."
+
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Successfully restored report \"{name}\""
+msgid "Successful password reset for {}"
+msgstr "Relatório \"{name}\" restaurado com sucesso"
 
 #: corehq/apps/domain/views/settings.py
 msgid "Recovery Measures History"
@@ -26317,7 +26418,6 @@ msgid "CommCare Supply"
 msgstr "CommTrack"
 
 #: corehq/apps/export/forms.py corehq/apps/reports/filters/case_list.py
-#: corehq/apps/reports/v2/filters/case_report.py
 msgid "Case Owner(s)"
 msgstr "Proprietário(s) do Caso"
 
@@ -27765,6 +27865,10 @@ msgstr ""
 "          No momento, permitimos no máximo %(odata_feed_limit)s feeds OData por espaço de projeto.\n"
 "          Considere excluir os feeds que não são mais necessários.\n"
 "        "
+
+#: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
+msgid "Ok"
+msgstr "Ok"
 
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/users/templates/users/accept_invite.html
@@ -33198,72 +33302,6 @@ msgstr "Enviar feedback"
 msgid "Previous"
 msgstr "Anterior"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid "CommCare HQ looks better on desktop!"
-msgstr "CommCare HQ fica melhor em desktop!"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-#, python-format
-msgid ""
-"\n"
-"            Hi%(\" \" + full_name)s, it looks like you’re on a mobile device.\n"
-"          "
-msgstr ""
-"\n"
-"            Olá%(\" \" + full_name)s, parece que você está em um dispositivo móvel.\n"
-"          "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid ""
-"\n"
-"            CommCare HQ is optimized for desktop or laptop browsers.\n"
-"          "
-msgstr ""
-"\n"
-"            O CommCare HQ é otimizado para navegadores em desktop ou laptop.\n"
-"          "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid ""
-"\n"
-"            Send yourself an email with a login link to use when you’re back on a full-size browser:\n"
-"          "
-msgstr ""
-"\n"
-"            Envie um e-mail para você mesmo com um link de acesso para usar quando estiver de volta em um navegador de tela cheia:\n"
-"          "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid "Email Link"
-msgstr "Link por e-mail"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid ""
-"\n"
-"            Reminder sent!\n"
-"          "
-msgstr ""
-"\n"
-"            Lembrete enviado!\n"
-"          "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid ""
-"\n"
-"            Check out this video to get an introduction to CommCare HQ.\n"
-"          "
-msgstr ""
-"\n"
-"            Assista a este vídeo para ter uma introdução ao CommCare HQ.\n"
-"          "
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
 #, python-format
@@ -33856,37 +33894,36 @@ msgid "KYC Report"
 msgstr "Relatório KYC"
 
 #: corehq/apps/integration/payments/const.py
-msgid "Requested"
-msgstr "Solicitado"
+#, fuzzy
+#| msgid "Last Verified"
+msgid "Not Verified"
+msgstr "Última Verificação"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "Pending Submission"
+msgstr "Ver envios recentes"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Submitted [UTC]"
+msgid "Submitted"
+msgstr "Enviado [UTC]"
 
 #: corehq/apps/integration/payments/const.py
 msgid "Request failed"
 msgstr "Solicitação falhou"
 
 #: corehq/apps/integration/payments/filters.py
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
-msgid "Verification Status"
-msgstr "Status da Verificação"
+msgid "Batch number"
+msgstr "Número do lote"
 
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
 #: corehq/apps/userreports/reports/filters/factory.py
 msgid "Show all"
 msgstr "Mostrar tudo"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/integration/payments/tables.py
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
-msgid "Verified"
-msgstr "Verificado"
-
-#: corehq/apps/integration/payments/filters.py
-msgid "Unverified"
-msgstr "Não verificado"
-
-#: corehq/apps/integration/payments/filters.py
-msgid "Batch number"
-msgstr "Número do lote"
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
@@ -33962,8 +33999,25 @@ msgid "Payer Message"
 msgstr "Mensagem do pagador"
 
 #: corehq/apps/integration/payments/tables.py
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+msgid "Verified"
+msgstr "Verificado"
+
+#: corehq/apps/integration/payments/tables.py
 msgid "Verified By"
 msgstr "Verificado por"
+
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Submitted [UTC]"
+msgid "Submitted At"
+msgstr "Enviado [UTC]"
+
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Invalid Date"
+msgid "Invalid Status"
+msgstr "Data inválida"
 
 #: corehq/apps/integration/payments/tables.py
 msgid "Unavailable"
@@ -34182,10 +34236,15 @@ msgid "Are you sure you want to proceed with the selected payments?"
 msgstr "Tem certeza de que deseja prosseguir com os pagamentos selecionados?"
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      Successfully submitted %(success_count)s records for payments!\n"
+#| "      Verification status for these will be refreshed in a few seconds.\n"
+#| "    "
 msgid ""
 "\n"
-"      Successfully submitted %(success_count)s records for payments!\n"
+"      Successfully verified %(success_count)s records for payments!\n"
 "      Verification status for these will be refreshed in a few seconds.\n"
 "    "
 msgstr ""
@@ -34195,10 +34254,14 @@ msgstr ""
 "    "
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      Failed to submit %(failure_count)s records for payments!\n"
+#| "    "
 msgid ""
 "\n"
-"      Failed to submit %(failure_count)s records for payments!\n"
+"      Failed to verify %(failure_count)s records for payments!\n"
 "    "
 msgstr ""
 "\n"
@@ -40369,6 +40432,13 @@ msgstr "Tentando Novamente..."
 msgid "Loading Failed. Try Again?"
 msgstr "Falha ao Carregar. Tentar Novamente?"
 
+#: corehq/apps/reports/templates/reports/async/bootstrap3/filters.html
+#: corehq/apps/reports/templates/reports/async/bootstrap5/filters.html
+#: corehq/apps/reports_core/templates/reports_core/partials/bootstrap3/filter_panel.html
+#: corehq/apps/reports_core/templates/reports_core/partials/bootstrap5/filter_panel.html
+msgid "Report Filters"
+msgstr "Filtros do Relatório"
+
 #: corehq/apps/reports/templates/reports/async/bootstrap3/project_health_dashboard.html
 #: corehq/apps/reports/templates/reports/async/bootstrap5/project_health_dashboard.html
 msgid "Set Performance Threshold"
@@ -41754,75 +41824,6 @@ msgstr ""
 #, python-format
 msgid "%s: Requested export excel data"
 msgstr "%s: Solicitou exportação de dados em Excel"
-
-#: corehq/apps/reports/v2/endpoints/case_properties.py
-msgid "info"
-msgstr "informação"
-
-#: corehq/apps/reports/v2/endpoints/case_properties.py
-msgid "current"
-msgstr "atual"
-
-#: corehq/apps/reports/v2/endpoints/case_properties.py
-#, python-brace-format
-msgid "{num} cases"
-msgstr "{num} casos"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Text equals"
-msgstr "Texto é igual a"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Text does not equal"
-msgstr "Texto não é igual a"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "a Number"
-msgstr "um Número"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Number is equal to"
-msgstr "Número é igual a"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Number is less than"
-msgstr "Número é menor que"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Number is greater than"
-msgstr "Número é maior que"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Number is not equal to"
-msgstr "Número não é igual a"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "a Date"
-msgstr "uma Data"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Date is"
-msgstr "Data é"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Date is before"
-msgstr "Data é anterior a"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Date is after"
-msgstr "Data é posterior a"
-
-#: corehq/apps/reports/v2/models.py
-msgid "The report endpoint for {}/{} cannot be found."
-msgstr "O endpoint do relatório para {}/{} não pode ser encontrado."
-
-#: corehq/apps/reports/v2/models.py
-msgid "Could not find the report filter '{}'"
-msgstr "Não foi possível encontrar o filtro de relatório '{}'"
-
-#: corehq/apps/reports/v2/reports/explore_case_data.py
-msgid "Project Data"
-msgstr "Dados do Projeto"
 
 #: corehq/apps/reports/views.py
 msgid "Scheduled Report"
@@ -43877,6 +43878,10 @@ msgstr "Tipo de Filtro"
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Show Contacts"
 msgstr "Mostrar Contatos"
+
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+msgid "Verification Status"
+msgstr "Status da Verificação"
 
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Not Verified or Already In Use"
@@ -49442,22 +49447,6 @@ msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr "Sua senha está muito fraca! Tente adicionar números ou símbolos!"
 
 #: corehq/apps/users/forms.py
-msgid ""
-"Setting a password is disabled. The user will set their own password on "
-"confirming their account email."
-msgstr ""
-"A definição de senha está desativada. O usuário definirá sua própria senha "
-"ao confirmar o e-mail da conta."
-
-#: corehq/apps/users/forms.py
-msgid ""
-"Setting a password is disabled. The user will set their own password on "
-"confirming their account phone number."
-msgstr ""
-"A definição de senha está desativada. O usuário definirá sua própria senha "
-"ao confirmar o número de telefone da conta."
-
-#: corehq/apps/users/forms.py
 msgid "Auto-Deactivation Settings"
 msgstr "Configurações de Auto-Desativação"
 
@@ -50388,6 +50377,36 @@ msgstr "Atualizar Definições de Localização"
 #: corehq/apps/users/templates/users/edit_web_user.html
 msgid "Update Tableau Configuration"
 msgstr "Atualizar Configuração do Tableau"
+
+#: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
+#, python-format
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully confirmed the account %(new_mobile_worker)s for the\n"
+"    project space %(domain)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    If you think you have received this by mistake, you can go ahead and ignore\n"
+"    this email.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    Você confirmou com sucesso a conta %(new_mobile_worker)s para o\n"
+"    espaço do projeto %(domain)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    Se você acha que recebeu este e-mail por engano, pode ignorá-lo.\n"
+"  </p>\n"
+"  <p>\n"
+"    Obrigado,<br />\n"
+"    Equipe CommCare HQ\n"
+"  </p>\n"
 
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
@@ -52448,6 +52467,12 @@ msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
 #, fuzzy
+#| msgid "Send Account Confirmaton SMS"
+msgid "Successful account confirmation for {}"
+msgstr "Enviar SMS de confirmação de conta"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
 #| msgid ""
 #| "The user account associated with this email address cannot reset the "
 #| "password."
@@ -52892,14 +52917,6 @@ msgstr ""
 "lógica avançada. Disponível no construtor de formulários, como uma opção "
 "adicional nos Dados da Tabela de Pesquisa para perguntas de tabela de "
 "pesquisa."
-
-#: corehq/feature_previews.py
-msgid ""
-"This feature allows you to quickly explore your case data for ad-hoc data "
-"queries or to identify unclean data."
-msgstr ""
-"Este recurso permite explorar rapidamente seus dados de casos para consultas"
-" ad-hoc ou para identificar dados inconsistentes."
 
 #: corehq/form_processor/backends/sql/update_strategy.py
 msgid "Sorry, referrals are no longer supported!"
@@ -57021,6 +57038,10 @@ msgid "CommCare Supply Setup"
 msgstr "Configuração do CommCare Supply"
 
 #: corehq/tabs/tabclasses.py
+msgid "Export Data"
+msgstr "Exportar Dados"
+
+#: corehq/tabs/tabclasses.py
 msgid "Explore Data"
 msgstr "Explorar Dados"
 
@@ -58012,6 +58033,335 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#~ msgid "Explore Case Data (Preview)"
+#~ msgstr "Explorar Dados do Caso (Prévia)"
+
+#~ msgid ""
+#~ "\n"
+#~ "      This feature allows you to quickly explore your case data for ad-hoc data\n"
+#~ "      queries or to identify unclean data.<br />\n"
+#~ "      This is an Add-On.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Este recurso permite explorar rapidamente seus dados de caso para consultas ad-hoc\n"
+#~ "      ou para identificar dados inconsistentes.<br />\n"
+#~ "      Este é um Complemento.\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "              Preparing your case data for exploration...\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Preparando seus dados de caso para exploração...\n"
+#~ "            "
+
+#~ msgid "Save Filters"
+#~ msgstr "Salvar Filtros"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Loading...\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Carregando...\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "          Our system is experiencing an unusually large load on resources at the moment,\n"
+#~ "          so data is not being received in a timely fashion. We are working on the problem, but\n"
+#~ "          if you continue to experience this issue, please contact support.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Nosso sistema está enfrentando uma carga de recursos incomumente alta no momento,\n"
+#~ "          por isso os dados não estão sendo recebidos de forma oportuna. Estamos trabalhando no problema, mas\n"
+#~ "          se você continuar enfrentando essa questão, entre em contato com o suporte.\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "          There was an issue fetching cases with these filters.\n"
+#~ "          Please check your filters and try again.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Houve um problema ao buscar casos com esses filtros.\n"
+#~ "          Verifique seus filtros e tente novamente.\n"
+#~ "        "
+
+#~ msgid "Edit Column"
+#~ msgstr "Edição da Coluna"
+
+#~ msgid "Filter Data in Column"
+#~ msgstr "Filtrar Dados na Coluna"
+
+#~ msgid ""
+#~ "\n"
+#~ "                      Treat this property as\n"
+#~ "                      <select class=\"form-control filter-type\"\n"
+#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
+#~ "                                         optionsText: function (val) {\n"
+#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
+#~ "                                         },\n"
+#~ "                                         value: filterName,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
+#~ "                      and match\n"
+#~ "                      <select data-bind=\"value: $parent.clause,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
+#~ "                              class=\"form-control filter-clause\">\n"
+#~ "                        <option value=\"all\">\n"
+#~ "                          all of the\n"
+#~ "                        </option>\n"
+#~ "                        <option value=\"any\">\n"
+#~ "                          any of the\n"
+#~ "                        </option>\n"
+#~ "                      </select>\n"
+#~ "                      following conditions:\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Tratar esta propriedade como\n"
+#~ "                      <select class=\"form-control filter-type\"\n"
+#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
+#~ "                                         optionsText: function (val) {\n"
+#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
+#~ "                                         },\n"
+#~ "                                         value: filterName,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
+#~ "                      e corresponder\n"
+#~ "                      <select data-bind=\"value: $parent.clause,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
+#~ "                              class=\"form-control filter-clause\">\n"
+#~ "                        <option value=\"all\">\n"
+#~ "                          todas as\n"
+#~ "                        </option>\n"
+#~ "                        <option value=\"any\">\n"
+#~ "                          quaisquer das\n"
+#~ "                        </option>\n"
+#~ "                      </select>\n"
+#~ "                      seguintes condições:\n"
+#~ "                    "
+
+#~ msgid ""
+#~ "\n"
+#~ "              This task is currently not supported, but we are happy to\n"
+#~ "              learn about your interest.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Esta tarefa atualmente não é suportada, mas ficaremos felizes em\n"
+#~ "              saber do seu interesse.\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "                      Treat this property as\n"
+#~ "                      <select class=\"form-select filter-type\"\n"
+#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
+#~ "                                         optionsText: function (val) {\n"
+#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
+#~ "                                         },\n"
+#~ "                                         value: filterName,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
+#~ "                      and match\n"
+#~ "                      <select data-bind=\"value: $parent.clause,  \n"
+#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
+#~ "                              class=\"form-control filter-clause\">\n"
+#~ "                        <option value=\"all\">\n"
+#~ "                          all of the\n"
+#~ "                        </option>\n"
+#~ "                        <option value=\"any\">\n"
+#~ "                          any of the\n"
+#~ "                        </option>\n"
+#~ "                      </select>\n"
+#~ "                      following conditions:\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Tratar esta propriedade como\n"
+#~ "                      <select class=\"form-select filter-type\"\n"
+#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
+#~ "                                         optionsText: function (val) {\n"
+#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
+#~ "                                         },\n"
+#~ "                                         value: filterName,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
+#~ "                      e corresponder\n"
+#~ "                      <select data-bind=\"value: $parent.clause,  \n"
+#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
+#~ "                              class=\"form-control filter-clause\">\n"
+#~ "                        <option value=\"all\">\n"
+#~ "                          todas as\n"
+#~ "                        </option>\n"
+#~ "                        <option value=\"any\">\n"
+#~ "                          quaisquer das\n"
+#~ "                        </option>\n"
+#~ "                      </select>\n"
+#~ "                      seguintes condições:\n"
+#~ "                    "
+
+#~ msgid "Explore Case Data"
+#~ msgstr "Explorar Dados de Casos"
+
+#~ msgid "CommCare HQ looks better on desktop!"
+#~ msgstr "CommCare HQ fica melhor em desktop!"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            Hi%(\" \" + full_name)s, it looks like you’re on a mobile device.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Olá%(\" \" + full_name)s, parece que você está em um dispositivo móvel.\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "            CommCare HQ is optimized for desktop or laptop browsers.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            O CommCare HQ é otimizado para navegadores em desktop ou laptop.\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "            Send yourself an email with a login link to use when you’re back on a full-size browser:\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Envie um e-mail para você mesmo com um link de acesso para usar quando estiver de volta em um navegador de tela cheia:\n"
+#~ "          "
+
+#~ msgid "Email Link"
+#~ msgstr "Link por e-mail"
+
+#~ msgid ""
+#~ "\n"
+#~ "            Reminder sent!\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Lembrete enviado!\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "            Check out this video to get an introduction to CommCare HQ.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Assista a este vídeo para ter uma introdução ao CommCare HQ.\n"
+#~ "          "
+
+#~ msgid "Requested"
+#~ msgstr "Solicitado"
+
+#~ msgid "Unverified"
+#~ msgstr "Não verificado"
+
+#~ msgid "info"
+#~ msgstr "informação"
+
+#~ msgid "current"
+#~ msgstr "atual"
+
+#, python-brace-format
+#~ msgid "{num} cases"
+#~ msgstr "{num} casos"
+
+#~ msgid "Text equals"
+#~ msgstr "Texto é igual a"
+
+#~ msgid "Text does not equal"
+#~ msgstr "Texto não é igual a"
+
+#~ msgid "a Number"
+#~ msgstr "um Número"
+
+#~ msgid "Number is equal to"
+#~ msgstr "Número é igual a"
+
+#~ msgid "Number is less than"
+#~ msgstr "Número é menor que"
+
+#~ msgid "Number is greater than"
+#~ msgstr "Número é maior que"
+
+#~ msgid "Number is not equal to"
+#~ msgstr "Número não é igual a"
+
+#~ msgid "a Date"
+#~ msgstr "uma Data"
+
+#~ msgid "Date is"
+#~ msgstr "Data é"
+
+#~ msgid "Date is before"
+#~ msgstr "Data é anterior a"
+
+#~ msgid "Date is after"
+#~ msgstr "Data é posterior a"
+
+#~ msgid "The report endpoint for {}/{} cannot be found."
+#~ msgstr "O endpoint do relatório para {}/{} não pode ser encontrado."
+
+#~ msgid "Could not find the report filter '{}'"
+#~ msgstr "Não foi possível encontrar o filtro de relatório '{}'"
+
+#~ msgid "Project Data"
+#~ msgstr "Dados do Projeto"
+
+#~ msgid ""
+#~ "Setting a password is disabled. The user will set their own password on "
+#~ "confirming their account email."
+#~ msgstr ""
+#~ "A definição de senha está desativada. O usuário definirá sua própria senha "
+#~ "ao confirmar o e-mail da conta."
+
+#~ msgid ""
+#~ "Setting a password is disabled. The user will set their own password on "
+#~ "confirming their account phone number."
+#~ msgstr ""
+#~ "A definição de senha está desativada. O usuário definirá sua própria senha "
+#~ "ao confirmar o número de telefone da conta."
+
+#~ msgid ""
+#~ "This feature allows you to quickly explore your case data for ad-hoc data "
+#~ "queries or to identify unclean data."
+#~ msgstr ""
+#~ "Este recurso permite explorar rapidamente seus dados de casos para consultas"
+#~ " ad-hoc ou para identificar dados inconsistentes."
+
+#~ msgid "No, take me back."
+#~ msgstr "Não, quero voltar."
+
+#~ msgid "Yes, import application"
+#~ msgstr "Sim, importa o aplicativo"
+
+#~ msgid "You must submit a name for the application you are importing."
+#~ msgstr ""
+#~ "Você deve submeter um nome para o aplicativo que você está importando."
+
+#~ msgid "You must upload the app source file."
+#~ msgstr "Você deve enviar o arquivo fonte do aplicativo."
+
+#~ msgid "Domain Temporarily Unavailable"
+#~ msgstr "Domínio Temporariamente Indisponível"
+
+#~ msgid ""
+#~ "The page you requested is currently unavailable due to a\n"
+#~ "    data migration. Please check back later."
+#~ msgstr ""
+#~ "A página solicitada está indisponível no momento devido a uma\n"
+#~ "    migração de dados. Por favor, tente novamente mais tarde."
 
 #, python-format
 #~ msgid ""
