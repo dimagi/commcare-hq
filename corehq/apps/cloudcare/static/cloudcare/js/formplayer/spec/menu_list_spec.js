@@ -14,10 +14,11 @@ import UsersModels from "cloudcare/js/formplayer/users/models";
 
 describe('Render a case list', function () {
     before(function () {
+        this.sscsOrigValue = initialPageData.get('split_screen_case_search');
+        initialPageData.register('split_screen_case_search', false);
         initialPageData.register(
             "toggles_dict",
             {
-                SPLIT_SCREEN_CASE_SEARCH: false,
                 DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
                 USE_PROMINENT_PROGRESS_BAR: false,
                 ACTIVATE_DATADOG_APM_TRACES: false,
@@ -28,6 +29,11 @@ describe('Render a case list', function () {
 
     after(function () {
         initialPageData.unregister("toggles_dict");
+        if (this.sscsOrigValue !== undefined) {
+            initialPageData.register('split_screen_case_search', this.sscsOrigValue);
+        } else {
+            initialPageData.unregister('split_screen_case_search');
+        }
     });
 
     describe('#getMenuView', function () {
