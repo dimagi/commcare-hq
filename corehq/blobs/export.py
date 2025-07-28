@@ -46,6 +46,11 @@ class BlobDbBackendExporter(object):
                 self.db.copy_blob(content, key=meta.key)
 
     def _write_missing_ids(self):
+        if os.path.exists(self.missing_ids_filename):
+            confirm = input(f"{self.missing_ids_filename} already exists. Overwrite? (y/N): ")
+            if confirm != 'y':
+                print("Cancelled export.")
+                return
         with open(self.missing_ids_filename, 'w') as f:
             for missing_id in self.missing_ids:
                 f.write(f"{missing_id}\n")
