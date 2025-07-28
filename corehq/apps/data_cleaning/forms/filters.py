@@ -251,18 +251,18 @@ class AddFilterForm(forms.Form):
                                 'multi_select_value',
                                 x_init='$watch('
                                 "  'propId',"
-                                "   value => $dispatch('updateAddFilterPropId', { propId: value })"
+                                "   value => $dispatch('updateMultiSelectOptions', { propId: value })"
                                 '); '
                                 '$watch('
                                 "  'dataType',"
-                                "  value => $dispatch('updateAddFilterPropId', { "
+                                "  value => $dispatch('updateMultiSelectOptions', { "
                                 '    propId: propId, dataType: value, '
                                 '  })'
                                 '); ',
                                 x_dynamic_options_select2=json.dumps(
                                     {
                                         'details': property_details,
-                                        'eventName': 'updateAddFilterPropId',
+                                        'eventName': 'updateMultiSelectOptions',
                                         'initialPropId': initial_prop_id,
                                     }
                                 ),
