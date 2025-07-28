@@ -129,38 +129,76 @@ class TestAddFilterForm(TestCase):
                 assert not form.is_valid()
                 self.assertFormError(form, field=match_field, errors=['Please select a match type.'])
 
-    def test_missing_values(self):
-        cases = [
-            ('soil_mix', DataType.TEXT, 'text_match_type', 'text_value', FilterMatchType.TEXT_CHOICES),
-            ('height', DataType.INTEGER, 'number_match_type', 'number_value', FilterMatchType.NUMBER_CHOICES),
-            ('watered_on', DataType.DATE, 'date_match_type', 'date_value', FilterMatchType.DATE_CHOICES),
-            (
-                'pot_type',
-                DataType.MULTIPLE_OPTION,
-                'multi_select_match_type',
-                'multi_select_value',
-                FilterMatchType.MULTI_SELECT_CHOICES,
-            ),
-        ]
-        for prop_id, data_type, match_field, value_field, match_choices in cases:
-            required_text_match_types = [mt for mt, _ in match_choices]
-            for match_type in required_text_match_types:
-                with self.subTest(prop_id=prop_id, data_type=data_type, match_type=match_type):
-                    data = self._get_post_data(
-                        prop_id,
-                        data_type,
-                        **{
-                            match_field: match_type,
-                            value_field: '',
-                        },
-                    )
-                    form = AddFilterForm(self.session, data)
-                    assert not form.is_valid()
-                    assert value_field in form.errors
-                    assert (
-                        "Please provide a value or use the 'empty' or 'missing' match types."
-                        in form.errors[value_field]
-                    )
+    def test_missing_values_for_text_choices(self):
+        required_text_match_types = [mt for mt, _ in FilterMatchType.TEXT_CHOICES]
+        for match_type in required_text_match_types:
+            with self.subTest(match_type=match_type):
+                data = self._get_post_data(
+                    'soil_mix',
+                    DataType.TEXT,
+                    text_match_type=match_type,
+                )
+                form = AddFilterForm(self.session, data)
+                assert not form.is_valid()
+                self.assertFormError(
+                    form,
+                    field='text_value',
+                    errors=["Please provide a value or use the 'empty' or 'missing' match types."],
+                )
+
+    def test_missing_values_for_number_choices(self):
+        required_number_match_types = [mt for mt, _ in FilterMatchType.NUMBER_CHOICES]
+        for match_type in required_number_match_types:
+            with self.subTest(match_type=match_type):
+                data = self._get_post_data(
+                    'height',
+                    DataType.INTEGER,
+                    number_match_type=match_type,
+                )
+                form = AddFilterForm(self.session, data)
+                assert not form.is_valid()
+                self.assertFormError(
+                    form,
+                    field='number_value',
+                    errors=["Please provide a value or use the 'empty' or 'missing' match types."],
+                )
+
+    def test_missing_values_for_date_choices(self):
+        required_date_match_types = [mt for mt, _ in FilterMatchType.DATE_CHOICES]
+        for match_type in required_date_match_types:
+            with self.subTest(match_type=match_type):
+                data = self._get_post_data(
+                    'watered_on',
+                    DataType.DATE,
+                    date_match_type=match_type,
+                )
+                form = AddFilterForm(self.session, data)
+                assert not form.is_valid()
+                self.assertFormError(
+                    form,
+                    field='date_value',
+                    errors=[
+                        "Please provide a value or use the 'empty' or 'missing' match types.",
+                        "Date format should be 'YYYY-MM-DD'",
+                    ],
+                )
+
+    def test_missing_values_for_multi_select_choices(self):
+        required_multi_select_match_types = [mt for mt, _ in FilterMatchType.MULTI_SELECT_CHOICES]
+        for match_type in required_multi_select_match_types:
+            with self.subTest(match_type=match_type):
+                data = self._get_post_data(
+                    'pot_type',
+                    DataType.MULTIPLE_OPTION,
+                    multi_select_match_type=match_type,
+                )
+                form = AddFilterForm(self.session, data)
+                assert not form.is_valid()
+                self.assertFormError(
+                    form,
+                    field='multi_select_value',
+                    errors=["Please provide a value or use the 'empty' or 'missing' match types."],
+                )
 
     def test_validation_ok_for_non_value_matches(self):
         cases = [
