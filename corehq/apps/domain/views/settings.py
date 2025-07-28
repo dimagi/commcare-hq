@@ -40,6 +40,7 @@ from corehq.apps.case_search.models import (
     case_search_synchronous_web_apps_for_domain,
     disable_case_search,
     enable_case_search,
+    split_screen_ui_enabled_for_domain,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -472,6 +473,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         })
         case_search_synchronous_web_apps_for_domain.clear(self.domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(self.domain)
+        split_screen_ui_enabled_for_domain.clear(self.domain)
         config.ignore_patterns.set(updated_ignore_patterns)
         config.fuzzy_properties.set(updated_fuzzies)
         return json_response(self.page_context)

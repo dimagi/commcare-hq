@@ -420,6 +420,7 @@ def enable_case_search(domain):
         case_search_enabled_for_domain.clear(domain)
         reindex_case_search_for_domain.delay(domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
+        split_screen_ui_enabled_for_domain.clear(domain)
     return config
 
 
@@ -439,6 +440,7 @@ def disable_case_search(domain):
         case_search_enabled_for_domain.clear(domain)
         delete_case_search_cases_for_domain.delay(domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
+        split_screen_ui_enabled_for_domain.clear(domain)
     return config
 
 
