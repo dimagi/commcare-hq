@@ -129,7 +129,7 @@ class TestIsActiveOnDomain(TestCase):
     @classmethod
     def make_cc_user(cls, username, domain, is_active=True):
         user = CommCareUser.create(domain, username, "***********", None, None)
-        user.is_active = is_active
+        user.set_is_active(domain, is_active)
         user_adapter.index(user, refresh=True)
         cls.addClassCleanup(user.delete, None, None)
         cls.addClassCleanup(user_adapter.delete, user._id)
