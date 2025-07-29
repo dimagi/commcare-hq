@@ -75,7 +75,7 @@ var userModel = function (options) {
 
     self.confirmationSentAtText = ko.computed(function () {
         if (!self.confirmation_sent_at()) {
-            return '';
+            return gettext('Unavailable');
         }
         return moment(self.confirmation_sent_at()).format("MMMM Do YYYY, h:mm a");
     });
