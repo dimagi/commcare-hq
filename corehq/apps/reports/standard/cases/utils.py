@@ -14,6 +14,7 @@ from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
+from corehq.project_limits.const import OWNER_ID_LIMIT_KEY, DEFAULT_OWNER_ID_LIMIT
 from corehq.project_limits.models import SystemLimit
 
 
@@ -174,7 +175,7 @@ def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slug
         location_owner_ids,
         assigned_user_ids_at_selected_locations,
     ))
-    limit = SystemLimit.get_limit_for_key("owner_id_limit", 1000, domain=domain)
+    limit = SystemLimit.get_limit_for_key(OWNER_ID_LIMIT_KEY, DEFAULT_OWNER_ID_LIMIT, domain=domain)
     if len(owner_ids) > limit:
         raise TooManyOwnerIDsError
     return owner_ids
