@@ -274,12 +274,9 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         require_account_confirmation = string_to_boolean(bundle.data.pop('require_account_confirmation', False))
         send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         password = bundle.data.get('password')
-        if not (password or bundle.data.get('connect_username')) and not require_account_confirmation:
-            if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']) and send_confirmation_email:
-                raise BadRequest(_("You must require account confirmation to send a confirmation email."))
-            raise BadRequest(_('Password or connect username required'))
+        connect_username = bundle.data.get('connect_username')
 
-        if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
+        if connect_username and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
         try:
             validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
@@ -303,6 +300,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 if require_account_confirmation and send_confirmation_email:
                     send_account_confirmation_if_necessary(bundle.obj)
             else:
+                if not (password or connect_username):
+                    raise BadRequest(_('Password or connect username required'))
                 bundle.obj = CommCareUser.create(
                     domain=kwargs['domain'],
                     username=username,
@@ -328,10 +327,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             else:
                 django_user.delete()
             raise
-        if bundle.data.get('connect_username'):
+        if connect_username:
             ConnectIDUserLink.objects.create(
                 domain=bundle.request.domain,
-                connectid_username=bundle.data['connect_username'],
+                connectid_username=connect_username,
                 commcare_user=bundle.obj.get_django_user()
             )
         return bundle
