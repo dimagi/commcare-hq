@@ -52,14 +52,16 @@ def test_example_urls(input_url, expected):
     [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('8.8.8.8', 80))],
     [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('169.254.169.254', 80))]
 ])
-def test_rebinding(mock_gethostbyname):
+def test_dns_resolution_to_bad_address(mock_gethostbyname):
     """
     this test doesn't do much, it just checks that a known rebinding endpoint
     is either valid, or pointing to a link local address
     """
     url = 'http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/'
+    # resolves to a good address
     validate_user_input_url(url)
     try:
+        # resolves to a bad address
         validate_user_input_url(url)
     except PossibleSSRFAttempt as e:
         assert e.reason == 'is_link_local'
