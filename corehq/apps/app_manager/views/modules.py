@@ -106,7 +106,10 @@ from corehq.apps.app_manager.views.utils import (
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.app_manager.xpath_validator import validate_xpath
-from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.case_search.models import (
+    case_search_enabled_for_domain,
+    split_screen_ui_enabled_for_domain,
+)
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
     track_domain_request,
@@ -159,6 +162,7 @@ def get_module_view_context(request, app, module, lang=None):
             and has_privilege(request, privileges.CLOUDCARE)
             and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
+        'split_screen_case_search': split_screen_ui_enabled_for_domain(app.domain),
         'custom_assertions': [
             {'test': assertion.test, 'text': assertion.text.get(lang)}
             for assertion in module.custom_assertions

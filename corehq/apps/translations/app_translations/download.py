@@ -8,6 +8,7 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xform import ItextOutput, ItextValue
+from corehq.apps.case_search.models import split_screen_ui_enabled_for_domain
 from corehq.apps.translations.app_translations.utils import (
     get_form_sheet_name,
     get_menu_row,
@@ -218,7 +219,7 @@ def get_module_search_command_rows(langs, module, domain):
         ('description', 'list')
         + tuple(module.search_config.description.get(lang, '') for lang in langs),
     ]
-    if not toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(domain):
+    if not split_screen_ui_enabled_for_domain(domain):
         rows.append(
             ('search_again_label', 'list') + tuple(module.search_config.search_again_label.label.get(lang, '')
                                                    for lang in langs),

@@ -1,14 +1,28 @@
 from django.core.management import BaseCommand
-from corehq.toggles import SPLIT_SCREEN_CASE_SEARCH, DYNAMICALLY_UPDATE_SEARCH_RESULTS, NAMESPACE_DOMAIN
+
+from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.toggles import DYNAMICALLY_UPDATE_SEARCH_RESULTS, NAMESPACE_DOMAIN
 
 
 class Command(BaseCommand):
     help = """
-    Enabled DYNAMICALLY_UPDATE_SEARCH_RESULTS feature flag for domains with SPLIT_SCREEN_CASE_SEARCH enabled.
+    Enable DYNAMICALLY_UPDATE_SEARCH_RESULTS feature flag for domains
+    with CaseSearchConfig.split_screen_ui enabled.
+
+    This command ignores domain subscription, so it includes domains
+    that aren't yet, or are no longer, on Advanced or Enterprise plans.
+    Domains will only see the split screen case search UI and
+    dynamically updated search results when they are on Advanced or
+    Enterprise plans.
     """
 
     def handle(self, **options):
-        sscs_enabled_domains = SPLIT_SCREEN_CASE_SEARCH.get_enabled_domains()
-        print("Processing " + str(len(sscs_enabled_domains)) + " domains")
-        for domain in sscs_enabled_domains:
+        domains = get_split_screen_ui_enabled_domains()
+        print(f"Processing {len(domains)} domains")
+        for domain in domains:
             DYNAMICALLY_UPDATE_SEARCH_RESULTS.set(domain, True, NAMESPACE_DOMAIN)
+
+
+def get_split_screen_ui_enabled_domains():
+    configs = CaseSearchConfig.objects.filter(split_screen_ui=True)
+    return [conf.domain for conf in configs]
