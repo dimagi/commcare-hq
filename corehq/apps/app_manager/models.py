@@ -5072,6 +5072,9 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             const.TARGET_COMMCARE: 'org.commcare.dalvik',
             const.TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(commcare_flavor)
+
+        # todo: add credentials in context
+
         return render_to_string('app_manager/profile.xml', {
             'is_odk': is_odk,
             'app': self,
@@ -6312,18 +6315,18 @@ class CredentialApplication(models.Model):
     Represents an application that issues credentials to users when
     they have been active for a certain activity_level.
     """
-    class ActivityLevelChoices(models.IntegerChoices):
-        ONE_MONTH = 1, _('1 Month')
-        TWO_MONTHS = 2, _('2 Months')
-        THREE_MONTHS = 3, _('3 Months')
-        FOUR_MONTHS = 4, _('4 Months')
-        FIVE_MONTHS = 5, _('5 Months')
-        SIX_MONTHS = 6, _('6 Months')
+    class ActivityLevelChoices(models.TextChoices):
+        ONE_MONTH = '1_MONTH', _('1 Month')
+        TWO_MONTHS = '2_MONTHS', _('2 Months')
+        THREE_MONTHS = '3_MONTHS', _('3 Months')
+        SIX_MONTHS = '6_MONTHS', _('6 Months')
+        NINE_MONTHS = '9_MONTHS', _('9 Months')
+        TWELVE_MONTHS = '12_MONTHS', _('12 Months')
 
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
     activity_level = models.CharField(
-        max_length=1,
+        max_length=32,
         choices=ActivityLevelChoices.choices,
         default=ActivityLevelChoices.THREE_MONTHS.value,
     )

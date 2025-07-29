@@ -25,6 +25,7 @@ from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.apps import edit_app_attr
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.app_manager.models import CredentialApplication
 
 
 @require_GET
@@ -74,6 +75,17 @@ def edit_commcare_profile(request, domain, app_id):
                 app.profile[settings_type] = {}
             app.profile[settings_type][name] = value
             changed[settings_type][name] = value
+
+    # Todo: need to check if this app can issue credentials
+    credentials_activity_level = changed.get('features', {}).get('credentials', {})
+    if credentials_activity_level:
+        CredentialApplication.objects.update_or_create(
+            app_id=app.id,
+            domain=domain,
+            defaults={
+                'activity_level': credentials_activity_level,
+            }
+        )
 
     if not domain_has_privilege(domain, privileges.APP_DEPENDENCIES):
         # remove dependencies if they were set before
