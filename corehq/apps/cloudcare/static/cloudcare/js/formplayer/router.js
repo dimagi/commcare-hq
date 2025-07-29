@@ -186,6 +186,12 @@ define("cloudcare/js/formplayer/router", [
         urlObject.setRequestInitiatedByTag(formplayerConstants.requestInitiatedByTagsMapping.PAGINATION);
         let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
         API.listMenus(encodedUrl);
+
+        const contentContainer = document.getElementById(formplayerConstants.SCROLLABLE_CONTENT_CONTAINER.slice(1));
+        contentContainer.scroll({
+            top: 0,
+            left: 0,
+        });
     });
 
     FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage, selections) {
