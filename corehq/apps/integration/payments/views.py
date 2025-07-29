@@ -1,3 +1,9 @@
+import io
+
+from corehq.apps.reports.cache import request_cache
+from corehq.util.view_utils import request_as_dict
+from couchexport.export import export_from_tables, get_writer
+from couchexport.shortcuts import export_response
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -6,6 +12,8 @@ from django.utils.translation import gettext as _
 from memoized import memoized
 
 from corehq import toggles
+from celery.utils.log import get_task_logger
+
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -28,7 +36,7 @@ from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.utils import add_case_owners_and_location_access
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import HqPermissions, WebUser
+from corehq.apps.users.models import HqPermissions, WebUser, CouchUser
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.timezones.utils import get_timezone
@@ -244,3 +252,181 @@ class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
             'show_success': show_success,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+
+from django.utils.translation import gettext as _
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from django.http import HttpResponse
+
+
+class ExportableMixin:
+    """Mixin to add export functionality to table views"""
+    exportable = False
+    exportable_all = False
+    export_format_override = None
+
+    # Required stuff
+    name = None
+    slug = None
+
+    @property
+    def headers(self):
+        """
+            Override this method to create a functional tabular report.
+            Returns a DataTablesHeader() object (or a list, but preferably the former.
+        """
+        return DataTablesHeader()
+
+    @property
+    def total_records(self):
+        """
+            Override for pagination.
+            Returns an integer.
+        """
+        return 0
+
+    @property
+    def override_export_sheet_name(self):
+        """
+            Override the export sheet name here. Return a string.
+        """
+        return None
+
+    _export_sheet_name = None
+
+    @property
+    def export_sheet_name(self):
+        if self._export_sheet_name is None:
+            override = self.override_export_sheet_name
+            self._export_sheet_name = override if isinstance(override, str) else self.name
+        return self._export_sheet_name
+
+    @property
+    @memoized
+    def export_format(self):
+        from couchexport.models import Format
+        return self.export_format_override or self.get_request_param('format', Format.XLS_2007)
+
+    # TODO Consider removing this method if not needed
+    def get_request_param(self, param_name, default=None):
+        """
+        Helper method to get a request parameter, with a default value.
+        """
+        return self.request.GET.get(param_name, default)
+
+    @property
+    def export_name(self):
+        return self.slug
+
+    @property
+    def export_target(self):
+        writer = get_writer(self.export_format)
+        return writer.target_app
+
+    @property
+    def export_table(self):
+        """
+            Intention: Override
+            Returns an export table to be parsed by export_from_tables.
+        """
+        return [
+            [
+                'table_or_sheet_name',
+                [
+                    ['header'],
+                    ['row 1'],
+                    ['row 2'],
+                ]
+            ]
+        ]
+
+    @property
+    def export_response(self):
+        """
+        Intention: Not to be overridden in general.
+        Returns the tabular export of the data, if available.
+        """
+        # self.is_rendered_as_export = True
+        if self.exportable_all:
+            export_all_rows_task.delay(self.__class__, self.__getstate__())
+            return HttpResponse()
+        else:
+            # We only want to cache the responses which serve files directly
+            # The response which return 200 and emails the reports should not be cached
+            return self._export_response_direct()
+
+    # @request_cache()
+    def _export_response_direct(self):
+        temp = io.BytesIO()
+        export_from_tables(self.export_table, temp, self.export_format)
+        return export_response(temp, self.export_format, self.export_name)
+
+    @property
+    def rows(self):
+        """
+            Override this method to create a functional tabular report.
+            Returns 2D list of rows.
+            [['row1'],[row2']]
+        """
+        return []
+
+    @property
+    def get_all_rows(self):
+        """
+            Override this method to return all records to export
+        """
+        return []
+
+    # TODO Used by export task. Consider creating a new task that is simpler I guess
+    def __getstate__(self):
+        """
+            For pickling the report when passing it to Celery.
+        """
+        request = request_as_dict(self.request)
+
+        return dict(
+            request=request,
+            request_params=self._request_params,
+            domain=self.domain,
+            context={}
+        )
+
+    _caching = False
+
+    # TODO Used by export task. Consider creating a new task that is simpler I guess
+
+    def __setstate__(self, state):
+        """
+            For unpickling a pickled report.
+        """
+        logging = get_task_logger(__name__)  # logging is likely to happen within celery.
+        self.domain = state.get('domain')
+        self.context = state.get('context', {})
+
+        class FakeHttpRequest(object):
+            method = 'GET'
+            domain = ''
+            GET = {}
+            META = {}
+            couch_user = None
+            datespan = None
+            can_access_all_locations = None
+
+        request_data = state.get('request')
+        request = FakeHttpRequest()
+        request.domain = self.domain
+        request.GET = request_data.get('GET', {})
+        request.META = request_data.get('META', {})
+        request.datespan = request_data.get('datespan')
+        request.can_access_all_locations = request_data.get('can_access_all_locations')
+
+        try:
+            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
+            request.couch_user = couch_user
+        except Exception as e:
+            logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
+                          (self.name, e))
+        self.request = request
+        self._caching = True
+        self._request_params = state.get('request_params')
+        # self._update_initial_context()
