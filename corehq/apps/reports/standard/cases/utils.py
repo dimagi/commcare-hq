@@ -1,7 +1,3 @@
-from django.conf import settings
-
-from dimagi.utils.logging import notify_exception
-
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
@@ -13,6 +9,7 @@ from corehq.apps.locations.dbaccessors import (
     user_ids_at_locations_and_descendants,
 )
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.exceptions import TooManyOwnerIDsError
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
@@ -177,11 +174,9 @@ def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slug
         location_owner_ids,
         assigned_user_ids_at_selected_locations,
     ))
-    if settings.IS_SAAS_ENVIRONMENT:
-        # temporary code to understand usages of this function that result in a lot of owner_ids
-        limit = SystemLimit.get_limit_for_key("owner_id_limit", 1000, domain=domain)
-        if len(owner_ids) > limit:
-            notify_exception(None, "Exceeded recommended owner id count", details={"count": len(owner_ids)})
+    limit = SystemLimit.get_limit_for_key("owner_id_limit", 1000, domain=domain)
+    if len(owner_ids) > limit:
+        raise TooManyOwnerIDsError
     return owner_ids
 
 
