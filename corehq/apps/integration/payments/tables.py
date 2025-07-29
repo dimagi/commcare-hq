@@ -51,13 +51,13 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     user_or_case_id = columns.Column(
         verbose_name=_("User or Case ID"),
     )
-    kyc_status = columns.Column(
-        verbose_name=_("KYC Status"),
-        # Since by default the value for kyc_status is blank,
-        # in which case render_kyc_status will be skipped.
-        # We set empty_values explicitly to force render_kyc_status being called for all rows.
-        empty_values=(),
-    )
+    # kyc_status = columns.Column(
+    #     verbose_name=_("KYC Status"),
+    #     # Since by default the value for kyc_status is blank,
+    #     # in which case render_kyc_status will be skipped.
+    #     # We set empty_values explicitly to force render_kyc_status being called for all rows.
+    #     empty_values=(),
+    # )
     payee_note = columns.Column(
         verbose_name=_("Payee Note"),
     )
@@ -98,8 +98,8 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         except ValueError:
             return _("Invalid Status")
 
-    def render_kyc_status(self, record, value):
-        user_or_case_id = record.record.get('user_or_case_id')
-        if user_or_case_id and user_or_case_id in self.context['user_or_cases_verification_statuses']:
-            return self.context['user_or_cases_verification_statuses'][user_or_case_id]
-        return _("Unavailable")
+    # def render_kyc_status(self, record, value):
+    #     user_or_case_id = record.record.get('user_or_case_id')
+    #     if user_or_case_id and user_or_case_id in self.context['user_or_cases_verification_statuses']:
+    #         return self.context['user_or_cases_verification_statuses'][user_or_case_id]
+    #     return _("Unavailable")

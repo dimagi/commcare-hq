@@ -35,6 +35,16 @@
       <span> {% trans "Verify Selected" %} </span>
     </button>
   </p>
+  <p>
+    <a
+      id="export-btn"
+      class="btn btn-primary"
+      href="{% url 'payments_verify_table' domain %}{% querystring %}"
+      hq-hx-action="export"
+    >
+      <span> {% trans "Export All" %} </span>
+    </a>
+  </p>
   <div
     id="payment-verify-table"
     hx-trigger="load"

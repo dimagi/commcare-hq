@@ -1,9 +1,14 @@
 import io
+import re
+from itertools import chain
 
 from corehq.apps.reports.cache import request_cache
+from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.util.view_utils import request_as_dict
 from couchexport.export import export_from_tables, get_writer
+from couchexport.models import Format
 from couchexport.shortcuts import export_response
+from dimagi.utils.web import json_request
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -77,6 +82,171 @@ require_payments_report_access = require_permission(
 )
 
 
+from django.http import HttpResponse
+
+
+class ExportableMixin:
+    """Mixin to add export functionality to htmx based table views"""
+    exportable_all = False  # If True, export all rows, otherwise export only the rows shown in the table.
+    # Override this property to set the export format from backend.
+    # Defaults to one provided in request or Format.XLS_2007
+    export_format = None
+    export_sheet_name = None  # Override this property to set the export sheet name. Defaults to report name.
+    export_file_name = None  # Override this property to set the export file name. Defaults to report name.
+    # Override this property to disable caching for the export. Applicable only when exportable_all is False.
+    is_cacheable = True
+    name = None  # Override this property to set the name of the export. Defaults to the class name. (Not needed ?)
+
+    @property
+    def headers(self):
+        """
+            Override this method to create a functional tabular report.
+            Returns a DataTablesHeader() object (or a list, but preferably the former.
+        """
+        raise NotImplementedError
+
+    @property
+    def rows(self):
+        """
+            Override this method to create a functional tabular report.
+            Returns 2D list of rows.
+            [['row1'],[row2']]
+        """
+        raise NotImplementedError
+
+    @property
+    def all_rows(self):
+        """
+            Override this method to return all records to export
+        """
+        raise NotImplementedError
+
+    @property
+    def export_table(self):
+        """
+        Exports the report as excel.
+
+        When rendering a complex cell, it will assign a value in the following order:
+        1. cell['raw']
+        2. cell['sort_key']
+        3. str(cell)
+        """
+
+        def _unformat_row(row):
+            def _unformat_val(val):
+                if isinstance(val, dict):
+                    return val.get('raw', val.get('sort_key', val))
+                return self._strip_tags(val)
+
+            return [_unformat_val(val) for val in row]
+
+        table = [self.headers]
+        rows = (_unformat_row(row) for row in self.export_rows)
+        table = chain(table, rows)
+        return [[self.export_sheet_name, table]]
+
+    # TODO: Consider adding below to util
+    @staticmethod
+    def _strip_tags(value):
+        """
+        Strip HTML tags from a value
+        """
+        # Uses regex. Regex is much faster than using an HTML parser, but will
+        # strip "<2 && 3>" from a value like "1<2 && 3>2". A parser will treat
+        # each cell like an HTML document, which might be overkill, but if
+        # using regex breaks values then we should use a parser instead, and
+        # take the knock. Assuming we won't have values with angle brackets,
+        # using regex for now.
+        if isinstance(value, str):
+            return re.sub('<[^>]*?>', '', value)
+        return value
+
+    @property
+    def export_rows(self):
+        """
+        The rows that will be used in an export. Useful if you want to apply any additional
+        custom formatting to mirror something that would be done in a template.
+        """
+        if self.exportable_all:
+            return self.all_rows
+        else:
+            return self.rows
+
+    def trigger_export(self):
+        """
+        Intention: Not to be overridden in general.
+        Returns the tabular export of the data, if available.
+        """
+        if self.exportable_all:
+            from corehq.apps.integration.tasks import export_all_rows_task
+            export_all_rows_task.delay(
+                class_path=f"{self.__class__.__module__}.{self.__class__.__name__}",
+                export_context=self.get_export_context(),
+                export_format=self.export_format,
+            )
+            return HttpResponse()
+        else:
+            return self._export_response_direct()
+
+    @request_cache()
+    def _export_response_direct(self):
+        file = self.export_in_file()
+        return export_response(file, self.export_format, self.name)
+
+    def export_in_file(self):
+        file = io.BytesIO()
+        export_from_tables(self.export_table, file, Format.XLS_2007)
+        return file
+
+    _caching = False
+
+    def set_export_context(self, request):
+        """
+        Set the export context for the view. This is used to reconstruct the view later.
+        """
+        self.request = request
+        # TODO Check when the domain is set in the request and is it safe to use it here
+        self.domain = request.domain
+        self.name = self.name or self.__class__.__name__
+        self.export_sheet_name = self.export_sheet_name or self.name
+        self.export_file_name = self.export_file_name or self.name
+        print(self.request.GET, self.request.POST)
+        self.request_params = json_request(
+            self.request.GET if self.request.method == 'GET' else self.request.POST
+        )
+        self.export_format = self.export_format or self.request_params.get('format', Format.XLS_2007)
+
+    def get_export_context(self):
+        """
+        Return minimal export context required to reconstruct this export.
+        """
+        return {
+            "domain": self.domain,
+            "name": self.name,
+            "user_id": self.request.couch_user.user_id,
+            "request_params": self.request_params,
+        }
+
+    @classmethod
+    def reconstruct_from_export_context(cls, context):
+        """
+        Reconstructs the report object from a minimal serialized context.
+        Can be overridden by subclasses if needed.
+        """
+        from django.test.client import RequestFactory
+        from corehq.apps.users.models import CouchUser
+
+        request = RequestFactory().get('/', data=context['request_params'])
+        request.domain = context['domain']
+        request.couch_user = CouchUser.get_by_user_id(context['user_id'])
+
+        view = cls()
+        view.request = request
+        view.domain = context['domain']
+        view.name = context['name']
+        return view
+
+
 @location_safe
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
@@ -106,9 +276,10 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
-class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
+class PaymentsVerificationTableView(ExportableMixin, HqHtmxActionMixin, SelectablePaginatedTableView):
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
+    name = _('Payments Verification Report')
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
@@ -129,7 +300,6 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
         context_data['user_or_cases_verification_statuses'] = self._get_user_or_cases_verification_status(
             context_data['page_obj'].object_list
         )
-
         return context_data
 
     def _get_user_or_cases_verification_status(self, object_list):
@@ -204,6 +374,37 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             context,
         )
 
+    @hq_hx_action('get')
+    def export(self, request, *args, **kwargs):
+        self.set_export_context(request)
+        return self.trigger_export()
+
+    @property
+    def headers(self):
+        """Returns headers for table display"""
+        return [column.verbose_name for column in self.table.base_columns.values()]
+
+    @property
+    @memoized
+    def table(self):
+        return self.table_class(data=self.get_queryset(), request=self.request)
+
+    @property
+    def rows(self):
+        # TODO Maybe consider a direct approach to get rows from the table class
+        """Returns paginated rows for table display"""
+        return self.table.rows
+
+    @property
+    def all_rows(self):
+        """Returns all rows for export without pagination"""
+        queryset = self.get_queryset()
+        queryset = queryset.size(queryset.count()).start(0)
+        # TODO Use scrolling if the number of rows is large
+        data = queryset.run().hits
+        table = self.table_class(data)
+        return table.rows
+
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
@@ -254,179 +455,4 @@ class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
 
 
-from django.utils.translation import gettext as _
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from django.http import HttpResponse
 
-
-class ExportableMixin:
-    """Mixin to add export functionality to table views"""
-    exportable = False
-    exportable_all = False
-    export_format_override = None
-
-    # Required stuff
-    name = None
-    slug = None
-
-    @property
-    def headers(self):
-        """
-            Override this method to create a functional tabular report.
-            Returns a DataTablesHeader() object (or a list, but preferably the former.
-        """
-        return DataTablesHeader()
-
-    @property
-    def total_records(self):
-        """
-            Override for pagination.
-            Returns an integer.
-        """
-        return 0
-
-    @property
-    def override_export_sheet_name(self):
-        """
-            Override the export sheet name here. Return a string.
-        """
-        return None
-
-    _export_sheet_name = None
-
-    @property
-    def export_sheet_name(self):
-        if self._export_sheet_name is None:
-            override = self.override_export_sheet_name
-            self._export_sheet_name = override if isinstance(override, str) else self.name
-        return self._export_sheet_name
-
-    @property
-    @memoized
-    def export_format(self):
-        from couchexport.models import Format
-        return self.export_format_override or self.get_request_param('format', Format.XLS_2007)
-
-    # TODO Consider removing this method if not needed
-    def get_request_param(self, param_name, default=None):
-        """
-        Helper method to get a request parameter, with a default value.
-        """
-        return self.request.GET.get(param_name, default)
-
-    @property
-    def export_name(self):
-        return self.slug
-
-    @property
-    def export_target(self):
-        writer = get_writer(self.export_format)
-        return writer.target_app
-
-    @property
-    def export_table(self):
-        """
-            Intention: Override
-            Returns an export table to be parsed by export_from_tables.
-        """
-        return [
-            [
-                'table_or_sheet_name',
-                [
-                    ['header'],
-                    ['row 1'],
-                    ['row 2'],
-                ]
-            ]
-        ]
-
-    @property
-    def export_response(self):
-        """
-        Intention: Not to be overridden in general.
-        Returns the tabular export of the data, if available.
-        """
-        # self.is_rendered_as_export = True
-        if self.exportable_all:
-            export_all_rows_task.delay(self.__class__, self.__getstate__())
-            return HttpResponse()
-        else:
-            # We only want to cache the responses which serve files directly
-            # The response which return 200 and emails the reports should not be cached
-            return self._export_response_direct()
-
-    # @request_cache()
-    def _export_response_direct(self):
-        temp = io.BytesIO()
-        export_from_tables(self.export_table, temp, self.export_format)
-        return export_response(temp, self.export_format, self.export_name)
-
-    @property
-    def rows(self):
-        """
-            Override this method to create a functional tabular report.
-            Returns 2D list of rows.
-            [['row1'],[row2']]
-        """
-        return []
-
-    @property
-    def get_all_rows(self):
-        """
-            Override this method to return all records to export
-        """
-        return []
-
-    # TODO Used by export task. Consider creating a new task that is simpler I guess
-    def __getstate__(self):
-        """
-            For pickling the report when passing it to Celery.
-        """
-        request = request_as_dict(self.request)
-
-        return dict(
-            request=request,
-            request_params=self._request_params,
-            domain=self.domain,
-            context={}
-        )
-
-    _caching = False
-
-    # TODO Used by export task. Consider creating a new task that is simpler I guess
-
-    def __setstate__(self, state):
-        """
-            For unpickling a pickled report.
-        """
-        logging = get_task_logger(__name__)  # logging is likely to happen within celery.
-        self.domain = state.get('domain')
-        self.context = state.get('context', {})
-
-        class FakeHttpRequest(object):
-            method = 'GET'
-            domain = ''
-            GET = {}
-            META = {}
-            couch_user = None
-            datespan = None
-            can_access_all_locations = None
-
-        request_data = state.get('request')
-        request = FakeHttpRequest()
-        request.domain = self.domain
-        request.GET = request_data.get('GET', {})
-        request.META = request_data.get('META', {})
-        request.datespan = request_data.get('datespan')
-        request.can_access_all_locations = request_data.get('can_access_all_locations')
-
-        try:
-            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
-            request.couch_user = couch_user
-        except Exception as e:
-            logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                          (self.name, e))
-        self.request = request
-        self._caching = True
-        self._request_params = state.get('request_params')
-        # self._update_initial_context()
