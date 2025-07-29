@@ -214,7 +214,7 @@ class CommCareUserImporter(BaseUserImporter):
         self.logger.add_changes({'email': self.user.email})
 
     def update_status(self, is_active):
-        self.user.is_active = is_active
+        self.user.set_is_active(self.user_domain, is_active)
         self.logger.add_changes({'is_active': is_active})
 
     def update_locations(self, location_codes, domain_info):
