@@ -2005,6 +2005,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             raise IllegalAccountConfirmation('Account is already confirmed')
         assert not self.is_active, 'Active account should not be unconfirmed!'
         self.is_active = True
+        self.get_domain_membership(self.domain).is_active = True
         self.is_account_confirmed = True
         self.set_password(password)
         self.self_set_password = True

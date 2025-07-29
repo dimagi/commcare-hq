@@ -823,7 +823,7 @@ BIOMETRIC_INTEGRATION = StaticToggle(
 CASE_DETAIL_PRINT = StaticToggle(
     'case_detail_print',
     'MLabour: Allowing printing of the case detail, based on an HTML template',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1263,7 +1263,7 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description='Allows printing from CommCare on the device',
     help_link='https://confluence.dimagi.com/display/saas/Printing+from+a+form+in+CommCare+Android',
@@ -1319,7 +1319,7 @@ MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
      'through the app builder'),
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
@@ -1836,18 +1836,6 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'eCHIS/ICDS: Allow blank case tags',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
-    'filter_on_groups_and_locations',
-    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
-    'ONSE domain with group and location filters',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='For reports filtered by groups and locations, change the OR logic to an AND, so that '
-                '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
-                'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
-                'have group and location filters, such as the Submissions by Form report.',
 )
 
 DONT_INDEX_SAME_CASETYPE = StaticToggle(
