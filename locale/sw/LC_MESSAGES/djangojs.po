@@ -3616,12 +3616,6 @@ msgid "Error determining number of matching users"
 msgstr "Hitilafu katika kubaini idadi ya watumiaji wanaolingana"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"Anwani ya barua pepe inahitajika wakati watumiaji wanathibitisha akaunti zao"
-" wenyewe."
-
-#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Tafadhali ingiza anwani halali ya barua pepe."
 
@@ -4254,6 +4248,11 @@ msgstr "Imeshindikana! Majibu ni: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "Anwani ya barua pepe inahitajika wakati watumiaji wanathibitisha akaunti zao"
+#~ " wenyewe."
 
 #~ msgid "Out of range of filter. Will not appear on page refresh."
 #~ msgstr "Nje ya wigo wa kichujio. Haitatokea ukurasa ukipakiwa upya."

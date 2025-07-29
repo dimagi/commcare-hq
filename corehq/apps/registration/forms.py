@@ -63,7 +63,7 @@ class RegisterWebUserForm(forms.Form):
     company_name = forms.CharField(
         required=False,
         label=_("Organization or Company"),
-        max_length=50,
+        max_length=100,
     )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(

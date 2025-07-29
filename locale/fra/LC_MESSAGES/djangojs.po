@@ -3681,12 +3681,6 @@ msgstr ""
 "Erreur lors de la détermination du nombre d'utilisateurs correspondants"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"L'adresse e-mail est requise lorsque les utilisateurs confirment eux-mêmes "
-"leur compte."
-
-#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Veuillez entrer une adresse mail valide."
 
@@ -4333,6 +4327,11 @@ msgstr "Échec ! La réponse est : "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ n'a pas pu effectuer la requête : "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "L'adresse e-mail est requise lorsque les utilisateurs confirment eux-mêmes "
+#~ "leur compte."
 
 #~ msgid "Out of range of filter. Will not appear on page refresh."
 #~ msgstr ""

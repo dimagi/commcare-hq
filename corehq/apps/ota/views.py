@@ -37,6 +37,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq import toggles
+from corehq.toggles import deterministic_random
 from corehq.apps.app_manager.dbaccessors import (
     get_app_cached,
     get_latest_released_app_version,
@@ -72,7 +73,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timer import set_request_duration_reporting_threshold
 
 from .case_restore import get_case_restore_response
-from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
+from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket, IntegritySamplePercentage
 from .rate_limiter import rate_limit_restore
 from .utils import (
     demo_user_restore_response,
@@ -416,6 +417,12 @@ def heartbeat(request, domain, app_build_id):
 
     if _should_force_log_submission(request):
         info['force_logs'] = True
+
+    # Select % of app users to report app integrity to PersonalID server
+    sample_string = f"{request.couch_user.user_id}_{str(datetime.utcnow().date())}"
+    if (deterministic_random(sample_string) * 100) <= IntegritySamplePercentage.objects.first().percentage:
+        info["report_integrity"] = request.couch_user.user_id
+
     return JsonResponse(info)
 
 

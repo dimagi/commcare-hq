@@ -2,13 +2,13 @@
   "metadata": {
     "name": "CommCare HQ Font",
     "lastOpened": 0,
-    "created": 1751548810197
+    "created": 1752845736208
   },
   "iconSets": [
     {
       "selection": [
         {
-          "order": 5,
+          "order": 58,
           "id": 0,
           "name": "flower",
           "prevSize": 32,
@@ -16,7 +16,7 @@
           "tempChar": ""
         },
         {
-          "order": 6,
+          "order": 59,
           "id": 11,
           "name": "applications",
           "prevSize": 32,
@@ -24,7 +24,7 @@
           "tempChar": ""
         },
         {
-          "order": 7,
+          "order": 60,
           "id": 10,
           "name": "commtrack",
           "prevSize": 32,
@@ -32,7 +32,7 @@
           "tempChar": ""
         },
         {
-          "order": 8,
+          "order": 61,
           "id": 23,
           "name": "reports",
           "prevSize": 32,
@@ -40,7 +40,7 @@
           "tempChar": ""
         },
         {
-          "order": 9,
+          "order": 62,
           "id": 22,
           "name": "data",
           "prevSize": 32,
@@ -48,7 +48,7 @@
           "tempChar": ""
         },
         {
-          "order": 10,
+          "order": 63,
           "id": 21,
           "name": "users",
           "prevSize": 32,
@@ -56,7 +56,7 @@
           "tempChar": ""
         },
         {
-          "order": 11,
+          "order": 64,
           "id": 20,
           "name": "settings",
           "prevSize": 32,
@@ -64,7 +64,7 @@
           "tempChar": ""
         },
         {
-          "order": 12,
+          "order": 65,
           "id": 19,
           "name": "help",
           "prevSize": 32,
@@ -72,7 +72,7 @@
           "tempChar": ""
         },
         {
-          "order": 13,
+          "order": 66,
           "id": 18,
           "name": "exchange",
           "prevSize": 32,
@@ -80,7 +80,7 @@
           "tempChar": ""
         },
         {
-          "order": 14,
+          "order": 67,
           "id": 17,
           "name": "messaging",
           "prevSize": 32,
@@ -88,7 +88,7 @@
           "tempChar": ""
         },
         {
-          "order": 15,
+          "order": 68,
           "id": 44,
           "name": "chart-report",
           "prevSize": 32,
@@ -96,7 +96,7 @@
           "tempChar": ""
         },
         {
-          "order": 16,
+          "order": 69,
           "id": 43,
           "name": "form-report",
           "prevSize": 32,
@@ -104,7 +104,7 @@
           "tempChar": ""
         },
         {
-          "order": 17,
+          "order": 70,
           "id": 42,
           "name": "user-report",
           "prevSize": 32,
@@ -112,7 +112,7 @@
           "tempChar": ""
         },
         {
-          "order": 18,
+          "order": 71,
           "id": 41,
           "name": "datatable-report",
           "prevSize": 32,
@@ -120,7 +120,7 @@
           "tempChar": ""
         },
         {
-          "order": 19,
+          "order": 72,
           "id": 40,
           "name": "piegraph-report",
           "prevSize": 32,
@@ -128,7 +128,7 @@
           "tempChar": ""
         },
         {
-          "order": 20,
+          "order": 73,
           "id": 39,
           "name": "survey",
           "prevSize": 32,
@@ -136,7 +136,7 @@
           "tempChar": ""
         },
         {
-          "order": 21,
+          "order": 74,
           "id": 38,
           "name": "casemgt",
           "prevSize": 32,
@@ -144,7 +144,7 @@
           "tempChar": ""
         },
         {
-          "order": 22,
+          "order": 75,
           "id": 37,
           "name": "blankapp",
           "prevSize": 32,
@@ -152,7 +152,7 @@
           "tempChar": ""
         },
         {
-          "order": 23,
+          "order": 76,
           "id": 30,
           "name": "globe",
           "prevSize": 32,
@@ -160,7 +160,7 @@
           "tempChar": ""
         },
         {
-          "order": 24,
+          "order": 77,
           "id": 29,
           "name": "app-createform",
           "prevSize": 32,
@@ -168,7 +168,7 @@
           "tempChar": ""
         },
         {
-          "order": 25,
+          "order": 78,
           "id": 28,
           "name": "app-updateform",
           "prevSize": 32,
@@ -176,7 +176,7 @@
           "tempChar": ""
         },
         {
-          "order": 26,
+          "order": 79,
           "id": 27,
           "name": "app-completeform",
           "prevSize": 32,
@@ -184,7 +184,7 @@
           "tempChar": ""
         },
         {
-          "order": 27,
+          "order": 80,
           "id": 26,
           "name": "app-biometrics",
           "prevSize": 32,
@@ -192,7 +192,7 @@
           "tempChar": ""
         },
         {
-          "order": 28,
+          "order": 81,
           "id": 1,
           "name": "fd-text",
           "prevSize": 32,
@@ -200,7 +200,7 @@
           "tempChar": ""
         },
         {
-          "order": 29,
+          "order": 82,
           "id": 2,
           "name": "fd-numeric",
           "prevSize": 32,
@@ -208,7 +208,7 @@
           "tempChar": ""
         },
         {
-          "order": 30,
+          "order": 83,
           "id": 9,
           "name": "fd-data",
           "prevSize": 32,
@@ -216,7 +216,7 @@
           "tempChar": ""
         },
         {
-          "order": 31,
+          "order": 84,
           "id": 7,
           "name": "fd-variable",
           "prevSize": 32,
@@ -224,7 +224,7 @@
           "tempChar": ""
         },
         {
-          "order": 32,
+          "order": 85,
           "id": 6,
           "name": "fd-single-select",
           "prevSize": 32,
@@ -232,7 +232,7 @@
           "tempChar": ""
         },
         {
-          "order": 33,
+          "order": 86,
           "id": 5,
           "name": "fd-multi-select",
           "prevSize": 32,
@@ -240,7 +240,7 @@
           "tempChar": ""
         },
         {
-          "order": 34,
+          "order": 87,
           "id": 4,
           "name": "fd-decimal",
           "prevSize": 32,
@@ -248,7 +248,7 @@
           "tempChar": ""
         },
         {
-          "order": 35,
+          "order": 88,
           "id": 3,
           "name": "fd-long",
           "prevSize": 32,
@@ -256,7 +256,7 @@
           "tempChar": ""
         },
         {
-          "order": 36,
+          "order": 89,
           "id": 8,
           "name": "fd-calculation",
           "prevSize": 32,
@@ -264,7 +264,7 @@
           "tempChar": ""
         },
         {
-          "order": 37,
+          "order": 90,
           "id": 15,
           "name": "fd-datetime",
           "prevSize": 32,
@@ -272,7 +272,7 @@
           "tempChar": ""
         },
         {
-          "order": 38,
+          "order": 91,
           "id": 14,
           "name": "fd-audio-capture",
           "prevSize": 32,
@@ -280,7 +280,7 @@
           "tempChar": ""
         },
         {
-          "order": 39,
+          "order": 92,
           "id": 13,
           "name": "fd-android-intent",
           "prevSize": 32,
@@ -288,7 +288,7 @@
           "tempChar": ""
         },
         {
-          "order": 40,
+          "order": 93,
           "id": 45,
           "name": "fd-signature",
           "prevSize": 32,
@@ -296,7 +296,7 @@
           "tempChar": ""
         },
         {
-          "order": 41,
+          "order": 94,
           "id": 25,
           "name": "fd-multi-box",
           "prevSize": 32,
@@ -304,7 +304,7 @@
           "tempChar": ""
         },
         {
-          "order": 42,
+          "order": 95,
           "id": 24,
           "name": "fd-single-circle",
           "prevSize": 32,
@@ -312,7 +312,7 @@
           "tempChar": ""
         },
         {
-          "order": 43,
+          "order": 96,
           "id": 16,
           "name": "fd-hash",
           "prevSize": 32,
@@ -320,7 +320,7 @@
           "tempChar": ""
         },
         {
-          "order": 44,
+          "order": 97,
           "id": 36,
           "name": "fd-external-case",
           "prevSize": 32,
@@ -328,7 +328,7 @@
           "tempChar": ""
         },
         {
-          "order": 45,
+          "order": 98,
           "id": 35,
           "name": "fd-external-case-data",
           "prevSize": 32,
@@ -336,7 +336,7 @@
           "tempChar": ""
         },
         {
-          "order": 46,
+          "order": 99,
           "id": 34,
           "name": "fd-expand",
           "prevSize": 32,
@@ -344,7 +344,7 @@
           "tempChar": ""
         },
         {
-          "order": 47,
+          "order": 100,
           "id": 33,
           "name": "fd-collapse",
           "prevSize": 32,
@@ -352,7 +352,7 @@
           "tempChar": ""
         },
         {
-          "order": 48,
+          "order": 101,
           "id": 32,
           "name": "fd-case-property",
           "prevSize": 32,
@@ -360,7 +360,7 @@
           "tempChar": ""
         },
         {
-          "order": 49,
+          "order": 102,
           "id": 31,
           "name": "fd-edit-form",
           "prevSize": 32,
@@ -368,7 +368,7 @@
           "tempChar": ""
         },
         {
-          "order": 50,
+          "order": 103,
           "id": 55,
           "name": "cloudcare-start-full",
           "prevSize": 32,
@@ -376,7 +376,7 @@
           "tempChar": ""
         },
         {
-          "order": 51,
+          "order": 104,
           "id": 54,
           "name": "cloudcare-start-fg",
           "prevSize": 32,
@@ -384,7 +384,7 @@
           "tempChar": ""
         },
         {
-          "order": 52,
+          "order": 105,
           "id": 53,
           "name": "cloudcare-start-bg",
           "prevSize": 32,
@@ -392,7 +392,7 @@
           "tempChar": ""
         },
         {
-          "order": 53,
+          "order": 106,
           "id": 52,
           "name": "cloudcare-saved-full",
           "prevSize": 32,
@@ -400,7 +400,7 @@
           "tempChar": ""
         },
         {
-          "order": 54,
+          "order": 107,
           "id": 51,
           "name": "cloudcare-saved-fg",
           "prevSize": 32,
@@ -408,7 +408,7 @@
           "tempChar": ""
         },
         {
-          "order": 55,
+          "order": 108,
           "id": 50,
           "name": "cloudcare-saved-bg",
           "prevSize": 32,
@@ -416,7 +416,7 @@
           "tempChar": ""
         },
         {
-          "order": 56,
+          "order": 109,
           "id": 49,
           "name": "cloudcare-sync",
           "prevSize": 32,
@@ -424,12 +424,20 @@
           "tempChar": ""
         },
         {
-          "order": 57,
+          "order": 110,
           "id": 56,
           "name": "incomplete",
           "prevSize": 32,
           "code": 59655,
           "tempChar": ""
+        },
+        {
+          "order": 111,
+          "id": 57,
+          "name": "manage-case",
+          "prevSize": 32,
+          "code": 59656,
+          "tempChar": ""
         }
       ],
       "id": 2,
@@ -1247,6 +1255,23 @@
           "grid": 0,
           "tags": [
             "incomplete"
+          ]
+        },
+        {
+          "id": 57,
+          "paths": [
+            "M694.655 37.647l168.951 168.951v226.049h-65.867v-179.474h-159.305v-159.305h-412.048v171.887h-65.867v-237.754h524.49l9.646 9.647z",
+            "M525.693 399.71h497.207v596.883h-1021.697v-756.189h365.185l159.305 159.306zM307.288 402.302c-16.411 0-32.483 1.28-48.102 3.841-10.413 1.6-18.336 9.282-20.6 18.992l-14.148 60.925c-17.882 6.935-34.633 16.111-49.799 27.101l-63.042-18.886c-9.96-2.987-21.053-0.426-27.731 7.256-9.168 10.456-17.543 21.553-25.013 33.289l-5.319 8.643c-6.904 11.737-12.903 23.901-17.883 36.598-3.622 9.282-0.566 19.632 7.243 26.248l49.008 42.039c-1.245 8.856-1.924 17.925-1.924 27.101s0.679 18.246 1.924 27.208l-49.008 42.039c-7.809 6.616-10.865 16.965-7.243 26.247 4.98 12.697 10.979 24.861 17.883 36.598l5.319 8.643c7.47 11.736 15.845 22.833 25.013 33.29 6.678 7.575 17.771 10.243 27.731 7.255l62.928-18.992c15.167 10.99 31.918 20.166 49.8 27.101l14.149 60.925c2.263 9.709 10.186 17.391 20.598 18.992 15.619 2.454 31.691 3.734 48.103 3.734 16.411 0 32.483-1.28 48.102-3.734 10.413-1.601 18.335-9.283 20.599-18.992l14.147-60.925c17.883-6.935 34.635-16.111 49.801-27.101l63.042 18.885c9.96 2.988 21.052 0.427 27.73-7.255 9.167-10.456 17.543-21.553 25.013-33.29l5.32-8.642c6.904-11.737 12.903-23.901 17.883-36.598 3.621-9.283 0.565-19.632-7.245-26.247l-49.007-42.040c1.245-8.856 1.924-17.925 1.924-27.101s-0.679-18.245-1.924-27.101l49.007-42.039c7.81-6.616 10.866-16.966 7.245-26.248l0.113-0.107c-4.98-12.697-10.979-24.861-17.883-36.598l-5.32-8.642c-7.47-11.737-15.845-22.834-25.013-33.29-6.678-7.576-17.77-10.243-27.73-7.255l-63.041 18.885c-15.167-10.99-31.919-20.165-49.801-27.101l-14.148-60.925c-2.263-9.709-10.187-17.391-20.599-18.992-15.619-2.454-31.691-3.734-48.102-3.734zM307.288 590.090c24.014 0 47.045 8.993 64.025 25.001 16.981 16.008 26.52 37.72 26.52 60.358 0 22.639-9.539 44.35-26.52 60.358-16.98 16.007-40.011 25.001-64.025 25.001s-47.045-8.994-64.025-25.001c-16.981-16.008-26.521-37.719-26.521-60.358 0-22.638 9.54-44.35 26.521-60.358 16.98-16.008 40.011-25.001 64.025-25.001z"
+          ],
+          "attrs": [
+            {},
+            {}
+          ],
+          "isMulticolor": false,
+          "isMulticolor2": false,
+          "grid": 0,
+          "tags": [
+            "Manage Case"
           ]
         }
       ],
