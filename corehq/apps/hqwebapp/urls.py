@@ -38,6 +38,7 @@ from corehq.apps.hqwebapp.views import (
     OauthApplicationRegistration,
     retrieve_download,
     server_up,
+    set_language,
     temporary_google_verify,
     check_sso_login_status,
 )
@@ -69,6 +70,7 @@ urlpatterns = [
 
     url(r'^no_permissions/$', no_permissions, name='no_permissions'),
 
+    url(r'^set_language/$', set_language, name='set_language'),
     url(r'^accounts/login/$', login, name="login"),
     url(r'^accounts/logout/$', logout, name="logout"),
     url(r'^reports/$', redirect_to_default),

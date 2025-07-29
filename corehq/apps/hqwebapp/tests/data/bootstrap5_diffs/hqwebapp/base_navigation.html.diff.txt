@@ -1,7 +1,7 @@
 --- 
 +++ 
-@@ -8,7 +8,7 @@
- 
+@@ -7,7 +7,7 @@
+ {% load statici18n %}
  
  {% block pre_navigation_content %}
 -  {% include "hqwebapp/partials/bootstrap3/maintenance_alerts.html" %}
@@ -9,18 +9,22 @@
    {% if show_trial_banner %}
      {% include "hqwebapp/partials/trial_banner.html" %}
    {% endif %}
-@@ -19,28 +19,52 @@
- 
+@@ -17,38 +17,62 @@
+ {% endblock pre_navigation_content %}
  
  {% block navigation %}
--  <div id="hq-navigation"
--       class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
-+  <nav id="hq-navigation"
-+       class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu">
+-  <div
++  <nav
+     id="hq-navigation"
+-    class="navbar navbar-default navbar-static-top navbar-hq-main-menu"
++    class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu"
+   >
      <div class="container-fluid">
- 
 +      <div class="navbar-header hq-header">
-+        <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
++        <a
++          href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}"
++          class="navbar-brand"
++        >
 +          {% if CUSTOM_LOGO_URL %}
 +            <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
 +          {% else %}
@@ -30,8 +34,20 @@
 +        </a>
 +      </div>
 +
-       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated  %}
--        <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
+       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
+-        <ul
+-          class="nav navbar-nav collapse-fullmenu-toggle"
+-          id="hq-fullmenu-responsive"
+-          role="menu"
++        <button
++          class="navbar-toggler"
++          type="button"
++          data-bs-toggle="collapse"
++          data-bs-target="#hq-full-menu"
++          aria-controls="hq-full-menu"
++          aria-expanded="false"
++          aria-label="toggle menu"
+         >
 -          <li>
 -            <a href="#hq-full-menu" data-toggle="collapse">
 -              <i class="fa fa-bars"></i>
@@ -39,13 +55,6 @@
 -            </a>
 -          </li>
 -        </ul>
-+        <button class="navbar-toggler"
-+                type="button"
-+                data-bs-toggle="collapse"
-+                data-bs-target="#hq-full-menu"
-+                aria-controls="hq-full-menu"
-+                aria-expanded="false"
-+                aria-label="toggle menu">
 +          <i class="fa fa-bars"></i>
 +          {% trans "Menu" %}
 +        </button>
@@ -67,20 +76,47 @@
 -          <div class="nav-settings-bar pull-right">
 +        <nav class="navbar-signin ms-2" role="navigation">
 +          <div class="nav-settings-bar">
-             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+             <div class="navbar-nav dropdown">
+               <button
+-                class="dropdown-toggle btn btn-default navbar-btn"
+-                data-toggle="dropdown"
++                class="dropdown-toggle btn btn-outline-primary navbar-btn"
++                data-bs-toggle="dropdown"
+                 aria-haspopup="true"
+                 aria-expanded="false"
+               >
+                 {{ LANGUAGE_CODE|language_name_local }}
+-                <span class="caret"></span>
+               </button>
+               <ul class="dropdown-menu">
+                 {% for lang_code, name in LANGUAGES %}
+@@ -56,6 +80,7 @@
+                     <form action="{% url 'set_language' %}" method="post">
+                       {% csrf_token %}
+                       <button
++                        class="dropdown-item"
+                         type="submit"
+                         name="language"
+                         value="{{ lang_code }}"
+@@ -73,7 +98,7 @@
              {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
-               <a href="#cta-form-get-demo"
--                 data-toggle="modal"
-+                 data-bs-toggle="modal"
-                  id="cta-form-get-demo-button-header"
-                  class="btn btn-purple navbar-btn">
-                 {% trans 'Schedule a Demo' %}
-@@ -50,49 +74,18 @@
+               <a
+                 href="#cta-form-get-demo"
+-                data-toggle="modal"
++                data-bs-toggle="modal"
+                 id="cta-form-get-demo-button-header"
+                 class="btn btn-purple navbar-btn"
+               >
+@@ -83,59 +108,17 @@
+           </div>
          </nav>
        {% endif %}
- 
+-
 -      <div class="navbar-header hq-header">
--        <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
+-        <a
+-          href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}"
+-          class="navbar-brand"
+-        >
 -          {% if CUSTOM_LOGO_URL %}
 -            <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
 -          {% else %}
@@ -91,7 +127,11 @@
 -      </div>
 -
 -      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
--        <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
+-        <ul
+-          class="nav navbar-nav collapse-mainmenu-toggle"
+-          id="hq-mainmenu-responsive"
+-          role="menu"
+-        >
 -          <li>
 -            <a href="#hq-main-tabs" data-toggle="collapse">
 -              <i class="fa fa-bars"></i>
@@ -100,7 +140,11 @@
 -          </li>
 -        </ul>
 -
--        <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
+-        <nav
+-          class="navbar-menus fullmenu collapse"
+-          id="hq-full-menu"
+-          role="navigation"
+-        >
 -          <div class="nav-settings-bar pull-right">
 -            {% include 'hqwebapp/includes/bootstrap3/global_navigation_bar.html' %}
 -          </div>
@@ -109,12 +153,10 @@
 -          {% endblock %}
 -        </nav>
 -      {% endif %}
--
      </div>
 -  </div>
 +  </nav>
  {% endblock navigation %}
- 
  
  {% block post_navigation_content %}
    {% if request.project.is_snapshot %}
@@ -127,32 +169,46 @@
 +  {% include "hqwebapp/partials/bootstrap5/unsupported_browser.html" %}
  {% endblock post_navigation_content %}
  
- 
-@@ -103,19 +96,18 @@
-       <div class="col-sm-12">
+ {% block messages %}
+@@ -145,10 +128,15 @@
          {% if messages %}
            {% for message in messages %}
--            <div class="alert alert-margin-top fade in{% if message.tags %} {{ message.tags }}{% endif %}">
+             <div
+-              class="alert alert-margin-top fade in {% if message.tags %}{{ message.tags }}{% endif %}"
++              class="alert alert-dismissible alert-margin-top fade show {% if message.tags %}{{ message.tags }}{% endif %}"
+             >
 -              <a class="close" data-dismiss="alert" href="#">&times;</a>
-+            <div class="alert alert-dismissible alert-margin-top fade show{% if message.tags %} {{ message.tags }}{% endif %}">
                {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
++              <button
++                type="button"
++                class="btn-close"
++                data-bs-dismiss="alert"
++                aria-label="{% trans_html_attr "Close" %}"
++              ></button>
              </div>
            {% endfor %}
          {% endif %}
-         <div id="message-alerts"
-              class="ko-template"
-              data-bind="foreach: {data: alerts, beforeRemove: fadeOut}">
+@@ -157,9 +145,17 @@
+           class="ko-template"
+           data-bind="foreach: {data: alerts, beforeRemove: fadeOut}"
+         >
 -          <div data-bind="attr: {'class': alert_class}">
--            <a class="close"
--               data-dismiss="alert" href="#">&times;</a>
-+          <div class="alert alert-dismissible fade show" data-bind="attr: {class: alert_class}">
+-            <a class="close" data-dismiss="alert" href="#">&times;</a>
++          <div
++            class="alert alert-dismissible fade show"
++            data-bind="attr: {class: alert_class}"
++          >
              <span data-bind="html: message"></span>
-+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
++            <button
++              type="button"
++              class="btn-close"
++              data-bs-dismiss="alert"
++              aria-label="{% trans_html_attr "Close" %}"
++            ></button>
            </div>
          </div>
        </div>
-@@ -126,7 +118,7 @@
+@@ -169,16 +165,16 @@
  
  {% block footer %}
    {% if not enterprise_mode %}
@@ -161,7 +217,6 @@
    {% endif %}
  {% endblock footer %}
  
-@@ -134,9 +126,9 @@
  {% block modals %}
    {% if domain and not enterprise_mode %}
      {% if show_overdue_invoice_modal %}
