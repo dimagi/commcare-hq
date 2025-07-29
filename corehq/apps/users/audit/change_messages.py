@@ -240,7 +240,7 @@ class UserChangeMessage(object):
                 CONFIRM_MOBILE_ACCOUNT: {"domain": domain}
             }
         }
-    
+
     @staticmethod
     def toggle_edit_permissions_added(toggle_tags):
         return {
