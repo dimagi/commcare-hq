@@ -1182,7 +1182,7 @@ class FormValidator(IndexedFormBaseValidator):
 
         if update_case.update_multi:
             for (key, value) in update_case.update_multi.items():
-                if len(value) > 0:
+                if len(value) > 1:
                     errors.append(self._get_property_conflict_error(key))
 
         return errors
