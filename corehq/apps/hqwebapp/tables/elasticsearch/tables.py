@@ -103,10 +103,17 @@ class ElasticTableData(TableData):
             raise ValueError("'stop' must be greater than 'start'")
         size = stop - start
         page_query = self.query.start(start).size(size)
+        print("Calling es results with query from _get_records, start:", start, "stop:", stop, "size:", size)
         results = self.get_es_results(page_query)
         self.data = [self.table.record_class(record, self.table.request, **self.record_kwargs)
                      for record in results['hits'].get('hits', [])]
         return self.data
+
+    def get_all_records(self):
+        """
+        Returns all records in the query.
+        """
+        return self._get_records(0, len(self))
 
     @staticmethod
     def validate(data):
@@ -140,7 +147,9 @@ class ElasticTableData(TableData):
         """
         Returns the total number of records in the ESQuery.
         """
+        print("Calling get es results")
         res = cls.get_es_results(query.size(0))
+        print("Total rows", len(res.get("hits")))
         if res is not None:
             return res['hits'].get('total', 0)
         else:

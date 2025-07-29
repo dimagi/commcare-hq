@@ -181,7 +181,7 @@ class ExportWriter(object):
             self.max_table_name_size
         )
         for table_index, table in header_table:
-            self.add_table(
+                self.add_table(
                 table_index,
                 list(table)[0],
                 table_title=table_titles.get(table_index)
