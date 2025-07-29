@@ -15,7 +15,6 @@ from corehq import privileges
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.export.filters import (
-    AND,
     NOT,
     OR,
     FormSubmittedByFilter,
@@ -51,7 +50,6 @@ from corehq.apps.reports.filters.users import (
 )
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util import flatten_non_iterable_list
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 
@@ -764,8 +762,6 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
         if not location_filter and not group_filter:
             group_and_location_metafilter = None
-        elif FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain_object.name) and location_ids and group_ids:
-            group_and_location_metafilter = AND(group_filter, location_filter)
         else:
             group_and_location_metafilter = OR(*list(filter(None, [group_filter, location_filter])))
 
