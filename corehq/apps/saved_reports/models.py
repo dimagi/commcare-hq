@@ -17,6 +17,7 @@ from django.core.validators import validate_email
 from django.db import models
 from django.http import Http404, HttpRequest, QueryDict
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from couchdbkit.ext.django.schema import (
     BooleanProperty,
@@ -74,6 +75,7 @@ from corehq.util.quickcache import quickcache
 
 ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
+UNKNOWN_OWNER = gettext_lazy("Unknown User")
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
@@ -178,7 +180,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
-            'report_creator': self.owner.username,
+            'report_creator': self.owner.username if self.owner else UNKNOWN_OWNER,
             'report_name': self.report_name,
             'date_description': self.date_description,
             'datespan_filters': self.datespan_filter_choices(
@@ -435,7 +437,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                         "is no longer active."
                     ) % {
                         'config_name': self.name,
-                        'username': self.owner.username
+                        'username': self.owner.username if self.owner else UNKNOWN_OWNER
                     },
                     None,
                 )
@@ -744,6 +746,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return hashlib.sha1((uuid + email).encode('utf-8')).hexdigest()[:20]
 
     def send(self):
+        if not self.owner:
+            self.delete()
+            return
+
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
         if not self.owner.is_member_of(self.domain, allow_enterprise=True):
@@ -875,7 +881,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         for report_config in self.configs:
             mock_request = HttpRequest()
             mock_request.couch_user = self.owner
-            mock_request.user = self.owner.get_django_user()
+            mock_request.user = self.owner.get_django_user() if self.owner else None
             mock_request.domain = self.domain
             mock_request.couch_user.current_domain = self.domain
             mock_request.couch_user.language = self.language
@@ -903,7 +909,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def remove_recipient(self, email):
         try:
-            if email == self.owner.get_email():
+            if email == self.owner_email:
                 self.send_to_owner = False
             self.recipient_emails.remove(email)
         except ValueError:
