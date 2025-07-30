@@ -345,18 +345,19 @@ class HQApiKeyForm(forms.Form):
             HQApiKey.all_objects.get(name=self.cleaned_data['name'], user=user)
             raise DuplicateApiKeyName
         except HQApiKey.DoesNotExist:
-            if self.cleaned_data['domain'] == self.ALL_DOMAINS:
-                domain = ''
-            else:
-                domain = self.cleaned_data['domain']
             new_key = HQApiKey.objects.create(
                 name=self.cleaned_data['name'],
                 ip_allowlist=self.cleaned_data['ip_allowlist'],
                 user=user,
-                domain=domain,
+                domain=self.cleaned_data['domain'],
                 expiration_date=self.cleaned_data['expiration_date'],
             )
             return new_key
+
+    def clean_domain(self):
+        if self.cleaned_data['domain'] == self.ALL_DOMAINS:
+            return ''
+        return self.cleaned_data['domain']
 
     def clean_expiration_date(self):
         if not self.cleaned_data['expiration_date']:
