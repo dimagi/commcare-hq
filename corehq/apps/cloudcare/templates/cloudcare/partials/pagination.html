@@ -25,7 +25,7 @@
                   <span><i class="fa fa-fast-backward"></i></span>
                 </a>
               </li>
-              <li>
+              <li class="page-item">
                 <a class="page-link js-page" aria-label='{% trans_html_attr "Previous" %}' tabindex="0" data-id="<%- currentPage - 1 %>">
                   <span><i class="fa fa-caret-left"></i></span>
                 </a>
@@ -36,8 +36,8 @@
                   <span><i class="fa fa-fast-backward"></i></span>
                 </a>
               </li>
-              <li>
-                <a class="page-link js-page" data-id="<%- currentPage - 1 %>">
+              <li class="page-item">
+                <a class="page-link paginate-disabled" data-id="<%- currentPage - 1 %>">
                   <span><i class="fa fa-caret-left"></i></span>
                 </a>
               </li>
@@ -80,7 +80,7 @@
                   <a class="page-link paginate-disabled">{% trans "..." %}</a>
                 </li>
                 <li class="page-item js-page" data-id="<%- pageCount - 1 %>">
-                  <a class="page-link" aria-label="<%- pageNumLabel({num: pageCount}) %>" tabindex="0"><%- pageCount %></a>
+                  <a class="page-link paginate-disabled" aria-label="<%- pageNumLabel({num: pageCount}) %>" tabindex="0"><%- pageCount %></a>
                 </li>
               <% } %>
             <% } %>
@@ -91,7 +91,7 @@
                   <span><i class="fa fa-caret-right"></i></span>
                 </a>
               </li>
-              <li>
+              <li class="page-item paginate-disabled">
                 <a class="page-link js-page" data-id="<%- pageCount - 1 %>">
                   <span><i class="fa fa-fast-forward"></i></span>
                 </a>

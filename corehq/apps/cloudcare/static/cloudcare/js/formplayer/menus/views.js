@@ -890,6 +890,7 @@ define("cloudcare/js/formplayer/menus/views", [
             });
             self.smallScreenListener.listen();
             self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+            self.scrollContainer.scrollTop(0);
         },
 
         ui: CaseListViewUI(),
