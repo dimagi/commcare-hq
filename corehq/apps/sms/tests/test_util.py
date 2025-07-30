@@ -19,7 +19,7 @@ from corehq.util.test_utils import create_test_case, flag_enabled
 
 
 class UtilTestCase(TestCase):
-    
+
     def setUp(self):
         self.domain = 'test-domain'
         self.user = CommCareUser.create(self.domain, 'test-user', '123', None, None)
@@ -63,11 +63,11 @@ class UtilTestCase(TestCase):
     def test_is_contact_active_for_user(self):
         self.assertTrue(is_contact_active(self.domain, 'CommCareUser', self.user.get_id))
 
-        self.user.is_active = False
+        self.user.set_is_active(self.domain, False)
         self.user.save()
         self.assertFalse(is_contact_active(self.domain, 'CommCareUser', self.user.get_id))
 
-        self.user.is_active = True
+        self.user.set_is_active(self.domain, True)
         self.user.save()
         self.assertTrue(is_contact_active(self.domain, 'CommCareUser', self.user.get_id))
 
