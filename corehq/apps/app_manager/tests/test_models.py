@@ -375,6 +375,24 @@ class UpdateCaseActionTests(SimpleTestCase):
         self.assertEqual(action.update['one'].question_path, '/two/')
         self.assertEqual(action.update_multi, None)
 
+    def test_get_property_names_returns_keys_from_update(self):
+        action = UpdateCaseAction({
+            'update': {
+                'one': {'question_path': '/two/'}
+            }
+        })
+
+        self.assertEqual(action.get_property_names(), {'one'})
+
+    def test_get_property_names_returns_keys_from_update_multi(self):
+        action = UpdateCaseAction({
+            'update_multi': {
+                'one': [{'question_path': '/two/'}]
+            }
+        })
+
+        self.assertEqual(action.get_property_names(), {'one'})
+
 
 class UpdateCaseAction_ApplyUpdates_Tests(SimpleTestCase):
     def test_no_changes(self):
@@ -584,6 +602,15 @@ class FormActionsTests(SimpleTestCase):
     def test_constructor_creates_empty_values(self):
         actions = FormActions()
         self.assertEqual(actions.update_case.update, {})
+
+    def test_all_property_names(self):
+        actions = FormActions()
+        self.assertEqual(actions.all_property_names(), set())
+
+    def test_all_property_names_adds_update_case_names(self):
+        update_case = UpdateCaseAction({'update': {'one': {'question_path': 'two'}}})
+        actions = FormActions(update_case=update_case)
+        self.assertEqual(actions.all_property_names(), {'one'})
 
 
 class FormActions_WithUpdatesTests(SimpleTestCase):
