@@ -122,16 +122,22 @@ def pkce_required(client_id):
         return False
 
 
-class ServerLocation(object):
+class ServerLocation:
     PRODUCTION = 'production'
     INDIA = 'india'
     EU = 'eu'
     ENVS = (PRODUCTION, INDIA, EU)
 
+    SUBDOMAINS = {
+        PRODUCTION: 'www',
+        INDIA: 'india',
+        EU: 'eu',
+    }
+
     CHOICES_DICT = {
-        PRODUCTION: ("www", _("United States")),
-        INDIA: ("india", _("India")),
-        EU: ("eu", _("European Union")),
+        PRODUCTION: (SUBDOMAINS[PRODUCTION], _("United States")),
+        INDIA: (SUBDOMAINS[INDIA], _("India")),
+        EU: (SUBDOMAINS[EU], _("European Union")),
     }
 
     @classmethod
