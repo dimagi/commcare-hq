@@ -1300,7 +1300,6 @@ define("cloudcare/js/formplayer/menus/views", [
                 },
 
                 mapVisible: function () {
-                    console.log(`context.mapVisible: ${self.mapVisible}`);
                     return self.mapVisible;
                 },
             });
