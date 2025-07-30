@@ -5073,8 +5073,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             const.TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(commcare_flavor)
 
-        # todo: add credentials in context
-
         return render_to_string('app_manager/profile.xml', {
             'is_odk': is_odk,
             'app': self,
@@ -6316,12 +6314,12 @@ class CredentialApplication(models.Model):
     they have been active for a certain activity_level.
     """
     class ActivityLevelChoices(models.TextChoices):
-        ONE_MONTH = '1_MONTH', _('1 Month')
-        TWO_MONTHS = '2_MONTHS', _('2 Months')
-        THREE_MONTHS = '3_MONTHS', _('3 Months')
-        SIX_MONTHS = '6_MONTHS', _('6 Months')
-        NINE_MONTHS = '9_MONTHS', _('9 Months')
-        TWELVE_MONTHS = '12_MONTHS', _('12 Months')
+        ONE_MONTH = '1MON_ACTIVE', _('1 Month')
+        TWO_MONTHS = '2MON_ACTIVE', _('2 Months')
+        THREE_MONTHS = '3MON_ACTIVE', _('3 Months')
+        SIX_MONTHS = '6MON_ACTIVE', _('6 Months')
+        NINE_MONTHS = '9MON_ACTIVE', _('9 Months')
+        TWELVE_MONTHS = '12MON_ACTIVE', _('12 Months')
 
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
