@@ -50,6 +50,7 @@ module.caseSearchConfig = function (options) {
     self.toggleEnabled = ko.observable(initialValues.enabled);
     self.synchronousWebApps = ko.observable(initialValues.synchronous_web_apps);
     self.syncCaseOnFormEntry = ko.observable(initialValues.sync_cases_on_form_entry);
+    self.splitScreenUI = ko.observable(initialValues.split_screen_ui);
     self.fuzzyProperties = ko.observableArray();
     for (var caseType in initialValues.fuzzy_properties) {
         self.fuzzyProperties.push(caseTypeProps(
@@ -71,6 +72,7 @@ module.caseSearchConfig = function (options) {
     self.fuzzyProperties.subscribe(self.change);
     self.synchronousWebApps.subscribe(self.change);
     self.syncCaseOnFormEntry.subscribe(self.change);
+    self.splitScreenUI.subscribe(self.change);
 
     self.addCaseType = function () {
         self.fuzzyProperties.push(caseTypeProps('', ['']));
@@ -118,6 +120,7 @@ module.caseSearchConfig = function (options) {
             'enable': self.toggleEnabled(),
             'synchronous_web_apps': self.synchronousWebApps(),
             'sync_cases_on_form_entry': self.syncCaseOnFormEntry(),
+            'split_screen_ui': self.splitScreenUI(),
             'fuzzy_properties': fuzzyProperties,
             'ignore_patterns': _.map(self.ignorePatterns(), function (rc) {
                 return {

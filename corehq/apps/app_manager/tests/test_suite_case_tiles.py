@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.exceptions import SuiteValidationError
@@ -468,6 +470,10 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @patch(
+        'corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain',
+        return_value=False,
+    )
     def test_case_tile_with_case_search(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 

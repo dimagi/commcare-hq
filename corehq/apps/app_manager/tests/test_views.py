@@ -716,7 +716,7 @@ class TestViewGeneric(ViewsBase):
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
         'formats_supporting_case_list_optimizations', 'module_type', 'icon_class', 'form_submit_history_url',
-        'btn_style',
+        'btn_style', 'split_screen_case_search',
     }
 
     expected_keys_form = {

@@ -61,7 +61,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         )
         self.module.assign_references()
 
-    def test_multi_select_case_list(self):
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
+    def test_multi_select_case_list(self, *args):
         suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
@@ -94,7 +95,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./remote-request",
         )
 
-    def test_multi_select_case_list_auto_select_true(self):
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
+    def test_multi_select_case_list_auto_select_true(self, *args):
         self.module.case_details.short.auto_select = True
         suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
@@ -124,7 +126,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./entry",
         )
 
-    def test_multi_select_case_list_modified_max_select_value(self):
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
+    def test_multi_select_case_list_modified_max_select_value(self, *args):
         self.module.case_details.short.max_select_value = 15
         print(self.module.case_details.short)
         suite = self.factory.app.create_suite()
@@ -171,7 +174,11 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         del self.factory.app.modules[shadow_module.id]
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    def test_multi_select_case_list_auto_launch(self):
+    @patch(
+        'corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain',
+        return_value=False,
+    )
+    def test_multi_select_case_list_auto_launch(self, *args):
         self.module.search_config.auto_launch = True
         suite = self.factory.app.create_suite()
 
@@ -517,7 +524,11 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     @patch(
         "corehq.apps.app_manager.suite_xml.sections.entries."
         "case_search_sync_cases_on_form_entry_enabled_for_domain")
-    def test_multi_select_as_child_with_parent_select_case_search(self, mock1):
+    @patch(
+        'corehq.apps.app_manager.suite_xml.sections.details.'
+        'split_screen_ui_enabled_for_domain'
+    )
+    def test_multi_select_as_child_with_parent_select_case_search(self, *args):
         # parent select from parent module to child (seems weird)
         self.set_parent_select(self.m2, self.m4)
 
