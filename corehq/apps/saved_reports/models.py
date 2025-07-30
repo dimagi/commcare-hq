@@ -881,7 +881,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         for report_config in self.configs:
             mock_request = HttpRequest()
             mock_request.couch_user = self.owner
-            mock_request.user = self.owner.get_django_user() if self.owner else None
+            mock_request.user = self.owner.get_django_user()
             mock_request.domain = self.domain
             mock_request.couch_user.current_domain = self.domain
             mock_request.couch_user.language = self.language
