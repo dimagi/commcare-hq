@@ -117,12 +117,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_app, REPORT_FIXTURE, LOOKUP_TABLE_FIXTURE
 from corehq.apps.fixtures.models import LookupTable
-from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
-from corehq.apps.hqmedia.models import (
-    ApplicationMediaReference,
-    CommCareMultimedia,
-)
-from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
@@ -296,29 +290,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             },
         },
     }
-    if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
-        slug = 'module_%s_detail_print' % module.unique_id
-        print_template = module.case_details.long.print_template
-        print_uploader = MultimediaHTMLUploadController(
-            slug,
-            reverse(
-                ProcessDetailPrintTemplateUploadView.urlname,
-                args=[app.domain, app.id, module.unique_id],
-            )
-        )
-        if not print_template:
-            print_template = {
-                'path': 'jr://file/commcare/text/%s.html' % slug,
-            }
-        context.update({
-            'print_uploader': print_uploader,
-            'print_uploader_js': print_uploader.js_options,
-            'print_ref': ApplicationMediaReference(
-                print_template.get('path'),
-                media_class=CommCareMultimedia,
-            ).as_dict(),
-            'print_media_info': print_template,
-        })
     return context
 
 
@@ -1010,7 +981,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_xml',
         'case_tile_configuration',
         'multi_select',
-        'print_template',
         'search_properties',
         'search_default_properties',
         'search_claim_options',
@@ -1214,7 +1184,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     case_tile_template = params.get('caseTileTemplate', None)
-    print_template = params.get('printTemplate', None)
     custom_variables_dict = {
         'short': params.get("short_custom_variables_dict", None),
         'long': params.get("long_custom_variables_dict", None)
@@ -1243,8 +1212,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.long.columns = list(map(DetailColumn.from_json, long_))
         if tabs is not None:
             detail.long.tabs = list(map(DetailTab.wrap, tabs))
-        if print_template is not None:
-            detail.long.print_template = print_template
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
