@@ -1765,6 +1765,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # user creation
     is_account_confirmed = BooleanProperty(default=True)
     self_set_password = BooleanProperty(default=False)
+    confirmation_sent_at = DateTimeProperty()
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
@@ -2004,6 +2005,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             raise IllegalAccountConfirmation('Account is already confirmed')
         assert not self.is_active, 'Active account should not be unconfirmed!'
         self.is_active = True
+        self.get_domain_membership(self.domain).is_active = True
         self.is_account_confirmed = True
         self.set_password(password)
         self.self_set_password = True

@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
-from corehq import toggles
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import EnterprisePermissions
@@ -406,16 +405,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             location_query = location_query.accessible_to_user(domain, request_user)
         location_ids = list(location_query.location_ids())
 
-        if toggles.FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
-            group_and_location_filter = filters.AND(
-                filters.term("__group_ids", group_ids),
-                user_es.location(location_ids),
-            )
-        else:
-            group_and_location_filter = filters.OR(
-                filters.term("__group_ids", group_ids),
-                user_es.location(location_ids),
-            )
+        group_and_location_filter = filters.OR(
+            filters.term("__group_ids", group_ids)
+            user_es.location(location_ids),
+        )
 
         id_filter = filters.OR(
             filters.term("_id", user_ids),

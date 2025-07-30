@@ -96,7 +96,7 @@ class DomainPillowTest(TestCase):
         # confirm domain still exists
         self._verify_domain_in_es(domain_name)
 
-    @patch('pillowtop.pillow.interface.PillowBase._update_checkpoint')
+    @patch('pillowtop.pillow.interface.ConstructedPillow._update_checkpoint')
     @patch('corehq.pillows.domain.KafkaChangeFeed.iter_changes', return_value=[])
     def test_no_changes(self, mock_iter, mock_update):
         since = get_topic_offset(topics.DOMAIN)
