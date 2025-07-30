@@ -124,7 +124,7 @@ class TestCustomDataFieldsProfile(TestCase):
         errors = self.custom_data_model.delete_eligible_profiles(self.profiles, updated_profile_list)
         self.assertTrue(errors)
 
-        mobile_user.is_active = False
+        mobile_user.set_is_active(self.domain, False)
         mobile_user.save()
         errors = self.custom_data_model.delete_eligible_profiles(self.profiles, updated_profile_list)
         self.assertFalse(errors)
