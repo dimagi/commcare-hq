@@ -1,7 +1,7 @@
 define("cloudcare/js/formplayer/menus/utils", [
     'underscore',
     'backbone',
-    'hqwebapp/js/toggles',
+    'hqwebapp/js/initial_page_data',
     'analytix/js/noopMetrics',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/constants',
@@ -14,7 +14,7 @@ define("cloudcare/js/formplayer/menus/utils", [
 ], function (
     _,
     Backbone,
-    toggles,
+    initialPageData,
     noopMetrics,
     FormplayerFrontend,
     constants,
@@ -176,7 +176,7 @@ define("cloudcare/js/formplayer/menus/utils", [
     };
 
     var isSidebarEnabled = function (menuResponse) {
-        const splitScreenCaseSearchEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
+        const splitScreenCaseSearchEnabled = initialPageData.get('split_screen_case_search');
         if (menuResponse.type === constants.QUERY) {
             return splitScreenCaseSearchEnabled && menuResponse.models && menuResponse.models.length > 0;
         } else if (menuResponse.type === constants.ENTITIES) {
@@ -226,7 +226,7 @@ define("cloudcare/js/formplayer/menus/utils", [
 
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 noopMetrics.track.event('Started Case Search', {
-                    'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                    'Split Screen Case Search': initialPageData.get('split_screen_case_search'),
                 });
             }
             var caseListView = getCaseListView(menuResponse);

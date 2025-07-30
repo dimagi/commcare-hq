@@ -42,6 +42,10 @@ DOMAIN = 'test_domain'
 
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
+@patch(
+    'corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain',
+    return_value=False,
+)
 class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
@@ -208,7 +212,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             self.app.create_suite(),
             './detail[@id="m0_case_long"]')
 
-    def test_form_linking_to_registry_module_from_registration_form(self):
+    def test_form_linking_to_registry_module_from_registration_form(self, *args):
         self.module.search_config.additional_case_types = ["other_case"]
         suite = self.app.create_suite()
         expected = f"""
@@ -238,7 +242,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             "./entry[2]/stack/create"
         )
 
-    def test_workflow_registry_module_previous_screen_after_case_list_form(self):
+    def test_workflow_registry_module_previous_screen_after_case_list_form(self, *args):
         factory = AppFactory(DOMAIN, "App with DR", build_version='2.53.0')
         m0, f0 = factory.new_basic_module("new case", "case")
         factory.form_opens_case(f0, "case")
@@ -294,7 +298,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled('MOBILE_UCR')
-    def test_prompt_itemset_mobile_report(self):
+    def test_prompt_itemset_mobile_report(self, *args):
         self.module.search_config.properties[0].input_ = 'select1'
         instance_id = "commcare-reports:123abc"
         self.module.search_config.properties[0].itemset = Itemset(
@@ -407,6 +411,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
         self.shadow_module = self.app.modules[1]
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
     def test_suite(self, *args):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(
@@ -421,6 +426,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
     def test_additional_types(self, *args):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
@@ -480,7 +486,8 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
         # wrap to have assign_references called
         self.app = Application.wrap(factory.app.to_json())
 
-    def test_form_link_in_child_module_with_registry_search(self):
+    @patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
+    def test_form_link_in_child_module_with_registry_search(self, *args):
         suite = self.app.create_suite()
 
         expected = f"""

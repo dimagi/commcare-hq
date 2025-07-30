@@ -303,6 +303,14 @@ class CaseSearchConfig(models.Model):
     # See case_search_sub.py docstring for context
     index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
         "Name or alias of alternative index to use for case search"))
+    # Show the search filters in a sidebar on the left and the results
+    # on the right.
+    split_screen_ui = models.BooleanField(blank=False, null=False, default=False)
+    # TODO: GA or Bust:
+    #   # When split_screen_ui is True, search results update when a search
+    #   # field is updated without requiring the user to manually press a
+    #   # button to search
+    #   dynamically_update_results = models.BooleanField(blank=False, null=False, default=False)
 
     objects = GetOrNoneManager()
 
@@ -384,6 +392,24 @@ def case_search_sync_cases_on_form_entry_enabled_for_domain(domain):
     return config.sync_cases_on_form_entry if config else False
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
+def split_screen_ui_enabled_for_domain(domain):
+    from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
+
+    config = CaseSearchConfig.objects.get_or_none(pk=domain)
+    if not config:
+        return False
+    if not config.split_screen_ui:
+        return False
+    subs = Subscription.get_active_subscription_by_domain(domain)
+    if not subs:
+        return False
+    return subs.plan_version.plan.edition in (
+        SoftwarePlanEdition.ADVANCED,
+        SoftwarePlanEdition.ENTERPRISE,
+    )
+
+
 def enable_case_search(domain):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
 
@@ -394,6 +420,7 @@ def enable_case_search(domain):
         case_search_enabled_for_domain.clear(domain)
         reindex_case_search_for_domain.delay(domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
+        split_screen_ui_enabled_for_domain.clear(domain)
     return config
 
 
@@ -413,6 +440,7 @@ def disable_case_search(domain):
         case_search_enabled_for_domain.clear(domain)
         delete_case_search_cases_for_domain.delay(domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
+        split_screen_ui_enabled_for_domain.clear(domain)
     return config
 
 

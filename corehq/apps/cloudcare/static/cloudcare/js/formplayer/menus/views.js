@@ -1029,7 +1029,7 @@ define("cloudcare/js/formplayer/menus/views", [
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
                 noopMetrics.track.event('Completed Case Search', {
-                    'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                    'Split Screen Case Search': initialPageData.get('split_screen_case_search'),
                 });
             }
         },
@@ -1285,7 +1285,7 @@ define("cloudcare/js/formplayer/menus/views", [
                 isMultiSelect: false,
                 showMap: this.showMap,
                 sidebarEnabled: this.options.sidebarEnabled,
-                splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                splitScreenCaseSearchEnabled: initialPageData.get('split_screen_case_search'),
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
@@ -1715,7 +1715,7 @@ define("cloudcare/js/formplayer/menus/views", [
                 FormplayerFrontend.trigger("menu:select", this.caseId);
                 if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
                     noopMetrics.track.event('Completed Case Search', {
-                        'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                        'Split Screen Case Search': initialPageData.get('split_screen_case_search'),
                     });
                 }
             }
@@ -1801,7 +1801,7 @@ define("cloudcare/js/formplayer/menus/views", [
             $('#persistent-menu-region').removeClass('d-none');
             this.sidebarEnabled = options.sidebarEnabled;
             this.menuExpanded;
-            this.splitScreenToggleEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+            this.splitScreenCaseSearchEnabled = initialPageData.get('split_screen_case_search'),
             this.offcanvas = 'offcanvas';
             this.collapse = 'collapse';
             this.containerCollapseClasses = this.collapse + ' position-relative';
@@ -1928,7 +1928,7 @@ define("cloudcare/js/formplayer/menus/views", [
                 persistentMenuContainer.addClass('border-top');
             }
 
-            if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
+            if (this.splitScreenCaseSearchEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
                 self.hideMenu();
                 self.unlockMenu();
                 self.flipArrowRight();

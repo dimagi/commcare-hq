@@ -41,14 +41,29 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
-from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
-from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileHelper
-from corehq.apps.app_manager.suite_xml.features.scheduler import (
-    schedule_detail_variables,
+from corehq.apps.app_manager.util import (
+    create_temp_sort_column,
+    get_sort_and_sort_only_columns,
+    module_loads_registry_case,
+    module_offers_search,
+    module_uses_inline_search,
 )
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from corehq.apps.app_manager.suite_xml.xml_models import (
+from corehq.apps.app_manager.xpath import (
+    CaseTypeXpath,
+    CaseXPath,
+    XPath,
+    interpolate_xpath,
+    session_var,
+)
+from corehq.apps.case_search.models import split_screen_ui_enabled_for_domain
+from corehq.util.timer import time_method
+
+from ..const import FIELD_TYPE_LEDGER
+from ..contributors import SectionContributor
+from ..features.case_tiles import CaseTileHelper
+from ..features.scheduler import schedule_detail_variables
+from ..sections.entries import EntriesHelper
+from ..xml_models import (
     Action,
     Detail,
     DetailVariable,
@@ -70,15 +85,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     TextXPath,
     XPathVariable,
 )
-from corehq.apps.app_manager.util import (
-    create_temp_sort_column,
-    get_sort_and_sort_only_columns,
-    module_loads_registry_case,
-    module_offers_search,
-    module_uses_inline_search,
-)
-from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
-from corehq.util.timer import time_method
 
 AUTO_LAUNCH_EXPRESSIONS = {
     "single-select": "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0",
@@ -319,7 +325,10 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def add_register_action(app, module, actions, build_profile_id, entries_helper):
-        from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+        from corehq.apps.app_manager.views.modules import (
+            get_parent_select_followup_forms,
+        )
+
         form = app.get_form(module.case_list_form.form_id)
         if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
             valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, module)]
@@ -399,7 +408,7 @@ class DetailContributor(SectionContributor):
         in_search = module_loads_registry_case(module) or "search" in detail_id
 
         # don't add search again action in split screen
-        if in_search and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(module.get_app().domain):
+        if in_search and split_screen_ui_enabled_for_domain(module.get_app().domain):
             return None
 
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
@@ -513,9 +522,8 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_report_context_tile_detail():
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
-            MOBILE_UCR_TILE_DETAIL_ID,
-        )
+        from ..features.mobile_ucr import MOBILE_UCR_TILE_DETAIL_ID
+
         return Detail(
             id=MOBILE_UCR_TILE_DETAIL_ID,
             title=Text(),
