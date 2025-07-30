@@ -744,42 +744,21 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
-    def is_active_in_domain(self, domain):
-        return self.is_active
-
     def set_is_active(self, domain, is_active):
         if domain != self.domain:
             raise AssertionError(f"User is not a member of {domain}")
         self.is_active = is_active
-
-    def is_active_in_any_domain(self):
-        return self.is_active
 
 
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
 
-    @memoized
-    def is_active_in_domain(self, domain):
-        # user.is_active concerns authentication - can a user log in?
-        # domain_membership.is_active controls whether a user can access a domain
-        # CommCareUsers are only in a single domain, so there's no distinction
-        domain_membership = self.get_domain_membership(domain)
-        if domain_membership and self.is_active:
-            return domain_membership.is_active
-        return False
-
     def set_is_active(self, domain, is_active):
         domain_membership = self.get_domain_membership(domain)
         if not domain_membership:
             raise AssertionError(f"User is not a member of {domain}")
         domain_membership.is_active = is_active
-
-    def is_active_in_any_domain(self):
-        return self.is_active and [
-            dm.is_active for dm in self.domain_memberships
-        ]
 
 
 class LowercaseStringProperty(StringProperty):
@@ -1091,6 +1070,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def should_be_locked_out(self):
         max_attempts = MAX_WEB_USER_LOGIN_ATTEMPTS if self.is_web_user() else MAX_COMMCARE_USER_LOGIN_ATTEMPTS
         return self.login_attempts >= max_attempts
+
+    @memoized
+    def is_active_in_domain(self, domain):
+        # user.is_active concerns authentication - can a user log in?
+        # domain_membership.is_active controls whether a user can access a domain
+        # CommCareUsers are only in a single domain, so there's no distinction
+        domain_membership = self.get_domain_membership(domain)
+        if domain_membership and self.is_active:
+            return domain_membership.is_active
+        return False
+
+    def is_active_in_any_domain(self):
+        return self.is_active and [
+            dm.is_active for dm in self.domain_memberships
+        ]
 
     def supports_lockout(self):
         return True
