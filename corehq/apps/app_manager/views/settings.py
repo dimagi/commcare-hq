@@ -73,19 +73,17 @@ def edit_commcare_profile(request, domain, app_id):
         for name, value in settings.get(settings_type, {}).items():
             if settings_type not in app.profile:
                 app.profile[settings_type] = {}
+
+            if name == "credentials":
+                credential_application = CredentialApplication.objects.filter(
+                    app_id=app.id,
+                ).first()
+                if credential_application:
+                    credential_application.activity_level = value
+                    credential_application.save(update_fields=['activity_level'])
+
             app.profile[settings_type][name] = value
             changed[settings_type][name] = value
-
-    # Todo: need to check if this app can issue credentials
-    credentials_activity_level = changed.get('features', {}).get('credentials', {})
-    if credentials_activity_level:
-        CredentialApplication.objects.update_or_create(
-            app_id=app.id,
-            domain=domain,
-            defaults={
-                'activity_level': credentials_activity_level,
-            }
-        )
 
     if not domain_has_privilege(domain, privileges.APP_DEPENDENCIES):
         # remove dependencies if they were set before
