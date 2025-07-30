@@ -867,10 +867,10 @@ define("cloudcare/js/formplayer/menus/views", [
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             const user = UsersModels.getCurrentUser();
-            const configStorageId = this.getConfigStorageId(user);
+            self.configStorageId = this.getConfigStorageId(user);
             self.columnConfigModel = new ColumnConfigModel({
                 columnNames: self.headers,
-                configStorageId: configStorageId,
+                configStorageId: self.configStorageId,
                 styles: self.styles,
             });
             self.redoLast = options.redoLast;
@@ -884,7 +884,8 @@ define("cloudcare/js/formplayer/menus/views", [
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
-            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
+            self.mapVisible = localStorage.getItem(`${self.configStorageId}-map-visible`) === "true";
+            self.mapAvailable = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
             self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 self.handleSmallScreenChange(smallScreenEnabled);
             });
@@ -1004,7 +1005,7 @@ define("cloudcare/js/formplayer/menus/views", [
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
             const hideButton = $('#hide-map-button');
-            if (!mapDiv.hasClass("d-none")) {
+            if (this.mapVisible) {
                 mapDiv.addClass("d-none");
                 moduleCaseList.removeClass('col-lg-7').addClass('col-lg');
                 hideButton.text(gettext('Show Map'));
@@ -1015,7 +1016,8 @@ define("cloudcare/js/formplayer/menus/views", [
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
             }
-
+            this.mapVisible = !this.mapVisible;
+            localStorage.setItem(`${this.configStorageId}-map-visible`, this.mapVisible);
         },
 
         _allCaseIds: function () {
@@ -1229,7 +1231,7 @@ define("cloudcare/js/formplayer/menus/views", [
 
         onAttach() {
             const self = this;
-            if (self.showMap) {
+            if (self.mapAvailable) {
                 self.loadMap();
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
@@ -1253,6 +1255,7 @@ define("cloudcare/js/formplayer/menus/views", [
         },
 
         templateContext: function () {
+            const self = this;
             const paginateItems = formplayerUtils.paginateOptions(
                 this.options.currentPage,
                 this.options.pageCount,
@@ -1284,7 +1287,7 @@ define("cloudcare/js/formplayer/menus/views", [
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
-                showMap: this.showMap,
+                mapAvailable: this.mapAvailable,
                 sidebarEnabled: this.options.sidebarEnabled,
                 splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 smallScreenEnabled: this.smallScreenEnabled,
@@ -1295,6 +1298,10 @@ define("cloudcare/js/formplayer/menus/views", [
                 },
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0) && this.columnConfigModel.isVisible(index);
+                },
+
+                mapVisible: function () {
+                    return self.mapVisible;
                 },
             });
         },
