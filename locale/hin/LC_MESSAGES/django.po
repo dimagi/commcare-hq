@@ -4453,12 +4453,12 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr "क्रमबद्ध करने के लिए कोई मेल खाता '{field_name}' फ़ील्ड नहीं है"
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Password or connect username required"
-msgstr "पासवर्ड या connect उपयोगकर्ता नाम आवश्यक है"
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to use connect_username field"
 msgstr "आपको connect_username फ़ील्ड का उपयोग करने की अनुमति नहीं है"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Password or connect username required"
+msgstr "पासवर्ड या connect उपयोगकर्ता नाम आवश्यक है"
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You must provide the user's email to send a confirmation email."
