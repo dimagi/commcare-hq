@@ -4528,12 +4528,12 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr "Nessun campo '{field_name}' corrispondente per l'ordinamento"
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Password or connect username required"
-msgstr "Password o connect username richiesti"
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to use connect_username field"
 msgstr "Non hai il permesso di usare il campo connect_username"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Password or connect username required"
+msgstr "Password o connect username richiesti"
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You must provide the user's email to send a confirmation email."

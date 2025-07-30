@@ -4846,12 +4846,12 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr "Немає відповідного поля '{field_name}' для сортування"
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Password or connect username required"
-msgstr "Потрібен пароль або ім'я користувача connect"
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to use connect_username field"
 msgstr "У вас немає дозволу використовувати поле connect_username"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Password or connect username required"
+msgstr "Потрібен пароль або ім'я користувача connect"
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You must provide the user's email to send a confirmation email."
