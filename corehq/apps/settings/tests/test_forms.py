@@ -69,7 +69,8 @@ class HQApiKeyTests(SimpleTestCase):
     def test_form_domain_list(self):
         form = HQApiKeyForm(user_domains=['domain1', 'domain2'])
         domain_choices = form.fields['domain'].choices
-        self.assertEqual(domain_choices, [('', 'All Projects'), ('domain1', 'domain1'), ('domain2', 'domain2')])
+        self.assertEqual(domain_choices, [('', ''), ('domain1', 'domain1'), ('domain2', 'domain2'),
+                                          (HQApiKeyForm.ALL_DOMAINS, 'All Projects')])
 
     def test_expiration_date_is_not_required_by_default(self):
         form = HQApiKeyForm()
@@ -161,6 +162,7 @@ class HQApiKeyTests(SimpleTestCase):
     def _form_data(self, expiration_date='2023-01-01'):
         data = {
             'name': 'TestKey',
+            'domain': HQApiKeyForm.ALL_DOMAINS,
         }
 
         if expiration_date:
