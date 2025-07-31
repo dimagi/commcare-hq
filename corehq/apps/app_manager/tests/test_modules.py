@@ -254,7 +254,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
 
     def setUp(self):
         self.all_attrs = ['columns', 'filter', 'sort_elements', 'custom_variables', 'custom_xml',
-                          'case_tile_configuration', 'multi_select', 'print_template']
+                          'case_tile_configuration', 'multi_select']
         self.cols_and_filter = ['columns', 'filter']
         self.case_tile = ['case_tile_configuration']
 
@@ -267,8 +267,6 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         self.custom_variables = setattr(self.src_detail, 'custom_variables', 'def')
         self.custom_xml = setattr(self.src_detail, 'custom_xml', 'ghi')
         self.multi_select = getattr(self.src_detail, 'multi_select')
-        self.print_template = getattr(self.src_detail, 'print_template')
-        self.print_template['name'] = 'test'
         self.case_tile_configuration = setattr(self.src_detail, 'persist_tile_on_forms', True)
 
     def test_overwrite_all(self):
