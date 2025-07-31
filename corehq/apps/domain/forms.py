@@ -3098,7 +3098,7 @@ class DomainAlertForm(forms.Form):
 
 class DomainCredentialIssuingAppForm(forms.Form):
     app_id = forms.CharField(
-        label=gettext_lazy("Credential-issuing Application"),
+        label=gettext_lazy("Enable credentials for application"),
         required=False,
         widget=forms.Select(choices=[]),
         help_text=gettext_lazy("Select the application that will be used to issue credentials to workers."),

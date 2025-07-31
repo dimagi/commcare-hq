@@ -366,7 +366,7 @@
   force: true
 
 - id: 'credentials'
-  name: 'Worker Credentials'
+  name: 'Worker Activity'
   type: 'features'
   description: >
     Issues credentials to mobile workers who have been active users of this app for the specified period of time.

@@ -2198,7 +2198,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         ManageDomainMobileWorkersView,
-        WorkerHistorySettingsView,
+        CredentialsApplicationSettingsView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -2237,8 +2237,8 @@ def _get_administration_section(domain):
             'url': reverse(ManageDomainMobileWorkersView.urlname, args=[domain]),
         }))
     administration.append({
-        'title': _(WorkerHistorySettingsView.page_title),
-        'url': reverse(WorkerHistorySettingsView.urlname, args=[domain]),
+        'title': _(CredentialsApplicationSettingsView.page_title),
+        'url': reverse(CredentialsApplicationSettingsView.urlname, args=[domain]),
     })
 
     return administration
