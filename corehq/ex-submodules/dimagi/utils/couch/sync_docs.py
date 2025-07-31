@@ -1,4 +1,6 @@
 import logging
+import os
+import time
 from collections import namedtuple
 
 import six
@@ -26,16 +28,46 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
     docid = "_design/%s" % design_name_
     push(design_dir, db, force=True, docid=docid)
     log.info("synced '%s' in couchdb", design_name)
+
     if temp:
-        index_design_docs(db, docid, design_name_)
+        # Check if the design directory has a views subdirectory
+        has_views = os.path.exists(os.path.join(design_dir, 'views'))
+        index_design_docs(db, docid, design_name_, expect_views=has_views)
 
 
-def index_design_docs(db, docid, design_name, wait=True):
+def verify_design_doc(db, design_doc_id, max_retries=5, retry_delay_s=1, expect_views=False):
+    """
+    Verify that a design document is properly uploaded and can be accessed.
+
+    Returns:
+        bool: True if verified, raises exception if verification fails after retries
+    """
+    for attempt in range(max_retries):
+        try:
+            doc = db.get(design_doc_id)
+            if (not expect_views) or ('views' in doc and doc['views']):
+                log.info(f"Design document {design_doc_id} verified successfully")
+                return True
+
+            log.warning(f"Design document {design_doc_id} exists but "
+                f"appears incomplete, retrying... (attempt {attempt + 1}/{max_retries})")
+        except (ResourceNotFound, HTTPError) as e:
+            log.warning(f"Error verifying design document {design_doc_id}: {e}. "
+                f"Retrying... (attempt {attempt + 1}/{max_retries})")
+
+        time.sleep(retry_delay_s * (2 ** attempt))  # Exponential backoff
+
+    raise RuntimeError(f"Failed to verify design document {design_doc_id} after {max_retries} attempts")
+
+
+def index_design_docs(db, docid, design_name, wait=True, expect_views=True):
+    verify_design_doc(db, docid, expect_views=expect_views)
+
     # found in the innards of couchdbkit
     view_names = list(db[docid].get('views', {}))
     if view_names:
-        log.info('Triggering view rebuild')
         view = '%s/%s' % (design_name, view_names[0])
+        log.info(f'Triggering view rebuild: {view}')
         while True:
             try:
                 if wait:
