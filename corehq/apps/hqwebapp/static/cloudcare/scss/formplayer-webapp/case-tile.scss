@@ -132,6 +132,9 @@
     border-right-width: 5px;
   }
 
+  .sticky-map {
+    top: 0px;
+  }
   // todo: determine appropriate nesting
   #module-case-list-map {
     height: calc(100vh - 65px);
