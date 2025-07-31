@@ -81,7 +81,8 @@ from .views.mobile.users import (
     ClearCommCareUsers,
     link_connectid_user,
     bulk_user_upload_api,
-    CommCareUserPasswordResetView
+    CommCareUserPasswordResetView,
+    CommCareUserAccountConfirmedView,
 )
 from ..hqwebapp.decorators import waf_allow
 
@@ -248,6 +249,11 @@ urlpatterns = [
         r'^commcare/confirm_account/(?P<user_invite_hash>[\S-]+)/$',
         CommCareUserConfirmAccountView.as_view(),
         name=CommCareUserConfirmAccountView.urlname
+    ),
+    url(
+        r'^commcare/account_confirmed/$',
+        CommCareUserAccountConfirmedView.as_view(),
+        name=CommCareUserAccountConfirmedView.urlname
     ),
     url(
         r'^commcare/send_confirmation_sms/(?P<user_id>[ \w-]+)/$',

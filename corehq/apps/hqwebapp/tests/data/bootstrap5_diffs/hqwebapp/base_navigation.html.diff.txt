@@ -74,13 +74,14 @@
        {% if not request.user.is_authenticated %}
 -        <nav class="navbar-menus navbar-signin" role="navigation">
 -          <div class="nav-settings-bar pull-right">
+-            <div class="navbar-btn dropdown" style="display: inline-block;">
 +        <nav class="navbar-signin ms-2" role="navigation">
 +          <div class="nav-settings-bar">
-             <div class="navbar-nav dropdown">
++            <div class="navbar-btn dropdown d-inline-block">
                <button
--                class="dropdown-toggle btn btn-default navbar-btn"
+-                class="dropdown-toggle btn btn-default"
 -                data-toggle="dropdown"
-+                class="dropdown-toggle btn btn-outline-primary navbar-btn"
++                class="dropdown-toggle btn btn-outline-primary"
 +                data-bs-toggle="dropdown"
                  aria-haspopup="true"
                  aria-expanded="false"

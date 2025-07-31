@@ -3742,11 +3742,11 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Password or connect username required"
+msgid "You don't have permission to use connect_username field"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "You don't have permission to use connect_username field"
+msgid "Password or connect username required"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
