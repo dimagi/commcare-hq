@@ -69,6 +69,7 @@
     - hq.mobile_ucr_restore_version
     - hq.location_fixture_restore
     - hq.split_screen_dynamic_search
+    - features.credentials
 
 - title: 'Disabled'
   id: app-settings-disabled

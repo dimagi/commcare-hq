@@ -25,6 +25,7 @@ from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.apps import edit_app_attr
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.app_manager.models import CredentialApplication
 
 
 @require_GET
@@ -72,8 +73,18 @@ def edit_commcare_profile(request, domain, app_id):
         for name, value in settings.get(settings_type, {}).items():
             if settings_type not in app.profile:
                 app.profile[settings_type] = {}
+
             app.profile[settings_type][name] = value
             changed[settings_type][name] = value
+
+    credential_application = CredentialApplication.objects.filter(
+        app_id=app.id,
+    ).first()
+    if credential_application:
+        credential_application.activity_level = app.profile["features"]["credentials"]
+        credential_application.save(update_fields=["activity_level"])
+    elif "credentials" in app.profile.get("features", {}):
+        del app.profile["features"]["credentials"]
 
     if not domain_has_privilege(domain, privileges.APP_DEPENDENCIES):
         # remove dependencies if they were set before

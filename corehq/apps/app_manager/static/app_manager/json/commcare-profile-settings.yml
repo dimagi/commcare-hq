@@ -364,3 +364,19 @@
   default: []  # multiSelect default takes a list
   since: '2.54'
   force: true
+
+- id: 'credentials'
+  name: 'Worker Activity'
+  type: 'features'
+  description: >
+    Issues credentials to mobile workers who have been active users of this app for the specified period of time.
+  values:
+    - ['1MON_ACTIVE', '1 Month']
+    - ['2MON_ACTIVE', '2 Months']
+    - ['3MON_ACTIVE', '3 Months']
+    - ['6MON_ACTIVE', '6 Months']
+    - ['9MON_ACTIVE', '9 Months']
+    - ['12MON_ACTIVE', '12 Months']
+  default: '3MON_ACTIVE'
+  group: 'app_activity'
+  force: true

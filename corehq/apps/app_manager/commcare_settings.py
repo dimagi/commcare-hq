@@ -75,6 +75,13 @@ def _load_commcare_settings_layout(app):
             setting = settings.pop(key)
             if doc_type == 'Application':
                 include = True
+                if setting['id'] == "credentials":
+                    from corehq.apps.app_manager.models import CredentialApplication
+                    credential_application = CredentialApplication.objects.filter(
+                        app_id=app.id,
+                    ).first()
+                    include = credential_application is not None
+
                 section['settings'][i] = setting
             elif doc_type == 'LinkedApplication':
                 include = setting.get('supports_linked_app', False)
@@ -131,7 +138,7 @@ def parse_condition_string(condition_str):
     elif match["equals"] == 'false':
         match["equals"] = False
     elif len(match["equals"]) > 1 and match["equals"][0] == "'" and match["equals"][-1] == "'":
-            match["equals"] = match["equals"][1:-1]
+        match["equals"] = match["equals"][1:-1]
     else:
         raise Exception("Error parsing contingent condition")
     return match
@@ -141,7 +148,7 @@ def check_condition(app, condition_str):
     cond = parse_condition_string(condition_str)
     attr_val = app.get_profile_setting(cond["type"], cond["id"])
     return attr_val == cond["equals"] or \
-           (cond["equals"] == 'true' and attr_val is True) or (cond["equals"] == 'false' and attr_val is False)
+        (cond["equals"] == 'true' and attr_val is True) or (cond["equals"] == 'false' and attr_val is False)
 
 
 def check_contingent_for_circular_dependency(contingent, yaml_lookup, deps=None):
