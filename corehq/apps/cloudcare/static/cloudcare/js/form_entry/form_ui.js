@@ -974,7 +974,9 @@ define("cloudcare/js/form_entry/form_ui", [
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
         };
-        self.afterRender = function () { self.entry.afterRender(); };
+        self.afterRender = function (elements, entry) {
+            self.entry.afterRender(elements, entry);
+        };
 
         self.ixInfo = function (o) {
             var fullIx = getIx(o);
