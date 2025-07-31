@@ -275,6 +275,19 @@ define("cloudcare/js/form_entry/entries", [
             return null;
         };
 
+        self.afterRender = function (elements) {
+            _.each(elements, function (el) {
+                if (el.nodeName === 'TEXTAREA') {
+                    const showFullText = () => {
+                        el.style.height = 'auto';
+                        el.style.height = el.scrollHeight + 3 + 'px';
+                    };
+                    showFullText();
+                    window.addEventListener('input', showFullText);
+                    window.addEventListener('resize', showFullText);
+                }
+            });
+        };
         self.enableReceiver(question, options);
     }
     FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
