@@ -20,6 +20,7 @@ class Migration(migrations.Migration):
                 ('app_id', models.CharField(max_length=50)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('issued_on', models.DateTimeField(blank=True, null=True)),
+                ('type', models.CharField(max_length=32)),
             ],
             options={
                 'unique_together': {('user_id', 'app_id')},

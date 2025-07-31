@@ -443,7 +443,8 @@ def process_mobile_worker_credentials():
     UserCredential.objects.bulk_create(applicable_credentials, ignore_conflicts=True)
 
 
-def _get_credentials_for_timeframe(months, app_ids):
+def _get_credentials_for_timeframe(activity_level, app_ids):
+    months = int(re.search(r'^\d+', activity_level).group())
     now = datetime.now(timezone.utc)
     start_date = date(now.year, now.month, now.day) - relativedelta(months=months)
     user_months_activity = (
@@ -458,10 +459,10 @@ def _get_credentials_for_timeframe(months, app_ids):
         .values('app_id', 'username', 'user_id', 'month', 'domain')
         .distinct()
     )
-    return _filter_users_with_complete_months(user_months_activity, months)
+    return _filter_users_with_complete_months(user_months_activity, months, activity_level)
 
 
-def _filter_users_with_complete_months(data, months):
+def _filter_users_with_complete_months(data, months, activity_level):
     """
     Filter data to only include records where each user has entries for all distinct months.
     """
@@ -481,6 +482,7 @@ def _filter_users_with_complete_months(data, months):
                 app_id=record["app_id"],
                 username=record["username"],
                 domain=record["domain"],
+                type=activity_level,
             ))
             combined_user_app_ids.add(combined_user_app_id)
 
@@ -493,6 +495,5 @@ def _get_app_ids_by_activity_level():
     credential_apps = CredentialApplication.objects.all()
     app_ids_by_level = defaultdict(list)
     for app in credential_apps:
-        activity_level = int(re.search(r'^\d+', app.activity_level).group())
-        app_ids_by_level[activity_level].append(app.app_id)
+        app_ids_by_level[app.activity_level].append(app.app_id)
     return app_ids_by_level

@@ -3425,6 +3425,7 @@ class UserCredential(models.Model):
     app_id = models.CharField(max_length=50)
     created_on = models.DateTimeField(auto_now_add=True)
     issued_on = models.DateTimeField(null=True, blank=True)
+    type = models.CharField(max_length=32)
 
     class Meta:
         unique_together = ("user_id", "app_id")
