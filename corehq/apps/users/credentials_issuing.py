@@ -19,7 +19,7 @@ def get_credentials_for_timeframe(activity_level, app_ids):
             user_type='CommCareUser',
             is_app_deleted=False,
         )
-        .values('app_id', 'username', 'user_id', 'month', 'domain')
+        .values('app_id', 'username', 'user_id', 'month', 'domain_name')
         .distinct()
     )
     return _filter_users_with_complete_months(user_months_activity, months, activity_level)
@@ -44,7 +44,7 @@ def _filter_users_with_complete_months(data, months, activity_level):
                 user_id=record["user_id"],
                 app_id=record["app_id"],
                 username=record["username"],
-                domain=record["domain"],
+                domain=record["domain_name"],
                 type=activity_level,
             ))
             combined_user_app_ids.add(combined_user_app_id)
