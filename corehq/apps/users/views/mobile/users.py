@@ -1600,7 +1600,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
                     use_domain_gateway=True
                 )
             return HttpResponseRedirect('{}?username={}'.format(
-                reverse('domain_login', args=[self.domain]),
+                reverse('commcare_user_account_confirmed', args=[self.domain]),
                 user.raw_username,
             ))
 
@@ -1612,6 +1612,27 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         if hours_elapsed <= self._expiration_time_in_hours:
             return True
         return False
+
+
+@location_safe
+class CommCareUserAccountConfirmedView(TemplateView):
+    template_name = "users/commcare_user_account_confirmed.html"
+    urlname = "commcare_user_account_confirmed"
+    strict_domain_fetching = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        username = self.request.GET.get('username')
+        domain = self.kwargs.get('domain')
+        if username:
+            login_url = '{}?username={}'.format(
+                reverse('domain_login', args=[domain]),
+                username,
+            )
+        else:
+            login_url = reverse('domain_login', args=[domain])
+        context['login_url'] = login_url
+        return context
 
 
 @location_safe

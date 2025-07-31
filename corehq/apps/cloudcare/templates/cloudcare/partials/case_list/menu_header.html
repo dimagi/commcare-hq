@@ -3,7 +3,7 @@
 
 <div class="page-header menu-header clearfix" id="case-list-menu-header">
   <div class="float-end">
-    <% if (showMap) { %>
+    <% if (mapAvailable) { %>
     <button
       id="hide-map-button"
       class="btn btn-primary float-end"
@@ -11,7 +11,11 @@
       aria-expanded="true"
       aria-controls="module-case-list-map"
     >
-      {% trans "Hide Map" %}
+      <% if (mapVisible()) { %>
+        {% trans "Hide Map" %}
+      <% } else { %>
+        {% trans "Show Map" %}
+      <% } %>
     </button>
     <% } %> <% if (sidebarEnabled) { %>
     <button
