@@ -134,7 +134,7 @@ class SuperuserManagement(UserAdministration):
         usernames = {user.username for user in users}
 
         for tag in ALL_TAGS:
-            permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
+            permission = ToggleEditPermission.objects.get_by_tag_slug(tag.slug)
             should_have_access = tag.slug in selected_tag_slugs
             if should_have_access:
                 if not permission:
@@ -304,7 +304,7 @@ def _augment_users_with_feature_flag_edit_permissions(users):
     for user in users:
         user.tags_edit_permissions = []
     for tag in ALL_TAGS:
-        permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
+        permission = ToggleEditPermission.objects.get_by_tag_slug(tag.slug)
         if not permission:
             continue
         for user in users:

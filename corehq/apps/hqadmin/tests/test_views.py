@@ -157,5 +157,5 @@ class TestSuperuserManagementView(TestCase):
         self.assertTrue(updated_user.is_staff)
         self.assertTrue(updated_user.can_assign_superuser)
         for tag_slug in [TAG_SOLUTIONS.slug, TAG_CUSTOM.slug]:
-            permission = ToggleEditPermission.get_by_tag_slug(tag_slug)
+            permission = ToggleEditPermission.objects.get_by_tag_slug(tag_slug)
             self.assertIn(user.username, permission.enabled_users)

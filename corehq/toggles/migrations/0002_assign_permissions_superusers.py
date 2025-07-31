@@ -13,7 +13,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 def _assign_all_toggle_edit_permissions_to_superusers(apps, schema_editor):
     superusers = User.objects.filter(is_superuser=True).values_list('username', flat=True)
     for tag in ALL_TAGS:
-        toggle_permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
+        toggle_permission = ToggleEditPermission.objects.get_by_tag_slug(tag.slug)
         if not toggle_permission:
             toggle_permission = ToggleEditPermission(tag_slug=tag.slug)
         toggle_permission.add_users(list(superusers))
@@ -22,7 +22,7 @@ def _assign_all_toggle_edit_permissions_to_superusers(apps, schema_editor):
 def _reverse(apps, schema_editor):
     superusers = User.objects.filter(is_superuser=True).values_list('username', flat=True)
     for tag in ALL_TAGS:
-        toggle_permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
+        toggle_permission = ToggleEditPermission.objects.get_by_tag_slug(tag.slug)
         if toggle_permission:
             toggle_permission.remove_users(list(superusers))
 
