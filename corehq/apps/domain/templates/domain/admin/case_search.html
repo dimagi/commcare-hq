@@ -110,6 +110,25 @@
         </div>
 
         <div data-bind="visible: toggleEnabled" class="mb-3">
+          <h2>{% trans "Split Screen UI" %}</h2>
+          <p>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="split-screen-ui"
+                data-bind="checked: splitScreenUI"
+              />
+              <label class="form-check-label" for="split-screen-ui">
+                {% blocktrans %}
+                  Show the search filters in a sidebar on the left and the results on the right.
+                {% endblocktrans %}
+              </label>
+            </div>
+          </p>
+        </div>
+
+        <div data-bind="visible: toggleEnabled" class="mb-3">
           <h2>{% trans "Remove Special Characters" %}</h2>
           <p>
             {% blocktrans %}
@@ -156,6 +175,7 @@
             <i class="fa fa-plus"></i> {% trans "Add case property" %}
           </button>
         </div>
+
       </form>
     </div>
   </div>

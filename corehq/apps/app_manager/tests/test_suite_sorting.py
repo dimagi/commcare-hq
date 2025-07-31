@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq import privileges
@@ -47,6 +49,10 @@ class SuiteSortingTest(SimpleTestCase, SuiteMixin):
             "./detail[@id='m0_case_short']"
         )
 
+    @patch(
+        'corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain',
+        return_value=False,
+    )
     def test_sort_cache_search(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.modules[0].search_config = CaseSearch(
