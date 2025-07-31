@@ -431,14 +431,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if settings.IS_SAAS_ENVIRONMENT:
         demo_workflow_ab_v2.update_response(response)
 
-    if 'auth-username' in req.POST:
-        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
-        if couch_user:
-            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
-            # reset cookie to an empty list on login to show domain alerts again
-            response.set_cookie('viewed_domain_alerts', [])
-            activate(couch_user.language)
-
     return response
 
 
@@ -526,6 +518,16 @@ class HQLoginView(LoginView):
             if idp:
                 return HttpResponseRedirect(idp.get_login_url(username=username))
         return super().post(*args, **kwargs)
+
+    def done(self, *args, **kwargs):
+        response = super().done(*args, **kwargs)
+        couch_user = CouchUser.get_by_username(self.request.user.username)
+        if couch_user:
+            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
+            # reset cookie to an empty list on login to show domain alerts again
+            response.set_cookie('viewed_domain_alerts', [])
+            activate(couch_user.language)
+        return response
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
