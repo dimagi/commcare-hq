@@ -729,8 +729,7 @@ class XForm(WrappedNode):
     def text_references(self, lang=None):
         # Accepts lang param for consistency with image_references, etc.,
         # but current text references aren't language-specific
-        nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]'
-                             '/{f}extra[@key="cc:print_template_reference"]')
+        nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]')
         return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
     def image_references(self, lang=None):
