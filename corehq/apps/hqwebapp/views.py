@@ -40,7 +40,7 @@ from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop, activate
+from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
@@ -437,7 +437,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
             # reset cookie to an empty list on login to show domain alerts again
             response.set_cookie('viewed_domain_alerts', [])
-            activate(couch_user.language)
 
     return response
 
