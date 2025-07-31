@@ -655,8 +655,9 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
                 domain=self.domain,
                 app_id=app_id,
             )
-        else:
+        elif app_id != domain_issuing_app.app_id:
             domain_issuing_app.app_id = app_id
+            domain_issuing_app.activity_level = None
 
         domain_issuing_app.save()
 
