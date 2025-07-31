@@ -1,36 +1,11 @@
-from contextlib import ContextDecorator
-from unittest.mock import patch
 from django.test import SimpleTestCase
+from corehq.apps.translations.tests.utils import custom_translations, CUSTOM_LANGUAGE
 
 from django.utils import translation
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext, gettext_lazy
-from django.utils.translation.trans_real import translation as get_translations
 
 from ...utils.translation import format_html_lazy
-
-CUSTOM_LANGUAGE = 'custom'
-
-
-class custom_translations(ContextDecorator):
-    """
-    A decorator/context manager to provide runtime translations for the 'custom' language
-    """
-    def __init__(self, translation_mapping):
-        self.translation_mapping = translation_mapping
-
-    def __enter__(self):
-        translations = get_translations(CUSTOM_LANGUAGE)
-        old_gettext = translations.gettext
-
-        def lookup(id):
-            return self.translation_mapping.get(id) or old_gettext(id)
-
-        self.patcher = patch.object(translations, 'gettext', lookup)
-        self.patcher.start()
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.patcher.stop()
 
 
 class TestCustomTranslationsDecorator(SimpleTestCase):
