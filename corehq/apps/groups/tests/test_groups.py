@@ -20,7 +20,7 @@ class GroupTest(TestCase):
                                               created_by=None, created_via=None)
         cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret',
                                                 created_by=None, created_via=None)
-        cls.inactive_user.is_active = False
+        cls.inactive_user.set_is_active(DOMAIN, False)
         cls.inactive_user.save()
         cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret',
                                                created_by=None, created_via=None)
