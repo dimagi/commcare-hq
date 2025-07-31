@@ -3419,7 +3419,9 @@ class ConnectIDMessagingKey(models.Model):
 
 
 class UserCredential(models.Model):
+    domain = models.TextField()
     user_id = models.CharField(max_length=50)
+    username = models.CharField(max_length=255)
     app_id = models.CharField(max_length=50)
     created_on = models.DateTimeField(auto_now_add=True)
     issued_on = models.DateTimeField(null=True, blank=True)

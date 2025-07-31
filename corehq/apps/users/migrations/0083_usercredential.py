@@ -14,7 +14,9 @@ class Migration(migrations.Migration):
             name='UserCredential',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('domain', models.TextField()),
                 ('user_id', models.CharField(max_length=50)),
+                ('username', models.CharField(max_length=255)),
                 ('app_id', models.CharField(max_length=50)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('issued_on', models.DateTimeField(blank=True, null=True)),

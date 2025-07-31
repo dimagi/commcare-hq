@@ -455,7 +455,7 @@ def _get_credentials_for_timeframe(months, app_ids):
             user_type='CommCareUser',
             is_app_deleted=False,
         )
-        .values('app_id', 'user_id', 'month')
+        .values('app_id', 'username', 'user_id', 'month', 'domain')
         .distinct()
     )
     return _filter_users_with_complete_months(user_months_activity, months)
@@ -476,7 +476,12 @@ def _filter_users_with_complete_months(data, months):
 
         has_required_months = len(user_months[combined_user_app_id]) >= months
         if has_required_months and combined_user_app_id not in combined_user_app_ids:
-            user_credentials.append(UserCredential(user_id=record["user_id"], app_id=record["app_id"]))
+            user_credentials.append(UserCredential(
+                user_id=record["user_id"],
+                app_id=record["app_id"],
+                username=record["username"],
+                domain=record["domain"],
+            ))
             combined_user_app_ids.add(combined_user_app_id)
 
     return user_credentials
