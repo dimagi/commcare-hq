@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from datetime import datetime, timezone, date
 from dateutil.relativedelta import relativedelta
@@ -487,6 +488,6 @@ def _get_app_ids_by_activity_level():
     credential_apps = CredentialApplication.objects.all()
     app_ids_by_level = defaultdict(list)
     for app in credential_apps:
-        activity_level = int(app.activity_level)
+        activity_level = int(re.search(r'^\d+', app.activity_level).group())
         app_ids_by_level[activity_level].append(app.app_id)
     return app_ids_by_level
