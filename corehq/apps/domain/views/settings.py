@@ -618,6 +618,14 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     urlname = 'domain_manage_mobile_workers'
 
 
+@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
+class WorkerHistorySettingsView(BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Worker History")
+    template_name = 'domain/admin/worker_history.html'
+    urlname = 'domain_manage_worker_history'
+
+
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),
                    require_can_manage_domain_alerts], name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
