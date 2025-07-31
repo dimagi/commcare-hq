@@ -112,7 +112,7 @@ from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.view_utils import reverse
+from corehq.util.view_utils import reverse, set_language_cookie
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
@@ -1568,14 +1568,5 @@ def set_language(request):
     lang_code = request.POST.get("language")
     valid_lang_codes = [lang_code for lang_code, __ in settings.LANGUAGES]
     if lang_code and lang_code in valid_lang_codes:
-        response.set_cookie(
-            settings.LANGUAGE_COOKIE_NAME,
-            lang_code,
-            max_age=settings.LANGUAGE_COOKIE_AGE,
-            path=settings.LANGUAGE_COOKIE_PATH,
-            domain=settings.LANGUAGE_COOKIE_DOMAIN,
-            secure=settings.LANGUAGE_COOKIE_SECURE,
-            httponly=settings.LANGUAGE_COOKIE_HTTPONLY,
-            samesite=settings.LANGUAGE_COOKIE_SAMESITE,
-        )
+        response = set_language_cookie(response, lang_code)
     return response
