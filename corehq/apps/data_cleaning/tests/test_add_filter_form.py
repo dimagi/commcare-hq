@@ -137,6 +137,7 @@ class TestAddFilterForm(TestCase):
                     'soil_mix',
                     DataType.TEXT,
                     text_match_type=match_type,
+                    text_value=None,
                 )
                 form = AddFilterForm(self.session, data)
                 assert not form.is_valid()
@@ -154,6 +155,7 @@ class TestAddFilterForm(TestCase):
                     'height',
                     DataType.INTEGER,
                     number_match_type=match_type,
+                    number_value=None,
                 )
                 form = AddFilterForm(self.session, data)
                 assert not form.is_valid()
@@ -171,6 +173,7 @@ class TestAddFilterForm(TestCase):
                     'watered_on',
                     DataType.DATE,
                     date_match_type=match_type,
+                    date_value=None,
                 )
                 form = AddFilterForm(self.session, data)
                 assert not form.is_valid()
@@ -191,6 +194,7 @@ class TestAddFilterForm(TestCase):
                     'pot_type',
                     DataType.MULTIPLE_OPTION,
                     multi_select_match_type=match_type,
+                    multi_select_value=None,
                 )
                 form = AddFilterForm(self.session, data)
                 assert not form.is_valid()
@@ -200,27 +204,57 @@ class TestAddFilterForm(TestCase):
                     errors=["Please provide a value or use the 'empty' or 'missing' match types."],
                 )
 
-    def test_validation_ok_for_non_value_matches(self):
-        cases = [
-            ('soil_mix', DataType.TEXT, 'text_match_type', 'text_value'),
-            ('height', DataType.INTEGER, 'number_match_type', 'number_value'),
-            ('watered_on', DataType.DATE, 'date_match_type', 'date_value'),
-            ('pot_type', DataType.MULTIPLE_OPTION, 'multi_select_match_type', 'multi_select_value'),
-        ]
-        required_text_match_types = [mt for mt, _ in FilterMatchType.ALL_DATA_TYPES_CHOICES]
-        for prop_id, data_type, match_field, value_field in cases:
-            for match_type in required_text_match_types:
-                with self.subTest(prop_id=prop_id, data_type=data_type, match_type=match_type):
-                    data = self._get_post_data(
-                        prop_id,
-                        data_type,
-                        **{
-                            match_field: match_type,
-                            value_field: '',
-                        },
-                    )
-                    form = AddFilterForm(self.session, data)
-                    assert form.is_valid()
+    def test_validation_ok_for_non_value_matches_with_text(self):
+        non_value_match_types = [mt for mt, _ in FilterMatchType.ALL_DATA_TYPES_CHOICES]
+        for match_type in non_value_match_types:
+            with self.subTest(match_type=match_type):
+                data = self._get_post_data(
+                    'soil_mix',
+                    DataType.TEXT,
+                    text_match_type=match_type,
+                    text_value='',
+                )
+                form = AddFilterForm(self.session, data)
+                assert form.is_valid()
+
+    def test_validation_ok_for_non_value_matches_with_number(self):
+        non_value_match_types = [mt for mt, _ in FilterMatchType.ALL_DATA_TYPES_CHOICES]
+        for match_type in non_value_match_types:
+            with self.subTest(match_type=match_type):
+                data = self._get_post_data(
+                    'height',
+                    DataType.INTEGER,
+                    number_match_type=match_type,
+                    number_value='',
+                )
+                form = AddFilterForm(self.session, data)
+                assert form.is_valid()
+
+    def test_validation_ok_for_non_value_matches_with_date(self):
+        non_value_match_types = [mt for mt, _ in FilterMatchType.ALL_DATA_TYPES_CHOICES]
+        for match_type in non_value_match_types:
+            with self.subTest(match_type=match_type):
+                data = self._get_post_data(
+                    'watered_on',
+                    DataType.DATE,
+                    date_match_type=match_type,
+                    date_value='',
+                )
+                form = AddFilterForm(self.session, data)
+                assert form.is_valid()
+
+    def test_validation_ok_for_non_value_matches_with_multi_select(self):
+        non_value_match_types = [mt for mt, _ in FilterMatchType.ALL_DATA_TYPES_CHOICES]
+        for match_type in non_value_match_types:
+            with self.subTest(match_type=match_type):
+                data = self._get_post_data(
+                    'pot_type',
+                    DataType.MULTIPLE_OPTION,
+                    multi_select_match_type=match_type,
+                    multi_select_value='',
+                )
+                form = AddFilterForm(self.session, data)
+                assert form.is_valid()
 
     def test_validation_ok(self):
         cases = [
