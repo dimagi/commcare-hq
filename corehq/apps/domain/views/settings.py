@@ -51,6 +51,7 @@ from corehq.apps.domain.forms import (
     PrivacySecurityForm,
     ProjectSettingsForm,
     IPAccessConfigForm,
+    DomainCredentialIssuingAppForm,
     clean_password
 )
 from corehq.apps.domain.models import Domain
@@ -66,6 +67,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.apps.app_manager.models import CredentialApplication
 
 MAX_ACTIVE_ALERTS = 3
 
@@ -624,6 +626,42 @@ class WorkerHistorySettingsView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Worker History")
     template_name = 'domain/admin/worker_history.html'
     urlname = 'domain_manage_worker_history'
+
+    @property
+    def form(self):
+        if self.request.method == 'POST':
+            return DomainCredentialIssuingAppForm(self.domain, self.request.POST)
+        return DomainCredentialIssuingAppForm(self.domain)
+
+    @property
+    def main_context(self):
+        context = super().main_context
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form
+        if not form.is_valid():
+            messages.error(request, _("There was an error saving your settings. Please try again!"))
+            return self.get(request, *args, **kwargs)
+
+        domain_issuing_app = CredentialApplication.objects.filter(domain=self.domain).first()
+        app_id = form.cleaned_data['app_id']
+
+        if not domain_issuing_app:
+            domain_issuing_app = CredentialApplication(
+                domain=self.domain,
+                app_id=app_id,
+            )
+        else:
+            domain_issuing_app.app_id = app_id
+
+        domain_issuing_app.save()
+
+        messages.success(request, _("Worker history settings saved!"))
+        return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
 
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),

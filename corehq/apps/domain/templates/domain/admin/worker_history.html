@@ -5,5 +5,10 @@
 
 
 {% block page_content %}
-Todo
+<form class="form form-horizontal" method="post">
+  <fieldset>
+    <legend>{% trans 'Configure Credential-issuing Application' %}</legend>
+    {% crispy form %}
+  </fieldset>
+</form>
 {% endblock %}
