@@ -157,6 +157,7 @@ MIDDLEWARE = [
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'corehq.middleware.SyncUserLanguageMiddleware',
     'corehq.middleware.HqHtmxActionMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
