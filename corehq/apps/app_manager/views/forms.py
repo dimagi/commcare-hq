@@ -54,6 +54,7 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
+    FormActionsDiffException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -233,7 +234,10 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     old_load_from_form = form.actions.load_from_form
 
     allow_conflicts = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
+    try:
+        form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
+    except FormActionsDiffException as e:
+        return HttpResponseBadRequest(e.get_user_message())
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
