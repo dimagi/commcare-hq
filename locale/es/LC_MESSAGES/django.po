@@ -4573,12 +4573,12 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr "No hay un campo '{field_name}' coincidente para ordenar"
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Password or connect username required"
-msgstr "Se requiere contraseña o nombre de usuario de connect"
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to use connect_username field"
 msgstr "No tienes permiso para usar el campo connect_username"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Password or connect username required"
+msgstr "Se requiere contraseña o nombre de usuario de connect"
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You must provide the user's email to send a confirmation email."
