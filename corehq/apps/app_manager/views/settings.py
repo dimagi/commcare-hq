@@ -77,14 +77,12 @@ def edit_commcare_profile(request, domain, app_id):
             app.profile[settings_type][name] = value
             changed[settings_type][name] = value
 
-    credential_application = CredentialApplication.objects.filter(
-        app_id=app.id,
-    ).first()
-    if credential_application:
-        credential_application.activity_level = app.profile["features"]["credentials"]
-        credential_application.save(update_fields=["activity_level"])
-    elif "credentials" in app.profile.get("features", {}):
-        del app.profile["features"]["credentials"]
+    if "credentials" in changed["features"]:
+        CredentialApplication.objects.filter(
+            app_id=app.id,
+        ).update(
+            activity_level=app.profile["features"]["credentials"]
+        )
 
     if not domain_has_privilege(domain, privileges.APP_DEPENDENCIES):
         # remove dependencies if they were set before

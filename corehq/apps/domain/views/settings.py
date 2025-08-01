@@ -27,7 +27,7 @@ from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from dimagi.utils.web import json_response, get_ip
 
 from corehq import feature_previews, privileges, toggles
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
@@ -647,22 +647,47 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
             messages.error(request, _("There was an error saving your settings. Please try again!"))
             return self.get(request, *args, **kwargs)
 
-        domain_issuing_app = CredentialApplication.objects.filter(domain=self.domain).first()
-        app_id = form.cleaned_data['app_id']
+        is_new_credential_app = self.update_credential_app(form.cleaned_data)
 
+        success_message = _("Settings saved!")
+        if is_new_credential_app:
+            success_message = _(
+                "Settings saved! Please remember to configure the credential criteria in the app manager settings."
+            )
+
+        messages.success(request, success_message)
+        return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+    def update_credential_app(self, form_data):
+        domain_issuing_app = CredentialApplication.objects.filter(domain=self.domain).first()
+        app_id = form_data['app_id']
+
+        is_new_credential_app = True
         if not domain_issuing_app:
-            domain_issuing_app = CredentialApplication(
+            CredentialApplication.objects.create(
                 domain=self.domain,
                 app_id=app_id,
             )
         elif app_id != domain_issuing_app.app_id:
+            old_app = get_app(self.domain, domain_issuing_app.app_id)
+            new_app = get_app(self.domain, app_id)
+
             domain_issuing_app.app_id = app_id
-            domain_issuing_app.activity_level = None
+            domain_issuing_app.activity_level = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+            domain_issuing_app.save()
 
-        domain_issuing_app.save()
+            # Remove credentials from the old app
+            old_app.profile.get('features', {}).pop('credentials', None)
+            old_app.save()
 
-        messages.success(request, _("Settings saved!"))
-        return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+            # Add credentials to the new app
+            app_features = new_app.profile.get('features', {})
+            app_features['credentials'] = domain_issuing_app.activity_level
+            new_app.profile['features'] = app_features
+            new_app.save()
+        else:
+            is_new_credential_app = False
+        return is_new_credential_app
 
 
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),

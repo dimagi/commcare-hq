@@ -579,7 +579,7 @@ class TestCredentialsApplicationSettingsView(TestCase):
         )
         credential_app = CredentialApplication.objects.get(app_id="another-app-id")
         assert not CredentialApplication.objects.filter(app_id=self.app_id).exists()
-        assert credential_app.activity_level is None
+        assert credential_app.activity_level == CredentialApplication.ActivityLevelChoices.THREE_MONTHS
 
 
 @contextmanager
