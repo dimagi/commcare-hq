@@ -146,18 +146,18 @@ function imageHandler() {
         const file = imageInput.files[0];
 
         await uploadAndInsertImage(file, self.quill, {
-            onStart: function() {
+            onStart: function () {
                 uploadProgress.classList.remove("d-none");
             },
-            onComplete: function() {
+            onComplete: function () {
                 imageInput.value = '';
                 uploadButton.removeEventListener('click', handleImage);
                 $modal.modal('hide');
             },
-            onError: function(error) {
+            onError: function (error) {
                 alert(error.message || gettext('Failed to upload image. Please try again.'));
             },
-        }).finally(function() {
+        }).finally(function () {
             uploadProgress.classList.add("d-none");
         });
     };
@@ -297,7 +297,7 @@ ko.bindingHandlers.richEditor = {
         });
 
         // Handle paste events in the capture phase to intercept before Quill's handlers
-        editor.root.addEventListener('paste', function(e) {
+        editor.root.addEventListener('paste', function (e) {
             if (initialPageData.get("read_only_mode")) {
                 return;
             }
@@ -324,34 +324,27 @@ ko.bindingHandlers.richEditor = {
         }, true); // Using capture phase to intercept before Quill's handlers
 
         // Completely disable Quill's drop handler
-        editor.root.addEventListener('drop', function(e) {
+        editor.root.addEventListener('drop', function (e) {
             e.stopPropagation();
         }, true);
 
         // Handle drag and drop images
-        editor.root.addEventListener('dragover', function(e) {
+        editor.root.addEventListener('dragover', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            editor.root.classList.add('quill-drag-over');
             return false;
         }, { capture: true });
 
-        editor.root.addEventListener('dragleave', function(e) {
+        editor.root.addEventListener('dragleave', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            editor.root.classList.remove('quill-drag-over');
             return false;
         }, { capture: true });
 
-        editor.root.addEventListener('drop', function(e) {
+        editor.root.addEventListener('drop', function (e) {
             // This needs to happen before anything else
             e.preventDefault();
             e.stopPropagation();
-
-            // This completely prevents Quill from handling the drop
-
-            editor.root.classList.remove('quill-drag-over');
-
             if (initialPageData.get("read_only_mode")) {
                 return false;
             }
@@ -364,7 +357,7 @@ ko.bindingHandlers.richEditor = {
                 } else {
                     // Handle non-image files
                     const reader = new FileReader();
-                    reader.onload = function(e) {
+                    reader.onload = function (e) {
                         const range = editor.getSelection() || { index: editor.getLength(), length: 0 };
                         editor.insertText(range.index, e.target.result);
                     };
