@@ -75,6 +75,11 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.WARNING(
                             f"User not found in Elasticsearch: {user_id} - {str(e)}"
                         ))
+                    except Exception as e:
+                        self.stdout.write(self.style.ERROR(
+                            f"Error updating user in ES: {user_id} - {str(e)}"
+                        ))
+                        continue
                 f.flush()
             os.remove(progress_filename)
         else:
