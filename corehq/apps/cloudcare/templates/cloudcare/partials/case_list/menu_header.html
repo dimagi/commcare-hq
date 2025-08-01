@@ -4,20 +4,13 @@
 <div class="page-header menu-header clearfix" id="case-list-menu-header">
   <div class="float-end">
     <% if (mapAvailable) { %>
-    <button
-      id="hide-map-button"
-      class="btn btn-primary float-end"
-      type="button"
-      aria-expanded="true"
-      aria-controls="module-case-list-map"
-    >
-      <% if (mapVisible()) { %>
-        {% trans "Hide Map" %}
+      <% if (isMultiSelect) { %>
+        {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="float-end d-block d-lg-none" %}
       <% } else { %>
-        {% trans "Show Map" %}
+        {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="float-end" %}
       <% } %>
-    </button>
-    <% } %> <% if (sidebarEnabled) { %>
+    <% } %>
+    <% if (sidebarEnabled) { %>
     <button
       id="search-more"
       class="btn btn-primary d-xs-block d-sm-block d-md-block d-lg-none float-end"
