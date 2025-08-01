@@ -659,35 +659,43 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
         return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
     def update_credential_app(self, form_data):
-        domain_issuing_app = CredentialApplication.objects.filter(domain=self.domain).first()
+        domain_issuing_app_record = CredentialApplication.objects.filter(domain=self.domain).first()
         app_id = form_data['app_id']
 
+        default_activity_level = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+
         is_new_credential_app = True
-        if not domain_issuing_app:
-            CredentialApplication.objects.create(
+        if not domain_issuing_app_record:
+            domain_issuing_app_record = CredentialApplication.objects.create(
                 domain=self.domain,
                 app_id=app_id,
+                activity_level=default_activity_level,
             )
-        elif app_id != domain_issuing_app.app_id:
-            old_app = get_app(self.domain, domain_issuing_app.app_id)
+            application = get_app(self.domain, app_id)
+            self.add_credential_to_app_features(application, domain_issuing_app_record)
+
+        elif app_id != domain_issuing_app_record.app_id:
+            old_app = get_app(self.domain, domain_issuing_app_record.app_id)
             new_app = get_app(self.domain, app_id)
 
-            domain_issuing_app.app_id = app_id
-            domain_issuing_app.activity_level = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
-            domain_issuing_app.save()
+            domain_issuing_app_record.app_id = app_id
+            domain_issuing_app_record.activity_level = default_activity_level
+            domain_issuing_app_record.save()
 
             # Remove credentials from the old app
             old_app.profile.get('features', {}).pop('credentials', None)
             old_app.save()
 
-            # Add credentials to the new app
-            app_features = new_app.profile.get('features', {})
-            app_features['credentials'] = domain_issuing_app.activity_level
-            new_app.profile['features'] = app_features
-            new_app.save()
+            self.add_credential_to_app_features(new_app, domain_issuing_app_record)
         else:
             is_new_credential_app = False
         return is_new_credential_app
+
+    def add_credential_to_app_features(self, app, domain_issuing_app):
+        app_features = app.profile.get('features', {})
+        app_features['credentials'] = domain_issuing_app.activity_level
+        app.profile['features'] = app_features
+        app.save()
 
 
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),

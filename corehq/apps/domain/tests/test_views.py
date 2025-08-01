@@ -18,6 +18,7 @@ from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application, CredentialApplication
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.settings import (
     MAX_ACTIVE_ALERTS,
@@ -30,6 +31,7 @@ from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater
 from corehq.util.test_utils import privilege_enabled
+from corehq.apps.app_manager.dbaccessors import get_app
 
 
 class TestDomainViews(TestCase, DomainSubscriptionMixin):
@@ -547,7 +549,6 @@ class TestCredentialsApplicationSettingsView(TestCase):
         self.client = Client()
         self.client.force_login(user=self.user.get_django_user())
 
-        self.app_id = 'test-app-id'
         self.url = reverse(CredentialsApplicationSettingsView.urlname, args=[self.domain.name])
 
     def tearDown(self):
@@ -556,30 +557,53 @@ class TestCredentialsApplicationSettingsView(TestCase):
         super().tearDown()
 
     def test_create_new_credential_app(self):
-        self.client.post(
-            self.url,
-            data={
-                'app_id': self.app_id,
-            }
-        )
-        credential_app = CredentialApplication.objects.get(app_id=self.app_id)
-        assert credential_app.activity_level is None
+        app_id = self._get_app().id
 
-    def test_update_existing_credential_app(self):
-        CredentialApplication.objects.create(
-            domain=self.domain,
-            app_id=self.app_id,
-            activity_level='some_activity'
-        )
         self.client.post(
             self.url,
             data={
-                'app_id': "another-app-id",
+                'app_id': app_id,
             }
         )
-        credential_app = CredentialApplication.objects.get(app_id="another-app-id")
-        assert not CredentialApplication.objects.filter(app_id=self.app_id).exists()
+        credential_app = CredentialApplication.objects.get(app_id=app_id)
         assert credential_app.activity_level == CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+
+        app = get_app(self.domain.name, app_id)
+        assert app.profile['features']['credentials'] == CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+
+    def test_specify_new_credential_app_with_existing_app(self):
+        app_id = self._get_app().id
+        self.client.post(
+            self.url,
+            data={
+                'app_id': app_id,
+            }
+        )
+
+        another_app_id = self._get_app().id
+        self.client.post(
+            self.url,
+            data={
+                'app_id': another_app_id,
+            }
+        )
+        three_months = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+
+        credential_app = CredentialApplication.objects.get(app_id=another_app_id)
+        assert not CredentialApplication.objects.filter(app_id=app_id).exists()
+        assert credential_app.activity_level == three_months
+
+        previous_issuing_app = get_app(self.domain.name, app_id)
+        assert 'credentials' not in previous_issuing_app.profile['features']
+
+        new_issuing_app = get_app(self.domain.name, another_app_id)
+        assert new_issuing_app.profile['features']['credentials'] == three_months
+
+    def _get_app(self):
+        factory = AppFactory(domain=self.domain.name, build_version='2.51.0')
+        app = factory.app
+        app.save()
+        return app
 
 
 @contextmanager
