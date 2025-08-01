@@ -6330,6 +6330,9 @@ class CredentialApplication(models.Model):
         blank=True,
     )
 
+    class Meta:
+        unique_together = ('domain', 'app_id')
+
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
