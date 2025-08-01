@@ -389,6 +389,10 @@ class SyncUserLanguageMiddleware:
         response = self.get_response(request)
         if request.user.is_authenticated:
             couch_user = CouchUser.from_django_user(request.user)
-            if couch_user and couch_user.language != request.LANGUAGE_CODE:
+            if (
+                couch_user
+                and couch_user.language
+                and couch_user.language != request.LANGUAGE_CODE
+            ):
                 response = set_language_cookie(response, couch_user.language)
         return response
