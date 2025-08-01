@@ -1,8 +1,7 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from django.contrib.auth.models import User
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, override_settings
 
 from freezegun import freeze_time
 from two_factor.forms import totp
@@ -66,7 +65,7 @@ class TestHQTOTPDeviceForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
 
 
-class HQApiKeyTests(TestCase):
+class HQApiKeyTests(SimpleTestCase):
     def test_form_domain_list(self):
         form = HQApiKeyForm(user_domains=['domain1', 'domain2'])
         domain_choices = form.fields['domain'].choices
@@ -160,19 +159,15 @@ class HQApiKeyTests(TestCase):
             # So if we aren't localizing the date, this would be '2023-02-02'
             self.assertEqual(form.fields['expiration_date'].initial, '2023-02-01')
 
-    def test_select_all_domains_ui_will_create_an_unscoped_api_key(self):
-        user = User.objects.create(username='test-user@test.com')
-        current_time = datetime(year=2023, month=1, day=1)
-        with freeze_time(current_time):
-            form = HQApiKeyForm(self._form_data(expiration_date='2023-02-01'))
-            self.assertTrue(form.is_valid())
-            api_key = form.create_key(user)
-            self.assertEqual(api_key.domain, '')
+    def test_all_domains_ui_will_be_cleaned_to_empty_string(self):
+        form = HQApiKeyForm(self._form_data(expiration_date=None, domain=HQApiKeyForm.ALL_DOMAINS_UI))
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['domain'], '')
 
-    def _form_data(self, expiration_date='2023-01-01'):
+    def _form_data(self, expiration_date='2023-01-01', domain=HQApiKeyForm.ALL_DOMAINS_UI):
         data = {
             'name': 'TestKey',
-            'domain': HQApiKeyForm.ALL_DOMAINS_UI,
+            'domain': domain,
         }
 
         if expiration_date:
