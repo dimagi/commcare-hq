@@ -901,7 +901,7 @@ define("cloudcare/js/formplayer/menus/views", [
         handleSmallScreenChange: function (enabled) {
             const self = this;
             self.smallScreenEnabled = enabled;
-            if (self.options.sidebarEnabled) {
+            if (self.options.sidebarEnabled || self.mapAvailable) {
                 self.positionStickyItems(enabled);
             }
         },
