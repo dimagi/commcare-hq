@@ -133,7 +133,7 @@ that the translator has enough context.
 
     message = _("User '{user}' has successfully been {action}.").format(
         user=user.raw_username,
-        action=_("Un-Archived") if user.is_active else _("Archived"),
+        action=_("Un-Archived") if user.is_active_in_domain(domain) else _("Archived"),
     )
 
 This ends up in the translations file as::
