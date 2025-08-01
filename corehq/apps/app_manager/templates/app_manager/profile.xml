@@ -54,7 +54,7 @@
         </reminders>
         <package active="false"/>
         {% for feature, value in app_profile.features.items %}{% if value.value != None %}
-        {% if feature != 'users' and feature != 'dependencies' %}
+        {% if feature != 'users' and feature != 'dependencies' and feature != 'credentials' %}
             <{{ feature }} active="{{ value.value }}" />
         {% endif %}
         {% endif %}{% endfor %}
@@ -66,6 +66,11 @@
             <android_package id="{{ app_id }}"/>
             {% endfor %}
         </dependencies>
+        {% endif %}
+        {% if app_profile.features.credentials %}
+        <credentials active="true">
+            <credential level="{{ app_profile.features.credentials.value }}" type="APP_ACTIVITY">
+        </credentials>
         {% endif %}
     </features>
 
