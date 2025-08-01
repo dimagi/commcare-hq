@@ -269,7 +269,8 @@ class HQPhoneNumberForm(PhoneNumberForm):
 
 
 class HQApiKeyForm(forms.Form):
-    ALL_DOMAINS = 'ALL_DOMAINS'  # This value is safe to use because we normalize all domain names
+    ALL_DOMAINS_UI = 'ALL_DOMAINS_UI'
+    ALL_DOMAINS = ''
     name = forms.CharField()
     ip_allowlist = SimpleArrayField(
         forms.GenericIPAddressField(
@@ -291,7 +292,7 @@ class HQApiKeyForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         user_domains = user_domains or []
-        all_domains = (self.ALL_DOMAINS, _('All Projects'))
+        all_domains = (self.ALL_DOMAINS_UI, _('All Projects'))
         default_empty_choice = ('', '')
         self.fields['domain'].choices = [default_empty_choice] + [(d, d) for d in user_domains] + [all_domains]
 
@@ -355,8 +356,8 @@ class HQApiKeyForm(forms.Form):
             return new_key
 
     def clean_domain(self):
-        if self.cleaned_data['domain'] == self.ALL_DOMAINS:
-            return ''
+        if self.cleaned_data['domain'] == self.ALL_DOMAINS_UI:
+            return self.ALL_DOMAINS
         return self.cleaned_data['domain']
 
     def clean_expiration_date(self):
