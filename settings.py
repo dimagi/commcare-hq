@@ -162,6 +162,7 @@ MIDDLEWARE = [
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.SentryContextMiddleware',
+    'corehq.middleware.SyncUserLanguageMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.middleware.LogLongRequestMiddleware',
