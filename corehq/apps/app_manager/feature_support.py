@@ -128,13 +128,6 @@ class CommCareFeatureSupportMixin(object):
         return self._require_minimum_version('2.35')
 
     @property
-    def enable_detail_print(self):
-        """
-        Ability to print case detail screen, based on an HTML template, only supported > 2.35
-        """
-        return self._require_minimum_version('2.35')
-
-    @property
     def supports_practice_users(self):
         """
         Ability to configure practice mobile workers for apps

@@ -865,7 +865,6 @@ class Field(OrderedXmlObject):
     ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node', 'alt_text')
 
     sort = StringField('@sort')
-    print_id = StringField('@print-id')
     lazy_loading = BooleanField('@lazy_loading', required=False)
     cache_enabled = BooleanField('@cache_enabled', required=False)
     style = NodeField('style', Style)
@@ -943,7 +942,6 @@ class Detail(OrderedXmlObject, IdNode):
     ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
-    print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
