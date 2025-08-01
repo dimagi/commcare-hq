@@ -1,7 +1,8 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from django.test import SimpleTestCase, override_settings
+from django.contrib.auth.models import User
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from freezegun import freeze_time
 from two_factor.forms import totp
@@ -65,7 +66,7 @@ class TestHQTOTPDeviceForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
 
 
-class HQApiKeyTests(SimpleTestCase):
+class HQApiKeyTests(TestCase):
     def test_form_domain_list(self):
         form = HQApiKeyForm(user_domains=['domain1', 'domain2'])
         domain_choices = form.fields['domain'].choices
@@ -158,6 +159,15 @@ class HQApiKeyTests(SimpleTestCase):
             # 11 PM Eastern time will wrap over to the next day in UTC
             # So if we aren't localizing the date, this would be '2023-02-02'
             self.assertEqual(form.fields['expiration_date'].initial, '2023-02-01')
+
+    def test_select_all_domains_ui_will_create_an_unscoped_api_key(self):
+        user = User.objects.create(username='test-user@test.com')
+        current_time = datetime(year=2023, month=1, day=1)
+        with freeze_time(current_time):
+            form = HQApiKeyForm(self._form_data(expiration_date='2023-02-01'))
+            self.assertTrue(form.is_valid())
+            api_key = form.create_key(user)
+            self.assertEqual(api_key.domain, '')
 
     def _form_data(self, expiration_date='2023-01-01'):
         data = {
