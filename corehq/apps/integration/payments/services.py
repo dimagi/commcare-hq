@@ -11,8 +11,8 @@ from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
-    PAYMENT_SUCCESS_STATUS_CODE,
     PAYMENT_SUBMITTED_DEVICE_ID,
+    PAYMENT_SUCCESS_STATUS_CODE,
     PaymentProperties,
     PaymentStatus,
 )
@@ -107,8 +107,13 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     if not case_ids:
         return []
 
+    valid_statuses_for_verification = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
+    if not _validate_payment_status_for_cases(case_ids, domain, valid_statuses_for_verification):
+        raise PaymentRequestError(
+            _("Only payments in 'Not Verified' or 'Request failed' state are eligible for verification.")
+        )
     payment_properties_update = {
-        PaymentProperties.PAYMENT_VERIFIED: str(True),
+        PaymentProperties.PAYMENT_VERIFIED: 'True',
         PaymentProperties.PAYMENT_VERIFIED_ON_UTC: str(datetime.now()),
         PaymentProperties.PAYMENT_VERIFIED_BY: verifying_user.username,
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: verifying_user.user_id,
@@ -118,12 +123,20 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     updated_cases = []
     for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
         cases_updates = _get_cases_updates(case_ids_chunk, payment_properties_update)
-        _, cases = handle_case_update(
+        xform, cases = handle_case_update(
             domain, cases_updates, verifying_user, 'momo_payment_verified', is_creation=False,
         )
         updated_cases.extend(cases)
 
     return updated_cases
+
+
+def _validate_payment_status_for_cases(case_ids, domain, valid_statuses):
+    for case in CommCareCase.objects.iter_cases(case_ids, domain):
+        payment_status_value = case.get_case_property(PaymentProperties.PAYMENT_STATUS)
+        if PaymentStatus.from_value(payment_status_value) not in valid_statuses:
+            return False
+    return True
 
 
 def _get_cases_updates(case_ids, updates):
@@ -197,3 +210,30 @@ def get_payment_batch_numbers_for_domain(domain):
         batch_numbers.update(chunk_batch_numbers)
 
     return [batch_number for batch_number in batch_numbers if batch_number]
+
+
+def revert_payment_verification(domain, case_ids: list):
+    if not case_ids:
+        return []
+
+    if not _validate_payment_status_for_cases(case_ids, domain, [PaymentStatus.PENDING_SUBMISSION]):
+        raise PaymentRequestError(
+            _("Only payments in the 'Pending Submission' state are eligible for verification reversal.")
+        )
+
+    payment_properties_update = {
+        PaymentProperties.PAYMENT_VERIFIED: 'False',
+        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: '',
+        PaymentProperties.PAYMENT_VERIFIED_BY: '',
+        PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: '',
+        PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
+    }
+    updated_cases = []
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        case_changes = [(case_id, payment_properties_update, False) for case_id in case_ids_chunk]
+        xform, cases = bulk_update_cases(
+            domain, case_changes, 'momo_payment_verification_reverted'
+        )
+        updated_cases.extend(cases)
+
+    return updated_cases
