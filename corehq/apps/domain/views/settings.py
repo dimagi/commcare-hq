@@ -682,14 +682,15 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
             domain_issuing_app_record.activity_level = default_activity_level
             domain_issuing_app_record.save()
 
-            # Remove credentials from the old app
-            old_app.profile.get('features', {}).pop('credentials', None)
-            old_app.save()
-
+            self.remove_credential_from_app_features(old_app, domain_issuing_app_record)
             self.add_credential_to_app_features(new_app, domain_issuing_app_record)
         else:
             is_new_credential_app = False
         return is_new_credential_app
+
+    def remove_credential_from_app_features(self, app, domain_issuing_app):
+        app.profile.get('features', {}).pop('credentials', None)
+        app.save()
 
     def add_credential_to_app_features(self, app, domain_issuing_app):
         app_features = app.profile.get('features', {})
