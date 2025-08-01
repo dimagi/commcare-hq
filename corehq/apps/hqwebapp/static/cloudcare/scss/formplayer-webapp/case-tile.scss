@@ -132,6 +132,9 @@
     border-right-width: 5px;
   }
 
+  .sticky-map {
+    top: 0px;
+  }
   // todo: determine appropriate nesting
   #module-case-list-map {
     height: calc(100vh - 65px);
@@ -159,7 +162,7 @@
     container-type: inline-size;
 
     a {
-      color: $cc-brand-mid;
+      color: $primary;
     }
 
     .module-icon,
@@ -176,7 +179,7 @@
 
   .highlighted-case {
     border-style: solid;
-    border-color: $cc-brand-mid;
+    border-color: $primary;
   }
 
   .case-tile-group{

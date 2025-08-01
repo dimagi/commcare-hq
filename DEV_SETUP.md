@@ -213,6 +213,10 @@ $ venv
       ```
       `uv` caches compiled dependencies, so this is only necessary when a new
       dependency with a compiled binary is installed.
+    - If `uv sync` fails to build `lxml`, where it mentions incompatible pointer types, try rebuilding via:
+      ```sh
+      CC=gcc CFLAGS="-Wno-error=incompatible-pointer-types" LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" uv sync --compile-bytecode
+      ```
 
 Note that once you're up and running, you'll want to periodically re-run these
 steps, and a few others, to keep your environment up to date. Some developers
@@ -265,15 +269,8 @@ needs of most developers.
     # log in as yourself again to activate membership of the "docker" group
     su - $USER
 
-    # re-activate your virtualenv (with your venv tool of choice)
-    # (virtualenvwrapper)
-    workon hq
-
-    # or (pyenv)
-    pyenv activate hq
-
-    # or (virtualenv)
-    source $WORKON_HOME/hq/bin/activate
+    # re-activate your virtualenv (presuming uv)
+    source .venv/bin/activate
     ```
 
 3. Install `docker compose`
@@ -408,7 +405,13 @@ commcarehq=# CREATE DATABASE commcarehq_p2;
 CREATE DATABASE
 commcarehq=# \q
 ```
+If you are running formplayer through docker, you will need to create the
+database for the service
 
+```sh
+commcarehq=# CREATE DATABASE formplayer;
+CREATE DATABASE
+```
 Populate your database:
 
 ```sh
@@ -647,7 +650,18 @@ This can also be used to promote a user created by signing up to a superuser.
 Note that promoting a user to superuser status using this command will also give them the
 ability to assign other users as superuser in the in-app Superuser Management page.
 
-### Step 11: Running `yarn dev`
+### Step 11: Bootstrap a local build
+
+If you are going to build CommCare applications, you should generally ensure that CommCareHQ
+has at least one CommCare app version installed and available in the 
+[build manager](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/builds#adding-commcare-builds-to-commcare-hq).
+
+The easiest way to do this is to just grab the latest build available. 
+```sh
+./manage.py add_commcare_build --latest
+```
+
+### Step 12: Running `yarn dev`
 
 In order to build JavaScript bundles with Webpack, you will need to have `yarn dev`
 running in the background. It will watch any existing Webpack Entry Point, aka modules
@@ -663,7 +677,7 @@ changes to javascript files bundled by Webpack.
 For more information about JavaScript and Static Files, please see the
 [Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) on Read the Docs.
 
-### Step 12: Running CommCare HQ
+### Step 13: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).

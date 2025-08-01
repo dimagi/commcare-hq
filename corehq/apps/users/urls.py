@@ -81,6 +81,8 @@ from .views.mobile.users import (
     ClearCommCareUsers,
     link_connectid_user,
     bulk_user_upload_api,
+    CommCareUserPasswordResetView,
+    CommCareUserAccountConfirmedView,
 )
 from ..hqwebapp.decorators import waf_allow
 
@@ -93,6 +95,8 @@ user_management_urls = [
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
     url(r'^change_password/(?P<login_id>[ \w-]+)/$', change_password, name="change_password"),
+    url(r'^send_password_reset_email/(?P<couch_user_id>[ \w-]+)/$', CommCareUserPasswordResetView.as_view(),
+        name=CommCareUserPasswordResetView.urlname),
     url(r'^domain_accounts/(?P<couch_user_id>[ \w-]+)/$', domain_accounts, name='domain_accounts'),
     url(r'^delete_phone_number/(?P<couch_user_id>[ \w-]+)/$', delete_phone_number, name='delete_phone_number'),
     url(
@@ -242,9 +246,14 @@ urlpatterns = [
         name=ConfirmBillingAccountForExtraUsersView.urlname
     ),
     url(
-        r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$',
+        r'^commcare/confirm_account/(?P<user_invite_hash>[\S-]+)/$',
         CommCareUserConfirmAccountView.as_view(),
         name=CommCareUserConfirmAccountView.urlname
+    ),
+    url(
+        r'^commcare/account_confirmed/$',
+        CommCareUserAccountConfirmedView.as_view(),
+        name=CommCareUserAccountConfirmedView.urlname
     ),
     url(
         r'^commcare/send_confirmation_sms/(?P<user_id>[ \w-]+)/$',

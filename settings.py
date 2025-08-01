@@ -207,6 +207,7 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
     'django.contrib.auth.hashers.CryptPasswordHasher',
 )
+PASSWORD_RESET_TIMEOUT = 3600
 
 ROOT_URLCONF = "urls"
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
@@ -488,7 +489,7 @@ SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'accounts@example.com'
-GROWTH_EMAIL = 'growth@example.com'
+GROWTH_EMAIL = 'saas-revenue-team@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
@@ -831,6 +832,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.ReferCaseRepeater',
     'corehq.motech.repeaters.models.DataRegistryCaseUpdateRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.ConnectFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
@@ -869,7 +871,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 5
+ELASTICSEARCH_MAJOR_VERSION = 6
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
@@ -1291,7 +1293,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain',
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
-                'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',

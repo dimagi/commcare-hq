@@ -777,7 +777,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 timezone=self.get_user_timezone(),
             )
         return HQApiKeyForm(
-            user_domains=user_domains,
+            user_domains=sorted(user_domains),
             max_allowed_expiration_days=max_expiration_window,
             timezone=self.get_user_timezone(),
         )

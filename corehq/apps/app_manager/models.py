@@ -317,7 +317,19 @@ class FormActionCondition(DocumentSchema):
         return self.type in ('if', 'always')
 
 
-class FormAction(DocumentSchema):
+class UpdateableDocument(DocumentSchema):
+    def update_object(self, updates):
+        '''
+        Apply all 'updates' to the current object.
+        'updates' is expected to be a collection of properties which already exist on this document
+        '''
+        for key, value in updates.items():
+            if key not in self:
+                raise InvalidPropertyException(key)
+            self.set_raw_value(key, value)
+
+
+class FormAction(UpdateableDocument):
     """
     Corresponds to Case XML
 
@@ -398,9 +410,11 @@ class UpdateCaseAction(FormAction):
 
     DIFF_VALUE_UPDATED = 'updated'
 
-    def apply_diffs(self, diffs):
+    def apply_updates(self, updates, diffs):
         self.check_for_duplicate_keys(diffs)
         self.check_for_invalid_updates(diffs)
+
+        self.update_object(updates)
 
         if self.DIFF_ACTION_ADD in diffs:
             for (key, value) in diffs[self.DIFF_ACTION_ADD].items():
@@ -475,7 +489,8 @@ class OpenCaseAction(FormAction):
 
     DIFF_VALUE_UPDATED = 'updated'
 
-    def apply_diffs(self, diffs):
+    def apply_updates(self, updates, diffs):
+        self.update_object(updates)
         if self.DIFF_VALUE_UPDATED in diffs:
             self.name_update = ConditionalCaseUpdate(diffs[self.DIFF_VALUE_UPDATED])
 
@@ -519,7 +534,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
         return 'subcase_{}'.format(self.id)
 
 
-class FormActions(DocumentSchema):
+class FormActions(UpdateableDocument):
 
     open_case = SchemaProperty(OpenCaseAction)
     update_case = SchemaProperty(UpdateCaseAction)
@@ -552,29 +567,22 @@ class FormActions(DocumentSchema):
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
 
-    def update(self, updates):
+    def with_updates(self, updates, diffs):
         '''
-        Apply all 'updates' to the current object.
-        'updates' is expected to be a collection of valid properties within
-        FormActions (such as 'open_case', 'subcases', etc) in a json object form
-        '''
-        for key, value in updates.items():
-            if key not in self:
-                raise InvalidPropertyException(key)
-            self.set_raw_value(key, value)
-
-    def with_diffs(self, diffs):
-        '''
-        Produce a new FormActions object containing potentially updated
-        'open_case' and 'update_case' properties reflecting the diffs.
+        Produce a new FormActions object containing all updates, including
+        'open_case' and 'update_case', affected by the diffs
         '''
         dest = FormActions(self.to_json())  # clone object
 
-        if 'update_case' in diffs:
-            dest.update_case.apply_diffs(diffs['update_case'])
+        update_case_updates = updates.pop('update_case', {})
+        update_case_diffs = diffs.get('update_case', {})
+        dest.update_case.apply_updates(update_case_updates, update_case_diffs)
 
-        if 'open_case' in diffs:
-            dest.open_case.apply_diffs(diffs['open_case'])
+        open_case_updates = updates.pop('open_case', {})
+        open_case_diffs = diffs.get('open_case', {})
+        dest.open_case.apply_updates(open_case_updates, open_case_diffs)
+
+        dest.update_object(updates)
 
         return dest
 

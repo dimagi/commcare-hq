@@ -123,6 +123,9 @@ accounting
  0101_update_standard_plan_pricing_users_and_privs
  0102_alter_defaultproductplan_edition_and_more
  0103_bulk_data_cleaning_priv
+ 0104_fix_priv_community_rename
+ 0105_alter_billingcontactinfo_city_and_more
+ 0106_alter_billingcontactinfo_company_name
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -348,6 +351,7 @@ data_dictionary
  0014_auto_20230705_2007
  0015_casetype_is_deprecated
  0016_remove_case_property_group_and_rename_group_obj_caseproperty_group
+ 0017_refresh_data_dictionary
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -464,6 +468,7 @@ es
  0014_enable_slowlogs
  0015_add_user_domain_memberships
  0016_add_new_index_for_cc_perf
+ 0017_add_is_account_confirmed
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -793,6 +798,7 @@ ota
  0009_devicelogrequest
  0010_alter_devicelogrequest
  0011_remove_devicelogrequest_deviceid
+ 0012_integritysamplepercentage
 otp_static
  0001_initial
  0002_throttling
@@ -848,6 +854,7 @@ pillowtop
 preindex
  0001_initial
  0002_initial
+ 0003_initial
 products
  0001_initial
 project_limits
@@ -892,6 +899,7 @@ repeaters
  0016_repeater_max_workers
  0017_add_indexes
  0018_datasourceupdate
+ 0019_connectformrepeater
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1206,6 +1214,7 @@ toggle_ui
  0002_toggleaudit
 toggles
  0001_toggle_edit_permission
+ 0002_assign_permissions_superusers
 translations
  0001_initial
  0002_transifexblacklist
@@ -1330,6 +1339,7 @@ users
  0080_connectiduserlink_is_active
  0081_rm_orphaned_user_data
  0082_connectidmessagingkey_unique_active_messaging_key_per_user_and_domain
+ 0083_reset_ccu_dm_is_active
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

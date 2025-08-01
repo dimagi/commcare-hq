@@ -283,6 +283,10 @@ class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
         return reverse(AddFormRepeaterView.urlname, args=[self.domain])
 
 
+class EditConnectFormRepeaterView(EditFormRepeaterView):
+    urlname = "edit_connect_form_repeater"
+
+
 class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
