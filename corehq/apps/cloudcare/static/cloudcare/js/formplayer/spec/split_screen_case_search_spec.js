@@ -3,7 +3,7 @@ import _ from "underscore";
 import Backbone from "backbone";
 import Marionette from "backbone.marionette";
 import sinon from "sinon";
-import Toggles from "hqwebapp/js/toggles";
+import initialPageData from "hqwebapp/js/initial_page_data";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import API from "cloudcare/js/formplayer/menus/api";
 import Controller from "cloudcare/js/formplayer/menus/controller";
@@ -42,7 +42,7 @@ describe('Split Screen Case Search', function () {
             },
             addRegions: function () { return; },
         };
-        stubs.splitScreenToggleEnabled = sinon.stub(Toggles, 'toggleEnabled').withArgs('SPLIT_SCREEN_CASE_SEARCH');
+        stubs.splitScreenCaseSearchEnabled = sinon.stub(initialPageData, 'get').withArgs('split_screen_case_search');
     });
 
     beforeEach(function () {
@@ -50,7 +50,7 @@ describe('Split Screen Case Search', function () {
         user.displayOptions = {
             singleAppMode: false,
         };
-        stubs.splitScreenToggleEnabled.returns(true);
+        stubs.splitScreenCaseSearchEnabled.returns(true);
     });
 
     afterEach(function () {
@@ -141,7 +141,7 @@ describe('Split Screen Case Search', function () {
         });
 
         it('should empty sidebar if feature flag disabled', function () {
-            stubs.splitScreenToggleEnabled.returns(false);
+            stubs.splitScreenCaseSearchEnabled.returns(false);
             Controller.showMenu(splitScreenCaseListResponse);
 
             assert.isTrue(stubs.regions['sidebar'].empty.called);
