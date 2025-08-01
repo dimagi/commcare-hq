@@ -949,11 +949,11 @@ def _modify_user_status(request, domain, user_id, is_active):
         return JsonResponse({
             'error': _(str(e)),
         })
-    user.is_active = is_active
+    user.set_is_active(domain, is_active)
     user.save(spawn_task=True)
     log_user_change(by_domain=request.domain, for_domain=user.domain,
                     couch_user=user, changed_by_user=request.couch_user,
-                    changed_via=USER_CHANGE_VIA_WEB, fields_changed={'is_active': user.is_active})
+                    changed_via=USER_CHANGE_VIA_WEB, fields_changed={'is_active': is_active})
     return JsonResponse({
         'success': True,
     })

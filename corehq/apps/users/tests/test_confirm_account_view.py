@@ -66,7 +66,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
     @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     def test_account_active(self):
         self.user.is_account_confirmed = True
-        self.user.is_active = True
+        self.user.set_is_active(self.domain, True)
         self.user.save()
         response = self.client.get(self.url)
         self.assertEqual(200, response.status_code)
@@ -75,7 +75,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
     @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     def test_account_inactive_but_confirmed(self):
         self.user.is_account_confirmed = True
-        self.user.is_active = False
+        self.user.set_is_active(self.domain, False)
         self.user.save()
         response = self.client.get(self.url)
         self.assertEqual(200, response.status_code)

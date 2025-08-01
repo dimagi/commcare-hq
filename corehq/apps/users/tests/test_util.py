@@ -169,9 +169,7 @@ class TestBulkAutoDeactivateCommCareUser(TestCase):
     def test_user_is_deactivated_and_logged(self):
         bulk_auto_deactivate_commcare_users([self.active_user.get_id], self.domain)
         refreshed_user = CommCareUser.get_by_user_id(self.active_user.user_id)
-        self.assertFalse(
-            refreshed_user.is_active
-        )
+        self.assertFalse(refreshed_user.is_active_in_domain(self.domain))
         user_history = UserHistory.objects.get(user_id=self.active_user.user_id)
         self.assertEqual(
             user_history.by_domain,
@@ -193,9 +191,7 @@ class TestBulkAutoDeactivateCommCareUser(TestCase):
     def test_user_is_not_deactivated_and_no_logs(self):
         bulk_auto_deactivate_commcare_users([self.inactive_user.user_id], self.domain)
         refreshed_user = CommCareUser.get_by_user_id(self.inactive_user.get_id)
-        self.assertFalse(
-            refreshed_user.is_active
-        )
+        self.assertFalse(refreshed_user.is_active_in_domain(self.domain))
         self.assertFalse(
             UserHistory.objects.filter(user_id=self.inactive_user.user_id).exists()
         )

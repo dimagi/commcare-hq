@@ -744,20 +744,21 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
-    def is_active_in_domain(self, domain):
-        return self.is_active
+    def set_is_active(self, domain, is_active):
+        if domain != self.domain:
+            raise AssertionError(f"User is not a member of {domain}")
+        self.is_active = is_active
 
 
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
 
-    @memoized
-    def is_active_in_domain(self, domain):
+    def set_is_active(self, domain, is_active):
         domain_membership = self.get_domain_membership(domain)
-        if domain_membership:
-            return domain_membership.is_active
-        return False
+        if not domain_membership:
+            raise AssertionError(f"User is not a member of {domain}")
+        domain_membership.is_active = is_active
 
 
 class LowercaseStringProperty(StringProperty):
@@ -784,7 +785,7 @@ class DjangoUserMixin(DocumentSchema):
     email = LowercaseStringProperty()
     password = StringProperty()
     is_staff = BooleanProperty()
-    is_active = BooleanProperty()
+    is_active = BooleanProperty()  # Use is_active_in_domain and set_is_active instead
     is_superuser = BooleanProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
@@ -1069,6 +1070,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def should_be_locked_out(self):
         max_attempts = MAX_WEB_USER_LOGIN_ATTEMPTS if self.is_web_user() else MAX_COMMCARE_USER_LOGIN_ATTEMPTS
         return self.login_attempts >= max_attempts
+
+    def is_active_in_domain(self, domain):
+        # user.is_active concerns authentication - can a user log in?
+        # domain_membership.is_active controls whether a user can access a domain
+        # CommCareUsers are only in a single domain, so there's no distinction
+        domain_membership = self.get_domain_membership(domain)
+        if domain_membership and self.is_active:
+            return domain_membership.is_active
+        return False
+
+    def is_active_in_any_domain(self):
+        return self.is_active and [
+            dm.is_active for dm in self.domain_memberships
+        ]
 
     def supports_lockout(self):
         return True
@@ -1845,18 +1860,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                commit=True,
                is_account_confirmed=True,
                user_data=None,
+               is_active=None,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
         """
         # if the account is not confirmed, also set is_active false so they can't login
-        if 'is_active' not in kwargs:
-            kwargs['is_active'] = is_account_confirmed
-        elif not is_account_confirmed:
-            assert not kwargs['is_active'], \
-                "it's illegal to create a user with is_active=True and is_account_confirmed=False"
-        commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
-                                                        email, uuid, date, user_data, **kwargs)
+        if is_active is None:
+            is_active = is_account_confirmed
+        elif is_active and not is_account_confirmed:
+            raise AssertionError("it's illegal to create a user with is_active=True "
+                                 "and is_account_confirmed=False")
+        commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via, email,
+                                                        uuid, date, user_data, is_active=is_active, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -2412,11 +2428,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               user_data=None, by_domain_required_for_log=True, commit=True, **kwargs):
+               user_data=None, by_domain_required_for_log=True, commit=True, is_active=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, user_data, **kwargs)
         if domain:
-            web_user.add_domain_membership(domain, **kwargs)
+            web_user.add_domain_membership(domain, is_active=is_active, **kwargs)
         if commit:
             web_user.save()
             web_user.log_user_create(domain, created_by, created_via,

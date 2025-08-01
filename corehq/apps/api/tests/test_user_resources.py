@@ -531,7 +531,7 @@ class TestCommCareUserResource(APIResourceTest):
         changes = UserHistory.objects.filter(user_id=user.get_id, changed_via=USER_CHANGE_VIA_API)
 
         self.assertEqual(response.status_code, 202)
-        self.assertTrue(updated_user.is_active)
+        self.assertTrue(updated_user.is_active_in_domain(self.domain.name))
         self.assertEqual(changes.count(), 1)
 
     def test_deactivate_user(self):
@@ -550,7 +550,7 @@ class TestCommCareUserResource(APIResourceTest):
         changes = UserHistory.objects.filter(user_id=user.get_id, changed_via=USER_CHANGE_VIA_API)
 
         self.assertEqual(response.status_code, 202)
-        self.assertFalse(updated_user.is_active)
+        self.assertFalse(updated_user.is_active_in_domain(self.domain.name))
         self.assertEqual(changes.count(), 1)
 
     def test_cant_deactivate_location_user(self):
@@ -570,7 +570,7 @@ class TestCommCareUserResource(APIResourceTest):
         updated_location_user = CommCareUser.get(location_user.get_id)
 
         self.assertEqual(location_response.status_code, 400)
-        self.assertTrue(updated_location_user.is_active)
+        self.assertTrue(updated_location_user.is_active_in_domain(self.domain.name))
 
 
 @es_test(requires=[user_adapter])
