@@ -11,6 +11,8 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.signals import update_user_in_es
 from corehq.util.log import with_progress_bar
 
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+
 
 class Command(BaseCommand):
     help = "Sync users in Elasticsearch with Couchdb (WebUser or CommCareUser)"
@@ -52,6 +54,15 @@ class Command(BaseCommand):
             with open(progress_filename, 'a') as f:
                 for user_doc in with_progress_bar(user_docs, doc_count):
                     user_id = user_doc.get('_id')
+                    try:
+                        if user_doc.get('base_doc').endswith(DELETED_SUFFIX):
+                            continue
+                    except Exception as e:
+                        self.stdout.write(self.style.ERROR(
+                            f"Error getting user doc: {user_id} - {str(e)}"
+                        ))
+                        continue
+
                     if user_id in processed_ids:
                         continue
                     try:
@@ -62,7 +73,7 @@ class Command(BaseCommand):
                             f.flush()
                     except NotFoundError as e:
                         self.stdout.write(self.style.WARNING(
-                            f"User not found in Elasticsearch: {user_doc.get('_id')} - {str(e)}"
+                            f"User not found in Elasticsearch: {user_id} - {str(e)}"
                         ))
                 f.flush()
             os.remove(progress_filename)
