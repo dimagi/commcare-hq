@@ -176,7 +176,8 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             "entry/instance"
         )
 
-    def test_search_input_instance_remote_request(self):
+    @mock.patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
+    def test_search_input_instance_remote_request(self, *args):
         self.form.requires = 'case'
         self.module.case_type = 'case'
 
@@ -221,10 +222,12 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             "entry[2]/instance"
         )
 
-    def test_search_prompt_itemset_instance(self):
+    @mock.patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
+    def test_search_prompt_itemset_instance(self, *args):
         self._test_search_prompt_itemset_instance(self.module)
 
-    def test_shadow_module_search_prompt_itemset_instance(self):
+    @mock.patch('corehq.apps.app_manager.suite_xml.sections.details.split_screen_ui_enabled_for_domain')
+    def test_shadow_module_search_prompt_itemset_instance(self, *args):
         shadow_module = self.factory.app.add_module(ShadowModule.new_module("shadow", "en"))
         shadow_module.source_module_id = self.module.get_or_create_unique_id()
         self._test_search_prompt_itemset_instance(shadow_module)
