@@ -61,6 +61,80 @@ function deleteUnusedImages(editor, newImages) {
     }
 }
 
+/**
+ * Upload an image file and insert it into the Quill editor
+ *
+ * @param {File} file - The image file to upload
+ * @param {Quill} editor - The Quill editor instance
+ * @param {Object} options - Additional options
+ * @param {Function} options.onStart - Called when upload starts
+ * @param {Function} options.onComplete - Called when upload completes
+ * @param {Function} options.onError - Called when an error occurs
+ * @returns {Promise<void>}
+ */
+async function uploadAndInsertImage(file, editor, options = {}) {
+    if (!file) {
+        alert(gettext('No File selected'));
+        return;
+    }
+
+    if (options.onStart) {
+        options.onStart();
+    }
+
+    const uploadUrl = initialPageData.reverse("upload_messaging_image");
+    let formData = new FormData();
+    formData.append("upload", file, file.name || "image");
+
+    try {
+        const response = await fetch(uploadUrl, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFTOKEN": $("#csrfTokenContainer").val(),
+            },
+        });
+
+        if (!response.ok) {
+            if (response.status === 400) {
+                const errorJson = await response.json();
+                throw Error(gettext('Failed to upload image: ') + errorJson.error.message);
+            }
+            throw Error(gettext('Failed to upload image. Please try again.'));
+        }
+
+        const data = await response.json();
+        const Delta = Quill.import("delta");
+        const selectionRange = editor.getSelection(true) || { index: editor.getLength(), length: 0 };
+
+        editor.updateContents(
+            new Delta()
+                .retain(selectionRange.index)
+                .delete(selectionRange.length)
+                .insert({
+                    image: data.url,
+                }, {
+                    alt: file.name || "image",
+                }),
+        );
+
+        // Track the image in editorImages
+        const editorImageSet = editorImages.get(editor) || new Set();
+        editorImageSet.add(data.url);
+        editorImages.set(editor, editorImageSet);
+
+        if (options.onComplete) {
+            options.onComplete(data);
+        }
+    } catch (error) {
+        if (options.onError) {
+            options.onError(error);
+        } else {
+            alert(error.message || gettext('Failed to upload image. Please try again.'));
+        }
+    }
+}
+
 function imageHandler() {
     const self = this;
     const $modal = $('#rich-text-image-dialog');
@@ -70,60 +144,22 @@ function imageHandler() {
 
     const handleImage = async function () {
         const file = imageInput.files[0];
-        if (!file) {
-            alert(gettext('No File selected'));
-            return;
-        }
-        uploadProgress.classList.remove("d-none");
 
-        const uploadUrl = initialPageData.reverse("upload_messaging_image");
-        let formData = new FormData();
-
-        formData.append("upload", file, file.name);
-        await fetch(uploadUrl, {
-            method: "POST",
-            body: formData,
-            headers: {
-                "X-CSRFTOKEN": $("#csrfTokenContainer").val(),
+        await uploadAndInsertImage(file, self.quill, {
+            onStart: function () {
+                uploadProgress.classList.remove("d-none");
             },
-        })
-            .then(function (response) {
-                if (!response.ok) {
-                    if (response.status === 400) {
-                        return response.json().then(function (errorJson) {
-                            throw Error(gettext('Failed to upload image: ') + errorJson.error.message);
-                        });
-                    }
-                    throw Error(gettext('Failed to upload image. Please try again.'));
-                }
-                return response.json();
-            })
-            .then(function (data) {
-                const Delta =  Quill.import("delta");
-                const selectionRange = self.quill.getSelection(true);
-                self.quill.updateContents(
-                    new Delta()
-                        .retain(selectionRange.index)
-                        .delete(selectionRange.length)
-                        .insert({
-                            image: data.url,
-                        }, {
-                            alt: file.name,
-                        }),
-                );
-                editorImages.get(self.quill).add(data.url);
-            })
-            .catch(function (error) {
+            onComplete: function () {
+                imageInput.value = '';
+                uploadButton.removeEventListener('click', handleImage);
+                $modal.modal('hide');
+            },
+            onError: function (error) {
                 alert(error.message || gettext('Failed to upload image. Please try again.'));
-            })
-            .finally(function () {
-                uploadProgress.classList.add("d-none");
-            });
-
-
-        imageInput.value = '';
-        uploadButton.removeEventListener('click', handleImage);
-        $modal.modal('hide');
+            },
+        }).finally(function () {
+            uploadProgress.classList.add("d-none");
+        });
     };
 
     uploadButton.addEventListener('click', handleImage);
@@ -254,7 +290,88 @@ ko.bindingHandlers.richEditor = {
                 },
             },
             theme: "snow",
+            // Disable Quill's native clipboard and drop handling
+            clipboard: {
+                matchVisual: false,
+            },
         });
+
+        // Handle paste events in the capture phase to intercept before Quill's handlers
+        editor.root.addEventListener('paste', function (e) {
+            if (initialPageData.get("read_only_mode")) {
+                return;
+            }
+
+            if (e.clipboardData && e.clipboardData.items) {
+                const items = e.clipboardData.items;
+
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        // Prevent default and stop propagation to avoid Quill's handling
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const file = items[i].getAsFile();
+                        if (!file) {
+                            continue;
+                        }
+
+                        uploadAndInsertImage(file, editor);
+                        break; // Only handle the first image
+                    }
+                }
+            }
+        }, true); // Using capture phase to intercept before Quill's handlers
+
+        // Completely disable Quill's drop handler
+        editor.root.addEventListener('drop', function (e) {
+            e.stopPropagation();
+        }, true);
+
+        // Handle drag and drop images
+        editor.root.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }, { capture: true });
+
+        editor.root.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }, { capture: true });
+
+        editor.root.addEventListener('drop', function (e) {
+            // This needs to happen before anything else
+            e.preventDefault();
+            e.stopPropagation();
+            if (initialPageData.get("read_only_mode")) {
+                return false;
+            }
+
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+
+                if (file.type.indexOf('image') !== -1) {
+                    uploadAndInsertImage(file, editor);
+                } else {
+                    // Handle non-image files
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const range = editor.getSelection() || { index: editor.getLength(), length: 0 };
+                        editor.insertText(range.index, e.target.result);
+                    };
+                    reader.readAsText(file);
+                }
+            } else if (e.dataTransfer.getData('text')) {
+                // Handle text drag and drop
+                const text = e.dataTransfer.getData('text');
+                const range = editor.getSelection() || { index: editor.getLength(), length: 0 };
+                editor.insertText(range.index, text);
+            }
+
+            return false;
+        }, true);
 
         const value = ko.utils.unwrapObservable(valueAccessor());
         editor.clipboard.dangerouslyPasteHTML(value);
