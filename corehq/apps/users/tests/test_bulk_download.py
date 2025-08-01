@@ -17,7 +17,7 @@ class TestBulkDownload(TestCase):
     def test_make_web_user_dict_with_inactive_user(self):
         user = WebUser.create("test", 'username', 'password', None, None)
         self.addCleanup(user.delete, "test", deleted_by=None)
-        assert user.is_active
+        assert user.is_active_in_domain(self.domain.name)
         user.is_active = False
 
         data = make_web_user_dict(user, {}, "test")
