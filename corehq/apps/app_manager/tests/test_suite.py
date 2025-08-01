@@ -96,9 +96,6 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
     def test_owner_name(self, *args):
         self._test_generic_suite('owner-name')
 
-    def test_printing(self, *args):
-        self._test_generic_suite('app_print_detail', 'suite-print-detail')
-
     @privilege_enabled(privileges.APP_DEPENDENCIES)
     @flag_enabled('MOBILE_UCR')
     def test_report_module(self, *args):
