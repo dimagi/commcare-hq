@@ -16,8 +16,10 @@ from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
+from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from corehq.util.timer import DURATION_REPORTING_THRESHOLD
+from corehq.util.view_utils import set_language_cookie
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
@@ -376,3 +378,21 @@ class HqHtmxActionMiddleware:
             q.pop(self._FLAG, None)
             request.GET = q
         return self.get_response(request)
+
+
+class SyncUserLanguageMiddleware:
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if request.user.is_authenticated:
+            couch_user = CouchUser.from_django_user(request.user)
+            if (
+                couch_user
+                and couch_user.language
+                and couch_user.language != request.LANGUAGE_CODE
+            ):
+                response = set_language_cookie(response, couch_user.language)
+        return response
