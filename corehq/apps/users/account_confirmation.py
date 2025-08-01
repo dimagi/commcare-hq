@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.template.loader import render_to_string
 from django.utils.translation import override, gettext_lazy as _
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -63,6 +65,8 @@ def send_account_confirmation(commcare_user):
         html_content = render_to_string("registration/email/mobile_worker_confirm_account.html",
                                         template_params)
         subject = _(f'Confirm your CommCare account for {commcare_user.domain}')
+    commcare_user.confirmation_sent_at = datetime.utcnow()
+    commcare_user.save()
     send_html_email_async.delay(subject, commcare_user.email, html_content,
                                 text_content=text_content,
                                 domain=commcare_user.domain,
@@ -79,6 +83,8 @@ def send_account_confirmation_sms(commcare_user):
     with override(lang):
         text_content = render_to_string("registration/mobile/mobile_worker_confirm_account_sms.txt",
                                         template_params)
+    commcare_user.confirmation_sent_at = datetime.utcnow()
+    commcare_user.save()
     return send_sms(
         domain=commcare_user.domain,
         contact=None,

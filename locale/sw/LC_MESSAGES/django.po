@@ -4502,12 +4502,12 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr "Hakuna ulinganifu wa uga '{field_name}' kwa upangaji"
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Password or connect username required"
-msgstr "Nenosiri au jina la mtumiaji wa connect linahitajika"
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to use connect_username field"
 msgstr "Huna ruhusa ya kutumia uga wa connect_username"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Password or connect username required"
+msgstr "Nenosiri au jina la mtumiaji wa connect linahitajika"
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You must provide the user's email to send a confirmation email."
