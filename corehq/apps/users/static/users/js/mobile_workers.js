@@ -19,6 +19,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import moment from "moment/moment";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import assertProperties from "hqwebapp/js/assert_properties";
 import googleAnalytics from "analytix/js/google";
@@ -61,6 +62,7 @@ var userModel = function (options) {
         is_account_confirmed: true,
         is_personalid_link_active: null,
         deactivate_after_date: '',
+        confirmation_sent_at: null,
     });
 
     var self = ko.mapping.fromJS(options);
@@ -69,6 +71,33 @@ var userModel = function (options) {
         profile_slug: initialPageData.get('custom_fields_profile_slug'),
         slugs: initialPageData.get('custom_fields_slugs'),
         can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
+    });
+
+    self.confirmationSentAtText = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return gettext('Unavailable');
+        }
+        return moment(self.confirmation_sent_at()).format("MMMM Do YYYY, h:mm a");
+    });
+
+    self.minutesRemaining = ko.computed(function () {
+        var expirationDate = new Date(self.confirmation_sent_at());
+        expirationDate.setHours(expirationDate.getHours() + 1);
+        return (expirationDate - new Date()) / (60 * 1000);
+    });
+    self.isExpired = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return false;
+        }
+        return self.minutesRemaining() < 0;
+    });
+    self.minutesRemainingText = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return '';
+        }
+        return _.template(gettext("<%- minutes %> minutes remaining"))({
+            minutes: Math.floor(self.minutesRemaining()),
+        });
     });
 
     self.email.extend({
@@ -136,6 +165,7 @@ var userModel = function (options) {
                 $modal.modal('hide');
                 if (data.success) {
                     self.action_error('');
+                    self.confirmation_sent_at(new Date());
                 } else {
                     self.action_error(data.error);
                 }
@@ -161,6 +191,7 @@ var userModel = function (options) {
                 $modal.modal('hide');
                 if (data.success) {
                     self.action_error('');
+                    self.confirmation_sent_at(new Date());
                 } else {
                     self.action_error(data.error);
                 }
@@ -615,6 +646,72 @@ var newUserCreationModel = function (options) {
     return self;
 };
 
+var usersConfirmationModel = function () {
+    var self = {};
+    self.users = ko.observableArray();
+
+    self.itemsPerPage = ko.observable(5);
+    self.totalItems = ko.observable();
+
+    self.query = ko.observable('');
+
+    // Visibility of spinners, messages, and user table
+    self.hasError = ko.observable(false);
+    self.showLoadingSpinner = ko.observable(true);
+    self.showPaginationSpinner = ko.observable(false);
+    self.projectHasUsers = ko.observable(true);
+
+    self.showProjectHasNoUsers = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError() && !self.projectHasUsers();
+    });
+
+    self.showNoUsers = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
+    });
+
+    self.showTable = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
+    });
+
+    self.goToPage = function (page) {
+        self.users.removeAll();
+        $.ajax({
+            method: 'GET',
+            url: initialPageData.reverse('paginate_mobile_workers'),
+            data: {
+                page: page || 1,
+                query: self.query(),
+                limit: self.itemsPerPage(),
+                showDeactivatedUsers: true,
+                showUnconfirmedUsers: true,
+            },
+            success: function (data) {
+                self.totalItems(data.total);
+                self.users(_.map(data.users, function (user) {
+                    return userModel(user);
+                }));
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+                self.hasError(false);
+                if (!self.query()) {
+                    self.projectHasUsers(!!data.users.length);
+                }
+            },
+            error: function () {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+                self.hasError(true);
+            },
+
+        });
+    };
+    self.onPaginationLoad = function () {
+        self.goToPage(1);
+    };
+
+    return self;
+};
+
 $(function () {
     var rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
     rmi = function (remoteMethod, data) {
@@ -634,4 +731,5 @@ $(function () {
     $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
     $("#new-user-modal").koApplyBindings(newUserCreation);
     $("#new-users-list").koApplyBindings(newUserCreation);
+    $("#mobile-worker-confirmation-panel").koApplyBindings(usersConfirmationModel);
 });
