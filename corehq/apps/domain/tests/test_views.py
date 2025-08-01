@@ -17,12 +17,13 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, CredentialApplication
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.settings import (
     MAX_ACTIVE_ALERTS,
     EditDomainAlertView,
     ManageDomainAlertsView,
+    CredentialsApplicationSettingsView,
 )
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
@@ -535,6 +536,50 @@ class TestSubscriptionRenewalViews(TestCase):
         self.assertEqual(response.context['subscription'], subscription)
         self.assertEqual(response.context['plan'], subscription.plan_version.user_facing_description)
         self.assertEqual(response.context['next_plan'], expected_next_plan.user_facing_description)
+
+
+class TestCredentialsApplicationSettingsView(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.domain = generator.arbitrary_domain()
+        self.user = generator.arbitrary_user(self.domain.name, is_webuser=True, is_admin=True)
+        self.account = generator.billing_account(self.user, self.user.name)
+        self.client = Client()
+        self.client.force_login(user=self.user.get_django_user())
+
+        self.app_id = 'test-app-id'
+        self.url = reverse(CredentialsApplicationSettingsView.urlname, args=[self.domain.name])
+
+    def tearDown(self):
+        self.user.delete(self.domain.name, deleted_by=None)
+        self.domain.delete()
+        super().tearDown()
+
+    def test_create_new_credential_app(self):
+        self.client.post(
+            self.url,
+            data={
+                'app_id': self.app_id,
+            }
+        )
+        credential_app = CredentialApplication.objects.get(app_id=self.app_id)
+        assert credential_app.activity_level is None
+
+    def test_update_existing_credential_app(self):
+        CredentialApplication.objects.create(
+            domain=self.domain,
+            app_id=self.app_id,
+            activity_level='some_activity'
+        )
+        self.client.post(
+            self.url,
+            data={
+                'app_id': "another-app-id",
+            }
+        )
+        credential_app = CredentialApplication.objects.get(app_id="another-app-id")
+        assert not CredentialApplication.objects.filter(app_id=self.app_id).exists()
+        assert credential_app.activity_level is None
 
 
 @contextmanager
