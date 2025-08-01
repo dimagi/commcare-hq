@@ -5,7 +5,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 
 @skip_on_fresh_install
 def sync_couch_commcareusers_with_es(*args, **kwargs):
-    call_command('sync_es_users', doc_types='CommCareUser')
+    call_command('sync_es_users', doc_types='CommCareUser', progress_key='0009_commcareusers_migration')
 
 
 class Migration(migrations.Migration):

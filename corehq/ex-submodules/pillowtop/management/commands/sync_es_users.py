@@ -15,8 +15,6 @@ from corehq.util.log import with_progress_bar
 class Command(BaseCommand):
     help = "Sync users in Elasticsearch with Couchdb (WebUser or CommCareUser)"
 
-    SYNC_ES_USERS_PROGRESS_FILENAME = 'sync_es_users_processed_doc_ids.txt'
-
     def add_arguments(self, parser):
         parser.add_argument(
             '--doc_types',
@@ -24,35 +22,56 @@ class Command(BaseCommand):
             choices=['WebUser', 'CommCareUser'],
             help='Specify which user doc type to sync: "WebUser" or "CommCareUser"'
         )
+        parser.add_argument(
+            '--progress-key',
+            required=False,
+            default=None,
+            help='Optional key to append to the checkpoint file (e.g., "myproject").'
+        )
 
     def handle(self, **options):
         doc_type = options['doc_types']
         user_docs = get_all_docs_with_doc_types(db=CouchUser.get_db(), doc_types=[doc_type])
         doc_count = get_doc_count_by_type(CouchUser.get_db(), doc_type)
 
-        processed_ids = set()
-        processed_count = 0
-        try:
-            with open(self.SYNC_ES_USERS_PROGRESS_FILENAME, 'r') as f:
-                for line in f:
-                    processed_ids.add(line.strip())
-        except FileNotFoundError:
-            pass
+        base_filename = "sync_es_users_processed_doc_ids"
+        progress_key = options.get('progress_key')
 
-        with open(self.SYNC_ES_USERS_PROGRESS_FILENAME, 'a') as f:
+        if progress_key:
+            progress_filename = f"{base_filename}__{progress_key}.txt"
+
+            processed_ids = set()
+            processed_count = 0
+            try:
+                with open(progress_filename, 'r') as f:
+                    for line in f:
+                        processed_ids.add(line.strip())
+            except FileNotFoundError:
+                pass
+
+            with open(progress_filename, 'a') as f:
+                for user_doc in with_progress_bar(user_docs, doc_count):
+                    user_id = user_doc.get('_id')
+                    if user_id in processed_ids:
+                        continue
+                    try:
+                        update_user_in_es(None, CouchUser.wrap_correctly(user_doc))
+                        f.write(user_id + '\n')
+                        processed_count += 1
+                        if processed_count % 100 == 0:
+                            f.flush()
+                    except NotFoundError as e:
+                        self.stdout.write(self.style.WARNING(
+                            f"User not found in Elasticsearch: {user_doc.get('_id')} - {str(e)}"
+                        ))
+                f.flush()
+            os.remove(progress_filename)
+        else:
             for user_doc in with_progress_bar(user_docs, doc_count):
                 user_id = user_doc.get('_id')
-                if user_id in processed_ids:
-                    continue
                 try:
                     update_user_in_es(None, CouchUser.wrap_correctly(user_doc))
-                    f.write(user_id + '\n')
-                    processed_count += 1
-                    if processed_count % 100 == 0:
-                        f.flush()
                 except NotFoundError as e:
                     self.stdout.write(self.style.WARNING(
                         f"User not found in Elasticsearch: {user_doc.get('_id')} - {str(e)}"
                     ))
-            f.flush()
-        os.remove(self.SYNC_ES_USERS_PROGRESS_FILENAME)
