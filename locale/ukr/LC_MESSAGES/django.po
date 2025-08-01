@@ -24036,19 +24036,12 @@ msgstr "Згенерувати токени"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "        %(entity_string)s Property\n"
-#| "      "
+#, python-format
 msgid ""
 "\n"
 "        %(server_location)s Server\n"
 "      "
 msgstr ""
-"\n"
-"        Властивість %(entity_string)s\n"
-"      "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
