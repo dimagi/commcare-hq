@@ -186,6 +186,12 @@
   {% initial_page_data 'read_only_mode' request.is_view_only %}
   {% url 'geospatial_settings' domain as geospatial_settings_url %}
   <div class="ko-template">
+    <!-- Loading indicator for initial case types -->
+    <div id="case-types-loading" data-bind="visible: isLoadingCaseTypes" style="text-align: center; padding: 40px;">
+      <i class="fa fa-spinner fa-spin fa-3x"></i>
+      <p>{% trans "Loading data dictionary..." %}</p>
+    </div>
+
     <div id="case-type-error" class="alert alert-danger" hidden>
       <p>
         {% blocktrans %}
@@ -199,7 +205,7 @@
         data-bind="saveButton: saveButton, visible: $root.activeCaseType()"
       ></div>
     {% endif %}
-    <div class="row">
+    <div class="row" data-bind="visible: !isLoadingCaseTypes()">
       <div class="col-xs-12">
         <div>
           <h3
@@ -295,7 +301,14 @@
             data-bind="click: $root.hideDeprecated, visible: showAll"
             class="btn btn-default pull-right"
           >{% trans "Hide Deprecated" %}</button>
-          <div id="data-dictionary-table">
+
+          <!-- Loading indicator for case properties -->
+          <div id="case-properties-loading" data-bind="visible: isLoadingCaseProperties" style="text-align: center; padding: 20px;">
+            <i class="fa fa-spinner fa-spin fa-2x"></i>
+            <p>{% trans "Loading case properties..." %}</p>
+          </div>
+
+          <div id="data-dictionary-table" data-bind="visible: !isLoadingCaseProperties()">
             <div class="table-row table-header">
             <div class="row-item-small"></div>
             <div class="row-item">{% trans "Case Property" %}</div>
