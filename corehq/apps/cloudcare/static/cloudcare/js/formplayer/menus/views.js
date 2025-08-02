@@ -648,7 +648,7 @@ define("cloudcare/js/formplayer/menus/views", [
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
             scrollToBottomButton: '#scroll-to-bottom',
-            mapShowHideButton: '#hide-map-button',
+            mapShowHideButton: '.hide-map-button',
         };
     };
 
@@ -901,7 +901,7 @@ define("cloudcare/js/formplayer/menus/views", [
         handleSmallScreenChange: function (enabled) {
             const self = this;
             self.smallScreenEnabled = enabled;
-            if (self.options.sidebarEnabled) {
+            if (self.options.sidebarEnabled || self.mapAvailable) {
                 self.positionStickyItems(enabled);
             }
         },
@@ -1004,7 +1004,7 @@ define("cloudcare/js/formplayer/menus/views", [
         showHideMap: function (e) {
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
-            const hideButton = $('#hide-map-button');
+            const hideButton = $('.hide-map-button');
             if (this.mapVisible) {
                 mapDiv.addClass("d-none");
                 moduleCaseList.removeClass('col-lg-7').addClass('col-lg');
