@@ -1,6 +1,7 @@
+import binascii
 from base64 import b64decode, b64encode
 
-from django.http import QueryDict
+from django.http import JsonResponse, QueryDict
 
 from corehq.apps.api.util import make_date_filter
 from corehq.apps.case_search.filter_dsl import (
@@ -13,6 +14,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
+from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
@@ -82,7 +84,11 @@ COMPOUND_FILTERS = {
 
 def get_list(domain, couch_user, params):
     if 'cursor' in params:
-        params_string = b64decode(params['cursor']).decode('utf-8')
+        try:
+            params_string = b64decode(params['cursor']).decode('utf-8')
+        except binascii.Error:
+            notify_error(message=f"Failed to decode 'cursor' parameter in case api: {params['cursor']}")
+            return JsonResponse({'error': "Failed to decode 'cursor' parameter"}, status=400)
         params = QueryDict(params_string, mutable=True)
         # QueryDict.pop() returns a list
         last_date = params.pop(INDEXED_AFTER, [None])[0]
