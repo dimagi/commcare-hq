@@ -53,8 +53,8 @@ class Command(BaseCommand):
 
             with open(progress_filename, 'a') as f:
                 for user_doc in with_progress_bar(user_docs, doc_count):
-                    user_id = user_doc.get('_id')
                     try:
+                        user_id = user_doc.get('_id')
                         if user_doc.get('base_doc').endswith(DELETED_SUFFIX):
                             continue
                     except Exception as e:
