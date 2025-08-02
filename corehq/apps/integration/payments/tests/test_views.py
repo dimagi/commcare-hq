@@ -242,7 +242,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         response = self._make_request()
 
         # no kyc config
-        assert response.context_data['user_or_cases_verification_statuses'] == {}
+        assert response.context_data['verification_statuses'] == {}
 
         KycConfig.objects.create(
             domain=self.domain,
@@ -252,7 +252,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         )
         response = self._make_request()
 
-        assert response.context_data['user_or_cases_verification_statuses'] == {
+        assert response.context_data['verification_statuses'] == {
             self.case_linked_to_payment_case.case_id: KycVerificationStatus.PASSED
         }
 

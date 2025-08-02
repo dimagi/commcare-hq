@@ -118,13 +118,13 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        context_data['user_or_cases_verification_statuses'] = self._get_user_or_cases_verification_status(
+        context_data['verification_statuses'] = self._get_verification_status(
             context_data['page_obj'].object_list
         )
 
         return context_data
 
-    def _get_user_or_cases_verification_status(self, object_list):
+    def _get_verification_status(self, object_list):
         if not self.kyc_config:
             return {}
 
@@ -147,8 +147,8 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
         user_or_case_ids = []
         for commcare_payment_case_details in object_list:
             case = wrap_case_search_hit(commcare_payment_case_details)
-            if case_prop := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
-                user_or_case_ids.append(case_prop)
+            if user_or_case_id := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
+                user_or_case_ids.append(user_or_case_id)
         return user_or_case_ids
 
     def _apply_filters(self, query):

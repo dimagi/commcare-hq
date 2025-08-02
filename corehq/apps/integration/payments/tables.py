@@ -100,6 +100,6 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
 
     def render_kyc_status(self, record, value):
         user_or_case_id = record.record.get('user_or_case_id')
-        if user_or_case_id and user_or_case_id in self.context['user_or_cases_verification_statuses']:
-            return self.context['user_or_cases_verification_statuses'][user_or_case_id]
+        if user_or_case_id and user_or_case_id in self.context['verification_statuses']:
+            return self.context['verification_statuses'][user_or_case_id]
         return _("Unavailable")
