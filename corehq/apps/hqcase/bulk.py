@@ -1,6 +1,7 @@
+from contextlib import contextmanager
 from dataclasses import dataclass
-from xml.etree import cElementTree as ElementTree
 
+from casexml.apps.case.mock import CaseBlock
 from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id
 from corehq.form_processor.models import CommCareCase
 
@@ -31,43 +32,6 @@ class SystemFormMeta:
         )
 
 
-class CaseBulkDB:
-    """
-    Context manager to facilitate making case changes in chunks.
-    """
-
-    def __init__(self, domain, form_meta: SystemFormMeta = None):
-        self.domain = domain
-        self.form_meta = form_meta or SystemFormMeta()
-
-    def __enter__(self):
-        self.to_save = []
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.commit()
-
-    def save(self, case_block):
-        self.to_save.append(case_block)
-        if len(self.to_save) >= CASEBLOCK_CHUNKSIZE:
-            self.commit()
-
-    def commit(self):
-        if self.to_save:
-            case_blocks = [
-                ElementTree.tostring(case_block.as_xml(), encoding='utf-8').decode('utf-8')
-                for case_block in self.to_save
-            ]
-            submit_case_blocks(
-                case_blocks,
-                self.domain,
-                device_id=self.form_meta.device_id,
-                user_id=self.form_meta.user_id,
-                username=self.form_meta.username,
-            )
-            self.to_save = []
-
-
 def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
     """
     Perform a large number of case updates in chunks
@@ -77,12 +41,87 @@ def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
 
     Returns counts of number of updates made (not necessarily number of cases update).
     """
-    update_count = 0
-    with CaseBulkDB(domain, form_meta) as bulk_db:
-        for case in CommCareCase.objects.iter_cases(case_ids):
-            case_blocks = update_fn(case)
-            if case_blocks:
-                for case_block in case_blocks:
-                    bulk_db.save(case_block)
-                    update_count += 1
-    return update_count
+    cases = CommCareCase.objects.iter_cases(case_ids)
+    case_blocks = (
+        case_block for case in cases
+        for case_block in (update_fn(case) or [])
+    )
+    form_meta = form_meta or SystemFormMeta()
+    count = 0
+    with case_block_submitter(
+        domain,
+        device_id=form_meta.device_id,
+        user_id=form_meta.user_id,
+        username=form_meta.username,
+    ) as submitter:
+        for count, case_block in enumerate(case_blocks, start=1):
+            submitter.send(case_block)
+    return count
+
+
+def coro_as_context(func):
+    """
+    Decorator to transform a coroutine function into a context manager.
+
+    The context manager primes the coroutine using ``next()`` when
+    entering the context, and calls ``.close()`` when exiting the context.
+
+    Usage::
+
+        @coro_as_context
+        def my_coro():
+            try:
+                while True:
+                    data = yield
+                    ... # Do something with data
+            except GeneratorExit:
+                ... # Cleanup
+
+        with my_coro() as coro:
+            coro.send(data)
+
+    """
+    @contextmanager
+    def wrapper(*args, **kwargs):
+        coro = func(*args, **kwargs)
+        next(coro)  # Prime the coroutine
+        try:
+            yield coro
+        finally:
+            coro.close()
+    return wrapper
+
+
+@coro_as_context
+def case_block_submitter(
+    *args,
+    chunk_size=CASEBLOCK_CHUNKSIZE,
+    **kwargs,
+):
+    """
+    Accepts case blocks and submits them in chunks of chunk_size.
+
+    ``*args`` and ``**kwargs`` are passed through to
+    ``submit_case_blocks()``.
+
+    Usage::
+
+        with case_block_submitter(domain, device_id=__name__) as submitter:
+            for case in iter_all_the_cases:
+                case_block = get_case_updates(case)
+                submitter.send(case_block)
+
+    """
+    case_blocks = []
+    try:
+        while True:
+            case_block = yield
+            if isinstance(case_block, CaseBlock):
+                case_block = case_block.as_text()
+            case_blocks.append(case_block)
+            if len(case_blocks) == chunk_size:
+                submit_case_blocks(case_blocks, *args, **kwargs)
+                case_blocks = []
+    except GeneratorExit:
+        if case_blocks:
+            submit_case_blocks(case_blocks, *args, **kwargs)
