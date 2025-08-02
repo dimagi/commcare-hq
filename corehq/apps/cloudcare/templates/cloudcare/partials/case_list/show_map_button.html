@@ -5,9 +5,6 @@
   aria-expanded="true"
   aria-controls="module-case-list-map"
 >
-  <% if (mapVisible()) { %>
-    {% trans "Hide Map" %}
-  <% } else { %>
-    {% trans "Show Map" %}
-  <% } %>
+  <% if (mapVisible()) { %> {% trans "Hide Map" %} <% } else { %>
+  {% trans "Show Map" %} <% } %>
 </button>

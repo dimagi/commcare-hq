@@ -3,14 +3,11 @@
 
 <div class="page-header menu-header clearfix" id="case-list-menu-header">
   <div class="float-end">
-    <% if (mapAvailable) { %>
-      <% if (isMultiSelect) { %>
-        {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="float-end d-block d-lg-none" %}
-      <% } else { %>
-        {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="float-end" %}
-      <% } %>
-    <% } %>
-    <% if (sidebarEnabled) { %>
+    <% if (mapAvailable) { %> <% if (isMultiSelect) { %>
+    {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="float-end d-block d-lg-none" %}
+    <% } else { %>
+    {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="float-end" %}
+    <% } %> <% } %> <% if (sidebarEnabled) { %>
     <button
       id="search-more"
       class="btn btn-primary d-xs-block d-sm-block d-md-block d-lg-none float-end"
