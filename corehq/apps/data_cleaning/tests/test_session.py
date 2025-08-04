@@ -384,6 +384,23 @@ class BulkEditSessionCaseColumnTests(BaseBulkEditSessionTest):
         assert new_column.data_type == DataType.TEXT
         assert new_column.is_system
 
+    def test_copy_to_session(self):
+        self.session.add_column('num_leaves', 'Number of Leaves', DataType.INTEGER)
+        self.session.add_column('pot_type', 'Pot Type', DataType.MULTIPLE_OPTION)
+        name_col = self.session.columns.get(prop_id='name')
+        name_col.label = 'Plant Name'
+        name_col.save()
+        new_session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
+        assert new_session.columns.count() == 6  # defaults
+        self.session.columns.copy_to_session(self.session, new_session)
+        assert new_session.columns.count() == 8
+        for new_column in new_session.columns.all():
+            old_column = self.session.columns.get(prop_id=new_column.prop_id)
+            assert new_column.index == old_column.index
+            assert new_column.label == old_column.label
+            assert new_column.data_type == old_column.data_type
+            assert new_column.is_system == old_column.is_system
+
 
 @es_test(requires=[case_search_adapter])
 class BulkEditSessionSelectionCountTests(CaseDataTestMixin, BaseBulkEditSessionTest):
