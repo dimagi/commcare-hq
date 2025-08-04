@@ -19,7 +19,7 @@ var caseType = function (
     fhirResourceType,
     deprecated,
     moduleCount,
-    propertiesCount,
+    propertyCount,
     geoCaseProp,
     isSafeToDelete,
     changeSaveButton,
@@ -30,7 +30,7 @@ var caseType = function (
     self.name = name || gettext("No Name");
     self.deprecated = deprecated;
     self.appCount = moduleCount;  // The number of application modules using this case type
-    self.propertyCount = propertiesCount;
+    self.propertyCount = propertyCount;
     self.url = "#" + name;
     self.fhirResourceType = ko.observable(fhirResourceType);
     self.groups = ko.observableArray();
@@ -423,7 +423,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.fhir_resource_type,
                         caseTypeData.is_deprecated,
                         caseTypeData.module_count,
-                        caseTypeData.properties_count,
+                        caseTypeData.property_count,
                         data.geo_case_property,
                         caseTypeData.is_safe_to_delete,
                         changeSaveButton,

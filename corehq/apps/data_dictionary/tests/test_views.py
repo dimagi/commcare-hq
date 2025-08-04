@@ -388,12 +388,12 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
         )
         cls.case_properties_with_group = cls._create_properties_for_case_type(
             case_type=cls.case_type_obj,
-            properties_count=2,
+            property_count=2,
             group=cls.group_obj
         )
         cls.case_properties_without_group = cls._create_properties_for_case_type(
             case_type=cls.case_type_obj,
-            properties_count=2,
+            property_count=2,
         )
 
         cls.deprecated_case_type_obj = CaseType.objects.create(
@@ -428,9 +428,9 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
         )
 
     @classmethod
-    def _create_properties_for_case_type(cls, case_type, properties_count, group=None):
+    def _create_properties_for_case_type(cls, case_type, property_count, group=None):
         case_properties = []
-        for index in range(properties_count):
+        for index in range(property_count):
             prop_name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=7))
             case_prop_obj = CaseProperty.objects.create(
                 case_type=case_type,
@@ -451,7 +451,7 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                     "is_safe_to_delete": True,
                     "is_deprecated": False,
                     "module_count": 0,
-                    "properties_count": cls.case_type_obj.properties.count(),
+                    "property_count": cls.case_type_obj.properties.count(),
                 },
             ],
             "geo_case_property": GPS_POINT_CASE_PROPERTY,
@@ -464,7 +464,7 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                     "is_safe_to_delete": True,
                     "is_deprecated": True,
                     "module_count": 0,
-                    "properties_count": cls.deprecated_case_type_obj.properties.count(),
+                    "property_count": cls.deprecated_case_type_obj.properties.count(),
                 }
             )
         return expected_output
@@ -480,7 +480,7 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
     ):
         expected_output = {
             "name": case_type_obj.name,
-            "properties_count": case_type_obj.properties.count(),
+            "property_count": case_type_obj.properties.count(),
             "_links": {
                 "self": f"http://testserver/a/{cls.domain_name}"
                         f"/data_dictionary/json/{case_type_obj.name}/"
