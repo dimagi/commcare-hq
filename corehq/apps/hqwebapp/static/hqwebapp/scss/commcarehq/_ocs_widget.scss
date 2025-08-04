@@ -5,6 +5,6 @@ open-chat-studio-widget {
 
   //CSS custom properties
   --button-background-color: white;
-  --button-text-color: $primary;
-  --button-text-color-hover: $primary;
+  --button-text-color: #{$primary};
+  --button-text-color-hover: #{$primary};
 }
