@@ -56,7 +56,7 @@
     <script>
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>
-
+    <script type='module' src='https://unpkg.com/open-chat-studio-widget@0.4.1/dist/open-chat-studio-widget/open-chat-studio-widget.esm.js' async></script>
     {% block head %}
     {% endblock %}
   </head>
@@ -82,6 +82,20 @@
       {% block messages %}{% endblock %}
 
       {% block content %}{% endblock content %}
+      <open-chat-studio-widget
+        visible="false"
+        chatbot-id="c1dc26e6-b9fe-4ff9-a201-c55e11c1b98f"
+        button-text="Let's Chat"
+        position="right"
+        welcome-messages='["Hi there! I&#39;m CommCare Companion, your personal guide to CommCare! What can I help you with today?"]'
+        starter-questions="[
+          'I need help with building my CommCare application.',
+          'I need help troubleshooting my mobile application.',
+          'I need help with exporting or understanding my data.',
+          'I have a different question.'
+        ]"
+        >
+      </open-chat-studio-widget>
     </div>
 
     {% block footer %}{% endblock %}
