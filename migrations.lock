@@ -850,6 +850,7 @@ pillowtop
  0006_add_geopoint_to_case_search_index
  0007_copy_xforms_checkpoint
  0008_sync_es_with_couch_webusers
+ 0009_sync_es_with_couch_commcareusers
 preindex
  0001_initial
  0002_initial
