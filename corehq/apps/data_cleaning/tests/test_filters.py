@@ -913,3 +913,31 @@ class TestCaseStatusPinnedFilterQuery(TestCase):
         filtered_query = pinned_filter.filter_query(query)
         expected_query = query.is_closed(True)
         assert filtered_query.es_query == expected_query.es_query
+
+
+class TestPinnedFilterDefaults(TestCase):
+    domain = 'test-pinned-filter-defaults'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.web_user = WebUser.create(cls.domain, 'tester@datacleaning.org', 'testpwd', None, None)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
+
+    def setUp(self):
+        super().setUp()
+        self.session = BulkEditSession.objects.new_case_session(
+            self.web_user.get_django_user(),
+            self.domain,
+            'plants',
+        )
+
+    def test_default_pinned_filters(self):
+        assert self.session.pinned_filters.count() == 2
+        case_owners_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        assert case_owners_filter.value is None
+        case_status_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
+        assert case_status_filter.value is None
