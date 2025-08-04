@@ -10,6 +10,7 @@ from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetVie
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
@@ -27,7 +28,8 @@ from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from dimagi.utils.web import json_response, get_ip
 
 from corehq import feature_previews, privileges, toggles
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
+from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
@@ -56,14 +58,19 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.domain.views.import_apps import ImportAppStepsView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -562,10 +569,17 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                     )
                 )
                 return '{}?username={}'.format(
-                    reverse('domain_login', args=[couch_user.domain]),
+                    reverse('commcare_user_account_confirmed', args=[couch_user.domain]),
                     couch_user.raw_username,
                 )
         return super().get_success_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {"username": self.user.username}
+        )
+        return context
 
     def get(self, request, *args, **kwargs):
 
@@ -581,11 +595,31 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 messages.error(request, _(e.message))
                 return HttpResponseRedirect(request.path_info)
         response = super().post(request, *args, **kwargs)
-        uidb64 = kwargs.get('uidb64')
-        uid = urlsafe_base64_decode(uidb64)
-        user = User.objects.get(pk=uid)
-        couch_user = CouchUser.from_django_user(user)
-        clear_login_attempts(couch_user)
+
+        if self.get_context_data().get('form').is_valid():
+            uidb64 = kwargs.get('uidb64')
+            uid = urlsafe_base64_decode(uidb64)
+            user = User.objects.get(pk=uid)
+            couch_user = CouchUser.from_django_user(user)
+            clear_login_attempts(couch_user)
+            if couch_user.is_commcare_user():
+                couch_user.self_set_password = True
+                couch_user.save()
+
+            domain = couch_user.domain if couch_user.is_commcare_user() else None
+            log_user_change(by_domain=None, for_domain=domain, couch_user=couch_user, changed_by_user=couch_user,
+                            changed_via=USER_CHANGE_VIA_WEB, change_messages=UserChangeMessage.password_reset(),
+                            by_domain_required_for_log=False, for_domain_required_for_log=False)
+            context = {'username': couch_user.raw_username}
+            email = couch_user.get_email()
+            send_html_email_async.delay(
+                subject=_('Successful password reset for {}').format(couch_user.raw_username),
+                recipient=email,
+                html_content=render_to_string('domain/email/password_reset_confirmation.html', context),
+                text_content=render_to_string('domain/email/password_reset_confirmation.txt', context),
+                domain=domain,
+                use_domain_gateway=True
+            )
         return response
 
 
@@ -647,22 +681,56 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
             messages.error(request, _("There was an error saving your settings. Please try again!"))
             return self.get(request, *args, **kwargs)
 
-        domain_issuing_app = CredentialApplication.objects.filter(domain=self.domain).first()
-        app_id = form.cleaned_data['app_id']
+        is_new_credential_app = self.update_credential_app(form.cleaned_data)
 
-        if not domain_issuing_app:
-            domain_issuing_app = CredentialApplication(
+        success_message = _("Settings saved!")
+        if is_new_credential_app:
+            success_message = _(
+                "Settings saved! Please remember to configure the credential criteria in the app manager settings."
+            )
+
+        messages.success(request, success_message)
+        return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+    def update_credential_app(self, form_data):
+        domain_issuing_app_record = CredentialApplication.objects.filter(domain=self.domain).first()
+        app_id = form_data['app_id']
+
+        default_activity_level = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+
+        is_new_credential_app = True
+        if not domain_issuing_app_record:
+            domain_issuing_app_record = CredentialApplication.objects.create(
                 domain=self.domain,
                 app_id=app_id,
+                activity_level=default_activity_level,
             )
-        elif app_id != domain_issuing_app.app_id:
-            domain_issuing_app.app_id = app_id
-            domain_issuing_app.activity_level = None
+            application = get_app(self.domain, app_id)
+            self.add_credential_to_app_features(application, domain_issuing_app_record)
 
-        domain_issuing_app.save()
+        elif app_id != domain_issuing_app_record.app_id:
+            old_app = get_app(self.domain, domain_issuing_app_record.app_id)
+            new_app = get_app(self.domain, app_id)
 
-        messages.success(request, _("Settings saved!"))
-        return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+            domain_issuing_app_record.app_id = app_id
+            domain_issuing_app_record.activity_level = default_activity_level
+            domain_issuing_app_record.save()
+
+            self.remove_credential_from_app_features(old_app, domain_issuing_app_record)
+            self.add_credential_to_app_features(new_app, domain_issuing_app_record)
+        else:
+            is_new_credential_app = False
+        return is_new_credential_app
+
+    def remove_credential_from_app_features(self, app, domain_issuing_app):
+        app.profile.get('features', {}).pop('credentials', None)
+        app.save()
+
+    def add_credential_to_app_features(self, app, domain_issuing_app):
+        app_features = app.profile.get('features', {})
+        app_features['credentials'] = domain_issuing_app.activity_level
+        app.profile['features'] = app_features
+        app.save()
 
 
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),
@@ -822,6 +890,47 @@ class EditDomainAlertView(BaseDomainAlertsView):
         )
 
         alert.save()
+
+
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_can_edit_apps,
+    ],
+    name='dispatch',
+)
+class ImportAppFromAnotherServerView(BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Import App from Another Server")
+    urlname = 'import_app_from_another_server_main'
+    template_name = 'domain/import_app_from_another_server_main.html'
+
+    def get_recent_import_details(self):
+        """
+        Returns the details of the most recent import app steps.
+        """
+        if self.request.GET.get('source_domain'):
+            return {
+                'source_server': self.request.GET.get('source_server'),
+                'source_domain': self.request.GET.get('source_domain'),
+                'source_app_id': self.request.GET.get('source_app_id'),
+                'new_app_id': self.request.GET.get('new_app_id'),
+            }
+        return {}
+
+    @property
+    def page_context(self):
+        context = {
+            'htmx_import_app_steps_view_url': reverse(
+                ImportAppStepsView.urlname,
+                args=[self.domain,],
+            ),
+        }
+        recent_import_details = self.get_recent_import_details()
+        if recent_import_details:
+            context.update({
+                'import_details': json.dumps(recent_import_details),
+            })
+        return context
 
 
 @require_POST

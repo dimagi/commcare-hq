@@ -1,13 +1,29 @@
 <script type="text/html" id="text-entry-ko-template">
-  <textarea class="textfield form-control vertical-resize" data-bind="
-        value: $data.rawAnswer,
-        valueUpdate: valueUpdate,
-        css: { 'is-invalid': $parent.hasError() },
-        attr: {
-            placeholder: placeholderText,
-            maxlength: lengthLimit,
-            id: entryId,
-            'aria-required': $parent.required() ? 'true' : 'false',
-        },
-    "></textarea>
+  <textarea
+    class="textfield form-control vertical-resize d-print-none"
+    data-bind="
+      value: $data.rawAnswer,
+      valueUpdate: valueUpdate,
+      css: { 'is-invalid': $parent.hasError() },
+      attr: {
+          placeholder: placeholderText,
+          maxlength: lengthLimit,
+          id: entryId,
+          'aria-required': $parent.required() ? 'true' : 'false',
+      },
+    "
+  ></textarea>
+  {# Render as a div in print mode so the whole thing is visible #}
+  <div
+    class="textfield form-control d-none d-print-block"
+    data-bind="
+      text: $data.rawAnswer() || '&nbsp;',
+      css: { 'is-invalid': $parent.hasError() },
+      attr: {
+          placeholder: placeholderText,
+          maxlength: lengthLimit,
+          'aria-required': $parent.required() ? 'true' : 'false',
+      },
+    "
+  ></div>
 </script>

@@ -1677,10 +1677,15 @@ msgstr "Vero quando TUTTE le proprietà del caso corrispondono"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
-msgstr ""
-"Fuori dall'intervallo del filtro. Non apparirà all'aggiornamento della "
-"pagina."
+msgid "Reassigned"
+msgstr "Riassegnato"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Copied!"
+msgid "Copied"
+msgstr "Copiato!"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1689,13 +1694,22 @@ msgstr "aggiornato"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
-msgstr "Caso copiato"
+msgid "Today"
+msgstr "Oggi"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
-msgstr "Casi copiati"
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Reassigned <%- count %> cases"
+msgstr "Scarica <%- count %> posizioni"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#, fuzzy
+#| msgid "Download <%- count %> Locations"
+msgid "Copied <%- count %> cases"
+msgstr "Scarica <%- count %> posizioni"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3609,11 +3623,6 @@ msgid "Error determining number of matching users"
 msgstr "Errore nel determinare il numero di utenti corrispondenti"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"L'indirizzo email è richiesto quando gli utenti confermano i propri account."
-
-#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Inserisci un indirizzo email valido."
 
@@ -4251,6 +4260,21 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "L'indirizzo email è richiesto quando gli utenti confermano i propri account."
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr ""
+#~ "Fuori dall'intervallo del filtro. Non apparirà all'aggiornamento della "
+#~ "pagina."
+
+#~ msgid "Case copied"
+#~ msgstr "Caso copiato"
+
+#~ msgid "Cases copied"
+#~ msgstr "Casi copiati"
 
 #~ msgid "Select None"
 #~ msgstr "Nessuna selezione"

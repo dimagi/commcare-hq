@@ -35,6 +35,7 @@ from corehq.form_processor.models import XFormInstance
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
 
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
@@ -1070,3 +1071,14 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
         date_of_use = DateTimeProperty.deserialize(date_of_use)
 
     return version_in_use, date_of_use
+
+
+def report_date_to_json(date, timezone, date_format, is_phonetime=True):
+    if date:
+        if is_phonetime:
+            user_time = PhoneTime(date, timezone).user_time(timezone)
+        else:
+            user_time = ServerTime(date).user_time(timezone)
+        return user_time.ui_string(date_format)
+    else:
+        return ''

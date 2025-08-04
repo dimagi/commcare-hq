@@ -62,6 +62,7 @@ from .views import (
     view_form_attachment,
     view_scheduled_report,
     copy_cases,
+    reassign_cases,
 )
 
 custom_report_urls = [
@@ -79,7 +80,8 @@ release_management_urls = [
 urlpatterns = [
     ConfigurableReportView.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
-    url(r'^copy_cases/$', copy_cases, name='copy_cases'),
+    url(r'^copy_cases/$', copy_cases, name='copy_cases_action'),
+    url(r'^reassign_cases/$', reassign_cases, name='reassign_cases_action'),
 
     # Report Builder
     url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(),
@@ -152,9 +154,6 @@ urlpatterns = [
         send_test_scheduled_report, name='send_test_scheduled_report'),
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
-
-    # V2 Reports
-    url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
     url(r'^tableau/ticket/$', get_tableau_server_ticket, name='get_tableau_server_ticket'),

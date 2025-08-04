@@ -15,7 +15,7 @@
 /* Override default nprogress bar color to match CommCareHQ */
 #nprogress {
   .bar {
-    background: #4aba32;
+    background: #fff;
     height: 4px;
   }
 
@@ -62,7 +62,14 @@ input:invalid {
   border-color: #b94a48;
 }
 
-.required .caption::before,
+.required .caption .webapp-markdown-output::after {
+  content: '*';
+  font-weight: bold;
+  color: $danger;
+  margin: 0 0 0 3px;
+  display: inline;
+}
+
 .required-group .gr-header .caption::before {
   content: '*';
   font-weight: bold;

@@ -273,7 +273,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                 data={
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.PAYMENT_VERIFIED: True,
-                    PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING,
+                    PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
                 }),
             _create_case(
                 cls.factory,
@@ -312,24 +312,6 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         assert response.status_code == 404
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_verified_has_two(self):
-        response = self._make_request(querystring='payment_verification_status=verified')
-        queryset = response.context['table'].data
-        assert len(queryset) == 2
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_unverified_has_two(self):
-        response = self._make_request(querystring='payment_verification_status=unverified')
-        queryset = response.context['table'].data
-        assert len(queryset) == 2
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_unfiltered(self):
-        response = self._make_request(querystring='payment_verification_status=')
-        queryset = response.context['table'].data
-        assert len(queryset) == 4
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_batch_number_filter_has_none(self):
         response = self._make_request(querystring='batch_number=9999')
         queryset = response.context['table'].data
@@ -349,7 +331,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_payment_status_filter_pending_payments_has_one(self):
-        response = self._make_request(querystring=f'payment_status={PaymentStatus.PENDING}')
+        response = self._make_request(querystring=f'payment_status={PaymentStatus.PENDING_SUBMISSION}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 

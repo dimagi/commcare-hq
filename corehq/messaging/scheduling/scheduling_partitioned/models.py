@@ -195,7 +195,7 @@ class ScheduleInstance(PartitionedModel):
         user_ids = set()
         for location_id in location_ids:
             if toggles.INCLUDE_ALL_LOCATIONS.enabled(domain):
-                user_ids_at_this_location = user_ids_at_locations([location_id])
+                user_ids_at_this_location = user_ids_at_locations(domain, [location_id])
                 users = (CouchUser.wrap_correctly(u)
                          for u in iter_docs(CouchUser.get_db(), user_ids_at_this_location))
             else:

@@ -275,6 +275,19 @@ define("cloudcare/js/form_entry/entries", [
             return null;
         };
 
+        self.afterRender = function (elements) {
+            _.each(elements, function (el) {
+                if (el.nodeName === 'TEXTAREA') {
+                    const showFullText = () => {
+                        el.style.height = 'auto';
+                        el.style.height = el.scrollHeight + 3 + 'px';
+                    };
+                    showFullText();
+                    window.addEventListener('input', showFullText);
+                    window.addEventListener('resize', showFullText);
+                }
+            });
+        };
         self.enableReceiver(question, options);
     }
     FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -361,7 +374,8 @@ define("cloudcare/js/form_entry/entries", [
     function IntEntry(question, options) {
         var self = this;
         FreeTextEntry.call(self, question, options);
-        self.templateType = 'str';
+        self.templateType = 'numeric';
+        self.inputmode = 'numeric';
         self.lengthLimit = options.lengthLimit || constants.INT_LENGTH_LIMIT;
         var valueLimit = options.valueLimit || constants.INT_VALUE_LIMIT;
 
@@ -393,7 +407,8 @@ define("cloudcare/js/form_entry/entries", [
 
     function PhoneEntry(question, options) {
         FreeTextEntry.call(this, question, options);
-        this.templateType = 'str';
+        this.templateType = 'numeric';
+        this.inputmode = 'tel';
         this.lengthLimit = options.lengthLimit;
 
         this.getErrorMessage = function (rawAnswer) {
@@ -414,7 +429,8 @@ define("cloudcare/js/form_entry/entries", [
      */
     function FloatEntry(question, options) {
         IntEntry.call(this, question, options);
-        this.templateType = 'str';
+        this.templateType = 'numeric';
+        this.inputmode = 'decimal';
         this.lengthLimit = options.lengthLimit || constants.FLOAT_LENGTH_LIMIT;
         var valueLimit = options.valueLimit || constants.FLOAT_VALUE_LIMIT;
 

@@ -9,10 +9,13 @@ from corehq.apps.locations.dbaccessors import (
     user_ids_at_locations_and_descendants,
 )
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.exceptions import TooManyOwnerIDsError
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
+from corehq.project_limits.const import OWNER_ID_LIMIT_KEY, DEFAULT_OWNER_ID_LIMIT
+from corehq.project_limits.models import SystemLimit
 
 
 def _get_special_owner_ids(domain, admin, unknown, web, demo, commtrack):
@@ -55,8 +58,7 @@ def all_project_data_filter(domain, mobile_user_and_group_slugs):
 
 def deactivated_case_owners(domain):
     owner_ids = (user_es.UserES()
-                 .show_only_inactive()
-                 .domain(domain)
+                 .domain(domain, include_active=False, include_inactive=True)
                  .get_ids())
     return case_es.owner(owner_ids)
 
@@ -142,8 +144,7 @@ def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slug
 
     if loc_ids:
         # Get users at selected locations and descendants
-        assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(
-            loc_ids)
+        assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(domain, loc_ids)
         # Get user ids for each user in specified reporting groups
 
     if selected_user_ids:
@@ -174,6 +175,9 @@ def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slug
         location_owner_ids,
         assigned_user_ids_at_selected_locations,
     ))
+    limit = SystemLimit.get_limit_for_key(OWNER_ID_LIMIT_KEY, DEFAULT_OWNER_ID_LIMIT, domain=domain)
+    if len(owner_ids) > limit:
+        raise TooManyOwnerIDsError
     return owner_ids
 
 
@@ -182,7 +186,7 @@ def _get_location_accessible_ids(domain, couch_user):
         domain,
         couch_user
     ))
-    accessible_user_ids = mobile_user_ids_at_locations(accessible_location_ids)
+    accessible_user_ids = mobile_user_ids_at_locations(domain, accessible_location_ids)
     accessible_ids = accessible_user_ids + list(accessible_location_ids)
     return accessible_ids
 

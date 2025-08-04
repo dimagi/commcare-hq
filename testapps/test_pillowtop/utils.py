@@ -7,7 +7,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.util.decorators import ContextDecorator
 from pillowtop import get_pillow_by_name
-from pillowtop.pillow.interface import PillowBase
+from pillowtop.pillow.interface import ConstructedPillow
 
 
 class process_pillow_changes(ContextDecorator):
@@ -28,7 +28,7 @@ class process_pillow_changes(ContextDecorator):
     def _populate(self):
         if not self._populated:
             for pillow_name_or_instance, pillow_kwargs in self.pillow_names_or_instances:
-                if isinstance(pillow_name_or_instance, PillowBase):
+                if isinstance(pillow_name_or_instance, ConstructedPillow):
                     self._pillows.append(pillow_name_or_instance)
                 else:
                     self._pillows.append(self._get_pillow(pillow_name_or_instance, pillow_kwargs or {}))

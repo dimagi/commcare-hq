@@ -1,9 +1,19 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-
 from corehq.toggles import ALL_TAGS
+from corehq.util.quickcache import quickcache
 
 TAG_SLUG_CHOICES = [(tag.slug, tag.slug) for tag in ALL_TAGS]
+
+
+class ToggleEditPermissionManager(models.Manager):
+
+    @quickcache(['tag_slug'], timeout=60 * 60 * 24 * 7)
+    def get_by_tag_slug(self, tag_slug):
+        try:
+            return self.get(tag_slug=tag_slug)
+        except self.model.DoesNotExist:
+            return None
 
 
 class ToggleEditPermission(models.Model):
@@ -14,8 +24,11 @@ class ToggleEditPermission(models.Model):
     tag_slug = models.CharField(max_length=255, choices=TAG_SLUG_CHOICES, unique=True)
     enabled_users = ArrayField(models.CharField(max_length=255), default=list, blank=True)
 
+    objects = ToggleEditPermissionManager()
+
     def save(self, *args, **kwargs):
         self.full_clean()
+        ToggleEditPermission.objects.get_by_tag_slug.clear(ToggleEditPermission.objects, self.tag_slug)
         super().save(*args, **kwargs)
 
     def add_users(self, usernames):

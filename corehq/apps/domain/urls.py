@@ -41,6 +41,7 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.domain.views.base import select, accept_all_invitations
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
+from corehq.apps.domain.views.import_apps import ImportAppStepsView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
     DeactivateTransferDomainView,
@@ -75,6 +76,7 @@ from corehq.apps.domain.views.settings import (
     ManageDomainMobileWorkersView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
+    ImportAppFromAnotherServerView,
     CredentialsApplicationSettingsView,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
@@ -204,7 +206,8 @@ domain_settings = [
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
     url(r'^alerts/edit/(?P<alert_id>[\w\-]+)/$', EditDomainAlertView.as_view(), name=EditDomainAlertView.urlname),
     url(r'^alerts/$', ManageDomainAlertsView.as_view(), name=ManageDomainAlertsView.urlname),
-    url(r'^credentials_application/$', CredentialsApplicationSettingsView.as_view(), name=CredentialsApplicationSettingsView.urlname),
+    url(r'^credentials_application/$', CredentialsApplicationSettingsView.as_view(),
+        name=CredentialsApplicationSettingsView.urlname),
     url(r'^alerts/delete/$', delete_domain_alert, name='delete_domain_alert'),
     url(r'^alerts/update_status/$', update_domain_alert_status, name='update_domain_alert_status'),
     url(r'^manage_mobile_workers/$', ManageDomainMobileWorkersView.as_view(),
@@ -226,5 +229,9 @@ domain_settings = [
         name='activate_release_restriction'),
     url(r'^toggle_release_restriction_by_app_profile/(?P<restriction_id>[\w-]+)/$',
         toggle_release_restriction_by_app_profile, name='toggle_release_restriction_by_app_profile'),
+    url(r'^import_app/$', ImportAppFromAnotherServerView.as_view(),
+        name=ImportAppFromAnotherServerView.urlname),
+    url(r'^import_app/steps/$', ImportAppStepsView.as_view(),
+        name=ImportAppStepsView.urlname),
     DomainReportDispatcher.url_pattern()
 ]

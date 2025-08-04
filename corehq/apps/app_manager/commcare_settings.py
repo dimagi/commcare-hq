@@ -76,11 +76,7 @@ def _load_commcare_settings_layout(app):
             if doc_type == 'Application':
                 include = True
                 if setting['id'] == "credentials":
-                    from corehq.apps.app_manager.models import CredentialApplication
-                    credential_application = CredentialApplication.objects.filter(
-                        app_id=app.id,
-                    ).first()
-                    include = credential_application is not None
+                    include = 'credentials' in app.profile.get('features', {})
 
                 section['settings'][i] = setting
             elif doc_type == 'LinkedApplication':
