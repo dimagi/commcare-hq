@@ -13,6 +13,7 @@ from corehq.apps.data_cleaning.models import (
     DataType,
     FilterMatchType,
 )
+from corehq.apps.data_cleaning.models.column import BulkEditColumnManager
 from corehq.apps.data_cleaning.tests.mixins import CaseDataTestMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES, group_adapter, user_adapter
@@ -356,6 +357,13 @@ class BaseBulkEditSessionTest(TestCase):
 
 class BulkEditSessionCaseColumnTests(BaseBulkEditSessionTest):
     domain_name = 'session-test-case-columns'
+
+    def test_default_columns(self):
+        assert self.session.columns.count() == 6
+        default_columns = BulkEditColumnManager._DEFAULT_PROPERTIES_BY_SESSION_TYPE[BulkEditSessionType.CASE]
+        for index, column in enumerate(self.session.columns.all()):
+            assert column.prop_id == default_columns[index]
+            assert column.index == index
 
     def test_add_column(self):
         assert self.session.columns.count() == 6
