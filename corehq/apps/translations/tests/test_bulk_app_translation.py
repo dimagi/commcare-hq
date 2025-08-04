@@ -1140,7 +1140,11 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                          [('case_list_menu_item_label', 'list', 'Steth List')])
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    def test_module_search_labels_rows(self):
+    @patch(
+        'corehq.apps.translations.app_translations.download.split_screen_ui_enabled_for_domain',
+        return_value=False,
+    )
+    def test_module_search_labels_rows(self, *args):
         app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
                          [('search_label', 'list', 'Find a Mother'),
@@ -1149,8 +1153,11 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                           ('search_again_label', 'list', 'Find Another Mother')])
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
-    def test_module_split_screen_case_search_rows(self):
+    @patch(
+        'corehq.apps.translations.app_translations.download.split_screen_ui_enabled_for_domain',
+        return_value=True,
+    )
+    def test_module_split_screen_case_search_rows(self, *args):
         app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
                          [('search_label', 'list', 'Find a Mother'),

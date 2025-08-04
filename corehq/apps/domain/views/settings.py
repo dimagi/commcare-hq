@@ -1,4 +1,3 @@
-import pytz
 import json
 from collections import defaultdict
 from functools import cached_property
@@ -6,7 +5,10 @@ from functools import cached_property
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetView
+from django.contrib.auth.views import (
+    PasswordResetConfirmView,
+    PasswordResetView,
+)
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -18,30 +20,32 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
+import pytz
 from couchdbkit import ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
-from dimagi.utils.web import json_response, get_ip
+from dimagi.utils.web import get_ip, json_response
 
 from corehq import feature_previews, privileges, toggles
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
     IgnorePatterns,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
     case_search_synchronous_web_apps_for_domain,
     disable_case_search,
-    enable_case_search, case_search_sync_cases_on_form_entry_enabled_for_domain,
+    enable_case_search,
+    split_screen_ui_enabled_for_domain,
 )
 from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
     domain_admin_required,
     login_and_domain_required,
-    LoginAndDomainMixin,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import (
@@ -50,15 +54,16 @@ from corehq.apps.domain.forms import (
     DomainAlertForm,
     DomainGlobalSettingsForm,
     DomainMetadataForm,
+    IPAccessConfigForm,
     PrivacySecurityForm,
     ProjectSettingsForm,
-    IPAccessConfigForm,
     DomainCredentialIssuingAppForm,
-    clean_password
+    clean_password,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.domain.views.import_apps import ImportAppStepsView
+from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
@@ -73,7 +78,7 @@ from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
-from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.apps.app_manager.models import CredentialApplication
 
 MAX_ACTIVE_ALERTS = 3
@@ -466,9 +471,11 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'enabled': request_json.get('enable'),
             'synchronous_web_apps': request_json.get('synchronous_web_apps'),
             'sync_cases_on_form_entry': request_json.get('sync_cases_on_form_entry'),
+            'split_screen_ui': request_json.get('split_screen_ui'),
         })
         case_search_synchronous_web_apps_for_domain.clear(self.domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(self.domain)
+        split_screen_ui_enabled_for_domain.clear(self.domain)
         config.ignore_patterns.set(updated_ignore_patterns)
         config.fuzzy_properties.set(updated_fuzzies)
         return json_response(self.page_context)
@@ -485,6 +492,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 'enabled': config.enabled,
                 'synchronous_web_apps': config.synchronous_web_apps,
                 'sync_cases_on_form_entry': config.sync_cases_on_form_entry,
+                'split_screen_ui': config.split_screen_ui,
                 'fuzzy_properties': {
                     fp.case_type: fp.properties for fp in config.fuzzy_properties.all()
                 },
