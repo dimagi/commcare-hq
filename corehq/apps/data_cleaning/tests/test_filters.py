@@ -941,3 +941,57 @@ class TestPinnedFilterDefaults(TestCase):
         assert case_owners_filter.value is None
         case_status_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
         assert case_status_filter.value is None
+
+
+class TestBulkEditFilterManagers(TestCase):
+    domain = 'test-bulk-edit-filter-managers'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.web_user = WebUser.create(cls.domain, 'tester@datacleaning.org', 'testpwd', None, None)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
+
+    def setUp(self):
+        super().setUp()
+        self.session = BulkEditSession.objects.new_case_session(
+            self.web_user.get_django_user(),
+            self.domain,
+            'plants',
+        )
+
+    def test_copy_filters_to_session(self):
+        self.session.add_filter(
+            'soil_contents',
+            DataType.MULTIPLE_OPTION,
+            FilterMatchType.IS_ANY,
+            'bark worm_castings',
+        )
+        new_session = BulkEditSession.objects.new_case_session(
+            self.web_user.get_django_user(),
+            self.domain,
+            'plants',
+        )
+        self.session.filters.copy_to_session(self.session, new_session)
+        assert new_session.filters.count() == self.session.filters.count()
+        other_session_filter = new_session.filters.first()
+        assert other_session_filter.prop_id == 'soil_contents'
+        assert other_session_filter.data_type == DataType.MULTIPLE_OPTION
+        assert other_session_filter.match_type == FilterMatchType.IS_ANY
+        assert other_session_filter.value == 'bark worm_castings'
+
+    def test_copy_pinned_filters_to_session(self):
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
+        pinned_filter.value = ['open']
+        pinned_filter.save()
+        new_session = BulkEditSession.objects.new_case_session(
+            self.web_user.get_django_user(),
+            self.domain,
+            'plants',
+        )
+        self.session.pinned_filters.copy_to_session(self.session, new_session)
+        new_pinned_filter = new_session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
+        assert new_pinned_filter.value == ['open']
