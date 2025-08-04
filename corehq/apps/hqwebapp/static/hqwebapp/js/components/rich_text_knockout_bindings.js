@@ -124,7 +124,7 @@ async function uploadAndInsertImage(file, editor, options = {}) {
         editorImages.set(editor, editorImageSet);
 
         if (options.onComplete) {
-            options.onComplete(data);
+            options.onComplete();
         }
     } catch (error) {
         if (options.onError) {
@@ -290,13 +290,11 @@ ko.bindingHandlers.richEditor = {
                 },
             },
             theme: "snow",
-            // Disable Quill's native clipboard and drop handling
             clipboard: {
                 matchVisual: false,
             },
         });
 
-        // Handle paste events in the capture phase to intercept before Quill's handlers
         editor.root.addEventListener('paste', function (e) {
             if (initialPageData.get("read_only_mode")) {
                 return;
@@ -307,7 +305,6 @@ ko.bindingHandlers.richEditor = {
 
                 for (let i = 0; i < items.length; i++) {
                     if (items[i].type.indexOf('image') !== -1) {
-                        // Prevent default and stop propagation to avoid Quill's handling
                         e.preventDefault();
                         e.stopPropagation();
 
@@ -317,18 +314,17 @@ ko.bindingHandlers.richEditor = {
                         }
 
                         uploadAndInsertImage(file, editor);
-                        break; // Only handle the first image
+                        break;
                     }
                 }
             }
         }, true); // Using capture phase to intercept before Quill's handlers
 
-        // Completely disable Quill's drop handler
+        // Prevent Quill's from handeling the drop event
         editor.root.addEventListener('drop', function (e) {
             e.stopPropagation();
         }, true);
 
-        // Handle drag and drop images
         editor.root.addEventListener('dragover', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -342,7 +338,6 @@ ko.bindingHandlers.richEditor = {
         }, { capture: true });
 
         editor.root.addEventListener('drop', function (e) {
-            // This needs to happen before anything else
             e.preventDefault();
             e.stopPropagation();
             if (initialPageData.get("read_only_mode")) {
@@ -355,7 +350,6 @@ ko.bindingHandlers.richEditor = {
                 if (file.type.indexOf('image') !== -1) {
                     uploadAndInsertImage(file, editor);
                 } else {
-                    // Handle non-image files
                     const reader = new FileReader();
                     reader.onload = function (e) {
                         const range = editor.getSelection() || { index: editor.getLength(), length: 0 };
@@ -364,7 +358,6 @@ ko.bindingHandlers.richEditor = {
                     reader.readAsText(file);
                 }
             } else if (e.dataTransfer.getData('text')) {
-                // Handle text drag and drop
                 const text = e.dataTransfer.getData('text');
                 const range = editor.getSelection() || { index: editor.getLength(), length: 0 };
                 editor.insertText(range.index, text);
