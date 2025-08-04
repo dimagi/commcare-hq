@@ -11,19 +11,19 @@ from corehq.apps.data_cleaning.models.types import (
 
 class BulkEditColumnManager(models.Manager):
     use_for_related_fields = True
+    _DEFAULT_PROPERTIES_BY_SESSION_TYPE = {
+        BulkEditSessionType.CASE: (
+            'name',
+            'owner_name',
+            'date_opened',
+            'opened_by_username',
+            'last_modified',
+            '@status',
+        ),
+    }
 
     def create_session_defaults(self, session):
-        default_properties = {
-            BulkEditSessionType.CASE: (
-                'name',
-                'owner_name',
-                'date_opened',
-                'opened_by_username',
-                'last_modified',
-                '@status',
-            ),
-        }.get(session.session_type)
-
+        default_properties = self._DEFAULT_PROPERTIES_BY_SESSION_TYPE.get(session.session_type)
         if not default_properties:
             raise NotImplementedError(f'{session.session_type} default columns not yet supported')
 
