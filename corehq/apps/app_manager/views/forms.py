@@ -109,7 +109,7 @@ from corehq.apps.app_manager.xform import (
 from corehq.apps.data_dictionary.util import (
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
-    get_custom_case_property_count,
+    get_case_property_count,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -786,7 +786,7 @@ def get_form_view_context(
         'reserved_words': load_case_reserved_words(),
         'usercasePropertiesMap': usercase_properties_map,
     }
-    case_property_count = get_custom_case_property_count(domain, case_config_options['caseType'])
+    case_property_count = get_case_property_count(domain, case_config_options['caseType'])
     context = {
         'nav_form': form,
         'xform_languages': languages,
