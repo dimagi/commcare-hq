@@ -1615,7 +1615,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
 
 @location_safe
-class CommCareUserAccountConfirmedView(TemplateView):
+class CommCareUserAccountConfirmedView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_account_confirmed.html"
     urlname = "commcare_user_account_confirmed"
     strict_domain_fetching = True
@@ -1623,14 +1623,13 @@ class CommCareUserAccountConfirmedView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         username = self.request.GET.get('username')
-        domain = self.kwargs.get('domain')
         if username:
             login_url = '{}?username={}'.format(
-                reverse('domain_login', args=[domain]),
+                reverse('domain_login', args=[self.domain]),
                 username,
             )
         else:
-            login_url = reverse('domain_login', args=[domain])
+            login_url = reverse('domain_login', args=[self.domain])
         context['login_url'] = login_url
         return context
 
