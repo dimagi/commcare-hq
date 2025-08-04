@@ -44,14 +44,24 @@ class BulkEditColumnManager(models.Manager):
 
     def copy_to_session(self, source_session, dest_session):
         for column in self.filter(session=source_session):
-            self.model.objects.create(
+            existing = self.model.objects.filter(
                 session=dest_session,
-                index=column.index,
                 prop_id=column.prop_id,
-                label=column.label,
-                data_type=column.data_type,
-                is_system=column.is_system,
-            )
+            ).first()
+            if existing:
+                existing.label = column.label
+                existing.data_type = column.data_type
+                existing.index = column.index
+                existing.save()
+            else:
+                self.model.objects.create(
+                    session=dest_session,
+                    index=column.index,
+                    prop_id=column.prop_id,
+                    label=column.label,
+                    data_type=column.data_type,
+                    is_system=column.is_system,
+                )
 
     def create_for_session(self, session, prop_id, label, data_type=None):
         is_system_property = self.model.is_system_property(prop_id)
