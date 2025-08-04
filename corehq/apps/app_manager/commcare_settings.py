@@ -76,7 +76,7 @@ def _load_commcare_settings_layout(app):
             if doc_type == 'Application':
                 include = True
                 if setting['id'] == "credentials":
-                    include = 'credentials' in app.profile['features']
+                    include = 'credentials' in app.profile.get('features', {})
 
                 section['settings'][i] = setting
             elif doc_type == 'LinkedApplication':
