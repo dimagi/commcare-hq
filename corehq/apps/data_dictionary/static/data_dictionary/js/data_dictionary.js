@@ -20,6 +20,7 @@ var caseType = function (
     deprecated,
     moduleCount,
     propertyCount,
+    deprecatedPropertyCount,
     geoCaseProp,
     isSafeToDelete,
     changeSaveButton,
@@ -31,6 +32,7 @@ var caseType = function (
     self.deprecated = deprecated;
     self.appCount = moduleCount;  // The number of application modules using this case type
     self.propertyCount = propertyCount;
+    self.deprecatedPropertyCount = deprecatedPropertyCount;
     self.url = "#" + name;
     self.fhirResourceType = ko.observable(fhirResourceType);
     self.groups = ko.observableArray();
@@ -424,6 +426,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.is_deprecated,
                         caseTypeData.module_count,
                         caseTypeData.property_count,
+                        caseTypeData.deprecated_property_count,
                         data.geo_case_property,
                         caseTypeData.is_safe_to_delete,
                         changeSaveButton,
@@ -628,7 +631,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
 
     self.activeCaseType.subscribe(function () {
         const caseType = self.getActiveCaseType();
-        self.casePropertyWarningViewModel.updateViewModel(caseType.name, caseType.propertyCount);
+        const nonDeprecatedPropertyCount = caseType.propertyCount - caseType.deprecatedPropertyCount;
+        self.casePropertyWarningViewModel.updateViewModel(caseType.name, nonDeprecatedPropertyCount);
     });
 
     self.showDeprecated = function () {

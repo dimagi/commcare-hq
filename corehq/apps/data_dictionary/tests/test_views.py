@@ -452,6 +452,7 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                     "is_deprecated": False,
                     "module_count": 0,
                     "property_count": cls.case_type_obj.properties.count(),
+                    "deprecated_property_count": cls.case_type_obj.properties.filter(deprecated=True).count(),
                 },
             ],
             "geo_case_property": GPS_POINT_CASE_PROPERTY,
@@ -465,6 +466,9 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                     "is_deprecated": True,
                     "module_count": 0,
                     "property_count": cls.deprecated_case_type_obj.properties.count(),
+                    "deprecated_property_count": cls.deprecated_case_type_obj.properties.filter(
+                        deprecated=True
+                    ).count(),
                 }
             )
         return expected_output
@@ -481,6 +485,7 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
         expected_output = {
             "name": case_type_obj.name,
             "property_count": case_type_obj.properties.count(),
+            "deprecated_property_count": case_type_obj.properties.filter(deprecated=True).count(),
             "_links": {
                 "self": f"http://testserver/a/{cls.domain_name}"
                         f"/data_dictionary/json/{case_type_obj.name}/"

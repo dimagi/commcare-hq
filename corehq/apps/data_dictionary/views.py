@@ -5,7 +5,7 @@ from operator import attrgetter
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -69,7 +69,10 @@ def data_dictionary_json_case_types(request, domain):
     if toggles.FHIR_INTEGRATION.enabled(domain):
         fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
 
-    queryset = CaseType.objects.filter(domain=domain).annotate(property_count=Count('property'))
+    queryset = CaseType.objects.filter(domain=domain).annotate(
+        property_count=Count('property'),
+        deprecated_property_count=Count('property', filter=Q(property__deprecated=True))
+    )
     if not request.GET.get('load_deprecated_case_types', False) == 'true':
         queryset = queryset.filter(is_deprecated=False)
 
@@ -84,6 +87,7 @@ def data_dictionary_json_case_types(request, domain):
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
             "property_count": case_type.property_count,
+            "deprecated_property_count": case_type.deprecated_property_count,
             "is_safe_to_delete": is_case_type_unused(domain, case_type.name)
         })
     return JsonResponse({
@@ -108,13 +112,17 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
         fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
 
     case_type = get_object_or_404(
-        CaseType.objects.annotate(property_count=Count('property')),
+        CaseType.objects.annotate(
+            property_count=Count('property'),
+            deprecated_property_count=Count('property', filter=Q(property__deprecated=True)),
+        ),
         domain=domain,
         name=case_type_name,
     )
     case_type_data = {
         "name": case_type.name,
         "property_count": case_type.property_count,
+        "deprecated_property_count": case_type.deprecated_property_count,
         "groups": []
     }
 
