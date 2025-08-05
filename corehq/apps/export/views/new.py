@@ -184,16 +184,11 @@ class BaseExportView(BaseProjectDataView):
     @property
     def _possible_form_geo_properties(self):
         export_table = self.export_instance.tables[0]
-        geo_props = []
-
-        for column in export_table.columns:
-            if column.item.doc_type == 'GeopointItem':
-                # show the path to the geo properties, not the column headers, because the
-                # paths do not change.
-                path_str = '.'.join([f"{node.name}" for node in column.item.path])
-                geo_props.append(path_str)
-
-        return geo_props
+        return [
+            col.item.readable_path
+            for col in export_table.columns
+            if col.item.doc_type == 'GeopointItem'
+        ]
 
     @property
     def _possible_case_geo_properties(self):
