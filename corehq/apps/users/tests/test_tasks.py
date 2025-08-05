@@ -291,6 +291,8 @@ class TestProcessReportingMetadataStagingTransaction(TestCase):
         cls.record_two.delete()
 
 
+@patch('corehq.apps.users.credentials_issuing.requests.models.Response.raise_for_status')
+@patch('corehq.apps.users.credentials_issuing.requests.post')
 class TestProcessMobileWorkerCredentials(TestCase):
     domain = 'test-domain'
 
@@ -323,13 +325,14 @@ class TestProcessMobileWorkerCredentials(TestCase):
             })
             MALTRow.objects.create(**malt_row_dict)
 
-    def test_process_credentials(self):
+    def test_process_credentials(self, mock_post, mock_status_raise):
         user_id = uuid.uuid4().hex
         self._create_malt_rows(3, user_id, self.three_month_app_id)
         process_mobile_worker_credentials()
-        assert UserCredential.objects.get(user_id=user_id, app_id=self.three_month_app_id)
+        cred = UserCredential.objects.get(user_id=user_id, app_id=self.three_month_app_id)
+        assert cred.issued_on is not None
 
-    def test_process_multiple_credentials(self):
+    def test_process_multiple_credentials(self, mock_post, mock_status_raise):
         user_id1 = uuid.uuid4().hex
         user_id2 = uuid.uuid4().hex
         self._create_malt_rows(3, user_id1, self.one_month_app_id)
@@ -337,19 +340,19 @@ class TestProcessMobileWorkerCredentials(TestCase):
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 2
 
-    def test_no_credentials(self):
+    def test_no_credentials(self, mock_post, mock_status_raise):
         self._create_malt_rows(1, uuid.uuid4().hex, self.three_month_app_id)
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 0
 
-    def test_no_consecutive_activity(self):
+    def test_no_consecutive_activity(self, mock_post, mock_status_raise):
         user_id = uuid.uuid4().hex
         self._create_malt_rows(1, user_id, self.three_month_app_id)
         self._create_malt_rows(2, user_id, self.three_month_app_id, offset=2)
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 0
 
-    def test_credentials_already_exist(self):
+    def test_credentials_already_exist(self, mock_post, mock_status_raise):
         user_id = uuid.uuid4().hex
         UserCredential.objects.create(
             user_id=user_id,
