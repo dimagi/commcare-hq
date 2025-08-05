@@ -6,6 +6,9 @@ from datetime import datetime, timezone, date
 from corehq.apps.data_analytics.models import MALTRow
 
 
+CREDENTIAL_TYPE = 'APP_ACTIVITY'
+
+
 def get_credentials_for_timeframe(activity_level, app_ids):
     months = int(re.search(r'^\d+', activity_level).group())
     now = datetime.now(timezone.utc)
@@ -60,3 +63,57 @@ def get_app_ids_by_activity_level():
     for app in credential_apps:
         app_ids_by_level[app.activity_level].append(app.app_id)
     return app_ids_by_level
+
+
+def submit_new_credentials():
+    from corehq.apps.users.models import UserCredential
+
+    credentials_to_submit, credential_ids_to_update = get_credentials_to_submit()
+
+
+def get_credentials_to_submit():
+    from corehq.apps.users.models import ConnectIDUserLink, UserCredential
+
+    user_credentials = UserCredential.objects.filter(issued_on=None)
+    if not user_credentials:
+        return
+
+    app_ids = []
+    usernames = []
+    for user_cred in user_credentials:
+        app_ids.append(user_cred.app_id)
+        usernames.append(user_cred.username)
+
+    connectid_links = ConnectIDUserLink.objects.filter(
+        commcare_user__username__in=usernames
+    )
+    connectid_username_by_commcare_username = {
+        link.commcare_user.username: link.connectid_username for link in connectid_links
+    }
+
+    app_names_by_id = get_app_names_by_id(app_ids)
+    credentials_to_submit = []
+    credential_ids_to_update = []
+    for user_cred in user_credentials:
+        connectid_username = connectid_username_by_commcare_username.get(user_cred.username)
+        if not connectid_username:
+            continue  # TODO: Handle case where ConnectID username is not found
+
+        credential_ids_to_update.append(user_cred.id)
+        credentials_to_submit.append({
+            'users': [connectid_username],
+            'title': app_names_by_id[user_cred.app_id],
+            'type': CREDENTIAL_TYPE,
+            'level': user_cred.type,
+            'slug': user_cred.app_id,
+            'app_id': user_cred.app_id,
+        })
+
+    return credentials_to_submit, credential_ids_to_update
+
+
+def get_app_names_by_id(app_ids):
+    from corehq.apps.app_manager.dbaccessors import get_apps_by_id
+
+    app_names = get_apps_by_id(domain=None, app_ids=app_ids)
+    return {app_id: app_name for app_id, app_name in app_names}
