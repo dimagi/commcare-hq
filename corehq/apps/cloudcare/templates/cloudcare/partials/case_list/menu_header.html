@@ -31,10 +31,10 @@
 </div>
 
 <% if (isMultiSelect) { %>
-  <div class="case-list-actions d-grid gap-2 d-md-flex align-items-center">
-    {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
-    <% if (mapAvailable) { %>
-      {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="ms-auto d-none d-lg-block" %}
-    <% } %>
-  </div>
+<div class="case-list-actions d-grid gap-2 d-md-flex align-items-center">
+  {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
+  <% if (mapAvailable) { %>
+  {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="ms-auto d-none d-lg-block" %}
+  <% } %>
+</div>
 <% } %>
