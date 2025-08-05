@@ -8,30 +8,27 @@ Overview
 What are pillows
 ----------------
 Pillows are a component of the publisher/subscriber design pattern that
-is used for asynchronous communication.
-
-A pillow subscribes to a change feed, and when changes are received, performs
-specific operations related to that change.
+is used for asynchronous communication. A pillow subscribes to a change feed,
+and when changes are received, performs specific operations related to that change.
 
 Why do we need pillows
 ----------------------
 In CommCare HQ, pillows are primarily used to update secondary databases like
-Elasticsearch and User Configurable Reports (UCRs). Examples of other use cases
+Elasticsearch and User Configurable Reports (UCRs). Some other use cases
 are invalidating cache or checking if alerts need to be sent.
 
 How do pillows receive changes
 ------------------------------
-We use Kafka as our message queue, which allows producers to publish changes to
-the queue, and consumers (i.e. pillows) to listen for and process those changes.
-
-Kafka uses _topics_ to organize related changes, and pillows can listen for
-changes to one or more specific topics.
+We use Kafka as the message queue. Producers send changes to Kafka, and
+consumers (i.e. pillows) listen to those changes and process them. Kafka uses
+*topics* to organize related changes, and pillows listen for changes to
+one or more topics.
 
 Why the name
 ------------
-Pillows, as part of the pillowtop framework, were created by us to consume and
-process changes from the CouchDB change feed. Our usage of pillows has since
-expanded beyond CouchDB.
+Pillows were initially created to process changes specifically from CouchDB. The
+idea was that "pillows" sit on top of the "couch". Our usage of pillows has since
+expanded beyond Couch, making this name a historical artifact.
 
 Deconstructing a Pillow
 =======================
@@ -46,40 +43,33 @@ few parts:
 
 Change Feed
 -----------
-The brief overview is that a change feed publishes changes which a pillow can
-subscribe to. When setting up a pillow, an instance of a `ChangeFeed` class is
-created and configured to only contain changes the pillow cares about.
+An instance of a `ChangeFeed` class is created and configured to only contain
+changes the pillow cares about when setting up a pillow.
 
 For more information about change feeds, see :ref:`Change Feeds`.
 
 Checkpoint
 ----------
 
-The checkpoint is a json field that tells processor where to start the change
-feed.
+The checkpoint is a JSON field that tells the processor where to start reading
+from the change feed.
 
 Processors
-------------
+----------
 
-A processor is a method that operates on the incoming change. Historically, we
-had one processor per pillow, however we have since shifted to favor multiple
-processors for each pillow. This way, all processors can operate on the change
-which ensures all operations relevant for a change happen within relatively the
-same time window.
+A processor operates on the incoming change. For example, the case pillow
+has multiple processors, one to send case changes to elasticsearch, another
+to update UCR datasources, etc.
 
-When creating a processor you should be aware of how much time it will take to
-process the record. A useful baseline is:
-
-86400 seconds per day / # of expected changes per day = how long your processor should take
-
-Note that it should be faster than this as most changes will come in at once
-instead of evenly distributed throughout the day.
+Historically, we had one processor per pillow, however we now favor multiple
+processors per pillow. This is due to the large memory consumption of
+a pillow process, and wanting to minimize how many pillow processes we need to run.
 
 Change Event Handler
 --------------------
 
 This fires after each change has been processed. The main use case is to save
-the checkpoint to the database.
+checkpoints to the database.
 
 Error Handling
 ==============
@@ -88,22 +78,14 @@ Errors
 ------
 Pillows can fail to process a change for a number of reasons. The most common
 causes of pillow errors are a code bug, or a failure in a dependent service
-(e.g., attempting to save a change to Elasticsearch but it is unreachable).
-
-Errors encountered in processors are handled by creating an instance of the
-`PillowError` database model.
+(e.g., attempting to save a change to Elasticsearch but it is unreachable). If
+errors are encountered in processors, a `PillowError` is created.
 
 Retries
 --------
-The `run_pillow_retry_queue` command is configured to run continuously in a
-celery queue, and looks for new `PillowError` objects to retry. A pillow has the
+The `run_pillow_retry_queue` command is configured to run continuously on a
+pillow machine, and looks for new `PillowError` objects to retry. A pillow has the
 option to disable retrying errors via the `retry_errors` property.
-
-If the related pillow reads from a Kafka change feed, the change associated with
-the error is re-published into Kafka. However if it reads from a Couch change
-feed, the pillow's processor is called directly with the change passed in. In
-both cases, the `PillowError` is deleted, a new one will be created if it fails
-again.
 
 Monitoring
 ==========
