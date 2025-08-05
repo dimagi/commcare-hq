@@ -29,6 +29,8 @@ class TestableBaseExportView(BaseExportView):
     """
     Testable implementation of BaseExportView
     """
+    __test__ = False
+
     export_type = None
 
     def __init__(self, export_instance):
