@@ -126,6 +126,7 @@ accounting
  0104_fix_priv_community_rename
  0105_alter_billingcontactinfo_city_and_more
  0106_alter_billingcontactinfo_company_name
+ 0107_two_stage_mobile_worker_creation_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
