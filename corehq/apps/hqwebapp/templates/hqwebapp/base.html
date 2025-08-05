@@ -57,6 +57,9 @@
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>
     <script type='module' src='https://unpkg.com/open-chat-studio-widget@0.4.1/dist/open-chat-studio-widget/open-chat-studio-widget.esm.js' async></script>
+    {% if not use_bootstrap5 %}
+    <script src="{% static 'hqwebapp/js/ocs_widget_bootstrap3_fix.js' %}"></script>
+    {% endif %}
     {% block head %}
     {% endblock %}
   </head>
