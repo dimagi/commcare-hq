@@ -121,7 +121,7 @@ def get_credentials_to_submit():
 
         credential_ids_to_update.append(user_cred.id)
         credentials_to_submit.append({
-            'users': [connectid_username],
+            'usernames': [connectid_username],
             'title': app_names_by_id[user_cred.app_id],
             'type': CREDENTIAL_TYPE,
             'level': user_cred.type,
