@@ -29,15 +29,12 @@ class DataDictionaryViewTestBase(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
         cls.user = WebUser.create(None, 'username', 'Passw0rd!', None, None)
         cls.user.add_domain_membership(cls.domain_name, is_admin=True)
         cls.user.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain_name, deleted_by=None)
-        cls.domain_obj.delete()
-        super().tearDownClass()
+        cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
@@ -54,11 +51,6 @@ class UpdateCasePropertyViewTest(DataDictionaryViewTestBase):
         group = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
         group.id = 1
         group.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        super().tearDownClass()
 
     def setUp(self):
         self.url = reverse('update_case_property', args=[self.domain_name])
@@ -263,24 +255,24 @@ class DataDictionaryViewTest(TestCase):
     def setUpClass(cls):
         super(DataDictionaryViewTest, cls).setUpClass()
         cls.domain_obj = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
         cls.user_data_dict_access = cls.make_user_with_data_dict_role(
             'has_data_dict@ex.com',
             cls.domain_obj,
             has_data_dict_access=True,
         )
+        cls.addClassCleanup(cls.user_data_dict_access.delete, cls.domain_name, deleted_by=None)
+
         cls.user_no_data_dict_access = cls.make_user_with_data_dict_role(
             'no_data_dict@ex.com',
             cls.domain_obj,
         )
+        cls.addClassCleanup(cls.user_no_data_dict_access.delete, cls.domain_name, deleted_by=None)
+
         cls.client = Client()
         cls.url = reverse('data_dictionary', args=[cls.domain_name])
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user_data_dict_access.delete(cls.domain_name, deleted_by=None)
-        cls.user_no_data_dict_access.delete(cls.domain_name, deleted_by=None)
-        cls.domain_obj.delete()
-        super(DataDictionaryViewTest, cls).tearDownClass()
 
     def test_has_view_access(self):
         self.client.login(username='has_data_dict@ex.com', password='Passw0rd!')
@@ -313,11 +305,6 @@ class TestDeprecateOrRestoreCaseTypeView(DataDictionaryViewTestBase):
         )
         self.client = Client()
         self.client.login(username='username', password='Passw0rd!')
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        return super().tearDownClass()
 
     def _update_deprecate_state(self, is_deprecated):
         case_type_obj = CaseType.objects.get(name=self.case_type_name)
@@ -408,12 +395,6 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
             "data_dictionary_json_case_types",
             args=[cls.domain_name],
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        cls.deprecated_case_type_obj.delete()
-        super().tearDownClass()
 
     def setUp(self):
         self.client.login(username='username', password='Passw0rd!')
@@ -693,11 +674,6 @@ class TestDeleteCaseType(DataDictionaryViewTestBase):
         )
         self.client = Client()
         self.client.login(username='username', password='Passw0rd!')
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        return super().tearDownClass()
 
     def test_delete_case_type(self):
         response = self.client.post(self.endpoint, {})
