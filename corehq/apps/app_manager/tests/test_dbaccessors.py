@@ -353,6 +353,7 @@ class TestAppGetters(TestCase):
 
 class TestGetLatestAppIds(TestCase):
     domain = 'test-get_latest_app_ids'
+    AppMeta = namedtuple('app_meta', 'app build release')
 
     @classmethod
     @patch_validate_xform()
@@ -363,12 +364,26 @@ class TestGetLatestAppIds(TestCase):
 
         cls.app_no_builds = cls.make_app()
         cls.built_app = cls.make_app(make_build=True)
-        cls.released_app = cls.make_app(release=True)
-        cls.app_with_unreleased_changes = cls.make_app(release=True)
+        cls.released_app = cls.make_app(make_release=True)
+        cls.app_with_unreleased_changes = cls.make_app(make_release=True)
         cls.app_with_unreleased_changes.app.save()
 
+        cls.webapp_no_builds = cls.make_app(cloudcare_enabled=True)
+        cls.built_webapp = cls.make_app(cloudcare_enabled=True, make_build=True)
+        cls.released_webapp = cls.make_app(cloudcare_enabled=True, make_release=True)
+        cls.webapp_with_unreleased_changes = cls.make_app(cloudcare_enabled=True, make_release=True)
+        cls.webapp_with_unreleased_changes.app.save()
+
+        _app, _build, _release = cls.make_app(cloudcare_enabled=True, make_release=True)
+        _app.cloudcare_enabled = False
+        _app.save()
+        _new_build = _app.make_build()
+        _new_build.save()
+        # This app had cloudcare disabled. It's been built but not released
+        cls.webapp_later_disabled = cls.AppMeta(_app, _new_build, _release)
+
     @classmethod
-    def make_app(cls, cloudcare_enabled=False, make_build=False, release=False):
+    def make_app(cls, cloudcare_enabled=False, make_build=False, make_release=False):
         factory = AppFactory(cls.domain, name='foo')
         m0, f0 = factory.new_basic_module("bar", "bar")
         f0.source = get_simple_form(xmlns=f0.unique_id)
@@ -377,17 +392,18 @@ class TestGetLatestAppIds(TestCase):
         if cloudcare_enabled:
             app.cloudcare_enabled = True
 
+        build, release = None, None
         app.save()
-        if make_build or release:
+        if make_build or make_release:
             build = app.make_build()
-            if release:
+            if make_release:
                 build.is_released = True
+                release = build
+
             build.save()
-        else:
-            build = None
 
         app.save()
-        return namedtuple('app_meta', 'app build')(app, build)
+        return cls.AppMeta(app, build, release)
 
     @classmethod
     def tearDownClass(cls):
@@ -402,6 +418,11 @@ class TestGetLatestAppIds(TestCase):
                 self.built_app.app._id,
                 self.released_app.app._id,
                 self.app_with_unreleased_changes.app._id,
+                self.webapp_no_builds.app._id,
+                self.built_webapp.app._id,
+                self.released_webapp.app._id,
+                self.webapp_with_unreleased_changes.app._id,
+                self.webapp_later_disabled.app._id,
             ],
         )
 
@@ -412,6 +433,10 @@ class TestGetLatestAppIds(TestCase):
                 self.built_app.build._id,
                 self.released_app.build._id,
                 self.app_with_unreleased_changes.build._id,
+                self.built_webapp.build._id,
+                self.released_webapp.build._id,
+                self.webapp_with_unreleased_changes.build._id,
+                self.webapp_later_disabled.build._id,
             ],
         )
 
@@ -419,7 +444,30 @@ class TestGetLatestAppIds(TestCase):
         self.assertItemsEqual(
             get_latest_app_ids(self.domain, 'release'),
             [
-                self.released_app.build._id,
-                self.app_with_unreleased_changes.build._id,
+                self.released_app.release._id,
+                self.app_with_unreleased_changes.release._id,
+                self.released_webapp.release._id,
+                self.webapp_with_unreleased_changes.release._id,
+                self.webapp_later_disabled.release._id,
+            ],
+        )
+
+    def test_get_latest_cloudcare_builds(self):
+        self.assertItemsEqual(
+            get_latest_app_ids(self.domain, 'build', cloudcare_only=True),
+            [
+                self.built_webapp.build._id,
+                self.released_webapp.build._id,
+                self.webapp_with_unreleased_changes.build._id,
+            ],
+        )
+
+    def test_get_latest_cloudcare_releases(self):
+        self.assertItemsEqual(
+            get_latest_app_ids(self.domain, 'release', cloudcare_only=True),
+            [
+                self.released_webapp.release._id,
+                self.webapp_with_unreleased_changes.release._id,
+                self.webapp_later_disabled.release._id,
             ],
         )
