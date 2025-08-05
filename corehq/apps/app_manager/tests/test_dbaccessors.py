@@ -1,3 +1,6 @@
+from collections import namedtuple
+from unittest.mock import patch, MagicMock
+
 from django.test import TestCase
 
 from couchdbkit.exceptions import NoResultFound
@@ -347,20 +350,76 @@ class TestAppGetters(TestCase):
         res = get_case_types_from_apps(self.domain)
         self.assertEqual(res, {'bar', 'case'})
 
+
+class TestGetLatestAppIds(TestCase):
+    domain = 'test-get_latest_app_ids'
+
+    @classmethod
+    @patch_validate_xform()
+    @patch('corehq.apps.app_manager.models._refresh_data_dictionary', MagicMock)
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = Domain.get_or_create_with_name(cls.domain)
+
+        cls.app_no_builds = cls.make_app()
+        cls.built_app = cls.make_app(make_build=True)
+        cls.released_app = cls.make_app(release=True)
+        cls.app_with_unreleased_changes = cls.make_app(release=True)
+        cls.app_with_unreleased_changes.app.save()
+
+    @classmethod
+    def make_app(cls, cloudcare_enabled=False, make_build=False, release=False):
+        factory = AppFactory(cls.domain, name='foo')
+        m0, f0 = factory.new_basic_module("bar", "bar")
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        app = factory.app
+
+        if cloudcare_enabled:
+            app.cloudcare_enabled = True
+
+        app.save()
+        if make_build or release:
+            build = app.make_build()
+            if release:
+                build.is_released = True
+            build.save()
+        else:
+            build = None
+
+        app.save()
+        return namedtuple('app_meta', 'app build')(app, build)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        super().tearDownClass()
+
     def test_get_latest_apps_save(self):
         self.assertItemsEqual(
             get_latest_app_ids(self.domain, 'save'),
-            [self.app_id, self.other_app_id],
+            [
+                self.app_no_builds.app._id,
+                self.built_app.app._id,
+                self.released_app.app._id,
+                self.app_with_unreleased_changes.app._id,
+            ],
         )
 
     def test_get_latest_apps_build(self):
         self.assertItemsEqual(
             get_latest_app_ids(self.domain, 'build'),
-            [self.v4_build._id],
+            [
+                self.built_app.build._id,
+                self.released_app.build._id,
+                self.app_with_unreleased_changes.build._id,
+            ],
         )
 
     def test_get_latest_apps_release(self):
         self.assertItemsEqual(
             get_latest_app_ids(self.domain, 'release'),
-            [self.v4_build._id],
+            [
+                self.released_app.build._id,
+                self.app_with_unreleased_changes.build._id,
+            ],
         )
