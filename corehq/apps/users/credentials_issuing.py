@@ -1,6 +1,8 @@
 from collections import defaultdict
+from django.conf import settings
 from dateutil.relativedelta import relativedelta
 import re
+import requests
 from datetime import datetime, timezone, date
 
 from corehq.apps.data_analytics.models import MALTRow
@@ -69,6 +71,24 @@ def submit_new_credentials():
     from corehq.apps.users.models import UserCredential
 
     credentials_to_submit, credential_ids_to_update = get_credentials_to_submit()
+
+    response = requests.post(
+        settings.CONNECTID_CREDENTIALS_URL,
+        json={
+            "credentials": credentials_to_submit
+        },
+        auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
+    )
+    response.raise_for_status()
+
+    # TODO: Handle credentials in 'failed' field
+    success_indices = response.json().get('success', [])
+    successful_credential_ids = [
+        credential_ids_to_update[i] for i in success_indices
+    ]
+
+    issued_date = datetime.now(timezone.utc)
+    UserCredential.objects.filter(id__in=successful_credential_ids).update(issued_on=issued_date)
 
 
 def get_credentials_to_submit():
