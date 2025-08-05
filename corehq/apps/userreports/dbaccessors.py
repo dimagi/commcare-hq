@@ -194,7 +194,7 @@ def get_orphaned_ucrs(engine_id, domain=None, ignore_active_domains=True):
     """
     deleted_domains_cache = DeletedDomains()
     if domain and not deleted_domains_cache.is_domain_deleted(domain):
-        assert not ignore_active_domains,\
+        assert not ignore_active_domains, \
             f"{domain} is active but ignore_active_domains is True"
 
     ucrs_with_datasources = _get_ucrs_with_datasources(engine_id,
