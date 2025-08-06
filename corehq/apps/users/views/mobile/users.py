@@ -332,11 +332,11 @@ class EditCommCareUserView(BaseEditUserView):
             messages.error(self.request, _(
                 "There were some errors while saving user's locations. Please check the 'Locations' tab"
             ))
-        if (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
+        if (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
                 and self.editable_user.self_set_password):
             context['reset_password_form'] = ''
         if (self.editable_user.is_active
-                and domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)):
+                and domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)):
             context.update({
                 'send_password_reset_email_form': SendCommCareUserPasswordResetEmailForm()
             })
@@ -734,7 +734,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def two_stage_user_confirmation(self):
-        return (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
+        return (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
                 or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain))
 
     @property
@@ -1598,7 +1598,7 @@ class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
 
-    @method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_CREATION))
+    @method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION))
     def dispatch(self, request, *args, **kwargs):
         return super(CommCareUserConfirmAccountViewByEmailView, self).dispatch(request, *args, **kwargs)
 

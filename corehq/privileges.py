@@ -120,7 +120,7 @@ CASE_LIST_EXPLORER = 'case_list_explorer'
 
 CASE_COPY = 'case_copy'
 
-TWO_STAGE_MOBILE_WORKER_CREATION = 'two_stage_mobile_worker_creation'
+TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION = 'two_stage_mobile_worker_account_creation'
 
 CASE_DEDUPE = 'case_deduplicate'
 CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
@@ -191,7 +191,7 @@ MAX_PRIVILEGES = [
     CUSTOM_DOMAIN_ALERTS,
     APP_DEPENDENCIES,
     BULK_DATA_EDITING,
-    TWO_STAGE_MOBILE_WORKER_CREATION,
+    TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -272,5 +272,5 @@ class Titles(object):
             CASE_DEDUPE: _("Deduplication Rules"),
             CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
             APP_DEPENDENCIES: _("App Dependencies"),
-            TWO_STAGE_MOBILE_WORKER_CREATION: _("Two-stage mobile worker account creation"),
+            TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION: _("Two-stage Mobile Worker Account Creation"),
         }.get(privilege, privilege)

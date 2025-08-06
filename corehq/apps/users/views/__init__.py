@@ -1723,7 +1723,7 @@ def change_password(request, domain, login_id):
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
     json_dump = {}
     if (not commcare_user or not user_can_access_other_user(domain, request.couch_user, commcare_user)
-            or (domain_has_privilege(domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
+            or (domain_has_privilege(domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
                 and commcare_user.self_set_password)):
         raise Http404()
     django_user = commcare_user.get_django_user()

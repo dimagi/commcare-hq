@@ -783,7 +783,7 @@ class NewMobileWorkerForm(forms.Form):
                 '',
                 data_bind='value: location_id',
             )
-        if domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION):
+        if domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION):
             confirm_account_field = crispy.Field(
                 'force_account_confirmation',
                 data_bind='checked: force_account_confirmation',

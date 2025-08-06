@@ -474,7 +474,7 @@ def _show_link_to_webapps(user):
         if user.domain_memberships:
             membership = user.domain_memberships[0]
             if membership.role and membership.role.default_landing_page == "webapps":
-                if domain_has_privilege(membership.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION):
+                if domain_has_privilege(membership.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION):
                     return True
     return False
 

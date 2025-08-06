@@ -248,17 +248,18 @@ def get_active_users_by_email(email, domain=None):
         if user.username.lower() == email.lower():
             yield user
         else:
-            # also any mobile workers with domains with TWO_STAGE_MOBILE_WORKER_CREATION privilege
+            # also any mobile workers with domains with TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION privilege
             # should be included
             couch_user = CouchUser.get_by_username(user.username, strict=True)
             if (couch_user
                     and couch_user.is_commcare_user()
-                    and domain_has_privilege(couch_user.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
+                    and domain_has_privilege(couch_user.domain,
+                                             privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
                     and (domain is None or couch_user.domain == domain)):
                 yield user
             # intentionally excluded:
             # - WebUsers who have changed their email address from their login (though could revisit this)
-            # - CommCareUsers not belonging to domains with TWO_STAGE_MOBILE_WORKER_CREATION privilege
+            # - CommCareUsers not belonging to domains with TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION privilege
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):
