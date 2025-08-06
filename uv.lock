@@ -1288,18 +1288,6 @@ wheels = [
 ]
 
 [[package]]
-name = "elasticsearch5"
-version = "5.5.6"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "urllib3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7b/88/4034caa9d9ed852e681d1ad1d374aa10046cc9e9cc41ebc70dbccd43ed11/elasticsearch5-5.5.6.tar.gz", hash = "sha256:331ce226182c75cfdf6b823f9f30b5a555fa91b85f1d05ac9958758150e2e8c7", size = 69797, upload-time = "2019-05-28T19:24:16.738Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/99/9cfd6881a4242a5d03c5c817b0f3231ba3afe5248118e2be465c29c51dce/elasticsearch5-5.5.6-py2.py3-none-any.whl", hash = "sha256:3d95aef3317b1e28288ab8dd2ee38e2a6aae96df14ffcd4ecbea4f681dc4891d", size = 62571, upload-time = "2019-05-28T19:24:18.621Z" },
-]
-
-[[package]]
 name = "elasticsearch6"
 version = "6.8.2"
 source = { registry = "https://pypi.org/simple" }
