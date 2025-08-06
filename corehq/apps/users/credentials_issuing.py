@@ -117,7 +117,7 @@ def get_credentials_to_submit():
     for user_cred in user_credentials:
         connectid_username = connectid_username_by_commcare_username.get(user_cred.username)
         if not connectid_username:
-            continue  # TODO: Handle case where ConnectID username is not found
+            continue  # Skip these users as they still need to set up their PersonalID account
 
         credential_ids_to_update.append(user_cred.id)
         credentials_to_submit.append({
