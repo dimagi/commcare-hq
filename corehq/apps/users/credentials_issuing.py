@@ -135,5 +135,5 @@ def get_credentials_to_submit():
 def get_app_names_by_id(app_ids):
     from corehq.apps.app_manager.dbaccessors import get_apps_by_id
 
-    app_names = get_apps_by_id(domain=None, app_ids=app_ids)
-    return {app_id: app_name for app_id, app_name in app_names}
+    apps = get_apps_by_id(domain=None, app_ids=app_ids)
+    return {app.id: app.name for app in apps}
