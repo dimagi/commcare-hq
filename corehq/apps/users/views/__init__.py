@@ -834,7 +834,7 @@ def paginate_enterprise_users(request, domain):
                 'profile': profile.name if profile else None,
                 'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
                 'loginAsUser': web_user.username,
-                'is_active': mobile_user.is_active,
+                'is_active': mobile_user.is_active_in_domain(mobile_user.domain),
             })
 
     return JsonResponse({
