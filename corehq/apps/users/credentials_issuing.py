@@ -5,6 +5,8 @@ import re
 import requests
 from datetime import datetime, timezone, date
 
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.data_analytics.models import MALTRow
 
 
@@ -68,8 +70,6 @@ def get_app_ids_by_activity_level():
 
 
 def submit_new_credentials():
-    from corehq.apps.users.models import UserCredential
-
     credentials_to_submit, credential_ids_to_update = get_credentials_to_submit()
 
     response = requests.post(
@@ -81,14 +81,7 @@ def submit_new_credentials():
     )
     response.raise_for_status()
 
-    # TODO: Handle credentials in 'failed' field
-    success_indices = response.json().get('success', [])
-    successful_credential_ids = [
-        credential_ids_to_update[i] for i in success_indices
-    ]
-
-    issued_date = datetime.now(timezone.utc)
-    UserCredential.objects.filter(id__in=successful_credential_ids).update(issued_on=issued_date)
+    mark_credentials_as_issued(response, credential_ids_to_update)
 
 
 def get_credentials_to_submit():
@@ -130,6 +123,32 @@ def get_credentials_to_submit():
         })
 
     return credentials_to_submit, credential_ids_to_update
+
+
+def mark_credentials_as_issued(response, credential_ids):
+    from corehq.apps.users.models import UserCredential
+
+    success_indices = response.json().get('success', [])
+    failed_indices = response.json().get('failed', [])
+    success_credential_ids = []
+    failed_credential_ids = []
+    for i, id in enumerate(credential_ids):
+        if i in success_indices:
+            success_credential_ids.append(id)
+        elif i in failed_indices:
+            failed_credential_ids.append(id)
+
+    issued_date = datetime.now(timezone.utc)
+    UserCredential.objects.filter(id__in=success_credential_ids).update(issued_on=issued_date)
+
+    if failed_credential_ids:
+        notify_exception(
+            None,
+            f"Failed to submit {len(failed_credential_ids)} credentials to PersonalID",
+            details={
+                'failed_credential_ids': failed_credential_ids,
+            }
+        )
 
 
 def get_app_names_by_id(app_ids):
