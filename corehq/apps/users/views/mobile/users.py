@@ -1594,13 +1594,11 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
 
 @location_safe
+@method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION),
+                name="dispatch")
 class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
-
-    @method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION))
-    def dispatch(self, request, *args, **kwargs):
-        return super(CommCareUserConfirmAccountViewByEmailView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -1640,13 +1638,10 @@ class CommCareUserAccountConfirmedView(TemplateView, DomainViewMixin):
 
 
 @location_safe
+@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.required_decorator(), name="dispatch")
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
     HOURS_IN_A_DAY = 24
-
-    @method_decorator(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(CommCareUserConfirmAccountBySMSView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
