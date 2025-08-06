@@ -1521,10 +1521,6 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     strict_domain_fetching = True
     ONE_HOUR_IN_SECONDS = 60 * 60
 
-    @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
-    def dispatch(self, request, *args, **kwargs):
-        return super(CommCareUserConfirmAccountView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def user_invite_hash(self):
@@ -1602,6 +1598,10 @@ class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
 
+    @method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_CREATION))
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserConfirmAccountViewByEmailView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def form(self):
@@ -1643,6 +1643,10 @@ class CommCareUserAccountConfirmedView(TemplateView, DomainViewMixin):
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
     HOURS_IN_A_DAY = 24
+
+    @method_decorator(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserConfirmAccountBySMSView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
