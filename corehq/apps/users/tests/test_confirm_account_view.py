@@ -48,7 +48,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
 
     def test_does_not_have_privilege(self):
         response = self.client.get(self.url)
-        print("response.content.decode()", response.content.decode())
+        self.assertEqual(200, response.status_code)
         self.assertContains(response, "you do not have access to Two-stage Mobile Worker Account Creation")
 
     @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
