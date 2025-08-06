@@ -56,9 +56,10 @@ def get_web_apps_available_to_user(domain, user, fetch_app_fn=get_latest_build_f
     apps = []
     app_ids = get_app_ids_in_domain(domain)
     for app_id in app_ids:
-        app = fetch_app_fn(domain, user.username, app_id)
-        if app and is_web_app(app) and can_user_access_web_app(domain, user, app_id):
-            apps.append(app)
+        if can_user_access_web_app(domain, user, app_id):
+            app = fetch_app_fn(domain, user.username, app_id)
+            if app and is_web_app(app):
+                apps.append(app)
 
     return apps
 
