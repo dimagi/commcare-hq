@@ -57,7 +57,7 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
-    get_latest_build_for_web_apps,
+    can_user_access_web_app,
     get_latest_build_id_for_web_apps,
     get_mobile_ucr_count,
     get_web_apps_available_to_user,
@@ -104,23 +104,15 @@ class FormplayerMain(View):
     def dispatch(self, request, *args, **kwargs):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
-    def make_specific_build_fetcher(self, original_app_id, build_id):
-        def get_build_or_latest(domain, username, app_id):
-            if original_app_id == app_id:
-                return get_build_doc_by_build_id(build_id)
-
-            return get_latest_build_for_web_apps(domain, username, app_id)
-
-        return get_build_or_latest
-
     def get_web_apps_for_user(self, domain, user, app_id=None, build_id=None):
         if app_id and build_id:
-            # Linked from releases page > "Open in Web Apps"
-            fetch_app_fn = self.make_specific_build_fetcher(app_id, build_id)
-        else:
-            fetch_app_fn = get_latest_build_for_web_apps
+            if can_user_access_web_app(domain, user, app_id):
+                build = get_build_doc_by_build_id(build_id)
+                if build.get('cloudcare_enabled'):
+                    return [_format_app_doc(build)]
+            return []
 
-        apps = get_web_apps_available_to_user(domain, user, fetch_app_fn=fetch_app_fn)
+        apps = get_web_apps_available_to_user(domain, user)
         apps = [_format_app_doc(app) for app in apps]
         return sorted(apps, key=lambda app: app['name'].lower())
 
