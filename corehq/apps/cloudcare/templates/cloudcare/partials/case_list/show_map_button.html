@@ -1,0 +1,10 @@
+{% load i18n %}
+<button
+  class="btn btn-primary hide-map-button {{ extra_classes|default:'' }}"
+  type="button"
+  aria-expanded="true"
+  aria-controls="module-case-list-map"
+>
+  <% if (mapVisible()) { %> {% trans "Hide Map" %} <% } else { %>
+  {% trans "Show Map" %} <% } %>
+</button>

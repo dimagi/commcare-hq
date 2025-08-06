@@ -3,21 +3,11 @@
 
 <div class="page-header menu-header clearfix" id="case-list-menu-header">
   <div class="float-end">
-    <% if (mapAvailable) { %>
-    <button
-      id="hide-map-button"
-      class="btn btn-primary float-end"
-      type="button"
-      aria-expanded="true"
-      aria-controls="module-case-list-map"
-    >
-      <% if (mapVisible()) { %>
-        {% trans "Hide Map" %}
-      <% } else { %>
-        {% trans "Show Map" %}
-      <% } %>
-    </button>
-    <% } %> <% if (sidebarEnabled) { %>
+    <% if (mapAvailable) { %> <% if (isMultiSelect) { %>
+    {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="float-end d-block d-lg-none" %}
+    <% } else { %>
+    {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="float-end" %}
+    <% } %> <% } %> <% if (sidebarEnabled) { %>
     <button
       id="search-more"
       class="btn btn-primary d-xs-block d-sm-block d-md-block d-lg-none float-end"
@@ -39,3 +29,12 @@
   </div>
   <% } %>
 </div>
+
+<% if (isMultiSelect) { %>
+<div class="case-list-actions d-grid gap-2 d-md-flex align-items-center">
+  {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
+  <% if (mapAvailable) { %>
+  {% include "cloudcare/partials/case_list/show_map_button.html" with extra_classes="ms-auto d-none d-lg-block" %}
+  <% } %>
+</div>
+<% } %>
