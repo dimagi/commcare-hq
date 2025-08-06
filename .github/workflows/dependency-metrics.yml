@@ -19,8 +19,6 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: '0.7.2'
-      - name: install libxml
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxmlsec1-dev
       - name: install dev-requirements
         run: uv sync --all-groups --locked --compile-bytecode --no-progress
       - name: run metrics for pip
