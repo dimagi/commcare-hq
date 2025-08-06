@@ -894,7 +894,7 @@ class TestWebUserResource(APIResourceTest):
         user.save()
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
 
-        activate_url = self.single_endpoint(user.get_id) + 'enable/'
+        activate_url = self.single_endpoint(user.get_id) + 'activate/'
         response = self._assert_auth_post_resource(
             activate_url, json.dumps({}), content_type='application/json', method='POST')
         updated_user = WebUser.get(user.get_id)
@@ -910,7 +910,7 @@ class TestWebUserResource(APIResourceTest):
                               created_by=None, created_via=None, is_active=True)
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
 
-        activate_url = self.single_endpoint(user.get_id) + 'disable/'
+        activate_url = self.single_endpoint(user.get_id) + 'deactivate/'
         response = self._assert_auth_post_resource(
             activate_url, json.dumps({}), content_type='application/json', method='POST')
         updated_user = WebUser.get(user.get_id)
