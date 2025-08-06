@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            _add_data_cleaning_to_enterprise,
+            _add_two_stage_mw_creation_to_standard,
             reverse_code=_reverse,
         ),
     ]
