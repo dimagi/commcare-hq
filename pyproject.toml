@@ -135,12 +135,6 @@ Repository = "https://github.com/dimagi/commcare-hq"
 [tool.uv]
 required-version = ">=0.7.0"
 default-groups = ["dev", "sso"]
-no-binary-package = [
-    # fixes xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
-    # revisit if new lxml or xmlsec versions are released
-    # https://github.com/xmlsec/python-xmlsec/issues/316
-    "lxml",
-]
 
 [dependency-groups]
 dev = [
