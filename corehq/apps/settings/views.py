@@ -38,6 +38,9 @@ from two_factor.plugins.phonenumber.views import (
 from dimagi.utils.web import json_response
 
 from corehq import toggles
+from corehq import privileges
+
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import (
     active_domains_required,
     login_and_domain_required,
@@ -471,7 +474,7 @@ def _show_link_to_webapps(user):
         if user.domain_memberships:
             membership = user.domain_memberships[0]
             if membership.role and membership.role.default_landing_page == "webapps":
-                if toggles.TWO_STAGE_USER_PROVISIONING.enabled(membership.domain):
+                if domain_has_privilege(membership.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION):
                     return True
     return False
 

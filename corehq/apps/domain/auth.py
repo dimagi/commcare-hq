@@ -20,9 +20,11 @@ from django.utils import timezone
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
+from corehq import privileges
+
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey, ConnectIDUserLink
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.metrics import metrics_counter
 
@@ -246,16 +248,17 @@ def get_active_users_by_email(email, domain=None):
         if user.username.lower() == email.lower():
             yield user
         else:
-            # also any mobile workers from TWO_STAGE_USER_PROVISIONING domains should be included
+            # also any mobile workers with domains with TWO_STAGE_MOBILE_WORKER_CREATION privilege
+            # should be included
             couch_user = CouchUser.get_by_username(user.username, strict=True)
             if (couch_user
                     and couch_user.is_commcare_user()
-                    and TWO_STAGE_USER_PROVISIONING.enabled(couch_user.domain)
+                    and domain_has_privilege(couch_user.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
                     and (domain is None or couch_user.domain == domain)):
                 yield user
             # intentionally excluded:
             # - WebUsers who have changed their email address from their login (though could revisit this)
-            # - CommCareUsers not belonging to domains with TWO_STAGE_USER_PROVISIONING enabled
+            # - CommCareUsers not belonging to domains with TWO_STAGE_MOBILE_WORKER_CREATION privilege
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):

@@ -332,9 +332,11 @@ class EditCommCareUserView(BaseEditUserView):
             messages.error(self.request, _(
                 "There were some errors while saving user's locations. Please check the 'Locations' tab"
             ))
-        if toggles.TWO_STAGE_USER_PROVISIONING.enabled(self.domain) and self.editable_user.self_set_password:
+        if (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
+                and self.editable_user.self_set_password):
             context['reset_password_form'] = ''
-        if self.editable_user.is_active and toggles.TWO_STAGE_USER_PROVISIONING.enabled(self.domain):
+        if (self.editable_user.is_active
+                and domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)):
             context.update({
                 'send_password_reset_email_form': SendCommCareUserPasswordResetEmailForm()
             })
@@ -732,9 +734,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def two_stage_user_confirmation(self):
-        return toggles.TWO_STAGE_USER_PROVISIONING.enabled(
-            self.domain
-        ) or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+        return (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
+                or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain))
 
     @property
     def page_context(self):

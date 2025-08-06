@@ -284,7 +284,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(e.message)
         try:
             email = bundle.data.get('email', '').lower()
-            if (toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain'])
+            if (domain_has_privilege(kwargs['domain'], privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
                     and (require_account_confirmation or send_confirmation_email)):
                 self.validate_new_user_input(require_account_confirmation, send_confirmation_email,
                                              email, password)
@@ -355,7 +355,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
 
-        if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']) and send_confirmation_email:
+        if (domain_has_privilege(kwargs['domain'], privileges.TWO_STAGE_MOBILE_WORKER_CREATION)
+                and send_confirmation_email):
             if bundle.obj.is_account_confirmed:
                 raise BadRequest(_("The confirmation email can not be sent "
                                    "because this user's account is already confirmed."))

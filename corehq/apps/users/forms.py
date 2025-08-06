@@ -21,8 +21,10 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
+from corehq import privileges
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -59,7 +61,6 @@ from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.toggles import (
     DEACTIVATE_WEB_USERS,
-    TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
 from corehq.util.global_request import get_request_domain
@@ -782,9 +783,7 @@ class NewMobileWorkerForm(forms.Form):
                 '',
                 data_bind='value: location_id',
             )
-
-        self.two_stage_provisioning_enabled = TWO_STAGE_USER_PROVISIONING.enabled(self.domain)
-        if self.two_stage_provisioning_enabled:
+        if domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_CREATION):
             confirm_account_field = crispy.Field(
                 'force_account_confirmation',
                 data_bind='checked: force_account_confirmation',
