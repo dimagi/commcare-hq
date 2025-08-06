@@ -1,10 +1,12 @@
 from django.test import TestCase
 
+from corehq import privileges
+
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.users.util import generate_mobile_username
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import privilege_enabled
 
 
 class PasswordResetTest(TestCase):
@@ -44,7 +46,7 @@ class PasswordResetTest(TestCase):
         results = list(get_active_users_by_email(email))
         self.assertEqual(0, len(results))
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_mobile_worker_included_with_flag(self):
         email = 'mw-included@example.com'
         mobile_worker = CommCareUser.create(self.domain, 'mw-included', 's3cr3t', None, None, email=email)
@@ -63,7 +65,7 @@ class PasswordResetTest(TestCase):
         self.assertEqual(1, len(results))
         self.assertEqual(active_user.username, results[0].username)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_domain_limited_mobile_worker_lookup(self):
         other_domain = 'other-domain'
         email = 'active-user@example.com'

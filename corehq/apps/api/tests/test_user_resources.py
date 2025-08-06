@@ -8,6 +8,7 @@ from django.utils.http import urlencode
 from flaky import flaky
 from tastypie.bundle import Bundle
 
+from corehq import privileges
 from corehq.apps.api.resources import v0_5, v1_0
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
@@ -40,7 +41,7 @@ from corehq.apps.users.signals import update_user_in_es
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util.es.testing import sync_users_to_es
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 from ..resources.v0_5 import BadRequest, UserDomainsResource
 from .utils import APIResourceTest
@@ -203,7 +204,7 @@ class TestCommCareUserResource(APIResourceTest):
                          [self.loc1.location_id, self.loc2.location_id])
         self.assertEqual(user_back.get_location_id(self.domain.name), self.loc1.location_id)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
     def test_create_and_send_confirmation_email(self, mock_send_account_confirmation):
         self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
@@ -223,7 +224,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertNotEqual(mobile_user, None)
         self.assertEqual(mock_send_account_confirmation.call_count, 1)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_create_and_send_confirmation_email_invalid_input(self):
         user_json = {
             "username": "jdoe",
@@ -446,7 +447,7 @@ class TestCommCareUserResource(APIResourceTest):
             "non-editable field 'username', 'default_phone_number' must be a string\"}"
         )
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
     def test_update_and_send_confirmation_email(self, mock_send_account_confirmation):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234", created_by=None,
@@ -463,7 +464,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(mock_send_account_confirmation.call_count, 1)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
     def test_update_and_send_confirmation_already_confirmed(self, mock_send_account_confirmation):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
@@ -483,7 +484,7 @@ class TestCommCareUserResource(APIResourceTest):
                          "this user's account is already confirmed.")
         self.assertEqual(mock_send_account_confirmation.call_count, 0)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     @patch('corehq.apps.users.account_confirmation.send_account_confirmation')
     def test_update_and_send_confirmation_no_email(self, mock_send_account_confirmation):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234", created_by=None,
@@ -501,7 +502,7 @@ class TestCommCareUserResource(APIResourceTest):
                          "This user has no email. You must provide the user's email to send a confirmation email.")
         self.assertEqual(mock_send_account_confirmation.call_count, 0)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_update_cant_change_account_confirmation(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")

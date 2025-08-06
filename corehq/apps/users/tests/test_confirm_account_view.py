@@ -2,11 +2,13 @@ from django.test import TestCase
 from django.urls import reverse
 from unittest.mock import Mock, patch
 
+from corehq import privileges
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.utils import encrypt_account_confirmation_info
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.views.mobile.users import CommCareUserConfirmAccountView
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import privilege_enabled
 
 
 class TestMobileWorkerConfirmAccountView(TestCase):
@@ -38,7 +40,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
     def tearDown(self):
         self.user.delete(self.domain, deleted_by=None)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_expected_workflow(self):
         response = self.client.get(self.url)
         self.assertEqual(200, response.status_code)
@@ -48,7 +50,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(404, response.status_code)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_user_id_not_found(self):
         mock_commcare_user = Mock()
         mock_commcare_user.get_id = 'missing-id'
@@ -57,13 +59,13 @@ class TestMobileWorkerConfirmAccountView(TestCase):
         response = self.client.get(reverse('commcare_user_confirm_account', args=[self.domain, encrypted_info]))
         self.assertEqual(404, response.status_code)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_user_domain_mismatch(self):
         response = self.client.get(reverse('commcare_user_confirm_account',
                                            args=['wrong-domain', self.user.get_id]))
         self.assertEqual(404, response.status_code)
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_account_active(self):
         self.user.is_account_confirmed = True
         self.user.is_active = True
@@ -72,7 +74,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'Your account is already confirmed')
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     def test_account_inactive_but_confirmed(self):
         self.user.is_account_confirmed = True
         self.user.is_active = False
@@ -81,7 +83,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'your account has been deactivated')
 
-    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    @privilege_enabled(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
     @patch.object(CommCareUserConfirmAccountView, '_expiration_time_in_hours', new_callable=Mock(return_value=-1))
     def test_invite_expired_message(self, mock_expiration_time):
         response = self.client.get(self.url)
