@@ -8,7 +8,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 
 
 @skip_on_fresh_install
-def _add_data_cleaning_to_enterprise(apps, schema_editor):
+def _add_two_stage_mw_creation_to_standard(apps, schema_editor):
     call_command('cchq_prbac_bootstrap')
 
     skip_editions = ','.join((
