@@ -3383,6 +3383,14 @@ msgid "Error determining number of matching users"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Unavailable"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "<%- minutes %> minutes remaining"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr ""
 

@@ -3602,6 +3602,16 @@ msgid "Error determining number of matching users"
 msgstr "मिलते-जुलते उपयोगकर्ताओं की संख्या निर्धारित करने में त्रुटि"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Unavailable"
+msgstr "उपलब्ध नहीं"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#, fuzzy
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "<%- days %> दिन शेष"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "कृपया एक मान्य ईमेल पता दर्ज करें।"
 

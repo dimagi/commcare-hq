@@ -4704,6 +4704,7 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/edit_commcare_user.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
 #: corehq/motech/generic_inbound/views.py
@@ -5830,6 +5831,10 @@ msgid "1.5"
 msgstr "1.5"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "10 Meters"
+msgstr "10 मीटर"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "10"
 msgstr "10"
 
@@ -5859,6 +5864,10 @@ msgid "2.x"
 msgstr "2.x"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "20 Meters"
+msgstr "20 मीटर"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "20"
 msgstr "20"
 
@@ -5875,12 +5884,20 @@ msgid "4 hours"
 msgstr "4 घंटे"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "40 Meters"
+msgstr "40 मीटर"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "40"
 msgstr "40"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "5 Days"
 msgstr "5 दिन"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid "5 Meters"
+msgstr "5 मीटर"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "5"
@@ -5893,6 +5910,10 @@ msgstr "6 घंटे"
 #: corehq/apps/app_manager/static_strings.py
 msgid "8 hours"
 msgstr "8 घंटे"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid "80 Meters"
+msgstr "80 मीटर"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "80"
@@ -5980,6 +6001,12 @@ msgstr "ऐप संस्करण"
 #: corehq/apps/app_manager/static_strings.py corehq/apps/hqmedia/models.py
 msgid "Audio"
 msgstr "ऑडियो"
+
+#: corehq/apps/app_manager/static_strings.py
+#, fuzzy
+#| msgid "Auto Capture Location"
+msgid "Auto-Capture Location Accuracy"
+msgstr "स्वचालित स्थान कैप्चर करें"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Auto Capture Location<br />(all forms)"
@@ -6634,6 +6661,15 @@ msgstr "टेक्स्ट इनपुट"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Text"
 msgstr "टेक्स्ट"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"The target accuracy of auto-captured GPS in meters. Once a reading meets "
+"this accuracy, it will be captured and the form will stop polling the GPS"
+msgstr ""
+"मीटर में ऑटो-कैप्चर किए गए जीपीएस की लक्षित सटीकता। एक बार जब कोई रीडिंग इस "
+"सटीकता को प्राप्त कर लेती है, तो उसे कैप्चर कर लिया जाएगा और फॉर्म जीपीएस "
+"पोलिंग बंद कर देगा।"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
@@ -15506,6 +15542,12 @@ msgid "Hide Map"
 msgstr "मानचित्र छुपाएँ"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "सभी दिखाएँ"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "खोज को परिष्कृत करें"
 
@@ -21326,6 +21368,30 @@ msgstr "फीचर नाम"
 msgid "More information"
 msgstr "अधिक जानकारी"
 
+#: corehq/apps/domain/templates/domain/admin/flags_and_privileges.html
+#, fuzzy
+#| msgid "No Permission."
+msgid "No Permission!"
+msgstr "कोई अनुमति नहीं।"
+
+#: corehq/apps/domain/templates/domain/admin/flags_and_privileges.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-On.\n"
+#| "                If this is in error, please contact your project's administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"                      You do not have permission to modify this flag. Please\n"
+"                      contact support if any changes are needed.\n"
+"                    "
+msgstr ""
+"\n"
+"                आपको सिंगल साइन-ऑन के साथ साइन इन करने की अनुमति नहीं है।\n"
+"                यदि यह त्रुटि है, तो कृपया अपने प्रोजेक्ट के व्यवस्थापक से संपर्क करें।\n"
+"              "
+
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
 msgid "SMS Pricing"
 msgstr "एसएमएस मूल्य निर्धारण"
@@ -23604,10 +23670,16 @@ msgstr "पासवर्ड रीसेट असफल"
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        The password reset link was invalid, possibly because\n"
+#| "        it has already been used.\n"
+#| "      "
 msgid ""
 "\n"
-"        The password reset link was invalid, possibly because\n"
-"        it has already been used.\n"
+"        The password reset link was invalid, possibly because it has already\n"
+"        been used.\n"
 "      "
 msgstr ""
 "\n"
@@ -23824,6 +23896,9 @@ msgid ""
 "        %(server_location)s Server\n"
 "      "
 msgstr ""
+"\n"
+"        %(server_location)s सर्वर\n"
+"      "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
@@ -27804,6 +27879,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
 msgid "View"
 msgstr "देखें"
@@ -30714,6 +30790,12 @@ msgstr "सभी सुपरयूज़र और स्टाफ उपय�
 msgid "Can assign Superuser"
 msgstr "सुपरयूज़र असाइन कर सकते हैं"
 
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#, fuzzy
+#| msgid "Feature Flags and Privileges"
+msgid "Feature Flag Edit Permissions"
+msgstr "फीचर फ्लैग्स और विशेषाधिकार"
+
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
 msgstr "नीचे उनका ईमेल पता दर्ज करके किसी उपयोगकर्ता की परियोजनाएँ देखें।"
@@ -31696,39 +31778,168 @@ msgid "Submit Report"
 msgstr "रिपोर्ट सबमिट करें"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-msgid "Cookies Required for CSRF"
-msgstr "CSRF के लिए कुकीज़ आवश्यक हैं"
+#, fuzzy
+#| msgid "Can be disabled"
+msgid "Cookies are disabled!"
+msgstr "अक्षम किया जा सकता है"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-msgid "Cookies must be enabled to use CommCare"
-msgstr "CommCare का उपयोग करने के लिए कुकीज़ सक्षम होनी चाहिए"
+msgid "Someone ate the cookies."
+msgstr "किसी ने कुकीज़ खा लीं।"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
 msgid ""
 "\n"
-"    <p>\n"
-"      Please try refreshing your browser or clicking the blue \"flower\" icon in the top left hand corner.\n"
-"    </p>\n"
-"    <p>\n"
-"      No luck? Please clear your browser’s cache, close your browser, and reopen your browser.\n"
-"    </p>\n"
-"    <p>\n"
-"      If you believe you received this error as a mistake, please contact <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
-"    </p>\n"
-"  "
+"          Oops! Looks like Cookies are disabled!\n"
+"        "
 msgstr ""
 "\n"
-"    <p>\n"
-"      कृपया अपने ब्राउज़र को रीफ्रेश करने का प्रयास करें या ऊपर बाईं ओर नीले \"फूल\" आइकन पर क्लिक करें।\n"
-"    </p>\n"
-"    <p>\n"
-"      काम नहीं बना? कृपया अपने ब्राउज़र की कैश साफ़ करें, ब्राउज़र बंद करें और फिर से खोलें।\n"
-"    </p>\n"
-"    <p>\n"
-"      यदि आपको लगता है कि यह त्रुटि गलती से मिली है, तो कृपया <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a> से संपर्क करें।\n"
-"    </p>\n"
-"  "
+"          लुकअप तालिकाएँ अपलोड करें\n"
+"        "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          If you would like to undelete it you can do so below.\n"
+#| "        "
+msgid ""
+"\n"
+"          No worries! Here's how you can fix it:\n"
+"        "
+msgstr ""
+"\n"
+"          यदि आप इसे पुनः स्थापित करना चाहते हैं, तो नीचे ऐसा कर सकते हैं।\n"
+"        "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid ""
+"\n"
+"            Try\n"
+"            <a\n"
+"              href=\"#\"\n"
+"              x-data=\"\"\n"
+"              @click.prevent=\"window.location.reload()\"\n"
+"              class=\"fw-bold\"\n"
+"            >refreshing</a> the page.\n"
+"          "
+msgstr ""
+"\n"
+"            कोशिश करें\n"
+"            <a\n"
+"              href=\"#\"\n"
+"              x-data=\"\"\n"
+"              @click.prevent=\"window.location.reload()\"\n"
+"              class=\"fw-bold\"\n"
+"            >पेज को रीफ़्रेश</a> करें।\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This is a <i class=\"fcc fcc-app-createform\"></i> Registration Form.\n"
+#| "      "
+msgid ""
+"\n"
+"            Click on the CommCare icon <i class=\"fcc fcc-flower\"></i> in the top left corner.\n"
+"          "
+msgstr ""
+"\n"
+"        यह एक <i class=\"fcc fcc-app-createform\"></i> पंजीकरण फॉर्म है।\n"
+"      "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid ""
+"\n"
+"            If that doesn't work, clear your browser's cache, then close and reopen your browser.\n"
+"          "
+msgstr ""
+"\n"
+"            यदि यह काम नहीं करता है, तो अपने ब्राउज़र का कैश साफ़ करें, फिर ब्राउज़र को बंद करें और पुनः खोलें।\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid "Need help?"
+msgstr "मदद चाहिए?"
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"            Check out our step-by-step\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950826/Troubleshooting+Support\"\n"
+"              class=\"fw-bold\"\n"
+"              target=\"_blank\"\n"
+"            >troubleshooting guide</a> with screenshots and quick tips.\n"
+"          "
+msgstr ""
+"\n"
+"                हमारे <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">सहायता साइट</a> पर निर्यात के बारे में अधिक जानें।\n"
+"            "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid "Still having trouble?"
+msgstr "अब भी समस्या आ रही है?"
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            What happens after you pause?\n"
+#| "          "
+msgid ""
+"\n"
+"            We are happy to assist!\n"
+"          "
+msgstr ""
+"\n"
+"            पोज़ करने के बाद क्या होगा?\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              If this problem persists, we encourage you to\n"
+#| "              <a\n"
+#| "                href=\"#modalReportIssue\"\n"
+#| "                data-bs-target=\"#modalReportIssue\"\n"
+#| "                data-bs-toggle=\"modal\"\n"
+#| "              >Report an Issue</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"            Email us at\n"
+"            <a\n"
+"              href=\"mailto:%(support_email)s\"\n"
+"              class=\"fw-bold\"\n"
+"              target=\"_blank\"\n"
+"            >%(support_email)s</a>.\n"
+"          "
+msgstr ""
+"\n"
+"              यदि यह समस्या बनी रहती है, तो हम आपको प्रोत्साहित करते हैं कि आप\n"
+"              <a\n"
+"                href=\\\"#modalReportIssue\\\"\n"
+"                data-bs-target=\\\"#modalReportIssue\\\"\n"
+"                data-bs-toggle=\\\"modal\\\"\n"
+"              >समस्या रिपोर्ट करें</a>।\n"
+"            "
 
 #: corehq/apps/hqwebapp/templates/error_base.html
 msgid ""
@@ -38761,6 +38972,14 @@ msgid "Project Reports"
 msgstr "परियोजना रिपोर्ट्स"
 
 #: corehq/apps/reports/standard/cases/basic.py
+msgid ""
+"Cannot filter by that many case owners. Choose a more specific group or "
+"location."
+msgstr ""
+"इतने अधिक केस मालिकों द्वारा फ़िल्टर नहीं किया जा सकता। कृपया अधिक विशिष्ट "
+"समूह या स्थान चुनें।"
+
+#: corehq/apps/reports/standard/cases/basic.py
 #, fuzzy
 #| msgid "Make this an upstream project space"
 msgid "View all cases within your project space."
@@ -41553,6 +41772,10 @@ msgstr "अक्टूबर"
 msgid "December"
 msgstr "दिसंबर"
 
+#: corehq/apps/saved_reports/models.py corehq/apps/users/models.py
+msgid "Unknown User"
+msgstr "अज्ञात उपयोगकर्ता"
+
 #: corehq/apps/saved_reports/models.py
 msgid "Deleted Report"
 msgstr "हटाई गई रिपोर्ट"
@@ -41857,6 +42080,7 @@ msgid "Copy Full Key"
 msgstr "पूर्ण कुंजी कॉपी करें"
 
 #: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Expired"
 msgstr "समाप्त हो गया"
@@ -45620,9 +45844,15 @@ msgid "Please confirm with %(owner)s before using it."
 msgstr "कृपया इसका उपयोग करने से पहले %(owner)s से पुष्टि करें।"
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.\n"
+#| "        "
 msgid ""
 "\n"
-"          <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.\n"
+"          <strong>Please Note:</strong> This feature flag is available on this\n"
+"          server environment, but not on others.\n"
 "        "
 msgstr ""
 "\n"
@@ -45630,9 +45860,15 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          <strong>CAUTION:</strong> This feature flag is not available on the current server environment.\n"
+#| "        "
 msgid ""
 "\n"
-"          <strong>CAUTION:</strong> This feature flag is not available on the current server environment.\n"
+"          <strong>CAUTION:</strong> This feature flag is not available on the\n"
+"          current server environment.\n"
 "        "
 msgstr ""
 "\n"
@@ -45640,9 +45876,15 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag is <strong>always enabled</strong> for the following domains:\n"
+#| "      "
 msgid ""
 "\n"
-"        This feature flag is <strong>always enabled</strong> for the following domains:\n"
+"        This feature flag is <strong>always enabled</strong> for the following\n"
+"        domains:\n"
 "      "
 msgstr ""
 "\n"
@@ -45650,9 +45892,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag is <strong>always disabled</strong> for the following domains:\n"
+#| "      "
 msgid ""
 "\n"
-"        This feature flag is <strong>always disabled</strong> for the following domains:\n"
+"        This feature flag is <strong>always disabled</strong> for the following\n"
+"        domains:\n"
 "      "
 msgstr ""
 "\n"
@@ -45660,20 +45908,31 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag also requires the following flags to be enabled:\n"
+#| "      "
 msgid ""
 "\n"
-"        This feature flag also requires the following flags to be enabled:\n"
-"      "
+"          This feature flag also requires the following flags to be enabled:\n"
+"        "
 msgstr ""
 "\n"
 "        इस फीचर फ्लैग को सक्षम करने के लिए निम्नलिखित फ्लैग्स भी सक्षम होने चाहिए:\n"
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Enabling this feature flag will automatically enable the flags listed above.\n"
+#| "      "
 msgid ""
 "\n"
-"        Enabling this feature flag will automatically enable the flags listed above.\n"
-"      "
+"          Enabling this feature flag will automatically enable the flags listed\n"
+"          above.\n"
+"        "
 msgstr ""
 "\n"
 "        इस फीचर फ्लैग को सक्षम करने से ऊपर सूचीबद्ध फ्लैग्स स्वतः सक्षम हो जाएँगे।\n"
@@ -45684,6 +45943,30 @@ msgid ""
 "Randomness ranges from 0-1.<br/>0=disabled for all<br/>1=enable for all"
 msgstr ""
 "रैंडमनेस 0-1 के बीच होती है।<br/>0=सभी के लिए अक्षम<br/>1=सभी के लिए सक्षम"
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid "Why can't I see any data?"
+msgid "Why can't I edit?"
+msgstr "मैं कोई डेटा क्यों नहीं देख पा रहा/रही हूँ?"
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-On.\n"
+#| "                If this is in error, please contact your project's administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"              You do not have permission to modify this flag. Please contact\n"
+"              support if any changes are needed.\n"
+"            "
+msgstr ""
+"\n"
+"                आपको सिंगल साइन-ऑन के साथ साइन इन करने की अनुमति नहीं है।\n"
+"                यदि यह त्रुटि है, तो कृपया अपने प्रोजेक्ट के व्यवस्थापक से संपर्क करें।\n"
+"              "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "Enabled toggle items"
@@ -48960,10 +49243,6 @@ msgid "No landing page found with id {page_id}"
 msgstr "id {page_id} के साथ कोई लैंडिंग पेज नहीं मिला"
 
 #: corehq/apps/users/models.py
-msgid "Unknown User"
-msgstr "अज्ञात उपयोगकर्ता"
-
-#: corehq/apps/users/models.py
 msgid "Dimagi User"
 msgstr "Dimagi उपयोगकर्ता"
 
@@ -49263,6 +49542,36 @@ msgstr ""
 "    </p>\n"
 "\n"
 "  "
+
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy
+#| msgid "Account Credit"
+msgid "Account Confirmed"
+msgstr "खाता क्रेडिट"
+
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy
+#| msgid "You can now login"
+msgid "You can now log into the mobile app."
+msgstr "अब आप लॉगिन कर सकते हैं"
+
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Case List has blank filter in\n"
+#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                "
+msgid ""
+"\n"
+"                To log into CommCare HQ on the web, click\n"
+"                <a href=\"%(login_url)s\">here</a>.\n"
+"              "
+msgstr ""
+"\n"
+"                  केस सूची में खाली फ़िल्टर है\n"
+"                  <a href=\"%(module_url)s\">%(module_name)s</a> में\n"
+"                "
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #, python-format
@@ -50206,14 +50515,6 @@ msgid "Reactivate"
 msgstr "पुनः सक्रिय करें"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Confirmation Email"
-msgstr "पुष्टिकरण ईमेल भेजें"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Confirmation SMS"
-msgstr "पुष्टिकरण एसएमएस भेजें"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Unlink PersonalID"
 msgstr "PersonalID अनलिंक करें"
 
@@ -50294,88 +50595,6 @@ msgstr ""
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              email to this account?\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  Would you like to send the account\n"
-"                                  confirmation email to this account?\n"
-"                                "
-msgstr ""
-"\n"
-"                              क्या आप इस खाते पर खाता पुष्टि\n"
-"                              ईमेल भेजना चाहेंगे?\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              SMS to this account?\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  Would you like to send the account\n"
-"                                  confirmation SMS to this account?\n"
-"                                "
-msgstr ""
-"\n"
-"                              क्या आप इस खाते पर खाता पुष्टि\n"
-"                              एसएमएस भेजना चाहेंगे?\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent an email with instructions to\n"
-#| "                              set a password and be able to login to this project.\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  The user will be sent an email with\n"
-"                                  instructions to set a password and be able to\n"
-"                                  login to this project.\n"
-"                                "
-msgstr ""
-"\n"
-"                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
-"                              एक ईमेल भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent a SMS with instructions to\n"
-#| "                              set a password and be able to login to this project.\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  The user will be sent a SMS with instructions\n"
-"                                  to set a password and be able to login to this\n"
-"                                  project.\n"
-"                                "
-msgstr ""
-"\n"
-"                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
-"                              एक एसएमएस भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Account Confirmaton Email"
-msgstr "खाता पुष्टि ईमेल भेजें"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Account Confirmaton SMS"
-msgstr "खाता पुष्टि एसएमएस भेजें"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Loading Workers..."
 msgstr "वर्कर्स लोड हो रहे हैं..."
 
@@ -50402,6 +50621,186 @@ msgstr ""
 "            यदि यह समस्या बनी रहती है, तो कृपया\n"
 "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">समस्या की रिपोर्ट करें</a>।\n"
 "          "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Pending Confirmation"
+msgid "Pending Account Confirmations"
+msgstr "पुष्टि लंबित"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            No Mobile Workers were found that matched your query.\n"
+#| "          "
+msgid ""
+"\n"
+"            No pending account confirmations were found that matched your query.\n"
+"          "
+msgstr ""
+"\n"
+"            आपकी क्वेरी से मेल खाते कोई मोबाइल वर्कर्स नहीं मिले।\n"
+"          "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              <strong>There are no mobile workers visible to you at this time.</strong>\n"
+#| "              Please contact your project's administrator if this is incorrect.\n"
+#| "            "
+msgid ""
+"\n"
+"              <strong\n"
+"                >There are no pending account confirmations visible to you at\n"
+"                this time.</strong\n"
+"              >\n"
+"              Please contact your project's administrator if this is incorrect.\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>इस समय आपके लिए कोई मोबाइल वर्कर दिखाई नहीं दे रहे हैं।</strong>\n"
+"              यदि यह गलत है तो कृपया अपने प्रोजेक्ट के एडमिनिस्ट्रेटर से संपर्क करें।\n"
+"            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  <strong>There are currently no mobile workers in this project.</strong>\n"
+#| "              "
+msgid ""
+"\n"
+"                <strong\n"
+"                  >There are currently no pending account confirmations in this\n"
+"                  project.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+"\n"
+"                  <strong>इस प्रोजेक्ट में वर्तमान में कोई मोबाइल वर्कर नहीं हैं।</strong>\n"
+"              "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>No mobile users are assigned to your user's location.</strong>\n"
+#| "              "
+msgid ""
+"\n"
+"                <strong\n"
+"                  >No users with pending account confirmations are assigned to\n"
+"                  your user's location.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+"\n"
+"                <strong>आपके यूज़र के स्थान पर कोई मोबाइल यूज़र असाइन नहीं हैं।</strong>\n"
+"              "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "ending balance"
+msgid "Pending Since"
+msgstr "अंतिम शेष राशि"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation SMS"
+msgstr "पुष्टिकरण एसएमएस भेजें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation Email"
+msgstr "पुष्टिकरण ईमेल भेजें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account confirmation\n"
+#| "                              SMS to this account?\n"
+#| "                            "
+msgid ""
+"\n"
+"                              Would you like to send the account confirmation\n"
+"                              SMS to this account?\n"
+"                            "
+msgstr ""
+"\n"
+"                              क्या आप इस खाते पर खाता पुष्टि\n"
+"                              एसएमएस भेजना चाहेंगे?\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account confirmation\n"
+#| "                              email to this account?\n"
+#| "                            "
+msgid ""
+"\n"
+"                              Would you like to send the account confirmation\n"
+"                              email to this account?\n"
+"                            "
+msgstr ""
+"\n"
+"                              क्या आप इस खाते पर खाता पुष्टि\n"
+"                              ईमेल भेजना चाहेंगे?\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with instructions to\n"
+#| "                              set a password and be able to login to this project.\n"
+#| "                            "
+msgid ""
+"\n"
+"                              The user will be sent a SMS with instructions to\n"
+"                              set a password and be able to login to this\n"
+"                              project.\n"
+"                            "
+msgstr ""
+"\n"
+"                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
+"                              एक एसएमएस भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with instructions to\n"
+#| "                              set a password and be able to login to this project.\n"
+#| "                            "
+msgid ""
+"\n"
+"                              The user will be sent an email with instructions\n"
+"                              to set a password and be able to login to this\n"
+"                              project.\n"
+"                            "
+msgstr ""
+"\n"
+"                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
+"                              एक एसएमएस भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton SMS"
+msgstr "खाता पुष्टि एसएमएस भेजें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton Email"
+msgstr "खाता पुष्टि ईमेल भेजें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Send Account Confirmaton SMS"
+msgid "Loading Pending Account Confirmations..."
+msgstr "खाता पुष्टि एसएमएस भेजें"
 
 #: corehq/apps/users/templates/users/partials/basic_info_form.html
 msgid "CommCare Supply Settings"
@@ -57324,6 +57723,51 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
 
+#~ msgid "Cookies Required for CSRF"
+#~ msgstr "CSRF के लिए कुकीज़ आवश्यक हैं"
+
+#~ msgid "Cookies must be enabled to use CommCare"
+#~ msgstr "CommCare का उपयोग करने के लिए कुकीज़ सक्षम होनी चाहिए"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <p>\n"
+#~ "      Please try refreshing your browser or clicking the blue \"flower\" icon in the top left hand corner.\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      No luck? Please clear your browser’s cache, close your browser, and reopen your browser.\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      If you believe you received this error as a mistake, please contact <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
+#~ "    </p>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <p>\n"
+#~ "      कृपया अपने ब्राउज़र को रीफ्रेश करने का प्रयास करें या ऊपर बाईं ओर नीले \"फूल\" आइकन पर क्लिक करें।\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      काम नहीं बना? कृपया अपने ब्राउज़र की कैश साफ़ करें, ब्राउज़र बंद करें और फिर से खोलें।\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      यदि आपको लगता है कि यह त्रुटि गलती से मिली है, तो कृपया <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a> से संपर्क करें।\n"
+#~ "    </p>\n"
+#~ "  "
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "                                  The user will be sent an email with\n"
+#~ "                                  instructions to set a password and be able to\n"
+#~ "                                  login to this project.\n"
+#~ "                                "
+#~ msgstr ""
+#~ "\n"
+#~ "                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
+#~ "                              एक ईमेल भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
+#~ "                            "
+
 #~ msgid "Explore Case Data (Preview)"
 #~ msgstr "मामला डेटा एक्सप्लोर करें (पूर्वावलोकन)"
 
@@ -57768,9 +58212,6 @@ msgstr "मान्य JSON दर्ज करें"
 
 #~ msgid "...Collapse"
 #~ msgstr "...संकुचित करें"
-
-#~ msgid "You can now login"
-#~ msgstr "अब आप लॉगिन कर सकते हैं"
 
 #~ msgid "patients added from OpenMRS Atom feed."
 #~ msgstr "OpenMRS Atom फ़ीड से जोड़े गए मरीज।"
