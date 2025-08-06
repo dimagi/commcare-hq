@@ -2944,3 +2944,11 @@ CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+CHATBOT = StaticToggle(
+    slug='show_ocs_chatbot',
+    label='Show OCS Chatbot',
+    tag=TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Show OCS Chatbot',
+)
