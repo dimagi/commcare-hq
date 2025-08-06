@@ -569,8 +569,9 @@ class WebUserResource(v0_1.WebUserResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('enable_user'), name="api_enable_web_user"),
-            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$", self.wrap_view('disable_user'), name="api_disable_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('enable_user'), name="api_activate_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$",
+                self.wrap_view('disable_user'), name="api_deactivate_web_user"),
         ]
 
     def enable_user(self, request, **kwargs):
