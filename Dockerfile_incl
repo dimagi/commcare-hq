@@ -61,16 +61,18 @@ RUN npm -g install \
 RUN git config --global url."https://".insteadOf git://
 
 WORKDIR /vendor
+
+# setup venv
+COPY .python-version pyproject.toml uv.lock /tmp-project/
+RUN --mount=type=cache,target=/root/.cache/uv \
+  uv sync --locked --group=prod --no-dev --project=/tmp-project --no-install-project \
+  && rm -rf /tmp-project
+
 RUN mkdir /sharedfiles
 RUN groupadd -r cchq && \
     useradd -r -m -g cchq cchq && \
     chown cchq:cchq /vendor /sharedfiles
 USER cchq:cchq
-
-COPY .python-version pyproject.toml uv.lock /tmp-project/
-RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --locked --group=prod --no-dev --project=/tmp-project --no-install-project \
-  && rm -rf /tmp-project
 
 COPY --chown=cchq:cchq package.json /vendor/
 RUN npm shrinkwrap && \
