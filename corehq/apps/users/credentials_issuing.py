@@ -94,9 +94,11 @@ def submit_new_credentials():
 def get_credentials_to_submit():
     from corehq.apps.users.models import ConnectIDUserLink, UserCredential
 
+    credentials_to_submit = []
+    credential_ids_to_update = []
     user_credentials = UserCredential.objects.filter(issued_on=None)
     if not user_credentials:
-        return
+        return credentials_to_submit, credential_ids_to_update
 
     app_ids = []
     usernames = []
@@ -112,8 +114,6 @@ def get_credentials_to_submit():
     }
 
     app_names_by_id = get_app_names_by_id(app_ids)
-    credentials_to_submit = []
-    credential_ids_to_update = []
     for user_cred in user_credentials:
         connectid_username = connectid_username_by_commcare_username.get(user_cred.username)
         if not connectid_username:
