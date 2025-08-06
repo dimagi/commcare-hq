@@ -1540,22 +1540,6 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     def user(self):
         return get_document_or_404(CommCareUser, self.domain, self.user_id)
 
-    @property
-    @memoized
-    def form(self):
-        if self.request.method == 'POST':
-            return MobileWorkerAccountConfirmationForm(self.request.POST)
-        else:
-            return MobileWorkerAccountConfirmationForm(initial={
-                'username': self.user.raw_username,
-                'full_name': self.user.full_name,
-                'email': self.user.email,
-            })
-
-    @property
-    def _expiration_time_in_hours(self):
-        return 1
-
     def get_context_data(self, **kwargs):
         context = super(CommCareUserConfirmAccountView, self).get_context_data(**kwargs)
         context.update({
@@ -1611,6 +1595,28 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         if hours_elapsed <= self._expiration_time_in_hours:
             return True
         return False
+
+
+@location_safe
+class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
+    template_name = "users/commcare_user_confirm_account.html"
+    urlname = "commcare_user_confirm_account"
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return MobileWorkerAccountConfirmationForm(self.request.POST)
+        else:
+            return MobileWorkerAccountConfirmationForm(initial={
+                'username': self.user.raw_username,
+                'full_name': self.user.full_name,
+                'email': self.user.email,
+            })
+
+    @property
+    def _expiration_time_in_hours(self):
+        return 1
 
 
 @location_safe
