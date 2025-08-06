@@ -12,9 +12,9 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.util.test_utils import flag_disabled, flag_enabled, privilege_enabled
