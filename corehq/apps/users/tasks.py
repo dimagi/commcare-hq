@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from uuid import uuid4
 
 from django.conf import settings
@@ -35,6 +35,7 @@ from corehq.form_processor.models import (
 from corehq.apps.users.credentials_issuing import (
     get_credentials_for_timeframe,
     get_app_ids_by_activity_level,
+    submit_new_credentials,
 )
 from corehq.util.celery_utils import (
     deserialize_run_every_setting,
@@ -441,3 +442,4 @@ def process_mobile_worker_credentials():
         applicable_credentials += get_credentials_for_timeframe(activity_level, app_ids)
 
     UserCredential.objects.bulk_create(applicable_credentials, ignore_conflicts=True)
+    submit_new_credentials()
