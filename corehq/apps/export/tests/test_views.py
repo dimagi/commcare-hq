@@ -21,6 +21,7 @@ from corehq.apps.export.models.new import (
     TableConfiguration,
 )
 from corehq.apps.export.views.new import BaseExportView
+from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test-domain'
 
@@ -138,29 +139,26 @@ class BaseExportViewTestCase(TestCase):
 
 class TestPossibleGeoProperties(BaseExportViewTestCase):
 
-    @patch.object(toggles.SUPPORT_GEO_JSON_EXPORT, 'enabled')
-    def test_possible_geo_properties_toggle_disabled(self, mock_toggle):
+    def test_possible_geo_properties_toggle_disabled(self):
         """
         Test that _possible_geo_properties returns empty list when
         toggle is disabled
         """
-        mock_toggle.return_value = False
-
         export_instance = self._create_form_export_instance_with_geopoint()
         view = TestableBaseExportView(export_instance)
         view.export_type = FORM_EXPORT
+        with patch.object(toggles.SUPPORT_GEO_JSON_EXPORT, 'enabled') as mock_toggle:
+            mock_toggle.return_value = False
 
-        result = view._possible_geo_properties
-        self.assertEqual(result, [])
+            result = view._possible_geo_properties
+            self.assertEqual(result, [])
 
-    @patch.object(toggles.SUPPORT_GEO_JSON_EXPORT, 'enabled')
-    def test_possible_geo_properties_bulk_case_export(self, mock_toggle):
+    @flag_enabled('SUPPORT_GEO_JSON_EXPORT')
+    def test_possible_geo_properties_bulk_case_export(self):
         """
         Test that _possible_geo_properties returns empty list for bulk
         case export
         """
-        mock_toggle.return_value = True
-
         bulk_case_export_instance = CaseExportInstance(
             domain=DOMAIN,
             name='Test Bulk Case Export',
@@ -173,14 +171,12 @@ class TestPossibleGeoProperties(BaseExportViewTestCase):
         result = view._possible_geo_properties
         self.assertEqual(result, [])
 
-    @patch.object(toggles.SUPPORT_GEO_JSON_EXPORT, 'enabled')
-    def test_possible_geo_properties_form_export(self, mock_toggle):
+    @flag_enabled('SUPPORT_GEO_JSON_EXPORT')
+    def test_possible_geo_properties_form_export(self):
         """
         Test that _possible_geo_properties calls
         _possible_form_geo_properties for form exports
         """
-        mock_toggle.return_value = True
-
         export_instance = self._create_form_export_instance_with_geopoint()
         view = TestableBaseExportView(export_instance)
         view.export_type = FORM_EXPORT
@@ -189,14 +185,12 @@ class TestPossibleGeoProperties(BaseExportViewTestCase):
         expected = ['form.location.gps_coords', 'form.user_location']
         self.assertEqual(result, expected)
 
-    @patch.object(toggles.SUPPORT_GEO_JSON_EXPORT, 'enabled')
-    def test_possible_geo_properties_case_export(self, mock_toggle):
+    @flag_enabled('SUPPORT_GEO_JSON_EXPORT')
+    def test_possible_geo_properties_case_export(self):
         """
         Test that _possible_geo_properties calls
         _possible_case_geo_properties for case exports
         """
-        mock_toggle.return_value = True
-
         export_instance = self._create_case_export_instance()
         view = TestableBaseExportView(export_instance)
         view.export_type = CASE_EXPORT
