@@ -422,11 +422,11 @@ def update_url_query_params(url, params):
     return parsed_url._replace(query=merged_params).geturl()
 
 
-def get_custom_case_property_count(domain, case_type):
-    """This excludes system properties"""
+def get_case_property_count(domain, case_type):
+    """This excludes system and deprecated properties"""
     try:
         case_type = CaseType.objects.get(domain=domain, name=case_type)
     except CaseType.DoesNotExist:
         return 0
 
-    return case_type.properties.count()
+    return case_type.properties.filter(property__deprecated=False).count()
