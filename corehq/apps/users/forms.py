@@ -676,7 +676,8 @@ class NewMobileWorkerForm(forms.Form):
         label=gettext_noop("Require Account Confirmation?"),
         help_text=gettext_noop(
             "The user's account will not be active until "
-            "they have confirmed their email and set a password."
+            "they have confirmed their email and set a password. "
+            "This requires that the mobile worker has access to an email address."
         ),
         required=False,
     )
