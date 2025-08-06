@@ -74,7 +74,7 @@ from .views.mobile.users import (
     toggle_demo_mode,
     update_user_groups,
     user_download_job_poll,
-    CommCareUserConfirmAccountView,
+    CommCareUserConfirmAccountViewByEmailView,
     send_confirmation_email,
     send_confirmation_sms,
     CommcareUserUploadJobPollView,
@@ -247,8 +247,8 @@ urlpatterns = [
     ),
     url(
         r'^commcare/confirm_account/(?P<user_invite_hash>[\S-]+)/$',
-        CommCareUserConfirmAccountView.as_view(),
-        name=CommCareUserConfirmAccountView.urlname
+        CommCareUserConfirmAccountViewByEmailView.as_view(),
+        name=CommCareUserConfirmAccountViewByEmailView.urlname
     ),
     url(
         r'^commcare/account_confirmed/$',
