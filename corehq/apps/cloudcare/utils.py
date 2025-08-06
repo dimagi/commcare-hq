@@ -32,7 +32,7 @@ def can_user_access_web_app(domain, user, app_id):
     return has_access_via_permission and has_access_via_group
 
 
-def get_latest_build_for_web_apps(domain, username, app_id):
+def _get_latest_build_for_web_apps(domain, username, app_id):
     if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
         return get_latest_build_doc(domain, app_id)
     else:
@@ -46,7 +46,7 @@ def get_latest_build_id_for_web_apps(domain, username, app_id):
         return get_latest_released_build_id(domain, app_id)
 
 
-def get_web_apps_available_to_user(domain, user, fetch_app_fn=get_latest_build_for_web_apps):
+def get_web_apps_available_to_user(domain, user):
     """
     The fetch_app_fn is a function to fetch app docs, and should accept a domain, username and app_id if overridden
     """
@@ -57,7 +57,7 @@ def get_web_apps_available_to_user(domain, user, fetch_app_fn=get_latest_build_f
     app_ids = get_app_ids_in_domain(domain)
     for app_id in app_ids:
         if can_user_access_web_app(domain, user, app_id):
-            app = fetch_app_fn(domain, user.username, app_id)
+            app = _get_latest_build_for_web_apps(domain, user.username, app_id)
             if app and is_web_app(app):
                 apps.append(app)
 
