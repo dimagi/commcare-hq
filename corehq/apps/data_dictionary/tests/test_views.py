@@ -355,7 +355,7 @@ class TestDeprecateOrRestoreCaseTypeView(DataDictionaryViewTestBase):
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 @privilege_enabled(privileges.DATA_DICTIONARY)
-class CaseTypesTest(DataDictionaryViewTestBase):
+class DataDictionaryJsonCaseTypesTest(DataDictionaryViewTestBase):
 
     @classmethod
     def setUpClass(cls):
@@ -470,7 +470,7 @@ class CaseTypesTest(DataDictionaryViewTestBase):
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 @privilege_enabled(privileges.DATA_DICTIONARY)
-class CasePropertiesTest(DataDictionaryViewTestBase):
+class DataDictionaryJsonCasePropertiesTest(DataDictionaryViewTestBase):
 
     @classmethod
     def setUpClass(cls):
