@@ -2070,7 +2070,8 @@ ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TWO_STAGE_USER_PROVISIONING = StaticToggle(
+TWO_STAGE_USER_PROVISIONING = FrozenPrivilegeToggle(
+    privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
     TAG_SOLUTIONS_LIMITED,
