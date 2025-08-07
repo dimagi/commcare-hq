@@ -289,12 +289,12 @@ class LocationForm(forms.Form):
             # archive the location user
             user = CommCareUser.get_by_user_id(self.location.user_id, self.domain)
             if user:
-                user.is_active = False
+                user.set_is_active(self.domain, False)
                 user.save()
                 log_user_change(by_domain=self.domain, for_domain=user.domain,
                                 couch_user=user, changed_by_user=self.user,
                                 changed_via=USER_CHANGE_VIA_LOCATION,
-                                fields_changed={'is_active': user.is_active})
+                                fields_changed={'is_active': False})
             self.location.user_id = ''
             self.location.save()
 
