@@ -820,13 +820,6 @@ BIOMETRIC_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-CASE_DETAIL_PRINT = StaticToggle(
-    'case_detail_print',
-    'MLabour: Allowing printing of the case detail, based on an HTML template',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-)
-
 COPY_FORM_TO_APP = StaticToggle(
     'copy_form_to_app',
     'Allow copying a form from one app to another',
