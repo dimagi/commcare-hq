@@ -193,6 +193,9 @@ const module = function (spec) {
             self.filter.filterText,
         );
     }
+    if (spec.state.long !== undefined) {
+        self.longScreen = addScreen(spec.state, "long");
+    }
     return self;
 };
 
