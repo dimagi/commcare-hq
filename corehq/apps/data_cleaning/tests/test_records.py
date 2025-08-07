@@ -169,15 +169,15 @@ class BulkEditRecordChangesTest(BaseBulkEditSessionTest):
     domain_name = 'forest-friends'
     case_type = 'tree'
 
-    def test_should_reset_changes_no_changes(self):
+    def test_should_reset_calculated_change_id_no_changes(self):
         record = BulkEditRecord.objects.create(
             session=self.session,
             doc_id=str(uuid.uuid4()),
             is_selected=True,
         )
-        assert not record.should_reset_changes
+        assert not record.should_reset_calculated_change_id
 
-    def test_should_reset_changes(self):
+    def test_should_reset_calculated_change_id(self):
         record = BulkEditRecord.objects.create(
             session=self.session,
             doc_id=str(uuid.uuid4()),
@@ -185,9 +185,9 @@ class BulkEditRecordChangesTest(BaseBulkEditSessionTest):
         )
         record.calculated_change_id = uuid.uuid4()
         record.save()
-        assert record.should_reset_changes
+        assert record.should_reset_calculated_change_id
 
-    def test_should_reset_changes_with_changes(self):
+    def test_should_reset_calculated_change_id_with_changes(self):
         record = BulkEditRecord.objects.create(
             session=self.session,
             doc_id=str(uuid.uuid4()),
@@ -199,7 +199,7 @@ class BulkEditRecordChangesTest(BaseBulkEditSessionTest):
             action_type=EditActionType.STRIP,
         )
         change.records.add(record)
-        assert not record.should_reset_changes
+        assert not record.should_reset_calculated_change_id
 
     def test_reset_changes(self):
         record = BulkEditRecord.objects.create(
