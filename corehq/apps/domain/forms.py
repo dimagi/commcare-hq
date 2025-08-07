@@ -3300,4 +3300,3 @@ class DomainCredentialIssuingAppForm(forms.Form):
             (app.id, app.name) for app in get_apps_in_domain(domain)
         ])
         return choices
-

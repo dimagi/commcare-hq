@@ -6334,8 +6334,7 @@ class CredentialApplication(models.Model):
     activity_level = models.CharField(
         max_length=32,
         choices=ActivityLevelChoices.choices,
-        null=True,
-        blank=True,
+        default=ActivityLevelChoices.THREE_MONTHS,
     )
 
     class Meta:

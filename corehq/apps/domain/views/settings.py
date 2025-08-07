@@ -712,7 +712,6 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
         domain_issuing_app_record = CredentialApplication.objects.create(
             domain=self.domain,
             app_id=new_app_id,
-            activity_level=CredentialApplication.ActivityLevelChoices.THREE_MONTHS,
         )
         application = get_app(self.domain, new_app_id)
         self.add_credential_to_app_features(application, domain_issuing_app_record)
@@ -722,7 +721,6 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
         new_app = get_app(self.domain, new_app_id)
 
         current_credential_app_record.app_id = new_app_id
-        current_credential_app_record.activity_level = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
         current_credential_app_record.save()
 
         self.remove_credential_from_app_features(old_app)
