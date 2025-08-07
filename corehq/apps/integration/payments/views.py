@@ -14,6 +14,7 @@ from corehq.apps.es.case_search import (
     case_property_query,
     wrap_case_search_hit,
 )
+from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
@@ -30,6 +31,7 @@ from corehq.apps.integration.payments.services import (
     verify_payment_cases,
 )
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
+from corehq.apps.integration.tasks import REQUEST_MOMO_PAYMENTS_TASK_SLUG
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import get_filter_classes
@@ -243,6 +245,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
         try:
             self._validate_revert_verification_request(case_ids)
+            self._check_for_active_payment_task()
             revert_payment_verification(request.domain, case_ids=case_ids)
         except PaymentRequestError as e:
             raise HtmxResponseException(str(e), status_code=400)
@@ -252,6 +255,14 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             'payments/partials/payments_revert_verification_alert.html',
             {}
         )
+
+    def _check_for_active_payment_task(self):
+        task_tracker = get_celery_task_tracker(self.request.domain, REQUEST_MOMO_PAYMENTS_TASK_SLUG)
+        if task_tracker.is_active():
+            raise PaymentRequestError(
+                _("Payment submissions are currently active for your project and should be completed shortly."
+                  " Please try again later.")
+            )
 
 
 @method_decorator(use_bootstrap5, name='dispatch')

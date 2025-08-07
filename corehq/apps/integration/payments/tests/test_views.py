@@ -399,6 +399,36 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
             in str(response.content)
         )
 
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @patch('corehq.apps.integration.payments.views.get_celery_task_tracker')
+    def test_revert_verification_payment_submissions_active(self, mock_task_tracker):
+        # Setup: mock the task tracker to simulate active submissions
+        mock_task_tracker.return_value.is_active.return_value = True
+
+        verified_case = _create_case(
+            self.factory,
+            name='verified_case_active',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+            }
+        )
+        self.addCleanup(verified_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [verified_case.case_id]},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 400
+        assert (
+            b"Payment submissions are currently active for your project and should be completed shortly."
+            b" Please try again later."
+            in response.content
+        )
+
 
 @es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
