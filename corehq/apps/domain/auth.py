@@ -294,12 +294,13 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         domain = getattr(request, 'domain', '')
         if domain:
             domain_accessible = Q(domain='') | Q(domain=domain)
-            query = domain_accessible & query
+            query = domain_accessible
         try:
             filtered_keys = user.api_keys.filter(query)
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
 
+        # ensure API Key exists
         key = None
         for filtered_key in filtered_keys:
             if filtered_key.plaintext_key == api_key:
