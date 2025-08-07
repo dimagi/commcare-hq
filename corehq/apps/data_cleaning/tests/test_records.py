@@ -163,3 +163,61 @@ class BulkEditRecordManagerTests(BaseBulkEditSessionTest):
         assert record.session == self.session
         assert record.doc_id == doc_id
         assert record.is_selected
+
+
+class BulkEditRecordChangesTest(BaseBulkEditSessionTest):
+    domain_name = 'forest-friends'
+    case_type = 'tree'
+
+    def test_should_reset_changes_no_changes(self):
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=str(uuid.uuid4()),
+            is_selected=True,
+        )
+        assert not record.should_reset_changes
+
+    def test_should_reset_changes(self):
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=str(uuid.uuid4()),
+            is_selected=True,
+        )
+        record.calculated_change_id = uuid.uuid4()
+        record.save()
+        assert record.should_reset_changes
+
+    def test_should_reset_changes_with_changes(self):
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=str(uuid.uuid4()),
+            is_selected=True,
+        )
+        change = BulkEditChange.objects.create(
+            session=self.session,
+            prop_id='name',
+            action_type=EditActionType.STRIP,
+        )
+        change.records.add(record)
+        assert not record.should_reset_changes
+
+    def test_reset_changes(self):
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=str(uuid.uuid4()),
+            is_selected=True,
+        )
+        change = BulkEditChange.objects.create(
+            session=self.session,
+            prop_id='name',
+            action_type=EditActionType.STRIP,
+        )
+        change.records.add(record)
+        assert record.changes.count() == 1
+
+        record.reset_changes('name')
+        assert record.changes.count() == 2
+
+        latest_change = record.changes.last()
+        assert latest_change.action_type == EditActionType.RESET
+        assert latest_change.prop_id == 'name'
