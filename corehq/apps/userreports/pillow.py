@@ -25,9 +25,6 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
 from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
-from corehq.apps.domain_migration_flags.api import (
-    all_domains_with_migrations_in_progress,
-)
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from corehq.util.timer import TimingContext
@@ -97,10 +94,9 @@ def _filter_domains_to_skip(configs):
     """Return a list of configs whose domain exists on this environment"""
     domain_names = list({config.domain for config in configs if config.is_static})
     existing_domains = list(get_domain_ids_by_names(domain_names))
-    migrating_domains = all_domains_with_migrations_in_progress()
     return [
         config for config in configs
-        if config.domain not in migrating_domains and (not config.is_static or config.domain in existing_domains)
+        if not config.is_static or config.domain in existing_domains
     ]
 
 
@@ -316,7 +312,6 @@ class RegistryDataSourceTableManager(UcrTableManager):
         self.data_source_provider = RegistryDataSourceProvider()
         self.adapters = []
         self.adapters_by_domain = defaultdict(list)
-        self.domains_to_skip = None
 
     def get_filtered_configs(self, configs=None):
         if configs is None:
@@ -330,8 +325,6 @@ class RegistryDataSourceTableManager(UcrTableManager):
         for config in configs:
             self._add_adapter_for_data_source(config)
 
-        self.domains_to_skip = all_domains_with_migrations_in_progress()
-
     def _add_adapter_for_data_source(self, config):
         adapter = _get_indicator_adapter_for_pillow(config)
         self.adapters.append(adapter)
@@ -340,7 +333,7 @@ class RegistryDataSourceTableManager(UcrTableManager):
 
     @property
     def relevant_domains(self):
-        return set(self.adapters_by_domain) - self.domains_to_skip
+        return set(self.adapters_by_domain)
 
     def get_adapters(self, domain):
         return list(self.adapters_by_domain.get(domain, []))

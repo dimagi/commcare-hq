@@ -1,7 +1,6 @@
 import uuid
 
 from django.test import TestCase
-from unittest.mock import patch
 
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.domain.shortcuts import create_user
@@ -19,7 +18,6 @@ from corehq.util.test_utils import create_and_save_a_case
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-@patch('corehq.apps.userreports.pillow.all_domains_with_migrations_in_progress', return_value=set())
 class RegistryDataSourceTableManagerTest(TestCase):
     domain = "user-reports"
 
@@ -35,27 +33,17 @@ class RegistryDataSourceTableManagerTest(TestCase):
             Invitation(cls.domain), Invitation("other-domain"),
         ], grants=[Grant("other-domain", to_domains=[cls.domain])], name='bazz')
 
-    def test_bootstrap(self, ignored_mock):
+    def test_bootstrap(self):
         self._bootstrap_manager_with_data_source()
 
-    def test_ignore_migrating_domains(self, mock_domains_with_migrations):
-        mock_domains_with_migrations.return_value = {self.domain}
-        data_source_1 = get_sample_registry_data_source(domain=self.domain, registry_slug=self.registry_1.slug)
-        data_source_1.save()
-        table_manager = RegistryDataSourceTableManager()
-        table_manager.bootstrap([data_source_1])
-        self.addCleanup(cleanup_ucr, data_source_1)
-        # the "user-reports" domain is excluded because it has a migration in progress
-        self.assertEqual({"granted-domain"}, table_manager.relevant_domains)
-
-    def test_update_modified_since_remove_deactivated(self, ignored_mock):
+    def test_update_modified_since_remove_deactivated(self):
         data_source_1, table_manager = self._bootstrap_manager_with_data_source()
         data_source_1.is_deactivated = True
 
         table_manager._add_or_update_data_source(data_source_1)
         self.assertEqual(0, len(table_manager.relevant_domains))
 
-    def test_update_modified_since_add_adapter_same_domain(self, ignored_mock):
+    def test_update_modified_since_add_adapter_same_domain(self):
         data_source_1, table_manager = self._bootstrap_manager_with_data_source()
 
         # test in same domain, same registry
@@ -71,7 +59,7 @@ class RegistryDataSourceTableManagerTest(TestCase):
                 {adapter.config for adapter in table_manager.get_adapters(domain)}
             )
 
-    def test_update_modified_since_add_adapter_different_domain(self, ignored_mock):
+    def test_update_modified_since_add_adapter_different_domain(self):
         data_source_1, table_manager = self._bootstrap_manager_with_data_source()
 
         data_source_2 = get_sample_registry_data_source(domain=self.domain, registry_slug=self.registry_2.slug)
@@ -90,7 +78,7 @@ class RegistryDataSourceTableManagerTest(TestCase):
             {table_adapter.config for table_adapter in table_manager.get_adapters(self.domain)}
         )
 
-    def test_update_modified_since_refresh_same_configs(self, ignored_mock):
+    def test_update_modified_since_refresh_same_configs(self):
         data_source_1, table_manager = self._bootstrap_manager_with_data_source()
 
         # add a new grant and check that it get's picked up
