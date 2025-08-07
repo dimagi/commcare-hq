@@ -138,3 +138,28 @@ class BulkEditRecordSelectionTest(BaseBulkEditSessionTest):
         assert set(self.session.records.get_unrecorded_doc_ids(self.session, all_case_ids)) == set(
             unrecorded_case_ids
         )
+
+
+class BulkEditRecordManagerTests(BaseBulkEditSessionTest):
+    domain_name = 'forest-friends'
+    case_type = 'tree'
+
+    def test_get_for_inline_editing_new(self):
+        doc_id = str(uuid.uuid4())
+        self.session.records.get_for_inline_editing(self.session, doc_id)
+        record = self.session.records.get(doc_id=doc_id)
+        assert record.session == self.session
+        assert record.doc_id == doc_id
+        assert not record.is_selected
+
+    def test_get_for_inline_editing_existing(self):
+        doc_id = str(uuid.uuid4())
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=doc_id,
+            is_selected=True,
+        )
+        record = self.session.records.get_for_inline_editing(self.session, doc_id)
+        assert record.session == self.session
+        assert record.doc_id == doc_id
+        assert record.is_selected
