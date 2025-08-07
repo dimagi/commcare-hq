@@ -407,15 +407,15 @@ class Repeater(RepeaterSuperProxy):
         If BACKOFF_REPEATERS is enabled, this will return in the order they
         were registered, otherwise it will order by the next check date
         """
+        query = self.repeat_records.filter(state__in=RECORD_QUEUED_STATES)
         if toggles.BACKOFF_REPEATERS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN):
-            order_by_fields = ['registered_at']
+            return query.order_by('registered_at')
         else:
-            order_by_fields = ['next_check', 'registered_at']
-        return (
-            self.repeat_records
-            .filter(state__in=RECORD_QUEUED_STATES)
-            .order_by(*order_by_fields)
-        )
+            return (
+                query
+                .filter(next_check__lte=datetime.utcnow())
+                .order_by('next_check', 'registered_at')
+            )
 
     @property
     def num_workers(self):
