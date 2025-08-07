@@ -176,6 +176,7 @@ MIDDLEWARE = [
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
+    'corehq.apps.sso.middleware.SingleSignOnErrorMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
