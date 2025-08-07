@@ -429,4 +429,4 @@ def get_case_property_count(domain, case_type):
     except CaseType.DoesNotExist:
         return 0
 
-    return case_type.properties.filter(property__deprecated=False).count()
+    return case_type.properties.filter(deprecated=False).count()
