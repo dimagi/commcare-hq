@@ -69,7 +69,8 @@ class HQApiKeyTests(SimpleTestCase):
     def test_form_domain_list(self):
         form = HQApiKeyForm(user_domains=['domain1', 'domain2'])
         domain_choices = form.fields['domain'].choices
-        self.assertEqual(domain_choices, [('', 'All Projects'), ('domain1', 'domain1'), ('domain2', 'domain2')])
+        self.assertEqual(domain_choices, [('', ''), ('domain1', 'domain1'), ('domain2', 'domain2'),
+                                          (HQApiKeyForm.ALL_DOMAINS_UI, 'All Projects')])
 
     def test_expiration_date_is_not_required_by_default(self):
         form = HQApiKeyForm()
@@ -158,9 +159,15 @@ class HQApiKeyTests(SimpleTestCase):
             # So if we aren't localizing the date, this would be '2023-02-02'
             self.assertEqual(form.fields['expiration_date'].initial, '2023-02-01')
 
-    def _form_data(self, expiration_date='2023-01-01'):
+    def test_all_domains_ui_will_be_cleaned_to_empty_string(self):
+        form = HQApiKeyForm(self._form_data(expiration_date=None, domain=HQApiKeyForm.ALL_DOMAINS_UI))
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['domain'], '')
+
+    def _form_data(self, expiration_date='2023-01-01', domain=HQApiKeyForm.ALL_DOMAINS_UI):
         data = {
             'name': 'TestKey',
+            'domain': domain,
         }
 
         if expiration_date:

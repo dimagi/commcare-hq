@@ -1,0 +1,14 @@
+<script type="text/html" id="numeric-entry-ko-template">
+  <input autocomplete="off" type="text" class="form-control" data-bind="
+        value: $data.rawAnswer,
+        valueUpdate: valueUpdate,
+        css: { 'is-invalid': $parent.hasError() },
+        attr: {
+            maxlength: lengthLimit,
+            id: entryId,
+            placeholder: placeholderText,
+            inputmode: inputmode || 'text',
+            'aria-required': $parent.required() ? 'true' : 'false',
+        }
+    "/>
+</script>

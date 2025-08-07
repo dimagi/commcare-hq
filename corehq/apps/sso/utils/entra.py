@@ -101,7 +101,7 @@ def _get_user_principal_names(user_ids, token):
         batch_result = batch_response.json()
         for resp in batch_result['responses']:
             if 'body' in resp and 'error' in resp['body']:
-                raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['message'])
+                raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['error']['message'])
 
         # Extract userPrincipalName from batch response
         for resp in batch_result['responses']:

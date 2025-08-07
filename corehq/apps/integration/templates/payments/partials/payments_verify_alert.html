@@ -3,7 +3,7 @@
 {% if success_count %}
   <div class="alert alert-success alert-dismissable fade show" role="alert">
     {% blocktrans %}
-      Successfully submitted {{ success_count }} records for payments!
+      Successfully verified {{ success_count }} records for payments!
       Verification status for these will be refreshed in a few seconds.
     {% endblocktrans %}
     <button
@@ -17,7 +17,7 @@
 {% if failure_count %}
   <div class="alert alert-danger alert-dismissable fade show" role="alert">
     {% blocktrans %}
-      Failed to submit {{ failure_count }} records for payments!
+      Failed to verify {{ failure_count }} records for payments!
     {% endblocktrans %}
     <button
       type="button"

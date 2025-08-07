@@ -83,7 +83,7 @@ def get_es_user_counts_by_doc_type(domain):
     doc_type_buckets = (
         es.UserES()
         .remove_default_filters()
-        .filter(es.users.domain(domain))
+        .filter(es.users.domain(domain, include_inactive=True))
         .aggregation(agg)
         .size(0)
         .run()
@@ -202,7 +202,7 @@ def get_es_user_ids(domain, doc_type):
     return set(
         es.UserES()
         .remove_default_filters()
-        .filter(es.users.domain(domain))
+        .filter(es.users.domain(domain, include_inactive=True))
         .filter(es.filters.doc_type(doc_type))
         .filter(_get_user_base_doc_filter(doc_type))
         .get_ids()

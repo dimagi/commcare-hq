@@ -7,7 +7,7 @@ from corehq.apps.es import cases as case_es
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.exceptions import BadRequestError, TooManyOwnerIDsError
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
@@ -92,6 +92,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                     if original_exception.info.get('status') == 400:
                         raise BadRequestError()
             raise e
+        except TooManyOwnerIDsError:
+            raise BadRequestError(
+                _("Cannot filter by that many case owners. Choose a more specific group or location.")
+            )
 
     def _run_es_query(self):
         return self._build_query().run().raw

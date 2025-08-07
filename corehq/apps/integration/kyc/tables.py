@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 
 from django_tables2 import columns
 
+from corehq.apps.hqwebapp.tables.columns import DateTimeStringColumn
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 
@@ -45,7 +46,7 @@ class KycVerifyTable(BaseHtmxTable):
                 template_name='kyc/partials/kyc_verify_status.html',
                 verbose_name=_('KYC Status')
             )),
-            ('kyc_last_verified_at', columns.DateTimeColumn(
+            ('kyc_last_verified_at', DateTimeStringColumn(
                 verbose_name=_('Last Verified')
             )),
             ('verify_btn', columns.TemplateColumn(

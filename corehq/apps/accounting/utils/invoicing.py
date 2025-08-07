@@ -135,7 +135,7 @@ def get_flagged_pay_annually_prepay_invoice(invoice):
     product_line_item = invoice.lineitem_set.get_products().first()
     if (
         product_line_item is None
-        or product_line_item.applied_credit >= product_line_item.subtotal
+        or product_line_item.total <= 0
     ):
         return None
 

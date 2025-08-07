@@ -71,7 +71,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.models import PageInfoContext
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import (
@@ -82,9 +81,6 @@ from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.reports.standard.cases.filters import CaseListExplorerColumns
-from corehq.apps.reports.v2.reports.explore_case_data import (
-    ExploreCaseDataReport,
-)
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -163,45 +159,6 @@ class DataInterfaceSection(BaseDomainView):
     @property
     def section_url(self):
         return reverse("data_interfaces_default", args=[self.domain])
-
-
-@location_safe
-class ExploreCaseDataView(BaseDomainView):
-    template_name = "data_interfaces/bootstrap3/explore_case_data.html"
-    urlname = "explore_case_data"
-    page_title = gettext_lazy("Explore Case Data")
-
-    def dispatch(self, request, *args, **kwargs):
-        if hasattr(request, 'couch_user') and not self.report_config.has_permission:
-            raise Http404()
-        return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse("data_interfaces_default", args=[self.domain])
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-    @property
-    @memoized
-    def report_config(self):
-        return ExploreCaseDataReport(self.request, self.domain)
-
-    @property
-    def page_context(self):
-        return {
-            'report': self.report_config.context,
-            'section': PageInfoContext(
-                title=DataInterfaceSection.section_name,
-                url=reverse(DataInterfaceSection.urlname, args=[self.domain]),
-            ),
-            'page': PageInfoContext(
-                title=self.page_title,
-                url=reverse(self.urlname, args=[self.domain]),
-            ),
-        }
 
 
 class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):

@@ -1065,10 +1065,8 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -4130,7 +4128,7 @@ msgid "Mobile Workers"
 msgstr "मोबाइल कार्यकर्ता"
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/export/forms.py corehq/apps/reports/models.py
+#: corehq/apps/export/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
 #: corehq/apps/users/views/mobile/custom_data_fields.py
@@ -4455,16 +4453,44 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr "क्रमबद्ध करने के लिए कोई मेल खाता '{field_name}' फ़ील्ड नहीं है"
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Password or connect username required"
-msgstr "पासवर्ड या connect उपयोगकर्ता नाम आवश्यक है"
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to use connect_username field"
 msgstr "आपको connect_username फ़ील्ड का उपयोग करने की अनुमति नहीं है"
 
 #: corehq/apps/api/resources/v0_5.py
+msgid "Password or connect username required"
+msgstr "पासवर्ड या connect उपयोगकर्ता नाम आवश्यक है"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "You must provide the user's email to send a confirmation email."
+msgstr "कन्फ़र्मेशन ईमेल भेजने के लिए आपको उपयोगकर्ता का ईमेल देना आवश्यक है।"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Users will provide their own password on confirmation."
+msgstr "उपयोगकर्ता कन्फ़र्मेशन के समय स्वयं पासवर्ड देंगे।"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "You must require account confirmation to send a confirmation email."
+msgstr "कन्फ़र्मेशन ईमेल भेजने के लिए आपको खाता पुष्टि आवश्यक करनी होगी।"
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "The request resulted in the following errors: {}"
 msgstr "अनुरोध के परिणामस्वरूप निम्नलिखित त्रुटियाँ हुईं: {}"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"The confirmation email can not be sent because this user's account is "
+"already confirmed."
+msgstr ""
+"कन्फ़र्मेशन ईमेल नहीं भेजी जा सकती क्योंकि इस उपयोगकर्ता का खाता पहले ही "
+"पुष्टि हो चुका है।"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid ""
+"This user has no email. You must provide the user's email to send a "
+"confirmation email."
+msgstr ""
+"इस उपयोगकर्ता के पास कोई ईमेल नहीं है। कन्फ़र्मेशन ईमेल भेजने के लिए आपको "
+"उपयोगकर्ता का ईमेल देना आवश्यक है।"
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
@@ -4678,6 +4704,7 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/edit_commcare_user.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
 #: corehq/motech/generic_inbound/views.py
@@ -4746,10 +4773,8 @@ msgstr "अंतिम 10 रन"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -4764,7 +4789,6 @@ msgstr "अंतिम 10 रन"
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
@@ -5807,6 +5831,10 @@ msgid "1.5"
 msgstr "1.5"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "10 Meters"
+msgstr "10 मीटर"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "10"
 msgstr "10"
 
@@ -5836,6 +5864,10 @@ msgid "2.x"
 msgstr "2.x"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "20 Meters"
+msgstr "20 मीटर"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "20"
 msgstr "20"
 
@@ -5852,12 +5884,20 @@ msgid "4 hours"
 msgstr "4 घंटे"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "40 Meters"
+msgstr "40 मीटर"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "40"
 msgstr "40"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "5 Days"
 msgstr "5 दिन"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid "5 Meters"
+msgstr "5 मीटर"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "5"
@@ -5870,6 +5910,10 @@ msgstr "6 घंटे"
 #: corehq/apps/app_manager/static_strings.py
 msgid "8 hours"
 msgstr "8 घंटे"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid "80 Meters"
+msgstr "80 मीटर"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "80"
@@ -5957,6 +6001,12 @@ msgstr "ऐप संस्करण"
 #: corehq/apps/app_manager/static_strings.py corehq/apps/hqmedia/models.py
 msgid "Audio"
 msgstr "ऑडियो"
+
+#: corehq/apps/app_manager/static_strings.py
+#, fuzzy
+#| msgid "Auto Capture Location"
+msgid "Auto-Capture Location Accuracy"
+msgstr "स्वचालित स्थान कैप्चर करें"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Auto Capture Location<br />(all forms)"
@@ -6609,9 +6659,17 @@ msgstr "टेक्स्ट इनपुट"
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Text"
 msgstr "टेक्स्ट"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"The target accuracy of auto-captured GPS in meters. Once a reading meets "
+"this accuracy, it will be captured and the form will stop polling the GPS"
+msgstr ""
+"मीटर में ऑटो-कैप्चर किए गए जीपीएस की लक्षित सटीकता। एक बार जब कोई रीडिंग इस "
+"सटीकता को प्राप्त कर लेती है, तो उसे कैप्चर कर लिया जाएगा और फॉर्म जीपीएस "
+"पोलिंग बंद कर देगा।"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
@@ -7249,8 +7307,6 @@ msgstr "समस्याएँ:"
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Case Property"
 msgstr "केस प्रॉपर्टी"
@@ -7570,33 +7626,6 @@ msgstr ""
 "आपने अभी तक कोई फॉर्म नहीं बनाया है। यूज़र प्रॉपर्टीज़ देखने और संपादित करने"
 " के लिए एक फॉर्म बनाएं।"
 
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Import Application"
-msgstr "ऐप्लिकेशन आयात करें"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-#, python-format
-msgid ""
-"\n"
-"          <p>Import application <strong>%(app_name)s</strong> from domain <strong>%(app_domain)s</strong>?</p>\n"
-"        "
-msgstr ""
-"\n"
-"          <p>डोमेन <strong>%(app_domain)s</strong> से ऐप्लिकेशन <strong>%(app_name)s</strong> आयात करें?</p>\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Application Source File"
-msgstr "ऐप्लिकेशन स्रोत फ़ाइल"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "No, take me back."
-msgstr "नहीं, मुझे वापस ले जाएँ।"
-
-#: corehq/apps/app_manager/templates/app_manager/import_app.html
-msgid "Yes, import application"
-msgstr "हाँ, ऐप्लिकेशन आयात करें"
-
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 #: corehq/apps/sms/templates/sms/languages.html
 msgid "Language List"
@@ -7716,8 +7745,6 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
@@ -9333,7 +9360,6 @@ msgstr "कृपया अपनी केस सूची के लिए ए
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/v2/filters/case_report.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 #: corehq/motech/openmrs/forms.py
@@ -9372,6 +9398,7 @@ msgstr "* आप बाद में केस प्रकार को मे�
 
 #: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
 #: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 msgid "Go Back"
@@ -12540,12 +12567,20 @@ msgid "Transfer this file to your Android phone's file system"
 msgstr "इस फ़ाइल को अपने Android फ़ोन की फ़ाइल सिस्टम में ट्रांसफर करें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                From CommCare ODK's install screen menu, bring up the\n"
+#| "                                application menu by hitting the three dots in the upper\n"
+#| "                                right or by hitting the menu button on your phone to\n"
+#| "                                select Offline Install\n"
+#| "                              "
 msgid ""
 "\n"
-"                                From CommCare ODK's install screen menu, bring up the\n"
-"                                application menu by hitting the three dots in the upper\n"
-"                                right or by hitting the menu button on your phone to\n"
-"                                select Offline Install\n"
+"                                Login to the CommCare App, tap the three dots in\n"
+"                                the top-right corner, select \"Update App,\" then\n"
+"                                tap the three-dot menu again and choose \"Offline\n"
+"                                Update.\"\n"
 "                              "
 msgstr ""
 "\n"
@@ -12815,8 +12850,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Learn more."
 msgstr "और जानें।"
 
@@ -12922,8 +12955,6 @@ msgstr "पूरा होने पर ईमेल करें (बड़ी
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/models.py
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 #: corehq/apps/integration/forms.py
@@ -13314,18 +13345,6 @@ msgstr "{} संस्करण"
 #: corehq/apps/app_manager/views/apps.py
 msgid "Invalid application id requested for exchange import"
 msgstr "एक्सचेंज इम्पोर्ट के लिए अमान्य एप्लिकेशन आईडी अनुरोधित की गई है"
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "You must submit a name for the application you are importing."
-msgstr "आपको उस एप्लिकेशन का नाम सबमिट करना होगा जिसे आप इम्पोर्ट कर रहे हैं।"
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "You must upload the app source file."
-msgstr "आपको ऐप स्रोत फ़ाइल अपलोड करनी होगी।"
-
-#: corehq/apps/app_manager/views/apps.py
-msgid "The file uploaded is an invalid JSON file"
-msgstr "अपलोड की गई फ़ाइल एक अमान्य JSON फ़ाइल है"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "The form is incompatible with the destination menu and was not moved."
@@ -14033,10 +14052,7 @@ msgstr "निष्क्रिय वेब उपयोगकर्ताओ�
 msgid "Number of forms submitted by mobile workers"
 msgstr "मोबाइल वर्कर्स द्वारा सबमिट किए गए फॉर्म्स की संख्या"
 
-#: corehq/apps/campaign/forms.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/reports/views.py
+#: corehq/apps/campaign/forms.py corehq/apps/reports/views.py
 msgid "Title"
 msgstr "शीर्षक"
 
@@ -15113,8 +15129,6 @@ msgid "CSQL Fixture Configuration"
 msgstr "CSQL फिक्स्चर कॉन्फ़िगरेशन"
 
 #: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Add Expression"
 msgstr "अभिव्यक्ति जोड़ें"
 
@@ -15149,11 +15163,8 @@ msgstr "फजी खोज कई मानों के साथ समर्
 msgid "Data"
 msgstr "डेटा"
 
-#: corehq/apps/case_search/views.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/domain/views/settings.py corehq/apps/registry/models.py
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/case_search/views.py corehq/apps/domain/views/settings.py
+#: corehq/apps/registry/models.py corehq/tabs/tabclasses.py
 msgid "Case Search"
 msgstr "केस खोज"
 
@@ -15529,6 +15540,12 @@ msgstr "सूची खाली है।"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Hide Map"
 msgstr "मानचित्र छुपाएँ"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "सभी दिखाएँ"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
@@ -16662,8 +16679,6 @@ msgstr "कोई केस प्रॉपर्टी चुनें"
 
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/manage_columns_form.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Add Column"
 msgstr "कॉलम जोड़ें"
 
@@ -16757,6 +16772,7 @@ msgid "Select a Case Type"
 msgstr "कोई केस प्रकार चुनें"
 
 #: corehq/apps/data_cleaning/forms/start_session.py
+#: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -17117,8 +17133,8 @@ msgid "Completed"
 msgstr "पूर्ण"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
-#: corehq/apps/integration/payments/const.py corehq/apps/registry/models.py
-#: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
+#: corehq/apps/registry/models.py corehq/apps/sms/models.py
+#: corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
@@ -18717,7 +18733,6 @@ msgstr "पुनः असाइन करें"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
-#: corehq/apps/reports/v2/reports/explore_case_data.py
 msgid "Case Name"
 msgstr "केस नाम"
 
@@ -18978,194 +18993,6 @@ msgstr "सटीक मान पर"
 msgid "to the value from other case property"
 msgstr "अन्य मामला संपत्ति के मान पर"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/tabs/tabclasses.py
-msgid "Explore Case Data (Preview)"
-msgstr "मामला डेटा एक्सप्लोर करें (पूर्वावलोकन)"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"      This feature allows you to quickly explore your case data for ad-hoc data\n"
-"      queries or to identify unclean data.<br />\n"
-"      This is an Add-On.\n"
-"    "
-msgstr ""
-"\n"
-"      यह सुविधा आपको अपने मामला डेटा को त्वरित रूप से अनौपचारिक डेटा\n"
-"      क्वेरी या अस्वच्छ डेटा की पहचान के लिए एक्सप्लोर करने की अनुमति देती है।<br />\n"
-"      यह एक ऐड-ऑन है।\n"
-"    "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"              Preparing your case data for exploration...\n"
-"            "
-msgstr ""
-"\n"
-"              आपके मामला डेटा को एक्सप्लोरेशन के लिए तैयार किया जा रहा है...\n"
-"            "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/tabs/tabclasses.py
-msgid "Export Data"
-msgstr "डेटा निर्यात करें"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid "Save Filters"
-msgstr "फ़िल्टर सहेजें"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/reports/templates/reports/async/bootstrap3/filters.html
-#: corehq/apps/reports/templates/reports/async/bootstrap5/filters.html
-#: corehq/apps/reports_core/templates/reports_core/partials/bootstrap3/filter_panel.html
-#: corehq/apps/reports_core/templates/reports_core/partials/bootstrap5/filter_panel.html
-msgid "Report Filters"
-msgstr "रिपोर्ट फ़िल्टर"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"          Loading...\n"
-"        "
-msgstr ""
-"\n"
-"          लोड हो रहा है...\n"
-"        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"          Our system is experiencing an unusually large load on resources at the moment,\n"
-"          so data is not being received in a timely fashion. We are working on the problem, but\n"
-"          if you continue to experience this issue, please contact support.\n"
-"        "
-msgstr ""
-"\n"
-"          हमारा सिस्टम इस समय संसाधनों पर असामान्य रूप से अधिक लोड का सामना कर रहा है,\n"
-"          इसलिए डेटा समय पर प्राप्त नहीं हो रहा है। हम समस्या पर काम कर रहे हैं, लेकिन\n"
-"          यदि आपको यह समस्या लगातार आती है, तो कृपया सहायता से संपर्क करें।\n"
-"        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"          No cases found.\n"
-"        "
-msgstr ""
-"\n"
-"          कोई मामले नहीं मिले।\n"
-"        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"          There was an issue fetching cases with these filters.\n"
-"          Please check your filters and try again.\n"
-"        "
-msgstr ""
-"\n"
-"          इन फ़िल्टर के साथ मामले प्राप्त करने में समस्या आई।\n"
-"          कृपया अपने फ़िल्टर जांचें और पुनः प्रयास करें।\n"
-"        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid "Edit Column"
-msgstr "कॉलम संपादित करें"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid "Filter Data in Column"
-msgstr "कॉलम में डेटा फ़िल्टर करें"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-msgid ""
-"\n"
-"                      Treat this property as\n"
-"                      <select class=\"form-control filter-type\"\n"
-"                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-"                                         optionsText: function (val) {\n"
-"                                           return $root.editColumnController.filterTitleByName[val];\n"
-"                                         },\n"
-"                                         value: filterName,\n"
-"                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-"                      and match\n"
-"                      <select data-bind=\"value: $parent.clause,\n"
-"                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-"                              class=\"form-control filter-clause\">\n"
-"                        <option value=\"all\">\n"
-"                          all of the\n"
-"                        </option>\n"
-"                        <option value=\"any\">\n"
-"                          any of the\n"
-"                        </option>\n"
-"                      </select>\n"
-"                      following conditions:\n"
-"                    "
-msgstr ""
-"\n"
-"                      इस संपत्ति को मानें\n"
-"                      <select class=\"form-control filter-type\"\n"
-"                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-"                                         optionsText: function (val) {\n"
-"                                           return $root.editColumnController.filterTitleByName[val];\n"
-"                                         },\n"
-"                                         value: filterName,\n"
-"                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-"                      और मिलाएं\n"
-"                      <select data-bind=\"value: $parent.clause,\n"
-"                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-"                              class=\"form-control filter-clause\">\n"
-"                        <option value=\"all\">\n"
-"                          सभी\n"
-"                        </option>\n"
-"                        <option value=\"any\">\n"
-"                          कोई भी\n"
-"                        </option>\n"
-"                      </select>\n"
-"                      निम्नलिखित शर्तें:\n"
-"                    "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-#: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py
-msgid "Add"
-msgstr "जोड़ें"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"              This task is currently not supported, but we are happy to\n"
-"              learn about your interest.\n"
-"            "
-msgstr ""
-"\n"
-"              यह कार्य वर्तमान में समर्थित नहीं है, लेकिन हमें आपकी रुचि जानकर खुशी हुई।\n"
-"            "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
-msgid "Ok"
-msgstr "ठीक है"
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/find_by_id.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/find_by_id.html
 msgid ""
@@ -19383,54 +19210,6 @@ msgstr ""
 "          यह डीडुप्लिकेशन नियम वर्तमान में बैकफिलिंग कर रहा है। आप इसे तब संपादित कर पाएंगे जब यह पूरा हो जाएगा। <strong>%(progress)s%%</strong> (%(complete)s / %(total)s) केस प्रोसेस किए गए।  \n"
 "          अपडेटेड प्रगति देखने के लिए पेज को रीलोड करें।\n"
 "        "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid ""
-"\n"
-"                      Treat this property as\n"
-"                      <select class=\"form-select filter-type\"\n"
-"                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-"                                         optionsText: function (val) {\n"
-"                                           return $root.editColumnController.filterTitleByName[val];\n"
-"                                         },\n"
-"                                         value: filterName,\n"
-"                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-"                      and match\n"
-"                      <select data-bind=\"value: $parent.clause,  \n"
-"                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-"                              class=\"form-control filter-clause\">\n"
-"                        <option value=\"all\">\n"
-"                          all of the\n"
-"                        </option>\n"
-"                        <option value=\"any\">\n"
-"                          any of the\n"
-"                        </option>\n"
-"                      </select>\n"
-"                      following conditions:\n"
-"                    "
-msgstr ""
-"\n"
-"                      इस प्रॉपर्टी को मानें\n"
-"                      <select class=\"form-select filter-type\"\n"
-"                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-"                                         optionsText: function (val) {\n"
-"                                           return $root.editColumnController.filterTitleByName[val];\n"
-"                                         },\n"
-"                                         value: filterName,\n"
-"                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-"                      और मिलाएँ\n"
-"                      <select data-bind=\"value: $parent.clause,  \n"
-"                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-"                              class=\"form-control filter-clause\">\n"
-"                        <option value=\"all\">\n"
-"                          सभी\n"
-"                        </option>\n"
-"                        <option value=\"any\">\n"
-"                          कोई भी\n"
-"                        </option>\n"
-"                      </select>\n"
-"                      निम्नलिखित शर्तों के साथ:\n"
-"                    "
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
 msgid "cases processed. Please do not refresh or btn-close this page."
@@ -19954,10 +19733,6 @@ msgstr "रिपीट रिकॉर्ड (id={}) के लिए क्र
 #, python-brace-format
 msgid "Successfully performed {action} action on {count} form(s)"
 msgstr "{action} क्रिया {count} फ़ॉर्म(फ़ॉर्म्स) पर सफलतापूर्वक की गई"
-
-#: corehq/apps/data_interfaces/views.py corehq/feature_previews.py
-msgid "Explore Case Data"
-msgstr "केस डेटा एक्सप्लोर करें"
 
 #: corehq/apps/data_interfaces/views.py corehq/messaging/scheduling/forms.py
 msgid "Case Groups"
@@ -21182,6 +20957,72 @@ msgstr "प्रोफ़ाइल {profile} के लिए प्रति�
 msgid "Using project's timezone: {}"
 msgstr "प्रोजेक्ट का टाइमज़ोन उपयोग किया जा रहा है: {}"
 
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Copy URL"
+msgid "App URL"
+msgstr "URL कॉपी करें"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Copy and paste the full URL of the application from the source server. You "
+"can find this URL in your browser's address bar when viewing the app."
+msgstr ""
+"सोर्स सर्वर से एप्लिकेशन का पूरा URL कॉपी और पेस्ट करें। जब आप ऐप देख रहे "
+"हों, तो अपने ब्राउज़र के एड्रेस बार में यह URL मिल जाएगा।"
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must start with https://"
+msgstr "URL https:// से शुरू होना चाहिए"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "The source app url is in the same server as current server. To copy app in "
+#| "the same server, please use Copy Application feature."
+msgid ""
+"The source app url matches the current server. To copy an app within the "
+"same server, please use the Copy Application feature."
+msgstr ""
+"सोर्स ऐप URL वर्तमान सर्वर के समान सर्वर में है। एक ही सर्वर में ऐप कॉपी "
+"करने के लिए कृपया 'कॉपी एप्लिकेशन' फीचर का उपयोग करें।"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Invalid phone number format."
+msgid "Invalid app URL format."
+msgstr "अमान्य फ़ोन नंबर प्रारूप।"
+
+#: corehq/apps/domain/forms.py
+msgid "The URL must be from a valid CommCare server."
+msgstr "URL एक मान्य CommCare सर्वर से होना चाहिए।"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Application"
+msgid "Application Name"
+msgstr "एप्लिकेशन"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The name of the application from the user's last request."
+msgid "Choose a name for the imported application on this server."
+msgstr "उपयोगकर्ता के अंतिम अनुरोध से एप्लिकेशन का नाम।"
+
+#: corehq/apps/domain/forms.py
+msgid "Application Source File"
+msgstr "ऐप्लिकेशन स्रोत फ़ाइल"
+
+#: corehq/apps/domain/forms.py
+msgid "Import Application"
+msgstr "ऐप्लिकेशन आयात करें"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "The file uploaded is an invalid JSON file"
+msgid "The file uploaded is an invalid JSON file."
+msgstr "अपलोड की गई फ़ाइल एक अमान्य JSON फ़ाइल है"
+
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
 msgstr "डोमेन ट्रांसफर अनुरोध अब सक्रिय नहीं है"
@@ -21526,6 +21367,30 @@ msgstr "फीचर नाम"
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "More information"
 msgstr "अधिक जानकारी"
+
+#: corehq/apps/domain/templates/domain/admin/flags_and_privileges.html
+#, fuzzy
+#| msgid "No Permission."
+msgid "No Permission!"
+msgstr "कोई अनुमति नहीं।"
+
+#: corehq/apps/domain/templates/domain/admin/flags_and_privileges.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-On.\n"
+#| "                If this is in error, please contact your project's administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"                      You do not have permission to modify this flag. Please\n"
+"                      contact support if any changes are needed.\n"
+"                    "
+msgstr ""
+"\n"
+"                आपको सिंगल साइन-ऑन के साथ साइन इन करने की अनुमति नहीं है।\n"
+"                यदि यह त्रुटि है, तो कृपया अपने प्रोजेक्ट के व्यवस्थापक से संपर्क करें।\n"
+"              "
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
 msgid "SMS Pricing"
@@ -22406,17 +22271,23 @@ msgstr "वर्तमान उपयोग"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
-msgid "Domain Temporarily Unavailable"
-msgstr "डोमेन अस्थायी रूप से अनुपलब्ध है"
+#, fuzzy
+#| msgid "Project Space Name"
+msgid "Project Space Unavailable"
+msgstr "प्रोजेक्ट स्पेस नाम"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
 msgid ""
-"The page you requested is currently unavailable due to a\n"
-"    data migration. Please check back later."
+"\n"
+"      The page you requested is unavailable because the project space is being\n"
+"      or has been migrated to a different hosting environment.\n"
+"    "
 msgstr ""
-"आपके द्वारा अनुरोधित पृष्ठ वर्तमान में डेटा माइग्रेशन के कारण अनुपलब्ध है। "
-"कृपया बाद में पुनः प्रयास करें।"
+"\n"
+"      आपके द्वारा अनुरोधित पेज उपलब्ध नहीं है क्योंकि प्रोजेक्ट स्पेस को\n"
+"      या तो माइग्रेट किया जा रहा है या किसी अन्य होस्टिंग वातावरण में माइग्रेट किया जा चुका है।\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
 #: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
@@ -22523,6 +22394,14 @@ msgstr ""
 "      आपका प्रोजेक्ट वर्तमान में %(plan_name)s के लिए सब्सक्राइब्ड है।\n"
 "    </h3>\n"
 "  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
+#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+#: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+#: corehq/apps/translations/forms.py
+msgid "Add"
+msgstr "जोड़ें"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
@@ -23270,6 +23149,53 @@ msgstr ""
 "\n"
 "यदि आपको लगता है कि यह संदेश गलती से मिला है, तो आप इस ईमेल को अनदेखा कर सकते हैं। CommCare HQ के बारे में अधिक जानने के लिए http://www.commcarehq.org/ पर जाएँ।\n"
 
+#: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your request to join %(domain_name)s has been approved.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    You may now visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully reset your password for the account %(username)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    %(domain_name)s से जुड़ने का आपका अनुरोध स्वीकृत कर लिया गया है।\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    अब आप %(url)s पर जा सकते हैं।\n"
+"  </p>\n"
+"\n"
+"  <p>\n"
+"    धन्यवाद,<br />\n"
+"    CommCare HQ\n"
+"  </p>\n"
+
+#: corehq/apps/domain/templates/domain/import_app_from_another_server_main.html
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Import a new build from the build server"
+msgid "Import App from Another Server"
+msgstr "बिल्ड सर्वर से नया बिल्ड आयात करें"
+
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load EVERYTHING"
 msgstr "सभी कुछ लोड करें"
@@ -23438,6 +23364,267 @@ msgstr ""
 "            या निम्नलिखित में से कोई एक लाइसेंस चुन सकते हैं:\n"
 "          "
 
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+#, fuzzy
+#| msgid "Application Source File"
+msgid "Download the Application Source File"
+msgstr "ऐप्लिकेशन स्रोत फ़ाइल"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                has no reports.\n"
+#| "              "
+msgid ""
+"\n"
+"        Open\n"
+"        <a href=\"%(download_url)s\" target=\"_blank\">%(download_url)s</a> in a\n"
+"        new tab.\n"
+"      "
+msgstr ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                में कोई रिपोर्ट नहीं है।\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+msgid ""
+"\n"
+"        Click on the browser’s File menu at the top (e.g. File → Save As…).\n"
+"      "
+msgstr ""
+"\n"
+"        ब्राउज़र के फ़ाइल मेनू पर क्लिक करें (जैसे, फ़ाइल 2 सहेजें रूप में026)।\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+msgid ""
+"\n"
+"        In the dialog: Change the name to end with .json (e.g., my_app.json)\n"
+"      "
+msgstr ""
+"\n"
+"        डायलॉग में: नाम को .json पर समाप्त होने के लिए बदलें (जैसे, my_app.json)\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
+msgid "Click Save."
+msgstr "सेव पर क्लिक करें।"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Configuration saved successfully!\n"
+#| "      "
+msgid ""
+"\n"
+"        Your application has been successfully imported!\n"
+"      "
+msgstr ""
+"\n"
+"        कॉन्फ़िगरेशन सफलतापूर्वक सहेजा गया!\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+msgid ""
+"\n"
+"        You're almost done — if your application contains multimedia files,\n"
+"        follow these steps to copy them to your new application.\n"
+"      "
+msgstr ""
+"\n"
+"        आप लगभग पूरा कर चुके हैं — यदि आपके एप्लिकेशन में मल्टीमीडिया फ़ाइलें हैं,\n"
+"        तो इन्हें अपनी नई एप्लिकेशन में कॉपी करने के लिए ये चरण अपनाएँ।\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Download %(plural_noun)s\n"
+#| "        "
+msgid ""
+"\n"
+"        Step 1: Download Multimedia from Source App\n"
+"      "
+msgstr ""
+"\n"
+"          %(plural_noun)s डाउनलोड करें\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Would you like to edit roles and add new,\n"
+#| "          custom roles?\n"
+#| "        "
+msgid ""
+"\n"
+"          Go to the source application's multimedia page and download the\n"
+"          multimedia files as a ZIP:\n"
+"        "
+msgstr ""
+"\n"
+"          क्या आप भूमिकाएँ संपादित करना और नई,\n"
+"          कस्टम भूमिकाएँ जोड़ना चाहेंगे?\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+msgid ""
+"\n"
+"          Go to Source App Multimedia Download Page\n"
+"        "
+msgstr ""
+"\n"
+"          स्रोत ऐप मल्टीमीडिया डाउनलोड पेज पर जाएँ\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          No cases found.\n"
+#| "        "
+msgid ""
+"\n"
+"          Click \"Download ZIP\".\n"
+"        "
+msgstr ""
+"\n"
+"          कोई मामले नहीं मिले।\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
+msgid ""
+"\n"
+"        Step 2: Upload Multimedia to New App\n"
+"      "
+msgstr ""
+"\n"
+"          लुकअप तालिकाएँ अपलोड करें\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Would you like to edit roles and add new,\n"
+#| "          custom roles?\n"
+#| "        "
+msgid ""
+"\n"
+"          Go to your new application's multimedia page and upload the downloaded\n"
+"          files:\n"
+"        "
+msgstr ""
+"\n"
+"          क्या आप भूमिकाएँ संपादित करना और नई,\n"
+"          कस्टम भूमिकाएँ जोड़ना चाहेंगे?\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              Not Active\n"
+#| "            "
+msgid ""
+"\n"
+"          Go to New App Multimedia Upload Page\n"
+"        "
+msgstr ""
+"\n"
+"              सक्रिय नहीं है\n"
+"            "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
+msgid ""
+"\n"
+"          Upload Multimedia Files under Step 3.\n"
+"        "
+msgstr ""
+"\n"
+"          लुकअप तालिकाएँ अपलोड करें\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+msgid ""
+"\n"
+"      All done? Click below to go to your new application.\n"
+"    "
+msgstr ""
+"\n"
+"      सब कुछ हो गया? नीचे क्लिक करें और अपनी नई एप्लिकेशन पर जाएँ।\n"
+"    "
+
+#: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
+#, fuzzy
+#| msgid "To Application"
+msgid "Go to Application"
+msgstr "एप्लिकेशन में"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+#, fuzzy
+#| msgid ""
+#| "This tool helps you import an app from another CommCare server to your "
+#| "current CommCare server."
+msgid ""
+"\n"
+"      This tool helps you import an app from another CommCare server to your\n"
+"      current CommCare server.\n"
+"    "
+msgstr ""
+"यह टूल आपको किसी अन्य CommCare सर्वर से अपने वर्तमान CommCare सर्वर में ऐप "
+"आयात करने में मदद करता है।"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+#, fuzzy
+#| msgid "To start, simply paste the URL of the app you want to import."
+msgid ""
+"\n"
+"      To start, simply paste the URL of the app you want to import.\n"
+"    "
+msgstr ""
+"शुरू करने के लिए, बस उस ऐप का URL पेस्ट करें जिसे आप आयात करना चाहते हैं।"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+#, fuzzy
+#| msgid "Import"
+msgid "Important to Note:"
+msgstr "आयात करें"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+msgid "This will not copy users and groups."
+msgstr "यह उपयोगकर्ता और समूहों की कॉपी नहीं करेगा।"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+#, fuzzy
+#| msgid "Preparing organization structure download."
+msgid "This will not copy organization structure or levels."
+msgstr "Diagnóstico de Casos"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+msgid "This will not copy user fields."
+msgstr "यह उपयोगकर्ता फ़ील्ड्स की कॉपी नहीं करेगा।"
+
+#: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
+msgid "This will not copy lookup tables (aka fixtures)."
+msgstr "यह लुकअप टेबल्स (जिसे फिक्स्चर भी कहते हैं) की कॉपी नहीं करेगा।"
+
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
 #: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
 msgid ""
@@ -23483,10 +23670,16 @@ msgstr "पासवर्ड रीसेट असफल"
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        The password reset link was invalid, possibly because\n"
+#| "        it has already been used.\n"
+#| "      "
 msgid ""
 "\n"
-"        The password reset link was invalid, possibly because\n"
-"        it has already been used.\n"
+"        The password reset link was invalid, possibly because it has already\n"
+"        been used.\n"
 "      "
 msgstr ""
 "\n"
@@ -23694,6 +23887,18 @@ msgstr "प्रोफ़ाइल पर वापस जाएँ"
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/backup_tokens.html
 msgid "Generate Tokens"
 msgstr "टोकन जेनरेट करें"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
+#, python-format
+msgid ""
+"\n"
+"        %(server_location)s Server\n"
+"      "
+msgstr ""
+"\n"
+"        %(server_location)s सर्वर\n"
+"      "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
@@ -24547,6 +24752,12 @@ msgstr ""
 "{} के लिए पासवर्ड सफलतापूर्वक रीसेट कर दिया गया है। अब आप लॉगिन कर सकते हैं।"
 
 #: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Successfully restored report \"{name}\""
+msgid "Successful password reset for {}"
+msgstr "रिपोर्ट \"{name}\" सफलतापूर्वक पुनर्स्थापित की गई"
+
+#: corehq/apps/domain/views/settings.py
 msgid "Recovery Measures History"
 msgstr "रिकवरी उपाय इतिहास"
 
@@ -24824,6 +25035,12 @@ msgstr "अंतिम लॉगिन [UTC]"
 #: corehq/apps/enterprise/enterprise.py
 msgid "Last Access Date [UTC]"
 msgstr "अंतिम एक्सेस तिथि [UTC]"
+
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Archive Product"
+msgid "Active in Project"
+msgstr "उत्पाद आर्काइव करें"
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/users/bulk_download.py
 msgid "Active User"
@@ -25923,7 +26140,6 @@ msgid "CommCare Supply"
 msgstr "CommCare सप्लाई"
 
 #: corehq/apps/export/forms.py corehq/apps/reports/filters/case_list.py
-#: corehq/apps/reports/v2/filters/case_report.py
 msgid "Case Owner(s)"
 msgstr "केस स्वामी"
 
@@ -27357,6 +27573,10 @@ msgstr ""
 "          कृपया वे फीड्स हटाने पर विचार करें जिनकी अब आपको आवश्यकता नहीं है।\n"
 "        "
 
+#: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
+msgid "Ok"
+msgstr "ठीक है"
+
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/users/templates/users/accept_invite.html
 msgid "or"
@@ -27659,6 +27879,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
 msgid "View"
 msgstr "देखें"
@@ -30569,6 +30790,12 @@ msgstr "सभी सुपरयूज़र और स्टाफ उपय�
 msgid "Can assign Superuser"
 msgstr "सुपरयूज़र असाइन कर सकते हैं"
 
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#, fuzzy
+#| msgid "Feature Flags and Privileges"
+msgid "Feature Flag Edit Permissions"
+msgstr "फीचर फ्लैग्स और विशेषाधिकार"
+
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
 msgstr "नीचे उनका ईमेल पता दर्ज करके किसी उपयोगकर्ता की परियोजनाएँ देखें।"
@@ -31551,39 +31778,168 @@ msgid "Submit Report"
 msgstr "रिपोर्ट सबमिट करें"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-msgid "Cookies Required for CSRF"
-msgstr "CSRF के लिए कुकीज़ आवश्यक हैं"
+#, fuzzy
+#| msgid "Can be disabled"
+msgid "Cookies are disabled!"
+msgstr "अक्षम किया जा सकता है"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-msgid "Cookies must be enabled to use CommCare"
-msgstr "CommCare का उपयोग करने के लिए कुकीज़ सक्षम होनी चाहिए"
+msgid "Someone ate the cookies."
+msgstr "किसी ने कुकीज़ खा लीं।"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
 msgid ""
 "\n"
-"    <p>\n"
-"      Please try refreshing your browser or clicking the blue \"flower\" icon in the top left hand corner.\n"
-"    </p>\n"
-"    <p>\n"
-"      No luck? Please clear your browser’s cache, close your browser, and reopen your browser.\n"
-"    </p>\n"
-"    <p>\n"
-"      If you believe you received this error as a mistake, please contact <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
-"    </p>\n"
-"  "
+"          Oops! Looks like Cookies are disabled!\n"
+"        "
 msgstr ""
 "\n"
-"    <p>\n"
-"      कृपया अपने ब्राउज़र को रीफ्रेश करने का प्रयास करें या ऊपर बाईं ओर नीले \"फूल\" आइकन पर क्लिक करें।\n"
-"    </p>\n"
-"    <p>\n"
-"      काम नहीं बना? कृपया अपने ब्राउज़र की कैश साफ़ करें, ब्राउज़र बंद करें और फिर से खोलें।\n"
-"    </p>\n"
-"    <p>\n"
-"      यदि आपको लगता है कि यह त्रुटि गलती से मिली है, तो कृपया <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a> से संपर्क करें।\n"
-"    </p>\n"
-"  "
+"          लुकअप तालिकाएँ अपलोड करें\n"
+"        "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          If you would like to undelete it you can do so below.\n"
+#| "        "
+msgid ""
+"\n"
+"          No worries! Here's how you can fix it:\n"
+"        "
+msgstr ""
+"\n"
+"          यदि आप इसे पुनः स्थापित करना चाहते हैं, तो नीचे ऐसा कर सकते हैं।\n"
+"        "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid ""
+"\n"
+"            Try\n"
+"            <a\n"
+"              href=\"#\"\n"
+"              x-data=\"\"\n"
+"              @click.prevent=\"window.location.reload()\"\n"
+"              class=\"fw-bold\"\n"
+"            >refreshing</a> the page.\n"
+"          "
+msgstr ""
+"\n"
+"            कोशिश करें\n"
+"            <a\n"
+"              href=\"#\"\n"
+"              x-data=\"\"\n"
+"              @click.prevent=\"window.location.reload()\"\n"
+"              class=\"fw-bold\"\n"
+"            >पेज को रीफ़्रेश</a> करें।\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This is a <i class=\"fcc fcc-app-createform\"></i> Registration Form.\n"
+#| "      "
+msgid ""
+"\n"
+"            Click on the CommCare icon <i class=\"fcc fcc-flower\"></i> in the top left corner.\n"
+"          "
+msgstr ""
+"\n"
+"        यह एक <i class=\"fcc fcc-app-createform\"></i> पंजीकरण फॉर्म है।\n"
+"      "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid ""
+"\n"
+"            If that doesn't work, clear your browser's cache, then close and reopen your browser.\n"
+"          "
+msgstr ""
+"\n"
+"            यदि यह काम नहीं करता है, तो अपने ब्राउज़र का कैश साफ़ करें, फिर ब्राउज़र को बंद करें और पुनः खोलें।\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid "Need help?"
+msgstr "मदद चाहिए?"
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"            Check out our step-by-step\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950826/Troubleshooting+Support\"\n"
+"              class=\"fw-bold\"\n"
+"              target=\"_blank\"\n"
+"            >troubleshooting guide</a> with screenshots and quick tips.\n"
+"          "
+msgstr ""
+"\n"
+"                हमारे <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">सहायता साइट</a> पर निर्यात के बारे में अधिक जानें।\n"
+"            "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid "Still having trouble?"
+msgstr "अब भी समस्या आ रही है?"
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            What happens after you pause?\n"
+#| "          "
+msgid ""
+"\n"
+"            We are happy to assist!\n"
+"          "
+msgstr ""
+"\n"
+"            पोज़ करने के बाद क्या होगा?\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              If this problem persists, we encourage you to\n"
+#| "              <a\n"
+#| "                href=\"#modalReportIssue\"\n"
+#| "                data-bs-target=\"#modalReportIssue\"\n"
+#| "                data-bs-toggle=\"modal\"\n"
+#| "              >Report an Issue</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"            Email us at\n"
+"            <a\n"
+"              href=\"mailto:%(support_email)s\"\n"
+"              class=\"fw-bold\"\n"
+"              target=\"_blank\"\n"
+"            >%(support_email)s</a>.\n"
+"          "
+msgstr ""
+"\n"
+"              यदि यह समस्या बनी रहती है, तो हम आपको प्रोत्साहित करते हैं कि आप\n"
+"              <a\n"
+"                href=\\\"#modalReportIssue\\\"\n"
+"                data-bs-target=\\\"#modalReportIssue\\\"\n"
+"                data-bs-toggle=\\\"modal\\\"\n"
+"              >समस्या रिपोर्ट करें</a>।\n"
+"            "
 
 #: corehq/apps/hqwebapp/templates/error_base.html
 msgid ""
@@ -31924,6 +32280,13 @@ msgstr "मेरी खाता सेटिंग्स"
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
 msgid "Sign Out"
 msgstr "साइन आउट"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#, fuzzy
+#| msgid "User Location"
+msgid "Server Location"
+msgstr "उपयोगकर्ता स्थान"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 msgid "Help &amp; Resources"
@@ -32716,72 +33079,6 @@ msgstr "प्रतिक्रिया सबमिट करें"
 msgid "Previous"
 msgstr "पिछला"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid "CommCare HQ looks better on desktop!"
-msgstr "CommCare HQ डेस्कटॉप पर बेहतर दिखता है!"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-#, python-format
-msgid ""
-"\n"
-"            Hi%(\" \" + full_name)s, it looks like you’re on a mobile device.\n"
-"          "
-msgstr ""
-"\n"
-"            नमस्ते%(\" \" + full_name)s, ऐसा लगता है कि आप मोबाइल डिवाइस पर हैं।\n"
-"          "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid ""
-"\n"
-"            CommCare HQ is optimized for desktop or laptop browsers.\n"
-"          "
-msgstr ""
-"\n"
-"            CommCare HQ डेस्कटॉप या लैपटॉप ब्राउज़र के लिए अनुकूलित है।\n"
-"          "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid ""
-"\n"
-"            Send yourself an email with a login link to use when you’re back on a full-size browser:\n"
-"          "
-msgstr ""
-"\n"
-"            जब आप पूर्ण आकार के ब्राउज़र पर लौटें तो उपयोग के लिए अपने आप को लॉगिन लिंक के साथ एक ईमेल भेजें:\n"
-"          "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid "Email Link"
-msgstr "ईमेल लिंक"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid ""
-"\n"
-"            Reminder sent!\n"
-"          "
-msgstr ""
-"\n"
-"            रिमाइंडर भेज दिया गया है!\n"
-"          "
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
-msgid ""
-"\n"
-"            Check out this video to get an introduction to CommCare HQ.\n"
-"          "
-msgstr ""
-"\n"
-"            CommCare HQ का परिचय प्राप्त करने के लिए यह वीडियो देखें।\n"
-"          "
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
 #, python-format
@@ -33372,37 +33669,36 @@ msgid "KYC Report"
 msgstr "KYC रिपोर्ट"
 
 #: corehq/apps/integration/payments/const.py
-msgid "Requested"
-msgstr "अनुरोधित"
+#, fuzzy
+#| msgid "Last Verified"
+msgid "Not Verified"
+msgstr "अंतिम सत्यापन"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "Pending Submission"
+msgstr "हाल की सबमिशन देखें"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Submitted [UTC]"
+msgid "Submitted"
+msgstr "सबमिट किया गया [UTC]"
 
 #: corehq/apps/integration/payments/const.py
 msgid "Request failed"
 msgstr "अनुरोध विफल"
 
 #: corehq/apps/integration/payments/filters.py
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
-msgid "Verification Status"
-msgstr "सत्यापन स्थिति"
+msgid "Batch number"
+msgstr "बैच नंबर"
 
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
 #: corehq/apps/userreports/reports/filters/factory.py
 msgid "Show all"
 msgstr "सभी दिखाएँ"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/integration/payments/tables.py
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
-msgid "Verified"
-msgstr "सत्यापित"
-
-#: corehq/apps/integration/payments/filters.py
-msgid "Unverified"
-msgstr "असत्यापित"
-
-#: corehq/apps/integration/payments/filters.py
-msgid "Batch number"
-msgstr "बैच नंबर"
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
@@ -33478,8 +33774,25 @@ msgid "Payer Message"
 msgstr "भुगतानकर्ता संदेश"
 
 #: corehq/apps/integration/payments/tables.py
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+msgid "Verified"
+msgstr "सत्यापित"
+
+#: corehq/apps/integration/payments/tables.py
 msgid "Verified By"
 msgstr "सत्यापित किया गया द्वारा"
+
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Submitted [UTC]"
+msgid "Submitted At"
+msgstr "सबमिट किया गया [UTC]"
+
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Invalid Date"
+msgid "Invalid Status"
+msgstr "अमान्य तिथि"
 
 #: corehq/apps/integration/payments/tables.py
 msgid "Unavailable"
@@ -33697,10 +34010,15 @@ msgid "Are you sure you want to proceed with the selected payments?"
 msgstr "क्या आप वाकई चयनित भुगतानों के साथ आगे बढ़ना चाहते हैं?"
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      Successfully submitted %(success_count)s records for payments!\n"
+#| "      Verification status for these will be refreshed in a few seconds.\n"
+#| "    "
 msgid ""
 "\n"
-"      Successfully submitted %(success_count)s records for payments!\n"
+"      Successfully verified %(success_count)s records for payments!\n"
 "      Verification status for these will be refreshed in a few seconds.\n"
 "    "
 msgstr ""
@@ -33710,10 +34028,14 @@ msgstr ""
 "    "
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      Failed to submit %(failure_count)s records for payments!\n"
+#| "    "
 msgid ""
 "\n"
-"      Failed to submit %(failure_count)s records for payments!\n"
+"      Failed to verify %(failure_count)s records for payments!\n"
 "    "
 msgstr ""
 "\n"
@@ -38632,10 +38954,30 @@ msgstr "admin"
 msgid "Deactivated Mobile Workers"
 msgstr "निष्क्रिय मोबाइल कार्यकर्ता"
 
+#: corehq/apps/reports/models.py
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Active Web Users"
+msgstr "# सक्रिय उपयोगकर्ता"
+
+#: corehq/apps/reports/models.py
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Deactivated Web Users"
+msgstr "निष्क्रिय मोबाइल वर्कर्स दिखाएँ"
+
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
 msgstr "परियोजना रिपोर्ट्स"
+
+#: corehq/apps/reports/standard/cases/basic.py
+msgid ""
+"Cannot filter by that many case owners. Choose a more specific group or "
+"location."
+msgstr ""
+"इतने अधिक केस मालिकों द्वारा फ़िल्टर नहीं किया जा सकता। कृपया अधिक विशिष्ट "
+"समूह या स्थान चुनें।"
 
 #: corehq/apps/reports/standard/cases/basic.py
 #, fuzzy
@@ -39695,6 +40037,12 @@ msgid "is active"
 msgstr "सक्रिय है"
 
 #: corehq/apps/reports/standard/users/reports.py
+#, fuzzy
+#| msgid "Active Domains"
+msgid "is active in domain"
+msgstr "सक्रिय डोमेन"
+
+#: corehq/apps/reports/standard/users/reports.py
 msgid "language"
 msgstr "भाषा"
 
@@ -39794,6 +40142,13 @@ msgstr "फिर से प्रयास कर रहे हैं..."
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
 msgid "Loading Failed. Try Again?"
 msgstr "लोडिंग विफल रही। फिर से प्रयास करें?"
+
+#: corehq/apps/reports/templates/reports/async/bootstrap3/filters.html
+#: corehq/apps/reports/templates/reports/async/bootstrap5/filters.html
+#: corehq/apps/reports_core/templates/reports_core/partials/bootstrap3/filter_panel.html
+#: corehq/apps/reports_core/templates/reports_core/partials/bootstrap5/filter_panel.html
+msgid "Report Filters"
+msgstr "रिपोर्ट फ़िल्टर"
 
 #: corehq/apps/reports/templates/reports/async/bootstrap3/project_health_dashboard.html
 #: corehq/apps/reports/templates/reports/async/bootstrap5/project_health_dashboard.html
@@ -41172,75 +41527,6 @@ msgstr ""
 msgid "%s: Requested export excel data"
 msgstr "%s: अनुरोधित निर्यात एक्सेल डेटा"
 
-#: corehq/apps/reports/v2/endpoints/case_properties.py
-msgid "info"
-msgstr "जानकारी"
-
-#: corehq/apps/reports/v2/endpoints/case_properties.py
-msgid "current"
-msgstr "वर्तमान"
-
-#: corehq/apps/reports/v2/endpoints/case_properties.py
-#, python-brace-format
-msgid "{num} cases"
-msgstr "{num} केस"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Text equals"
-msgstr "पाठ बराबर है"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Text does not equal"
-msgstr "पाठ बराबर नहीं है"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "a Number"
-msgstr "एक संख्या"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Number is equal to"
-msgstr "संख्या बराबर है"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Number is less than"
-msgstr "संख्या से कम है"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Number is greater than"
-msgstr "संख्या से अधिक है"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Number is not equal to"
-msgstr "संख्या बराबर नहीं है"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "a Date"
-msgstr "एक तिथि"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Date is"
-msgstr "तिथि है"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Date is before"
-msgstr "तिथि से पहले है"
-
-#: corehq/apps/reports/v2/filters/xpath_column.py
-msgid "Date is after"
-msgstr "तिथि के बाद है"
-
-#: corehq/apps/reports/v2/models.py
-msgid "The report endpoint for {}/{} cannot be found."
-msgstr "{}/{} के लिए रिपोर्ट एंडपॉइंट नहीं मिल सका।"
-
-#: corehq/apps/reports/v2/models.py
-msgid "Could not find the report filter '{}'"
-msgstr "'{}' रिपोर्ट फ़िल्टर नहीं मिल सका"
-
-#: corehq/apps/reports/v2/reports/explore_case_data.py
-msgid "Project Data"
-msgstr "प्रोजेक्ट डेटा"
-
 #: corehq/apps/reports/views.py
 msgid "Scheduled Report"
 msgstr "निर्धारित रिपोर्ट"
@@ -41485,6 +41771,10 @@ msgstr "अक्टूबर"
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap5/quarter_filter.html
 msgid "December"
 msgstr "दिसंबर"
+
+#: corehq/apps/saved_reports/models.py corehq/apps/users/models.py
+msgid "Unknown User"
+msgstr "अज्ञात उपयोगकर्ता"
 
 #: corehq/apps/saved_reports/models.py
 msgid "Deleted Report"
@@ -41790,6 +42080,7 @@ msgid "Copy Full Key"
 msgstr "पूर्ण कुंजी कॉपी करें"
 
 #: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Expired"
 msgstr "समाप्त हो गया"
@@ -43275,6 +43566,10 @@ msgstr "फ़िल्टर प्रकार"
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Show Contacts"
 msgstr "संपर्क दिखाएँ"
+
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+msgid "Verification Status"
+msgstr "सत्यापन स्थिति"
 
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Not Verified or Already In Use"
@@ -45549,9 +45844,15 @@ msgid "Please confirm with %(owner)s before using it."
 msgstr "कृपया इसका उपयोग करने से पहले %(owner)s से पुष्टि करें।"
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.\n"
+#| "        "
 msgid ""
 "\n"
-"          <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.\n"
+"          <strong>Please Note:</strong> This feature flag is available on this\n"
+"          server environment, but not on others.\n"
 "        "
 msgstr ""
 "\n"
@@ -45559,9 +45860,15 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          <strong>CAUTION:</strong> This feature flag is not available on the current server environment.\n"
+#| "        "
 msgid ""
 "\n"
-"          <strong>CAUTION:</strong> This feature flag is not available on the current server environment.\n"
+"          <strong>CAUTION:</strong> This feature flag is not available on the\n"
+"          current server environment.\n"
 "        "
 msgstr ""
 "\n"
@@ -45569,9 +45876,15 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag is <strong>always enabled</strong> for the following domains:\n"
+#| "      "
 msgid ""
 "\n"
-"        This feature flag is <strong>always enabled</strong> for the following domains:\n"
+"        This feature flag is <strong>always enabled</strong> for the following\n"
+"        domains:\n"
 "      "
 msgstr ""
 "\n"
@@ -45579,9 +45892,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag is <strong>always disabled</strong> for the following domains:\n"
+#| "      "
 msgid ""
 "\n"
-"        This feature flag is <strong>always disabled</strong> for the following domains:\n"
+"        This feature flag is <strong>always disabled</strong> for the following\n"
+"        domains:\n"
 "      "
 msgstr ""
 "\n"
@@ -45589,20 +45908,31 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag also requires the following flags to be enabled:\n"
+#| "      "
 msgid ""
 "\n"
-"        This feature flag also requires the following flags to be enabled:\n"
-"      "
+"          This feature flag also requires the following flags to be enabled:\n"
+"        "
 msgstr ""
 "\n"
 "        इस फीचर फ्लैग को सक्षम करने के लिए निम्नलिखित फ्लैग्स भी सक्षम होने चाहिए:\n"
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Enabling this feature flag will automatically enable the flags listed above.\n"
+#| "      "
 msgid ""
 "\n"
-"        Enabling this feature flag will automatically enable the flags listed above.\n"
-"      "
+"          Enabling this feature flag will automatically enable the flags listed\n"
+"          above.\n"
+"        "
 msgstr ""
 "\n"
 "        इस फीचर फ्लैग को सक्षम करने से ऊपर सूचीबद्ध फ्लैग्स स्वतः सक्षम हो जाएँगे।\n"
@@ -45613,6 +45943,30 @@ msgid ""
 "Randomness ranges from 0-1.<br/>0=disabled for all<br/>1=enable for all"
 msgstr ""
 "रैंडमनेस 0-1 के बीच होती है।<br/>0=सभी के लिए अक्षम<br/>1=सभी के लिए सक्षम"
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid "Why can't I see any data?"
+msgid "Why can't I edit?"
+msgstr "मैं कोई डेटा क्यों नहीं देख पा रहा/रही हूँ?"
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-On.\n"
+#| "                If this is in error, please contact your project's administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"              You do not have permission to modify this flag. Please contact\n"
+"              support if any changes are needed.\n"
+"            "
+msgstr ""
+"\n"
+"                आपको सिंगल साइन-ऑन के साथ साइन इन करने की अनुमति नहीं है।\n"
+"                यदि यह त्रुटि है, तो कृपया अपने प्रोजेक्ट के व्यवस्थापक से संपर्क करें।\n"
+"              "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "Enabled toggle items"
@@ -48672,6 +49026,18 @@ msgid "Username contains invalid characters."
 msgstr "यूज़रनेम में अमान्य अक्षर हैं।"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid "Password Reset"
+msgid "Password Reset Email"
+msgstr "पासवर्ड रीसेट"
+
+#: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid "Password Reset"
+msgid "Send Password Reset Link"
+msgstr "पासवर्ड रीसेट"
+
+#: corehq/apps/users/forms.py
 msgid "Require Account Confirmation?"
 msgstr "क्या खाता पुष्टि आवश्यक है?"
 
@@ -48755,22 +49121,6 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr "आपका पासवर्ड बहुत कमजोर है! नंबर या प्रतीक जोड़ने का प्रयास करें!"
-
-#: corehq/apps/users/forms.py
-msgid ""
-"Setting a password is disabled. The user will set their own password on "
-"confirming their account email."
-msgstr ""
-"पासवर्ड सेट करना अक्षम है। उपयोगकर्ता अपने खाते की ईमेल पुष्टि करने पर अपना "
-"पासवर्ड स्वयं सेट करेगा।"
-
-#: corehq/apps/users/forms.py
-msgid ""
-"Setting a password is disabled. The user will set their own password on "
-"confirming their account phone number."
-msgstr ""
-"पासवर्ड सेट करना अक्षम है। उपयोगकर्ता अपने खाते का फ़ोन नंबर पुष्टि करने पर "
-"अपना पासवर्ड स्वयं सेट करेगा।"
 
 #: corehq/apps/users/forms.py
 msgid "Auto-Deactivation Settings"
@@ -48891,10 +49241,6 @@ msgstr "ID '{}' के साथ कोई लैंडिंग पेज न�
 #, python-brace-format
 msgid "No landing page found with id {page_id}"
 msgstr "id {page_id} के साथ कोई लैंडिंग पेज नहीं मिला"
-
-#: corehq/apps/users/models.py
-msgid "Unknown User"
-msgstr "अज्ञात उपयोगकर्ता"
 
 #: corehq/apps/users/models.py
 msgid "Dimagi User"
@@ -49196,6 +49542,36 @@ msgstr ""
 "    </p>\n"
 "\n"
 "  "
+
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy
+#| msgid "Account Credit"
+msgid "Account Confirmed"
+msgstr "खाता क्रेडिट"
+
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy
+#| msgid "You can now login"
+msgid "You can now log into the mobile app."
+msgstr "अब आप लॉगिन कर सकते हैं"
+
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Case List has blank filter in\n"
+#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                "
+msgid ""
+"\n"
+"                To log into CommCare HQ on the web, click\n"
+"                <a href=\"%(login_url)s\">here</a>.\n"
+"              "
+msgstr ""
+"\n"
+"                  केस सूची में खाली फ़िल्टर है\n"
+"                  <a href=\"%(module_url)s\">%(module_name)s</a> में\n"
+"                "
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #, python-format
@@ -49688,6 +50064,36 @@ msgstr "स्थान सेटिंग अपडेट करें"
 msgid "Update Tableau Configuration"
 msgstr "Tableau कॉन्फ़िगरेशन अपडेट करें"
 
+#: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
+#, python-format
+msgid ""
+"\n"
+"  <p>\n"
+"    You have successfully confirmed the account %(new_mobile_worker)s for the\n"
+"    project space %(domain)s.\n"
+"  </p>\n"
+"  <p>\n"
+"    If you think you have received this by mistake, you can go ahead and ignore\n"
+"    this email.\n"
+"  </p>\n"
+"  <p>\n"
+"    Thank you,<br />\n"
+"    The CommCare HQ Team\n"
+"  </p>\n"
+msgstr ""
+"\n"
+"  <p>\n"
+"    आपने सफलतापूर्वक %(new_mobile_worker)s खाते की पुष्टि की है\n"
+"    प्रोजेक्ट स्पेस %(domain)s के लिए।\n"
+"  </p>\n"
+"  <p>\n"
+"    यदि आपको लगता है कि यह ईमेल गलती से मिला है, तो आप इसे अनदेखा कर सकते हैं।\n"
+"  </p>\n"
+"  <p>\n"
+"    धन्यवाद,<br />\n"
+"    CommCare HQ टीम\n"
+"  </p>\n"
+
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
 msgid ""
@@ -50109,14 +50515,6 @@ msgid "Reactivate"
 msgstr "पुनः सक्रिय करें"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Confirmation Email"
-msgstr "पुष्टिकरण ईमेल भेजें"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Confirmation SMS"
-msgstr "पुष्टिकरण एसएमएस भेजें"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Unlink PersonalID"
 msgstr "PersonalID अनलिंक करें"
 
@@ -50197,88 +50595,6 @@ msgstr ""
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              email to this account?\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  Would you like to send the account\n"
-"                                  confirmation email to this account?\n"
-"                                "
-msgstr ""
-"\n"
-"                              क्या आप इस खाते पर खाता पुष्टि\n"
-"                              ईमेल भेजना चाहेंगे?\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              SMS to this account?\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  Would you like to send the account\n"
-"                                  confirmation SMS to this account?\n"
-"                                "
-msgstr ""
-"\n"
-"                              क्या आप इस खाते पर खाता पुष्टि\n"
-"                              एसएमएस भेजना चाहेंगे?\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent an email with instructions to\n"
-#| "                              set a password and be able to login to this project.\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  The user will be sent an email with\n"
-"                                  instructions to set a password and be able to\n"
-"                                  login to this project.\n"
-"                                "
-msgstr ""
-"\n"
-"                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
-"                              एक ईमेल भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent a SMS with instructions to\n"
-#| "                              set a password and be able to login to this project.\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  The user will be sent a SMS with instructions\n"
-"                                  to set a password and be able to login to this\n"
-"                                  project.\n"
-"                                "
-msgstr ""
-"\n"
-"                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
-"                              एक एसएमएस भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Account Confirmaton Email"
-msgstr "खाता पुष्टि ईमेल भेजें"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Account Confirmaton SMS"
-msgstr "खाता पुष्टि एसएमएस भेजें"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Loading Workers..."
 msgstr "वर्कर्स लोड हो रहे हैं..."
 
@@ -50305,6 +50621,186 @@ msgstr ""
 "            यदि यह समस्या बनी रहती है, तो कृपया\n"
 "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">समस्या की रिपोर्ट करें</a>।\n"
 "          "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Pending Confirmation"
+msgid "Pending Account Confirmations"
+msgstr "पुष्टि लंबित"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            No Mobile Workers were found that matched your query.\n"
+#| "          "
+msgid ""
+"\n"
+"            No pending account confirmations were found that matched your query.\n"
+"          "
+msgstr ""
+"\n"
+"            आपकी क्वेरी से मेल खाते कोई मोबाइल वर्कर्स नहीं मिले।\n"
+"          "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              <strong>There are no mobile workers visible to you at this time.</strong>\n"
+#| "              Please contact your project's administrator if this is incorrect.\n"
+#| "            "
+msgid ""
+"\n"
+"              <strong\n"
+"                >There are no pending account confirmations visible to you at\n"
+"                this time.</strong\n"
+"              >\n"
+"              Please contact your project's administrator if this is incorrect.\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>इस समय आपके लिए कोई मोबाइल वर्कर दिखाई नहीं दे रहे हैं।</strong>\n"
+"              यदि यह गलत है तो कृपया अपने प्रोजेक्ट के एडमिनिस्ट्रेटर से संपर्क करें।\n"
+"            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  <strong>There are currently no mobile workers in this project.</strong>\n"
+#| "              "
+msgid ""
+"\n"
+"                <strong\n"
+"                  >There are currently no pending account confirmations in this\n"
+"                  project.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+"\n"
+"                  <strong>इस प्रोजेक्ट में वर्तमान में कोई मोबाइल वर्कर नहीं हैं।</strong>\n"
+"              "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>No mobile users are assigned to your user's location.</strong>\n"
+#| "              "
+msgid ""
+"\n"
+"                <strong\n"
+"                  >No users with pending account confirmations are assigned to\n"
+"                  your user's location.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+"\n"
+"                <strong>आपके यूज़र के स्थान पर कोई मोबाइल यूज़र असाइन नहीं हैं।</strong>\n"
+"              "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "ending balance"
+msgid "Pending Since"
+msgstr "अंतिम शेष राशि"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation SMS"
+msgstr "पुष्टिकरण एसएमएस भेजें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation Email"
+msgstr "पुष्टिकरण ईमेल भेजें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account confirmation\n"
+#| "                              SMS to this account?\n"
+#| "                            "
+msgid ""
+"\n"
+"                              Would you like to send the account confirmation\n"
+"                              SMS to this account?\n"
+"                            "
+msgstr ""
+"\n"
+"                              क्या आप इस खाते पर खाता पुष्टि\n"
+"                              एसएमएस भेजना चाहेंगे?\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account confirmation\n"
+#| "                              email to this account?\n"
+#| "                            "
+msgid ""
+"\n"
+"                              Would you like to send the account confirmation\n"
+"                              email to this account?\n"
+"                            "
+msgstr ""
+"\n"
+"                              क्या आप इस खाते पर खाता पुष्टि\n"
+"                              ईमेल भेजना चाहेंगे?\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with instructions to\n"
+#| "                              set a password and be able to login to this project.\n"
+#| "                            "
+msgid ""
+"\n"
+"                              The user will be sent a SMS with instructions to\n"
+"                              set a password and be able to login to this\n"
+"                              project.\n"
+"                            "
+msgstr ""
+"\n"
+"                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
+"                              एक एसएमएस भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with instructions to\n"
+#| "                              set a password and be able to login to this project.\n"
+#| "                            "
+msgid ""
+"\n"
+"                              The user will be sent an email with instructions\n"
+"                              to set a password and be able to login to this\n"
+"                              project.\n"
+"                            "
+msgstr ""
+"\n"
+"                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
+"                              एक एसएमएस भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton SMS"
+msgstr "खाता पुष्टि एसएमएस भेजें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton Email"
+msgstr "खाता पुष्टि ईमेल भेजें"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Send Account Confirmaton SMS"
+msgid "Loading Pending Account Confirmations..."
+msgstr "खाता पुष्टि एसएमएस भेजें"
 
 #: corehq/apps/users/templates/users/partials/basic_info_form.html
 msgid "CommCare Supply Settings"
@@ -51738,6 +52234,46 @@ msgid ""
 msgstr ""
 "{} के लिए पासवर्ड सफलतापूर्वक रीसेट कर दिया गया है। अब आप लॉगिन कर सकते हैं।"
 
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Send Account Confirmaton SMS"
+msgid "Successful account confirmation for {}"
+msgstr "खाता पुष्टि एसएमएस भेजें"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user is inactive and cannot reset their password."
+msgstr "इस ईमेल पते से संबद्ध उपयोगकर्ता खाता पासवर्ड रीसेट नहीं कर सकता।"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user account cannot reset the password."
+msgstr "इस ईमेल पते से संबद्ध उपयोगकर्ता खाता पासवर्ड रीसेट नहीं कर सकता।"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Recipient has no email address."
+msgid "This user does not have an email address set."
+msgstr "प्राप्तकर्ता के पास कोई ईमेल पता नहीं है।"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Password Reset Complete"
+msgid "Password reset email failed to send - "
+msgstr "पासवर्ड रीसेट पूर्ण"
+
+#: corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Password Reset Complete"
+msgid "Password reset email sent to {}"
+msgstr "पासवर्ड रीसेट पूर्ण"
+
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
 msgstr "कोई यूज़रनेम न होने वाली पंक्ति को छोड़ दिया गया"
@@ -52140,14 +52676,6 @@ msgstr ""
 " इन प्रश्नों को कॉन्फ़िगर करने के लिए उन्नत लॉजिक निर्दिष्ट करना आवश्यक है। "
 "यह फॉर्म बिल्डर में उपलब्ध है, लुकअप टेबल प्रश्नों के लिए Lookup Table Data "
 "पर एक अतिरिक्त विकल्प के रूप में।"
-
-#: corehq/feature_previews.py
-msgid ""
-"This feature allows you to quickly explore your case data for ad-hoc data "
-"queries or to identify unclean data."
-msgstr ""
-"यह सुविधा आपको अपने केस डेटा का त्वरित अन्वेषण करने, तात्कालिक डेटा क्वेरी "
-"करने या अस्वच्छ डेटा की पहचान करने की अनुमति देती है।"
 
 #: corehq/form_processor/backends/sql/update_strategy.py
 msgid "Sorry, referrals are no longer supported!"
@@ -55474,6 +56002,12 @@ msgstr "अनजान उपयोगकर्ता"
 msgid "Forward Forms"
 msgstr "फ़ॉर्म फॉरवर्ड करें"
 
+#: corehq/motech/repeaters/models.py
+#, fuzzy
+#| msgid "Forward Cases To Another Commcare Project"
+msgid "Forward Form Metadata to Commcare Connect"
+msgstr "केस को किसी अन्य Commcare प्रोजेक्ट में फॉरवर्ड करें"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Cases"
 msgstr "केस फॉरवर्ड करें"
@@ -56205,6 +56739,10 @@ msgid "CommCare Supply Setup"
 msgstr "CommCare सप्लाई सेटअप"
 
 #: corehq/tabs/tabclasses.py
+msgid "Export Data"
+msgstr "डेटा निर्यात करें"
+
+#: corehq/tabs/tabclasses.py
 msgid "Explore Data"
 msgstr "डेटा एक्सप्लोर करें"
 
@@ -56497,6 +57035,20 @@ msgstr "सभी इवेंट्स देखें"
 #: corehq/tabs/tabclasses.py
 msgid "Manage Attendance Tracking Events"
 msgstr "उपस्थिति ट्रैकिंग इवेंट्स का प्रबंधन करें"
+
+#: corehq/util/context_processors.py
+msgid "US"
+msgstr "यूएस"
+
+#: corehq/util/context_processors.py
+#, fuzzy
+#| msgid "Indices"
+msgid "India"
+msgstr "Manejo de Casos"
+
+#: corehq/util/context_processors.py
+msgid "EU"
+msgstr "ईयू"
 
 #: corehq/util/jsonattrs.py
 #, python-format
@@ -57171,6 +57723,388 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
 
+#~ msgid "Cookies Required for CSRF"
+#~ msgstr "CSRF के लिए कुकीज़ आवश्यक हैं"
+
+#~ msgid "Cookies must be enabled to use CommCare"
+#~ msgstr "CommCare का उपयोग करने के लिए कुकीज़ सक्षम होनी चाहिए"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <p>\n"
+#~ "      Please try refreshing your browser or clicking the blue \"flower\" icon in the top left hand corner.\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      No luck? Please clear your browser’s cache, close your browser, and reopen your browser.\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      If you believe you received this error as a mistake, please contact <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
+#~ "    </p>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <p>\n"
+#~ "      कृपया अपने ब्राउज़र को रीफ्रेश करने का प्रयास करें या ऊपर बाईं ओर नीले \"फूल\" आइकन पर क्लिक करें।\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      काम नहीं बना? कृपया अपने ब्राउज़र की कैश साफ़ करें, ब्राउज़र बंद करें और फिर से खोलें।\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      यदि आपको लगता है कि यह त्रुटि गलती से मिली है, तो कृपया <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a> से संपर्क करें।\n"
+#~ "    </p>\n"
+#~ "  "
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "                                  The user will be sent an email with\n"
+#~ "                                  instructions to set a password and be able to\n"
+#~ "                                  login to this project.\n"
+#~ "                                "
+#~ msgstr ""
+#~ "\n"
+#~ "                              उपयोगकर्ता को पासवर्ड सेट करने के निर्देशों के साथ\n"
+#~ "                              एक ईमेल भेजा जाएगा और वे इस प्रोजेक्ट में लॉगिन कर सकेंगे।\n"
+#~ "                            "
+
+#~ msgid "Explore Case Data (Preview)"
+#~ msgstr "मामला डेटा एक्सप्लोर करें (पूर्वावलोकन)"
+
+#~ msgid ""
+#~ "\n"
+#~ "      This feature allows you to quickly explore your case data for ad-hoc data\n"
+#~ "      queries or to identify unclean data.<br />\n"
+#~ "      This is an Add-On.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      यह सुविधा आपको अपने मामला डेटा को त्वरित रूप से अनौपचारिक डेटा\n"
+#~ "      क्वेरी या अस्वच्छ डेटा की पहचान के लिए एक्सप्लोर करने की अनुमति देती है।<br />\n"
+#~ "      यह एक ऐड-ऑन है।\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "              Preparing your case data for exploration...\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              आपके मामला डेटा को एक्सप्लोरेशन के लिए तैयार किया जा रहा है...\n"
+#~ "            "
+
+#~ msgid "Save Filters"
+#~ msgstr "फ़िल्टर सहेजें"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Loading...\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          लोड हो रहा है...\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "          Our system is experiencing an unusually large load on resources at the moment,\n"
+#~ "          so data is not being received in a timely fashion. We are working on the problem, but\n"
+#~ "          if you continue to experience this issue, please contact support.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          हमारा सिस्टम इस समय संसाधनों पर असामान्य रूप से अधिक लोड का सामना कर रहा है,\n"
+#~ "          इसलिए डेटा समय पर प्राप्त नहीं हो रहा है। हम समस्या पर काम कर रहे हैं, लेकिन\n"
+#~ "          यदि आपको यह समस्या लगातार आती है, तो कृपया सहायता से संपर्क करें।\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "          There was an issue fetching cases with these filters.\n"
+#~ "          Please check your filters and try again.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          इन फ़िल्टर के साथ मामले प्राप्त करने में समस्या आई।\n"
+#~ "          कृपया अपने फ़िल्टर जांचें और पुनः प्रयास करें।\n"
+#~ "        "
+
+#~ msgid "Edit Column"
+#~ msgstr "कॉलम संपादित करें"
+
+#~ msgid "Filter Data in Column"
+#~ msgstr "कॉलम में डेटा फ़िल्टर करें"
+
+#~ msgid ""
+#~ "\n"
+#~ "                      Treat this property as\n"
+#~ "                      <select class=\"form-control filter-type\"\n"
+#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
+#~ "                                         optionsText: function (val) {\n"
+#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
+#~ "                                         },\n"
+#~ "                                         value: filterName,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
+#~ "                      and match\n"
+#~ "                      <select data-bind=\"value: $parent.clause,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
+#~ "                              class=\"form-control filter-clause\">\n"
+#~ "                        <option value=\"all\">\n"
+#~ "                          all of the\n"
+#~ "                        </option>\n"
+#~ "                        <option value=\"any\">\n"
+#~ "                          any of the\n"
+#~ "                        </option>\n"
+#~ "                      </select>\n"
+#~ "                      following conditions:\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      इस संपत्ति को मानें\n"
+#~ "                      <select class=\"form-control filter-type\"\n"
+#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
+#~ "                                         optionsText: function (val) {\n"
+#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
+#~ "                                         },\n"
+#~ "                                         value: filterName,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
+#~ "                      और मिलाएं\n"
+#~ "                      <select data-bind=\"value: $parent.clause,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
+#~ "                              class=\"form-control filter-clause\">\n"
+#~ "                        <option value=\"all\">\n"
+#~ "                          सभी\n"
+#~ "                        </option>\n"
+#~ "                        <option value=\"any\">\n"
+#~ "                          कोई भी\n"
+#~ "                        </option>\n"
+#~ "                      </select>\n"
+#~ "                      निम्नलिखित शर्तें:\n"
+#~ "                    "
+
+#~ msgid ""
+#~ "\n"
+#~ "              This task is currently not supported, but we are happy to\n"
+#~ "              learn about your interest.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              यह कार्य वर्तमान में समर्थित नहीं है, लेकिन हमें आपकी रुचि जानकर खुशी हुई।\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "                      Treat this property as\n"
+#~ "                      <select class=\"form-select filter-type\"\n"
+#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
+#~ "                                         optionsText: function (val) {\n"
+#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
+#~ "                                         },\n"
+#~ "                                         value: filterName,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
+#~ "                      and match\n"
+#~ "                      <select data-bind=\"value: $parent.clause,  \n"
+#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
+#~ "                              class=\"form-control filter-clause\">\n"
+#~ "                        <option value=\"all\">\n"
+#~ "                          all of the\n"
+#~ "                        </option>\n"
+#~ "                        <option value=\"any\">\n"
+#~ "                          any of the\n"
+#~ "                        </option>\n"
+#~ "                      </select>\n"
+#~ "                      following conditions:\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      इस प्रॉपर्टी को मानें\n"
+#~ "                      <select class=\"form-select filter-type\"\n"
+#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
+#~ "                                         optionsText: function (val) {\n"
+#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
+#~ "                                         },\n"
+#~ "                                         value: filterName,\n"
+#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
+#~ "                      और मिलाएँ\n"
+#~ "                      <select data-bind=\"value: $parent.clause,  \n"
+#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
+#~ "                              class=\"form-control filter-clause\">\n"
+#~ "                        <option value=\"all\">\n"
+#~ "                          सभी\n"
+#~ "                        </option>\n"
+#~ "                        <option value=\"any\">\n"
+#~ "                          कोई भी\n"
+#~ "                        </option>\n"
+#~ "                      </select>\n"
+#~ "                      निम्नलिखित शर्तों के साथ:\n"
+#~ "                    "
+
+#~ msgid "Explore Case Data"
+#~ msgstr "केस डेटा एक्सप्लोर करें"
+
+#~ msgid "CommCare HQ looks better on desktop!"
+#~ msgstr "CommCare HQ डेस्कटॉप पर बेहतर दिखता है!"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            Hi%(\" \" + full_name)s, it looks like you’re on a mobile device.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            नमस्ते%(\" \" + full_name)s, ऐसा लगता है कि आप मोबाइल डिवाइस पर हैं।\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "            CommCare HQ is optimized for desktop or laptop browsers.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            CommCare HQ डेस्कटॉप या लैपटॉप ब्राउज़र के लिए अनुकूलित है।\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "            Send yourself an email with a login link to use when you’re back on a full-size browser:\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            जब आप पूर्ण आकार के ब्राउज़र पर लौटें तो उपयोग के लिए अपने आप को लॉगिन लिंक के साथ एक ईमेल भेजें:\n"
+#~ "          "
+
+#~ msgid "Email Link"
+#~ msgstr "ईमेल लिंक"
+
+#~ msgid ""
+#~ "\n"
+#~ "            Reminder sent!\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            रिमाइंडर भेज दिया गया है!\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "            Check out this video to get an introduction to CommCare HQ.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            CommCare HQ का परिचय प्राप्त करने के लिए यह वीडियो देखें।\n"
+#~ "          "
+
+#~ msgid "Requested"
+#~ msgstr "अनुरोधित"
+
+#~ msgid "Unverified"
+#~ msgstr "असत्यापित"
+
+#~ msgid "info"
+#~ msgstr "जानकारी"
+
+#~ msgid "current"
+#~ msgstr "वर्तमान"
+
+#, python-brace-format
+#~ msgid "{num} cases"
+#~ msgstr "{num} केस"
+
+#~ msgid "Text equals"
+#~ msgstr "पाठ बराबर है"
+
+#~ msgid "Text does not equal"
+#~ msgstr "पाठ बराबर नहीं है"
+
+#~ msgid "a Number"
+#~ msgstr "एक संख्या"
+
+#~ msgid "Number is equal to"
+#~ msgstr "संख्या बराबर है"
+
+#~ msgid "Number is less than"
+#~ msgstr "संख्या से कम है"
+
+#~ msgid "Number is greater than"
+#~ msgstr "संख्या से अधिक है"
+
+#~ msgid "Number is not equal to"
+#~ msgstr "संख्या बराबर नहीं है"
+
+#~ msgid "a Date"
+#~ msgstr "एक तिथि"
+
+#~ msgid "Date is"
+#~ msgstr "तिथि है"
+
+#~ msgid "Date is before"
+#~ msgstr "तिथि से पहले है"
+
+#~ msgid "Date is after"
+#~ msgstr "तिथि के बाद है"
+
+#~ msgid "The report endpoint for {}/{} cannot be found."
+#~ msgstr "{}/{} के लिए रिपोर्ट एंडपॉइंट नहीं मिल सका।"
+
+#~ msgid "Could not find the report filter '{}'"
+#~ msgstr "'{}' रिपोर्ट फ़िल्टर नहीं मिल सका"
+
+#~ msgid "Project Data"
+#~ msgstr "प्रोजेक्ट डेटा"
+
+#~ msgid ""
+#~ "Setting a password is disabled. The user will set their own password on "
+#~ "confirming their account email."
+#~ msgstr ""
+#~ "पासवर्ड सेट करना अक्षम है। उपयोगकर्ता अपने खाते की ईमेल पुष्टि करने पर अपना "
+#~ "पासवर्ड स्वयं सेट करेगा।"
+
+#~ msgid ""
+#~ "Setting a password is disabled. The user will set their own password on "
+#~ "confirming their account phone number."
+#~ msgstr ""
+#~ "पासवर्ड सेट करना अक्षम है। उपयोगकर्ता अपने खाते का फ़ोन नंबर पुष्टि करने पर "
+#~ "अपना पासवर्ड स्वयं सेट करेगा।"
+
+#~ msgid ""
+#~ "This feature allows you to quickly explore your case data for ad-hoc data "
+#~ "queries or to identify unclean data."
+#~ msgstr ""
+#~ "यह सुविधा आपको अपने केस डेटा का त्वरित अन्वेषण करने, तात्कालिक डेटा क्वेरी "
+#~ "करने या अस्वच्छ डेटा की पहचान करने की अनुमति देती है।"
+
+#~ msgid "No, take me back."
+#~ msgstr "नहीं, मुझे वापस ले जाएँ।"
+
+#~ msgid "Yes, import application"
+#~ msgstr "हाँ, ऐप्लिकेशन आयात करें"
+
+#~ msgid "You must submit a name for the application you are importing."
+#~ msgstr "आपको उस एप्लिकेशन का नाम सबमिट करना होगा जिसे आप इम्पोर्ट कर रहे हैं।"
+
+#~ msgid "You must upload the app source file."
+#~ msgstr "आपको ऐप स्रोत फ़ाइल अपलोड करनी होगी।"
+
+#~ msgid "Domain Temporarily Unavailable"
+#~ msgstr "डोमेन अस्थायी रूप से अनुपलब्ध है"
+
+#~ msgid ""
+#~ "The page you requested is currently unavailable due to a\n"
+#~ "    data migration. Please check back later."
+#~ msgstr ""
+#~ "आपके द्वारा अनुरोधित पृष्ठ वर्तमान में डेटा माइग्रेशन के कारण अनुपलब्ध है। "
+#~ "कृपया बाद में पुनः प्रयास करें।"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <p>Import application <strong>%(app_name)s</strong> from domain <strong>%(app_domain)s</strong>?</p>\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <p>डोमेन <strong>%(app_domain)s</strong> से ऐप्लिकेशन <strong>%(app_name)s</strong> आयात करें?</p>\n"
+#~ "        "
+
 #~ msgid ""
 #~ "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
 #~ "Apps and reports (if applicable), but does not affect mobile applications. "
@@ -57278,9 +58212,6 @@ msgstr "मान्य JSON दर्ज करें"
 
 #~ msgid "...Collapse"
 #~ msgstr "...संकुचित करें"
-
-#~ msgid "You can now login"
-#~ msgstr "अब आप लॉगिन कर सकते हैं"
 
 #~ msgid "patients added from OpenMRS Atom feed."
 #~ msgstr "OpenMRS Atom फ़ीड से जोड़े गए मरीज।"
