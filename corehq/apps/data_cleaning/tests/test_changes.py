@@ -1,3 +1,4 @@
+import uuid
 import pytest
 from casexml.apps.case.mock import CaseFactory
 from django.contrib.auth.models import User
@@ -428,3 +429,59 @@ class BulkEditRecordChangesTest(TestCase):
         change.records.add(record)
         with pytest.raises(ValueError, match="case.case_id doesn't match record.doc_id"):
             record.get_edited_case_properties(self.case_two)
+
+
+class BulkEditChangeManagerTests(TestCase):
+    domain_name = 'forest'
+    case_type = 'plant'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.web_user = WebUser.create(cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None)
+        cls.django_user = User.objects.get(username=cls.web_user.username)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
+
+    def setUp(self):
+        super().setUp()
+        self.session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
+
+    def test_apply_inline_edit(self):
+        doc_id = str(uuid.uuid4())
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=doc_id,
+        )
+        change = record.changes.last()
+        assert change is None
+        self.session.changes.apply_inline_edit(
+            record=record,
+            prop_id='town',
+            value='Esperanza',
+        )
+        change = record.changes.last()
+        assert change.prop_id == 'town'
+        assert change.action_type == EditActionType.REPLACE
+        assert change.replace_string == 'Esperanza'
+
+    def test_apply_reset(self):
+        doc_id = str(uuid.uuid4())
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=doc_id,
+        )
+        self.session.changes.apply_inline_edit(
+            record=record,
+            prop_id='town',
+            value='Esperanza',
+        )
+        self.session.changes.apply_reset(
+            record=record,
+            prop_id='town',
+        )
+        change = record.changes.last()
+        assert change.prop_id == 'town'
+        assert change.action_type == EditActionType.RESET
