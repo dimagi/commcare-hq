@@ -144,4 +144,4 @@ codebase. These guidelines apply in the following circumstances:
   logical steps to make reviewing easier. Each step should be staged with a
   suggested commit message that summarizes the step.
 - The AI Assistant should leave it to the developer to commit the staged
-  changes, and to sign the commit if applicable.
+  changes, and to sign the commit where applicable.
