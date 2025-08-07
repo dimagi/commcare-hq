@@ -696,6 +696,13 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
         domain_issuing_app_record = CredentialApplication.objects.filter(domain=self.domain).first()
         app_id = form_data['app_id']
 
+        if not app_id:
+            if domain_issuing_app_record:
+                issuing_app = get_app(self.domain, domain_issuing_app_record.app_id)
+                self.remove_credential_from_app_features(issuing_app)
+                domain_issuing_app_record.delete()
+            return False
+
         default_activity_level = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
 
         is_new_credential_app = True
@@ -716,13 +723,13 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
             domain_issuing_app_record.activity_level = default_activity_level
             domain_issuing_app_record.save()
 
-            self.remove_credential_from_app_features(old_app, domain_issuing_app_record)
+            self.remove_credential_from_app_features(old_app)
             self.add_credential_to_app_features(new_app, domain_issuing_app_record)
         else:
             is_new_credential_app = False
         return is_new_credential_app
 
-    def remove_credential_from_app_features(self, app, domain_issuing_app):
+    def remove_credential_from_app_features(self, app):
         app.profile.get('features', {}).pop('credentials', None)
         app.save()
 

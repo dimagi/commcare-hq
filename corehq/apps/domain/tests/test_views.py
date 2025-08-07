@@ -602,6 +602,34 @@ class TestCredentialsApplicationSettingsView(TestCase):
         new_issuing_app = get_app(self.domain.name, another_app_id)
         assert new_issuing_app.profile['features']['credentials'] == three_months
 
+    def test_specify_no_credential_app_with_no_existing_issuing_app(self):
+        self.client.post(
+            self.url,
+            data={
+                'app_id': '',
+            }
+        )
+        assert not CredentialApplication.objects.filter(domain=self.domain.name).exists()
+
+    def test_specify_no_credential_app_with_existing_issuing_app(self):
+        app_id = self._get_app().id
+        self.client.post(
+            self.url,
+            data={
+                'app_id': app_id,
+            }
+        )
+
+        self.client.post(
+            self.url,
+            data={
+                'app_id': '',
+            }
+        )
+        previous_issuing_app = get_app(self.domain.name, app_id)
+        assert 'credentials' not in previous_issuing_app.profile['features']
+        assert not CredentialApplication.objects.filter(domain=self.domain.name).exists()
+
     def _get_app(self):
         factory = AppFactory(domain=self.domain.name, build_version='2.51.0')
         app = factory.app

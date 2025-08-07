@@ -3295,6 +3295,9 @@ class DomainCredentialIssuingAppForm(forms.Form):
         )
 
     def get_domain_apps_choices(self, domain):
-        return [
+        choices = [('', gettext_lazy("No application"))]
+        choices.extend([
             (app.id, app.name) for app in get_apps_in_domain(domain)
-        ]
+        ])
+        return choices
+
