@@ -404,14 +404,19 @@ class Repeater(RepeaterSuperProxy):
     @property
     def repeat_records_ready(self):
         """
-        A QuerySet of repeat records in the Pending or Fail state in the
-        order in which they were registered
+        A QuerySet of repeat records in the Pending or Fail state
+        If BACKOFF_REPEATERS is enabled, this will return in the order they
+        were registered, otherwise it will order by the next check date
         """
-        return (
-            self.repeat_records
-            .filter(state__in=RECORD_QUEUED_STATES)
-            .order_by('registered_at')
-        )
+        query = self.repeat_records.filter(state__in=RECORD_QUEUED_STATES)
+        if toggles.BACKOFF_REPEATERS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN):
+            return query.order_by('registered_at')
+        else:
+            return (
+                query
+                .filter(next_check__lte=datetime.utcnow())
+                .order_by('next_check', 'registered_at')
+            )
 
     @property
     def num_workers(self):
