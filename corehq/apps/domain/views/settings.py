@@ -686,7 +686,8 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
         success_message = _("Settings saved!")
         if is_new_credential_app:
             success_message = _(
-                "Settings saved! Please remember to configure the credential criteria for the issuing app in the app manager settings."
+                "Settings saved! Please remember to configure the credential criteria for the issuing" \
+                " app in the app manager settings."
             )
 
         messages.success(request, success_message)
@@ -695,7 +696,7 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
     def set_credential_app(self, form_data):
         domain_issuing_app_record = CredentialApplication.objects.filter(domain=self.domain).first()
         new_issuing_app_id = form_data['app_id']
-        
+
         if not new_issuing_app_id:
             self.remove_issuing_app(domain_issuing_app_record)
             return False
