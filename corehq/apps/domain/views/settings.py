@@ -686,7 +686,7 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
         success_message = _("Settings saved!")
         if is_new_credential_app:
             success_message = _(
-                "Settings saved! Please remember to configure the credential criteria for the issuing" \
+                "Settings saved! Please remember to configure the credential criteria for the issuing"
                 " app in the app manager settings."
             )
 
