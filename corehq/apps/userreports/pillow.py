@@ -103,6 +103,12 @@ def _filter_domains_to_skip(configs):
 
 def _filter_invalid_config(configs):
     """Return a list of configs that have been validated"""
+    # Note: if a (valid) earlier version of a config is cached, it will
+    # not be removed as a result of a new (invalid) version being saved
+    # because this filter is applied before the config reaches the
+    # cache. It is unclear if it is by design that subsequent changes
+    # continue to be processed against the outdated (valid) version of
+    # the config/adapter.
     valid_configs = []
     for config in configs:
         try:
@@ -280,6 +286,12 @@ class ConfigurableReportTableManager(UcrTableManager):
                 yield (config.domain, config)
 
     def iter_configs_since(self, timestamp):
+        # Note: deactivated data source configs are not yielded by this
+        # method because the Couch view excludes them. This results in
+        # stale adapters remaining in the cache after deactivation.
+        # Logic is present in the cache implementations to remove
+        # inactive adapters, so all that needs to change is the Couch
+        # view: userreports/data_sources_by_last_modified
         for provider in self.data_source_providers:
             configs = provider.get_data_sources_modified_since(timestamp)
             for config in self.get_filtered_configs(configs):
