@@ -26,22 +26,12 @@ from corehq.util.test_utils import flag_enabled
 DOMAIN = 'test-domain'
 
 
-class TestableBaseExportView(BaseExportView):
-    """
-    Testable implementation of BaseExportView
-    """
-    __test__ = False
-
-    export_type = None
-
-    def __init__(self, export_instance):
-        super().__init__()
-        self.export_instance = export_instance
-        self.args = [export_instance.domain]
-
-    @property
-    def export_helper(self):
-        return None
+def get_base_export_view(export_instance, export_type=None):
+    view = BaseExportView()
+    view.args = [DOMAIN]
+    view.export_instance = export_instance
+    view.export_type = export_type
+    return view
 
 
 class BaseExportViewTestCase(TestCase):
@@ -145,8 +135,7 @@ class TestPossibleGeoProperties(BaseExportViewTestCase):
         toggle is disabled
         """
         export_instance = self._create_form_export_instance_with_geopoint()
-        view = TestableBaseExportView(export_instance)
-        view.export_type = FORM_EXPORT
+        view = get_base_export_view(export_instance, FORM_EXPORT)
         with patch.object(toggles.SUPPORT_GEO_JSON_EXPORT, 'enabled') as mock_toggle:
             mock_toggle.return_value = False
 
@@ -165,8 +154,7 @@ class TestPossibleGeoProperties(BaseExportViewTestCase):
             case_type=ALL_CASE_TYPE_EXPORT,
             tables=[]
         )
-        view = TestableBaseExportView(bulk_case_export_instance)
-        view.export_type = CASE_EXPORT
+        view = get_base_export_view(bulk_case_export_instance, CASE_EXPORT)
 
         result = view._possible_geo_properties
         self.assertEqual(result, [])
@@ -178,8 +166,7 @@ class TestPossibleGeoProperties(BaseExportViewTestCase):
         _possible_form_geo_properties for form exports
         """
         export_instance = self._create_form_export_instance_with_geopoint()
-        view = TestableBaseExportView(export_instance)
-        view.export_type = FORM_EXPORT
+        view = get_base_export_view(export_instance, FORM_EXPORT)
 
         result = view._possible_geo_properties
         expected = ['form.location.gps_coords', 'form.user_location']
@@ -192,8 +179,7 @@ class TestPossibleGeoProperties(BaseExportViewTestCase):
         _possible_case_geo_properties for case exports
         """
         export_instance = self._create_case_export_instance()
-        view = TestableBaseExportView(export_instance)
-        view.export_type = CASE_EXPORT
+        view = get_base_export_view(export_instance, CASE_EXPORT)
 
         result = view._possible_geo_properties
         expected = ['location_gps', 'home_location']
@@ -208,7 +194,7 @@ class TestPossibleFormGeoProperties(BaseExportViewTestCase):
         GeopointItem columns
         """
         export_instance = self._create_form_export_instance_with_geopoint()
-        view = TestableBaseExportView(export_instance)
+        view = get_base_export_view(export_instance)
 
         result = view._possible_form_geo_properties
         expected = ['form.location.gps_coords', 'form.user_location']
@@ -238,7 +224,7 @@ class TestPossibleFormGeoProperties(BaseExportViewTestCase):
             xmlns='test_xmlns',
             tables=[table_config]
         )
-        view = TestableBaseExportView(export_instance)
+        view = get_base_export_view(export_instance)
 
         result = view._possible_form_geo_properties
         self.assertEqual(result, [])
@@ -254,7 +240,7 @@ class TestPossibleFormGeoProperties(BaseExportViewTestCase):
             xmlns='test_xmlns',
             tables=[]
         )
-        view = TestableBaseExportView(export_instance)
+        view = get_base_export_view(export_instance)
 
         with self.assertRaises(IndexError):
             view._possible_form_geo_properties
@@ -268,7 +254,7 @@ class TestPossibleCaseGeoProperties(BaseExportViewTestCase):
         properties
         """
         export_instance = self._create_case_export_instance()
-        view = TestableBaseExportView(export_instance)
+        view = get_base_export_view(export_instance)
 
         result = view._possible_case_geo_properties
         expected = ['location_gps', 'home_location']
@@ -294,7 +280,7 @@ class TestPossibleCaseGeoProperties(BaseExportViewTestCase):
             case_type='no_gps_case_type',
             tables=[]
         )
-        view = TestableBaseExportView(export_instance)
+        view = get_base_export_view(export_instance)
 
         result = view._possible_case_geo_properties
         self.assertEqual(result, [])
@@ -318,7 +304,7 @@ class TestPossibleCaseGeoProperties(BaseExportViewTestCase):
             data_type=CaseProperty.DataType.GPS
         )
         export_instance = self._create_case_export_instance()
-        view = TestableBaseExportView(export_instance)
+        view = get_base_export_view(export_instance)
 
         result = view._possible_case_geo_properties
         expected = ['location_gps', 'home_location']
