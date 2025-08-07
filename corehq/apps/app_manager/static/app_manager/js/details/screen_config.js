@@ -12,7 +12,6 @@ import filterModule from "app_manager/js/details/filter";
 import sortRows from "app_manager/js/details/sort_rows";
 import caseListCallout from "app_manager/js/details/case_list_callout";
 import caseClaimModels from "app_manager/js/details/case_claim";
-import printModule from "app_manager/js/details/case_detail_print";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 const module = function (spec) {
@@ -193,29 +192,6 @@ const module = function (spec) {
             self.shortScreen.saveButton,
             self.filter.filterText,
         );
-    }
-    if (spec.state.long !== undefined) {
-        var printRef = printModule.getPrintRef(),
-            printTemplateUploader = printModule.getPrintTemplateUploader();
-        self.longScreen = addScreen(spec.state, "long");
-        self.printTemplateReference = _.extend(printRef, {
-            removePrintTemplate: function () {
-                $.post(
-                    initialPageData.reverse("hqmedia_remove_detail_print_template"), {
-                        module_unique_id: spec.moduleUniqueId,
-                    },
-                    function (data, status) {
-                        if (status === 'success') {
-                            printRef.setObjReference({
-                                path: printRef.path,
-                            });
-                            printRef.is_matched(false);
-                            printTemplateUploader.updateUploadFormUI();
-                        }
-                    },
-                );
-            },
-        });
     }
     return self;
 };
