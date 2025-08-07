@@ -38,6 +38,7 @@ form.htmx-request {
   }
 }
 
+form.htmx-request.loading-checkbox-htmx-request input[type="checkbox"],
 .htmx-request[type="checkbox"] {
   position: relative;
 

@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import gettext as _
 
-from corehq.apps.users.util import is_username_available
+from corehq.apps.users.util import cc_user_domain, is_username_available
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
@@ -43,7 +43,7 @@ def _validate_complete_username(username, domain):
                 email_username, username)
         )
 
-    expected_domain = f"{domain}.commcarehq.org"
+    expected_domain = cc_user_domain(domain)
     if email_domain != expected_domain:
         raise ValidationError(
             _("The username email domain '@{}' should be '@{}'.").format(email_domain, expected_domain))

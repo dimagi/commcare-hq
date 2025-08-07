@@ -8,10 +8,11 @@ import requests
 from unittest.mock import patch
 
 from corehq.motech.auth import AuthManager, BasicAuthManager, DigestAuthManager
-from corehq.motech.const import OAUTH2_PWD, REQUEST_TIMEOUT
+from corehq.motech.const import OAUTH2_PWD, REQUEST_TIMEOUT, OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import get_basic_requests
 from corehq.motech.views import ConnectionSettingsListView
+from corehq.util.test_utils import flag_enabled
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.view_utils import absolute_reverse
@@ -270,6 +271,36 @@ class RequestsOAuth2Tests(TestCase):
                          expected_keys)
         self.assertEqual(self.connection_settings.last_token['token_type'],
                          'bearer')
+
+
+class TestOAuth2CustomHeaders(TestCase):
+
+    def setUp(self):
+        self.connection_settings = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name="https://example.com",
+            url="https://example.com",
+            auth_type=OAUTH2_CLIENT,
+            api_auth_settings='custom',
+            username="Harry Potter",
+            password="chamber_of_secrets",
+            client_id=f"client_id_{random.randint(10_000, 99_999)}",
+            client_secret=f"client_secret_{random.randint(10_000, 99_999)}",
+        )
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_session_with_custom_headers(self):
+        self.connection_settings.custom_headers = {'X-Custom-Header': 'custom-value'}
+        self.connection_settings.save()
+
+        auth_manager = self.connection_settings.get_auth_manager()
+        auth_manager.last_token = {
+            'access_token': '1234',
+            'token_type': 'Bearer',
+            'refresh_token': '4321',
+        }
+        session = auth_manager.get_session(DOMAIN)
+        assert 'X-Custom-Header' in session.headers
 
 
 def mkpasswd(length):

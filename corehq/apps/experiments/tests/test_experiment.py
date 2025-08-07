@@ -1,6 +1,4 @@
-import gc
 from contextlib import contextmanager
-from time import sleep
 from unittest.mock import patch
 
 import pytest
@@ -52,14 +50,14 @@ def test_method_experiment():
 
 def test_experiment_timing_metrics():
     def sleeper(seconds):
-        sleep(seconds)
+        pass
 
     sleep2 = experiment(
         sleeper,
-        old_args={"seconds": .0011},
-        new_args={"seconds": .002},
+        old_args={"seconds": .0001},
+        new_args={"seconds": .001},
     )
-    with capture_metrics() as metrics, gc_disabled():
+    with capture_metrics() as metrics, fixed_time([0, 0.0001, 0.0011]):
         sleep2()
     assert metrics.to_flattened_dict() == {
         'commcare.experiment.time.campaign:test': 1,
@@ -68,21 +66,21 @@ def test_experiment_timing_metrics():
         'commcare.experiment.time.duration:lt_0.01s': 1,
         'commcare.experiment.diff.campaign:test': 1,
         f'commcare.experiment.diff.path:{__name__}.{sleeper.__qualname__}': 1,
-        'commcare.experiment.diff.duration:lt_200%': 1,
+        'commcare.experiment.diff.duration:over_200%': 1,
         'commcare.experiment.diff.notify:none': 1,
     }
 
 
 def test_experiment_negative_timing_metrics():
     def sleeper(seconds):
-        sleep(seconds)
+        pass
 
     sleep2 = experiment(
         sleeper,
         old_args={"seconds": .002},
         new_args={"seconds": .0001},
     )
-    with capture_metrics() as metrics, gc_disabled():
+    with capture_metrics() as metrics, fixed_time([0, 0.002, 0.0021]):
         sleep2()
     mets = metrics.to_flattened_dict()
     assert mets.get('commcare.experiment.diff.duration:lt_050%') == 1
@@ -201,12 +199,7 @@ def enable_all_experiments():
 
 
 @contextmanager
-def gc_disabled():
-    enabled = gc.isenabled()
-    if enabled:
-        gc.disable()
-    try:
+def fixed_time(times):
+    times.extend(times[-1:] * 2)  # HACK extra times for prometheus_client
+    with patch("time.time", lambda: times.pop(0)):
         yield
-    finally:
-        if enabled:
-            gc.enable()

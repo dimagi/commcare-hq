@@ -11,13 +11,14 @@ from django.http import (
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
+from django.utils.html import escape
 from django.utils.safestring import SafeText
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
-from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
+from no_exceptions.exceptions import Http403
 
 from couchexport.models import Format
 from dimagi.utils.dates import DateSpan
@@ -30,11 +31,6 @@ from soil.util import get_download_context
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_daterangepicker,
-    use_jquery_ui,
-)
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
@@ -73,18 +69,14 @@ from corehq.apps.userreports.util import (
     can_edit_report,
     default_language,
     get_referring_apps,
+    get_report_config_or_not_found,
     get_ucr_class_name,
     has_report_builder_access,
     has_report_builder_trial,
-    get_report_config_or_not_found,
 )
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
-from corehq.util.couch import (
-    DocumentNotFound,
-    get_document_or_404,
-)
+from corehq.util.couch import DocumentNotFound, get_document_or_404
 from corehq.util.view_utils import is_ajax, reverse
-from no_exceptions.exceptions import Http403
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -144,7 +136,7 @@ def _ucr_view_is_safe(view_fn, *args, **kwargs):
 @conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     section_name = gettext_noop("Reports")
-    template_name = 'userreports/configurable_report.html'
+    template_name = 'userreports/bootstrap3/configurable_report.html'
     slug = "configurable"
     prefix = slug
     is_exportable = True
@@ -160,18 +152,15 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def domain(self):
         if self._domain is not None:
             return self._domain
-        return super(ConfigurableReportView, self).domain
+        return super().domain
 
-    @use_daterangepicker
-    @use_jquery_ui
-    @use_datatables
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
             from corehq.apps.userreports.views import paywall_home
             return HttpResponseRedirect(paywall_home(self.domain))
         else:
-            original = super(ConfigurableReportView, self).dispatch(request, *args, **kwargs)
+            original = super().dispatch(request, *args, **kwargs)
             return original
 
     def should_redirect_to_paywall(self, request):
@@ -306,7 +295,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                         'If you believe you are seeing this message in error, please report an issue.'
                     )
                     details = str(e)
-                self.template_name = 'userreports/report_error.html'
+                self.template_name = 'userreports/bootstrap3/report_error.html'
                 allow_delete = (
                     self.report_config_id
                     and not self.is_static
@@ -322,7 +311,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 }
                 context.update(self.main_context)
                 return self.render_to_response(context)
-            return super(ConfigurableReportView, self).get(request, *args, **kwargs)
+            return super().get(request, *args, **kwargs)
         else:
             raise Http403()
 
@@ -663,7 +652,7 @@ class DownloadUCRStatusView(BaseDomainView):
 
     def get(self, request, *args, **kwargs):
         if _has_permission(self.domain, request.couch_user, self.report_config_id):
-            context = super(DownloadUCRStatusView, self).main_context
+            context = super().main_context
             context.update({
                 'domain': self.domain,
                 'download_id': kwargs['download_id'],

@@ -93,15 +93,29 @@
         <div class="col-sm-6">
           <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>
         </div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="row mb-3">
         <div class="col-sm-6">
           <search-box data-apply-bindings="false"
                       params="value: query,
                               action: function() { goToPage(1); },
                               placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
         </div>
+        {% if request|toggle_enabled:"DEACTIVATE_WEB_USERS" %}
+        <div class="col-sm-6">
+          <button id="gtm-show-disabled-web-users" type="button" class="btn btn-default pull-right"
+                    data-bind="visible: showActiveUsers(), click: function() { showActiveUsers(false); }">
+              {% trans 'Show Deactivated Web Users' %}
+          </button>
+          <button id="gtm-show-enabled-web-users" type="button" class="btn btn-default pull-right"
+                    data-bind="visible: !showActiveUsers(), click: function() { showActiveUsers(true); }">
+              {% trans 'Show Active Web Users' %}
+          </button>
+        </div>
+        {% endif %}
       </div>
-    </div>
-    <div class="panel-body">
       <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
       <div data-bind="visible: showLoadingSpinner">
         <i class="fa fa-spin fa-spinner"></i>
@@ -123,7 +137,7 @@
             <th>{% trans "Name" %}</th>
             <th>{% trans "Phone Numbers" %}</th>
             {% if not request.is_view_only %}
-              <th></th>
+              <th>{% trans "Action" %}</th>
             {% endif %}
           </tr>
         </thead>
@@ -146,58 +160,162 @@
             </td>
             {% if not request.is_view_only %}
               <td>
-                <div data-bind="visible: removeUrl">
+                <div>
+                  <button type="button"
+                          class="btn btn-default"
+                          data-toggle="modal"
+                          data-bind="attr: {'data-target': '#deactivate_' + id}, visible: deactivateUrl">
+                    {% trans "Deactivate" %}
+                  </button>
+                  <button type="button"
+                          class="btn btn-default"
+                          data-toggle="modal"
+                          data-bind="attr: {'data-target': '#reactivate_' + id}, visible: reactivateUrl">
+                    {% trans "Reactivate" %}
+                  </button>
                   <button type="button"
                           class="btn btn-danger"
                           data-toggle="modal"
-                          data-bind="attr: {'data-target': '#remove_membership_' + id}">
+                          data-bind="attr: {'data-target': '#remove_membership_' + id}, visible: removeUrl">
                     <i class="fa-regular fa-trash-can"></i> {% trans "Remove Membership" %}
                   </button>
-                </div>
-                <!-- ko if: removeUrl -->
-                <div data-bind="attr: {id: 'remove_membership_' + id}" class="modal fade">
-                  <div class="modal-dialog">
-                    <form class="modal-content" method="post"
-                          data-bind="attr: {action: removeUrl}">
-                      {% csrf_token %}
-                      <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">
-                          <span aria-hidden="true">&times;</span>
-                          <span class="sr-only">{% trans "Close" %}</span>
-                        </button>
-                        <h4 class="modal-title">
-                          {% trans "Remove User Membership" %}:
-                          <span data-bind="text: name"></span>
-                        </h4>
-                      </div>
-                      <div class="modal-body">
-                        <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
-                        <ul class="dl-horizontal">
-                          <dt>{% trans "Email Address" %}</dt>
-                          <dd data-bind="text: email"></dd>
-                          <dt>{% trans "Name" %}</dt>
-                          <dd data-bind="text: name"></dd>
-                          <dt>{% trans "Membership" %}</dt>
-                          <dd data-bind="text: domain"></dd>
-                          <dt>{% trans "Role" %}</dt>
-                          <dd data-bind="text: role"></dd>
-                        </ul>
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button"
-                                class="btn btn-default"
-                                data-dismiss="modal">
-                          {% trans "Cancel" %}
-                        </button>
-                        <button type="submit" class="btn btn-danger">
-                          <i class="fa-regular fa-trash-can"></i>
-                          {% trans "Remove Membership" %}
-                        </button>
-                      </div>
-                    </form>
+                  <!-- ko if: removeUrl -->
+                  <div data-bind="attr: {id: 'remove_membership_' + id}" class="modal fade">
+                    <div class="modal-dialog">
+                      <form class="modal-content" method="post"
+                            data-bind="attr: {action: removeUrl}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                            <span class="sr-only">{% trans "Close" %}</span>
+                          </button>
+                          <h4 class="modal-title">
+                            {% trans "Remove User Membership" %}:
+                            <span data-bind="text: name"></span>
+                          </h4>
+                        </div>
+                        <div class="modal-body">
+                          <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
+                          <ul class="dl-horizontal">
+                            <dt>{% trans "Email Address" %}</dt>
+                            <dd data-bind="text: email"></dd>
+                            <dt>{% trans "Name" %}</dt>
+                            <dd data-bind="text: name"></dd>
+                            <dt>{% trans "Membership" %}</dt>
+                            <dd data-bind="text: domain"></dd>
+                            <dt>{% trans "Role" %}</dt>
+                            <dd data-bind="text: role"></dd>
+                          </ul>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button"
+                                  class="btn btn-default"
+                                  data-dismiss="modal">
+                            {% trans "Cancel" %}
+                          </button>
+                          <button type="submit" class="btn btn-danger">
+                            <i class="fa-regular fa-trash-can"></i>
+                            {% trans "Remove Membership" %}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
                   </div>
+                  <!-- /ko -->
+                  <!-- ko if: deactivateUrl -->
+                  <div data-bind="attr: {id: 'deactivate_' + id}" class="modal fade">
+                    <div class="modal-dialog">
+                      <form class="modal-content" method="post"
+                            data-bind="attr: {action: deactivateUrl}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                            <span class="sr-only">{% trans "Close" %}</span>
+                          </button>
+                          <h4 class="modal-title">
+                            {% trans "Deactivate from the current project: " %}:
+                            <strong><span data-bind="text: name"></span></strong>
+                          </h4>
+                        </div>
+                        <div class="modal-body">
+                          <p class="lead">
+                            {% blocktrans %}
+                              Are you sure you want to <strong>deactivate</strong> this web user?
+                            {% endblocktrans %}
+                          </p>
+                          <p>
+                            {% blocktrans %}
+                              Deactivated web users will not be able to log into the project space.<br />
+                              Read more about
+                              <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958279/Web+Users' target="_blank">
+                                deactivating web users
+                              </a> on our Help Site.
+                            {% endblocktrans %}
+                          </p>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button"
+                                  class="btn btn-default"
+                                  data-dismiss="modal">
+                            {% trans "Cancel" %}
+                          </button>
+                          <button type="submit" class="btn btn-danger gtm-web-user-disable">
+                            {% trans "Deactivate" %}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                  <!-- /ko -->
+                  <!-- ko if: reactivateUrl -->
+                  <div data-bind="attr: {id: 'reactivate_' + id}" class="modal fade">
+                    <div class="modal-dialog">
+                      <form class="modal-content" method="post"
+                            data-bind="attr: {action: reactivateUrl}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                            <span class="sr-only">{% trans "Close" %}</span>
+                          </button>
+                          <h4 class="modal-title">
+                            {% trans "Reactivate in the current project: " %}:
+                            <strong><span data-bind="text: name"></span></strong>
+                          </h4>
+                        </div>
+                        <div class="modal-body">
+                          <p class="lead">
+                            {% blocktrans %}
+                              Are you sure you want to <strong>reactivate</strong> this web user?
+                            {% endblocktrans %}
+                          </p>
+                          <p>
+                            {% blocktrans %}
+                              Deactivated web users are not able to log into the project space.<br />
+                              Read more about
+                              <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958279/Web+Users' target="_blank">
+                                deactivating web users
+                              </a> on our Help Site.
+                            {% endblocktrans %}
+                          </p>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button"
+                                  class="btn btn-default"
+                                  data-dismiss="modal">
+                            {% trans "Cancel" %}
+                          </button>
+                          <button type="submit" class="btn btn-primary gtm-web-user-enable">
+                            {% trans "Reactivate" %}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                  <!-- /ko -->
                 </div>
-                <!-- /ko -->
               </td>
             {% endif %}
           </tr>

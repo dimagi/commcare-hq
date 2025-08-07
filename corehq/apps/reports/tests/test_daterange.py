@@ -1,8 +1,7 @@
 import datetime
 
 from django.test import SimpleTestCase
-
-from unittest.mock import patch
+from freezegun import freeze_time
 
 from corehq.apps.reports.daterange import (
     get_all_daterange_choices,
@@ -24,6 +23,7 @@ class DateRangeTest(SimpleTestCase):
                 get_daterange_start_end_dates(daterange.slug)
 
 
+@freeze_time('1829-08-03')
 class KnownRangesTests(SimpleTestCase):
 
     def setUp(self):
@@ -31,10 +31,7 @@ class KnownRangesTests(SimpleTestCase):
         self.first_performance = datetime.date(year=1829, month=8, day=3)
         # Ta da dum, ta da dum, ta da dum dum dum.
 
-    @patch('datetime.date')
-    def test_since(self, date_patch):
-        date_patch.today.return_value = self.first_performance
-
+    def test_since(self):
         saturday = datetime.date(year=1829, month=8, day=1)
         start_date, end_date = get_daterange_start_end_dates('since', start_date=saturday)
         self.assertEqual(start_date, saturday)
@@ -52,67 +49,41 @@ class KnownRangesTests(SimpleTestCase):
         self.assertEqual(start_date, self.first_performance)
         self.assertEqual(end_date, john_hughes_birthday)
 
-    @patch('datetime.date')
-    def test_thismonth(self, date_patch):
-        date_patch.today.return_value = self.first_performance
-
+    def test_thismonth(self):
         start_date, end_date = get_daterange_start_end_dates('thismonth')
         self.assertEqual(start_date, datetime.date(year=1829, month=8, day=1))
         self.assertEqual(end_date, datetime.date(year=1829, month=8, day=31))
 
-    @patch('datetime.date')
-    def test_lastmonth(self, date_patch):
-        date_patch.today.return_value = self.first_performance
-
+    def test_lastmonth(self):
         start_date, end_date = get_daterange_start_end_dates('lastmonth')
         self.assertEqual(start_date, datetime.date(year=1829, month=7, day=1))
         self.assertEqual(end_date, datetime.date(year=1829, month=7, day=31))
 
-    @patch('datetime.date')
-    def test_lastyear(self, date_patch):
-        date_patch.today.return_value = self.first_performance
-
+    def test_lastyear(self):
         start_date, end_date = get_daterange_start_end_dates('lastyear')
         self.assertEqual(start_date, datetime.date(year=1828, month=1, day=1))
         self.assertEqual(end_date, datetime.date(year=1828, month=12, day=31))
 
     def test_last7(self):
-        date_class = datetime.date
-        with patch('datetime.date') as date_patch:
-            date_patch.today.return_value = self.first_performance
-            date_patch.side_effect = lambda *args, **kwargs: date_class(*args, **kwargs)
-
-            start_date, end_date = get_daterange_start_end_dates('last7')
-            self.assertEqual(start_date, datetime.date(year=1829, month=7, day=27))
-            self.assertEqual(end_date, self.first_performance)
+        start_date, end_date = get_daterange_start_end_dates('last7')
+        self.assertEqual(start_date, datetime.date(year=1829, month=7, day=27))
+        self.assertEqual(end_date, self.first_performance)
 
     def test_last30(self):
-        date_class = datetime.date
-        with patch('datetime.date') as date_patch:
-            date_patch.today.return_value = self.first_performance
-            date_patch.side_effect = lambda *args, **kwargs: date_class(*args, **kwargs)
-
-            start_date, end_date = get_daterange_start_end_dates('last30')
-            self.assertEqual(start_date, datetime.date(year=1829, month=7, day=4))  # Woo!
-            self.assertEqual(end_date, self.first_performance)
+        start_date, end_date = get_daterange_start_end_dates('last30')
+        self.assertEqual(start_date, datetime.date(year=1829, month=7, day=4))  # Woo!
+        self.assertEqual(end_date, self.first_performance)
 
     def test_lastn(self):
-        date_class = datetime.date
-        with patch('datetime.date') as date_patch:
-            date_patch.today.return_value = self.first_performance
-            date_patch.side_effect = lambda *args, **kwargs: date_class(*args, **kwargs)
-
-            start_date, end_date = get_daterange_start_end_dates('lastn', days=-14)  # In two weeks' time
-            self.assertEqual(start_date, datetime.date(year=1829, month=8, day=17))
-            self.assertEqual(end_date, self.first_performance)
-            # TODO: If the start date occurs after the end date, we should switch them.
+        start_date, end_date = get_daterange_start_end_dates('lastn', days=-14)  # In two weeks' time
+        self.assertEqual(start_date, datetime.date(year=1829, month=8, day=17))
+        self.assertEqual(end_date, self.first_performance)
+        # TODO: If the start date occurs after the end date, we should switch them.
 
     def test_currentindianfinancialyear(self):
         def check_dates(on_date, expected_start_date, expected_end_date):
             date_class = datetime.date
-            with patch('datetime.date') as date_patch:
-                date_patch.side_effect = lambda *args, **kwargs: date_class(*args, **kwargs)
-                date_patch.today.return_value = on_date
+            with freeze_time(on_date):
                 start_date, end_date = get_daterange_start_end_dates('currentindianfinancialyear')
 
                 # to avoid false positives when compared with mock

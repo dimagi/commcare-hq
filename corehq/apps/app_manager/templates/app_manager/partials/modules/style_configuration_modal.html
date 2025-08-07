@@ -69,6 +69,6 @@
         data-bind="
             text: getBackup().lang,
             {# language badge is only visible if the field is empty and a backup was found #}
-            visible: !_([$parent.lang, null]).contains(getBackup().lang) && values[$parent.lang]() === null
+            visible: ![$parent.lang, null].includes(getBackup().lang) && values[$parent.lang]() === null
     "></span>
 </script>

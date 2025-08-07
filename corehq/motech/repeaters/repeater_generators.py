@@ -3,6 +3,7 @@ import warnings
 from collections import namedtuple
 from datetime import datetime
 from uuid import uuid4
+from jsonpath_ng import parse
 
 import attr
 from django.core.serializers.json import DjangoJSONEncoder
@@ -26,6 +27,7 @@ from corehq.util.json import CommCareJSONEncoder
 
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
+CONNECT_XMLNS = 'http://commcareconnect.com/data/v1/learn'
 
 
 def _get_test_form(domain):
@@ -707,6 +709,25 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
 
+class ConnectFormRepeaterPayloadGenerator(FormRepeaterJsonPayloadGenerator):
+
+    def get_payload(self, repeat_record, form):
+        form_json = form.to_json()
+        fields = ("domain", "id", "app_id", "build_id", "received_on", "metadata")
+        constructed_dict = {}
+        for field in fields:
+            constructed_dict[field] = form_json.get(field)
+        jsonpath_expr = parse('$..@xmlns')
+        matching_blocks = [
+            match
+            for match in jsonpath_expr.find(form_json)
+            if match.value == CONNECT_XMLNS
+        ]
+        for block in matching_blocks:
+            constructed_dict.update({str(block.context.full_path): block.context.value})
+        return constructed_dict
+
+
 class FormDictPayloadGenerator(BasePayloadGenerator):
     format_name = 'form_dict'
     format_label = _('Python dictionary')
@@ -753,11 +774,6 @@ class DataSourcePayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         """
         Returns the request body to be forwarded to CommCare Analytics
-        for ``payload_doc``, which is a ``DataSourceUpdateLog``.
+        for ``payload_doc``, which is a ``DataSourceUpdate``.
         """
-        data = {
-            "data": payload_doc.rows,
-            "data_source_id": payload_doc.data_source_id,
-            "doc_id": payload_doc.doc_id,
-        }
-        return json.dumps(data, cls=CommCareJSONEncoder)
+        return json.dumps(payload_doc.to_json(), cls=CommCareJSONEncoder)

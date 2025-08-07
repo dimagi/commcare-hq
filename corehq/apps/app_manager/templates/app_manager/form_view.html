@@ -4,41 +4,15 @@
 {% load compress %}
 {% load i18n %}
 
-{% block title %}{# controlled by app_manager/js/form_view.js #}{% endblock %}
+{% block title %}{# controlled by app_manager/js/forms/form_view.js #}{% endblock %}
+{% js_entry_b3 "app_manager/js/forms/form_view" %}
 
-{% block stylesheets %}{{ block.super }}
+{% block stylesheets %}
+  {{ block.super }}
   <style>
     .nodeset {
       min-width: 400px;
     }
-  </style>
-{% endblock %}
-
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
-    <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
-  {% endcompress %}
-  {% if module.doc_type == 'AdvancedModule' %}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
-      <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
-      <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
-      <script src="{% static 'app_manager/js/details/utils.js' %}"></script>
-      <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
-    {% endcompress %}
-  {% else %}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
-  <style>
     #open-referral-action,
     #update-referral-action,
     #close-referral-action,
@@ -49,35 +23,16 @@
       margin-left: 15px;
     }
   </style>
-
-  {% compress js %}
-    <script src="{% static 'cloudcare/js/formplayer/utils/utils.js' %}"></script>
-  {% endcompress %}
-
-  {% include "app_manager/partials/xpathValidator.html" %}
-  {% compress js %}
-    <script src="{% static 'hqmedia/js/uploaders.js' %}"></script>
-    <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
-    <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-    <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
-  {% endcompress %}
-  {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
-  {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/copy_form_to_app.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
 {% endblock %}
 
 {% block pre_form_content %}
   <div class="appmanager-page-actions">
     {% include 'app_manager/partials/app_summary_button.html' %}
-    <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
+    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-default' %}
+    <a
+      class="btn btn-default"
+      href="{% url "form_source" domain app.id form.unique_id %}"
+    >
       <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
     </a>
   </div>
@@ -97,7 +52,8 @@
   </div>
 
   <div class="appmanager-edit-description">
-    <inline-edit params="
+    <inline-edit
+      params="
           name: 'comment',
           id:'comment-id',
           value: '{{ form.comment|escapejs }}',
@@ -106,7 +62,8 @@
           saveValueName: 'comment',
           cols: 50,
           disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
-      "></inline-edit>
+      "
+    ></inline-edit>
   </div>
 
   <div id="build_errors"></div>
@@ -114,6 +71,7 @@
 
 {% block form-view %}
   {% initial_page_data 'all_other_forms_require_a_case' form.all_other_forms_require_a_case %}
+  {% initial_page_data 'allow_form_copy' allow_form_copy %}
   {% initial_page_data 'allow_form_filtering' allow_form_filtering %}
   {% initial_page_data 'auto_gps_capture' form.auto_gps_capture %}
   {% initial_page_data 'case_config_options' case_config_options %}
@@ -130,6 +88,7 @@
   {% initial_page_data 'is_case_list_form' is_case_list_form %}
   {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
   {% initial_page_data 'langs' app.langs %}
+  {% initial_page_data 'module_doc_type' module.doc_type %}
   {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
   {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
   {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
@@ -139,6 +98,7 @@
   {% initial_page_data 'is_release_notes_form' form.is_release_notes_form %}
   {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
   {% initial_page_data 'is_training_module' is_training_module %}
+  {% initial_page_data 'case_property_warning' case_property_warning %}
   {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
     {% initial_page_data 'apps_modules' apps_modules %}
   {% endif %}
@@ -157,10 +117,13 @@
 
   <div class="tabbable appmanager-tabs-container">
     <ul class="nav nav-tabs sticky-tabs">
-
       {% if form.uses_cases %}
         <li>
-          <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
+          <a
+            id="case-configuration-tab"
+            href="#case-configuration"
+            data-toggle="tab"
+          >
             {% trans "Case Management" %}
           </a>
         </li>
@@ -172,7 +135,11 @@
 
       {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
         <li>
-          <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+          <a
+            id="usercase-configuration-tab"
+            href="#usercase-configuration"
+            data-toggle="tab"
+          >
             {% trans "User Properties" %}
           </a>
         </li>
@@ -198,9 +165,9 @@
     {% include 'app_manager/partials/forms/case_config_ko_templates.html' %}
 
     <div class="tab-content appmanager-tab-content">
-
       {% if form.uses_cases %}
         <div class="tab-pane" id="case-configuration">
+          {% include "data_dictionary/partials/case_property_warning.html" %}
           {% if xform_validation_missing %}
             <p class="alert alert-warning">
               {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
@@ -210,12 +177,24 @@
             <div class="alert alert-warning">
               {% trans "You are viewing a shadow form, therefore:" %}
               <ul>
-                <li>{% trans 'You will be unable to add "Open case" action' %}</li>
-                <li>{% trans 'Load/Update actions will be "merged" with the source form actions'%}</li>
-                <li>{% trans 'Every case tag in the source form load/update action configuration must appear in this configuration'%}</li>
-                <li>{% trans 'You are not allowed to specify load or save case properties'%}</li>
-                <li>{% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.'%}</li>
-                <li>{% trans 'You are not allowed to specify case closures here'%}</li>
+                <li>
+                  {% trans 'You will be unable to add "Open case" action' %}
+                </li>
+                <li>
+                  {% trans 'Load/Update actions will be "merged" with the source form actions' %}
+                </li>
+                <li>
+                  {% trans 'Every case tag in the source form load/update action configuration must appear in this configuration' %}
+                </li>
+                <li>
+                  {% trans 'You are not allowed to specify load or save case properties' %}
+                </li>
+                <li>
+                  {% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.' %}
+                </li>
+                <li>
+                  {% trans 'You are not allowed to specify case closures here' %}
+                </li>
               </ul>
             </div>
           {% endif %}
@@ -240,11 +219,9 @@
         </div>
       {% endif %}
 
-
       {% if nav_form %}
         {% include "app_manager/partials/forms/form_tab_settings.html" %}
       {% endif %}
-
 
       {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
         <div class="tab-pane" id="usercase-configuration">
@@ -255,27 +232,39 @@
           {% elif form.source %}
             <div class="casexml" id="usercasexml_home">
               {% block usercase_management_content %}
-                {%  if form.uses_usercase and not allow_usercase %}
+                {% if form.uses_usercase and not allow_usercase %}
                   <div>
-                    <p>{% blocktrans %}
-                      The User Properties feature is no longer available because of the change in your
-                      CommCare subscription. Although currently-deployed applications will still
-                      function properly, it will not be possible to update or redeploy them unless
-                      the User Properties functionality is removed, or you upgrade your CommCare
-                      subscription.
-                    {% endblocktrans %}</p>
+                    <p>
+                      {% blocktrans %}
+                        The User Properties feature is no longer available
+                        because of the change in your CommCare subscription.
+                        Although currently-deployed applications will still
+                        function properly, it will not be possible to update or
+                        redeploy them unless the User Properties functionality
+                        is removed, or you upgrade your CommCare subscription.
+                      {% endblocktrans %}
+                    </p>
 
-                    <p class="alert alert-danger">{% blocktrans %}
-                      WARNING: By clicking "Remove User Properties" you will lose User Properties
-                      functionality if you redeploy your application. However, you will still be
-                      able to see all previously collected data.
-                    {% endblocktrans %}</p>
+                    <p class="alert alert-danger">
+                      {% blocktrans %}
+                        WARNING: By clicking "Remove User Properties" you will
+                        lose User Properties functionality if you redeploy your
+                        application. However, you will still be able to see all
+                        previously collected data.
+                      {% endblocktrans %}
+                    </p>
 
                     <p>
-                      <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
+                      <a
+                        href="{% url 'domain_select_plan' domain %}"
+                        class="btn btn-primary"
+                      >
                         {% trans "Change your subscription" %}
                       </a>
-                      <a href="{% url 'drop_usercase' domain app.id %}" class="btn btn-danger">
+                      <a
+                        href="{% url 'drop_usercase' domain app.id %}"
+                        class="btn btn-danger"
+                      >
                         {% trans "Remove User Properties" %}
                       </a>
                     </p>
@@ -293,7 +282,7 @@
       {% endif %}{% endif %}
 
       {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
-        {% if module.has_schedule  %}
+        {% if module.has_schedule %}
           {% include "app_manager/partials/forms/form_tab_visit_scheduler.html" %}
         {% endif %}
       {% endif %}
@@ -305,7 +294,8 @@
   <div id="questions"></div>
 {% endblock %}
 
-{% block modals %}{{ block.super }}
+{% block modals %}
+  {{ block.super }}
   {% include "app_manager/partials/forms/form_view_modals.html" %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}

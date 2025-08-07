@@ -1,0 +1,9 @@
+<button type="button" class="new-module-option" data-type="{{ module_type }}">
+  <div class="panel panel-default">
+    <div class="panel-heading">{% block heading %}{% endblock %}</div>
+    <div class="panel-body">
+      <i class="{{ icon_class }}"></i>
+      <p>{% block description %}{% endblock %}</p>
+    </div>
+  </div>
+</button>

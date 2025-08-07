@@ -1,3 +1,8 @@
 {% load i18n %}
+{% load data_cleaning %}
 
-{{ value }}
+{% if column|is_editable_column %}
+  {% include "data_cleaning/columns/column_editable.html" %}
+{% else %}
+  {% include "data_cleaning/columns/column_system.html" %}
+{% endif %}

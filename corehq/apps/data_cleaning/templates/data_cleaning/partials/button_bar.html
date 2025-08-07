@@ -5,6 +5,9 @@
   type="button"
   data-bs-toggle="offcanvas"
   data-bs-target="#offcanvas-filter"
+  x-data="wiggleButtonModel"
+  @wiggle-filters-button.window="wiggleThatButton()"
+  :class="getWiggleClasses()"
 >
   <i class="fa-solid fa-filter"></i> {% trans "Filter Cases" %}
 </button>
@@ -13,14 +16,24 @@
   type="button"
   data-bs-toggle="offcanvas"
   data-bs-target="#offcanvas-configure-columns"
+  x-data="wiggleButtonModel"
+  @wiggle-configure-columns-button.window="wiggleThatButton()"
+  :class="getWiggleClasses()"
 >
   <i class="fa-solid fa-table-columns"></i> {% trans "Configure Columns" %}
 </button>
 <button
   class="btn btn-outline-primary"
+  disabled="disabled"
   type="button"
   data-bs-toggle="offcanvas"
   data-bs-target="#offcanvas-bulk-changes"
+  x-data=""
+  :class="{
+    'btn-primary': $store.isCleaningAllowed,
+    'btn-outline-primary': !$store.isCleaningAllowed,
+  }"
+  :disabled="!$store.isCleaningAllowed"
 >
-  <i class="fa-solid fa-shower"></i> {% trans "Clean Selected Cases" %}
+  <i class="fa-solid fa-shower"></i> {% trans "Edit Selected Cases" %}
 </button>

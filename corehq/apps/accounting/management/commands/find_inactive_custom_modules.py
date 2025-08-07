@@ -60,7 +60,7 @@ class Command(BaseCommand):
         domains_exist = []
         plans = []
         last_form_submissions = []
-        all_community = True
+        all_free_edition = True
         for domain in domains:
             domain_obj = Domain.get_by_name(domain)
             plan = "Not Found"
@@ -69,8 +69,8 @@ class Command(BaseCommand):
                 subscription = Subscription.get_active_subscription_by_domain(domain)
                 if subscription:
                     plan = subscription.plan_version.plan.name
-                    if subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY:
-                        all_community = False
+                    if subscription.plan_version.plan.edition != SoftwarePlanEdition.FREE:
+                        all_free_edition = False
                 last_form_submissions.append("{}".format(get_last_form_submission_received(domain)))
             else:
                 last_form_submissions.append("None")
@@ -84,5 +84,5 @@ class Command(BaseCommand):
             " | ".join(plans),
             " | ".join(last_form_submissions),
             in_module_map,
-            all(domains_exist) and all_community,
+            all(domains_exist) and all_free_edition,
         ]

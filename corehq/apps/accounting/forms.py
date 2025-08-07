@@ -570,11 +570,11 @@ class SubscriptionForm(forms.Form):
         initial=FundingSource.CLIENT,
     )
     skip_auto_downgrade = forms.BooleanField(
-        label=gettext_lazy("Exclude from automated downgrade process"),
+        label=gettext_lazy("Exclude from automated pause process"),
         required=False
     )
     skip_auto_downgrade_reason = forms.CharField(
-        label=gettext_lazy("Justify why \"Skip Auto Downgrade\""),
+        label=gettext_lazy("Justify why \"Skip Auto Pause\""),
         max_length=256,
         required=False,
     )
@@ -744,7 +744,7 @@ class SubscriptionForm(forms.Form):
                 'pro_bono_status',
                 'funding_source',
                 hqcrispy.B3MultiField(
-                    "Skip Auto Downgrade",
+                    "Skip Auto Pause",
                     crispy.Field('skip_auto_downgrade', data_bind="checked: skipAutoDowngrade")
                 ),
                 crispy.Div(

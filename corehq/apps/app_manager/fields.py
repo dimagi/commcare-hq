@@ -15,6 +15,7 @@ from couchforms.analytics import get_exports_by_form
 
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.export.const import ALL_CASE_TYPE_EXPORT
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.registry.models import DataRegistry
@@ -337,7 +338,7 @@ class ApplicationDataRMIHelper(object):
                     if item not in self:
                         try:
                             self[item] = get_app(app_id=item, domain=self.domain)
-                        except Http404:
+                        except (Http404, AppInDifferentDomainException):
                             pass
                     return super(AppCache, self).__getitem__(item)
 
@@ -638,6 +639,7 @@ class ApplicationDataRMIHelper(object):
             }
         ) for case_type in all_case_type_names]
 
+        all_case_type_objs = sorted(all_case_type_objs, key=lambda case_type: case_type.text.lower())
         if len(all_case_type_names) > 1:
             all_case_type_objs.insert(
                 0,

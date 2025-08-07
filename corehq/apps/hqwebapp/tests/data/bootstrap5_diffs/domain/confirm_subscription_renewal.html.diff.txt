@@ -12,8 +12,8 @@
  
  {% block plan_breadcrumbs %}{% endblock %}
  
-@@ -28,9 +28,9 @@
-       {% endblocktrans %}
+@@ -44,9 +44,9 @@
+       {% endif %}
      </div>
    {% endif %}
 -  <div class="panel panel-modern-gray panel-form-only" id="billing-info">

@@ -67,10 +67,14 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
-from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
+from corehq.apps.accounting.utils.unpaid_invoice import (
+    Downgrade,
+    InvoiceReminder,
+)
+from corehq.apps.accounting.usage import get_web_user_usage
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
@@ -86,6 +90,7 @@ from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
 from corehq.util.serialization import deserialize_decimal
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.dates import force_to_date
 
 
 @transaction.atomic
@@ -463,21 +468,38 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
 def create_wire_credits_invoice(domain_name,
                                 amount,
                                 invoice_items,
-                                contact_emails):
+                                date_start,
+                                date_end,
+                                contact_emails,
+                                cc_emails=None,
+                                date_due=None):
     deserialized_amount = deserialize_decimal(amount)
+    date_due = date_due or datetime.date.today() + datetime.timedelta(days=30)
+
+    date_start = force_to_date(date_start)
+    date_end = force_to_date(date_end)
+
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
-        date_start=datetime.datetime.utcnow(),
-        date_end=datetime.datetime.utcnow(),
-        date_due=None,
+        date_start=date_start,
+        date_end=date_end,
+        date_due=date_due,
         balance=deserialized_amount,
     )
-
     deserialized_items = []
     for item in invoice_items:
+        general_credit_cost = item['unit_cost']
         general_credit_amount = item['amount']
-        deserialized_general_credit = deserialize_decimal(general_credit_amount)
-        deserialized_items.append({'type': item['type'], 'amount': deserialized_general_credit})
+        general_credit_prepaid = item['applied_credit']
+        general_credit_total = item['total']
+        deserialized_items.append({
+            'type': item['type'],
+            'quantity': item['quantity'],
+            'unit_cost': deserialize_decimal(general_credit_cost),
+            'amount': deserialize_decimal(general_credit_amount),
+            'applied_credit': deserialize_decimal(general_credit_prepaid),
+            'total': deserialize_decimal(general_credit_total),
+        })
 
     wire_invoice.items = deserialized_items
 
@@ -485,7 +507,7 @@ def create_wire_credits_invoice(domain_name,
     if record.should_send_email:
         try:
             for email in contact_emails:
-                record.send_email(contact_email=email)
+                record.send_email(contact_email=email, cc_emails=cc_emails)
         except Exception as e:
             log_accounting_error(
                 "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, str(e)),
@@ -673,8 +695,13 @@ def send_credits_on_hq_report():
 
 
 @periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
-def run_downgrade_process():
-    downgrade_eligible_domains()
+def run_auto_pause_process():
+    Downgrade.run_action()
+
+
+@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+def send_invoice_reminders():
+    InvoiceReminder.run_action()
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True,
@@ -838,7 +865,7 @@ def calculate_web_users_in_all_billing_accounts(today=None):
     today = today or datetime.date.today()
     for account in BillingAccount.objects.all():
         record_date = today - relativedelta(days=1)
-        num_users = account.get_web_user_count()
+        num_users = get_web_user_usage(account.get_domains())
         try:
             BillingAccountWebUserHistory.objects.create(
                 billing_account=account,

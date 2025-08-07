@@ -1,5 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
+from functools import partial
+from itertools import chain
 from operator import attrgetter
 
 from attrs import define, field
@@ -56,6 +58,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
                 workbook.iter_ownerships(new_row, row.id, owner_ids, result.errors),
                 owner_key,
                 deleted_key=attrgetter("id"),
+                on_change=partial(modified_table_ids.add, table.id),
             )
 
         old_rows = list(LookupTableRow.objects.iter_rows(domain, tag=table.tag))
@@ -75,8 +78,11 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             row_key,
             process_row,
             delete_missing=replace,
+            on_change=partial(modified_table_ids.add, table.id),
         )
         if len(rows.to_create) > 1000 or len(rows.to_delete) > 1000:
+            for table in chain(tables.to_create, tables.to_delete):
+                ignore_table_ids.add(table.id)
             flush(tables, rows, owners)
 
     result = FixtureUploadResult()
@@ -93,6 +99,8 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     tables = Mutation()
     rows = Mutation()
     owners = Mutation()
+    modified_table_ids = set()
+    ignore_table_ids = set()
     try:
         tables.process(
             workbook,
@@ -105,9 +113,11 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         )
 
         update_progress(None)
+        for table in chain(tables.to_create, tables.to_delete):
+            ignore_table_ids.add(table.id)
         flush(tables, rows, owners)
     finally:
-        clear_fixture_cache(domain)
+        clear_fixture_cache(domain, modified_table_ids - ignore_table_ids)
     return result
 
 
@@ -125,6 +135,7 @@ class Mutation:
         process_item=lambda item, new_item: None,
         delete_missing=True,
         deleted_key=lambda obj: obj.id.hex,
+        on_change=lambda: None,
     ):
         old_map = {key(old): old for old in old_items}
         get_deleted_item = {deleted_key(x): x for x in old_items}.get
@@ -134,6 +145,7 @@ class Mutation:
                 old = get_deleted_item(new.key)
                 if old is not None:
                     self.to_delete.append(old)
+                    on_change()
                 continue
             old = old_map.pop(key(new), None)
             if old is None:
@@ -141,12 +153,14 @@ class Mutation:
                 if old is not None:
                     self.to_delete.append(old)
                 self.to_create.append(new)
+                on_change()
                 item = new
             else:
                 item = old
             process_item(item, new)
         if delete_missing:
             self.to_delete.extend(old_map.values())
+            on_change()
 
     def clear(self):
         self.to_delete = []

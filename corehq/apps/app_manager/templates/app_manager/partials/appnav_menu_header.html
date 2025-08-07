@@ -4,7 +4,12 @@
   <div class="appnav-name-settings">
     <a href="{% url "app_settings" domain app_id %}"
        class="appnav-responsive{% if settings_active %} active{% endif %}">
-      <i class="fa-solid fa-gear"></i>
+      <i
+        class="fa-solid fa-gear"
+        title="{% trans 'Application Settings' %}"
+        data-toggle="tooltip"
+        data-placement="left"
+      ></i>
     </a>
   </div>
   <h2 class="appnav-name">

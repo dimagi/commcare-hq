@@ -9,9 +9,14 @@
     x-data="{
       errorCode: '',
       errorText: '',
+      eventError: '',
+      requestPath: '',
       updateError(evt) {
         this.errorCode = evt.detail.errorCode;
         this.errorText = evt.detail.errorText;
+        this.eventError = evt.detail.eventError;
+        this.requestPath = evt.detail.requestPath;
+        this.showDetails = evt.detail.showDetails;
       },
     }"
     @update-htmx-request-error-modal.camel.window="updateError"
@@ -46,6 +51,20 @@
         {% block modal_content %}
           <p x-text="errorCode"></p>
           <p x-text="errorText"></p>
+          <div
+            class="card"
+            x-show="eventError && requestPath && showDetails"
+          >
+            <div class="card-body">
+              <h5>{% trans "Additional Details" %}</h5>
+              <dl>
+                <dt>{% trans "HTMX Event Error" %}</dt>
+                <dd x-text="eventError"></dd>
+                <dt>{% trans "Request Path" %}</dt>
+                <dd x-text="requestPath"></dd>
+              </dl>
+            </div>
+          </div>
         {% endblock %}
 
       </div>

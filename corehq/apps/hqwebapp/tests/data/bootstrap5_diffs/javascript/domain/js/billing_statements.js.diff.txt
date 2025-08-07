@@ -1,16 +1,11 @@
 --- 
 +++ 
-@@ -1,11 +1,11 @@
- 'use strict';
--hqDefine("domain/js/bootstrap3/billing_statements", [
-+hqDefine("domain/js/bootstrap5/billing_statements", [
-     'jquery',
-     'underscore',
-     'knockout',
-     'hqwebapp/js/initial_page_data',
-     'accounting/js/payment_method_handler',
--    'hqwebapp/js/bootstrap3/crud_paginated_list',
-+    'hqwebapp/js/bootstrap5/crud_paginated_list',
-     'stripe',
- ], function (
-     $,
+@@ -4,7 +4,7 @@
+ import ko from "knockout";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import paymentMethodHandlers from "accounting/js/payment_method_handler";
+-import CRUDPaginatedList from "hqwebapp/js/bootstrap3/crud_paginated_list";
++import CRUDPaginatedList from "hqwebapp/js/bootstrap5/crud_paginated_list";
+ 
+ var wireInvoiceHandler = paymentMethodHandlers.wireInvoiceHandler;
+ var paymentMethodHandler = paymentMethodHandlers.paymentMethodHandler;

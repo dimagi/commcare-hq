@@ -1,28 +1,34 @@
 {% load i18n %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-
 {% registerurl 'rearrange' domain app.id '---' %}
 
-<ul class="sortable appmanager-main-menu appnav-menu appnav-module sortable-modules">
+<ul
+  class="sortable appmanager-main-menu appnav-menu appnav-module sortable-modules"
+>
   {% with module as selected_module %}
     {% for module in app.get_modules %}
-      <li class="edit-module-li js-sorted-li module"
-          data-index="{{ module.id }}"
-          data-uid="{{ module.unique_id }}"
-          data-rootmoduleuid="{{ module.root_module_id|default:"" }}">
-
+      <li
+        class="edit-module-li js-sorted-li module"
+        data-index="{{ module.id }}"
+        data-uid="{{ module.unique_id }}"
+        data-rootmoduleuid="{{ module.root_module_id|default:"" }}"
+      >
         {% include 'app_manager/partials/menu/module_link.html' %}
 
-        <ul class="appnav-menu appnav-menu-nested see sortable sortable-forms
-                   {% if module.unique_id == selected_module.unique_id %}selected{% endif %}">
+        <ul
+          class="appnav-menu appnav-menu-nested see sortable sortable-forms
+                   {% if module.unique_id == selected_module.unique_id %}selected{% endif %}"
+        >
           {% with nav_form as selected_form %}
             {% for form in module.get_forms %}
-              <li class="edit-form-li js-sorted-li"
-                  data-moduleuid="{{ module.unique_id }}"
-                  data-index="{{ form.id }}"
-                  data-uid="{{ form.unique_id }}"
-                  {% if form.get_action_type == 'open' %}data-appear="first"{% endif %}>
+              <li
+                class="edit-form-li js-sorted-li"
+                data-moduleuid="{{ module.unique_id }}"
+                data-index="{{ form.id }}"
+                data-uid="{{ form.unique_id }}"
+                {% if form.get_action_type == 'open' %}data-appear="first"{% endif %}
+              >
                 {% include 'app_manager/partials/menu/form_link.html' %}
               </li>
             {% endfor %}
@@ -36,14 +42,23 @@
   {% if app.get_doc_type == "Application" %}
     <li class="sort-disabled">
       <div class="appnav-item">
-        <form id="new-module-form"
-              action="{% url "new_module" domain app.id %}"
-              method="post"
-              class="hide">
+        <form
+          id="new-module-form"
+          action="{% url "new_module" domain app.id %}"
+          method="post"
+          class="hide"
+        >
           {% csrf_token %}
           <input id="new-module-type" type="hidden" name="module_type" />
+          <input id="new-case-type" type="hidden" name="case_type" />
         </form>
-        <a href="#" class="appnav-add js-add-new-item" data-slug="module">
+        <a
+          href="#"
+          class="appnav-add add-new-module"
+          data-slug="module"
+          data-toggle="modal"
+          data-target="#add-new-module-modal"
+        >
           <i class="new-module-icon fa fa-plus"></i>
           {% trans "Add..." %}
         </a>
@@ -53,42 +68,52 @@
 </ul>
 
 <div id="reorder_modules_modal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">
-                    {% trans "Your menus were reordered" %}
-                </h4>
-            </div>
-            <form action="{% url "move_child_modules_after_parents" domain app.id %}"
-                  method="post">
-                {% csrf_token %}
-                <div class="modal-body">
-                    {% blocktrans %}
-                    <p>
-                        Sub-menus are now displayed nested under their parent menu. The order
-                        of your menus has been changed to reflect that.
-                    </p>
-                    <p>
-                        Click "Rearrange" to make this change permanent.  You won't be able to modify the order of your menus until you do so.
-                    </p>
-                    <p>
-                        Please contact support or report an issue if you have any concerns.
-                    </p>
-                    {% endblocktrans %}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                        {% trans "Not Now" %}
-                    </button>
-                    <button type="submit" class="disable-on-submit btn btn-primary">
-                        {% trans "Rearrange" %}
-                    </button>
-                </div>
-            </form>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">{% trans "Your menus were reordered" %}</h4>
+      </div>
+      <form
+        action="{% url "move_child_modules_after_parents" domain app.id %}"
+        method="post"
+      >
+        {% csrf_token %}
+        <div class="modal-body">
+          {% blocktrans %}
+            <p>
+              Sub-menus are now displayed nested under their parent menu. The
+              order of your menus has been changed to reflect that.
+            </p>
+            <p>
+              Click "Rearrange" to make this change permanent. You won't be able
+              to modify the order of your menus until you do so.
+            </p>
+            <p>
+              Please contact support or report an issue if you have any
+              concerns.
+            </p>
+          {% endblocktrans %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">
+            {% trans "Not Now" %}
+          </button>
+          <button type="submit" class="disable-on-submit btn btn-primary">
+            {% trans "Rearrange" %}
+          </button>
+        </div>
+      </form>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->

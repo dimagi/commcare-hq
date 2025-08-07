@@ -352,7 +352,8 @@ class ManageMultimediaPathsView(BaseMultimediaTemplateView):
                 "download_url": reverse('download_multimedia_paths', args=[self.domain, self.app.get_id]),
                 "adjective": _("multimedia paths"),
                 "plural_noun": _("multimedia paths"),
-                "help_link": "https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager",
+                "help_link": ("https://dimagi.atlassian.net/wiki/spaces/IndiaDivision/"
+                              "pages/2145553380/Multimedia+Path+Manager"),
             },
         })
         context.update({

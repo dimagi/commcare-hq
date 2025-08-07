@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
-from django.http.response import Http404
+from django.http.response import Http404, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
@@ -16,7 +16,6 @@ from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
 
 from corehq.apps.domain.decorators import require_superuser_or_contractor
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
@@ -43,7 +42,12 @@ from corehq.toggles import (
     toggles_enabled_for_user,
 )
 from corehq.toggles.models import Toggle
-from corehq.toggles.shortcuts import namespaced_item, parse_toggle
+from corehq.toggles.shortcuts import (
+    can_user_edit_tag,
+    get_editable_toggle_tags_for_user,
+    namespaced_item,
+    parse_toggle,
+)
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 
@@ -55,7 +59,6 @@ class ToggleListView(BasePageView):
     page_title = "Feature Flags"
     template_name = 'toggle/flags.html'
 
-    @use_datatables
     @method_decorator(require_superuser_or_contractor)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleListView, self).dispatch(request, *args, **kwargs)
@@ -101,11 +104,15 @@ class ToggleListView(BasePageView):
             'page_url': self.page_url,
             'show_usage': self.show_usage,
             'toggles': toggles,
+            'editable_tags_slugs': self._editable_tags_slugs(),
             'tags': ALL_TAG_GROUPS,
             'user_counts': user_counts,
             'last_used': last_used,
             'last_modified': last_modified,
         }
+
+    def _editable_tags_slugs(self):
+        return [tag.slug for tag in get_editable_toggle_tags_for_user(self.request.user.username)]
 
 
 @method_decorator(require_superuser_or_contractor, name='dispatch')
@@ -150,6 +157,10 @@ class ToggleEditView(BasePageView):
         """
         return find_static_toggle(self.toggle_slug)
 
+    @property
+    def can_edit_toggle(self):
+        return can_user_edit_tag(self.request.user.username, self.static_toggle.tag)
+
     def get_toggle(self):
         if not self.static_toggle:
             raise Http404()
@@ -165,6 +176,7 @@ class ToggleEditView(BasePageView):
         context = {
             'static_toggle': self.static_toggle,
             'toggle': toggle,
+            'can_edit_toggle': self.can_edit_toggle,
             'namespaces': namespaces,
             'usage_info': self.usage_info,
             'server_environment': settings.SERVER_ENVIRONMENT,
@@ -180,6 +192,9 @@ class ToggleEditView(BasePageView):
         return context
 
     def post(self, request, *args, **kwargs):
+        if not self.can_edit_toggle:
+            return HttpResponseForbidden("You do not have permission to edit this feature flag.")
+
         toggle = self.get_toggle()
 
         item_list = request.POST.get('item_list', [])
@@ -380,6 +395,9 @@ def set_toggle(request, toggle_slug):
     static_toggle = find_static_toggle(toggle_slug)
     if not static_toggle:
         raise Http404()
+
+    if (not can_user_edit_tag(request.user.username, static_toggle.tag)):
+        return HttpResponseForbidden("You do not have permission to edit this feature flag.")
 
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'

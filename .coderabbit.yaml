@@ -14,7 +14,7 @@ reviews:
       - External system integrations should follow best practices for handling secrets.
       - Documentation should be close to the relevant code and use reStructuredText with autodoc.
       - Developers use tools like `flake8`, `pylint`, `isort`, and `django-extensions` for better development practices.
-      - Requirements updates should be managed through `requirements/*.in` files and built with `make requirements`.
+      - Requirements updates should be managed through `pyproject.toml` and `uv.lock` files.
 
     path_instructions:
         - path: "**/*.js"

@@ -18,6 +18,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from corehq.util.timer import DURATION_REPORTING_THRESHOLD
+from corehq.util.view_utils import set_language_cookie
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
@@ -349,4 +350,51 @@ class SecureCookiesMiddleware(MiddlewareMixin):
         if hasattr(response, 'cookies') and response.cookies:
             for cookie in response.cookies:
                 response.cookies[cookie]['secure'] = settings.SECURE_COOKIES or response.cookies[cookie]['secure']
+        return response
+
+
+class HqHtmxActionMiddleware:
+    """
+    We append `_hq-hx-action` to HTMX requests using hq-hx-action
+    so browsers can cache fragments under a distinct URL per action.
+
+    This middleware removes the flag before views run, keeping handler
+    code and user-facing URLs clean.
+
+    Benefits:
+      - Unique cache slots for HTMX fragments without polluting view logic
+      - Clean request parameters in views
+      - Transparent request logs revealing the HTMX action name in the URL
+    """
+    _FLAG = "_hq-hx-action"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if self._FLAG in request.GET:
+            q = request.GET.copy()
+            q.pop(self._FLAG, None)
+            request.GET = q
+        return self.get_response(request)
+
+
+class SyncUserLanguageMiddleware:
+    """
+    Sets display language to the logged in user's account language if defined.
+    Useful when a user logs in from any source or if the cookie gets deleted.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        couch_user = getattr(request, 'couch_user', None)
+        if (
+            couch_user
+            and couch_user.language
+            and couch_user.language != request.LANGUAGE_CODE
+        ):
+            response = set_language_cookie(response, couch_user.language)
         return response

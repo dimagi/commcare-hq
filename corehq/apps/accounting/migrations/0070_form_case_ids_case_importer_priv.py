@@ -16,7 +16,7 @@ def _grandfather_form_case_ids_case_importer_priv(apps, schema_editor):
     # Form and Case ID downloads are Standard Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
     ))
     call_command(
         'cchq_prbac_grandfather_privs',

@@ -48,7 +48,7 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
             topics.CASE_SQL,
             client_id='test-consumer',
             bootstrap_servers=settings.KAFKA_BROKERS,
-            consumer_timeout_ms=100,
+            consumer_timeout_ms=500,
             enable_auto_commit=False,
         )
         try:

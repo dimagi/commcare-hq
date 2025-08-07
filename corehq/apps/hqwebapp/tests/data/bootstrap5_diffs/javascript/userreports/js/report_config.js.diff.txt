@@ -1,0 +1,14 @@
+--- 
++++ 
+@@ -2,9 +2,9 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import noopMetrics from "analytix/js/noopMetrics";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ import charts from "reports_core/js/charts";
+-import maps from "reports_core/js/bootstrap3/maps";
++import maps from "reports_core/js/bootstrap5/maps";
+ import builderViewModels from "userreports/js/builder_view_models";
+ import constants from "userreports/js/constants";
+ import analytics from "userreports/js/report_analytix";

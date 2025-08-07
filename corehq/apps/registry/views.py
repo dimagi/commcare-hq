@@ -13,7 +13,7 @@ from corehq import toggles
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_multiselect, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
 from corehq.apps.registry.utils import (
     _get_registry_or_404,
@@ -92,8 +92,6 @@ def _registry_list_context(domain, registry):
 @require_GET
 @toggles.DATA_REGISTRY.required_decorator()
 @use_bootstrap5
-@use_multiselect
-@use_tempusdominus
 def manage_registry(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
     if not RegistryPermissionCheck(domain, request.couch_user).can_manage_registry(registry.slug):

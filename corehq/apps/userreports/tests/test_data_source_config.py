@@ -7,22 +7,16 @@ from freezegun import freeze_time
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
-from corehq.apps.userreports.const import (
-    UCR_NAMED_EXPRESSION,
-    UCR_NAMED_FILTER,
-)
-from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import (
-    DataSourceConfiguration,
-    UCRExpression,
-)
-from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.tests.utils import (
-    get_sample_data_source,
-    get_sample_doc_and_indicators,
-)
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.test_utils import flag_enabled
+
+from ..alembic_diffs import DiffTypes
+from ..const import UCR_NAMED_EXPRESSION, UCR_NAMED_FILTER
+from ..exceptions import BadSpecError
+from ..models import DataSourceConfiguration, UCRExpression
+from ..specs import EvaluationContext, FactoryContext
+from ..tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from ..util import get_table_name
 
 
 class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
@@ -341,6 +335,21 @@ class DataSourceFilterInterpolationTest(SimpleTestCase):
 
 class DataSourceConfigurationTests(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        for domain, table_id in [
+            ('foo', 'foo1'),
+            ('foo', 'foo2'),
+            ('bar', 'bar1')
+        ]:
+            config = DataSourceConfiguration(
+                domain=domain,
+                table_id=table_id,
+                referenced_doc_type='XFormInstance')
+            config.save()
+            cls.addClassCleanup(config.delete)
+
     def test_by_domain_returns_relevant_datasource_configs(self):
         results = DataSourceConfiguration.by_domain('foo')
         self.assertEqual(len(results), 2)
@@ -385,17 +394,82 @@ class DataSourceConfigurationTests(TestCase):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        for domain, table_id in [('foo', 'foo1'), ('foo', 'foo2'),
-                                 ('bar', 'bar1')]:
-            config = DataSourceConfiguration(
-                domain=domain,
-                table_id=table_id,
-                referenced_doc_type='XFormInstance')
-            config.save()
-            cls.addClassCleanup(config.delete)
+
+class DataSourceConfigurationRebuildTests(TestCase):
+
+    def setUp(self):
+        self.config = DataSourceConfiguration(
+            domain='test-domain',
+            table_id='table_id',
+            referenced_doc_type='XFormInstance'
+        )
+        self.config.save()
+        self.addCleanup(self.config.delete)
+
+    def test_set_build_not_required(self):
+        self.config.set_build_not_required()
+        assert self.config.meta.build.awaiting is False
+        assert self.config.meta.build.initiated is None
+        assert self.config.meta.build.finished is False
+
+    def test_set_build_queued(self):
+        self.config.set_build_queued()
+        assert self.config.meta.build.awaiting is True
+        assert self.config.meta.build.initiated is None
+        assert self.config.meta.build.finished is False
+
+    def test_rebuild_flag_for_missing_table(self):
+        assert self.config.meta.build.awaiting is False
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_migratable_table(self, mock_get_table_diffs, mock_table_exists):
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        diff = MagicMock(table_name=table_name, type=DiffTypes.ADD_NULLABLE_COLUMN)
+        mock_get_table_diffs.return_value = [diff]
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is False
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_rebuildable_table(self, mock_get_table_diffs, mock_table_exists):
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        diff = MagicMock(table_name=table_name, type=DiffTypes.MODIFY_TYPE)
+        mock_get_table_diffs.return_value = [diff]
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_no_change(self, mock_get_table_diffs, mock_table_exists):
+        mock_get_table_diffs.return_value = []
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is False
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_already_queued_table(self, mock_get_table_diffs, mock_table_exists):
+        # If a rebuild is already awaiting, it is not unset.
+        mock_get_table_diffs.return_value = []
+        self.config.meta.build.awaiting = True
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_rebuilding_table(self, mock_get_table_diffs, mock_table_exists):
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        diff = MagicMock(table_name=table_name, type=DiffTypes.MODIFY_TYPE)
+        mock_get_table_diffs.return_value = [diff]
+
+        self.config.meta.build.awaiting = False
+        self.config.meta.build.initiated = datetime.datetime.now()
+        self.config.meta.build.finished = False
+
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
 
 
 @patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions',

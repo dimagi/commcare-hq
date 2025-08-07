@@ -16,6 +16,8 @@ from corehq.apps.users.util import is_dimagi_email
 
 from email.utils import parseaddr
 
+from corehq.toggles import ALL_TAGS
+
 
 class EmailForm(forms.Form):
     email_subject = forms.CharField(max_length=100)
@@ -79,6 +81,16 @@ class SuperuserManagementForm(forms.Form):
         widget=forms.CheckboxSelectMultiple(),
         required=False,
     )
+    feature_flag_edit_permissions = forms.MultipleChoiceField(
+        help_text=(
+            "Requires superuser privileges"
+        ),
+        choices=[
+            (tag.slug, tag.name) for tag in ALL_TAGS
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+    )
 
     def clean(self):
         return clean_data(self.cleaned_data)
@@ -92,8 +104,15 @@ class SuperuserManagementForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'csv_email_list',
-            'privileges',
+            crispy.Div(
+                crispy.Field('privileges'),
+                css_id='privileges'
+            ),
             'can_assign_superuser',
+            crispy.Div(
+                crispy.Field('feature_flag_edit_permissions'),
+                css_id='feature_flag_edit_permissions'
+            ),
             FormActions(
                 crispy.Submit(
                     'superuser_management',

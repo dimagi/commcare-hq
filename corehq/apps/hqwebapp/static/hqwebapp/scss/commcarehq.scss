@@ -9,6 +9,7 @@
 @import "mixins";
 @import "commcarehq/mixins";
 @import "utilities";
+@import "commcarehq/animations";
 
 // Layout & components
 @import "root";
@@ -66,7 +67,6 @@
 
 // Custom Widgets
 @import "commcarehq/ace_cle";
-@import "commcarehq/appcues";
 @import "commcarehq/backgrounds";
 @import "commcarehq/datagrid";
 @import "commcarehq/datatables";

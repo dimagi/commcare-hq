@@ -6,17 +6,16 @@ from django import template
 from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
-from django.template.base import (
-    Variable,
-    VariableDoesNotExist,
-)
+from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
+from django.templatetags import i18n
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from django_prbac.utils import has_privilege
+from langcodes import langs_by_code
 
 from dimagi.utils.web import json_handler
 
@@ -27,7 +26,6 @@ from corehq.apps.hqwebapp.exceptions import (
 )
 from corehq.apps.hqwebapp.models import Alert
 from corehq.motech.utils import pformat_json
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone
 
@@ -256,8 +254,14 @@ def css_field_class():
 
 @register.simple_tag
 def css_action_class():
-    from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS, get_form_action_class
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+    from corehq.apps.hqwebapp.crispy import (
+        CSS_ACTION_CLASS,
+        get_form_action_class,
+    )
+    from corehq.apps.hqwebapp.utils.bootstrap import (
+        BOOTSTRAP_5,
+        get_bootstrap_version,
+    )
     if get_bootstrap_version() == BOOTSTRAP_5:
         return get_form_action_class()
     return CSS_ACTION_CLASS
@@ -422,7 +426,7 @@ def prelogin_url(urlname):
     """
     urlname_to_url = {
         'go_to_pricing': 'https://dimagi.com/commcare-pricing/',
-        'public_pricing': 'https://dimagi.com/commcare-pricing/',
+        'public_pricing': 'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview',  # noqa: E501
 
     }
     return urlname_to_url.get(urlname, 'https://dimagi.com/commcare/')
@@ -601,6 +605,19 @@ def html_attr(value):
     return conditional_escape(value)
 
 
+@register.filter
+def language_name_local(lang_code):
+    """
+    Override built-in language_name_local filter to work with 3-letter lang
+    codes and always title case its output. KeyError will be raised if language
+    is missing from either langs_by_code or django.conf.locale.LANG_INFO.
+    """
+    lang = langs_by_code[lang_code]
+    lang_code = lang.get('two', lang_code)
+    lang_name = i18n.language_name_local(lang_code)
+    return lang_name.title()
+
+
 def _create_page_data(parser, original_token, node_slug):
     split_contents = original_token.split_contents()
     tag = split_contents[0]
@@ -650,11 +667,8 @@ def _bundler_main(parser, token, flag, node_class):
     else:
         tag_name, value = bits
 
-    # Treat requirejs_main_b5 identically to requirejs_main
-    # Some templates check for {% if requirejs_main %}
-    tag_name = tag_name.rstrip("_b5")
-
-    # likewise with js_entry_b3, treat identically to js_entry
+    # Treat js_entry_b3 identically to js_entry
+    # Some templates check for {% if js_entry %}
     tag_name = tag_name.rstrip("_b3")
 
     if getattr(parser, flag, False):
@@ -672,32 +686,6 @@ def _bundler_main(parser, token, flag, node_class):
 
 
 @register.tag
-def requirejs_main_b5(parser, token):
-    """
-    Alias for requirejs_main. The build_requirejs step of deploy, which regexes HTML templates
-    for that tag, uses this alias to determine which version of Bootstrap a template uses.
-    """
-    return requirejs_main(parser, token)
-
-
-@register.tag
-def requirejs_main(parser, token):
-    """
-    Indicate that a page should be using RequireJS, by naming the
-    JavaScript module to be used as the page's main entry point.
-
-    The base template must have a `{% requirejs_main ... %}` tag before
-    the `requirejs_main` variable is accessed anywhere in the template.
-    The base template need not specify a value in its `{% requirejs_main %}`
-    tag, allowing it to be extended by templates that may or may not
-    use requirejs. In this case the `requirejs_main` template variable
-    will have a value of `None` unless an extending template has a
-    `{% requirejs_main "..." %}` with a value.
-    """
-    return _bundler_main(parser, token, "__saw_requirejs_main", RequireJSMainNode)
-
-
-@register.tag
 def js_entry(parser, token):
     """
     Indicate that a page should be using Webpack, by naming the
@@ -705,7 +693,7 @@ def js_entry(parser, token):
 
     The base template need not specify a value in its `{% js_entry %}`
     tag, allowing it to be extended by templates that may or may not
-    use requirejs. In this case the `js_entry` template variable
+    use webpack. In this case the `js_entry` template variable
     will have a value of `None` unless an extending template has a
     `{% js_entry "..." %}` with a value.
     """
@@ -721,7 +709,7 @@ def js_entry_b3(parser, token):
     return js_entry(parser, token)
 
 
-class RequireJSMainNode(template.Node):
+class WebpackMainNode(template.Node):
 
     def __init__(self, name, value):
         self.name = name
@@ -729,37 +717,27 @@ class RequireJSMainNode(template.Node):
         self.origin = None
 
     def __repr__(self):
-        return "<RequireJSMain Node: %r>" % (self.value,)
+        return "<WebpackMain Node: %r>" % (self.value,)
 
     def render(self, context):
         if self.name not in context and self.value:
-            # Check that there isn't already an entry point from the other bundler tool
-            # If there is, don't add this one, because having both set will cause js errors
-            other_tag = "js_entry" if self.name == "requirejs_main" else "requirejs_main"
-            other_value = None
-            for context_dict in context.dicts:
-                if other_tag in context_dict:
-                    other_value = context_dict.get(other_tag)
-                    msg = f"Discarding {self.value} {self.name} value because {other_value} is using {other_tag}"
-                    soft_assert('jschweers@dimagi.com', notify_admins=False, send_to_ops=False)(False, msg)
             # set name in block parent context
-            if not other_value:
-                context.dicts[-2]['use_js_bundler'] = True
-                context.dicts[-2][self.name] = self.value
+            context.dicts[-2][self.name] = self.value
 
         return ''
 
 
-class WebpackMainNode(RequireJSMainNode):
-
-    def __repr__(self):
-        return "<WebpackMain Node: %r>" % (self.value,)
-
-
 @register.filter
 def webpack_bundles(entry_name):
-    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
+    from corehq.apps.hqwebapp.utils.bootstrap import (
+        BOOTSTRAP_3,
+        BOOTSTRAP_5,
+        get_bootstrap_version,
+    )
+    from corehq.apps.hqwebapp.utils.webpack import (
+        WebpackManifestNotFoundError,
+        get_webpack_manifest,
+    )
     bootstrap_version = get_bootstrap_version()
 
     try:
@@ -805,20 +783,6 @@ def bootstrap_form_errors(form):
     return {'form': form}
 
 
-@register.inclusion_tag('hqwebapp/includes/core_libraries.html', takes_context=True)
-def javascript_libraries(context, **kwargs):
-    return {
-        'request': getattr(context, 'request', None),
-        'underscore': kwargs.pop('underscore', False),
-        'jquery_ui': kwargs.pop('jquery_ui', False),
-        'ko': kwargs.pop('ko', False),
-        'analytics': kwargs.pop('analytics', False),
-        'hq': kwargs.pop('hq', False),
-        'helpers': kwargs.pop('helpers', False),
-        'use_bootstrap5': kwargs.pop('use_bootstrap5', False),
-    }
-
-
 @register.simple_tag
 def breadcrumbs(page, section, parents=None):
     """
@@ -844,8 +808,8 @@ def breadcrumbs(page, section, parents=None):
 
 @register.filter
 def request_has_privilege(request, privilege_name):
-    from corehq.apps.accounting.utils import domain_has_privilege
     from corehq import privileges
+    from corehq.apps.accounting.utils import domain_has_privilege
     privilege = _get_obj_from_name_or_instance(privileges, privilege_name)
     return domain_has_privilege(request.domain, privilege)
 

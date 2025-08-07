@@ -142,7 +142,7 @@ def _create_es_user(user_id, domain):
 @es_test(requires=[user_adapter])
 class GroupToUserPillowDbTest(TestCase):
 
-    def test_pillow(self):
+    def process_pillow(self):
         user_id = uuid.uuid4().hex
         domain = 'dbtest-group-user'
         _create_es_user(user_id, domain)
@@ -165,8 +165,11 @@ class GroupToUserPillowDbTest(TestCase):
         _assert_es_user_and_groups(self, user_id, [group._id], [group.name])
         return user_id, group
 
+    def test_pillow(self):
+        self.process_pillow()
+
     def test_pillow_deletion(self):
-        user_id, group = self.test_pillow()
+        user_id, group = self.process_pillow()
         group.soft_delete()
 
         # send to kafka

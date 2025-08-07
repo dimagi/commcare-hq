@@ -6,7 +6,6 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     rebuild_indicators_in_place,
-    resume_building_indicators,
     time_in_range,
 )
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
@@ -130,29 +129,3 @@ class TestRebuildIndicatorsInPlace(BaseTestRebuildIndicators):
         self.assertIsNotNone(data_source_config.meta.build.initiated_in_place)
         self.assertFalse(data_source_config.meta.build.finished_in_place)
         self.assertFalse(data_source_config.meta.build.rebuilt_asynchronously)
-
-
-class TestResumeBuildingIndicators(BaseTestRebuildIndicators):
-    @patch('corehq.apps.userreports.tasks._iteratively_build_table')
-    @patch('corehq.apps.userreports.tasks.get_indicator_adapter')
-    def test_resume_building_indicators(self, mock_get_indicator_adapter, mock_iteratively_build_table):
-        mocked_adapter = Mock()
-        mock_get_indicator_adapter.return_value = mocked_adapter
-        self.data_source_config.meta.build.awaiting = True
-        self.data_source_config.save()
-
-        data_source_config = get_ucr_datasource_config_by_id(self.data_source_config.get_id)
-        self.assertTrue(data_source_config.meta.build.awaiting)
-
-        resume_building_indicators(self.data_source_config.get_id)
-
-        # test calls
-        mock_get_indicator_adapter.assert_called_once()
-        mocked_adapter.assert_has_calls([
-            call.log_table_build(initiated_by=None, source='resume_building_indicators')
-        ])
-        mock_iteratively_build_table.assert_called_once()
-
-        # test data source config updates
-        data_source_config = get_ucr_datasource_config_by_id(self.data_source_config.get_id)
-        self.assertFalse(data_source_config.meta.build.awaiting)

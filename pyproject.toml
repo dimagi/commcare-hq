@@ -1,0 +1,247 @@
+[project]
+name = "commcare-hq"
+readme = "README.md"
+license = { file = "LICENSE" }
+version = "1.0.0"
+
+# The version of Python that will be installed when creating a new venv is
+# stored in .python-version, and may need to be updated if requires-python is
+# changed here. Use `uv python pin VERSION`
+requires-python = ">=3.13"
+
+dependencies = [
+    "alembic",
+    "architect",
+    "attrs>=21.4",
+    "beautifulsoup4", # USH - used for rich text messaging emails, and some tests
+    "bleach", # USH - used for rich text messaging emails
+    "bleach[css]", # USH - used for rich text messaging emails
+    "boto3",
+    "celery",
+    "CommcareTranslationChecker>=0.9.7",
+    "cryptography>=43.0.1",
+    "csiphash",
+    "datadog",
+    "ddtrace>=2.21.0",
+    "decorator==5.1.1", # required by django-digest
+    "defusedxml",
+    "diff-match-patch",
+    "dimagi-memoized",
+    "django-autoslug",
+    "django-braces",
+    "django-bulk-update",
+    "django-celery-results",
+    "django-compressor",
+    "django-countries",
+    "django-crispy-forms",
+    "crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165",
+    "django-cte",
+    "django-field-audit",
+    "django-formtools",
+    "django-oauth-toolkit",
+    "django-otp",
+    "django-phonenumber-field",
+    "django-prbac",
+    "django-redis-sessions",
+    "django-redis",
+    "django-recaptcha",
+    "django-statici18n",
+    "django-tables2",
+    "django-tastypie",
+    "django-transfer",
+    "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
+    "django-user-agents",
+    "django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl",
+    "django>=4.2.16,<5.0",
+    "djangorestframework",
+    "dropbox",
+    "elasticsearch6>=6.0.0,<7.0.0",
+    "ethiopian-date-converter",
+    "eulxml",
+    "geoip2", # USH - used for IPAccessMiddleware
+    "gevent>=24.11.1",
+    "greenlet",
+    "gunicorn",
+    "haversine", # SolTech - Used in Geospatial features
+    "hiredis",
+    "httpagentparser",
+    "iso8601",
+    "Jinja2",
+    "jsonfield",
+    "jsonobject-couchdbkit",
+    "jsonobject>=2.3.1",
+    # jsonpath-ng with support for "wherenot" operator, and building documents
+    # Upgrade when changes merged upstream
+    "jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl",
+    "jsonschema",
+    "kafka-python",
+    "looseversion",
+    "lxml",
+    "markdown",
+    "oic",
+    "pulp", # Used in Geospatial features to solve routing problems - SolTech
+    "openpyxl",
+    "packaging",
+    "phonenumberslite",
+    "Pillow",
+    "polib",
+    "prometheus-client",
+    "psycogreen",
+    "psycopg2-binary>=2.9.10",
+    "pycryptodome>=3.6.6", # security update
+    "python-dateutil",
+    "python-imap",
+    "pyphonetics",
+    "python-magic",
+    "pytz",
+    "pyjwt",
+    "PyYAML>=6.0.2",
+    "hl7apy",
+    "pyzxcvbn",
+    "qrcode",
+    "quickcache",
+    "redis",
+    "reportlab==4.3.0",
+    "requests_oauthlib",
+    "requests_toolbelt",
+    "requests",
+    "schema",
+    "sentry-sdk",
+    "sh",
+    "simpleeval",
+    "simplejson",
+    "six",
+    "socketpool",
+    "sqlagg",
+    "SQLAlchemy",
+    "stripe",
+    "suds-py3",
+    "text-unidecode",
+    "toposort",
+    "transifex-python",
+    "tropo-webapi-python",
+    "turn-python",
+    "twilio",
+    "werkzeug",
+    "xlrd",
+    "xlwt",
+]
+
+[project.urls]
+Homepage = "https://commcarehq.org"
+Documentation = "https://commcare-hq.readthedocs.io"
+Repository = "https://github.com/dimagi/commcare-hq"
+
+[tool.uv]
+required-version = ">=0.7.0"
+default-groups = ["dev", "sso"]
+no-binary-package = [
+    # fixes xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
+    # revisit if new lxml or xmlsec versions are released
+    # https://github.com/xmlsec/python-xmlsec/issues/316
+    "lxml",
+]
+
+[dependency-groups]
+dev = [
+    'dependency-metrics',
+    'django-extensions',
+    'fixture',
+    'git-build-branch',
+    'gnureadline',
+    'ipython', # for nicer django shell experience
+    'psutil>5.1.3', # for memory profiling
+    'wheel',
+    'flake8>=6.0', # linting/formatting
+    'isort',
+    'yapf',
+    {include-group = "test"},
+]
+docs = [
+    "django-extensions",
+    "myst-parser",
+    "Sphinx",
+    "sphinxcontrib-django",
+    "sphinx-rtd-theme",
+    "pyOpenSSL", # CI builds fail without OpenSSL
+    "urllib3<=1.26.20", # fix doc tests AssertionError: Current app already created
+]
+prod = [
+    "flower",
+    "setproctitle",
+    "ipython", # for nicer django shell experience
+    "idna",
+    "certifi",
+]
+sso = [
+    "msal",
+    "python3-saml",
+]
+test = [
+    'fakecouch',
+    'testil',
+    'requests-mock',
+    'Faker',
+    'flaky>=3.8', # required for pytest 8.2 (and possibly earlier versions)
+    'freezegun',
+    'radon>=5.0', # v5 no longer depends on flake8-polyfill
+    # pytest is pinned to a git commit until 8.4 is released.
+    # `minversion = 8.4` should also be set in [tool.pytest.ini_options] below at that time.
+    'pytest @ git+https://github.com/pytest-dev/pytest.git@85760bff2776989b365167c7aeb35c86308ab76b',
+    'pytest-django',
+    'pytest-unmagic',
+    'coverage',
+]
+
+[tool.pytest.ini_options]
+minversion = '8.1'
+
+addopts = [
+    '--strict-markers',
+    '-pcorehq.tests.pytest_hooks',
+    # HQ has its own (incompatible) warnings system
+    '-pno:warnings',
+]
+markers = [
+    'es_test',  # marker for elasticsearch tests
+    'sharded',  # tests to be run against shard databases
+    'skip_setup_users',  # skip user setup in importer tests
+    'slow',  # marks tests as slow (deselect with -m 'not slow')
+]
+
+empty_parameter_set_mark = 'fail_at_collect'
+xfail_strict = true
+
+norecursedirs = [
+    '.*',
+    '*.egg',
+    'artifacts',
+    'docker',
+    'git-hooks',
+    'locale',
+    'node_modules',
+    'requirements',
+    'scripts',
+    'sharedfiles',
+    'staticfiles',
+]
+python_files = [
+    'test_*.py',
+    'tests.py',
+    '*/tests/*.py',
+]
+
+pythonpath = [
+    '.',
+    'corehq/ex-submodules',
+    # 'submodules' is for langcodes
+    'submodules',
+    'submodules/commcare-translations',
+    'submodules/couchdbkit-aggregate',
+    'submodules/django-digest-src',
+    'submodules/django-no-exceptions',
+    'submodules/python-digest',
+    'submodules/xml2json',
+]
+required_plugins = 'pytest-django'
+DJANGO_SETTINGS_MODULE = 'testsettings'

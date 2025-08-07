@@ -10,8 +10,8 @@ from unittest import mock
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks
+from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
 from corehq.apps.accounting.models import (
-    SMALL_INVOICE_THRESHOLD,
     BillingAccount,
     BillingRecord,
     Currency,

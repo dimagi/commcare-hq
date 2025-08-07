@@ -1,0 +1,51 @@
+{% load i18n %}
+<div
+  class="modal fade"
+  id="delete-widget-confirmation-modal"
+  tabindex="-1"
+  role="dialog"
+  x-data
+  @hidden-bs-modal.dot="$store.deleteWidgetModel.resetData()"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {% trans "Delete Widget" %}
+          <span x-text="`'${$store.deleteWidgetModel.title}'`"></span>
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>{% trans "Are you sure you want to delete this widget?" %}</p>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          data-bs-dismiss="modal"
+        >
+          {% trans "Cancel" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="delete-widget-confirmation-btn"
+          hx-post="{% url 'dashboard_widget' domain %}"
+          hq-hx-action="delete_widget"
+          :hx-vals='JSON.stringify({ "widget_id": $store.deleteWidgetModel.id,
+                    "widget_type": $store.deleteWidgetModel.type })'
+          :hx-target="$store.deleteWidgetModel.swapTargetSelector"
+          hx-swap="delete"
+        >
+          {% trans "Confirm" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

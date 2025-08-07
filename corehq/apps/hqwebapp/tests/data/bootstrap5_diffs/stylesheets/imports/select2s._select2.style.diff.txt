@@ -8,7 +8,7 @@
      margin-left: 10px;
      margin-bottom: 3px;
    }
-@@ -14,74 +15,186 @@
+@@ -14,74 +15,195 @@
  }
  
  // Static width for select2 widgets, which otherwise grow too large on form view's case management tab
@@ -147,14 +147,23 @@
 +
 +.select2-container--default
 +  .select2-selection--single.select2-selection--clearable {
++  display: flex;
++  align-items: center;
++
++  .select2-selection__rendered {
++    order: 1;
++    flex: 1 1 auto;
++  }
 +  .select2-selection__clear {
 +    font-size: 1.5em;
++    line-height: 1;
++    order: 2;
 +  }
 +}
 +
 +.select2-container--default.is-invalid,
 +.select2-container--default.is-valid {
-+  .select2-selection__rendered {
++  .select2-selection--single .select2-selection__rendered {
 +    padding-right: 66px !important;
 +  }
 +  .select2-selection--single::before {

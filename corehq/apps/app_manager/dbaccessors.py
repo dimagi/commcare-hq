@@ -8,7 +8,10 @@ from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
 from dimagi.utils.couch.database import iter_docs
 
-from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
+    BuildNotFoundException,
+)
 from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
@@ -247,7 +250,13 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             app = get_latest_released_app_doc(domain, app_id) or app
 
     if domain and app['domain'] != domain:
-        raise Http404()
+        raise AppInDifferentDomainException(
+            _("App {app_id} is in domain {app_domain} but requested from domain {requested_domain}").format(
+                app_id=app_id,
+                app_domain=app['domain'],
+                requested_domain=domain
+            )
+        )
     try:
         return wrap_app(app, wrap_cls=wrap_cls)
     except DocTypeError:
@@ -529,14 +538,14 @@ def _get_case_types_from_apps_query(domain, is_build=False):
     )
 
 
-def get_case_types_from_apps(domain):
+def get_case_types_from_apps(domain, include_save_to_case_updates=True):
     """
     Get the case types of modules in applications in the domain.
     Also returns case types for SaveToCase properties in the domain, if the toggle is enabled.
     :returns: A set of case_types
     """
     save_to_case_updates = set()
-    if VELLUM_SAVE_TO_CASE.enabled(domain):
+    if include_save_to_case_updates and VELLUM_SAVE_TO_CASE.enabled(domain):
         save_to_case_updates = _get_save_to_case_updates(domain)
     q = _get_case_types_from_apps_query(domain)
     case_types = set(q.run().aggregations.modules.case_types.keys)

@@ -1,4 +1,5 @@
 import json
+import re
 
 from collections import OrderedDict
 
@@ -109,6 +110,7 @@ class CustomDataEditor(object):
 
     def _make_field(self, field):
         safe_label = escape(field.label)
+        safe_label = re.sub(r"([_-])", "\\1\u200B", safe_label)  # add zero-width spaces for nicer line breaks
         is_required_field = self.field_view.is_field_required(field)
         if field.regex:
             validator = RegexValidator(field.regex, field.regex_msg)

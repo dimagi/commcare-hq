@@ -7,7 +7,6 @@ from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
     get_subscription_properties_by_user,
-    identify,
     track_user_sign_in_on_hubspot,
     update_hubspot_properties,
     update_subscription_properties_by_domain,
@@ -32,7 +31,6 @@ def user_save_callback(sender, **kwargs):
         properties = {}
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
-        identify.delay(couch_user.username, properties)
         update_hubspot_properties.delay(couch_user.get_id, properties)
 
 

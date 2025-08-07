@@ -112,7 +112,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         self.assertTrue(LOGO_HOME in app_build.logo_refs)
         self.assertTrue(LOGO_LOGIN in app_build.logo_refs)
 
-        community_sub = advanced_sub.change_plan(DefaultProductPlan.get_default_plan_version())
+        free_sub = advanced_sub.change_plan(DefaultProductPlan.get_default_plan_version())
 
         app_standard = Application.get(app_standard._id)
         app_build = Application.get(app_build._id)
@@ -122,7 +122,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         self.assertFalse(LOGO_HOME in app_build.logo_refs)
         self.assertFalse(LOGO_LOGIN in app_build.logo_refs)
 
-        community_sub.change_plan(
+        free_sub.change_plan(
             DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         )
 
@@ -173,7 +173,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         self.addCleanup(report_builder_report.delete)
 
         # downgrade the domain
-        community_sub = pro_with_rb_sub.change_plan(DefaultProductPlan.get_default_plan_version())
+        free_sub = pro_with_rb_sub.change_plan(DefaultProductPlan.get_default_plan_version())
 
         # Check that the builder data source is deactivated
         builder_report_data_source = _get_data_source(builder_report_data_source._id)
@@ -185,7 +185,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         # upgrade the domain
         # (for the upgrade to work, there has to be an existing subscription,
         # which is why we subscribe to advanced first)
-        community_sub.change_plan(
+        free_sub.change_plan(
             DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         )
         pro_with_rb_sub = self._subscribe_to_pro_with_rb()

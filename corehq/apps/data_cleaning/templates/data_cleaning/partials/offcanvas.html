@@ -11,21 +11,25 @@
       <i class="fa-solid fa-filter"></i> {% trans "Filter Cases" %}
     </h5>
     <button
-      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      class="btn-close"
+      type="button"
+      aria-label="{% trans "Close" %}"
       data-bs-dismiss="offcanvas"
     ></button>
   </div>
   <div class="offcanvas-body">
     <div
-      hx-get="{% url "data_cleaning_pinned_filter_form" domain session_id %}"
-      hx-trigger="load"
+      id="hq-hx-pinned-filters"
+      hx-get="{{ htmx_pinned_filters_view_url }}"
+      hx-trigger="load, dcPinnedFilterRefresh"
     >
       {% include "data_cleaning/partials/loading_indicator.html" %}
     </div>
     <div
+      id="hq-hx-active-filters"
       class="mt-3"
-      hx-get="{% url "data_cleaning_column_filter_form" domain session_id %}"
-      hx-trigger="load"
+      hx-get="{{ htmx_filters_view_url }}"
+      hx-trigger="load, dcFilterRefresh"
     >
       {% include "data_cleaning/partials/loading_indicator.html" %}
     </div>
@@ -43,12 +47,16 @@
       <i class="fa-solid fa-table-columns"></i> {% trans "Configure Columns" %}
     </h5>
     <button
-      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      class="btn-close"
+      type="button"
+      aria-label="{% trans "Close" %}"
       data-bs-dismiss="offcanvas"
     ></button>
   </div>
   <div class="offcanvas-body">
-    <p>todo</p>
+    <div hx-get="{{ htmx_columns_view_url }}" hx-trigger="load">
+      {% include "data_cleaning/partials/loading_indicator.html" %}
+    </div>
   </div>
 </div>
 
@@ -60,14 +68,22 @@
 >
   <div class="offcanvas-header">
     <h5 class="offcanvas-title">
-      <i class="fa-solid fa-shower"></i> {% trans "Clean Selected Cases" %}
+      <i class="fa-solid fa-shower"></i> {% trans "Edit Selected Cases" %}
     </h5>
     <button
-      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      class="btn-close"
+      type="button"
+      aria-label="{% trans "Close" %}"
       data-bs-dismiss="offcanvas"
     ></button>
   </div>
   <div class="offcanvas-body">
-    <p>todo</p>
+    <div
+      id="hq-hx-edit-selected-records-form"
+      hx-get="{{ htmx_edit_selected_records_view_url }}"
+      hx-trigger="load, dcEditFormRefresh"
+    >
+      {% include "data_cleaning/partials/loading_indicator.html" %}
+    </div>
   </div>
 </div>

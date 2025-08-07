@@ -11,7 +11,7 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[PROJECT]/api/v0.5/simplereportconfiguration/?format=json
+    https://www.commcarehq.org/a/[PROJECT]/api/simplereportconfiguration/v1/?format=json
 
 **HTTP Method**
     GET
@@ -74,7 +74,7 @@ An array of the reports defined in the project. Each entry includes:
         ],
         "title": "Test Report 1",
         "id": "9aab0eeb88555a7b3bc8676883e7379a",
-        "resource_uri": "/a/[PROJECT]/api/v0.5/simplereportconfiguration/9aab0eeb88555a7b3bc8676883e7379a/"
+        "resource_uri": "/a/[PROJECT]/api/simplereportconfiguration/v1/9aab0eeb88555a7b3bc8676883e7379a/"
       },
       {
         "columns": [
@@ -114,6 +114,6 @@ An array of the reports defined in the project. Each entry includes:
         ],
         "title": "Test Report 2",
         "id": "9aab0eeb88555a7b4568676883e7379a",
-        "resource_uri": "/a/[PROJECT]/api/v0.5/simplereportconfiguration/9aab0eeb88555a7b4568676883e7379a/"
+        "resource_uri": "/a/[PROJECT]/api/simplereportconfiguration/v1/9aab0eeb88555a7b4568676883e7379a/"
       }
     ]

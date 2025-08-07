@@ -17,21 +17,8 @@
     <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/scss/font-formplayer.scss' %}" />
-    <link type="text/scss"
-          rel="stylesheet"
-          media="all"
           href="{% static 'cloudcare/scss/formplayer-common.scss' %}"/>
   {% endcompress %}
-
-  {% if request.use_daterangepicker %}
-    {% compress css %}
-      <link type="text/css"
-            rel="stylesheet"
-            media="screen"
-            href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
-    {% endcompress %}
-  {% endif %}
 
   {% block css %}{% endblock %}
 
@@ -52,13 +39,8 @@
 
   {% include "hqwebapp/partials/webpack.html" %}
 
-  <style id="list-cell-layout-style"></style>
   <!-- For Formplayer's app preview -->
-
-  {# This is fine as an inline script; it'll be removed once all of HQ is using webpack #}
-  <script>
-    window.USE_WEBPACK = true;
-  </script>
+  <style id="list-cell-layout-style"></style>
 </head>
 <body>
 {% block body %}{% endblock %}

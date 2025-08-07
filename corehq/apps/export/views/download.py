@@ -32,7 +32,7 @@ from soil.util import get_download_context, process_email_request
 from corehq.apps.analytics.tasks import (
     HUBSPOT_DOWNLOADED_EXPORT_FORM_ID,
     send_hubspot_form,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -61,7 +61,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     case_type_or_app_limit_exceeded
 )
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
@@ -108,7 +108,7 @@ class DownloadExportViewHelper(object):
     def send_preparation_analytics(self, export_instances, export_filters):
         send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
 
-        track_workflow(self.request.couch_user.username, 'Downloaded {} Exports With {}Data'.format(
+        track_workflow_noop(self.request.couch_user.username, 'Downloaded {} Exports With {}Data'.format(
             self.model[0].upper() + self.model[1:],
             '' if any(get_export_size(instance, export_filters) > 0 for instance in export_instances) else 'No ',
         ))
@@ -158,7 +158,6 @@ class BaseDownloadExportView(BaseProjectDataView):
     export_filter_class = None
 
     @use_bootstrap5
-    @use_tempusdominus
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)

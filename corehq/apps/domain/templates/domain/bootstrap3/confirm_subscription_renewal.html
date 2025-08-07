@@ -26,6 +26,22 @@
         <h4>Note: You are renewing to a different plan</h4>
         <p>The new plan will take effect on <strong>{{ start_date }}</strong> and will cost <strong>{{ monthly_fee }}</strong>/month.</p>
       {% endblocktrans %}
+      {% if next_plan.is_annual_plan %}
+        {% blocktrans %}
+          <p>
+            By continuing you are renewing to a Pay Annually plan and will
+            receive an invoice via email for plan fees due. <br />
+            In case you incur any on-demand fees for excess users or SMS, you
+            will receive invoices for these charges on a monthly basis. <br />
+            See
+            <a
+              href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription"
+              >here</a
+            >
+            for more information about payment, cancellation, and refunds.
+          </p>
+        {% endblocktrans %}
+      {% endif %}
     </div>
   {% endif %}
   <div class="panel panel-modern-gray panel-form-only" id="billing-info">

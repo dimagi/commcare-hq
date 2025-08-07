@@ -50,7 +50,7 @@ locations
 ota
    Contains a number of the API endpoints used by CommCare mobile including sync / restore, case search, case claim, heartbeat and  recovery measures. This is used by both CommCare mobile and formplayer.
 reports
-   Standard, pre-canned reports to view project data: Submit History, Worker Activity Report, etc.
+   Standard, pre-canned reports to view project data: Submission History, Worker Activity Report, etc.
 reports_core
    More reporting code that resulted from an attempt to re-architect the report class structure.
 sms
@@ -118,7 +118,7 @@ These apps may be useful parts of the system but don't have as much active devel
 aggregate_ucrs
    An experimental framework for creating more complex reporting pipelines based off the UCR framework.
 analytics
-   Integrations with third-party analytics tools such as Google Analytics and Kissmetrics.
+   Integrations with third-party analytics tools such as Google Analytics.
    Also contains internal product-focused tools such as AB testing functionality.
 builds
    Models relating to CommCare Mobile builds, so that app builders can control which mobile version their apps use.

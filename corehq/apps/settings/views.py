@@ -38,6 +38,9 @@ from two_factor.plugins.phonenumber.views import (
 from dimagi.utils.web import json_response
 
 from corehq import toggles
+from corehq import privileges
+
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import (
     active_domains_required,
     login_and_domain_required,
@@ -49,7 +52,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
@@ -471,7 +474,7 @@ def _show_link_to_webapps(user):
         if user.domain_memberships:
             membership = user.domain_memberships[0]
             if membership.role and membership.role.default_landing_page == "webapps":
-                if toggles.TWO_STAGE_USER_PROVISIONING.enabled(membership.domain):
+                if domain_has_privilege(membership.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION):
                     return True
     return False
 
@@ -622,7 +625,6 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     template_name = "settings/user_api_keys.html"
 
     @use_bootstrap5
-    @use_tempusdominus
     def dispatch(self, request, *args, **kwargs):
         return super(ApiKeyView, self).dispatch(request, *args, **kwargs)
 
@@ -778,7 +780,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 timezone=self.get_user_timezone(),
             )
         return HQApiKeyForm(
-            user_domains=user_domains,
+            user_domains=sorted(user_domains),
             max_allowed_expiration_days=max_expiration_window,
             timezone=self.get_user_timezone(),
         )

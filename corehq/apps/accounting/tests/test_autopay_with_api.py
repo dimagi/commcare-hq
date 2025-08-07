@@ -72,7 +72,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.addClassCleanup(self.non_autopay_domain.delete)
         # Non-autopay subscription has same parameters as the autopayable subscription
         cheap_plan = SoftwarePlan.objects.create(name='cheap')
-        cheap_product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cheap_plan.name)
+        cheap_product_rate = SoftwareProductRate.objects.create(monthly_fee=1.00, name=cheap_plan.name)
         cheap_plan_version = SoftwarePlanVersion.objects.create(
             plan=cheap_plan,
             product_rate=cheap_product_rate,

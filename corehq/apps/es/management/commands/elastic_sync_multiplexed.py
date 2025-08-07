@@ -1,11 +1,11 @@
 import logging
 import time
 import gevent
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+from corehq.apps.es import canonical_name_adapter_map
 
 import corehq.apps.es.const as es_consts
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
@@ -211,7 +211,7 @@ class ESSyncUtil:
         except TaskMissing:
             raise CommandError(f"No Reindex process with {task_id} found")
 
-        start_time = datetime.utcfromtimestamp(task_info['start_time_in_millis'] / 1000)
+        start_time = datetime.fromtimestamp(task_info['start_time_in_millis'] / 1000, tz=timezone.utc)
         running_duration_seconds = task_info['running_time_in_nanos'] / 10**9
         duration = timedelta(running_duration_seconds)
 
@@ -267,33 +267,45 @@ class ESSyncUtil:
         older_index = getattr(es_consts, f"HQ_{cname.upper()}_INDEX_NAME")
         return (current_index, older_index)
 
-    def set_checkpoints_for_new_index(self, cname):
+    def set_checkpoints_for_new_index(self, cnames):
         """
-        Takes in an index cname and create new checkpoint for all the pillows that use the older index name
+        Takes in a list of index cnames and creates a new checkpoint for all pillows that use the older index name
         for that cname.
+        If the list of cnames contains 'all', checkpoints will be copied for all indices.
         Can only be performed when indexes are still multiplexed and not swapped.
         When we swap the indexes, the primary index changes which updates the checkpoint names.
         We should stop the pillows and copy the checkpoint to the new checkpoint ids, swap the indexes
         and then start the pillows.
         """
-        adapter = doc_adapter_from_cname(cname)
-        if not isinstance(adapter, ElasticMultiplexAdapter):
-            raise IndexNotMultiplexedException(f"""Checkpoints can be copied on multiplexed indexes.
-                Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to True """)
-
-        current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
-
-        if getattr(es_consts, f'ES_{cname.upper()}_INDEX_SWAPPED'):
-            raise IndexAlreadySwappedException(
-                f"""Checkpoints can only be copied before swapping indexes.
-                Make sure you have set ES_{cname.upper()}_INDEX_SWAPPED to False."""
-            )
-
         all_pillows = get_all_pillow_instances()
+        if 'all' in cnames:
+            assert len(cnames) == 1, f"Unexpected cnames provided with 'all': {cnames}"
+            cnames = iter_index_cnames()
+        for cname in cnames:
+            adapter = doc_adapter_from_cname(cname)
+            if not isinstance(adapter, ElasticMultiplexAdapter):
+                raise IndexNotMultiplexedException(f"""Checkpoints can only be copied on multiplexed indexes.
+                    Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to True """)
+
+            current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
+
+            if getattr(es_consts, f'ES_{cname.upper()}_INDEX_SWAPPED'):
+                raise IndexAlreadySwappedException(
+                    f"""Checkpoints can only be copied before swapping indexes.
+                    Make sure you have set ES_{cname.upper()}_INDEX_SWAPPED to False."""
+                )
+
         for pillow in all_pillows:
             old_checkpoint_id = pillow.checkpoint.checkpoint_id
-            if older_index_name in old_checkpoint_id:
-                new_checkpoint_id = old_checkpoint_id.replace(older_index_name, current_index_name)
+            new_checkpoint_id = old_checkpoint_id
+            checkpoint_updated = False
+            for cname in cnames:
+                current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
+                if older_index_name in old_checkpoint_id:
+                    assert new_checkpoint_id.count(older_index_name) == 1, (new_checkpoint_id, older_index_name)
+                    new_checkpoint_id = new_checkpoint_id.replace(older_index_name, current_index_name)
+                    checkpoint_updated = True
+            if checkpoint_updated:
                 print(f"Copying checkpoints of Checkpoint ID -  [{old_checkpoint_id}] to [{new_checkpoint_id}]")
                 self._copy_checkpoints(pillow, new_checkpoint_id)
 
@@ -323,7 +335,7 @@ class ESSyncUtil:
 
     def _get_index_name_cname_map(self, ignore_subindices=False):
         index_name_cname_map = {}
-        for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items():
+        for cname, adapter in canonical_name_adapter_map().items():
             if ignore_subindices and adapter.parent_index_cname:
                 continue
             index_name_cname_map[adapter.index_name] = cname
@@ -379,9 +391,9 @@ class ESSyncUtil:
             print("No residual indices found on the environment")
 
     def _get_all_known_index_names(self):
-        # get index name from CANONICAL_NAME_ADAPTER_MAP
+        # get index name from canonical_name_adapter_map()
         known_indices = set()
-        for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
+        for cname in canonical_name_adapter_map().keys():
             known_indices.update(self._get_current_and_older_index_name(cname))
         return [index for index in known_indices if index]
 
@@ -561,8 +573,9 @@ class Command(BaseCommand):
         copy_checkpoint_cmd.set_defaults(func=self.es_helper.set_checkpoints_for_new_index)
         copy_checkpoint_cmd.add_argument(
             'index_cname',
-            choices=INDEXES,
-            help="""Cannonical Name of the index whose checkpoints are to be copied""",
+            nargs='+',
+            choices=INDEXES + ['all'],
+            help="""Cannonical Names of the indices whose checkpoints are to be copied""",
         )
 
         # Set replicas for secondary index

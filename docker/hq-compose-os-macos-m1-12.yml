@@ -1,7 +1,5 @@
 # Service configurations specific to 'arm64' (Apple M1) architecture for MacOS Monterey (v 12).
 
-version: '2.3'
-
 services:
   postgres:
     image: docker.io/dimagi/docker-postgresql:${DOCKER_HQ_POSTGRES_VERSION}
