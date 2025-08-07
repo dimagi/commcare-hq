@@ -200,6 +200,12 @@ $ venv
       uv sync --compile-bytecode && uv pip install -r requirements/local.txt
       ```
 
+    - View pyproject.toml to understand the different dependency groups.
+      To install a specific group not included in default groups:
+      ```
+      uv sync --group=docs
+      ```
+
     - If you have ARM64 architecture (Apple M1 chip) and you're having trouble installing ReportLab:
       ```sh
       CFLAGS="-Wno-error=implicit-function-declaration" uv sync --compile-bytecode

@@ -157,7 +157,7 @@ from corehq.const import (
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
 )
-from corehq.motech.utils import b64_aes_decrypt, b64_aes_cbc_decrypt
+from corehq.motech.utils import b64_aes_cbc_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
@@ -332,9 +332,11 @@ class EditCommCareUserView(BaseEditUserView):
             messages.error(self.request, _(
                 "There were some errors while saving user's locations. Please check the 'Locations' tab"
             ))
-        if toggles.TWO_STAGE_USER_PROVISIONING.enabled(self.domain) and self.editable_user.self_set_password:
+        if (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                and self.editable_user.self_set_password):
             context['reset_password_form'] = ''
-        if self.editable_user.is_active and toggles.TWO_STAGE_USER_PROVISIONING.enabled(self.domain):
+        if (self.editable_user.is_active
+                and domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)):
             context.update({
                 'send_password_reset_email_form': SendCommCareUserPasswordResetEmailForm()
             })
@@ -732,9 +734,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def two_stage_user_confirmation(self):
-        return toggles.TWO_STAGE_USER_PROVISIONING.enabled(
-            self.domain
-        ) or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+        return (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain))
 
     @property
     def page_context(self):
@@ -984,6 +985,7 @@ def paginate_mobile_workers(request, domain):
     page = int(request.GET.get('page', 1))
     query = request.GET.get('query')
     deactivated_only = json.loads(request.GET.get('showDeactivatedUsers', "false"))
+    unconfirmed_only = json.loads(request.GET.get('showUnconfirmedUsers', "false"))
 
     query = (UserES()
              .domain(domain, include_inactive=True)
@@ -991,6 +993,7 @@ def paginate_mobile_workers(request, domain):
              .search_string_query(query, ["base_username", "last_name", "first_name"]))
     query = query.is_inactive(domain) if deactivated_only else query.is_active(domain)
     query = (filter_user_query_by_locations_accessible_to_user(query, domain, request.couch_user)
+             .account_confirmed(not unconfirmed_only)
              .source([
                  '_id',
                  'first_name',
@@ -999,6 +1002,7 @@ def paginate_mobile_workers(request, domain):
                  'created_on',
                  'is_active',
                  'is_account_confirmed',
+                 'confirmation_sent_at',
              ])
              .start((page - 1) * limit)  # backend pages start at 0
              .size(limit)
@@ -1517,19 +1521,10 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     strict_domain_fetching = True
     ONE_HOUR_IN_SECONDS = 60 * 60
 
-    @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
-    def dispatch(self, request, *args, **kwargs):
-        return super(CommCareUserConfirmAccountView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def user_invite_hash(self):
-        try:
-            return json.loads(b64_aes_cbc_decrypt(self.kwargs.get('user_invite_hash')))
-        except Exception:
-            # Temporarily fallback to b64_aes_decrypt if b64_aes_cbc_decrypt fails
-            # to handle existing invites
-            return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
+        return json.loads(b64_aes_cbc_decrypt(self.kwargs.get('user_invite_hash')))
 
     @property
     @memoized
@@ -1540,22 +1535,6 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     @memoized
     def user(self):
         return get_document_or_404(CommCareUser, self.domain, self.user_id)
-
-    @property
-    @memoized
-    def form(self):
-        if self.request.method == 'POST':
-            return MobileWorkerAccountConfirmationForm(self.request.POST)
-        else:
-            return MobileWorkerAccountConfirmationForm(initial={
-                'username': self.user.raw_username,
-                'full_name': self.user.full_name,
-                'email': self.user.email,
-            })
-
-    @property
-    def _expiration_time_in_hours(self):
-        return 1
 
     def get_context_data(self, **kwargs):
         context = super(CommCareUserConfirmAccountView, self).get_context_data(**kwargs)
@@ -1615,6 +1594,30 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
 
 @location_safe
+@method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION),
+                name="dispatch")
+class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
+    template_name = "users/commcare_user_confirm_account.html"
+    urlname = "commcare_user_confirm_account"
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return MobileWorkerAccountConfirmationForm(self.request.POST)
+        else:
+            return MobileWorkerAccountConfirmationForm(initial={
+                'username': self.user.raw_username,
+                'full_name': self.user.full_name,
+                'email': self.user.email,
+            })
+
+    @property
+    def _expiration_time_in_hours(self):
+        return 1
+
+
+@location_safe
 class CommCareUserAccountConfirmedView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_account_confirmed.html"
     urlname = "commcare_user_account_confirmed"
@@ -1635,6 +1638,7 @@ class CommCareUserAccountConfirmedView(TemplateView, DomainViewMixin):
 
 
 @location_safe
+@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.required_decorator(), name="dispatch")
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
     HOURS_IN_A_DAY = 24

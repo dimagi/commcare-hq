@@ -13,12 +13,6 @@
 
     {% include "cloudcare/partials/case_list/menu_header.html" %}
 
-    <% if (isMultiSelect) { %>
-    <div class="case-list-actions d-grid gap-2 d-md-block">
-      {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
-    </div>
-    <% } %>
-
     <% if (!splitScreenToggleEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
