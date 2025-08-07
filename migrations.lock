@@ -181,7 +181,6 @@ app_manager
  0028_case_list_custom_variable_xml_to_dict
  0029_delete_case_list_custom_variable_xml
  0030_credentialapplication
- 0031_alter_credentialapplication_activity_level
 auditcare
  0001_sqlmodels
  0002_uniques
