@@ -593,17 +593,17 @@ def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):
     return [a for a in apps if a.case_sharing and exclude_app_id != a.id]
 
 
-def get_latest_app_ids(domain, target="release"):
+def get_latest_app_meta(domain, target):
     """:param target: should be set to one of: 'save', 'build', 'release'"""
     from .models import Application
     prefix = {'save': 'SAVE', 'build': 'BUILD', 'release': 'RELEASE'}[target]
     # The key is [target, domain, origin_id, version]
     # reduce with group_level=3 yields the highest version for each
     # (target, domain, origin_id)
-    return [res['value']['_id'] for res in list(Application.get_db().view(
+    return [res['value'] for res in Application.get_db().view(
         'latest_apps/view',
         startkey=[prefix, domain],
         endkey=[prefix, domain, {}],
         group_level=3,
         reduce=True,
-    ))]
+    )]
