@@ -22,7 +22,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_current_app,
     get_latest_app_ids_and_versions,
-    get_latest_app_ids,
+    get_latest_app_meta,
     get_latest_build_doc,
     get_latest_released_app_doc,
     get_latest_released_app_version,
@@ -351,8 +351,8 @@ class TestAppGetters(TestCase):
         self.assertEqual(res, {'bar', 'case'})
 
 
-class TestGetLatestAppIds(TestCase):
-    domain = 'test-get_latest_app_ids'
+class TestGetLatestAppMeta(TestCase):
+    domain = 'test-get_latest_app_meta'
 
     @classmethod
     @patch_validate_xform()
@@ -394,32 +394,29 @@ class TestGetLatestAppIds(TestCase):
         cls.project.delete()
         super().tearDownClass()
 
-    def test_get_latest_apps_save(self):
+    def assert_latest_apps(self, target, expected):
         self.assertItemsEqual(
-            get_latest_app_ids(self.domain, 'save'),
-            [
-                self.app_no_builds.app._id,
-                self.built_app.app._id,
-                self.released_app.app._id,
-                self.app_with_unreleased_changes.app._id,
-            ],
+            [app['_id'] for app in get_latest_app_meta(self.domain, target)],
+            expected,
         )
+
+    def test_get_latest_apps_save(self):
+        self.assert_latest_apps('save', [
+            self.app_no_builds.app._id,
+            self.built_app.app._id,
+            self.released_app.app._id,
+            self.app_with_unreleased_changes.app._id,
+        ])
 
     def test_get_latest_apps_build(self):
-        self.assertItemsEqual(
-            get_latest_app_ids(self.domain, 'build'),
-            [
-                self.built_app.build._id,
-                self.released_app.build._id,
-                self.app_with_unreleased_changes.build._id,
-            ],
-        )
+        self.assert_latest_apps('build', [
+            self.built_app.build._id,
+            self.released_app.build._id,
+            self.app_with_unreleased_changes.build._id,
+        ])
 
     def test_get_latest_apps_release(self):
-        self.assertItemsEqual(
-            get_latest_app_ids(self.domain, 'release'),
-            [
-                self.released_app.build._id,
-                self.app_with_unreleased_changes.build._id,
-            ],
-        )
+        self.assert_latest_apps('release', [
+            self.released_app.build._id,
+            self.app_with_unreleased_changes.build._id,
+        ])
