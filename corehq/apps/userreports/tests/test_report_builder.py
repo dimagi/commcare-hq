@@ -344,6 +344,32 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
         assert 'first_name' == first_name_prop.get_id()
         assert 'first_name' == first_name_prop.get_text()
 
+    @flag_enabled('SHOW_IDS_IN_REPORT_BUILDER')
+    def test_show_case_id(self):
+        case_data_source = get_case_data_source(self.app, self.case_type)
+        case_data_source.save()
+        builder = ApplicationCaseDataSourceHelper(
+            self.domain,
+            self.app,
+            DATA_SOURCE_TYPE_CASE,
+            self.case_type,
+        )
+        expected_property_names = [
+            'closed',
+            'closed_on',
+            'first_name',
+            'last_name',
+            'modified_on',
+            'name',
+            'opened_on',
+            'owner_id',
+            'user_id',
+            'computed/owner_name',
+            'computed/user_name',
+            'case_id',
+        ]
+        assert expected_property_names == list(builder.data_source_properties.keys())
+
 
 class ReportBuilderTest(ReportBuilderDBTest):
 
