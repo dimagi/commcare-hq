@@ -109,6 +109,7 @@ from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.mobile_auth.utils import generate_aes_key
+from corehq.util.soft_assert.api import soft_assert
 
 
 WEB_USER = 'web'
@@ -3178,12 +3179,15 @@ class HQApiKey(models.Model):
     # Remove this after key fields are deleted and verified no errors occur
     @property
     def key(self):
-        logging.warning("Attempted to access api key directly for %s", self.name)
+        _soft_assert_api_key = soft_assert(to='jtang@dimagi.com', send_to_ops=False)
+        _soft_assert_api_key(False,
+                             f"Attempted to access api key directly for user {self.user} and name {self.name}")
         return self.plaintext_key
 
     @key.setter
     def key(self, value):
-        logging.warning("Attempted to set api key directly for %s", self.name)
+        _soft_assert_api_key = soft_assert(to='jtang@dimagi.com', send_to_ops=False)
+        _soft_assert_api_key(False, f"Attempted to set api key directly for user {self.user} and name {self.name}")
         self.plaintext_key = value
 
     @property
