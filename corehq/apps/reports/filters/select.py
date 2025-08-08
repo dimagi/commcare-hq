@@ -15,6 +15,7 @@ from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
     BaseSingleOptionFilter,
 )
+from corehq.feature_previews import all_previews
 from corehq.motech.repeaters.const import State, UCRRestrictionFFStatus
 from corehq.motech.repeaters.models import Repeater
 
@@ -161,3 +162,13 @@ class UCRRebuildStatusFilter(BaseSingleOptionFilter):
             UCRRestrictionFFStatus.ShouldEnable,
             UCRRestrictionFFStatus.CanDisable,
         ]]
+
+
+class FeatureFilter(BaseSingleOptionFilter):
+    slug = "feature"
+    label = gettext_lazy("Feature")
+    default_text = gettext_lazy("Select Feature")
+
+    @property
+    def options(self):
+        return [(feature.slug, feature.label) for feature in all_previews()]

@@ -64,6 +64,13 @@ def all_previews_by_name():
     return all_toggles_by_name_in_scope(globals(), toggle_class=FeaturePreview)
 
 
+def find_preview_by_slug(slug):
+    for preview in all_previews():
+        if preview.slug == slug:
+            return preview
+    return None
+
+
 def previews_dict(domain):
     by_name = all_previews_by_name()
     enabled = previews_enabled_for_domain(domain)
