@@ -705,7 +705,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
                 date_modified='2006-08-24',
             ).as_text(),
         ])
-        repeat_records = self.repeater.repeat_records_ready.all()
+        repeat_records = self.repeater.repeat_records.all()
         assert [r.payload_id for r in repeat_records] == [
             '(134340) Pluto',
             '(134340) Pluto I',
@@ -1361,7 +1361,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_payload_format(self):
         doc_id, expected_indicators = self._create_payload()
-        repeat_record = self.repeater.repeat_records_ready.first()
+        repeat_record = self.repeater.repeat_records.first()
         payload_str = repeat_record.get_payload()
         payload = json.loads(payload_str)
 
@@ -1581,19 +1581,6 @@ class TestRepeatRecordsReady(TestCase):
         payload_ids = {rr.payload_id for rr in self.repeater.repeat_records_ready.all()}
         assert payload_ids == {'pending', 'fail'}
 
-
-def fromisoformat(isoformat):
-    """
-    Return a datetime from a string in ISO 8601 date time format
-
-    >>> fromisoformat("2019-12-31 23:59:59")
-    datetime.datetime(2019, 12, 31, 23, 59, 59)
-
-    """
-    try:
-        return datetime.fromisoformat(isoformat)  # Python >= 3.7
-    except AttributeError:
-        return datetime.strptime(isoformat, "%Y-%m-%d %H:%M:%S")
 
 def str_seconds(dt):
     return dt.isoformat(timespec='seconds')
