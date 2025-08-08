@@ -35,9 +35,6 @@ from corehq.util.workbook_reading.datamodels import Cell
 class GenerateDictionaryTest(TestCase):
     domain = uuid.uuid4().hex
 
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
-
     def test_no_types(self, mock):
         mock.return_value = {}
         with self.assertNumQueries(1):
@@ -123,11 +120,6 @@ class DeleteCasePropertyTest(TestCase):
         cls.case_prop_obj = CaseProperty(case_type=cls.case_type_obj, name=cls.case_prop_name)
         cls.case_prop_obj.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        super().tearDownClass()
-
     def test_delete_case_property(self):
         error = delete_case_property(self.case_prop_name, self.case_type, self.domain)
         does_exist = CaseProperty.objects.filter(
@@ -190,9 +182,6 @@ class MiscUtilTest(TestCase):
             'bar': 'col_2',
             'test column': 'col_3',
         }
-
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
 
     def test_no_data_dict_info(self):
         case_type_name = 'bare'
