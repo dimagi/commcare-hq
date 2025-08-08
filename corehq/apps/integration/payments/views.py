@@ -14,23 +14,38 @@ from corehq.apps.es.case_search import (
     case_property_query,
     wrap_case_search_hit,
 )
+from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.models import KycConfig
-from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
+from corehq.apps.integration.payments.const import (
+    PaymentProperties,
+    PaymentStatus,
+)
+from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.integration.payments.models import MoMoConfig
-from corehq.apps.integration.payments.services import verify_payment_cases
+from corehq.apps.integration.payments.services import (
+    revert_payment_verification,
+    verify_payment_cases,
+)
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
+from corehq.apps.integration.tasks import REQUEST_MOMO_PAYMENTS_TASK_SLUG
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import get_filter_classes
-from corehq.apps.reports.standard.cases.utils import add_case_owners_and_location_access
+from corehq.apps.reports.standard.cases.utils import (
+    add_case_owners_and_location_access,
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.htmx_action import (
+    HqHtmxActionMixin,
+    HtmxResponseException,
+    hq_hx_action,
+)
 from corehq.util.timezones.utils import get_timezone
 
 
@@ -101,6 +116,9 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
+
+    VERIFICATION_ROWS_LIMIT = 100
+    REVERT_VERIFICATION_ROWS_LIMIT = 100
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
@@ -175,16 +193,30 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
         return query
 
+    def _validate_verification_request(self, case_ids):
+        if not case_ids:
+            raise PaymentRequestError(_("One or more case IDs are required for verification."))
+
+        if len(case_ids) > self.VERIFICATION_ROWS_LIMIT:
+            raise PaymentRequestError(
+                _("You can only verify for up to {} cases at a time.").format(self.VERIFICATION_ROWS_LIMIT)
+            )
+
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
         web_user = WebUser.get_by_username(request.user.username)
         case_ids = request.POST.getlist('selected_ids')
 
-        verified_cases = verify_payment_cases(
-            request.domain,
-            case_ids=case_ids,
-            verifying_user=web_user,
-        )
+        try:
+            self._validate_verification_request(case_ids)
+            verified_cases = verify_payment_cases(
+                request.domain,
+                case_ids=case_ids,
+                verifying_user=web_user,
+            )
+        except PaymentRequestError as e:
+            raise HtmxResponseException(str(e), status_code=400)
+
         success_count = len(verified_cases)
         context = {
             'success_count': success_count,
@@ -195,6 +227,42 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             'payments/partials/payments_verify_alert.html',
             context,
         )
+
+    def _validate_revert_verification_request(self, case_ids):
+        if not case_ids:
+            raise PaymentRequestError(_("One or more case IDs are required to revert verification."))
+
+        if len(case_ids) > self.REVERT_VERIFICATION_ROWS_LIMIT:
+            raise PaymentRequestError(
+                _("You can only revert verification for up to {} cases at a time.").format(
+                    self.REVERT_VERIFICATION_ROWS_LIMIT
+                ),
+            )
+
+    @hq_hx_action('post')
+    def revert_verification(self, request, *args, **kwargs):
+        case_ids = request.POST.getlist('selected_ids')
+
+        try:
+            self._validate_revert_verification_request(case_ids)
+            self._check_for_active_payment_task()
+            revert_payment_verification(request.domain, case_ids=case_ids)
+        except PaymentRequestError as e:
+            raise HtmxResponseException(str(e), status_code=400)
+
+        return self.render_htmx_partial_response(
+            request,
+            'payments/partials/payments_revert_verification_alert.html',
+            {}
+        )
+
+    def _check_for_active_payment_task(self):
+        task_tracker = get_celery_task_tracker(self.request.domain, REQUEST_MOMO_PAYMENTS_TASK_SLUG)
+        if task_tracker.is_active():
+            raise PaymentRequestError(
+                _("Payment submissions are currently active for your project and should be completed shortly."
+                  " Please try again later.")
+            )
 
 
 @method_decorator(use_bootstrap5, name='dispatch')

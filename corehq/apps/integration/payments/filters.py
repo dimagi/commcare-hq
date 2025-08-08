@@ -1,10 +1,12 @@
 from django.utils.translation import gettext as _
 
+from corehq.apps.integration.payments.const import PaymentStatus
+from corehq.apps.integration.payments.services import (
+    get_payment_batch_numbers_for_domain,
+)
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.apps.integration.payments.services import get_payment_batch_numbers_for_domain
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import WebUserFilter
-from corehq.apps.integration.payments.const import PaymentStatus
 
 
 class BatchNumberFilter(BaseSingleOptionFilter):

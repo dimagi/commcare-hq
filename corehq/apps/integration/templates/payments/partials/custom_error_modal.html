@@ -1,0 +1,9 @@
+{% extends 'hqwebapp/htmx/error_modal.html' %}
+
+{% block modal_title %}
+  Payment Request Error
+{% endblock modal_title %}
+
+{% block modal_content %}
+  <p x-text="errorText"></p>
+{% endblock modal_content %}

@@ -5,6 +5,7 @@ from celery.schedules import crontab
 from corehq.apps.celery import periodic_task
 from corehq.apps.es.case_search import CaseSearchES, case_property_query
 from corehq.apps.es import filters
+from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import request_payments_for_cases
@@ -13,6 +14,7 @@ from corehq.util.metrics import metrics_gauge
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 
+REQUEST_MOMO_PAYMENTS_TASK_SLUG = 'request_momo_payments'
 
 @periodic_task(run_every=crontab(minute=0, hour=1, day_of_week=1), queue=settings.CELERY_PERIODIC_QUEUE,
                acks_late=True, ignore_result=True)
@@ -52,9 +54,15 @@ def request_momo_payments():
             config = MoMoConfig.objects.get(domain=domain)
         except MoMoConfig.DoesNotExist:
             continue
-
-        case_ids = _get_payment_case_ids_on_domain(domain)
-        request_payments_for_cases(case_ids, config)
+        task_tracker = get_celery_task_tracker(domain, REQUEST_MOMO_PAYMENTS_TASK_SLUG)
+        task_tracker.mark_requested(timeout=60*60)
+        try:
+            case_ids = _get_payment_case_ids_on_domain(domain)
+            request_payments_for_cases(case_ids, config)
+        except Exception as err:
+            raise err
+        finally:
+            task_tracker.mark_completed()
 
 
 def _get_payment_case_ids_on_domain(domain):
