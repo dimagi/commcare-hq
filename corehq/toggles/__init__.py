@@ -1183,7 +1183,7 @@ FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     'saas_formbuilder_save_to_case',
     'Form Builder - Save Questions to Case Properties',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
+    namespaces=[NAMESPACE_DOMAIN],
     description='Allows users to save questions to case properties within the Form Builder'
 )
 
