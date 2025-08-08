@@ -13215,14 +13215,6 @@ msgid "List is empty."
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Show Map"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr ""
 
@@ -13234,6 +13226,14 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Show Map"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
@@ -14326,7 +14326,7 @@ msgid "Please provide a value or use the 'empty' or 'missing' match types."
 msgstr ""
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr ""
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -42501,7 +42501,8 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 
 #: corehq/apps/users/forms.py
@@ -49077,6 +49078,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "App Dependencies"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Two-stage Mobile Worker Account Creation"
 msgstr ""
 
 #: corehq/reports.py

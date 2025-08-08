@@ -16594,16 +16594,6 @@ msgid "List is empty."
 msgstr "Список порожній."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "Сховати карту"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "Показати всі"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "Уточнити пошук"
 
@@ -16616,6 +16606,16 @@ msgstr "Вибрати все"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "Сортувати за"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "Сховати карту"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "Показати всі"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -17893,7 +17893,9 @@ msgstr ""
 "'відсутній'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "Тип даних '{}' не може мати тип співпадіння '{}'."
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -51672,9 +51674,14 @@ msgid "Require Account Confirmation?"
 msgstr "Потрібне підтвердження облікового запису?"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their "
+#| "email and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "Обліковий запис користувача не буде активним, доки не буде підтверджено "
 "електронну пошту та встановлено пароль."
@@ -59799,6 +59806,12 @@ msgstr "Банери для власних доменів"
 #: corehq/privileges.py
 msgid "App Dependencies"
 msgstr "Залежності додатків"
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "Вимкнути блокування мобільного працівника"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"

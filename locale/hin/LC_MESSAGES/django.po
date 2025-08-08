@@ -15538,16 +15538,6 @@ msgid "List is empty."
 msgstr "सूची खाली है।"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "मानचित्र छुपाएँ"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "सभी दिखाएँ"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "खोज को परिष्कृत करें"
 
@@ -15560,6 +15550,16 @@ msgstr "सभी चुनें"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "क्रमबद्ध करें"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "मानचित्र छुपाएँ"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "सभी दिखाएँ"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -16764,7 +16764,9 @@ msgid "Please provide a value or use the 'empty' or 'missing' match types."
 msgstr "कृपया कोई मान दें या 'empty' या 'missing' मिलान प्रकार का उपयोग करें।"
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "डेटा प्रकार '{}' में मिलान प्रकार '{}' नहीं हो सकता।"
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -49042,9 +49044,14 @@ msgid "Require Account Confirmation?"
 msgstr "क्या खाता पुष्टि आवश्यक है?"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their email "
+#| "and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "उपयोगकर्ता का खाता तब तक सक्रिय नहीं होगा जब तक वे अपनी ईमेल की पुष्टि नहीं "
 "करते और पासवर्ड सेट नहीं करते।"
@@ -56701,6 +56708,12 @@ msgstr "कस्टम डोमेन बैनर"
 #: corehq/privileges.py
 msgid "App Dependencies"
 msgstr "ऐप डिपेंडेंसीज़"
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "मोबाइल वर्कर लॉकआउट अक्षम करें"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"

@@ -15671,16 +15671,6 @@ msgid "List is empty."
 msgstr "Orodha haina kitu."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "Ficha Ramani"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "Onyesha zote"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "Boresha utafutaji"
 
@@ -15693,6 +15683,16 @@ msgstr "Chagua Vyote"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "Panga Kwa"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "Ficha Ramani"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "Onyesha zote"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -16901,7 +16901,9 @@ msgstr ""
 "Tafadhali toa thamani au tumia aina za ulinganifu 'empty' au 'missing'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "Aina ya data '{}' haiwezi kuwa na aina ya ulinganifu '{}'."
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -49351,9 +49353,14 @@ msgid "Require Account Confirmation?"
 msgstr "Hitaji Uthibitisho wa Akaunti?"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their email "
+#| "and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "Akaunti ya mtumiaji haitakuwa hai hadi watakapothibitisha barua pepe yao na "
 "kuweka nenosiri."
@@ -57068,6 +57075,12 @@ msgstr "Bango maalum za anwani"
 #: corehq/privileges.py
 msgid "App Dependencies"
 msgstr "Mategemeo ya Programu"
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "Zima Kufungiwa kwa Wafanyakazi wa Simu"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"

@@ -15793,16 +15793,6 @@ msgid "List is empty."
 msgstr "A lista está vazia."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "Ocultar Mapa"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "Mostrar tudo"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "Refinar busca"
 
@@ -15815,6 +15805,16 @@ msgstr "Selecionar tudo"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "Ordenar por"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "Ocultar Mapa"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "Mostrar tudo"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -17034,7 +17034,9 @@ msgstr ""
 "'ausente'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "O tipo de dado '{}' não pode ter o tipo de correspondência '{}'."
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -49639,9 +49641,14 @@ msgid "Require Account Confirmation?"
 msgstr "Exigir Confirmação de Conta?"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their email "
+#| "and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "A conta do usuário não estará ativa até que ele confirme o e-mail e defina "
 "uma senha."
@@ -57391,6 +57398,12 @@ msgstr "Banners de domínio personalizado"
 #: corehq/privileges.py
 msgid "App Dependencies"
 msgstr "Dependências do App"
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "Desativar bloqueio de agentes móveis"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"

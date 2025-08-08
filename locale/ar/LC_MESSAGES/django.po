@@ -16249,16 +16249,6 @@ msgid "List is empty."
 msgstr "القائمة فارغة."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "إخفاء الخريطة"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "عرض الكل"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "تصفية البحث"
 
@@ -16271,6 +16261,16 @@ msgstr "تحديد الكل"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "ترتيب حسب"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "إخفاء الخريطة"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "عرض الكل"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -17517,7 +17517,9 @@ msgid "Please provide a value or use the 'empty' or 'missing' match types."
 msgstr "يرجى إدخال قيمة أو استخدام نوع المطابقة 'فارغ' أو 'مفقود'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "نوع البيانات '{}' لا يمكن أن يكون له نوع المطابقة '{}'."
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -50652,9 +50654,14 @@ msgid "Require Account Confirmation?"
 msgstr "هل يتطلب تأكيد الحساب؟"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their "
+#| "email and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr "لن يكون حساب المستخدم نشطًا حتى يؤكد بريده الإلكتروني ويعيّن كلمة مرور."
 
 #: corehq/apps/users/forms.py
@@ -58619,6 +58626,12 @@ msgstr "لافتات نطاق مخصصة"
 #: corehq/privileges.py
 msgid "App Dependencies"
 msgstr "اعتمادات التطبيق"
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "تعطيل قفل حساب العامل عبر الهاتف المحمول"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
