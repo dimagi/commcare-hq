@@ -35,6 +35,7 @@ from corehq.apps.fixtures.interface import (
 from corehq.apps.hqadmin.reports import (
     AdminPhoneNumberReport,
     DeployHistoryReport,
+    FeaturePreviewStatsReport,
     UserAuditReport,
     UserListReport,
     UCRDataLoadReport,
@@ -326,6 +327,7 @@ ADMIN_REPORTS = (
     (_('Domain Stats'), (
         UserListReport,
         AdminPhoneNumberReport,
+        FeaturePreviewStatsReport,
         UserAuditReport,
         DeployHistoryReport,
         UCRDataLoadReport,
