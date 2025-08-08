@@ -1,6 +1,7 @@
 from django.conf import settings
 
 from celery.schedules import crontab
+from celery.utils.log import get_task_logger
 
 from corehq.apps.celery import periodic_task
 from corehq.apps.es.case_search import CaseSearchES, case_property_query
@@ -14,6 +15,7 @@ from corehq.util.metrics import metrics_gauge
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 
+logger = get_task_logger(__name__)
 REQUEST_MOMO_PAYMENTS_TASK_SLUG = 'request_momo_payments'
 
 
@@ -50,11 +52,42 @@ def report_verification_status_count():
     ignore_result=True,
 )
 def request_momo_payments():
+    deferred_domains = []
     for domain in MTN_MOBILE_WORKER_VERIFICATION.get_enabled_domains():
         try:
             config = MoMoConfig.objects.get(domain=domain)
         except MoMoConfig.DoesNotExist:
             continue
+
+        if _is_revert_verification_request_active(domain):
+            deferred_domains.append(domain)
+            continue
+
+        _request_momo_payments_for_domain(domain, config)
+
+    _retry_for_deferred_domains(deferred_domains)
+
+
+def _is_revert_verification_request_active(domain):
+    from corehq.apps.integration.payments.views import REVERT_VERIFICATION_REQUEST_SLUG
+
+    task_tracker = get_celery_task_tracker(domain, REVERT_VERIFICATION_REQUEST_SLUG)
+    return task_tracker.is_active()
+
+
+def _retry_for_deferred_domains(deferred_domains):
+    # Implements a one-time retry for domains that had an active revert verification request
+    # during the initial attempt. If the revert request is still active at retry time, the domain is skipped
+    # and payment submissions will be picked up in the next scheduled run.
+
+    for domain in deferred_domains:
+        if _is_revert_verification_request_active(domain):
+            logger.info(
+                "Skipped payment submissions for domain {} as revert verification request is active."
+                "Will be retried in next schedule".format(domain)
+            )
+            continue
+        config = MoMoConfig.objects.get(domain=domain)
         _request_momo_payments_for_domain(domain, config)
 
 
