@@ -367,8 +367,12 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         )
 
         assert response.status_code == 400
-        assert (b"Only payments in the 'Pending Submission' state are eligible for verification reversal."
-                in response.content)
+        assert (
+            "Only payments in the '{}' state are eligible for verification reversal.".format(
+                PaymentStatus.PENDING_SUBMISSION.label
+            )
+            in str(response.content)
+        )
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_revert_verification_no_cases(self):

@@ -110,7 +110,9 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     valid_statuses_for_verification = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
     if _any_invalid_payment_status(case_ids, domain, valid_statuses_for_verification):
         raise PaymentRequestError(
-            _("Only payments in 'Not Verified' or 'Request failed' state are eligible for verification.")
+            _("Only payments in '{}' or '{}' state are eligible for verification.".format(
+                PaymentStatus.NOT_VERIFIED.label, PaymentStatus.REQUEST_FAILED.label
+            ))
         )
     payment_properties_update = {
         PaymentProperties.PAYMENT_VERIFIED: 'True',
@@ -218,7 +220,9 @@ def revert_payment_verification(domain, case_ids: list):
 
     if _any_invalid_payment_status(case_ids, domain, [PaymentStatus.PENDING_SUBMISSION]):
         raise PaymentRequestError(
-            _("Only payments in the 'Pending Submission' state are eligible for verification reversal.")
+            _("Only payments in the '{}' state are eligible for verification reversal.".format(
+                PaymentStatus.PENDING_SUBMISSION.label
+            ))
         )
 
     payment_properties_update = {

@@ -45,10 +45,10 @@ class TestVerifyPaymentCases(TestCase):
         )
         cls.webuser.save()
 
-        factory = CaseFactory(cls.domain)
+        cls.factory = CaseFactory(cls.domain)
         cls.case_list = [
             _create_case(
-                factory,
+                cls.factory,
                 name='foo',
                 data={
                     'batch_number': 'B001',
@@ -60,7 +60,7 @@ class TestVerifyPaymentCases(TestCase):
                     'payer_message': 'Thanks',
                 }),
             _create_case(
-                factory,
+                cls.factory,
                 name='bar',
                 data={
                     'batch_number': 'B001',
@@ -92,6 +92,25 @@ class TestVerifyPaymentCases(TestCase):
             assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_BY] == self.webuser.username
             assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID] == self.webuser.user_id
             assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_ON_UTC] is not None
+
+    def test_verify_payments_cases_with_invalid_statuses(self):
+        unverified_case = _create_case(
+            factory=self.factory,
+            name='Not verified case',
+            data={
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+            }
+        )
+        self.addCleanup(unverified_case.delete)
+
+        with pytest.raises(
+            PaymentRequestError,
+            match="Only payments in '{}' or '{}' state are eligible for verification.".format(
+                PaymentStatus.NOT_VERIFIED.label,
+                PaymentStatus.REQUEST_FAILED.label
+            )
+        ):
+            verify_payment_cases(self.domain, [unverified_case.case_id], self.webuser)
 
 
 class TestPaymentRequest(TestCase):
@@ -387,7 +406,9 @@ class TestRevertPaymentVerification(TestCase):
 
         with pytest.raises(
             PaymentRequestError,
-            match="Only payments in the 'Pending Submission' state are eligible for verification reversal."
+            match="Only payments in the '{}' state are eligible for verification reversal.".format(
+                PaymentStatus.PENDING_SUBMISSION.label
+            )
         ):
             revert_payment_verification(self.domain, [self.verified_case.case_id, submitted_case.case_id])
 
