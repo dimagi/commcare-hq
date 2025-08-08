@@ -29,7 +29,7 @@ from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from corehq.util.timer import TimingContext
 
-from .adaptercache import TTLCache
+from .adaptercache import MigrationCache, TTLCache
 from .const import KAFKA_TOPICS
 from .data_source_providers import (
     DynamicDataSourceProvider,
@@ -127,11 +127,49 @@ class UcrTableManager(ABC):
             do not attempt to change database
         """
         self.cache = TTLCache(self.iter_adapters)
+        self.is_dedicated_migration_process = False
         if run_migrations:
             interval = bootstrap_interval or REBUILD_CHECK_INTERVAL
             self.rebuild_coordinator = TaskCoordinator('rebuild-ucr', interval)
         else:
             self.rebuild_coordinator = None
+
+    def configure_dedicated_migration_process(self):
+        """Configure the table manager for a dedicated migration process
+
+        In this mode, the only other methods that will be called are
+        run_migrations and iter_adapters (via cache). The TTL cache
+        is not used.
+        """
+        self.is_dedicated_migration_process = True
+        assert self.rebuild_coordinator is not None, \
+            "Dedicated migration process requires run_migrations=True"
+        del self.cache  # delete unused TTLCache to avoid confusion
+        self.migration_cache = MigrationCache(self.iter_adapters)
+        self.migration_cache.get_adapters()  # prime cache
+
+    def run_migrations(self):
+        """Run migrations for the dedicated migration process
+
+        SQL tables are rebuilt if the data source changes or at least
+        every `rebuild_coordinator.interval`.
+        """
+        # Unfortunately data source configs that changed since the last
+        # refresh cannot trigger rebuilds because the rebuild changes
+        # the data source, which would trigger another rebuild. The loop
+        # would probably not be infinite because the second rebuild
+        # should not find any table schema diffs to migrate, but it is
+        # inefficient to check for diffs again immediately after a
+        # rebuild. Ideally the rebuild process would record its status
+        # in some other model than the data source config so the
+        # circular dependency could be avoided, and rebuilds could
+        # be change driven rather than strictly time based.
+        self.migration_cache.refresh()
+
+        all_adapters = self.migration_cache.get_adapters()
+        needs_rebuild = self.rebuild_coordinator.should_run
+        adapters = [a for a in all_adapters if needs_rebuild(a.config_id)]
+        rebuild_sql_tables(adapters)
 
     def refresh_cache(self):
         self.cache.refresh()
@@ -257,7 +295,12 @@ class ConfigurableReportTableManager(UcrTableManager):
             elif self.ucr_division:
                 configs = _filter_by_hash(configs, self.ucr_division)
 
-            configs = _filter_domains_to_skip(configs)
+            if self.is_dedicated_migration_process:
+                # Non-migration processes always fetch configs by domain,
+                # so do not need to discard configs for missing domains.
+                # This is only useful for static data sources, which do not change.
+                configs = _filter_domains_to_skip(configs)
+
             configs = _filter_invalid_config(configs)
 
         return configs
@@ -316,7 +359,7 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
             If an exception is raised in bulk operations of a set of changes,
             those changes are returned to pillow for serial reprocessing.
         """
-        self.bootstrap_if_needed()
+        self.table_manager.refresh_cache()
         # break up changes by domain
         changes_by_domain = defaultdict(list)
         for change in changes:
@@ -430,7 +473,7 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
         )
 
     def process_change(self, change):
-        self.bootstrap_if_needed()
+        self.table_manager.refresh_cache()
 
         domain = change.metadata.domain
         if not domain:
@@ -489,8 +532,11 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
             })
         self.domain_timing_context.clear()
 
-    def bootstrap_if_needed(self):
-        self.table_manager.refresh_cache()
+    def configure_dedicated_migration_process(self):
+        self.table_manager.configure_dedicated_migration_process()
+
+    def run_migrations(self):
+        self.table_manager.run_migrations()
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
