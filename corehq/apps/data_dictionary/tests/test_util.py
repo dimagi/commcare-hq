@@ -11,6 +11,7 @@ from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     delete_case_property,
     generate_data_dictionary,
+    get_case_property_count,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
     get_case_property_group_name_for_properties,
@@ -406,3 +407,23 @@ class TestUpdateUrlQueryParams(SimpleTestCase):
     def test_no_params(self):
         result = update_url_query_params(self.url, {})
         self.assertEqual(result, self.url)
+
+
+class TestGetCasePropertyCount(TestCase):
+
+    domain = 'test-count'
+
+    def test_returns_accurate_count(self):
+        """Count is directly reflective of linked CaseProperty objects"""
+        case_type = CaseType.objects.create(name='count', domain=self.domain)
+        for i in range(5):
+            CaseProperty.objects.create(name=f'count-{i}', case_type=case_type)
+        assert get_case_property_count(self.domain, case_type.name) == 5
+
+    def test_exludes_deprecated_properties(self):
+        case_type = CaseType.objects.create(name='count', domain=self.domain)
+        for i in range(5):
+            CaseProperty.objects.create(name=f'count-{i}', case_type=case_type)
+        for i in range(2):
+            CaseProperty.objects.create(name=f'count-dep-{i}', case_type=case_type, deprecated=True)
+        assert get_case_property_count(self.domain, case_type.name) == 5
