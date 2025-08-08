@@ -225,14 +225,12 @@ def revert_payment_verification(domain, case_ids: list):
             ))
         )
 
-    payment_properties_update = {
-        PaymentProperties.PAYMENT_VERIFIED: 'False',
-        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: '',
-        PaymentProperties.PAYMENT_VERIFIED_BY: '',
-        PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: '',
-        PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
-    }
+    return _update_payment_properties_for_revert(domain, case_ids)
+
+
+def _update_payment_properties_for_revert(domain, case_ids: list):
     updated_cases = []
+    payment_properties_update = _properties_to_update_for_revert()
     for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
         case_changes = [(case_id, payment_properties_update, False) for case_id in case_ids_chunk]
         xform, cases = bulk_update_cases(
@@ -241,3 +239,13 @@ def revert_payment_verification(domain, case_ids: list):
         updated_cases.extend(cases)
 
     return updated_cases
+
+
+def _properties_to_update_for_revert():
+    return {
+        PaymentProperties.PAYMENT_VERIFIED: 'False',
+        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: '',
+        PaymentProperties.PAYMENT_VERIFIED_BY: '',
+        PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: '',
+        PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
+    }
