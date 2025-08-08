@@ -1,21 +1,30 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from dateutil.parser import parse
 from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.auditcare.models import NavigationEventAudit
-from corehq.apps.auditcare.utils.export import filters_for_navigation_event_query, navigation_events_by_user
+from corehq.apps.auditcare.utils.export import (
+    filters_for_navigation_event_query,
+    navigation_events_by_user,
+)
+from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.exceptions import ESError
+from corehq.apps.es.forms import FormES
+from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
@@ -26,14 +35,11 @@ from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.dbaccessors import get_all_user_search_query
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.case_search import CaseSearchES
-from corehq.apps.es.forms import FormES
-from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
-from corehq.apps.es.aggregations import TermsAggregation
-from corehq.apps.es.exceptions import ESError
+from corehq.toggles import (
+    RESTRICT_DATA_SOURCE_REBUILD,
+    USER_CONFIGURABLE_REPORTS,
+)
 
 
 class AdminReport(GenericTabularReport):
@@ -426,6 +432,7 @@ class UCRRebuildRestrictionTable:
 
     def _ucr_rebuild_restriction_status_column_data(self, domain, case_count, form_count):
         from django.utils.safestring import mark_safe
+
         from corehq.apps.toggle_ui.views import ToggleEditView
 
         restriction_ff_enabled = self._rebuild_restricted_ff_enabled(domain)
