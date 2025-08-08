@@ -228,24 +228,13 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             context,
         )
 
-    def _validate_revert_verification_request(self, case_ids):
-        if not case_ids:
-            raise PaymentRequestError(_("One or more case IDs are required to revert verification."))
-
-        if len(case_ids) > self.REVERT_VERIFICATION_ROWS_LIMIT:
-            raise PaymentRequestError(
-                _("You can only revert verification for up to {} cases at a time.").format(
-                    self.REVERT_VERIFICATION_ROWS_LIMIT
-                ),
-            )
-
     @hq_hx_action('post')
     def revert_verification(self, request, *args, **kwargs):
         case_ids = request.POST.getlist('selected_ids')
 
         try:
-            self._validate_revert_verification_request(case_ids)
             self._check_for_active_payment_task()
+            self._validate_revert_verification_request(case_ids)
             revert_payment_verification(request.domain, case_ids=case_ids)
         except PaymentRequestError as e:
             raise HtmxResponseException(str(e), status_code=400)
@@ -262,6 +251,17 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             raise PaymentRequestError(
                 _("Payment submissions are currently active for your project and should be completed shortly."
                   " Please try again later.")
+            )
+
+    def _validate_revert_verification_request(self, case_ids):
+        if not case_ids:
+            raise PaymentRequestError(_("One or more case IDs are required to revert verification."))
+
+        if len(case_ids) > self.REVERT_VERIFICATION_ROWS_LIMIT:
+            raise PaymentRequestError(
+                _("You can only revert verification for up to {} cases at a time.").format(
+                    self.REVERT_VERIFICATION_ROWS_LIMIT
+                ),
             )
 
 
