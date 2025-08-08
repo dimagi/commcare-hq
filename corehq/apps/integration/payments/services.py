@@ -108,7 +108,7 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
         return []
 
     valid_statuses_for_verification = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
-    if not _validate_payment_status_for_cases(case_ids, domain, valid_statuses_for_verification):
+    if _any_invalid_payment_status(case_ids, domain, valid_statuses_for_verification):
         raise PaymentRequestError(
             _("Only payments in 'Not Verified' or 'Request failed' state are eligible for verification.")
         )
@@ -131,12 +131,12 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     return updated_cases
 
 
-def _validate_payment_status_for_cases(case_ids, domain, valid_statuses):
+def _any_invalid_payment_status(case_ids, domain, valid_statuses):
     for case in CommCareCase.objects.iter_cases(case_ids, domain):
         payment_status_value = case.get_case_property(PaymentProperties.PAYMENT_STATUS)
         if PaymentStatus.from_value(payment_status_value) not in valid_statuses:
-            return False
-    return True
+            return True
+    return False
 
 
 def _get_cases_updates(case_ids, updates):
@@ -216,7 +216,7 @@ def revert_payment_verification(domain, case_ids: list):
     if not case_ids:
         return []
 
-    if not _validate_payment_status_for_cases(case_ids, domain, [PaymentStatus.PENDING_SUBMISSION]):
+    if _any_invalid_payment_status(case_ids, domain, [PaymentStatus.PENDING_SUBMISSION]):
         raise PaymentRequestError(
             _("Only payments in the 'Pending Submission' state are eligible for verification reversal.")
         )
