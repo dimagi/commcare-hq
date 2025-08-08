@@ -65,6 +65,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
@@ -541,6 +542,12 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
+            ToggleAudit.objects.log_toggle_action(
+                feature.slug,
+                self.request.couch_user.username,
+                [f"{NAMESPACE_DOMAIN}:{self.domain}"],
+                ToggleAudit.ACTION_ADD if new_state else ToggleAudit.ACTION_REMOVE,
+            )
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
 
