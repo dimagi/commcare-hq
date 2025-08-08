@@ -16,6 +16,7 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 
 REQUEST_MOMO_PAYMENTS_TASK_SLUG = 'request_momo_payments'
 
+
 @periodic_task(run_every=crontab(minute=0, hour=1, day_of_week=1), queue=settings.CELERY_PERIODIC_QUEUE,
                acks_late=True, ignore_result=True)
 def report_verification_status_count():
@@ -54,15 +55,19 @@ def request_momo_payments():
             config = MoMoConfig.objects.get(domain=domain)
         except MoMoConfig.DoesNotExist:
             continue
-        task_tracker = get_celery_task_tracker(domain, REQUEST_MOMO_PAYMENTS_TASK_SLUG)
-        task_tracker.mark_requested(timeout=60*60)
-        try:
-            case_ids = _get_payment_case_ids_on_domain(domain)
-            request_payments_for_cases(case_ids, config)
-        except Exception as err:
-            raise err
-        finally:
-            task_tracker.mark_completed()
+        _request_momo_payments_for_domain(domain, config)
+
+
+def _request_momo_payments_for_domain(domain, config):
+    task_tracker = get_celery_task_tracker(domain, REQUEST_MOMO_PAYMENTS_TASK_SLUG)
+    task_tracker.mark_requested(timeout=60 * 60)
+    try:
+        case_ids = _get_payment_case_ids_on_domain(domain)
+        request_payments_for_cases(case_ids, config)
+    except Exception as err:
+        raise err
+    finally:
+        task_tracker.mark_completed()
 
 
 def _get_payment_case_ids_on_domain(domain):
