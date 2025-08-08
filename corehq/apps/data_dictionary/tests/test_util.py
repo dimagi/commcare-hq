@@ -11,6 +11,7 @@ from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     delete_case_property,
     generate_data_dictionary,
+    get_case_property_count,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
     get_case_property_group_name_for_properties,
@@ -33,9 +34,6 @@ from corehq.util.workbook_reading.datamodels import Cell
 @patch('corehq.apps.data_dictionary.util._get_properties_by_case_type')
 class GenerateDictionaryTest(TestCase):
     domain = uuid.uuid4().hex
-
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
 
     def test_no_types(self, mock):
         mock.return_value = {}
@@ -122,11 +120,6 @@ class DeleteCasePropertyTest(TestCase):
         cls.case_prop_obj = CaseProperty(case_type=cls.case_type_obj, name=cls.case_prop_name)
         cls.case_prop_obj.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        super().tearDownClass()
-
     def test_delete_case_property(self):
         error = delete_case_property(self.case_prop_name, self.case_type, self.domain)
         does_exist = CaseProperty.objects.filter(
@@ -189,9 +182,6 @@ class MiscUtilTest(TestCase):
             'bar': 'col_2',
             'test column': 'col_3',
         }
-
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
 
     def test_no_data_dict_info(self):
         case_type_name = 'bare'
@@ -406,3 +396,23 @@ class TestUpdateUrlQueryParams(SimpleTestCase):
     def test_no_params(self):
         result = update_url_query_params(self.url, {})
         self.assertEqual(result, self.url)
+
+
+class TestGetCasePropertyCount(TestCase):
+
+    domain = 'test-count'
+
+    def test_returns_accurate_count(self):
+        """Count is directly reflective of linked CaseProperty objects"""
+        case_type = CaseType.objects.create(name='count', domain=self.domain)
+        for i in range(5):
+            CaseProperty.objects.create(name=f'count-{i}', case_type=case_type)
+        assert get_case_property_count(self.domain, case_type.name) == 5
+
+    def test_exludes_deprecated_properties(self):
+        case_type = CaseType.objects.create(name='count', domain=self.domain)
+        for i in range(5):
+            CaseProperty.objects.create(name=f'count-{i}', case_type=case_type)
+        for i in range(2):
+            CaseProperty.objects.create(name=f'count-dep-{i}', case_type=case_type, deprecated=True)
+        assert get_case_property_count(self.domain, case_type.name) == 5
