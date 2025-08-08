@@ -645,11 +645,6 @@ class ModuleMediaMixin(MediaMixin):
                 media.append(ApplicationMediaReference(details.lookup_image, media_class=CommCareImage,
                                                        is_menu_media=True, **kwargs))
 
-            # Print template - not language-specific
-            if display and details.display == 'long' and details.print_template:
-                media.append(ApplicationMediaReference(details.print_template['path'],
-                                                       media_class=CommCareMultimedia, **kwargs))
-
             # Icon-formatted columns
             for column in details.get_columns():
                 if column.format == 'enum-image' or column.format == 'clickable-icon':
@@ -685,11 +680,6 @@ class ModuleMediaMixin(MediaMixin):
                 if details.lookup_image == old_path:
                     details.lookup_image = new_path
                     count += 1
-
-            # Print template
-            if display and details.display == 'long' and details.print_template:
-                details.print_template['path'] = new_path
-                count += 1
 
             # Icon-formatted columns
             for column in details.get_columns():
