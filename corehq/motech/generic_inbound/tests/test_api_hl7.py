@@ -43,13 +43,12 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
         self._check_logging(log, response_content)
         self._check_data(log, {"facility": "GOOD HEALTH HOSPITAL"})
 
-
     @freeze_time('2023-05-02 13:01:51')
     def test_post_not_supported_type(self):
         generic_api = self._make_api({}, backend=ApiBackendOptions.hl7)
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(
-            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
+            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}"
         )
         self.assertEqual(response.status_code, 400)
         log = RequestLog.objects.last()
@@ -113,8 +112,6 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
             if key in expected_properties
         }
         self.assertDictEqual(actual_properties, expected_properties)
-
-
 
     def _test_generic_api(self, properties_expression):
         response = self._call_api(properties_expression, backend=ApiBackendOptions.hl7)

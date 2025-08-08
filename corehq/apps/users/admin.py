@@ -24,7 +24,7 @@ admin.site.register(PartialDigest, DDPartialDigestAdmin)
 class ApiKeyInline(admin.TabularInline):
     model = HQApiKey
     readonly_fields = ('created',)
-    exclude = ('key',)
+    exclude = ('encrypted_key',)
     extra = 0
 
     def has_add_permission(self, request, obj):
@@ -71,7 +71,7 @@ class HQApiKeyAdmin(admin.ModelAdmin):
     list_filter = ['created', 'domain']
 
     readonly_fields = ('created',)
-    exclude = ('key',)
+    exclude = ('encrypted_key',)
 
 
 admin.site.register(HQApiKey, HQApiKeyAdmin)

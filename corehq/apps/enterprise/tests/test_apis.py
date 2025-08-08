@@ -34,7 +34,7 @@ class FormSubmissionResourceTests(TestCase):
             enterprise_account
         )
         django_user = enterprise_admin.get_django_user()
-        api_key = HQApiKey.objects.create(user=django_user, key='1234', name='TestKey')
+        api_key = HQApiKey.objects.create(user=django_user, plaintext_key='1234', name='TestKey')
 
         mobile_user_1 = self._create_mobile_user('mobile1@test.com', 'test-domain-1')
         mobile_user_2 = self._create_mobile_user('mobile2@test.com', 'test-domain-2')
@@ -124,7 +124,7 @@ class FormSubmissionResourceTests(TestCase):
         return user
 
     def _create_api_request(self, user, domain, api_key, data=None):
-        auth_string = f'{user.username}:{api_key.key}'
+        auth_string = f'{user.username}:{api_key.plaintext_key}'
         factory = RequestFactory()
         encoded_auth = base64.b64encode(auth_string.encode()).decode()
         request = factory.get(

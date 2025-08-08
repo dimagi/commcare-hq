@@ -235,7 +235,8 @@ class GetKeysExpiringAfterTests(TestCase):
 
     def _create_key(self, expiration_date=None, is_active=True):
         return HQApiKey.objects.create(
-            user=self.user, key='key', name='test-key', expiration_date=expiration_date, is_active=is_active)
+            user=self.user, plaintext_key='key', name='test-key',
+            expiration_date=expiration_date, is_active=is_active)
 
 
 class EnforceKeyExpirationTaskTests(TestCase):
@@ -307,7 +308,7 @@ class EnforceKeyExpirationTaskTests(TestCase):
 
     def _create_key_for_user(self, user, expiration_date=None):
         return HQApiKey.objects.create(
-            user=user.get_django_user(), key='key', name='test-key', expiration_date=expiration_date)
+            user=user.get_django_user(), plaintext_key='key', name='test-key', expiration_date=expiration_date)
 
 
 class TestAutoDeactivationTask(TestCase):

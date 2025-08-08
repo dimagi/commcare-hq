@@ -203,7 +203,7 @@ class TwoFactorPhoneSetupViewTests(SimpleTestCase):
 class ApiKeyViewTests(TestCase):
     def test_user_with_no_identity_provider_cannot_view_full_api_keys(self):
         couch_user = self.create_user('test')
-        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', key='1234567890')
+        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', plaintext_key='1234567890')
         request = self.create_request_for_user(couch_user)
         view = ApiKeyView()
         view.request = request
@@ -214,7 +214,7 @@ class ApiKeyViewTests(TestCase):
 
     def test_user_with_identity_provider_that_allows_full_keys_can_see_full_key(self):
         couch_user = self.create_user('test@test.com')
-        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', key='1234567890')
+        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', plaintext_key='1234567890')
 
         self.create_idp('test.com', always_show_user_api_keys=True)
 
@@ -229,7 +229,7 @@ class ApiKeyViewTests(TestCase):
 
     def test_user_managed_by_identity_provider_that_forbids_full_keys_cannot_see_full_key(self):
         couch_user = self.create_user('test@test.com')
-        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', key='1234567890')
+        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', plaintext_key='1234567890')
 
         self.create_idp('test.com', always_show_user_api_keys=False)
 
