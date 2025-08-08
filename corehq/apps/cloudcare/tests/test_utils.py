@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 from django.test import TestCase
 
 from corehq.apps.app_manager.models import (
@@ -5,10 +7,16 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     ReportModule,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import (
+    get_simple_form,
+    patch_validate_xform,
+)
 from corehq.apps.cloudcare.models import ApplicationAccess, SQLAppGroup
 from corehq.apps.cloudcare.utils import (
     can_user_access_web_app,
     get_mobile_ucr_count,
+    get_web_apps_available_to_user,
     should_restrict_web_apps_usage,
 )
 from corehq.apps.domain.shortcuts import create_domain
@@ -290,3 +298,70 @@ class TestCanUserAccessWebApp(TestCase):
         self.addCleanup(group.delete)
         app_access = ApplicationAccess.objects.create(domain=self.domain, restrict=True)
         SQLAppGroup.objects.create(app_id=app_id, group_id=group._id, application_access=app_access)
+
+
+@patch_validate_xform()
+@patch('corehq.apps.app_manager.models._refresh_data_dictionary', MagicMock)
+class TestGetWebAppsAvailableToUser(TestCase):
+    domain = 'test-get_web_apps_available_to_user'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = MagicMock()
+        project = create_domain(cls.domain)
+        cls.addClassCleanup(project.delete)
+
+    def assert_apps(self, expected):
+        self.assertItemsEqual(
+            [app['_id'] for app in get_web_apps_available_to_user(self.domain, self.user)],
+            expected,
+        )
+
+    @patch('corehq.apps.cloudcare.utils.can_user_access_web_app', return_value=True)
+    def test(self, *args):
+        factory = AppFactory(self.domain, name='foo')
+        m0, f0 = factory.new_basic_module("bar", "bar")
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        app = factory.app
+        app.save()
+        self.assert_apps([])
+
+        # Doesn't show up after cloudcare enabled 'cause there's no build
+        app.cloudcare_enabled = True
+        app.save()
+        self.assert_apps([])
+
+        build_1 = app.make_build()
+        build_1.save()
+        self.assert_apps([])
+        with flag_enabled('CLOUDCARE_LATEST_BUILD'):
+            self.assert_apps([build_1._id])
+
+        build_1.is_released = True
+        build_1.save()
+        self.assert_apps([build_1._id])
+
+        app.save()
+        build_2 = app.make_build()
+        build_2.save()
+        self.assert_apps([build_1._id])  # build 2 not released yet
+        with flag_enabled('CLOUDCARE_LATEST_BUILD'):
+            self.assert_apps([build_2._id])
+
+        # disabling cloudcare doesn't take effect until appropriate stage
+        app.cloudcare_enabled = False
+        app.save()
+        self.assert_apps([build_1._id])
+        with flag_enabled('CLOUDCARE_LATEST_BUILD'):
+            self.assert_apps([build_2._id])
+
+        build_3 = app.make_build()
+        build_3.save()
+        self.assert_apps([build_1._id])
+        with flag_enabled('CLOUDCARE_LATEST_BUILD'):
+            self.assert_apps([])
+
+        build_3.is_released = True
+        build_3.save()
+        self.assert_apps([])
