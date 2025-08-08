@@ -178,7 +178,7 @@ class ApiKeyFallbackTests(TestCase):
         allowed_ips = allowed_ips or []
         return HQApiKey.objects.create(
             user=user,
-            key=key,
+            plaintext_key=key,
             name=name,
             ip_allowlist=allowed_ips,
             domain=domain,

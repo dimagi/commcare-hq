@@ -124,7 +124,7 @@ class FormSubmissionResourceTests(TestCase):
         return user
 
     def _create_api_request(self, user, domain, api_key, data=None):
-        auth_string = f'{user.username}:{api_key.key}'
+        auth_string = f'{user.username}:{api_key.plaintext_key}'
         factory = RequestFactory()
         encoded_auth = base64.b64encode(auth_string.encode()).decode()
         request = factory.get(
