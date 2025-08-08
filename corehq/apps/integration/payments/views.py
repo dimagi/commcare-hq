@@ -48,6 +48,8 @@ from corehq.util.htmx_action import (
 )
 from corehq.util.timezones.utils import get_timezone
 
+REVERT_VERIFICATION_REQUEST_SLUG = 'revert_verification'
+
 
 class PaymentsFiltersMixin:
     fields = [
@@ -233,17 +235,32 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
         case_ids = request.POST.getlist('selected_ids')
 
         try:
+            self._check_for_active_revert_verification_request()
             self._check_for_active_payment_task()
             self._validate_revert_verification_request(case_ids)
+            self.revert_verification_request_tracker.mark_requested()
             revert_payment_verification(request.domain, case_ids=case_ids)
         except PaymentRequestError as e:
             raise HtmxResponseException(str(e), status_code=400)
+        finally:
+            self.revert_verification_request_tracker.mark_completed()
 
         return self.render_htmx_partial_response(
             request,
             'payments/partials/payments_revert_verification_alert.html',
             {}
         )
+
+    def _check_for_active_revert_verification_request(self):
+        if self.revert_verification_request_tracker.is_active():
+            raise PaymentRequestError(
+                _("Revert verification request is in progress for your project. Please try again after some time.")
+            )
+
+    @memoized
+    @property
+    def revert_verification_request_tracker(self):
+        return get_celery_task_tracker(self.request.domain, REVERT_VERIFICATION_REQUEST_SLUG)
 
     def _check_for_active_payment_task(self):
         task_tracker = get_celery_task_tracker(self.request.domain, REQUEST_MOMO_PAYMENTS_TASK_SLUG)
