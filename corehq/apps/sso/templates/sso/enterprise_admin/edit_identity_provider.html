@@ -1,22 +1,22 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'sso/js/enterprise_edit_identity_provider' %}
+{% js_entry 'sso/js/enterprise_edit_identity_provider' %}
 
 {% block page_content %}
   {% initial_page_data 'idp_slug' idp_slug %}
   {% initial_page_data 'is_oidc' is_oidc %}
 
-  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
-    <li><a href="#idp" data-toggle="tab">{% trans "Identity Provider" %}</a></li>
-    <li><a href="#sso-exempt-users" data-toggle="tab">{% trans "SSO Exempt Users" %}</a></li>
-    <li><a href="#sso-test-users" data-toggle="tab">{% trans "SSO Test Users" %}</a></li>
+  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">  {# todo B5: css-nav #}
+    <li><a href="#idp" data-bs-toggle="tab">{% trans "Identity Provider" %}</a></li>
+    <li><a href="#sso-exempt-users" data-bs-toggle="tab">{% trans "SSO Exempt Users" %}</a></li>
+    <li><a href="#sso-test-users" data-bs-toggle="tab">{% trans "SSO Test Users" %}</a></li>
   </ul>
   <div class="tab-content tab-padded">
     <div class="tab-pane" id="idp">
-      {% crispy edit_idp_form %}
+      {% crispy edit_idp_form %}  {# todo B5: crispy #}
     </div>
     <div class="tab-pane" id="sso-exempt-users">
       {% include 'sso/partials/manage_sso_exempt_users.html' %}
