@@ -1,4 +1,4 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -13,13 +13,13 @@
       Enterprise Account below.
     {% endblocktrans %}
   </p>
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">
+  <div class="card ">  {# todo B5: css-panel #}
+    <div class="card-header">
+      <h3 class="card-title">
         {% trans "Identity Providers" %}
       </h3>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
       <table class="table table-striped tape-responsive">
         <thead>
           <tr>
