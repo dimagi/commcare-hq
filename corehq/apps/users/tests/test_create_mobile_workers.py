@@ -36,7 +36,7 @@ class TestCreateMobileWorkers(TestCase):
         self.assertEqual('mw1@example.com', user.email)
         self.assertEqual(['my-pixel'], user.device_ids)
         self.assertEqual('Mobile', user.first_name)
-        self.assertEqual(True, user.is_active)
+        self.assertEqual(True, user.is_active_in_domain(self.domain))
         self.assertEqual(True, user.is_account_confirmed)
 
         # confirm user was created / can be accessed
@@ -57,7 +57,7 @@ class TestCreateMobileWorkers(TestCase):
             is_account_confirmed=False,
         )
         self.addCleanup(user.delete, self.domain, deleted_by=None)
-        self.assertEqual(False, user.is_active)
+        self.assertEqual(False, user.is_active_in_domain(self.domain))
         self.assertEqual(False, user.is_account_confirmed)
         # confirm user can't login
 

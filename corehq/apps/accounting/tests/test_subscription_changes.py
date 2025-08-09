@@ -101,7 +101,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             web_user = WebUser.create(
                 self.other_domain.name, generator.create_arbitrary_web_user_name(), 'test123', None, None
             )
-            web_user.is_active = True
             web_user.add_domain_membership(self.domain.name, role_id=role.get_id)
             web_user.save()
             self.web_users.append(web_user)

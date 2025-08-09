@@ -104,6 +104,7 @@ class TestUserSyncToEs(SimpleTestCase):
             'domain': user.domain,
             'username': user.username,
             'is_active': True,
+            'domain_membership': {'domain': user.domain, 'is_active': True},
             'first_name': user.first_name,
             'last_name': user.last_name,
             'doc_type': user.doc_type,

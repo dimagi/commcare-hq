@@ -220,7 +220,7 @@ def _get_user_info(username):
     return {
         "user_is_dimagi": is_dimagi_email(username),
         "user_is_mobile": "commcarehq.org" in username,
-        "user_is_active": user.is_active,
+        "user_is_active": user.is_active_in_any_domain(),
         "user_last_login": user.last_login,
         "user_is_superuser": user.is_superuser,
     }

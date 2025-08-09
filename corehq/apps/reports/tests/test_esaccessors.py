@@ -1015,7 +1015,7 @@ class TestUserESAccessors(TestCase):
         super(TestUserESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, is_active=True):
-        self.user.is_active = is_active
+        self.user.set_is_active(self.domain, is_active)
         user_adapter.index(self.user, refresh=True)
 
     def test_active_user_query(self):
@@ -1036,6 +1036,7 @@ class TestUserESAccessors(TestCase):
             'domain': self.user.domain,
             'username': self.user.username,
             'is_active': True,
+            'domain_membership': {'domain': self.user.domain, 'is_active': True},
             'first_name': self.user.first_name,
             'last_name': self.user.last_name,
             'doc_type': 'CommCareUser',
@@ -1053,6 +1054,7 @@ class TestUserESAccessors(TestCase):
             'domain': self.user.domain,
             'username': self.user.username,
             'is_active': False,
+            'domain_membership': {'domain': self.user.domain, 'is_active': True},
             'first_name': self.user.first_name,
             'last_name': self.user.last_name,
             'doc_type': 'CommCareUser',
