@@ -7,11 +7,13 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.userreports.app_manager.helpers import clean_table_name
-from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.pillow import get_location_pillow
-from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter
+
+from ..app_manager.helpers import clean_table_name
+from ..models import DataSourceConfiguration
+from ..pillow import get_location_pillow
+from ..tasks import rebuild_indicators
+from ..util import get_indicator_adapter
+from ..tests.utils import bootstrap_pillow
 
 
 @es_test(requires=[user_adapter])
@@ -53,8 +55,9 @@ class TestLocationDataSource(TestCase):
         adapter = get_indicator_adapter(self.data_source_config)
         self.addCleanup(adapter.drop_table)
 
-        self.pillow = get_location_pillow(ucr_configs=[self.data_source_config])
+        self.pillow = get_location_pillow()
         self.pillow.get_change_feed().get_latest_offsets()
+        bootstrap_pillow(self.pillow, self.data_source_config)
 
     def _make_loc(self, name, location_type):
         return SQLLocation.objects.create(

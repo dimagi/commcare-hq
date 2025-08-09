@@ -10,7 +10,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
-from corehq.apps.userreports.tests.utils import doc_to_change
+from corehq.apps.userreports.tests.utils import bootstrap_pillow, doc_to_change
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.case import get_case_pillow
 
@@ -155,7 +155,8 @@ class ReportDataTest(TestCase):
         return rows
 
     def _add_rows(self, rows):
-        pillow = get_case_pillow(ucr_configs=[self.data_source])
+        pillow = get_case_pillow()
+        bootstrap_pillow(pillow, self.data_source)
 
         def _get_case(row):
             return {
