@@ -3,9 +3,9 @@
 {# requires sso/js/edit_identity_provider #}
 
 <div id="sso-exempt-user-manager"
-     class="form-inline ko-template">
-  <div class="panel panel-modern-gray panel-form-only">
-    <div class="panel-body">
+     class="form-inline ko-template">  {# todo B5: css-form-inline #}
+  <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+    <div class="card-body">
       <fieldset>
         <legend>{% trans "SSO Exempt Users" %}</legend>
         <p>
@@ -27,22 +27,22 @@
         <ul data-bind="foreach: linkedObjects">
           <li>
             <strong data-bind="text: $data"
-                      style="padding-right: 10px;"></strong>
+                      style="padding-right: 10px;"></strong>  {# todo B5: inline-style #}
             (<button type="button"
                      class="btn-link"
                      data-bind="click: $parent.removeObject">remove</button>)
           </li>
         </ul>
         <p class="text-danger"
-           style="padding-left: 10px;"
+           style="padding-left: 10px;"  {# todo B5: inline-style #}
            data-bind="text: asyncHandlerError,
                       visible: asyncHandlerError"></p>
       </fieldset>
     </div>
   </div>
 
-  <div class="panel panel-modern-gray panel-form-only">
-    <div class="panel-body">
+  <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+    <div class="card-body">
       <input data-bind="textInput: newObject"
              placeholder="jsmith@example.org"
              type="email"
@@ -57,7 +57,7 @@
         {% trans "Add User" %}
       </button>
       <span class="text-danger"
-            style="padding-left: 10px;"
+            style="padding-left: 10px;"  {# todo B5: inline-style #}
             data-bind="text: addObjectError,
                        visible: addObjectError"></span>
     </div>
