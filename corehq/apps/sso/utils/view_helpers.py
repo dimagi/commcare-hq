@@ -1,6 +1,7 @@
 from django.shortcuts import render
 
 from django.utils.translation import gettext as _
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
 
@@ -44,6 +45,7 @@ def render_sso_error(request, error):
     })
 
 
+@use_bootstrap5
 def render_sso_user_login_failed(request):
     return render(request, 'sso/sso_request_denied.html', {})
 
