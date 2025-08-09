@@ -158,6 +158,7 @@ class NewIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMi
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMixin):
     page_title = gettext_lazy('Edit Identity Provider')
     template_name = 'sso/accounting_admin/edit_identity_provider.html'
