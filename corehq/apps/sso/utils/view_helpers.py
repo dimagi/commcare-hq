@@ -6,6 +6,7 @@ from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
 
 
+@use_bootstrap5
 def render_untrusted_identity_provider_for_domain_view(request, domain):
     """
     This is a "faux" view that doesn't map to a url, but returns a rendered
