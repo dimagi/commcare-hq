@@ -22,7 +22,7 @@ but not all of them are carefully reviewed. eg, it contains styles with `form-gr
 can be changed to
 ```
 <div class="card-header">
-    <h5 class="card-title">
+    <h5 class="card-title mb-0">
         {% trans ... %}
     </h5>
 </div>
