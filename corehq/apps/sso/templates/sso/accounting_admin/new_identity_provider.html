@@ -1,14 +1,14 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'sso/js/new_identity_provider' %}
+{% js_entry 'sso/js/new_identity_provider' %}
 
 {% block page_content %}
   {% initial_page_data 'idp_types_by_protocol' idp_types_by_protocol|JSON %}
 
   <form class="form form-horizontal" method="post" id="ko-new-idp-form">
-    {% crispy create_idp_form %}
+    {% crispy create_idp_form %}  {# todo B5: crispy #}
   </form>
 {% endblock %}
