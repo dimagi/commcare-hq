@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _, gettext_lazy
 from django.utils.html import format_html
 
@@ -16,6 +17,7 @@ from corehq.apps.accounting.filters import (
 from corehq.apps.accounting.interface import AddItemInterface
 from corehq.apps.accounting.views import AccountingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.sso.certificates import get_certificate_response
 
@@ -117,6 +119,7 @@ class BaseIdentityProviderAdminView(AccountingSectionView):
         }]
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class NewIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMixin):
     page_title = 'New Identity Provider'
     template_name = 'sso/accounting_admin/new_identity_provider.html'
