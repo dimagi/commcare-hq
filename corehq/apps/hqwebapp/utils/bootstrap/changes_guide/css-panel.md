@@ -12,4 +12,20 @@ but not all of them are carefully reviewed. eg, it contains styles with `form-gr
  which is dropped in B5. If you noticed some weird styling, please adjust
 `_card.scss` accordingly.
 
+```
+<div class="panel-heading ">
+    <h3 class="panel-title">
+        {% trans ... %}
+    </h3>
+</div>
+```
+can be changed to
+```
+<div class="card-header">
+    <h5 class="card-title">
+        {% trans ... %}
+    </h5>
+</div>
+```
+
 See: https://getbootstrap.com/docs/5.3/components/card/
