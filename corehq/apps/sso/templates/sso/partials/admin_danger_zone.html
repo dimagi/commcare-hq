@@ -1,7 +1,7 @@
 {% load i18n %}
 
-<div class="panel panel-modern-gray panel-form-only">
-  <div class="panel-body">
+<div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+  <div class="card-body">
     <form action="" method="post">
       {% csrf_token %}
       <input type="hidden" name="delete_identity_provider" value="true" />
@@ -39,7 +39,7 @@
               {% endblocktrans %}
             </p>
             <p>
-              <button type="submit" class="btn btn-danger">
+              <button type="submit" class="btn btn-outline-danger">
                 {% trans "Delete Identity Provider" %}
               </button>
             </p>
