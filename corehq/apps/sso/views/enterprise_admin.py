@@ -35,6 +35,7 @@ class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMixin):
     page_title = gettext_lazy("Edit Identity Provider")
     urlname = 'edit_idp_enterprise'
