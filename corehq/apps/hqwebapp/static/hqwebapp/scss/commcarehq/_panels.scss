@@ -1,8 +1,8 @@
-.panel-modern-gray {
+.card-modern-gray {
   border: none;
   background-color: lighten($cc-bg, 3);
 
-  .panel-heading {
+  .card-header {
     padding: 0;
     a:hover, a:link, a:focus {
       text-decoration: none;
@@ -29,7 +29,7 @@
     }
   }
 
-  .panel-title-nolink {
+  .card-title-nolink {
     padding: 15px 15px;
     border-bottom: 1px solid $cc-bg;
   }
@@ -57,7 +57,7 @@
 }
 
 
-.panel-form-only {
+.card-form-only {
   legend {
     padding-left: 10px;
     padding-right: 10px;
@@ -74,12 +74,12 @@
   }
 }
 
-.form-horizontal .panel-body .form-group,
-.panel-body .form-horizontal .form-group {
+.form-horizontal .card-body .form-group,
+.card-body .form-horizontal .form-group {
   margin-right: 0;
   margin-left: 0;
 }
 
-.panel-group .panel-modern-gray {
+.card-group .card-modern-gray {
   border-radius: 0;
 }
