@@ -450,10 +450,8 @@ class EditIdentityProviderAdminForm(forms.Form):
                 _("Manage Billing Account"),
             )
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
@@ -479,16 +477,16 @@ class EditIdentityProviderAdminForm(forms.Form):
                         twbscrispy.PrependedText('is_editable', ''),
                         twbscrispy.PrependedText('is_active', ''),
                     ),
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             crispy.Div(
                 crispy.Div(
                     sp_or_rp_settings,
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

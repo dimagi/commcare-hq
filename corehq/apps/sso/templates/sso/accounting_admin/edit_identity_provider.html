@@ -8,17 +8,17 @@
 {% block page_content %}
   {% initial_page_data 'idp_slug' idp_slug %}
 
-  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">  {# todo B5: css-nav #}
-    <li><a href="#idp" data-bs-toggle="tab">{% trans "Identity Provider" %}</a></li>
-    <li><a href="#email-domains" data-bs-toggle="tab">{% trans "Authenticated Email Domains" %}</a></li>
-    <li><a href="#sso-exempt-users" data-bs-toggle="tab">{% trans "SSO Exempt Users" %}</a></li>
-    <li><a href="#sso-test-users" data-bs-toggle="tab">{% trans "SSO Test Users" %}</a></li>
-    <li><a href="#danger-zone" data-bs-toggle="tab">{% trans "Danger Zone" %}</a></li>
+  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
+    <li class="nav-item"><a class="nav-link" href="#idp" data-bs-toggle="tab">{% trans "Identity Provider" %}</a></li>
+    <li class="nav-item"><a class="nav-link" href="#email-domains" data-bs-toggle="tab">{% trans "Authenticated Email Domains" %}</a></li>
+    <li class="nav-item"><a class="nav-link" href="#sso-exempt-users" data-bs-toggle="tab">{% trans "SSO Exempt Users" %}</a></li>
+    <li class="nav-item"><a class="nav-link" href="#sso-test-users" data-bs-toggle="tab">{% trans "SSO Test Users" %}</a></li>
+    <li class="nav-item"><a class="nav-link" href="#danger-zone" data-bs-toggle="tab">{% trans "Danger Zone" %}</a></li>
   </ul>
   <div class="tab-content tab-padded">
     <div class="tab-pane" id="idp">
       <form class="form form-horizontal" method="post">
-        {% crispy edit_idp_form %}  {# todo B5: crispy #}
+        {% crispy edit_idp_form %}
       </form>
     </div>
     <div class="tab-pane" id="email-domains">
