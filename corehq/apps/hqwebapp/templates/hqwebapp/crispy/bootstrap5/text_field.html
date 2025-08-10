@@ -3,16 +3,16 @@
 {% if field.is_hidden %}
 	{{ field }}
 {% else %}
-    <div class="form-group">
-        <label for="{{ field.id_for_label }}" class="control-label {{ label_class }}">
+    <div class="row mb-3">
+        <label for="{{ field.id_for_label }}" class="col-form-label {{ label_class }}">
             {{ field.label }}
         </label>
-        <div class="controls {{ field_class }}">
+        <div class="{{ field_class }}">
             <input type="hidden"
                    name="{{ field.html_name }}"
                    id="{{ field.auto_id }}"
                    value="{{ field.value|default_if_none:"" }}" />
-            <div class="form-control-text">
+            <div class="mt-2">
                 {{ field_text }}
             </div>
         </div>
