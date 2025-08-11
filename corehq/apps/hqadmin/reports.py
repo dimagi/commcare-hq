@@ -588,8 +588,8 @@ class FeaturePreviewStatsReport(AdminReport):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(gettext_lazy("Domain")),
-            DataTablesColumn(gettext_lazy("Turned On By")),
-            DataTablesColumn(gettext_lazy("Turned On At")),
+            DataTablesColumn(gettext_lazy("Enabled By")),
+            DataTablesColumn(gettext_lazy("Enabled At")),
         )
 
     @property
@@ -608,7 +608,6 @@ class FeaturePreviewStatsReport(AdminReport):
             .distinct('item')
         )
 
-        domains_with_records = {record.item for record in records}
         for record in records:
             rows.append([
                 record.item,
@@ -616,12 +615,14 @@ class FeaturePreviewStatsReport(AdminReport):
                 record.created,
             ])
 
+        domains_with_records = {record.item for record in records}
         domains_without_records = set(domains) - domains_with_records
+
         for domain in domains_without_records:
             rows.append([
                 domain,
-                "Not recorded",
-                "Not recorded",
+                _("Not recorded"),
+                _("Not recorded"),
             ])
 
         return rows
