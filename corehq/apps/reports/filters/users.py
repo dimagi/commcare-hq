@@ -117,17 +117,16 @@ class EmwfUtils(object):
     def user_tuple(self, u):
         user = util._report_user(u)
         uid = "u__%s" % user.user_id
-        is_active = False
-        if u['doc_type'] == 'WebUser':
-            if user.is_active_in_domain(self.domain):
-                name = "%s [Active Web User]" % user.username_in_report
-            else:
-                name = "%s [Deactivated Web User]" % user.username_in_report
-        elif user.is_active_in_domain(self.domain):
-            is_active = True
-            name = "%s [Active Mobile Worker]" % user.username_in_report
+        is_active = user.is_active_in_domain(self.domain)
+        if u['doc_type'] == 'WebUser' and is_active:
+            user_type = _("Active Web User")
+        elif u['doc_type'] == 'WebUser':
+            user_type = _("Deactivated Web User")
+        elif is_active:
+            user_type = _("Active Mobile Worker")
         else:
-            name = "%s [Deactivated Mobile Worker]" % user.username_in_report
+            user_type = _("Deactivated Mobile Worker")
+        name = f"{user.username_in_report} [{user_type}]"
         return uid, name, is_active
 
     def reporting_group_tuple(self, g):
