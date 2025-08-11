@@ -473,8 +473,8 @@ class UpdateCaseAction(FormAction):
         Moves any updates from `update` into `update_multi`
         Returns true when anything was moved
         '''
-        if not (self.update and len(self.update)):
-            # update contains no items, so no changes are necessary
+        if self.update_multi:
+            # because update_multi is meant to be exclusive with update, no items need to be moved
             return False
 
         self.update_multi = {k: [v] for (k, v) in self.update.items()}
@@ -502,6 +502,7 @@ class UpdateCaseAction(FormAction):
     def make_single(self):
         '''
         Force `update_multi` into `update`, even if it means losing values
+        Returns true when anything was moved
         '''
         if not self.update_multi:
             return False
