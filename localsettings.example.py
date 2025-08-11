@@ -15,9 +15,6 @@ if USE_PARTITIONED_DATABASE:
             'PASSWORD': 'commcarehq',
             'HOST': 'localhost',
             'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
             'PLPROXY': {
                 'PROXY': True
             }
@@ -29,9 +26,6 @@ if USE_PARTITIONED_DATABASE:
             'PASSWORD': 'commcarehq',
             'HOST': 'localhost',
             'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
             'PLPROXY': {
                 'SHARDS': [0, 1],
             }
@@ -43,9 +37,6 @@ if USE_PARTITIONED_DATABASE:
             'PASSWORD': 'commcarehq',
             'HOST': 'localhost',
             'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
             'PLPROXY': {
                 'SHARDS': [2, 3],
             }
