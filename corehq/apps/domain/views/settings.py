@@ -706,8 +706,7 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
         elif new_issuing_app_id != domain_issuing_app_record.app_id:
             self.update_issuing_app(new_issuing_app_id, domain_issuing_app_record)
             return True
-        else:
-            return False
+        return False
 
     def create_issuing_app(self, new_app_id):
         domain_issuing_app_record = CredentialApplication.objects.create(
