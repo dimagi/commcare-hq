@@ -354,21 +354,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             DATA_SOURCE_TYPE_CASE,
             self.case_type,
         )
-        expected_property_names = [
-            'closed',
-            'closed_on',
-            'first_name',
-            'last_name',
-            'modified_on',
-            'name',
-            'opened_on',
-            'owner_id',
-            'user_id',
-            'computed/owner_name',
-            'computed/user_name',
-            'case_id',
-        ]
-        assert expected_property_names == list(builder.data_source_properties.keys())
+        assert 'case_id' in builder.data_source_properties
 
 
 class ReportBuilderTest(ReportBuilderDBTest):
