@@ -410,7 +410,7 @@ class UpdateCaseAction(FormAction):
 
         normalized_update = {k: v[0] for (k, v) in self.update_multi.items() if v}
         self.update = normalized_update
-        self.update_multi = None
+        self.update_multi = {}
 
         return True
 
@@ -426,7 +426,7 @@ class UpdateCaseAction(FormAction):
             if updates:
                 self.update[case_property] = updates[-1]
 
-        self.update_multi = None
+        self.update_multi = {}
 
         return True
 
@@ -615,7 +615,7 @@ class OpenCaseAction(FormAction):
         if self.name_update_multi:
             self.name_update = self.name_update_multi[-1]
 
-        self.name_update_multi = None
+        self.name_update_multi = []
 
         return True
 
@@ -628,7 +628,7 @@ class OpenCaseAction(FormAction):
             return
 
         self.name_update = self.name_update_multi[0]
-        self.name_update_multi = None
+        self.name_update_multi = []
 
     def has_name_update(self):
         if self.name_update_multi:

@@ -112,7 +112,7 @@ class OpenCaseActionTests(SimpleTestCase):
         action.normalize_name_update()
 
         self.assertEqual(action.name_update.question_path, 'name')
-        self.assertIsNone(action.name_update_multi)
+        self.assertEqual(action.name_update_multi, [])
 
     def test_make_single_does_nothing_when_name_update_multi_is_empty(self):
         action = OpenCaseAction({
@@ -130,7 +130,7 @@ class OpenCaseActionTests(SimpleTestCase):
 
         action.make_single()
         self.assertEqual(action.name_update.question_path, 'name2')
-        self.assertEqual(action.name_update_multi, None)
+        self.assertEqual(action.name_update_multi, [])
 
     def test_has_name_update_returns_true_with_name_update(self):
         action = OpenCaseAction({
@@ -339,7 +339,7 @@ class UpdateCaseActionTests(SimpleTestCase):
 
         self.assertTrue(applied)
         self.assertEqual(update_paths, {'one': '/one/', 'two': '/two/'})
-        self.assertIsNone(action.update_multi)
+        self.assertEqual(action.update_multi, {})
 
     def test_normalize_update_removes_empty_keys(self):
         action = UpdateCaseAction({
@@ -351,7 +351,7 @@ class UpdateCaseActionTests(SimpleTestCase):
         action.normalize_update()
 
         self.assertNotIn('one', action.update)
-        self.assertIsNone(action.update_multi)
+        self.assertEqual(action.update_multi, {})
 
     def test_make_single_does_nothing_when_update_multi_is_empty(self):
         action = UpdateCaseAction({
@@ -373,7 +373,7 @@ class UpdateCaseActionTests(SimpleTestCase):
 
         action.make_single()
         self.assertEqual(action.update['one'].question_path, '/two/')
-        self.assertEqual(action.update_multi, None)
+        self.assertEqual(action.update_multi, {})
 
     def test_get_property_names_returns_keys_from_update(self):
         action = UpdateCaseAction({
@@ -440,7 +440,7 @@ class UpdateCaseAction_ApplyUpdates_Tests(SimpleTestCase):
         }), allow_conflicts=False)
 
         self.assertEqual(actions.update['one'].question_path, 'question2')
-        self.assertIsNone(actions.update_multi)
+        self.assertEqual(actions.update_multi, {})
 
     def test_add_value_with_existing_conflict(self):
         actions = UpdateCaseAction({'update_multi': {
