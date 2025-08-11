@@ -81,6 +81,13 @@ def rate_limit_repeater(domain, repeater_id):
 
 
 def _rate_limit_repeater(domain, repeater_id):
+    """
+    Allow a repeater to run
+    1. if global limit is not exceeded,
+       AND if feature flag RATE_LIMIT_REPEATER_ATTEMPTS enabled, check if repeater's attempts limit is not exceeded
+    2. OR if repeater's limit is not exceeded for the domain
+    Limit repeater by default
+    """
     limit_attempts = RATE_LIMIT_REPEATER_ATTEMPTS.enabled(domain, namespace=NAMESPACE_DOMAIN)
     is_under_attempt_limit = repeater_attempts_rate_limiter.allow_usage(repeater_id) if limit_attempts else True
 
