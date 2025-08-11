@@ -77,6 +77,10 @@ SHOULD_RATE_LIMIT_REPEATERS = not settings.UNIT_TESTING
 @silence_and_report_error("Exception raised in the repeater rate limiter",
                           'commcare.repeaters.rate_limiter_errors')
 def rate_limit_repeater(domain, repeater_id):
+    return _rate_limit_repeater(domain, repeater_id)
+
+
+def _rate_limit_repeater(domain, repeater_id):
     limit_attempts = RATE_LIMIT_REPEATER_ATTEMPTS.enabled(domain, namespace=NAMESPACE_DOMAIN)
     is_under_attempt_limit = repeater_attempts_rate_limiter.allow_usage(repeater_id) if limit_attempts else True
 
