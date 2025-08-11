@@ -200,7 +200,7 @@ class SimplifiedUserInfo:
         return Group.by_user_id(self.user_id, False)
 
     def is_active_in_domain(self, domain):
-        return self._active_by_domain.get(domain, False)
+        return self.is_active and self._active_by_domain.get(domain, False)
 
 
 def _report_user(user):
