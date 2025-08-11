@@ -576,15 +576,18 @@ class OpenCaseAction(FormAction):
         self.update_object(updates)
         self.make_multi()
 
-        mappings = {self._NAME_UPDATE_MULTI_FIELD_NAME: self.name_update_multi}
-        normalized_diffs = diffs.convert_to_update_diff()
-        apply_diffs(mappings, normalized_diffs)
-        self.name_update_multi = mappings[self._NAME_UPDATE_MULTI_FIELD_NAME]
+        self.apply_name_update(diffs)
 
         if allow_conflicts:
             self.normalize_name_update()
         else:
             self.make_single()
+
+    def apply_name_update(self, diffs):
+        mappings = {self._NAME_UPDATE_MULTI_FIELD_NAME: self.name_update_multi}
+        update_diff = diffs.convert_to_update_diff()
+        apply_diffs(mappings, update_diff)
+        self.name_update_multi = mappings[self._NAME_UPDATE_MULTI_FIELD_NAME]
 
     def make_multi(self):
         '''
