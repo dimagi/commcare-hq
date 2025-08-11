@@ -154,7 +154,7 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='inactive_user_email@example.com',
         )
-        cls.ccuser_inactive.is_active = False
+        cls.ccuser_inactive.set_is_active(cls.ccdomain.name, False)
         cls.ccuser_inactive.save()
         cls.ccuser_inactive.set_location(cls.loc2)
 

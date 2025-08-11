@@ -102,7 +102,7 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         for i in range(start_n_users, n_users):
             username = format_username(f'{user_cls.__name__}{i}', domain)
             user = user_cls.create(domain, username, password='123', created_by=None, created_via=None)
-            user.is_active = True
+            user.set_is_active(domain, True)
             user.save()
             self.addCleanup(user.delete, domain, deleted_by=None)
         assert user_cls.total_by_domain(domain, is_active=True) == n_users
