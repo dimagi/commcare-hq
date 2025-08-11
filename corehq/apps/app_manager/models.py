@@ -461,6 +461,10 @@ def _apply_updates(current_mappings, updates):
 
 
 class UpdateCaseAction(FormAction):
+    # `update` is the "official" version, while `update_multi` is intended as a way
+    # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
+    # buildable state, where `update` is specified, or conflicts are waiting to be resolved, where
+    # `update_multi` will hold the updates.
     update = SchemaDictProperty(ConditionalCaseUpdate)
     update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
 
@@ -560,7 +564,7 @@ class OpenCaseAction(FormAction):
     # `name_update` is the "official" version, while `name_update_multi` is intended as a way
     # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
     # buildable state, where `name_update` is specified, or conflicts are waiting to be resolved, where
-    # `name_updatd_multi` will hold the updates.
+    # `name_update_multi` will hold the updates.
     name_update = SchemaProperty(ConditionalCaseUpdate)
     name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
