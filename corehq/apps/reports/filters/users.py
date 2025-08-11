@@ -119,7 +119,7 @@ class EmwfUtils(object):
         uid = "u__%s" % user.user_id
         is_active = False
         if u['doc_type'] == 'WebUser':
-            if WebUser.get_by_user_id(user.user_id).is_active_in_domain(self.domain):
+            if user.is_active_in_domain(self.domain):
                 name = "%s [Active Web User]" % user.username_in_report
             else:
                 name = "%s [Deactivated Web User]" % user.username_in_report
