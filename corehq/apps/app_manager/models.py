@@ -454,6 +454,7 @@ class UpdateCaseAction(FormAction):
         '''
         Expects `current_mappings` to be a dictionary of `ConditionalCaseUpdate` lists.
         Expects `diffs` to be an `UpdateCaseDiff`
+        Uses 'diffs' to modify 'current_mappings' in-place.
         '''
         cls._check_for_duplicate_keys(diffs)
 
