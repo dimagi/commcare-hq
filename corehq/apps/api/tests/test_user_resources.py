@@ -817,6 +817,7 @@ class TestWebUserResource(APIResourceTest):
 
         return updated_user
 
+    @flag_enabled('TABLEAU_USER_SYNCING')
     @patch('corehq.apps.api.validation.WebUserResourceSpec._validate_param_permissions',
            return_value=[])
     @patch('corehq.apps.api.validation.TableauGroupsValidator.validate_tableau_groups',
