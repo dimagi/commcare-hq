@@ -210,7 +210,7 @@ def handle_401_response(f):
             if auth_type and auth_type == 'basic':
                 username, _ = get_username_and_password_from_request(request)
                 if username:
-                    valid, message, error_code = ensure_active_user_by_username(username)
+                    valid, message, error_code = ensure_active_user_by_username(username, domain)
                     if not valid:
                         return json_response({
                             "error": error_code,
