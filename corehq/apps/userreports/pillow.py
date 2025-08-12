@@ -372,7 +372,6 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
         for change in changes:
             if is_couch_change_for_sql_domain(change):
                 continue
-            # skip if no domain or no UCR tables in the domain
             if change.metadata.domain:
                 changes_by_domain[change.metadata.domain].append(change)
 
