@@ -20,9 +20,12 @@
               </h3>
               <h4>
                 {% url 'logout' as sign_out_url %}
-                {% blocktrans %}
-                  To accept this invitation, you must first <a href="{{ sign_out_url }}">sign out</a>.
-                {% endblocktrans %}
+                <form action="{% url 'logout' %}" method="post">
+                  {% csrf_token %}
+                  {% blocktrans %}
+                    To accept this invitation, you must first <button type="submit">sign out</button>.
+                  {% endblocktrans %}
+                </form>
               </h4>
             {% elif user.is_account_confirmed and user.is_active %}
               <h3>
