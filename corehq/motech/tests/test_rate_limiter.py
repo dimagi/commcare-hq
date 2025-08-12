@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-from corehq.motech.rate_limiter import _rate_limit_repeater
+from corehq.motech.rate_limiter import _allow_repeater
 from corehq.util.test_utils import flag_enabled
 
 
@@ -21,7 +21,7 @@ class TestRateLimitRepeater(TestCase):
         global_allowed.return_value = False
         repeater_attempts_allowed.return_value = False
         repeater_allowed.return_value = False
-        assert _rate_limit_repeater(self.domain, self.repeater_id)
+        assert not _allow_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_called_once()
 
     def test_not_global_rate_limited_and_no_attempts_check(self, global_allowed, repeater_attempts_allowed,
@@ -30,12 +30,12 @@ class TestRateLimitRepeater(TestCase):
 
         # rate limited based on repeater rate limiting
         repeater_allowed.return_value = True
-        assert not _rate_limit_repeater(self.domain, self.repeater_id)
+        assert _allow_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_not_called()
         repeater_attempts_allowed.assert_not_called()
 
         repeater_allowed.return_value = False
-        assert _rate_limit_repeater(self.domain, self.repeater_id)
+        assert not _allow_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_called_once()
         repeater_attempts_allowed.assert_not_called()
 
@@ -47,7 +47,7 @@ class TestRateLimitRepeater(TestCase):
         repeater_allowed.return_value = False  # set this to False to ensure this is not used
 
         # rate limited based on global and repeater attempts
-        assert not _rate_limit_repeater(self.domain, self.repeater_id)
+        assert _allow_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_not_called()
         repeater_attempts_allowed.assert_called_once()
 
@@ -59,12 +59,12 @@ class TestRateLimitRepeater(TestCase):
 
         # rate limited based on repeater
         repeater_allowed.return_value = True
-        assert not _rate_limit_repeater(self.domain, self.repeater_id)
+        assert _allow_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_not_called()
         repeater_attempts_allowed.assert_called_once()
 
         repeater_allowed.return_value = False
-        assert _rate_limit_repeater(self.domain, self.repeater_id)
+        assert not _allow_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_called_once()
         assert repeater_attempts_allowed.call_count == 2
 
@@ -73,9 +73,9 @@ class TestRateLimitRepeater(TestCase):
         global_allowed.return_value = False
 
         repeater_allowed.return_value = True
-        assert not _rate_limit_repeater(self.domain, self.repeater_id)
+        assert _allow_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_not_called()
 
         repeater_allowed.return_value = False
-        assert _rate_limit_repeater(self.domain, self.repeater_id)
+        assert not _allow_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_called_once()
