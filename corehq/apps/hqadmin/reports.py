@@ -642,7 +642,7 @@ class FeaturePreviewAuditReport(AdminReport):
     @property
     def selected_domain(self):
         selected_domain = self.request.GET.get('domain_name', None)
-        return selected_domain if selected_domain != '' else None
+        return selected_domain or None
 
     def selected_feature(self):
         return self.get_request_param(FeatureFilter.slug, None, from_json=True)
@@ -677,17 +677,14 @@ class FeaturePreviewAuditReport(AdminReport):
             base_filter['slug__in'] = all_slugs
 
         rows = []
-        records = (
-            ToggleAudit.objects
-            .filter(**base_filter)
-        )
+        records = ToggleAudit.objects.filter(**base_filter)
 
         for record in records:
-            action = "Enabled"
+            action = _("Enabled")
             if record.action == ToggleAudit.ACTION_REMOVE:
-                action = "Disabled"
+                action = _("Disabled")
             elif record.action == ToggleAudit.ACTION_UPDATE_RANDOMNESS:
-                action = "Update Randomness"
+                action = _("Update Randomness")
             rows.append([
                 find_preview_by_slug(record.slug).label,
                 action,
