@@ -81,6 +81,7 @@ class TestTTLCache:
             cache.refresh()
             assert cache.get_adapters('one') == result  # no change
             assert cache.get_adapters('two') == [adapter1, adapters['two']]
+            # refresh should not load modified adapter that was not cached
             assert 'three' not in cache.adapters
 
     def test_refresh_removes_adapter_from_domain(self):
@@ -98,7 +99,7 @@ class TestTTLCache:
             assert cache.get_adapters('two') == result
 
         with freeze_time('2020-01-02T00:00:00Z'):
-            adapter1.modified = datetime.now(UTC)
+            adapter1.modified = datetime.now(UTC)  # update on refresh
             adapters = {'one': adapter1}
             cache.refresh()
             assert cache.get_adapters('one') == result  # no change
@@ -152,8 +153,7 @@ class TestTTLCache:
         with freeze_time('2020-01-01T00:00:00Z'):
             adapter = Adapter('one')
             cache = TTLCache(iter_adapters)
-            result = cache.get_adapters('one')
-            assert result == [adapter]
+            assert cache.get_adapters('one') == [adapter]
 
             cache.remove('one', adapter)
             assert cache.get_adapters('one') == []
