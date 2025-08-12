@@ -218,23 +218,30 @@ class ApiKeyFallbackBackend(object):
             return None
 
         try:
+            user = User.objects.get(username=username)
+
             is_unexpired_filter = (
-                Q(api_keys__expiration_date__isnull=True) | Q(api_keys__expiration_date__gte=datetime.now(tz.utc))
+                Q(expiration_date__isnull=True) | Q(expiration_date__gte=datetime.now(tz.utc))
             )
-            api_domain_filter = Q(api_keys__domain='')
+
+            api_domain_filter = Q(domain='')
             domain = getattr(request, 'domain', '')
             if domain:
-                api_domain_filter = api_domain_filter | Q(api_keys__domain=domain)
+                api_domain_filter = api_domain_filter | Q(domain=domain)
 
             ip = get_ip(request)
-            api_whitelist_filter = Q(api_keys__ip_allowlist=[]) | Q(api_keys__ip_allowlist__contains=[ip])
-            user = User.objects.get(is_unexpired_filter, api_domain_filter, api_whitelist_filter,
-                username=username, api_keys__key=password, api_keys__is_active=True)
-        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            api_whitelist_filter = Q(ip_allowlist=[]) | Q(ip_allowlist__contains=[ip])
+
+            keys_qs = user.api_keys.filter(is_unexpired_filter, api_domain_filter,
+                                           api_whitelist_filter, is_active=True)
+
+            for key in keys_qs:
+                if key.plaintext_key == password:
+                    request.skip_two_factor_check = True
+                    return user
             return None
-        else:
-            request.skip_two_factor_check = True
-            return user
+        except User.DoesNotExist:
+            return None
 
 
 def get_active_users_by_email(email, domain=None):
@@ -290,14 +297,23 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return False
 
         # ensure API Key exists
-        query = Q(key=api_key)
+        query = Q()
         domain = getattr(request, 'domain', '')
         if domain:
             domain_accessible = Q(domain='') | Q(domain=domain)
-            query = domain_accessible & query
+            query = domain_accessible
         try:
-            key = user.api_keys.get(query)
+            filtered_keys = user.api_keys.filter(query)
         except HQApiKey.DoesNotExist:
+            return self._unauthorized()
+
+        # ensure API Key exists
+        key = None
+        for filtered_key in filtered_keys:
+            if filtered_key.plaintext_key == api_key:
+                key = filtered_key
+                break
+        if not key:
             return self._unauthorized()
 
         # update api_key.last used every 30 seconds

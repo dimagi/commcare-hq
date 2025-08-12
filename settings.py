@@ -176,6 +176,7 @@ MIDDLEWARE = [
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
+    'corehq.apps.sso.middleware.SingleSignOnErrorMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -199,11 +200,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 PASSWORD_HASHERS = (
-    # this is the default list with SHA1 moved to the front
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
     'django.contrib.auth.hashers.MD5PasswordHasher',
     'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
     'django.contrib.auth.hashers.CryptPasswordHasher',
