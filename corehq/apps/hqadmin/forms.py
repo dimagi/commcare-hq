@@ -124,7 +124,7 @@ class SuperuserManagementForm(forms.Form):
 
 class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
-        label="Comma/new-line seperated email addresses",
+        label="Comma/new-line separated email addresses",
         widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False
     )
