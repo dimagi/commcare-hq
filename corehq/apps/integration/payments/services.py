@@ -39,11 +39,12 @@ def request_payments_for_cases(case_ids, config):
 def _get_payment_cases_updates(case_ids_chunk, config):
     payment_updates = []
     for payment_case in CommCareCase.objects.get_cases(case_ids=list(case_ids_chunk)):
-        payment_update = request_payment(payment_case, config)
         # Additional safeguard to ensure we only process cases that are pending submission
         payment_status_value = payment_case.get_case_property(PaymentProperties.PAYMENT_STATUS)
         if PaymentStatus.from_value(payment_status_value) != PaymentStatus.PENDING_SUBMISSION:
             continue
+
+        payment_update = request_payment(payment_case, config)
 
         should_close = False
         payment_updates.append(

@@ -257,8 +257,8 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
                 _("Revert verification request is in progress for your project. Please try again after some time.")
             )
 
-    @memoized
     @property
+    @memoized
     def revert_verification_request_tracker(self):
         return get_celery_task_tracker(self.request.domain, REVERT_VERIFICATION_REQUEST_SLUG)
 
