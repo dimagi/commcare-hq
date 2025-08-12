@@ -374,7 +374,7 @@ def send_stale_case_data_info_to_admins():
 
 @task(ignore_result=True, acks_late=True)
 def export_all_rows_task(class_path, export_context, recipient_list=None, subject=None):
-    from corehq.apps.reports.tasks import _store_excel_in_blobdb
+    from corehq.apps.reports.util import store_excel_in_blobdb
     from corehq.apps.reports.util import send_report_download_email
 
     ReportClass = import_string(class_path)
@@ -382,7 +382,7 @@ def export_all_rows_task(class_path, export_context, recipient_list=None, subjec
     report_title = report.get_report_title()
 
     file = report.export_to_file()
-    hash_id = _store_excel_in_blobdb(class_path, file, export_context['domain'], report_title)
+    hash_id = store_excel_in_blobdb(class_path, file, export_context['domain'], report_title)
     logger.info(f'Stored report {report_title} with parameters: {export_context["request_params"]} '
                 f'in hash {hash_id}')
     if not recipient_list:
