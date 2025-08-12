@@ -1,39 +1,49 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from dateutil.parser import parse
 from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.auditcare.models import NavigationEventAudit
-from corehq.apps.auditcare.utils.export import filters_for_navigation_event_query, navigation_events_by_user
+from corehq.apps.auditcare.utils.export import (
+    filters_for_navigation_event_query,
+    navigation_events_by_user,
+)
+from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.exceptions import ESError
+from corehq.apps.es.forms import FormES
+from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
+from corehq.apps.reports.filters.select import FeatureFilter
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.reports.standard.sms import PhoneNumberReport
 from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.users.dbaccessors import get_all_user_search_query
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.case_search import CaseSearchES
-from corehq.apps.es.forms import FormES
-from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
+from corehq.feature_previews import find_preview_by_slug
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
-from corehq.apps.es.aggregations import TermsAggregation
-from corehq.apps.es.exceptions import ESError
+from corehq.toggles import (
+    NAMESPACE_DOMAIN,
+    RESTRICT_DATA_SOURCE_REBUILD,
+    USER_CONFIGURABLE_REPORTS,
+)
 
 
 class AdminReport(GenericTabularReport):
@@ -426,6 +436,7 @@ class UCRRebuildRestrictionTable:
 
     def _ucr_rebuild_restriction_status_column_data(self, domain, case_count, form_count):
         from django.utils.safestring import mark_safe
+
         from corehq.apps.toggle_ui.views import ToggleEditView
 
         restriction_ff_enabled = self._rebuild_restricted_ff_enabled(domain)
@@ -558,3 +569,60 @@ class StaleCasesTable:
             .filter(is_active=True)
             .values_list('subscriber__domain', flat=True)
         ))
+
+
+class FeaturePreviewStatsReport(AdminReport):
+    slug = 'feature_preview_stats_report'
+    name = gettext_lazy("Feature Preview Stats Report")
+
+    fields = [
+        'corehq.apps.reports.filters.select.FeatureFilter',
+    ]
+    emailable = False
+    exportable = True
+
+    def selected_feature(self):
+        return self.get_request_param(FeatureFilter.slug, None, from_json=True)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(gettext_lazy("Domain")),
+            DataTablesColumn(gettext_lazy("Enabled By")),
+            DataTablesColumn(gettext_lazy("Enabled At")),
+        )
+
+    @property
+    def rows(self):
+        if not self.selected_feature():
+            return []
+        feature = find_preview_by_slug(self.selected_feature())
+        if not feature:
+            return []
+        rows = []
+        domains = feature.get_enabled_domains()
+        records = (
+            ToggleAudit.objects
+            .filter(slug=feature.slug, namespace=NAMESPACE_DOMAIN, item__in=domains)
+            .order_by('item', 'created')
+            .distinct('item')
+        )
+
+        for record in records:
+            rows.append([
+                record.item,
+                record.username,
+                record.created,
+            ])
+
+        domains_with_records = {record.item for record in records}
+        domains_without_records = set(domains) - domains_with_records
+
+        for domain in domains_without_records:
+            rows.append([
+                domain,
+                _("Not recorded"),
+                _("Not recorded"),
+            ])
+
+        return rows

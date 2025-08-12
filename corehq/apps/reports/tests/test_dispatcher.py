@@ -53,6 +53,7 @@ class AdminReportDispatcherTests(SimpleTestCase):
             'deploy_history_report',
             'phone_number_report',
             'ucr_data_load',
+            'feature_preview_stats_report',
         })
 
 
