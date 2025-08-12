@@ -1,5 +1,6 @@
 {% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
 {% block page_content %}
@@ -27,6 +28,7 @@
           <th>{% translate "Developer" %}</th>
           <th>{% translate "Superuser" %}</th>
           <th>{% translate "Accounting Admin" %}</th>
+          <th>{% translate "Contractor (Feature Flag)" %}</th>
           <th>{% translate "Active" %}</th>
           <th>{% translate "Two Factor Enabled" %}</th>
         </tr>
@@ -36,6 +38,7 @@
             <td>{% if user.is_staff %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.is_accounting_admin %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>{% if user|toggle_enabled_for_user:"IS_CONTRACTOR" %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.is_active %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.two_factor_enabled %}<i class="fa fa-check"></i>{% endif %}</td>
           </tr>
