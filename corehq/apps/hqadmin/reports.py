@@ -115,7 +115,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.simple.SimpleUsername',
-        'corehq.apps.reports.filters.simple.SimpleDomain',
+        'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
     ]
     emailable = False
     exportable = True
