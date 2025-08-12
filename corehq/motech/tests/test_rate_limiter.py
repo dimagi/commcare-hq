@@ -15,8 +15,11 @@ class TestRateLimitRepeater(TestCase):
         cls.domain = 'test-domain'
         cls.repeater_id = 'test-repeater-id'
 
-    def test_rate_limited(self, global_allowed, repeater_attempts_allowed, repeater_allowed, metrics_counter):
+    @flag_enabled('RATE_LIMIT_REPEATER_ATTEMPTS')
+    def test_rate_limited_by_all(self, global_allowed, repeater_attempts_allowed, repeater_allowed,
+                                 metrics_counter):
         global_allowed.return_value = False
+        repeater_attempts_allowed.return_value = False
         repeater_allowed.return_value = False
         assert _rate_limit_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_called_once()
@@ -29,10 +32,12 @@ class TestRateLimitRepeater(TestCase):
         repeater_allowed.return_value = True
         assert not _rate_limit_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_not_called()
+        repeater_attempts_allowed.assert_not_called()
 
         repeater_allowed.return_value = False
         assert _rate_limit_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_called_once()
+        repeater_attempts_allowed.assert_not_called()
 
     @flag_enabled('RATE_LIMIT_REPEATER_ATTEMPTS')
     def test_not_global_rate_limited_and_not_overlimit(self, global_allowed, repeater_attempts_allowed,
@@ -44,6 +49,7 @@ class TestRateLimitRepeater(TestCase):
         # rate limited based on global and repeater attempts
         assert not _rate_limit_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_not_called()
+        repeater_attempts_allowed.assert_called_once()
 
     @flag_enabled('RATE_LIMIT_REPEATER_ATTEMPTS')
     def test_not_global_rate_limited_but_overlimit(self, global_allowed, repeater_attempts_allowed,
@@ -55,10 +61,12 @@ class TestRateLimitRepeater(TestCase):
         repeater_allowed.return_value = True
         assert not _rate_limit_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_not_called()
+        repeater_attempts_allowed.assert_called_once()
 
         repeater_allowed.return_value = False
         assert _rate_limit_repeater(self.domain, self.repeater_id)
         metrics_counter.assert_called_once()
+        assert repeater_attempts_allowed.call_count == 2
 
     def test_repeater_rate_limited(self, global_allowed, repeater_attempts_allowed, repeater_allowed,
                                    metrics_counter):
