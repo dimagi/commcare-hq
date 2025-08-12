@@ -7,8 +7,8 @@ However, there has been some restructuring to the `card` element itself that
 might not be entirely translatable this way. Please review and adjust
 accordingly.
 
-Customized panel styles (`_panels.less`) has been migrated to card styles (`_card.scss`),
-but not all of them are carefully reviewed. If you noticed some weird styling, please adjust
+Customized panel styles (`_panels.less`) have been migrated to card styles (`_card.scss`),
+but not all of them have been reviewed. If you noticed some weird styling, please adjust
 `_card.scss` accordingly.
 
 ```
