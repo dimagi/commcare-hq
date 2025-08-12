@@ -40,8 +40,8 @@ class TestRateLimitRepeater(TestCase):
         repeater_attempts_allowed.assert_not_called()
 
     @flag_enabled('RATE_LIMIT_REPEATER_ATTEMPTS')
-    def test_not_global_rate_limited_and_not_overlimit(self, global_allowed, repeater_attempts_allowed,
-                                                       repeater_allowed, metrics_counter):
+    def test_not_global_rate_limited_and_not_attempts_overlimit(self, global_allowed, repeater_attempts_allowed,
+                                                                repeater_allowed, metrics_counter):
         global_allowed.return_value = True
         repeater_attempts_allowed.return_value = True
         repeater_allowed.return_value = False  # set this to False to ensure this is not used
@@ -52,8 +52,8 @@ class TestRateLimitRepeater(TestCase):
         repeater_attempts_allowed.assert_called_once()
 
     @flag_enabled('RATE_LIMIT_REPEATER_ATTEMPTS')
-    def test_not_global_rate_limited_but_overlimit(self, global_allowed, repeater_attempts_allowed,
-                                                   repeater_allowed, metrics_counter):
+    def test_not_global_rate_limited_but_attempts_overlimit(self, global_allowed, repeater_attempts_allowed,
+                                                            repeater_allowed, metrics_counter):
         global_allowed.return_value = True
         repeater_attempts_allowed.return_value = False
 
@@ -68,8 +68,8 @@ class TestRateLimitRepeater(TestCase):
         metrics_counter.assert_called_once()
         assert repeater_attempts_allowed.call_count == 2
 
-    def test_repeater_rate_limited(self, global_allowed, repeater_attempts_allowed, repeater_allowed,
-                                   metrics_counter):
+    def test_rate_limiting_by_repeater_rate_limits(self, global_allowed, repeater_attempts_allowed,
+                                                   repeater_allowed, metrics_counter):
         global_allowed.return_value = False
 
         repeater_allowed.return_value = True
