@@ -404,8 +404,12 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         )
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @patch(
+        'corehq.apps.integration.payments.views.PaymentsVerificationTableView.'
+        '_check_for_active_revert_verification_request'
+    )
     @patch('corehq.apps.integration.payments.views.get_celery_task_tracker')
-    def test_revert_verification_payment_submissions_active(self, mock_task_tracker):
+    def test_revert_verification_payment_submissions_active(self, mock_task_tracker, *args):
         # Setup: mock the task tracker to simulate active submissions
         mock_task_tracker.return_value.is_active.return_value = True
 

@@ -259,6 +259,7 @@ class TestRequestPaymentsForCases(TestCase):
             PaymentProperties.PAYEE_NOTE: 'Jan payment',
             PaymentProperties.PAYER_MESSAGE: 'Thanks',
             PaymentProperties.PAYMENT_VERIFIED: 'True',
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
         }
 
     @patch('corehq.apps.integration.payments.services._make_payment_request')
@@ -308,7 +309,6 @@ class TestRequestPaymentsForCases(TestCase):
         for payment_case in payment_cases:
             case_data = payment_case.case_json
             assert case_data.get('transaction_id') is None
-            assert PaymentProperties.PAYMENT_STATUS not in case_data
             assert PaymentProperties.PAYMENT_TIMESTAMP not in case_data
 
         request_payments_for_cases([_case.case_id for _case in payment_cases], self.config)
