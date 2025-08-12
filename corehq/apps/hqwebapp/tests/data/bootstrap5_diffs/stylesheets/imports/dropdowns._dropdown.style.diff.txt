@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -24,98 +24,74 @@
+@@ -24,98 +24,76 @@
    border-color: transparent;
    border-style: solid;
    border-width: 5px 0 5px 5px;
@@ -64,7 +64,9 @@
 +  }
  
 +  .dropdown-menu > li > a:hover,
-+  .dropdown-menu > li > a:focus {
++  .dropdown-menu > li > a:focus,
++  .dropdown-menu > li button:hover,
++  .dropdown-menu > li button:focus {
 +    background-color: $brand-primary;
 +    color: #ffffff;
    }
