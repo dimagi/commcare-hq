@@ -1,5 +1,6 @@
 import io
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext as _
 
 from django_tables2.views import SingleTableMixin
@@ -68,7 +69,14 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
     Mixin to add export functionality to django-tables2 based views.
     Attributes:
         exclude_columns_in_export (tuple): Columns to exclude from the export. Defaults to empty tuple.
+    Usage:
+        - Inherit this mixin in a view that uses django-tables2.
+        - Define `table_class` as the django-tables2 table class to use.
+        - Optionally set `export_format`, `export_file_name`, and `export_sheet_name` to customize export
+          configurations.
+        - Trigger export by calling the `trigger_export()` method.
     """
+
     exclude_columns_in_export = ()
 
     def export_to_file(self):
@@ -90,3 +98,17 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         Can be overridden for customization.
         """
         return self.table_class(data=self.get_table_data())
+
+    def trigger_export(self):
+        self._validate_export_dependencies()
+        return self._trigger_async_export()
+
+    def _validate_export_dependencies(self):
+        if not getattr(self, 'request', None):
+            raise ImproperlyConfigured("TableExportMixin requires `self.request`.")
+        if not getattr(self, 'table_class', None):
+            raise ImproperlyConfigured("TableExportMixin requires `self.table_class`.")
+
+    def _trigger_async_export(self):
+        # TODO: Implement the logic to trigger an asynchronous export task.
+        pass
