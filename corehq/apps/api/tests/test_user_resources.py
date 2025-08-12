@@ -817,7 +817,6 @@ class TestWebUserResource(APIResourceTest):
 
         return updated_user
 
-    @flag_enabled('TABLEAU_USER_SYNCING')
     @patch('corehq.apps.api.validation.WebUserResourceSpec._validate_param_permissions',
            return_value=[])
     @patch('corehq.apps.api.validation.TableauGroupsValidator.validate_tableau_groups',
@@ -869,15 +868,16 @@ class TestWebUserResource(APIResourceTest):
         }
 
         backend_id = editable_user._id
-        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
-                                                   json.dumps(update_json),
-                                                   content_type='application/json',
-                                                   method='PATCH')
-        self.assertEqual(response.status_code, 202, response.content)
+        with flag_enabled('TABLEAU_USER_SYNCING'):
+            response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
+                                                    json.dumps(update_json),
+                                                    content_type='application/json',
+                                                    method='PATCH')
+            self.assertEqual(response.status_code, 202, response.content)
 
-        response_json = response.json()
-        self.assertEqual(response_json['tableau_role'], 'Viewer')
-        self.assertEqual(response_json['tableau_groups'], ['group1', 'group2'])
+            response_json = response.json()
+            self.assertEqual(response_json['tableau_role'], 'Viewer')
+            self.assertEqual(response_json['tableau_groups'], ['group1', 'group2'])
 
         mock_create_session.assert_called_once_with(self.domain.name)
         mock_update_tableau_user.assert_has_calls([
