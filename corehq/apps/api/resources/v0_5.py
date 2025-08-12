@@ -455,6 +455,13 @@ class WebUserResource(v0_1.WebUserResource):
         detail_allowed_methods = ['get', 'patch']
         always_return_data = True
 
+    def dehydrate(self, bundle):
+        bundle = super().dehydrate(bundle)
+        if not toggles.TABLEAU_USER_SYNCING.enabled(bundle.request.domain):
+            bundle.data.pop('tableau_role', None)
+            bundle.data.pop('tableau_groups', None)
+        return bundle
+
     def dehydrate_primary_location_id(self, bundle):
         return bundle.obj.get_location_id(bundle.request.domain) or ''
 
