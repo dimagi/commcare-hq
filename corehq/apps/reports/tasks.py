@@ -1,5 +1,4 @@
 import os
-import uuid
 import zipfile
 from datetime import datetime, timedelta
 
@@ -14,11 +13,10 @@ from soil.util import expose_blob_download
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
 from corehq.apps.reports.models import QueryStringHash
-from corehq.apps.reports.util import send_report_download_email
+from corehq.apps.reports.util import send_report_download_email, store_excel_in_blobdb
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 from corehq.form_processor.models import XFormInstance
-from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.view_utils import absolute_reverse
 
@@ -46,7 +44,7 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     # This uses the user's first domain to store the file in the blobdb
     report_storage_domain = report.request.couch_user.get_domains()[0] if report.domain is None else report.domain
 
-    hash_id = _store_excel_in_blobdb(report_class, file, report_storage_domain, report.slug)
+    hash_id = store_excel_in_blobdb(report_class, file, report_storage_domain, report.slug)
     logger.info(f'Stored report {report.name} with parameters: {report_state["request_params"]} in hash {hash_id}')
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
@@ -58,25 +56,6 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
 
 def _send_email(report, link, recipient, subject=None):
     send_report_download_email(report.name, recipient, link, subject, domain=report.domain)
-
-
-def _store_excel_in_blobdb(report_class, file, domain, report_slug):
-    key = uuid.uuid4().hex
-    expired = 60 * 24 * 7  # 7 days
-    db = get_blob_db()
-
-    kw = {
-        "domain": domain,
-        "name": f"{report_slug}-{get_timestamp_for_filename()}",
-        "parent_id": key,
-        "type_code": CODES.tempfile,
-        "key": key,
-        "timeout": expired,
-        "properties": {"report_class": report_class}
-    }
-    file.seek(0)
-    db.put(file, **kw)
-    return key
 
 
 @task(serializer='pickle')
