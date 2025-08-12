@@ -202,6 +202,13 @@ def toggle_enabled(request, toggle_or_toggle_name):
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
 
 
+@register.filter
+def toggle_enabled_for_user(user, toggle_or_toggle_name):
+    from corehq import toggles
+    toggle = _get_obj_from_name_or_instance(toggles, toggle_or_toggle_name)
+    return toggle.enabled(user.username, namespace=None)
+
+
 def _ui_notify_enabled(module, request, ui_notify_instance_or_name):
     ui_notify = _get_obj_from_name_or_instance(module, ui_notify_instance_or_name)
     return ui_notify.enabled(request)
