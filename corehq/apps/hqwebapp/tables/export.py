@@ -1,6 +1,8 @@
 import io
 
 from django.core.exceptions import ImproperlyConfigured
+from django.http.request import HttpRequest
+from django.http.response import HttpResponse
 from django.utils.translation import gettext as _
 
 from django_tables2.views import SingleTableMixin
@@ -8,6 +10,9 @@ from memoized import memoized
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
+from dimagi.utils.web import json_request
+
+from corehq.apps.hqwebapp.tasks import export_all_rows_task
 
 
 class TableExportException(Exception):
@@ -68,6 +73,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
     """
     Mixin to add export functionality to django-tables2 based views.
     Attributes:
+        report_title (str): Title of the report to be used in the export. Defaults to class name.
         exclude_columns_in_export (tuple): Columns to exclude from the export. Defaults to empty tuple.
     Usage:
         - Inherit this mixin in a view that uses django-tables2.
@@ -77,6 +83,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         - Trigger export by calling the `trigger_export()` method.
     """
 
+    report_title = None
     exclude_columns_in_export = ()
 
     def export_to_file(self):
@@ -99,9 +106,9 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         """
         return self.table_class(data=self.get_table_data())
 
-    def trigger_export(self):
+    def trigger_export(self, recipient_list=None, subject=None):
         self._validate_export_dependencies()
-        return self._trigger_async_export()
+        return self._trigger_async_export(recipient_list, subject)
 
     def _validate_export_dependencies(self):
         if not getattr(self, 'request', None):
@@ -109,6 +116,45 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         if not getattr(self, 'table_class', None):
             raise ImproperlyConfigured("TableExportMixin requires `self.table_class`.")
 
-    def _trigger_async_export(self):
-        # TODO: Implement the logic to trigger an asynchronous export task.
-        pass
+    def _trigger_async_export(self, recipient_list, subject):
+        export_all_rows_task.delay(
+            class_path=f"{self.__class__.__module__}.{self.__class__.__name__}",
+            export_context=self._get_export_context(),
+            recipient_list=recipient_list,
+            subject=subject,
+        )
+        return HttpResponse(_("Export is being generated. You will receive an email when it is ready."))
+
+    def _get_export_context(self):
+        """Returns context needed to reconstruct the view for async export"""
+        return {
+            "domain": self.request.domain,
+            "can_access_all_locations": self.request.can_access_all_locations,
+            "user_id": self.request.couch_user.user_id,
+            "request_params": json_request(self.request.GET),
+            "config": self.config_as_dict(),
+            "report_title": self.get_report_title(),
+        }
+
+    @memoized
+    def get_report_title(self):
+        return self.report_title or self.__class__.__name__
+
+    @classmethod
+    def reconstruct_from_export_context(cls, context):
+        """Reconstructs view instance from the export context to be used in the celery task"""
+        from corehq.apps.users.models import CouchUser
+
+        request = HttpRequest()
+        request.method = 'GET'
+        request.GET.update(context['request_params'])
+        request.domain = context['domain']
+        request.couch_user = CouchUser.get_by_user_id(context['user_id'])
+        request.can_access_all_locations = context['can_access_all_locations']
+
+        view = cls()
+        view.request = request
+        for config_key, config_value in context['config'].items():
+            setattr(view, config_key, config_value)
+
+        return view
