@@ -183,7 +183,7 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
         super().tearDownClass()
 
     def test_mobile_workers_are_deactivated(self):
-        active_statuses = [(u.username, u.is_active) for u in self.users]
+        active_statuses = [(u.username, u.is_active_in_domain(u.domain)) for u in self.users]
         self.assertListEqual(
             active_statuses,
             [
@@ -202,7 +202,7 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
             self.emw_settings.deactivate_mobile_workers_by_inactivity(domain)
 
         refreshed_users = [CommCareUser.get_by_user_id(u.get_id) for u in self.users]
-        new_active_statuses = [(u.username, u.is_active) for u in refreshed_users]
+        new_active_statuses = [(u.username, u.is_active_in_domain(u.domain)) for u in refreshed_users]
         self.assertListEqual(
             new_active_statuses,
             [
