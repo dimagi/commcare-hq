@@ -83,22 +83,19 @@ def time_ucr_process_change(method):
 def _filter_by_hash(configs, ucr_division):
     ucr_start = ucr_division[0]
     ucr_end = ucr_division[-1]
-    filtered_configs = []
     for config in configs:
         table_hash = hashlib.md5(config.table_id.encode('utf-8')).hexdigest()[0]
         if ucr_start <= table_hash <= ucr_end:
-            filtered_configs.append(config)
-    return filtered_configs
+            yield config
 
 
 def _filter_domains_to_skip(configs):
     """Return a list of configs whose domain exists on this environment"""
     domain_names = list({config.domain for config in configs if config.is_static})
     existing_domains = list(get_domain_ids_by_names(domain_names))
-    return [
-        config for config in configs
-        if not config.is_static or config.domain in existing_domains
-    ]
+    for config in configs:
+        if not config.is_static or config.domain in existing_domains:
+            yield config
 
 
 def _filter_invalid_config(configs):
@@ -109,14 +106,12 @@ def _filter_invalid_config(configs):
     # cache. It is unclear if it is by design that subsequent changes
     # continue to be processed against the outdated (valid) version of
     # the config/adapter.
-    valid_configs = []
     for config in configs:
         try:
             config.validate()
-            valid_configs.append(config)
+            yield config
         except Exception:
             pillow_logging.warning("Invalid config found during bootstrap: %s", config._id)
-    return valid_configs
 
 
 def _get_indicator_adapter_for_pillow(config):
@@ -282,7 +277,7 @@ class ConfigurableReportTableManager(UcrTableManager):
     def iter_configs(self, domain):
         for provider in self.data_source_providers:
             configs = provider.get_data_sources(domain)
-            for config in self.get_filtered_configs(configs):
+            for config in self._filter_configs(configs):
                 yield (config.domain, config)
 
     def iter_configs_since(self, timestamp):
@@ -294,16 +289,16 @@ class ConfigurableReportTableManager(UcrTableManager):
         # view: userreports/data_sources_by_last_modified
         for provider in self.data_source_providers:
             configs = provider.get_data_sources_modified_since(timestamp)
-            for config in self.get_filtered_configs(configs):
+            for config in self._filter_configs(configs):
                 yield (config.domain, config)
 
-    def get_filtered_configs(self, configs):
+    def _filter_configs(self, configs):
         if configs:
             if self.exclude_ucrs:
-                configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
+                configs = (config for config in configs if config.table_id not in self.exclude_ucrs)
 
             if self.include_ucrs:
-                configs = [config for config in configs if config.table_id in self.include_ucrs]
+                configs = (config for config in configs if config.table_id in self.include_ucrs)
             elif self.ucr_division:
                 configs = _filter_by_hash(configs, self.ucr_division)
 
