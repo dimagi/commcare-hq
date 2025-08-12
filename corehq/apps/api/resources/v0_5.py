@@ -462,6 +462,8 @@ class WebUserResource(v0_1.WebUserResource):
         return bundle.obj.get_location_ids(bundle.request.domain)
 
     def dehydrate_tableau_groups(self, bundle):
+        if not toggles.TABLEAU_USER_SYNCING.enabled(bundle.request.domain):
+            return []
         try:
             return [t.name for t in get_tableau_groups_for_user(bundle.request.domain,
                                                                 bundle.obj.username)]
@@ -469,6 +471,8 @@ class WebUserResource(v0_1.WebUserResource):
             return []
 
     def dehydrate_tableau_role(self, bundle):
+        if not toggles.TABLEAU_USER_SYNCING.enabled(bundle.request.domain):
+            return None
         try:
             t_user = TableauUser.objects.get(username=bundle.obj.username,
                                              server__domain=bundle.request.domain)
