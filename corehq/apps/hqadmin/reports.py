@@ -571,9 +571,9 @@ class StaleCasesTable:
         ))
 
 
-class FeaturePreviewStatsReport(AdminReport):
-    slug = 'feature_preview_stats_report'
-    name = gettext_lazy("Feature Preview Stats Report")
+class FeaturePreviewStatusReport(AdminReport):
+    slug = 'feature_preview_status_report'
+    name = gettext_lazy("Feature Preview Status Report")
 
     fields = [
         'corehq.apps.reports.filters.select.FeatureFilter',
