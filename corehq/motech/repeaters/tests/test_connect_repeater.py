@@ -1,6 +1,6 @@
 import pytest
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from corehq.motech.repeaters.models import ConnectFormRepeater
 from corehq.motech.repeaters.repeater_generators import CONNECT_XMLNS, ConnectFormRepeaterPayloadGenerator
@@ -57,11 +57,12 @@ MOCK_FORM = {
 }
 
 
-def test_connect_repeater():
+@patch("corehq.motech.repeaters.repeater_generators.FormRepeaterJsonPayloadGenerator.get_payload")
+def test_connect_repeater(mocked_super):
     repeater = ConnectFormRepeater(domain="test")
     generator = ConnectFormRepeaterPayloadGenerator(repeater)
     form = Mock()
-    form.to_json = Mock(return_value=MOCK_FORM)
+    mocked_super.return_value = MOCK_FORM
     payload = generator.get_payload(None, form)
     assert payload["metadata"] == FORM_META
     assert payload["form.connect_path.deliver"] == DELIVER_JSON["deliver"]
