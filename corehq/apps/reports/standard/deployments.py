@@ -30,7 +30,7 @@ from corehq.apps.es.aggregations import (
     FilterAggregation,
     NestedAggregation,
 )
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
@@ -280,12 +280,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         required_loc_columns = [loc_type for loc_type in location_types if loc_type.id in all_user_loc_types]
         return required_loc_columns
 
-    def user_locations(self, ancestors, location_types):
-        ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
-        return [
-            ancestors_by_type_id.get(location_type.id, '---')
-            for location_type in location_types
-        ]
+    def user_locations(self, user_primary_location_id):
+        # ToDo: return the value for locations corresponding to the location type columns
+        return []
+        # ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
+        # return [
+        #     ancestors_by_type_id.get(location_type.id, '---')
+        #     for location_type in location_types
+        # ]
 
     def get_bulk_ancestors(self, location_ids):
         """
@@ -320,6 +322,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return grouped_location
 
     def include_location_data(self):
+        # ToDo: make this configurable to "Expand primary location hierarchy in export"
+        # or always add these to the end/beginning of the excel sheet
         toggle = toggles.LOCATION_COLUMNS_APP_STATUS_REPORT
         return (
             (
@@ -333,11 +337,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         users = list(users)
 
         if self.include_location_data():
-            location_ids = {user['location_id'] for user in users if user['location_id']}
-            grouped_ancestor_locs = {}
-            if location_ids:
-                grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
-            self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
+            # We skip getting bulk ancestors and may be just fetch and cache hierarchy of a location
+            # location_ids = {user['location_id'] for user in users if user['location_id']}
+            # grouped_ancestor_locs = {}
+            # if location_ids:
+            #     grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
+            # self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
+            pass
 
         loc_names_dict = self._locations_names_dict(users)
         for user in users:
@@ -410,8 +416,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 row_data.append(last_build_profile_name)
 
             if self.include_location_data():
-                location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
-                                                    self.required_loc_columns)
+                location_data = self.user_locations(user['location_id'])
                 row_data = location_data + row_data
 
             rows.append(row_data)
@@ -517,7 +522,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         location_colums = []
 
         if self.include_location_data():
-            location_colums = ['{} Name'.format(loc_col.name.title()) for loc_col in self.required_loc_columns]
+            # ToDo: make it simple, just include a column for all location types
+            # and change it to simply be the location type name
+            # Also, fix spelling of location_colums
+            location_colums = LocationType.objects.filter(domain=self.domain).values_list('name', flat=True)
 
         table[0] = location_colums + table[0]
 
