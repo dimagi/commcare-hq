@@ -1076,6 +1076,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # user.is_active concerns authentication - can a user log in?
         # domain_membership.is_active controls whether a user can access a domain
         # CommCareUsers are only in a single domain, so there's no distinction
+        if not domain_restricts_superusers(domain) and (
+            self.is_active and self.is_superuser
+        ):
+            return True
+
         domain_membership = self.get_domain_membership(domain)
         if domain_membership and self.is_active:
             return domain_membership.is_active
