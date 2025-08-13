@@ -71,6 +71,7 @@ ALL_REPORTS = [
     hqadmin.DeployHistoryReport,
     hqadmin.UCRDataLoadReport,
     hqadmin.FeaturePreviewStatsReport,
+    hqadmin.FeaturePreviewAuditReport,
     DomainForwardingRepeatRecords,
     DomainLinkHistoryReport,
     ApiRequestLogReport,

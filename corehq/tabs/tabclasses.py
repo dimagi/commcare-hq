@@ -54,6 +54,7 @@ from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     FeaturePreviewStatsReport,
+    FeaturePreviewAuditReport,
     UserAuditReport,
     UserListReport,
     UCRDataLoadReport,
@@ -2705,7 +2706,12 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [UserAuditReport, FeaturePreviewStatsReport, UCRDataLoadReport]
+            } for report in [
+                UserAuditReport,
+                FeaturePreviewStatsReport,
+                FeaturePreviewAuditReport,
+                UCRDataLoadReport,
+            ]
         ]))
         return sections
 

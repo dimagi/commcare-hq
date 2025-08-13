@@ -115,7 +115,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.simple.SimpleUsername',
-        'corehq.apps.reports.filters.simple.SimpleDomain',
+        'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
     ]
     emailable = False
     exportable = True
@@ -623,6 +623,73 @@ class FeaturePreviewStatsReport(AdminReport):
                 domain,
                 _("Not recorded"),
                 _("Not recorded"),
+            ])
+
+        return rows
+
+
+class FeaturePreviewAuditReport(AdminReport):
+    slug = 'feature_preview_audit_report'
+    name = gettext_lazy("Feature Preview Audit Report")
+
+    fields = [
+        'corehq.apps.reports.filters.simple.SimpleDomain',
+        'corehq.apps.reports.filters.select.FeatureFilter',
+    ]
+    emailable = False
+    exportable = True
+
+    @property
+    def selected_domain(self):
+        selected_domain = self.request.GET.get('domain_name', None)
+        return selected_domain or None
+
+    def selected_feature(self):
+        return self.get_request_param(FeatureFilter.slug, None, from_json=True)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(gettext_lazy("Feature")),
+            DataTablesColumn(gettext_lazy("Action")),
+            DataTablesColumn(gettext_lazy("Changed By")),
+            DataTablesColumn(gettext_lazy("Changed At")),
+        )
+
+    @property
+    def rows(self):
+        if not self.selected_domain:
+            return []
+
+        base_filter = {
+            'namespace': NAMESPACE_DOMAIN,
+            'item': self.selected_domain
+        }
+
+        if self.selected_feature():
+            feature = find_preview_by_slug(self.selected_feature())
+            if not feature:
+                return []
+            base_filter['slug'] = feature.slug
+        else:
+            from corehq.feature_previews import all_previews
+            all_slugs = [preview.slug for preview in all_previews()]
+            base_filter['slug__in'] = all_slugs
+
+        rows = []
+        records = ToggleAudit.objects.filter(**base_filter)
+
+        for record in records:
+            action = _("Enabled")
+            if record.action == ToggleAudit.ACTION_REMOVE:
+                action = _("Disabled")
+            elif record.action == ToggleAudit.ACTION_UPDATE_RANDOMNESS:
+                action = _("Update Randomness")
+            rows.append([
+                find_preview_by_slug(record.slug).label,
+                action,
+                record.username,
+                record.created,
             ])
 
         return rows
