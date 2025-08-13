@@ -74,7 +74,6 @@ def get_case_pillow(
     exclude_ucrs=None,
     num_processes=1,
     process_num=0,
-    ucr_configs=None,
     skip_ucr=False,
     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
     topics=None,
@@ -106,11 +105,9 @@ def get_case_pillow(
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=run_migrations,
-        ucr_configs=ucr_configs
     )
     ucr_dr_processor = get_data_registry_ucr_processor(
         run_migrations=run_migrations,
-        ucr_configs=ucr_configs
     )
     case_to_es_processor = BulkElasticProcessor(
         adapter=case_adapter,
