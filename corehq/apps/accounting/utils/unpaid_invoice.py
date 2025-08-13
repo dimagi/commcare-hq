@@ -297,7 +297,6 @@ class Downgrade(UnpaidInvoiceAction):
             subscriptions_to_downgrade = _(
                 "subscriptions on {}".format(invoice.account.name)
             )
-            bcc = None
         else:
             subject = _(
                 "CommCare Alert: {}'s subscription will be paused after tomorrow!".format(
@@ -306,7 +305,6 @@ class Downgrade(UnpaidInvoiceAction):
             subscriptions_to_downgrade = _(
                 "subscription for {}".format(invoice.get_domain())
             )
-            bcc = [settings.GROWTH_EMAIL]
 
         context.update({
             'subscriptions_to_downgrade': subscriptions_to_downgrade
@@ -317,7 +315,6 @@ class Downgrade(UnpaidInvoiceAction):
             render_to_string('accounting/email/downgrade_warning.html', context),
             render_to_string('accounting/email/downgrade_warning.txt', context),
             cc=[settings.ACCOUNTS_EMAIL],
-            bcc=bcc,
             email_from=get_dimagi_from_email())
         communication_model.objects.create(
             invoice=invoice,
@@ -326,10 +323,6 @@ class Downgrade(UnpaidInvoiceAction):
 
     @staticmethod
     def _send_overdue_notice(invoice, communication_model, context):
-        if invoice.is_customer_invoice:
-            bcc = None
-        else:
-            bcc = [settings.GROWTH_EMAIL]
         send_HTML_email(
             _('CommCare Billing Statement {} days Overdue for {}'.format(
                 DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE, context['domain_or_account']
@@ -338,7 +331,6 @@ class Downgrade(UnpaidInvoiceAction):
             render_to_string('accounting/email/overdue_notice.html', context),
             render_to_string('accounting/email/overdue_notice.txt', context),
             cc=[settings.ACCOUNTS_EMAIL],
-            bcc=bcc,
             email_from=get_dimagi_from_email()
         )
         communication_model.objects.create(

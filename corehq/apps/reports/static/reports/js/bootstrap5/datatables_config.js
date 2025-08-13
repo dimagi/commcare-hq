@@ -173,7 +173,7 @@ var HQReportDataTables = function (options) {
                     if ('context' in data) {
                         let iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
                         import("reports/js/bootstrap5/maps_utils").then(function (mapsUtils) {
-                            mapsUtils.load(data['context'], iconPath);
+                            mapsUtils.default.load(data['context'], iconPath);
                         });
                     }
                     if (self.successCallbacks) {

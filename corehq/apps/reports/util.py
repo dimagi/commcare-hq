@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 import math
@@ -35,6 +36,7 @@ from corehq.form_processor.models import XFormInstance
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
 
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
@@ -48,7 +50,7 @@ def user_list(domain):
     #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
-    users.sort(key=lambda user: (not user.is_active, user.username))
+    users.sort(key=lambda user: (not user.is_active_in_domain(domain), user.username))
     return users
 
 
@@ -149,43 +151,20 @@ def get_user_id_from_form(form_id):
     return user_id
 
 
-def namedtupledict(name, fields):
-    cls = namedtuple(name, fields)
-
-    def __getitem__(self, item):
-        if isinstance(item, str):
-            warnings.warn(
-                "namedtuple fields should be accessed as attributes",
-                DeprecationWarning,
-            )
-            return getattr(self, item)
-        return cls.__getitem__(self, item)
-
-    def get(self, item, default=None):
-        warnings.warn(
-            "namedtuple fields should be accessed as attributes",
-            DeprecationWarning,
-        )
-        return getattr(self, item, default)
-    # return a subclass of cls that has the above __getitem__
-    return type(name, (cls,), {
-        '__getitem__': __getitem__,
-        'get': get,
-    })
-
-
-class SimplifiedUserInfo(
-        namedtupledict('SimplifiedUserInfo', (
-            'user_id',
-            'username_in_report',
-            'raw_username',
-            'is_active',
-            'location_id',
-        ))):
+@dataclasses.dataclass
+class SimplifiedUserInfo:
+    user_id: str
+    username_in_report: str
+    raw_username: str
+    is_active: bool
+    location_id: str
+    _active_by_domain: dict
 
     ES_FIELDS = [
         '_id', 'domain', 'username', 'first_name', 'last_name',
-        'doc_type', 'is_active', 'location_id', '__group_ids'
+        'doc_type', 'is_active', 'location_id', '__group_ids',
+        'domain_membership.is_active', 'domain_memberships.is_active',
+        'domain_membership.domain', 'domain_memberships.domain',
     ]
 
     @property
@@ -195,19 +174,40 @@ class SimplifiedUserInfo(
             return getattr(self, '__group_ids')
         return Group.by_user_id(self.user_id, False)
 
+    def is_active_in_domain(self, domain):
+        return self.is_active and self._active_by_domain.get(domain, False)
+
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            warnings.warn(
+                "namedtuple fields should be accessed as attributes",
+                DeprecationWarning,
+            )
+            return getattr(self, item)
+        return super().__getitem__(self, item)
+
+    def get(self, item, default=None):
+        warnings.warn(
+            "namedtuple fields should be accessed as attributes",
+            DeprecationWarning,
+        )
+        return getattr(self, item, default)
+
 
 def _report_user(user):
     """
     Accepts a user object or a dict such as that returned from elasticsearch.
-    Make sure the following fields (attributes) are available:
-    _id, username, first_name, last_name, doc_type, is_active
+    Make sure the SimplifiedUserInfo.ES_FIELDS attributes are available
     """
     if not isinstance(user, dict):
-        user_report_attrs = [
+        kwargs = {attr: getattr(user, attr) for attr in [
             'user_id', 'username_in_report', 'raw_username', 'is_active', 'location_id'
-        ]
-        return SimplifiedUserInfo(**{attr: getattr(user, attr)
-                                     for attr in user_report_attrs})
+        ]}
+        kwargs['_active_by_domain'] = {
+            dm.domain: dm.is_active for dm in user.domain_memberships
+        }
+        user = SimplifiedUserInfo(**kwargs)
+        return user
     else:
         username = user.get('username', '')
         raw_username = (username.split("@")[0]
@@ -216,12 +216,16 @@ def _report_user(user):
         first = user.get('first_name', '')
         last = user.get('last_name', '')
         username_in_report = _get_username_fragment(raw_username, first, last)
+        dms = user.get('domain_membership', user.get('domain_memberships'))
+        dms = dms if isinstance(dms, list) else [dms]
+        active_by_domain = {dm['domain']: dm.get('is_active', True) for dm in dms}
         info = SimplifiedUserInfo(
             user_id=user.get('_id', ''),
             username_in_report=username_in_report,
             raw_username=raw_username,
             is_active=user.get('is_active', None),
-            location_id=user.get('location_id', None)
+            location_id=user.get('location_id', None),
+            _active_by_domain=active_by_domain,
         )
         if '__group_ids' in user:
             group_ids = user['__group_ids']
@@ -1070,3 +1074,14 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
         date_of_use = DateTimeProperty.deserialize(date_of_use)
 
     return version_in_use, date_of_use
+
+
+def report_date_to_json(date, timezone, date_format, is_phonetime=True):
+    if date:
+        if is_phonetime:
+            user_time = PhoneTime(date, timezone).user_time(timezone)
+        else:
+            user_time = ServerTime(date).user_time(timezone)
+        return user_time.ui_string(date_format)
+    else:
+        return ''

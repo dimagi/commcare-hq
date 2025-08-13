@@ -225,7 +225,10 @@ class EditRepeaterView(BaseRepeaterView):
             )
         else:
             repeater_id = self.kwargs['repeater_id']
-            repeater = Repeater.objects.get(id=repeater_id)
+            try:
+                repeater = Repeater.objects.get(id=repeater_id, domain=self.domain)
+            except Repeater.DoesNotExist:
+                raise Http404()
             data = repeater.to_json()
             data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(

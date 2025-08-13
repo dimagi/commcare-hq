@@ -126,7 +126,8 @@
         "ansi-regex": "^5.0.1",
         "json-schema": "^0.4.0",
         "nanoid": "^3.1.31",
-        "word-wrap": "@aashutoshrathi/word-wrap"
+        "word-wrap": "@aashutoshrathi/word-wrap",
+        "form-data": "^3.0.4"
     },
     "scripts": {
         "postinstall": "yarn run -s build:modernizr",

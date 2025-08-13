@@ -618,7 +618,7 @@ class TestReportFilterSubclasses(TestCase):
         self.assertEqual(pinned_filter.value, ['project_data', 't__6', 't__3'])
         expected_value = [
             {'id': 'project_data', 'text': '[Project Data]'},
-            {'id': 't__6', 'text': '[Web Users]'},
+            {'id': 't__6', 'text': '[Active Web Users]'},
             {'id': 't__3', 'text': '[Unknown Users]'},
         ]
         self.assertEqual(
@@ -669,7 +669,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         super().setUpClass()
 
         cls.deactivated_user = CommCareUser.create(cls.domain, 'deactivated-user-test', 'Passw0rd!', None, None)
-        cls.deactivated_user.is_active = False
+        cls.deactivated_user.set_is_active(cls.domain, False)
         user_adapter.index(cls.deactivated_user)
         cls.deactivated_user.save()
 

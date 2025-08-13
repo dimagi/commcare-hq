@@ -37,9 +37,7 @@ RUN apt-get update \
      libmagic1 \
      libpq5 \
      # for xmlsec on Python 3.13
-     libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config \
-     # for `no-binary-package lxml` in pyproject.toml
-     libz-dev \
+     libxml2 libxmlsec1 libxmlsec1-openssl \
      make \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
 
@@ -61,16 +59,18 @@ RUN npm -g install \
 RUN git config --global url."https://".insteadOf git://
 
 WORKDIR /vendor
+
+# setup venv
+COPY .python-version pyproject.toml uv.lock /tmp-project/
+RUN --mount=type=cache,target=/root/.cache/uv \
+  uv sync --locked --group=prod --no-dev --project=/tmp-project --no-install-project \
+  && rm -rf /tmp-project
+
 RUN mkdir /sharedfiles
 RUN groupadd -r cchq && \
     useradd -r -m -g cchq cchq && \
     chown cchq:cchq /vendor /sharedfiles
 USER cchq:cchq
-
-COPY .python-version pyproject.toml uv.lock /tmp-project/
-RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --locked --group=prod --no-dev --project=/tmp-project --no-install-project \
-  && rm -rf /tmp-project
 
 COPY --chown=cchq:cchq package.json /vendor/
 RUN npm shrinkwrap && \

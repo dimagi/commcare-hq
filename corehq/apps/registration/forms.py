@@ -63,7 +63,7 @@ class RegisterWebUserForm(forms.Form):
     company_name = forms.CharField(
         required=False,
         label=_("Organization or Company"),
-        max_length=50,
+        max_length=100,
     )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
@@ -493,7 +493,9 @@ class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):
     """
     For Mobile Workers to confirm their accounts using Email.
     """
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs['readonly'] = 'readonly'
 
 
 class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):

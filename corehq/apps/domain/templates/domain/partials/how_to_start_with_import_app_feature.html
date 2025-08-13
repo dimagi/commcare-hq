@@ -1,0 +1,23 @@
+{% load i18n %}
+
+<div class="alert alert-info">
+  <p>
+    {% blocktrans %}
+      This tool helps you import an app from another CommCare server to your
+      current CommCare server.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      To start, simply paste the URL of the app you want to import.
+    {% endblocktrans %}
+  </p>
+
+  <p><strong>{% trans "Important to Note:" %}</strong></p>
+  <ul>
+    <li>{% trans "This will not copy users and groups." %}</li>
+    <li>{% trans "This will not copy organization structure or levels." %}</li>
+    <li>{% trans "This will not copy user fields." %}</li>
+    <li>{% trans "This will not copy lookup tables (aka fixtures)." %}</li>
+  </ul>
+</div>

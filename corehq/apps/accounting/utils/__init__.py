@@ -510,3 +510,11 @@ def count_form_submitting_mobile_workers(domain, start, end):
 def self_signup_workflow_in_progress(domain):
     from corehq.apps.registration.models import SelfSignupWorkflow
     return SelfSignupWorkflow.get_in_progress_for_domain(domain)
+
+
+def is_date_range_overlapping(start_1, end_1, start_2, end_2):
+    if end_1 is None:
+        end_1 = datetime.date.max
+    if end_2 is None:
+        end_2 = datetime.date.max
+    return start_1 < end_2 and start_2 < end_1

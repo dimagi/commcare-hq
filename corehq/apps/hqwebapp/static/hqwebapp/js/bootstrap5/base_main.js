@@ -11,6 +11,5 @@ import "analytix/js/google";
 import "analytix/js/hubspot";
 import "analytix/js/noopMetrics";
 import "analytix/js/gtx";
-import "hqwebapp/js/bootstrap5/mobile_experience_warning";
 
 // nothing to do, this is just to define the dependencies for hqwebapp/base.html
