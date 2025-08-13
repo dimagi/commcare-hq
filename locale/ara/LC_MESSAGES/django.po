@@ -10713,36 +10713,6 @@ msgstr ""
 "href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen'"
 " target='_blank'>موقع المساعدة</a>."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing"
-msgstr "الطباعة"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Document Template"
-msgstr "قالب المستند"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Opens file in new tab."
-msgstr "يفتح الملف في تبويب جديد."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Open HTML"
-msgstr "فتح HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Upload HTML"
-msgstr "رفع HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Replace HTML"
-msgstr "استبدال HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing the case detail is not supported on this version of CommCare"
-msgstr "طباعة تفاصيل الحالة غير مدعومة في هذا الإصدار من CommCare"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Custom Case List XML"
 msgstr "XML قائمة الحالات المخصصة"
@@ -11198,10 +11168,6 @@ msgstr "XML قائمة الحالات المخصصة"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Case tile configuration"
 msgstr "إعدادات مربعات الحالات"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
-msgid "Print template"
-msgstr "قالب الطباعة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Search properties"
@@ -15434,16 +15400,6 @@ msgid "List is empty."
 msgstr "القائمة فارغة."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "إخفاء الخريطة"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "عرض الكل"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "تصفية البحث"
 
@@ -15456,6 +15412,16 @@ msgstr "تحديد الكل"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "ترتيب حسب"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "إخفاء الخريطة"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "عرض الكل"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -16645,7 +16611,9 @@ msgid "Please provide a value or use the 'empty' or 'missing' match types."
 msgstr "يرجى إدخال قيمة أو استخدام نوع المطابقة 'فارغ' أو 'مفقود'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "نوع البيانات '{}' لا يمكن أن يكون له نوع المطابقة '{}'."
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -22105,6 +22073,7 @@ msgstr "ملخص الاستخدام"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/reports/filters/select.py
 msgid "Feature"
 msgstr "الميزة"
 
@@ -30471,6 +30440,30 @@ msgstr "لا يوجد تقييد لإعادة البناء مطلوب"
 msgid "UCR Domains Data Report"
 msgstr "تقرير بيانات نطاقات UCR"
 
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Stats Report"
+msgstr "معاينات الميزات"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled By"
+msgstr "مفعل"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled At"
+msgstr "مفعل"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Not Checked"
+msgid "Not recorded"
+msgstr "لم يتم الفحص"
+
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "اسم النطاق"
@@ -30813,10 +30806,6 @@ msgstr "صوت"
 #: corehq/apps/hqmedia/controller.py
 msgid "video"
 msgstr "فيديو"
-
-#: corehq/apps/hqmedia/controller.py
-msgid "text"
-msgstr "نص"
 
 #: corehq/apps/hqmedia/models.py
 msgid "Generic Multimedia"
@@ -31219,10 +31208,6 @@ msgstr "تم العثور على أخطاء"
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
 msgid "New Audio Uploaded Successfully"
 msgstr "تم رفع ملف صوتي جديد بنجاح"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "New Template Uploaded Successfully"
-msgstr "تم رفع القالب الجديد بنجاح"
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
 msgid "View Full Size"
@@ -38433,6 +38418,12 @@ msgstr "حالة السجل"
 msgid "Rebuild restriction feature flag status"
 msgstr "حالة ميزة تقييد إعادة البناء"
 
+#: corehq/apps/reports/filters/select.py
+#, fuzzy
+#| msgid "Select Status"
+msgid "Select Feature"
+msgstr "اختر الحالة"
+
 #: corehq/apps/reports/filters/simple.py
 #: corehq/motech/repeaters/views/repeat_records.py
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
@@ -44243,6 +44234,7 @@ msgstr "فشل طلب تسجيل الدخول الموحد"
 
 #: corehq/apps/sso/templates/sso/acs_errors.html
 #: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -44881,6 +44873,30 @@ msgstr ""
 "\n"
 "      يرجى التواصل مع مسؤول المشروع لاستعادة الوصول.\n"
 "    "
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid "Single Sign-On"
+msgid "Single Sign-On Error"
+msgstr "تسجيل الدخول الموحد"
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Invitation link has expired.\n"
+#| "                  Contact your project administrator to send new invite.\n"
+#| "                "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your project's\n"
+"                SSO settings. Please contact your project administrator to resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                  انتهت صلاحية رابط الدعوة.\n"
+"                  يرجى التواصل مع مسؤول المشروع لإرسال دعوة جديدة.\n"
+"                "
 
 #: corehq/apps/sso/templates/sso/sso_request_denied.html
 msgid "Single Sign-On Request Denied"
@@ -48665,9 +48681,14 @@ msgid "Require Account Confirmation?"
 msgstr "هل يتطلب تأكيد الحساب؟"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their email "
+#| "and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "لن يكون حساب المستخدم نشطًا حتى يؤكد بريده الإلكتروني ويعيّن كلمة مرور."
 
@@ -56271,6 +56292,12 @@ msgstr "لافتات نطاق مخصصة"
 msgid "App Dependencies"
 msgstr "اعتمادات التطبيق"
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "تعطيل قفل حساب العامل عبر الهاتف المحمول"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "تقارير منشئ التقارير"
@@ -57289,6 +57316,36 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "Printing"
+#~ msgstr "الطباعة"
+
+#~ msgid "Document Template"
+#~ msgstr "قالب المستند"
+
+#~ msgid "Opens file in new tab."
+#~ msgstr "يفتح الملف في تبويب جديد."
+
+#~ msgid "Open HTML"
+#~ msgstr "فتح HTML"
+
+#~ msgid "Upload HTML"
+#~ msgstr "رفع HTML"
+
+#~ msgid "Replace HTML"
+#~ msgstr "استبدال HTML"
+
+#~ msgid "Printing the case detail is not supported on this version of CommCare"
+#~ msgstr "طباعة تفاصيل الحالة غير مدعومة في هذا الإصدار من CommCare"
+
+#~ msgid "Print template"
+#~ msgstr "قالب الطباعة"
+
+#~ msgid "text"
+#~ msgstr "نص"
+
+#~ msgid "New Template Uploaded Successfully"
+#~ msgstr "تم رفع القالب الجديد بنجاح"
 
 #~ msgid "Cookies Required for CSRF"
 #~ msgstr "الكوكيز مطلوبة لـ CSRF"
