@@ -712,7 +712,7 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 class ConnectFormRepeaterPayloadGenerator(FormRepeaterJsonPayloadGenerator):
 
     def get_payload(self, repeat_record, form):
-        form_json = form.to_json()
+        form_json = super().get_payload(repeat_record, form)
         fields = ("domain", "id", "app_id", "build_id", "received_on", "metadata")
         constructed_dict = {}
         for field in fields:
