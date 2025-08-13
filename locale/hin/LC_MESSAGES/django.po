@@ -10794,36 +10794,6 @@ msgstr ""
 "href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-"
 "Tabs-on-Case-Detail-Screen' target='_blank'>सहायता साइट</a> पर और पढ़ें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing"
-msgstr "प्रिंटिंग"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Document Template"
-msgstr "दस्तावेज़ टेम्पलेट"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Opens file in new tab."
-msgstr "फ़ाइल को नए टैब में खोलता है।"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Open HTML"
-msgstr "HTML खोलें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Upload HTML"
-msgstr "HTML अपलोड करें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Replace HTML"
-msgstr "HTML बदलें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing the case detail is not supported on this version of CommCare"
-msgstr "इस CommCare संस्करण में केस विवरण प्रिंट करना समर्थित नहीं है"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Custom Case List XML"
 msgstr "कस्टम केस सूची XML"
@@ -11272,10 +11242,6 @@ msgstr "कस्टम केस सूची XML"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Case tile configuration"
 msgstr "केस टाइल विन्यास"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
-msgid "Print template"
-msgstr "प्रिंट टेम्पलेट"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Search properties"
@@ -15538,16 +15504,6 @@ msgid "List is empty."
 msgstr "सूची खाली है।"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "मानचित्र छुपाएँ"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "सभी दिखाएँ"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "खोज को परिष्कृत करें"
 
@@ -15560,6 +15516,16 @@ msgstr "सभी चुनें"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "क्रमबद्ध करें"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "मानचित्र छुपाएँ"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "सभी दिखाएँ"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -16764,7 +16730,9 @@ msgid "Please provide a value or use the 'empty' or 'missing' match types."
 msgstr "कृपया कोई मान दें या 'empty' या 'missing' मिलान प्रकार का उपयोग करें।"
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "डेटा प्रकार '{}' में मिलान प्रकार '{}' नहीं हो सकता।"
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -22236,6 +22204,7 @@ msgstr "उपयोग सारांश"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/reports/filters/select.py
 msgid "Feature"
 msgstr "फीचर"
 
@@ -30646,6 +30615,30 @@ msgstr "कोई पुनर्निर्माण प्रतिबंध 
 msgid "UCR Domains Data Report"
 msgstr "यूसीआर डोमेन डेटा रिपोर्ट"
 
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Stats Report"
+msgstr "फीचर प्रीव्यू"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled By"
+msgstr "सक्षम"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled At"
+msgstr "सक्षम"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Not Checked"
+msgid "Not recorded"
+msgstr "जाँचा नहीं गया"
+
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "डोमेन नाम"
@@ -30996,10 +30989,6 @@ msgstr "ऑडियो"
 #: corehq/apps/hqmedia/controller.py
 msgid "video"
 msgstr "वीडियो"
-
-#: corehq/apps/hqmedia/controller.py
-msgid "text"
-msgstr "पाठ"
 
 #: corehq/apps/hqmedia/models.py
 msgid "Generic Multimedia"
@@ -31403,10 +31392,6 @@ msgstr "त्रुटियाँ मिलीं"
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
 msgid "New Audio Uploaded Successfully"
 msgstr "नई ऑडियो सफलतापूर्वक अपलोड की गई"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "New Template Uploaded Successfully"
-msgstr "नया टेम्पलेट सफलतापूर्वक अपलोड किया गया"
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
 msgid "View Full Size"
@@ -38660,6 +38645,12 @@ msgstr "रिकॉर्ड स्थिति"
 msgid "Rebuild restriction feature flag status"
 msgstr "रीबिल्ड प्रतिबंध फीचर फ्लैग स्थिति"
 
+#: corehq/apps/reports/filters/select.py
+#, fuzzy
+#| msgid "Select Status"
+msgid "Select Feature"
+msgstr "स्थिति चुनें"
+
 #: corehq/apps/reports/filters/simple.py
 #: corehq/motech/repeaters/views/repeat_records.py
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
@@ -44530,6 +44521,7 @@ msgstr "सिंगल साइन-ऑन अनुरोध विफल ह�
 
 #: corehq/apps/sso/templates/sso/acs_errors.html
 #: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -45172,6 +45164,30 @@ msgstr ""
 "\n"
 "      कृपया एक्सेस पुनर्स्थापित करने के लिए प्रोजेक्ट व्यवस्थापक से संपर्क करें।\n"
 "    "
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid "Single Sign-On"
+msgid "Single Sign-On Error"
+msgstr "सिंगल साइन-ऑन"
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Invitation link has expired.\n"
+#| "                  Contact your project administrator to send new invite.\n"
+#| "                "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your project's\n"
+"                SSO settings. Please contact your project administrator to resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                  निमंत्रण लिंक की समय सीमा समाप्त हो गई है।\n"
+"                  नए निमंत्रण के लिए अपने प्रोजेक्ट व्यवस्थापक से संपर्क करें।\n"
+"                "
 
 #: corehq/apps/sso/templates/sso/sso_request_denied.html
 msgid "Single Sign-On Request Denied"
@@ -49042,9 +49058,14 @@ msgid "Require Account Confirmation?"
 msgstr "क्या खाता पुष्टि आवश्यक है?"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their email "
+#| "and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "उपयोगकर्ता का खाता तब तक सक्रिय नहीं होगा जब तक वे अपनी ईमेल की पुष्टि नहीं "
 "करते और पासवर्ड सेट नहीं करते।"
@@ -56702,6 +56723,12 @@ msgstr "कस्टम डोमेन बैनर"
 msgid "App Dependencies"
 msgstr "ऐप डिपेंडेंसीज़"
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "मोबाइल वर्कर लॉकआउट अक्षम करें"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "रिपोर्ट बिल्डर रिपोर्ट्स"
@@ -57722,6 +57749,36 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "Printing"
+#~ msgstr "प्रिंटिंग"
+
+#~ msgid "Document Template"
+#~ msgstr "दस्तावेज़ टेम्पलेट"
+
+#~ msgid "Opens file in new tab."
+#~ msgstr "फ़ाइल को नए टैब में खोलता है।"
+
+#~ msgid "Open HTML"
+#~ msgstr "HTML खोलें"
+
+#~ msgid "Upload HTML"
+#~ msgstr "HTML अपलोड करें"
+
+#~ msgid "Replace HTML"
+#~ msgstr "HTML बदलें"
+
+#~ msgid "Printing the case detail is not supported on this version of CommCare"
+#~ msgstr "इस CommCare संस्करण में केस विवरण प्रिंट करना समर्थित नहीं है"
+
+#~ msgid "Print template"
+#~ msgstr "प्रिंट टेम्पलेट"
+
+#~ msgid "text"
+#~ msgstr "पाठ"
+
+#~ msgid "New Template Uploaded Successfully"
+#~ msgstr "नया टेम्पलेट सफलतापूर्वक अपलोड किया गया"
 
 #~ msgid "Cookies Required for CSRF"
 #~ msgstr "CSRF के लिए कुकीज़ आवश्यक हैं"
