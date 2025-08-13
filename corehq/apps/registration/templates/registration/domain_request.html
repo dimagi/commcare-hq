@@ -10,8 +10,8 @@
     <div class="page-header">
       {% if is_new_user %}
         <h1>
-          {% blocktrans with request.couch_user.first_name as first_name %}
-            Welcome to CommCare HQ, {{ first_name }}!
+          {% blocktrans %}
+            Welcome to CommCare HQ, {{ user_name }}!
           {% endblocktrans %}
         </h1>
         <p class="lead">
@@ -28,8 +28,8 @@
         </p>
       {% else %}
         <h1>
-          {% blocktrans with request.couch_user.first_name as first_name %}
-            Let's add a new project, {{ first_name }}.
+          {% blocktrans %}
+            Let's add a new project, {{ user_name }}.
           {% endblocktrans %}
         </h1>
         <p class="lead">

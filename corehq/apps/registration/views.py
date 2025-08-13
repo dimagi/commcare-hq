@@ -331,6 +331,7 @@ class RegisterDomainView(TemplateView):
                 'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
             } for i in invitations],
             'show_multiple_invites': len(invitations) > 1,
+            'user_name': self.request.user.first_name or self.request.user.username,
         }
 
     @property
