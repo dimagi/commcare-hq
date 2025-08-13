@@ -151,31 +151,6 @@ def get_user_id_from_form(form_id):
     return user_id
 
 
-def namedtupledict(name, fields):
-    cls = namedtuple(name, fields)
-
-    def __getitem__(self, item):
-        if isinstance(item, str):
-            warnings.warn(
-                "namedtuple fields should be accessed as attributes",
-                DeprecationWarning,
-            )
-            return getattr(self, item)
-        return cls.__getitem__(self, item)
-
-    def get(self, item, default=None):
-        warnings.warn(
-            "namedtuple fields should be accessed as attributes",
-            DeprecationWarning,
-        )
-        return getattr(self, item, default)
-    # return a subclass of cls that has the above __getitem__
-    return type(name, (cls,), {
-        '__getitem__': __getitem__,
-        'get': get,
-    })
-
-
 @dataclasses.dataclass
 class SimplifiedUserInfo:
     user_id: str
@@ -201,6 +176,22 @@ class SimplifiedUserInfo:
 
     def is_active_in_domain(self, domain):
         return self.is_active and self._active_by_domain.get(domain, False)
+
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            warnings.warn(
+                "namedtuple fields should be accessed as attributes",
+                DeprecationWarning,
+            )
+            return getattr(self, item)
+        return super().__getitem__(self, item)
+
+    def get(self, item, default=None):
+        warnings.warn(
+            "namedtuple fields should be accessed as attributes",
+            DeprecationWarning,
+        )
+        return getattr(self, item, default)
 
 
 def _report_user(user):
