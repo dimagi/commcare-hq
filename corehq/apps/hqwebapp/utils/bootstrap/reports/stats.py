@@ -70,7 +70,7 @@ ALL_REPORTS = [
     hqadmin.UserAuditReport,
     hqadmin.DeployHistoryReport,
     hqadmin.UCRDataLoadReport,
-    hqadmin.FeaturePreviewStatsReport,
+    hqadmin.FeaturePreviewStatusReport,
     hqadmin.FeaturePreviewAuditReport,
     DomainForwardingRepeatRecords,
     DomainLinkHistoryReport,
