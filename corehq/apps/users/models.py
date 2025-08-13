@@ -1076,14 +1076,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # user.is_active concerns authentication - can a user log in?
         # domain_membership.is_active controls whether a user can access a domain
         # CommCareUsers are only in a single domain, so there's no distinction
-        domain_membership = self.get_domain_membership(domain)
-        if domain_membership and self.is_active:
+        if not domain_restricts_superusers(domain) and (
+            self.is_active and self.is_superuser
+        ):
+            return True
+
+        user = self.wrapped_correctly()
+        domain_membership = user.get_domain_membership(domain)
+        if domain_membership and user.is_active:
             return domain_membership.is_active
         return False
 
     def is_active_in_any_domain(self):
-        return self.is_active and [
-            dm.is_active for dm in self.domain_memberships
+        user = self.wrapped_correctly()
+        return user.is_active and [
+            dm.is_active for dm in user.domain_memberships
         ]
 
     def supports_lockout(self):
@@ -1458,6 +1465,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             'CommCareUser': CommCareUser,
             'FakeUser': FakeUser,
         }[doc_type].wrap(source)
+
+    def wrapped_correctly(self):
+        if not isinstance(self, (CommCareUser, WebUser)):
+            return self.wrap_correctly(self.to_json())
+        return self
 
     @classmethod
     @quickcache(['username'], skip_arg="strict")
