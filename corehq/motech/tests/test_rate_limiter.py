@@ -26,6 +26,9 @@ class TestRateLimitRepeater(TestCase):
 
     def test_not_global_rate_limited_and_no_attempts_check(self, global_allowed, repeater_attempts_allowed,
                                                            repeater_allowed, metrics_counter):
+        """
+        No attempts checked since feature flag is not enabled
+        """
         global_allowed.return_value = False
 
         # rate limited based on repeater rate limiting
