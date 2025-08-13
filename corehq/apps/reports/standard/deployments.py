@@ -334,7 +334,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         if self.include_location_data():
             location_ids = {user['location_id'] for user in users if user['location_id']}
-            grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
+            grouped_ancestor_locs = {}
+            if location_ids:
+                grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
             self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
 
         loc_names_dict = self._locations_names_dict(users)
