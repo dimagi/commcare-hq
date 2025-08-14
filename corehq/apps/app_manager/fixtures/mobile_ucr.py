@@ -19,7 +19,8 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_1,
     MOBILE_UCR_VERSION_2,
 )
-from corehq.apps.cloudcare.utils import get_web_apps_available_to_user
+from corehq.apps.app_manager.dbaccessors import get_app_cached
+from corehq.apps.cloudcare.utils import get_web_app_ids_available_to_user
 from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserReportsError,
@@ -135,7 +136,8 @@ def _parse_apps(restore_state, restore_user):
     elif toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY.enabled(restore_user.domain):
         needed_versions = set()
         mobile_ucr_configs = []
-        for app in get_web_apps_available_to_user(restore_user.domain, restore_user._couch_user):
+        for build_id in get_web_app_ids_available_to_user(restore_user.domain, restore_user._couch_user):
+            app = get_app_cached(restore_user.domain, build_id)
             if not is_remote_app(app):
                 needed_versions.add(app.get('mobile_ucr_restore_version', MOBILE_UCR_VERSION_2))
                 for module in app['modules']:
