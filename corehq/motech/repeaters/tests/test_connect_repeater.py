@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from unittest.mock import Mock, patch
@@ -62,7 +63,7 @@ def test_connect_repeater(mocked_super):
     repeater = ConnectFormRepeater(domain="test")
     generator = ConnectFormRepeaterPayloadGenerator(repeater)
     form = Mock()
-    mocked_super.return_value = MOCK_FORM
+    mocked_super.return_value = json.dumps(MOCK_FORM)
     payload = generator.get_payload(None, form)
     assert payload["metadata"] == FORM_META
     assert payload["form.connect_path.deliver"] == DELIVER_JSON["deliver"]
