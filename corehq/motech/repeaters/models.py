@@ -581,8 +581,6 @@ class Repeater(RepeaterSuperProxy):
             return repeat_record.handle_success(result)
         elif is_server_failure(self, result):
             return repeat_record.handle_server_failure(result)
-        elif is_traefik_proxy_404(result):
-            return repeat_record.handle_server_failure(result)
         elif result.status_code == HTTPStatus.TOO_MANY_REQUESTS:
             # TODO:
             #   self.max_workers = ceil(self.num_workers / 2)
@@ -1623,36 +1621,6 @@ def is_server_failure(repeater, result):
     retried after backing off.
     """
     return not is_response(result) or result.status_code in repeater.backoff_codes
-
-
-def is_traefik_proxy_404(response):
-    """
-    Treat 404 responses as server errors if they come from Traefik Proxy
-
-    Traefik Proxy returns (client error) 404 instead of (server error)
-    503 when it has not been configured with a catch-all router and is
-    unable to match a request to a router.
-    https://doc.traefik.io/traefik/getting-started/faq/#404-not-found
-
-    This can happen if the remote endpoint is temporarily unavailable,
-    so the request should be retried.
-
-    .. ATTENTION::
-
-       Note that Traefik's headers can be configured or removed in
-       some deployments, so this detection is not 100% reliable
-       across all Traefik installations, but it should work for
-       standard configurations.
-       -- Claude 3.7 Sonnet
-
-    """
-    return (
-        response.status_code == HTTPStatus.NOT_FOUND
-        and (
-            response.headers.get('X-Traefik-Err')
-            or 'traefik' in response.headers.get('Server', '').lower()
-        )
-    )
 
 
 def domain_can_forward(domain):
