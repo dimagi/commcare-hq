@@ -8,7 +8,7 @@ import pytest
 from freezegun import freeze_time
 
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, flag_disabled
 
 from ..const import State
 from ..models import FormRepeater, Repeater, RepeatRecord
@@ -309,6 +309,7 @@ def test_get_repeater_ids_by_domain():
 
 
 @flag_enabled('PROCESS_REPEATERS')
+@flag_enabled('BACKOFF_REPEATERS')
 class TestUpdateRepeater(SimpleTestCase):
 
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
@@ -332,6 +333,30 @@ class TestUpdateRepeater(SimpleTestCase):
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
+
+    @flag_disabled('BACKOFF_REPEATERS')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_does_not_reset_backoff_on_success_if_backoff_disabled(self, mock_get_repeater, __):
+        repeat_record_states = [State.Success, State.Fail, State.Empty, None]
+        mock_repeater = MagicMock()
+        mock_get_repeater.return_value = mock_repeater
+        update_repeater(repeat_record_states, 1, 'token', False)
+
+        mock_repeater.set_backoff.assert_not_called()
+        mock_repeater.reset_backoff.assert_not_called()
+
+    @flag_disabled('BACKOFF_REPEATERS')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_does_not_set_backoff_on_invalid_if_backoff_disabled(self, mock_get_repeater, __):
+        repeat_record_states = [State.Success, State.Fail, State.Empty, None]
+        mock_repeater = MagicMock()
+        mock_get_repeater.return_value = mock_repeater
+        update_repeater(repeat_record_states, 1, 'token', False)
+
+        mock_repeater.set_backoff.assert_not_called()
+        mock_repeater.reset_backoff.assert_not_called()
 
     @patch('corehq.motech.repeaters.tasks.process_repeater')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')

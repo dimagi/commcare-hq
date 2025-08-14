@@ -13,12 +13,12 @@ class RepeatRecordDisplay:
             record,
             timezone,
             date_format="%Y-%m-%d %H:%M",
-            process_repeaters_enabled=False,
+            backoff_repeaters_enabled=False,
     ):
         self.record = record
         self.timezone = timezone
         self.date_format = date_format
-        self.process_repeaters_enabled = process_repeaters_enabled
+        self.backoff_repeaters_enabled = backoff_repeaters_enabled
 
     @property
     def record_id(self):
@@ -34,7 +34,7 @@ class RepeatRecordDisplay:
             return '---'
         if self.record.repeater.is_paused:
             return _('Paused')
-        if self.process_repeaters_enabled:
+        if self.backoff_repeaters_enabled:
             next_check_ = self.record.repeater.next_attempt_at
         else:
             next_check_ = self.record.next_check
