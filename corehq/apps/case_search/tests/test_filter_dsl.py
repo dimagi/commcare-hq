@@ -4,7 +4,7 @@ from django.test import SimpleTestCase, TestCase
 
 import pytz
 from eulxml.xpath import parse as parse_xpath
-from freezegun import freeze_time
+from time_machine import travel
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from couchforms.geopoint import GeoPoint
@@ -66,14 +66,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         mock_get_timezone.assert_called_once()
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
-    @freeze_time('2023-05-16T13:01:51Z')
+    @travel('2023-05-16T13:01:51Z', tick=False)
     def test_system_datetime_property_comparison(self):
         parsed = parse_xpath("last_modified < datetime-add(now(), 'weeks', -2)")
         expected_filter = filters.date_range('modified_on', lt='2023-05-02T13:01:51+00:00')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
-    @freeze_time('2023-05-16T13:01:51Z')
+    @travel('2023-05-16T13:01:51Z', tick=False)
     def test_system_datetime_property_match(self):
         parsed = parse_xpath("last_modified = now()")
         expected_filter = filters.term('modified_on', '2023-05-16T13:01:51+00:00')
@@ -104,14 +104,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, query, is_raw_query=True)
 
-    @freeze_time('2021-08-02')
+    @travel('2021-08-02', tick=False)
     def test_date_comparison_today(self):
         parsed = parse_xpath("dob >= today()")
         expected_filter = case_property_date_range('dob', gte='2021-08-02')
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, query, is_raw_query=True)
 
-    @freeze_time('2023-05-16T13:01:51Z')
+    @travel('2023-05-16T13:01:51Z', tick=False)
     def test_date_property_comparison_now(self):
         parsed = parse_xpath("dob < datetime-add(now(), 'weeks', -2)")
         expected_filter = case_property_date_range('dob', lt='2023-05-02T13:01:51+00:00')
@@ -186,14 +186,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         with self.assertRaises(CaseFilterError):
             build_filter_from_ast(parse_xpath("parent/name > other_property"), SearchFilterContext("domain"))
 
-    @freeze_time('2021-08-02')
+    @travel('2021-08-02', tick=False)
     def test_filter_today(self):
         parsed = parse_xpath("age > today()")
         expected_filter = case_property_date_range('age', gt='2021-08-02')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
-    @freeze_time('2021-08-02')
+    @travel('2021-08-02', tick=False)
     def test_filter_date_today(self):
         parsed = parse_xpath("age > date(today())")
         expected_filter = case_property_date_range('age', gt='2021-08-02')

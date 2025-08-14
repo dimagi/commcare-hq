@@ -1,7 +1,7 @@
 import datetime
 
 from django.test import SimpleTestCase
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq.apps.reports.daterange import (
     get_all_daterange_choices,
@@ -23,7 +23,7 @@ class DateRangeTest(SimpleTestCase):
                 get_daterange_start_end_dates(daterange.slug)
 
 
-@freeze_time('1829-08-03')
+@travel('1829-08-03', tick=False)
 class KnownRangesTests(SimpleTestCase):
 
     def setUp(self):
@@ -83,7 +83,7 @@ class KnownRangesTests(SimpleTestCase):
     def test_currentindianfinancialyear(self):
         def check_dates(on_date, expected_start_date, expected_end_date):
             date_class = datetime.date
-            with freeze_time(on_date):
+            with travel(on_date, tick=False):
                 start_date, end_date = get_daterange_start_end_dates('currentindianfinancialyear')
 
                 # to avoid false positives when compared with mock

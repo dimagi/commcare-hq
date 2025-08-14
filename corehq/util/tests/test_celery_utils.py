@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 
 import pytest
 from celery.schedules import crontab
-from freezegun import freeze_time
+from time_machine import travel
 from nose.tools import assert_equal, assert_raises
 from testil import eq
 
@@ -109,6 +109,6 @@ TEST_CASES = make_cases()
 @pytest.mark.parametrize("name", TEST_CASES)
 def test_run_periodic_task_again(name):
     run_every, last_run, duration, expected, now = TEST_CASES[name]
-    with freeze_time(now):
+    with travel(now, tick=False):
         run_again = run_periodic_task_again(run_every, last_run, duration)
     eq(run_again, expected)

@@ -29,7 +29,7 @@ class MaxTestTimePlugin:
 
     def __init__(self):
         self.limits = None
-        self.time = time.time  # evade freezegun
+        self.time = time.time  # evade time-machine
 
     @pytest.hookimpl(wrapper=True)
     def pytest_runtest_setup(self, item):
