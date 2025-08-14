@@ -83,12 +83,8 @@
       </div>
     {% endif %}
     <div class="panel panel-modern-gray">
-      <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-          {% trans "Your New Project Space" %}
-        </h4>
-      </div>
       <div class="panel-body">
+        <h4>{% trans "Your New Project Space" %}</h4>
         <p>
           {% blocktrans %}
             A
@@ -102,42 +98,64 @@
           {% endblocktrans %}
         </p>
 
+        <div class="spacer"></div>
+
         {% if not is_new_user %}
           <div class="alert alert-info">
-            <h5><b>{% trans "Subscription" %}</b></h5>
-            <p>
-              {% blocktrans %}
-                All new projects start on CommCare's free edition. Once you
-                create a new project, you can
-                <a href="{{ pricing_page_url }}" target="_blank"><b>upgrade</b></a>
-                your subscription.
-              {% endblocktrans %}
-            </p>
-            <h5><b>{% trans "Server Location" %}</b></h5>
-            <p>
-              {% if server_display %}
-                {% blocktrans with server_display.hr_name as server_location %}
-                  This project will be hosted on the {{ server_location }} server.
-                {% endblocktrans %}
-              {% else %}
-                {% blocktrans %}
-                  This project will be hosted on the current server.
-                {% endblocktrans %}
-              {% endif %}
-              {% blocktrans %}
-                To select a different server, log into that server's site
-                before creating your project. Please note: projects
-                <strong>cannot</strong> be transferred between servers
-                after creation.
-              {% endblocktrans %}
-            </p>
+            <div class="row">
+              <div class="col-xs-1">
+                {% comment %}TODO: briefcase icon{% endcomment %}
+              </div>
+              <div class="col-xs-11">
+                <h5><b>{% trans "Subscription" %}</b></h5>
+                <p>
+                  {% blocktrans %}
+                    All new projects start on CommCare's free edition. Once you
+                    create a new project, you can
+                    <a href="{{ pricing_page_url }}" target="_blank"
+                      ><b>upgrade</b></a
+                    >
+                    your subscription.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-xs-1">
+                {% comment %}TODO: globe icon{% endcomment %}
+              </div>
+              <div class="col-xs-11">
+                <h5><b>{% trans "Server Location" %}</b></h5>
+                <p>
+                  {% if server_display %}
+                    {% blocktrans with server_display.hr_name as server_location %}
+                      This project will be hosted on the {{ server_location }}
+                      server.
+                    {% endblocktrans %}
+                  {% else %}
+                    {% blocktrans %}
+                      This project will be hosted on the current server.
+                    {% endblocktrans %}
+                  {% endif %}
+                  {% blocktrans %}
+                    To select a different server, log into that server's site
+                    before creating your project. Please note: projects
+                    <strong>cannot</strong> be transferred between servers after
+                    creation.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
           </div>
         {% else %}
           <div class="spacer"></div>
         {% endif %}
-
-        {% crispy form %}
       </div>
+    </div>
+
+    <div class="panel panel-modern-gray">
+      <div class="panel-body">{% crispy form %}</div>
     </div>
   </div>
 {% endblock %}
