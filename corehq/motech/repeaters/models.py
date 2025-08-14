@@ -76,6 +76,7 @@ from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, router
 from django.db.models import Min
 from django.db.models.base import Deferred
@@ -298,6 +299,18 @@ class Repeater(RepeaterSuperProxy):
         choices=list(zip(ALL_REQUEST_METHODS, ALL_REQUEST_METHODS)),
         default=REQUEST_POST,
         max_length=16,
+    )
+    incl_backoff_codes = ArrayField(
+        base_field=models.IntegerField(),
+        default=list,
+        help_text=_('Also back off / retry these HTTP response codes'),
+        size=None,
+    )
+    excl_backoff_codes = ArrayField(
+        base_field=models.IntegerField(),
+        default=list,
+        help_text=_('Do not back off / retry these HTTP response codes'),
+        size=None,
     )
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
