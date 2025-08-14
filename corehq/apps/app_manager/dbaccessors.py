@@ -172,7 +172,7 @@ def get_current_app_version(domain, app_id):
     return result['value']['version']
 
 
-def get_current_app_doc(domain, app_id):
+def get_app_doc(domain, app_id):
     from .models import Application
     app = Application.get_db().get(app_id)
     if app.get('domain', None) != domain:
@@ -181,7 +181,7 @@ def get_current_app_doc(domain, app_id):
 
 
 def get_current_app(domain, app_id):
-    return wrap_app(get_current_app_doc(domain, app_id))
+    return wrap_app(get_app_doc(domain, app_id))
 
 
 def get_app_cached(domain, app_id):
@@ -216,7 +216,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
     Here are some common usages and the simpler dbaccessor alternatives:
         current_app = get_app(domain, app_id)
-                    = get_current_app_doc(domain, app_id)
+                    = get_app_doc(domain, app_id)
         latest_released_build = get_app(domain, app_id, latest=True)
                               = get_latest_released_app_doc(domain, app_id)
         latest_build = get_app(domain, app_id, latest=True, target='build')
@@ -245,7 +245,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             # If the app_id passed in was the working copy, just use that app.
             # If it's a build, get the working copy.
             if app.get('copy_of'):
-                app = get_current_app_doc(domain, app_id)
+                app = get_app_doc(domain, app_id)
         else:
             app = get_latest_released_app_doc(domain, app_id) or app
 
