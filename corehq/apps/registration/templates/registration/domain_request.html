@@ -29,18 +29,13 @@
       {% else %}
         <h1>
           {% blocktrans %}
-            Let's add a new project, {{ user_name }}.
+            Let's add a new project, {{ user_name }}!
           {% endblocktrans %}
         </h1>
         <p class="lead">
           {% if invitation_links %}
             {% blocktrans %}
               Please accept an invitation or create your own project space.
-            {% endblocktrans %}
-          {% else %}
-            {% blocktrans %}
-              Create a project space below as a separate sandbox for new
-              applications, users, and form submissions.
             {% endblocktrans %}
           {% endif %}
         </p>
@@ -90,29 +85,50 @@
     <div class="panel panel-modern-gray">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">
-          {% trans "Create a New Project Space" %}
+          {% trans "Your New Project Space" %}
         </h4>
       </div>
       <div class="panel-body">
         <p>
           {% blocktrans %}
-            Your project space contains all form submissions from your CommCare
-            mobile applications and tools to help you easily create, deploy, and monitor
-            your applications and workers.
+            A
+            <a
+              href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2932637701/Project+Space+Overview"
+              target="_blank"
+              ><b>project space</b></a
+            >
+            is your top-level environment in CommCare. It's where you build
+            applications, manage users, track data, and configure settings.
           {% endblocktrans %}
         </p>
 
         {% if not is_new_user %}
           <div class="alert alert-info">
+            <h5><b>{% trans "Subscription" %}</b></h5>
             <p>
               {% blocktrans %}
-                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.
+                All new projects start on CommCare's free edition. Once you
+                create a new project, you can
+                <a href="{{ pricing_page_url }}" target="_blank"><b>upgrade</b></a>
+                your subscription.
               {% endblocktrans %}
             </p>
+            <h5><b>{% trans "Server Location" %}</b></h5>
             <p>
+              {% if server_display %}
+                {% blocktrans with server_display.hr_name as server_location %}
+                  This project will be hosted on the {{ server_location }} server.
+                {% endblocktrans %}
+              {% else %}
+                {% blocktrans %}
+                  This project will be hosted on the current server.
+                {% endblocktrans %}
+              {% endif %}
               {% blocktrans %}
-                <a href="https://dimagi.com/commcare/enterprise/" target="_blank">Learn more about CommCare Enterprise</a>
-                if you would like to link project spaces together under one account.
+                To select a different server, log into that server's site
+                before creating your project. Please note: projects
+                <strong>cannot</strong> be transferred between servers
+                after creation.
               {% endblocktrans %}
             </p>
           </div>
