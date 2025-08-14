@@ -4,7 +4,6 @@ import pytest
 from celery.schedules import crontab
 from time_machine import travel
 from nose.tools import assert_equal, assert_raises
-from testil import eq
 
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
@@ -36,7 +35,7 @@ def test_deserialize_run_every_setting():
 
 
 def make_cases():
-    now = datetime.utcnow()
+    now = datetime(2025, 6, 5, 4, 3, 2)
     all_hours = list(range(0, 24))
     all_hours_except_now = list(set(all_hours) - {now.hour})
     one_second = timedelta(seconds=1)
@@ -111,4 +110,4 @@ def test_run_periodic_task_again(name):
     run_every, last_run, duration, expected, now = TEST_CASES[name]
     with travel(now, tick=False):
         run_again = run_periodic_task_again(run_every, last_run, duration)
-    eq(run_again, expected)
+    assert run_again == expected
