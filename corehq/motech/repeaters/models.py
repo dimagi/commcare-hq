@@ -72,6 +72,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from itertools import chain
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -433,6 +434,11 @@ class Repeater(RepeaterSuperProxy):
         # which they were registered.
         num_workers = self.max_workers or settings.DEFAULT_REPEATER_WORKERS
         return min(num_workers, settings.MAX_REPEATER_WORKERS)
+
+    @property
+    def backoff_codes(self):
+        codes = set(chain(HTTP_STATUS_BACK_OFF, self.incl_backoff_codes))
+        return list(codes - set(self.excl_backoff_codes))
 
     def set_backoff(self):
         self.next_attempt_at = self._get_next_attempt_at(self.last_attempt_at)
