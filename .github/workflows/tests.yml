@@ -28,7 +28,7 @@ jobs:
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
       REUSE_DB: true  # do not drop databases on completion to save time
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
     - name: Docker info
