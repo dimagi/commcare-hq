@@ -834,7 +834,7 @@ def paginate_enterprise_users(request, domain):
                 'profile': profile.name if profile else None,
                 'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
                 'loginAsUser': web_user.username,
-                'is_active': mobile_user.is_active,
+                'is_active': mobile_user.is_active_in_domain(mobile_user.domain),
             })
 
     return JsonResponse({
@@ -1723,7 +1723,8 @@ def change_password(request, domain, login_id):
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
     json_dump = {}
     if (not commcare_user or not user_can_access_other_user(domain, request.couch_user, commcare_user)
-            or (toggles.TWO_STAGE_USER_PROVISIONING.enabled(domain) and commcare_user.self_set_password)):
+            or (domain_has_privilege(domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                and commcare_user.self_set_password)):
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":

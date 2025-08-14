@@ -26,6 +26,7 @@ from couchdbkit.exceptions import (
 
 from django.core.exceptions import ValidationError
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
 from corehq.apps.custom_data_fields.models import (
@@ -53,7 +54,6 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.model_log import InviteModelAction
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, INVITATION_CHANGE_VIA_BULK_IMPORTER
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, TABLEAU_USER_SYNCING
 from corehq.apps.sms.util import validate_phone_number
 
 from dimagi.utils.logging import notify_error
@@ -89,14 +89,14 @@ def check_headers(user_specs, domain, upload_couch_user, is_web_upload=False):
                 ))
             headers.discard(old_name)
 
-    if is_web_upload:
+    if is_web_upload and toggles.DEACTIVATE_WEB_USERS.enabled(domain):
         conditionally_allowed_headers.add('is_active_in_domain')
-    if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+    if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         conditionally_allowed_headers.add('domain')
 
     if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
         conditionally_allowed_headers.add('deactivate_after')
-    if TABLEAU_USER_SYNCING.enabled(domain) and upload_couch_user.has_permission(
+    if toggles.TABLEAU_USER_SYNCING.enabled(domain) and upload_couch_user.has_permission(
             domain,
             get_permission_name(HqPermissions.edit_user_tableau_config)
     ):

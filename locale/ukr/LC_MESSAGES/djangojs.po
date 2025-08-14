@@ -3614,6 +3614,16 @@ msgid "Error determining number of matching users"
 msgstr "Помилка при визначенні кількості відповідних користувачів"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Unavailable"
+msgstr "Недоступно"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#, fuzzy
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "Залишилося <%- days %> днів"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Будь ласка, введіть дійсну електронну адресу."
 

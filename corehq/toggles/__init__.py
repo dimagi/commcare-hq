@@ -820,13 +820,6 @@ BIOMETRIC_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-CASE_DETAIL_PRINT = StaticToggle(
-    'case_detail_print',
-    'MLabour: Allowing printing of the case detail, based on an HTML template',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-)
-
 COPY_FORM_TO_APP = StaticToggle(
     'copy_form_to_app',
     'Allow copying a form from one app to another',
@@ -2070,7 +2063,8 @@ ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TWO_STAGE_USER_PROVISIONING = StaticToggle(
+TWO_STAGE_USER_PROVISIONING = FrozenPrivilegeToggle(
+    privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
     TAG_SOLUTIONS_LIMITED,
@@ -2943,4 +2937,12 @@ CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
     label='Convert the group separator to a symbol XML can support',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+CHATBOT = StaticToggle(
+    slug='show_ocs_chatbot',
+    label='Show OCS Chatbot',
+    tag=TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Show OCS Chatbot',
 )
