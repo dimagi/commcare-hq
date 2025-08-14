@@ -1,7 +1,19 @@
 {% extends "hqwebapp/bootstrap3/base_navigation.html" %}
 {% load i18n %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+    <link
+      type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/less/register-domain.less' %}"
+    />
+  {% endcompress %}
+{% endblock stylesheets %}
 
 {% block title %}New Project Space{% endblock title %}
 
@@ -102,9 +114,12 @@
 
         {% if not is_new_user %}
           <div class="alert alert-info">
-            <div class="row">
-              <div class="col-xs-1">
-                {% comment %}TODO: briefcase icon{% endcomment %}
+            <div class="row icon-row">
+              <div class="col-xs-1 text-center">
+                <span class="fa-stack">
+                  <i class="fa fa-circle fa-stack-2x"></i>
+                  <i class="fa fa-briefcase fa-stack-1x"></i>
+                </span>
               </div>
               <div class="col-xs-11">
                 <h5><b>{% trans "Subscription" %}</b></h5>
@@ -121,9 +136,12 @@
               </div>
             </div>
 
-            <div class="row">
-              <div class="col-xs-1">
-                {% comment %}TODO: globe icon{% endcomment %}
+            <div class="row icon-row">
+              <div class="col-xs-1 text-center">
+                <span class="fa-stack">
+                  <i class="fa fa-circle fa-stack-2x"></i>
+                  <i class="fcc fcc-globe fa-stack-1x"></i>
+                </span>
               </div>
               <div class="col-xs-11">
                 <h5><b>{% trans "Server Location" %}</b></h5>
