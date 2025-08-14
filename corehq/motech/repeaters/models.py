@@ -438,7 +438,29 @@ class Repeater(RepeaterSuperProxy):
     @property
     def backoff_codes(self):
         codes = set(chain(HTTP_STATUS_BACK_OFF, self.incl_backoff_codes))
-        return list(codes - set(self.excl_backoff_codes))
+        return codes - set(self.excl_backoff_codes)
+
+    def add_backoff_code(self, code):
+        if code in self.backoff_codes:
+            return
+        if code in self.excl_backoff_codes:
+            self.excl_backoff_codes.remove(code)
+            update = {'excl_backoff_codes': self.excl_backoff_codes}
+        else:
+            self.incl_backoff_codes.append(code)
+            update = {'incl_backoff_codes': self.incl_backoff_codes}
+        Repeater.objects.filter(id=self.repeater_id).update(**update)
+
+    def remove_backoff_code(self, code):
+        if code not in self.backoff_codes:
+            return
+        if code in self.incl_backoff_codes:
+            self.incl_backoff_codes.remove(code)
+            update = {'incl_backoff_codes': self.incl_backoff_codes}
+        else:
+            self.excl_backoff_codes.append(code)
+            update = {'excl_backoff_codes': self.excl_backoff_codes}
+        Repeater.objects.filter(id=self.repeater_id).update(**update)
 
     def set_backoff(self):
         self.next_attempt_at = self._get_next_attempt_at(self.last_attempt_at)

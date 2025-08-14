@@ -59,7 +59,7 @@ class Command(BaseCommand):
         self.stdout.write(f'incl_backoff_codes: {repeater.incl_backoff_codes}')
         self.stdout.write(f'excl_backoff_codes: {repeater.excl_backoff_codes}')
 
-    def _set_max_workers(self, domain, repeater, max_workers):
+    def _set_max_workers(self, repeater, max_workers):
         if not 0 <= max_workers <= settings.MAX_REPEATER_WORKERS:
             self.stderr.write(
                 'max_workers must be between 0 and '
@@ -72,26 +72,6 @@ class Command(BaseCommand):
         repeater.max_workers = max_workers
         repeater.save(update_fields=['max_workers'])
 
-    def _add_backoff_code(self, domain, repeater, code):
-        if code in repeater.backoff_codes:
-            return
-        if code in repeater.excl_backoff_codes:
-            repeater.excl_backoff_codes.remove(code)
-            repeater.save(update_fields=['excl_backoff_codes'])
-        else:
-            repeater.incl_backoff_codes.append(code)
-            repeater.save(update_fields=['incl_backoff_codes'])
-
-    def _remove_backoff_code(self, domain, repeater, code):
-        if code not in repeater.backoff_codes:
-            return
-        if code in repeater.incl_backoff_codes:
-            repeater.incl_backoff_codes.remove(code)
-            repeater.save(update_fields=['incl_backoff_codes'])
-        else:
-            repeater.excl_backoff_codes.append(code)
-            repeater.save(update_fields=['excl_backoff_codes'])
-
     def handle(self, domain, repeater_id, *args, **options):
         set_max_workers = options.get('set_max_workers')
         add_backoff_code = options.get('add_backoff_code')
@@ -99,9 +79,9 @@ class Command(BaseCommand):
 
         repeater = self._get_repeater(domain, repeater_id)
         if set_max_workers is not None:
-            self._set_max_workers(domain, repeater, set_max_workers)
+            self._set_max_workers(repeater, set_max_workers)
         if add_backoff_code is not None:
-            self._add_backoff_code(domain, repeater, add_backoff_code)
+            repeater.add_backoff_code(add_backoff_code)
         if remove_backoff_code is not None:
-            self._remove_backoff_code(domain, repeater, remove_backoff_code)
+            repeater.remove_backoff_code(remove_backoff_code)
         self._get_repeater_info(repeater)

@@ -52,6 +52,7 @@ from ..const import (
     State,
 )
 from ..models import (
+    HTTP_STATUS_BACK_OFF,
     CaseRepeater,
     DataSourceRepeater,
     DataSourceUpdate,
@@ -1460,6 +1461,94 @@ class TestSetBackoff(TestCase):
         self.repeater.pause()
         repeater = Repeater.objects.get(id=self.repeater.repeater_id)
         assert repeater.next_attempt_at is None
+
+
+class TestBackoffCodes(TestCase):
+    domain = 'test-backoff-codes'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.connx = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            url='https://example.com/api/',
+        )
+
+    def setUp(self):
+        self.repeater = FormRepeater.objects.create(
+            domain=self.domain,
+            connection_settings_id=self.connx.id,
+            format='form_json',
+        )
+
+    def test_assumptions(self):
+        # The following tests assume that 502 is already in
+        # HTTP_STATUS_BACK_OFF and 404 is not
+        assert 502 in HTTP_STATUS_BACK_OFF
+        assert 404 not in HTTP_STATUS_BACK_OFF
+
+    def test_default_value(self):
+        assert self.repeater.backoff_codes == set(HTTP_STATUS_BACK_OFF)
+
+    def test_add_existing(self):
+        self.repeater.add_backoff_code(502)
+
+        reloaded = Repeater.objects.get(id=self.repeater.id)
+        for rep in (self.repeater, reloaded):
+            assert rep.incl_backoff_codes == []
+            assert rep.excl_backoff_codes == []
+            assert rep.backoff_codes == set(HTTP_STATUS_BACK_OFF)
+
+    def test_add_missing(self):
+        self.repeater.add_backoff_code(404)
+
+        expected = set(HTTP_STATUS_BACK_OFF) | {404}
+        reloaded = Repeater.objects.get(id=self.repeater.id)
+        for rep in (self.repeater, reloaded):
+            assert rep.incl_backoff_codes == [404]
+            assert rep.excl_backoff_codes == []
+            assert rep.backoff_codes == expected
+
+    def test_add_excluded(self):
+        self.repeater.remove_backoff_code(502)
+        assert self.repeater.excl_backoff_codes == [502]
+        self.repeater.add_backoff_code(502)
+
+        reloaded = Repeater.objects.get(id=self.repeater.id)
+        for rep in (self.repeater, reloaded):
+            assert rep.incl_backoff_codes == []
+            assert rep.excl_backoff_codes == []
+            assert rep.backoff_codes == set(HTTP_STATUS_BACK_OFF)
+
+    def test_remove_missing(self):
+        self.repeater.remove_backoff_code(404)
+
+        reloaded = Repeater.objects.get(id=self.repeater.id)
+        for rep in (self.repeater, reloaded):
+            assert rep.incl_backoff_codes == []
+            assert rep.excl_backoff_codes == []
+            assert rep.backoff_codes == set(HTTP_STATUS_BACK_OFF)
+
+    def test_remove_existing(self):
+        self.repeater.remove_backoff_code(502)
+
+        expected = set(HTTP_STATUS_BACK_OFF) - {502}
+        reloaded = Repeater.objects.get(id=self.repeater.id)
+        for rep in (self.repeater, reloaded):
+            assert rep.incl_backoff_codes == []
+            assert rep.excl_backoff_codes == [502]
+            assert rep.backoff_codes == expected
+
+    def test_remove_included(self):
+        self.repeater.add_backoff_code(404)
+        assert self.repeater.incl_backoff_codes == [404]
+        self.repeater.remove_backoff_code(404)
+
+        reloaded = Repeater.objects.get(id=self.repeater.id)
+        for rep in (self.repeater, reloaded):
+            assert rep.incl_backoff_codes == []
+            assert rep.excl_backoff_codes == []
+            assert rep.backoff_codes == set(HTTP_STATUS_BACK_OFF)
 
 
 def str_seconds(dt):
