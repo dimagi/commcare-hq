@@ -20,11 +20,7 @@ but not all of them have been reviewed. If you noticed some weird styling, pleas
 ```
 can be changed to
 ```
-<div class="card-header">
-    <h5 class="card-title mb-0">
-        {% trans ... %}
-    </h5>
-</div>
+<div class="card-header">{% trans ... %}</div>
 ```
 
 See: https://getbootstrap.com/docs/5.3/components/card/
