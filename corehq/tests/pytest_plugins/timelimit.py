@@ -5,6 +5,7 @@ import time
 import warnings
 
 import pytest
+from time_machine import escape_hatch
 from unmagic.scope import get_active
 
 
@@ -29,7 +30,6 @@ class MaxTestTimePlugin:
 
     def __init__(self):
         self.limits = None
-        self.time = time.time  # evade time-machine
 
     @pytest.hookimpl(wrapper=True)
     def pytest_runtest_setup(self, item):
@@ -52,6 +52,11 @@ class MaxTestTimePlugin:
         if duration > limit:
             raise AssertionError(f"{event} time limit ({limit}) exceeded: {duration}")
         self.limits = None
+
+    def time(self):
+        if escape_hatch.is_travelling():
+            return escape_hatch.time.time()
+        return time.time()
 
 
 def get_float(value, default):
