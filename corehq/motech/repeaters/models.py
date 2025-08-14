@@ -579,7 +579,7 @@ class Repeater(RepeaterSuperProxy):
             return repeat_record.handle_exception(result)
         elif is_success_response(result):
             return repeat_record.handle_success(result)
-        elif is_server_failure(result):
+        elif is_server_failure(self, result):
             return repeat_record.handle_server_failure(result)
         elif is_traefik_proxy_404(result):
             return repeat_record.handle_server_failure(result)
@@ -1617,12 +1617,12 @@ def is_response(duck):
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
 
 
-def is_server_failure(result):
+def is_server_failure(repeater, result):
     """
-    Returns True if ``result`` is a server error (5xx) or a 4xx
-    response that should be retried after backing off.
+    Returns True if ``result`` is an error response that should be
+    retried after backing off.
     """
-    return not is_response(result) or result.status_code in HTTP_STATUS_BACK_OFF
+    return not is_response(result) or result.status_code in repeater.backoff_codes
 
 
 def is_traefik_proxy_404(response):
