@@ -7,6 +7,7 @@ from django.utils.translation import gettext as _
 from django_tables2.views import SingleTableMixin
 from memoized import memoized
 
+from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.web import json_request
@@ -103,7 +104,19 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         """
         Can be overridden for customization.
         """
-        return self.table_class(data=self.get_table_data())
+        table = self.table_class(data=self.get_table_data())
+        if isinstance(table, ElasticTable):
+            table.request = self.request
+            from django_tables2.rows import BoundRows
+            table.rows = BoundRows(data=table.data.get_all_records(), table=table)
+        table.context = self.export_table_context(table)
+        return table
+
+    def export_table_context(self):
+        """
+        This method is a placeholder for setting up the additional table context as needed.
+        """
+        return {}
 
     def trigger_export(self, recipient_list=None, subject=None):
         self._validate_export_dependencies()
@@ -144,13 +157,11 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         """Reconstructs view instance from the export context to be used in the celery task"""
         from corehq.apps.users.models import CouchUser
 
-        class FakeHttpRequest(object):
-            method = 'GET'
-            data = None
-            domain = ''
+        from django.http import HttpRequest
 
-        request = FakeHttpRequest()
-        request.data = context['request_params']
+        request = HttpRequest()
+        request.method = 'GET'
+        request.GET.update(context['request_params'])
         request.domain = context['domain']
         request.couch_user = CouchUser.get_by_user_id(context['user_id'])
         request.can_access_all_locations = context['can_access_all_locations']

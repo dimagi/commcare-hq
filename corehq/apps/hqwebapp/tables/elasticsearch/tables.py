@@ -108,6 +108,10 @@ class ElasticTableData(TableData):
                      for record in results['hits'].get('hits', [])]
         return self.data
 
+    def get_all_records(self):
+        for record in self.query.scroll():
+            yield self.table.record_class(record, self.table.request, **self.record_kwargs)
+
     @staticmethod
     def validate(data):
         """

@@ -7,6 +7,9 @@ from django.db.models.query import QuerySet
 from django.test import TestCase
 from django.test.utils import override_settings
 
+from corehq.apps.es import ESQuery
+from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
+from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.export import TableExportMixin, TableExportException
 from corehq.apps.hqwebapp.tasks import export_all_rows_task
 from couchexport.models import Format
@@ -75,6 +78,27 @@ class QuerysetView(BaseTestView):
         return qs
 
 
+class DummyElasticTable(ElasticTable):
+    record_class = CaseSearchElasticRecord
+
+
+class ElasticTablleView(BaseTestView):
+    table_class = DummyTable
+
+    def get_queryset(self):
+        objs = [
+            CaseSearchElasticRecord(col1="a", col2="b"),
+            SimpleNamespace(col1="c", col2="d"),
+        ]
+        return self.fake_queryset(objs)
+
+    @staticmethod
+    def fake_queryset(objs):
+        qs = MagicMock(spec=ESQuery)
+        qs.scroll.return_value = iter(objs)
+        return qs
+
+
 class TestTableExportMixinExportData(TestCase):
 
     def _assert_for_sheet_and_rows(self, view, sheet_name, rows_list):
@@ -107,6 +131,12 @@ class TestTableExportMixinExportData(TestCase):
         self.assertEqual(rows_list[0], ['Col2'])
         self.assertEqual(rows_list[1], ['b'])
         self.assertEqual(rows_list[2], ['d'])
+
+    def test_with_elastic_table(self):
+        view = ElasticTablleView()
+        view.table_class = DummyElasticTable
+        sheet_name, rows = view._export_table_data[0]
+        self._assert_for_sheet_and_rows(view, sheet_name, list(rows))
 
 
 @override_settings(
