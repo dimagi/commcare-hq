@@ -233,16 +233,15 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
-        process_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
-            self.domain,
-            toggles.NAMESPACE_DOMAIN,
-        )
+        backoff_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
+            self.domain, toggles.NAMESPACE_DOMAIN
+        ) and toggles.BACKOFF_REPEATERS.enabled(self.domain, toggles.NAMESPACE_DOMAIN)
         repeat_records = [
             RepeatRecordDisplay(
                 record,
                 timezone,
                 date_format=DATE_FORMAT,
-                process_repeaters_enabled=process_repeaters_enabled,
+                backoff_repeaters_enabled=backoff_repeaters_enabled,
             )
             for record in RepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
         ]
