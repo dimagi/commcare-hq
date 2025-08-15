@@ -479,7 +479,6 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
 
     def test_handle_response_incl_code(self):
         self.repeater.add_backoff_code(404)
-        self.addCleanup(self.repeater.remove_backoff_code, 404)
         resp = RepeaterResponse(
             status_code=404,
             reason='Repeater-specific retry',
@@ -490,7 +489,6 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
 
     def test_handle_response_excl_code(self):
         self.repeater.remove_backoff_code(502)
-        self.addCleanup(self.repeater.add_backoff_code, 502)
         resp = RepeaterResponse(
             status_code=502,
             reason='Repeater-specific invalid payload',

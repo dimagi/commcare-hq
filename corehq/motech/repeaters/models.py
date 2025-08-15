@@ -72,7 +72,6 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from itertools import chain
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -153,8 +152,10 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 
-# Back off, and retry responses with these status codes. All other
-# status codes are treated as InvalidPayload errors.
+# Back off and retry responses that have these status codes. All other
+# status codes are treated as InvalidPayload errors because sending the
+# same repeat record again later will result in the same response. This
+# list can be modified per repeater. See `Repeater.backoff_codes`.
 HTTP_STATUS_BACK_OFF = (
     HTTPStatus.REQUEST_TIMEOUT,
     HTTPStatus.LOCKED,
@@ -301,21 +302,12 @@ class Repeater(RepeaterSuperProxy):
         default=REQUEST_POST,
         max_length=16,
     )
-    incl_backoff_codes = ArrayField(
-        base_field=models.IntegerField(),
-        default=list,
-        help_text=_('Also back off / retry these HTTP response codes'),
-        size=None,
-    )
-    excl_backoff_codes = ArrayField(
-        base_field=models.IntegerField(),
-        default=list,
-        help_text=_('Do not back off / retry these HTTP response codes'),
-        size=None,
-    )
+    # Manage `extra_backoff_codes` using `repeater` management command
+    extra_backoff_codes = ArrayField(base_field=models.IntegerField(), default=list)
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+    # Manage `max_workers` using `repeater` management command
     max_workers = models.IntegerField(default=0)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
@@ -437,30 +429,40 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def backoff_codes(self):
-        codes = set(chain(HTTP_STATUS_BACK_OFF, self.incl_backoff_codes))
-        return codes - set(self.excl_backoff_codes)
+        # Modifies `HTTP_STATUS_BACK_OFF` for this Repeater. Positive
+        # integer codes in `self.extra_backoff_codes` are added to
+        # `HTTP_STATUS_BACK_OFF`, and negative integers are removed.
+        codes = set(HTTP_STATUS_BACK_OFF)
+        for code in self.extra_backoff_codes:
+            if code > 0:
+                codes.add(code)
+            else:
+                # Multiply by -1 to get the HTTP status code.
+                codes.remove(code * -1)
+        return codes
 
     def add_backoff_code(self, code):
         if code in self.backoff_codes:
             return
-        if code in self.excl_backoff_codes:
-            self.excl_backoff_codes.remove(code)
-            update = {'excl_backoff_codes': self.excl_backoff_codes}
+        removed_code = code * -1
+        if removed_code in self.extra_backoff_codes:
+            self.extra_backoff_codes.remove(removed_code)
         else:
-            self.incl_backoff_codes.append(code)
-            update = {'incl_backoff_codes': self.incl_backoff_codes}
-        Repeater.objects.filter(id=self.repeater_id).update(**update)
+            self.extra_backoff_codes.append(code)
+        Repeater.objects.filter(id=self.repeater_id).update(
+            extra_backoff_codes=self.extra_backoff_codes,
+        )
 
     def remove_backoff_code(self, code):
         if code not in self.backoff_codes:
             return
-        if code in self.incl_backoff_codes:
-            self.incl_backoff_codes.remove(code)
-            update = {'incl_backoff_codes': self.incl_backoff_codes}
+        if code in self.extra_backoff_codes:
+            self.extra_backoff_codes.remove(code)
         else:
-            self.excl_backoff_codes.append(code)
-            update = {'excl_backoff_codes': self.excl_backoff_codes}
-        Repeater.objects.filter(id=self.repeater_id).update(**update)
+            self.extra_backoff_codes.append(code * -1)
+        Repeater.objects.filter(id=self.repeater_id).update(
+            extra_backoff_codes=self.extra_backoff_codes,
+        )
 
     def set_backoff(self):
         self.next_attempt_at = self._get_next_attempt_at(self.last_attempt_at)

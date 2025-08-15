@@ -1495,8 +1495,7 @@ class TestBackoffCodes(TestCase):
 
         reloaded = Repeater.objects.get(id=self.repeater.id)
         for rep in (self.repeater, reloaded):
-            assert rep.incl_backoff_codes == []
-            assert rep.excl_backoff_codes == []
+            assert rep.extra_backoff_codes == []
             assert rep.backoff_codes == set(HTTP_STATUS_BACK_OFF)
 
     def test_add_missing(self):
@@ -1505,19 +1504,17 @@ class TestBackoffCodes(TestCase):
         expected = set(HTTP_STATUS_BACK_OFF) | {404}
         reloaded = Repeater.objects.get(id=self.repeater.id)
         for rep in (self.repeater, reloaded):
-            assert rep.incl_backoff_codes == [404]
-            assert rep.excl_backoff_codes == []
+            assert rep.extra_backoff_codes == [404]
             assert rep.backoff_codes == expected
 
     def test_add_excluded(self):
         self.repeater.remove_backoff_code(502)
-        assert self.repeater.excl_backoff_codes == [502]
+        assert self.repeater.extra_backoff_codes == [-502]
         self.repeater.add_backoff_code(502)
 
         reloaded = Repeater.objects.get(id=self.repeater.id)
         for rep in (self.repeater, reloaded):
-            assert rep.incl_backoff_codes == []
-            assert rep.excl_backoff_codes == []
+            assert rep.extra_backoff_codes == []
             assert rep.backoff_codes == set(HTTP_STATUS_BACK_OFF)
 
     def test_remove_missing(self):
@@ -1525,8 +1522,7 @@ class TestBackoffCodes(TestCase):
 
         reloaded = Repeater.objects.get(id=self.repeater.id)
         for rep in (self.repeater, reloaded):
-            assert rep.incl_backoff_codes == []
-            assert rep.excl_backoff_codes == []
+            assert rep.extra_backoff_codes == []
             assert rep.backoff_codes == set(HTTP_STATUS_BACK_OFF)
 
     def test_remove_existing(self):
@@ -1535,19 +1531,17 @@ class TestBackoffCodes(TestCase):
         expected = set(HTTP_STATUS_BACK_OFF) - {502}
         reloaded = Repeater.objects.get(id=self.repeater.id)
         for rep in (self.repeater, reloaded):
-            assert rep.incl_backoff_codes == []
-            assert rep.excl_backoff_codes == [502]
+            assert rep.extra_backoff_codes == [-502]
             assert rep.backoff_codes == expected
 
     def test_remove_included(self):
         self.repeater.add_backoff_code(404)
-        assert self.repeater.incl_backoff_codes == [404]
+        assert self.repeater.extra_backoff_codes == [404]
         self.repeater.remove_backoff_code(404)
 
         reloaded = Repeater.objects.get(id=self.repeater.id)
         for rep in (self.repeater, reloaded):
-            assert rep.incl_backoff_codes == []
-            assert rep.excl_backoff_codes == []
+            assert rep.extra_backoff_codes == []
             assert rep.backoff_codes == set(HTTP_STATUS_BACK_OFF)
 
 
