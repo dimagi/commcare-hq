@@ -1054,7 +1054,7 @@ define("cloudcare/js/form_entry/entries", [
     function ImageEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
-        self.accept = "image/*,.pdf";
+        self.accept = "image/*";
     }
     ImageEntry.prototype = Object.create(FileEntry.prototype);
     ImageEntry.prototype.constructor = FileEntry;
