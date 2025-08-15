@@ -16,7 +16,7 @@ from corehq.apps.users.util import is_dimagi_email
 
 from email.utils import parseaddr
 
-from corehq.toggles import ALL_TAGS
+from corehq.toggles import ALL_TAGS, IS_CONTRACTOR
 
 
 class EmailForm(forms.Form):
@@ -124,7 +124,7 @@ class SuperuserManagementForm(forms.Form):
 
 class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
-        label="Comma/new-line seperated email addresses",
+        label="Comma/new-line separated email addresses",
         widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False
     )
@@ -153,7 +153,8 @@ def clean_data(cleaned_data, offboarding_list=False):
     EMAIL_INDEX = 1
     csv_email_list = cleaned_data.get('csv_email_list', '')
     all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)
-                                    | (Q(is_active=True) & Q(username__endswith='@dimagi.com')))
+                                    | (Q(is_active=True) & Q(username__endswith='@dimagi.com'))
+                                    | Q(username__in=IS_CONTRACTOR.get_enabled_users()))
     if offboarding_list and not csv_email_list:
         cleaned_data['csv_email_list'] = all_users
         return cleaned_data

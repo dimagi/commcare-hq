@@ -65,7 +65,7 @@ from corehq.apps.users.audit.change_messages import UserChangeMessage, TOGGLE_ED
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.toggles import ALL_TAGS
+from corehq.toggles import ALL_TAGS, IS_CONTRACTOR
 from corehq.toggles.sql_models import ToggleEditPermission
 from corehq.util import reverse
 from corehq.util.bounced_email_utils import get_email_statuses
@@ -265,11 +265,18 @@ def augmented_superusers(
     users=None,
     include_accounting_admin=False,
     include_can_assign_superuser=False,
-    include_feature_flag_edit_permissions=False
+    include_feature_flag_edit_permissions=False,
+    include_contractor=False,
 ):
     if not users:
-        users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)).order_by("username")
+        user_query = (Q(is_superuser=True) | Q(is_staff=True))
+        if include_contractor:
+            user_query = (user_query | Q(username__in=IS_CONTRACTOR.get_enabled_users()))
+        users = User.objects.filter(user_query).order_by("username")
+
     augmented_users = _augment_users_with_two_factor_enabled(users)
+    if include_contractor:
+        augmented_users = _augment_users_with_is_contractor_flag_enabled(augmented_users)
     if include_feature_flag_edit_permissions:
         augmented_users = _augment_users_with_feature_flag_edit_permissions(augmented_users)
     if include_accounting_admin:
@@ -310,6 +317,13 @@ def _augment_users_with_feature_flag_edit_permissions(users):
         for user in users:
             if permission.is_user_enabled(user.username):
                 user.tags_edit_permissions.append(tag.name)
+    return users
+
+
+def _augment_users_with_is_contractor_flag_enabled(users):
+    enabled_usernames = IS_CONTRACTOR.get_enabled_users()
+    for user in users:
+        user.is_contractor = user.username in enabled_usernames
     return users
 
 
@@ -811,7 +825,7 @@ class OffboardingUserList(UserAdministration):
     def page_context(self):
         form_data = self.request.POST if self.request.method == 'POST' else None
         if not self.users and not self.table_title:
-            self.users = augmented_superusers(include_accounting_admin=True)
+            self.users = augmented_superusers(include_accounting_admin=True, include_contractor=True)
         return {
             'form': OffboardingUserListForm(data=form_data),
             'users': self.users,
@@ -825,7 +839,9 @@ class OffboardingUserList(UserAdministration):
             users = form.cleaned_data['csv_email_list']
             self.validation_errors = form.cleaned_data.get('validation_errors')
             if users:
-                self.users = augmented_superusers(users=users, include_accounting_admin=True)
+                self.users = augmented_superusers(
+                    users=users, include_accounting_admin=True, include_contractor=True
+                )
             else:
                 self.users = users
             self.table_title = "Users that need their privileges revoked/account disabled"
