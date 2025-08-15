@@ -437,16 +437,15 @@ class Repeater(RepeaterSuperProxy):
             if code > 0:
                 codes.add(code)
             else:
-                # Multiply by -1 to get the HTTP status code.
-                codes.remove(code * -1)
+                # Negate to get the HTTP status code.
+                codes.discard(-code)
         return codes
 
     def add_backoff_code(self, code):
         if code in self.backoff_codes:
             return
-        removed_code = code * -1
-        if removed_code in self.extra_backoff_codes:
-            self.extra_backoff_codes.remove(removed_code)
+        if -code in self.extra_backoff_codes:
+            self.extra_backoff_codes.remove(-code)
         else:
             self.extra_backoff_codes.append(code)
         Repeater.objects.filter(id=self.repeater_id).update(
@@ -459,7 +458,7 @@ class Repeater(RepeaterSuperProxy):
         if code in self.extra_backoff_codes:
             self.extra_backoff_codes.remove(code)
         else:
-            self.extra_backoff_codes.append(code * -1)
+            self.extra_backoff_codes.append(-code)
         Repeater.objects.filter(id=self.repeater_id).update(
             extra_backoff_codes=self.extra_backoff_codes,
         )
