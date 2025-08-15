@@ -410,6 +410,7 @@ dependencies = [
     { name = "django-cte" },
     { name = "django-field-audit" },
     { name = "django-formtools" },
+    { name = "django-htmx" },
     { name = "django-oauth-toolkit" },
     { name = "django-otp" },
     { name = "django-phonenumber-field" },
@@ -584,6 +585,7 @@ requires-dist = [
     { name = "django-cte" },
     { name = "django-field-audit" },
     { name = "django-formtools" },
+    { name = "django-htmx" },
     { name = "django-oauth-toolkit" },
     { name = "django-otp" },
     { name = "django-phonenumber-field" },
@@ -1059,6 +1061,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6e/b0/41ca0a8b7f2ce073f4cfca6adcc7b502a4a894fad9b80505b2ad13dc7aac/django-formtools-2.3.tar.gz", hash = "sha256:9663b6eca64777b68d6d4142efad8597fe9a685924673b25aa8a1dcff4db00c3", size = 83706, upload-time = "2021-04-19T03:58:47.452Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8e/dd/0bce8b9cc6dfa80a4c510e625f54be4348e799d9c594f98c1cd83e63cd2a/django_formtools-2.3-py3-none-any.whl", hash = "sha256:4699937e19ee041d803943714fe0c1c7ad4cab802600eb64bbf4cdd0a1bfe7d9", size = 148867, upload-time = "2021-04-19T03:58:32.131Z" },
+]
+
+[[package]]
+name = "django-htmx"
+version = "1.23.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/dd/3c/8bf0e45b60094bbfc2147d48088a6af712534f319765352d5463c7433064/django_htmx-1.23.0.tar.gz", hash = "sha256:71e6242ac6bd32a0e14fcb12b340f901c9a924f0b4e9b461a5e6a6eea8d9c6dd", size = 63450, upload_time = "2025-03-14T16:16:02.228Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/47/53ac27bd75d164fa6f3996367c082933ed7ff7a0d59463e09ae97c148ff8/django_htmx-1.23.0-py3-none-any.whl", hash = "sha256:bca2d7590f3df8611a32a436b9f098d8bccb9762b99b01c08dc42336966700a0", size = 60822, upload_time = "2025-03-14T16:16:00.016Z" },
 ]
 
 [[package]]
