@@ -2819,14 +2819,6 @@ VELLUM_CASE_MICRO_IMAGE = StaticToggle(
     description='Add a micro image to cases in the case list.'
 )
 
-SUPPORT_GEO_JSON_EXPORT = StaticToggle(
-    slug='support_geo_json_export',
-    label='Support GeoJSON export in Case Exporter',
-    tag=TAG_SOLUTIONS_CONDITIONAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='The Case Export page now supports the exporting of GeoJSON data.',
-)
-
 USE_PROMINENT_PROGRESS_BAR = StaticToggle(
     slug='use_prominent_progress_bar',
     label='Use more prominent progress bar in place of NProgress',
