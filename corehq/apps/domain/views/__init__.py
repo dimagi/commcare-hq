@@ -41,11 +41,6 @@ from corehq.apps.domain.views.internal import (
     calculated_properties,
     toggle_diff,
 )
-from corehq.apps.domain.views.pro_bono import (
-    ProBonoMixin,
-    ProBonoStaticView,
-    ProBonoView,
-)
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseEditProjectInfoView,

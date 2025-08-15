@@ -148,7 +148,6 @@ def get_emails_to_never_bounce():
         settings.SERVER_EMAIL,
         settings.DEFAULT_FROM_EMAIL,
         settings.SUPPORT_EMAIL,
-        settings.PROBONO_SUPPORT_EMAIL,
         settings.ACCOUNTS_EMAIL,
         settings.DATA_EMAIL,
         settings.SUBSCRIPTION_CHANGE_EMAIL,
