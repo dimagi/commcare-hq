@@ -72,7 +72,7 @@
         "nprogress": "0.2.0",
         "nvd3": "1.1.10",
         "nvd3-1.8.6": "npm:nvd3#1.8.6",
-        "open-chat-studio-widget": "^0.4.2",
+        "open-chat-studio-widget": "0.4.5",
         "quill": "2.0.3",
         "quill-delta-to-html-upate": "^0.13.0",
         "select2": "4.1.0-rc.0",
