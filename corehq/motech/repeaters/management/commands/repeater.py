@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
@@ -15,9 +17,11 @@ class Command(BaseCommand):
         ({settings.DEFAULT_REPEATER_WORKERS}). Set to "1" to send repeat
         records chronologically, one at a time. The maximum value is
         {settings.MAX_REPEATER_WORKERS}.
-    --add-backoff-code: Adds HTTP status code to incl_backoff_codes list
-    --remove-backoff-code: Removes HTTP status code from
-        excl_backoff_codes list
+    --add-backoff-code: Ensures a repeat record will be retried after
+        backing off when its response has this HTTP status code.
+    --remove-backoff-code: Ensures a repeat record's state will be set
+        to "invalid payload" and not retried when its response has this
+        HTTP status code.
 
     If no optional arguments are provided, displays current values for
     all properties.
@@ -56,8 +60,7 @@ class Command(BaseCommand):
 
     def _get_repeater_info(self, repeater):
         self.stdout.write(f'max_workers: {repeater.max_workers}')
-        self.stdout.write(f'incl_backoff_codes: {repeater.incl_backoff_codes}')
-        self.stdout.write(f'excl_backoff_codes: {repeater.excl_backoff_codes}')
+        self.stdout.write(f'backoff_codes:\n{pformat(repeater.backoff_codes)}')
 
     def _set_max_workers(self, repeater, max_workers):
         if not 0 <= max_workers <= settings.MAX_REPEATER_WORKERS:
@@ -85,3 +88,15 @@ class Command(BaseCommand):
         if remove_backoff_code is not None:
             repeater.remove_backoff_code(remove_backoff_code)
         self._get_repeater_info(repeater)
+
+
+def pformat(http_status_codes):
+    strings = [
+        f'{HTTPStatus(c).value} "{title_case(HTTPStatus(c).name)}"'
+        for c in sorted(http_status_codes)
+    ]
+    return '    ' + '\n    '.join(strings) + '\n'
+
+
+def title_case(const_case):
+    return const_case.replace('_', ' ').title()
