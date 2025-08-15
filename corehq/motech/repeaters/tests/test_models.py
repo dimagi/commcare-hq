@@ -467,18 +467,6 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
         self.repeater.handle_response(resp, repeat_record)
         self.assertEqual(repeat_record.state, State.Fail)
 
-    def test_handle_traefik_proxy_404(self):
-        resp = RepeaterResponse(
-            status_code=404,
-            reason='because Traefik',
-            headers={
-                'Server': 'Traefik v3.3.5',
-            }
-        )
-        repeat_record = self.get_repeat_record()
-        self.repeater.handle_response(resp, repeat_record)
-        self.assertEqual(repeat_record.state, State.Fail)
-
     def test_handle_response_server_failure(self):
         for status_code in HTTP_STATUS_BACK_OFF:
             resp = RepeaterResponse(
@@ -488,6 +476,26 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
             repeat_record = self.get_repeat_record()
             self.repeater.handle_response(resp, repeat_record)
             self.assertEqual(repeat_record.state, State.Fail)
+
+    def test_handle_response_incl_code(self):
+        self.repeater.add_backoff_code(404)
+        resp = RepeaterResponse(
+            status_code=404,
+            reason='Repeater-specific retry',
+        )
+        repeat_record = self.get_repeat_record()
+        self.repeater.handle_response(resp, repeat_record)
+        self.assertEqual(repeat_record.state, State.Fail)
+
+    def test_handle_response_excl_code(self):
+        self.repeater.remove_backoff_code(502)
+        resp = RepeaterResponse(
+            status_code=502,
+            reason='Repeater-specific invalid payload',
+        )
+        repeat_record = self.get_repeat_record()
+        self.repeater.handle_response(resp, repeat_record)
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
 
     def test_handle_payload_errors(self):
         retry_codes = HTTP_STATUS_BACK_OFF + (HTTPStatus.TOO_MANY_REQUESTS,)
