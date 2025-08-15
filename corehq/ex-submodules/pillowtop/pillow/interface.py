@@ -108,12 +108,18 @@ class ConstructedPillow:
         scope = Scope.get_current_scope()
         scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:
-            for processor in self.processors:
-                processor.bootstrap_if_needed()
-            time.sleep(10)
+            self._run_migrations_forever()
         else:
             while True:
                 self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+
+    def _run_migrations_forever(self):
+        for processor in self.processors:
+            processor.configure_dedicated_migration_process()
+        while True:
+            for processor in self.processors:
+                processor.run_migrations()
+            time.sleep(10)
 
     def _update_checkpoint(self, change, context):
         if change and context:

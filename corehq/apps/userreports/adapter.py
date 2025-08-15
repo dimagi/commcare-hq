@@ -15,6 +15,14 @@ class IndicatorAdapter(object):
     def __init__(self, config):
         self.config = config
 
+    @property
+    def config_id(self):
+        return self.config._id
+
+    @property
+    def is_active(self):
+        return not self.config.is_deactivated
+
     @memoized
     def get_table(self):
         raise NotImplementedError

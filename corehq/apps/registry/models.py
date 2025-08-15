@@ -38,11 +38,10 @@ class RegistryManager(models.Manager):
             .prefetch_related("invitations")
         )
 
-    def accessible_to_domain(self, domain, slug=None, has_grants=False):
+    def accessible_to_domain(self, domain, slug=None):
         """
         :param domain: Domain to get registries for
         :param slug: (optional) Filter registries by slug
-        :param has_grants: (optional) Set to 'True' to only include registries for which the domain has grants
         """
         query = (
             self.filter(is_active=True)
@@ -53,8 +52,6 @@ class RegistryManager(models.Manager):
         )
         if slug:
             query = query.filter(slug=slug)
-        if has_grants:
-            query = query.filter(grants__to_domains__contains=[domain])
         return query
 
 
