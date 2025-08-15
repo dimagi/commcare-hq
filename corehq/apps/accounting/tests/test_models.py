@@ -1,11 +1,10 @@
 import datetime
 from decimal import Decimal
+from unittest import mock
 
 from django.core import mail
 from django.db import models
 from django.test import SimpleTestCase
-
-from unittest import mock
 
 from dimagi.utils.dates import add_months_to_date
 
@@ -28,6 +27,7 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCardManager,
     FakeStripeCustomerManager,
 )
+from corehq.apps.accounting.tests.utils import mocked_stripe_api
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import (
     SmsBillable,
@@ -37,7 +37,6 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFeeCriteria,
 )
 from corehq.util.dates import get_previous_month_date_range
-from corehq.apps.accounting.tests.utils import mocked_stripe_api
 
 
 class TestBillingAccount(BaseAccountingTest):
