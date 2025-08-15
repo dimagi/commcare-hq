@@ -11,7 +11,7 @@ from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from dateutil.parser import isoparse
-from freezegun import freeze_time
+from time_machine import travel
 from nose.tools import assert_in
 
 from corehq.motech.models import ConnectionSettings
@@ -963,7 +963,7 @@ class TestRepeatRecordMethods(TestCase):
             payload_id="abc123",
             registered_at=now - hour,
         )
-        with freeze_time(now):
+        with travel(now, tick=False):
             record.postpone_by(3 * hour)
         self.assertEqual(record.next_check, now + 3 * hour)
 
@@ -1050,7 +1050,7 @@ class TestDataSourceUpdateManager(TestCase):
 
     def test_get_oldest_date(self):
         ten_days_ago = datetime.today() - timedelta(days=10)
-        with freeze_time(ten_days_ago):
+        with travel(ten_days_ago, tick=False):
             DataSourceUpdate.objects.create(
                 domain='test-domain',
                 data_source_id=uuid4(),

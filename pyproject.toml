@@ -177,8 +177,8 @@ test = [
     'requests-mock',
     'Faker',
     'flaky>=3.8', # required for pytest 8.2 (and possibly earlier versions)
-    'freezegun',
     'radon>=5.0', # v5 no longer depends on flake8-polyfill
+    'time-machine',
     'pytest-django',
     'pytest-unmagic',
     'coverage',
