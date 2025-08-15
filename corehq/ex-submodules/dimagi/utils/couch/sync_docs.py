@@ -26,13 +26,14 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
     """
     design_name_ = '%s-%s' % (design_name, temp) if temp else design_name
     docid = "_design/%s" % design_name_
-    push(design_dir, db, force=True, docid=docid)
-    log.info("synced '%s' in couchdb", design_name)
+    pushed = push(design_dir, db, force=True, docid=docid)
+    if pushed:
+        log.info("synced '%s' in couchdb", design_name)
 
-    if temp:
-        # Check if the design directory has a views subdirectory
-        has_views = os.path.exists(os.path.join(design_dir, 'views'))
-        index_design_docs(db, docid, design_name_, expect_views=has_views)
+        if temp:
+            # Check if the design directory has a views subdirectory
+            has_views = os.path.exists(os.path.join(design_dir, 'views'))
+            index_design_docs(db, docid, design_name_, expect_views=has_views)
 
 
 def verify_design_doc(db, design_doc_id, max_retries=5, retry_delay_s=1, expect_views=False):
