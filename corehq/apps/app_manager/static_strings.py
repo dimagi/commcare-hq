@@ -38,6 +38,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Alphanumeric'),
     gettext_noop('Amount of time previously submitted forms remain accessible in the CommCare app.'),
     gettext_noop('Android app dependencies'),
+    gettext_noop('Worker Activity'),
     gettext_noop('Android Settings'),
     gettext_noop('Anonymous Usage'),
     gettext_noop('Any positive integer. Represents period of purging in days.'),
@@ -154,6 +155,9 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Prevents mobile workers from using a CommCare app until the '
                  'Android apps that it needs have been installed on the '
                  'device.\n'),
+    gettext_noop(
+        'Issues credentials to mobile workers who have been active users of this app for the specified period of time.\n'
+    ),
     gettext_noop('Profile URL'),
     gettext_noop('Project Default'),
     gettext_noop('Prompt Updates to Latest CommCare Version'),
