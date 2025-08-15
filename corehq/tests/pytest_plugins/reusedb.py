@@ -266,6 +266,7 @@ def couch_sql_context(config):
             verbosity=config.option.verbose,
             # avoid re-creating databases that already exist
             keepdb=config.skip_setup_for_reuse_db,
+            serialized_aliases=(),
         )
 
     try:
