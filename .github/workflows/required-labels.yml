@@ -1,0 +1,16 @@
+name: Labels
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: [labeled, unlabeled, opened, reopened]
+
+jobs:
+  check_product_label:
+    name: 🏷️ Require a product label
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if no 'product' label is present
+        if: ${{ !contains(join(github.event.pull_request.labels.*.name, ' '), 'product/') }}
+        run: exit 1
