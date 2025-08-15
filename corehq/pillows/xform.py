@@ -91,7 +91,6 @@ def get_xform_pillow(
         exclude_ucrs=None,
         num_processes=1,
         process_num=0,
-        ucr_configs=None,
         skip_ucr=False,
         processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
         topics=None,
@@ -127,7 +126,6 @@ def get_xform_pillow(
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
-        ucr_configs=ucr_configs
     )
 
     xform_to_es_processor = BulkElasticProcessor(
