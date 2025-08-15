@@ -13,9 +13,6 @@ DATABASES = {
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
         'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
     },
 }
 

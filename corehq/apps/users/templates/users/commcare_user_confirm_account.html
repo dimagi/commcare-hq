@@ -19,11 +19,14 @@
                 {% trans "You are already signed in." %}
               </h3>
               <h4>
-                {% url 'logout' as sign_out_url %}
                 {% blocktrans %}
-                  To accept this invitation, you must first <a href="{{ sign_out_url }}">sign out</a>.
+                  To accept this invitation, you must first sign out.
                 {% endblocktrans %}
               </h4>
+              <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">{% trans "Sign Out" %}</button>
+              </form>
             {% elif user.is_account_confirmed and user.is_active %}
               <h3>
                 {% trans "Your account is already confirmed!" %}
