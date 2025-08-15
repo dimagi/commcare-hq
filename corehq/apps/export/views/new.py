@@ -171,6 +171,7 @@ class BaseExportView(BaseProjectDataView):
             'terminology': self.terminology,
             'is_all_case_types_export': is_all_case_types_export,
             'disable_table_checkbox': (table_count < 2),
+            'geojson_enabled': _geojson_enabled(self.domain),
             'geo_properties': self._possible_geo_properties,
             'show_deprecated_filter': show_deprecated_filter,
         }
