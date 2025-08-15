@@ -22,8 +22,9 @@ from memoized import memoized
 
 from dimagi.utils.web import json_response
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.models import SoftwarePlanEdition, plan_enabled
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.data_dictionary.models import CaseProperty
@@ -176,7 +177,7 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def _possible_geo_properties(self):
-        if not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain):
+        if not _geojson_enabled(self.domain):
             return []
         if self._is_bulk_case_export:
             return []
@@ -206,16 +207,9 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def format_options(self):
-        format_options = ["xls", "xlsx", "csv"]
-
-        should_support_geojson = (
-            toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
-            and not self._is_bulk_case_export
-        )
-        if should_support_geojson:
-            format_options.append("geojson")
-
-        return format_options
+        if not self._is_bulk_case_export and _geojson_enabled(self.domain):
+            return ["xls", "xlsx", "csv", "geojson"]
+        return ["xls", "xlsx", "csv"]
 
     @property
     def parent_pages(self):
@@ -231,7 +225,7 @@ class BaseExportView(BaseProjectDataView):
             self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))
-                or (export.export_format == "geojson" and not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain))
+                or (export.export_format == "geojson" and not _geojson_enabled(self.domain))
         ):
             raise BadExportConfiguration()
 
@@ -350,6 +344,10 @@ class BaseExportView(BaseProjectDataView):
             self.export_type is CASE_EXPORT
             and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
         )
+
+
+def _geojson_enabled(domain):
+    return plan_enabled(SoftwarePlanEdition.ADVANCED, domain)
 
 
 @location_safe
