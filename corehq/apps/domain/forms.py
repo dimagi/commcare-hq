@@ -3284,7 +3284,11 @@ class DomainCredentialIssuingAppForm(forms.Form):
         self.fields['app_id'].widget.choices = self.get_domain_apps_choices(domain)
 
         self.helper = hqcrispy.HQFormHelper(self)
-        self.helper.layout.append(
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                gettext_lazy("Credential Issuing Application"),
+                crispy.Field('app_id'),
+            ),
             hqcrispy.FormActions(
                 StrictButton(
                     _('Save'),
