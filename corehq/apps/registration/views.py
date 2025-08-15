@@ -320,20 +320,6 @@ class RegisterDomainView(TemplateView):
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
     @property
-    def extra_context(self):
-        invitations = [
-            e for e in Invitation.by_email(self.request.user.username)
-            if not e.is_expired
-        ]
-        return {
-            'invitation_links': [{
-                'domain': i.domain,
-                'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
-            } for i in invitations],
-            'show_multiple_invites': len(invitations) > 1,
-        }
-
-    @property
     @memoized
     def is_new_user(self):
         user = self.request.user
@@ -410,12 +396,25 @@ class RegisterDomainView(TemplateView):
         if (not request.couch_user) or request.couch_user.is_commcare_user():
             raise Http404()
 
-        context = super(RegisterDomainView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context.update(get_domain_context())
+
+        invitations = [
+            e for e in Invitation.by_email(self.request.user.username)
+            if not e.is_expired
+        ]
+        invitation_links = [{
+            'domain': i.domain,
+            'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
+        } for i in invitations]
 
         context.update({
             'form': kwargs.get('form') or DomainRegistrationForm(),
+            'invitation_links': invitation_links,
             'is_new_user': self.is_new_user,
+            'pricing_page_url': settings.PRICING_PAGE_URL,
+            'show_multiple_invites': len(invitations) > 1,
+            'user_name': self.request.user.first_name or self.request.user.username,
         })
         return context
 
