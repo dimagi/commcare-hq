@@ -13,7 +13,7 @@ from corehq.apps.fixtures.models import (
     LookupTableRow,
     TypeField,
 )
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.bulk import case_block_submitter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
@@ -66,22 +66,18 @@ def _update_case_id_properties(domain, user):
     cases = CommCareCase.objects.get_cases(case_ids, domain)
     case_ids_by_external_id = {c.external_id: c.case_id for c in cases}
 
-    case_blocks = []
-    for case in cases:
-        update = {}
-        for k, v in case.dynamic_case_properties().items():
-            if v in case_ids_by_external_id:
-                update[k] = case_ids_by_external_id[v]
-        if update:
-            case_blocks.append(
-                CaseBlock(
+    with case_block_submitter(domain=domain, user_id=user._id) as submitter:
+        for case in cases:
+            update = {}
+            for k, v in case.dynamic_case_properties().items():
+                if v in case_ids_by_external_id:
+                    update[k] = case_ids_by_external_id[v]
+            if update:
+                submitter.send(CaseBlock(
                     case_id=case.case_id,
                     user_id=user._id,
                     update=update,
-                ).as_text()
-            )
-
-    submit_case_blocks(case_blocks, domain=domain, user_id=user._id)
+                ))
 
 
 def _read_csv(filename):

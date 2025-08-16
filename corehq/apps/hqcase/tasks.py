@@ -12,7 +12,7 @@ from soil import DownloadBase
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.celery import task
 from corehq.apps.es import CaseSearchES
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.bulk import case_block_submitter
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
@@ -47,44 +47,37 @@ def explode_cases(domain, user_id, factor, task=None):
     if task:
         DownloadBase.set_progress(explode_case_task, 0, total_cases)
 
-    queue = []
     progress = 0
+    with case_block_submitter(
+        domain,
+        chunk_size=500,   # submit 500 cases at a time
+        user_id=user_id,
+        device_id="explode_cases",
+    ) as submitter:
+        for old_case_id in reversed(topological_sort_case_blocks(cases)):
+            for explosion in range(factor - 1):
+                new_case = copy(cases[old_case_id])
+                new_case_id = new_case_ids[old_case_id][explosion]
 
-    def queue_case(new_case, queue, progress):
-        queue.append(new_case)
-        if len(queue) >= 500:   # submit 500 cases at a time
-            submit_case_blocks(queue, domain, user_id=user_id, device_id="explode_cases")
-            progress += len(queue)
-            if task:
-                DownloadBase.set_progress(explode_case_task, progress, total_cases)
-            del queue[:]
-        return progress
+                new_case.create = True
+                new_case.case_id = new_case_id
+                new_case.update['cc_exploded_from'] = old_case_id
+                new_case.update['cc_explosion_id'] = explosion_id
+                new_case.index = {
+                    key: IndexAttrs(
+                        i.case_type, new_case_ids[i.case_id][explosion], i.relationship
+                    ) for key, i in cases[old_case_id].index.items()
+                }
+                submitter.send(new_case.as_text())
+                progress += 1
+                if task:
+                    DownloadBase.set_progress(explode_case_task, progress, total_cases)
 
-    for old_case_id in reversed(topological_sort_case_blocks(cases)):
-        for explosion in range(factor - 1):
-            new_case = copy(cases[old_case_id])
-            new_case_id = new_case_ids[old_case_id][explosion]
-
-            new_case.create = True
-            new_case.case_id = new_case_id
-            new_case.update['cc_exploded_from'] = old_case_id
-            new_case.update['cc_explosion_id'] = explosion_id
-            new_case.index = {
-                key: IndexAttrs(
-                    i.case_type, new_case_ids[i.case_id][explosion], i.relationship
-                ) for key, i in cases[old_case_id].index.items()
-            }
-            progress += queue_case(new_case.as_text(), queue, progress)
-
-            for ledger in sync_result.ledgers.get(old_case_id, []):
-                new_ledger = copy(ledger)
-                new_ledger.entity_id = new_case_id
-                total_ledgers += 1
-                queue_case(new_ledger.as_string().decode('utf-8'), queue, progress)
-
-    if len(queue):
-        submit_case_blocks(queue, domain, user_id=user_id, device_id="explode_cases")
-        DownloadBase.set_progress(explode_case_task, total_cases, total_cases)
+                for ledger in sync_result.ledgers.get(old_case_id, []):
+                    new_ledger = copy(ledger)
+                    new_ledger.entity_id = new_case_id
+                    total_ledgers += 1
+                    submitter.send(new_ledger.as_string().decode('utf-8'))
 
     return {'messages': [
         "Successfully created {} cases".format(total_cases),
