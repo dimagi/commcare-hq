@@ -7,10 +7,24 @@ from django.db.models.query import QuerySet
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from corehq.apps.hqwebapp.tables.export import TableExportMixin, TableExportException
-from corehq.apps.hqwebapp.tasks import export_all_rows_task
-from couchexport.models import Format
 import django_tables2 as tables
+
+from couchexport.models import Format
+
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es import CaseSearchES, case_search_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.hqwebapp.tables.elasticsearch.records import (
+    CaseSearchElasticRecord,
+)
+from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
+from corehq.apps.hqwebapp.tables.export import (
+    TableExportException,
+    TableExportMixin,
+)
+from corehq.apps.hqwebapp.tasks import export_all_rows_task
+from corehq.apps.users.models import WebUser
+from corehq.form_processor.tests.utils import create_case
 
 
 class DummyTable(tables.Table):
@@ -75,7 +89,60 @@ class QuerysetView(BaseTestView):
         return qs
 
 
-class TestTableExportMixinExportData(TestCase):
+class DummyElasticTable(DummyTable, ElasticTable):
+    record_class = CaseSearchElasticRecord
+
+
+class ElasticTableView(BaseTestView):
+    table_class = DummyElasticTable
+
+    def get_queryset(self):
+        return CaseSearchES().case_type('foobar').domain('test-domain')
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class BaseCaseSearchTestSetup(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        case_type = 'foobar'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.web_user = WebUser.create(cls.domain, 'test-user', 'password', None, None, is_admin=True)
+        cls.web_user.save()
+
+        cls.case_a = create_case(
+            cls.domain,
+            case_type=case_type,
+            name='CaseA',
+            case_json={
+                'col1': 'a',
+                'col2': 'b',
+            },
+            save=True
+        )
+        cls.case_b = create_case(
+            cls.domain,
+            case_type=case_type,
+            name='CaseB',
+            case_json={
+                'col1': 'c',
+                'col2': 'd',
+            },
+            save=True,
+        )
+        case_search_adapter.bulk_index([cls.case_a, cls.case_b], refresh=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        for case in [cls.case_a, cls.case_b]:
+            case.delete()
+        cls.web_user.delete(None, None)
+        super().tearDownClass()
+
+
+class TestTableExportMixinExportData(BaseCaseSearchTestSetup):
 
     def _assert_for_sheet_and_rows(self, view, sheet_name, rows_list):
         self.assertEqual(sheet_name, view.get_export_sheet_name())
@@ -107,6 +174,12 @@ class TestTableExportMixinExportData(TestCase):
         self.assertEqual(rows_list[0], ['Col2'])
         self.assertEqual(rows_list[1], ['b'])
         self.assertEqual(rows_list[2], ['d'])
+
+    def test_with_elastic_table(self):
+        view = ElasticTableView()
+        view.request.couch_user = self.web_user
+        sheet_name, rows = view._export_table_data[0]
+        self._assert_for_sheet_and_rows(view, sheet_name, list(rows))
 
 
 @override_settings(

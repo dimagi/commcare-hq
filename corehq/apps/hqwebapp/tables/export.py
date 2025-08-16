@@ -5,9 +5,11 @@ from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.utils.translation import gettext as _
 
+from django_tables2.rows import BoundRows
 from django_tables2.views import SingleTableMixin
 from memoized import memoized
 
+from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.web import json_request
@@ -104,7 +106,13 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         """
         Can be overridden for customization.
         """
-        return self.table_class(data=self.get_table_data())
+        table = self.table_class(data=self.get_table_data())
+        # Elastic Table uses queryset for data which gets evaluated lazily on pagination.
+        # As export is not paginated, we need to ensure that all records are fetched.
+        if isinstance(table, ElasticTable):
+            table.request = self.request
+            table.rows = BoundRows(data=table.data.get_all_records(), table=table)
+        return table
 
     def trigger_export(self, recipient_list=None, subject=None):
         self._validate_export_dependencies()
