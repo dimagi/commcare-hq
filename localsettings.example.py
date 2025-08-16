@@ -1,13 +1,13 @@
 from dev_settings import *
 
-####### Database config #######
+# ####### Database config #######
 
 USE_PARTITIONED_DATABASE = False
 
 # example partitioned DB set up
 if USE_PARTITIONED_DATABASE:
 
-    DATABASES.update({
+    DATABASES.update({  # noqa f405
         'proxy': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_proxy',
@@ -57,12 +57,12 @@ if USE_PARTITIONED_DATABASE:
 # Identify the target type of this running environment
 SERVER_ENVIRONMENT = 'changeme'
 
-####### Less/Django Compressor ########
+# ####### Less/Django Compressor ########
 
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 
-####### Misc / HQ-specific Config ########
+# ####### Misc / HQ-specific Config ########
 
 # Set to something like "192.168.1.5:8000" (with your IP address) to enable submitting
 # data to your local environment from an android phone.
@@ -86,8 +86,31 @@ MAPS_LAYERS = {
     },
 }
 
-LOCAL_APPS += (
-#    'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
+# Temprory settings that are being used during the reindex
+# The settings signifies the current state of migration.
+
+ES_APPS_INDEX_SWAPPED = True
+ES_CASE_SEARCH_INDEX_SWAPPED = True
+ES_CASES_INDEX_SWAPPED = True
+ES_DOMAINS_INDEX_SWAPPED = True
+ES_FORMS_INDEX_SWAPPED = True
+ES_GROUPS_INDEX_SWAPPED = True
+ES_SMS_INDEX_SWAPPED = True
+ES_USERS_INDEX_SWAPPED = True
+
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
+LOCAL_APPS += ( # noqa f405
+    # 'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
 )
 
 LOCAL_MIDDLEWARE = [
@@ -95,6 +118,6 @@ LOCAL_MIDDLEWARE = [
 ]
 
 LOCAL_PILLOWTOPS = {
-#    'my_pillows': ['some.pillow.Class', ],
-#    'and_more': []
+    # 'my_pillows': ['some.pillow.Class', ],
+    # 'and_more': []
 }
