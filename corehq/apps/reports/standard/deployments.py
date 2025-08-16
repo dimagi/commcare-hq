@@ -300,12 +300,15 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         :param kwargs: extra parameters
         :return: dict
         """
+        grouped_location = {}
+        if not location_ids:
+            return grouped_location
+
         where = Q(domain=self.domain, location_id__in=location_ids)
         location_ancestors = SQLLocation.objects.get_ancestors(where)
         location_by_id = {location.location_id: location for location in location_ancestors}
         location_by_pk = {location.id: location for location in location_ancestors}
 
-        grouped_location = {}
         for location_id in location_ids:
 
             location_parents = []
