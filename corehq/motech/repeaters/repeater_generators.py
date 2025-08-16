@@ -716,9 +716,9 @@ class ConnectFormRepeaterPayloadGenerator(FormRepeaterJsonPayloadGenerator):
         # res.serialize from super() returns a JSON string
         form_json = json.loads(form_json)
         fields = ("domain", "id", "app_id", "build_id", "received_on", "metadata")
-        constructed_dict = {}
+        payload = {}
         for field in fields:
-            constructed_dict[field] = form_json.get(field)
+            payload[field] = form_json.get(field)
         jsonpath_expr = parse('$..@xmlns')
         matching_blocks = [
             match
@@ -726,8 +726,28 @@ class ConnectFormRepeaterPayloadGenerator(FormRepeaterJsonPayloadGenerator):
             if match.value == CONNECT_XMLNS
         ]
         for block in matching_blocks:
-            constructed_dict.update({str(block.context.full_path): block.context.value})
-        return constructed_dict
+            # context is the surrounding dict level
+            context = block.context
+            full_path = [str(context.path)]
+            # use the value here because for the matching block we want the entire dictionary
+            match_dict = {str(context.path): context.value}
+            context = context.context
+            # stop at last key rather than the root
+            while context.context:
+                match_dict = {str(context.path): match_dict}
+                full_path = [str(context.path)] + full_path
+                context = context.context
+            constructed_dict = payload
+            for key in full_path:
+                # traverse to the first missing key then put the match dict there
+                # to avoid overrwiting other matches
+                if key in constructed_dict:
+                    constructed_dict = constructed_dict[key]
+                    match_dict = match_dict[key]
+                else:
+                    constructed_dict[key] = match_dict[key]
+                    break
+        return json.dumps(payload)
 
 
 class FormDictPayloadGenerator(BasePayloadGenerator):

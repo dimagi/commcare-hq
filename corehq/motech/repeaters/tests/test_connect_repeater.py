@@ -64,8 +64,8 @@ def test_connect_repeater(mocked_super):
     generator = ConnectFormRepeaterPayloadGenerator(repeater)
     form = Mock()
     mocked_super.return_value = json.dumps(MOCK_FORM)
-    payload = generator.get_payload(None, form)
+    payload = json.loads(generator.get_payload(None, form))
     assert payload["metadata"] == FORM_META
-    assert payload["form.connect_path.deliver"] == DELIVER_JSON["deliver"]
+    assert payload["form"]["connect_path"]["deliver"] == DELIVER_JSON["deliver"]
     with pytest.raises(KeyError):
-        payload["form"]
+        payload["form"]["question_path"]
