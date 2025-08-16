@@ -112,7 +112,14 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         if isinstance(table, ElasticTable):
             table.request = self.request
             table.rows = BoundRows(data=table.data.get_all_records(), table=table)
+        table.context = self.export_table_context(table)
         return table
+
+    def export_table_context(self, table):
+        """
+        Can be overridden to provide additional context for the export.
+        """
+        return {}
 
     def trigger_export(self, recipient_list=None, subject=None):
         self._validate_export_dependencies()

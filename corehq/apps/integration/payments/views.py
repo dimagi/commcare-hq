@@ -144,6 +144,15 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
         return context_data
 
+    def export_table_context(self, table):
+        context = super().export_table_context(table)
+        table.rows = list(table.rows)
+        object_list = [row.record for row in table.rows]
+        context.update({
+            'user_or_cases_verification_statuses': self._get_user_or_cases_verification_status(object_list)
+        })
+        return context
+
     def _get_user_or_cases_verification_status(self, object_list):
         if not self.kyc_config:
             return {}
