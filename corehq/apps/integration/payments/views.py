@@ -16,6 +16,7 @@ from corehq.apps.es.case_search import (
 from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.hqwebapp.tables.export import TableExportMixin
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.models import KycConfig
 from corehq.apps.integration.payments.const import (
@@ -114,7 +115,7 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
-class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
+class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin):
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
 
@@ -279,6 +280,10 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
                     self.REVERT_VERIFICATION_ROWS_LIMIT
                 ),
             )
+
+    @hq_hx_action('get')
+    def export(self, request, *args, **kwargs):
+        return self.trigger_export()
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
