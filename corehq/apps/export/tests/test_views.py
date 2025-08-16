@@ -1,8 +1,8 @@
-from unittest.mock import patch
-
 from django.test import TestCase
 
-from corehq import toggles
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -21,7 +21,6 @@ from corehq.apps.export.models.new import (
     TableConfiguration,
 )
 from corehq.apps.export.views.new import BaseExportView
-from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test-domain'
 
@@ -127,22 +126,15 @@ class BaseExportViewTestCase(TestCase):
         return export_instance
 
 
-class TestPossibleGeoProperties(BaseExportViewTestCase):
+class TestPossibleGeoProperties(BaseExportViewTestCase, DomainSubscriptionMixin):
 
-    def test_possible_geo_properties_toggle_disabled(self):
-        """
-        Test that _possible_geo_properties returns empty list when
-        toggle is disabled
-        """
-        export_instance = self._create_form_export_instance_with_geopoint()
-        view = get_base_export_view(export_instance, FORM_EXPORT)
-        with patch.object(toggles.SUPPORT_GEO_JSON_EXPORT, 'enabled') as mock_toggle:
-            mock_toggle.return_value = False
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.setup_subscription(DOMAIN, SoftwarePlanEdition.ADVANCED)
+        cls.addClassCleanup(cls.teardown_subscriptions)
+        cls.addClassCleanup(clear_plan_version_cache)
 
-            result = view._possible_geo_properties
-            self.assertEqual(result, [])
-
-    @flag_enabled('SUPPORT_GEO_JSON_EXPORT')
     def test_possible_geo_properties_bulk_case_export(self):
         """
         Test that _possible_geo_properties returns empty list for bulk
@@ -159,7 +151,6 @@ class TestPossibleGeoProperties(BaseExportViewTestCase):
         result = view._possible_geo_properties
         self.assertEqual(result, [])
 
-    @flag_enabled('SUPPORT_GEO_JSON_EXPORT')
     def test_possible_geo_properties_form_export(self):
         """
         Test that _possible_geo_properties calls
@@ -172,7 +163,6 @@ class TestPossibleGeoProperties(BaseExportViewTestCase):
         expected = ['form.location.gps_coords', 'form.user_location']
         self.assertEqual(result, expected)
 
-    @flag_enabled('SUPPORT_GEO_JSON_EXPORT')
     def test_possible_geo_properties_case_export(self):
         """
         Test that _possible_geo_properties calls

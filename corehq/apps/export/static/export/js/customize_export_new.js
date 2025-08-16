@@ -28,7 +28,7 @@ $(function () {
         new Tooltip(trigger);
     });
 
-    if (toggles.toggleEnabled('SUPPORT_GEO_JSON_EXPORT')) {
+    if (initialPageData.get('geojson_enabled')) {
         const exportFormat = initialPageData.get('export_instance').export_format;
         if (exportFormat === constants.EXPORT_FORMATS.GEOJSON) {
             $("#select-geo-property").show();

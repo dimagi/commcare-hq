@@ -4073,3 +4073,30 @@ class InvoiceCommunicationHistory(CommunicationHistoryBase):
 
 class CustomerInvoiceCommunicationHistory(CommunicationHistoryBase):
     invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)
+
+
+def plan_enabled(plan, domain):
+    """
+    Returns ``True`` if the SoftwarePlanEdition of ``domain`` is at
+    ``plan`` or higher, otherwise returns ``False``.
+    """
+    subs = Subscription.get_active_subscription_by_domain(domain)
+    if not subs:
+        return False
+
+    ordered_plan_editions = [
+        SoftwarePlanEdition.PAUSED,
+        SoftwarePlanEdition.FREE,
+        SoftwarePlanEdition.STANDARD,
+        SoftwarePlanEdition.PRO,
+        SoftwarePlanEdition.ADVANCED,
+        SoftwarePlanEdition.MANAGED_HOSTING,  # Equivalent of ADVANCED
+        SoftwarePlanEdition.RESELLER,  # Equivalent of ADVANCED
+        SoftwarePlanEdition.ENTERPRISE,
+    ]
+    assert plan in ordered_plan_editions, (
+        f'Unable to evaluate {plan!r} plan.'
+    )
+    plan_index = ordered_plan_editions.index(subs.plan_version.plan.edition)
+    index_required = ordered_plan_editions.index(plan)
+    return plan_index >= index_required
