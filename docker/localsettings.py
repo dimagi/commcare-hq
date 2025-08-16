@@ -77,7 +77,7 @@ COUCH_DATABASES = {
     }
 }
 
-redis_host = 'redis'
+redis_host = 'valkey'
 
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
