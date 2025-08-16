@@ -292,7 +292,12 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     @hq_hx_action('get')
     def export(self, request, *args, **kwargs):
-        return self.trigger_export()
+        res = self.trigger_export()
+        return self.render_htmx_partial_response(
+            request,
+            'payments/partials/payments_export_alert.html',
+            {'message': res.content.decode('utf-8')}
+        )
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
