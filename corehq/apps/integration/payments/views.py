@@ -118,6 +118,8 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin):
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
+    report_title = _('Payments Verification Report')
+    exclude_columns_in_export = ('verify_select',)
 
     VERIFICATION_ROWS_LIMIT = 100
     REVERT_VERIFICATION_ROWS_LIMIT = 100
