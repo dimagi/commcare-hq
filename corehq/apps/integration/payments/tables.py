@@ -50,6 +50,15 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     currency = columns.Column(
         verbose_name=_("Currency"),
     )
+    campaign = columns.Column(
+        verbose_name=_("Campaign"),
+    )
+    activity = columns.Column(
+        verbose_name=_("Activity"),
+    )
+    funder = columns.Column(
+        verbose_name=_("Funder"),
+    )
     user_or_case_id = columns.Column(
         verbose_name=_("User or Case ID"),
     )
