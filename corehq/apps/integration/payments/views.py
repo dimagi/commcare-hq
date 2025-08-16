@@ -12,7 +12,6 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, filters
 from corehq.apps.es.case_search import (
     case_property_query,
-    wrap_case_search_hit,
 )
 from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
@@ -139,7 +138,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
         context_data = super().get_context_data(**kwargs)
 
         context_data['user_or_cases_verification_statuses'] = self._get_user_or_cases_verification_status(
-            context_data['page_obj'].object_list
+            context_data['table'].paginated_rows.data
         )
 
         return context_data
@@ -166,7 +165,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     def _get_user_or_case_ids(object_list):
         user_or_case_ids = []
         for commcare_payment_case_details in object_list:
-            case = wrap_case_search_hit(commcare_payment_case_details)
+            case = commcare_payment_case_details.record.case
             if case_prop := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
                 user_or_case_ids.append(case_prop)
         return user_or_case_ids
