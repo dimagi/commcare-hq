@@ -477,11 +477,11 @@ class TestCreditTransfers(BaseAccountingTest):
             self.assertEqual(credit_line.account.pk, self.account.pk)
 
 
-class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
+class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest):
 
     @classmethod
     def setUpClass(cls):
-        super(TestUserSubscriptionChangeTransfers, cls).setUpClass()
+        super(TestSubscriptionChangeTransfersSubscriptionLevelCredit, cls).setUpClass()
 
         generator.bootstrap_test_software_plan_versions()
         generator.init_default_currency()
@@ -501,7 +501,7 @@ class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
     @classmethod
     def tearDownClass(cls):
         utils.clear_plan_version_cache()
-        super(TestUserSubscriptionChangeTransfers, cls).tearDownClass()
+        super(TestSubscriptionChangeTransfersSubscriptionLevelCredit, cls).tearDownClass()
 
     def _get_credit_total(self, subscription):
         credit_lines = CreditLine.get_credits_by_subscription_and_features(
