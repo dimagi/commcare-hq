@@ -492,6 +492,12 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
             cls.domain, created_by=cls.billing_contact,
         )[0]
         generator.arbitrary_contact_info(cls.account, cls.billing_contact)
+        cls.standard_plan = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.STANDARD
+        )
+        cls.pro_plan = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.PRO
+        )
 
     def tearDown(self):
         for user in self.domain.all_users():
@@ -510,15 +516,8 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
         return sum([c.balance for c in credit_lines])
 
     def test_subscription_credits_transfer_in_invoice(self):
-        standard_plan = DefaultProductPlan.get_default_plan_version(
-            edition=SoftwarePlanEdition.STANDARD
-        )
-        pro_plan = DefaultProductPlan.get_default_plan_version(
-            edition=SoftwarePlanEdition.PRO
-        )
-
         first_sub = Subscription.new_domain_subscription(
-            self.account, self.domain.name, standard_plan,
+            self.account, self.domain.name, self.standard_plan,
             date_start=datetime.date(2019, 9, 1),
         )
         credit_amount = Decimal('5000.00')
@@ -527,7 +526,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
         )
 
         # this is the key step where the expected transfer happens
-        second_sub = first_sub.change_plan(pro_plan)
+        second_sub = first_sub.change_plan(self.pro_plan)
 
         # manually set when the plan change happens otherwise it will be today
         first_sub = Subscription.visible_objects.get(id=first_sub.id)
