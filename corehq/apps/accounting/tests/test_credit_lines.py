@@ -515,6 +515,18 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
         )
         return sum([c.balance for c in credit_lines])
 
+    def _change_plan_to_pro_on_date(self, subscription, date):
+        # this is the key step where the expected transfer happens
+        new_sub = subscription.change_plan(self.pro_plan)
+
+        # manually set when the plan change happens otherwise it will be today
+        old_sub = Subscription.visible_objects.get(id=subscription.id)
+        old_sub.date_end = date
+        old_sub.save()
+        new_sub.date_start = date
+        new_sub.save()
+        return new_sub
+
     def test_subscription_credits_transfer_in_invoice(self):
         first_sub = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.standard_plan,
@@ -525,15 +537,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
             credit_amount, subscription=first_sub,
         )
 
-        # this is the key step where the expected transfer happens
-        second_sub = first_sub.change_plan(self.pro_plan)
-
-        # manually set when the plan change happens otherwise it will be today
-        first_sub = Subscription.visible_objects.get(id=first_sub.id)
-        first_sub.date_end = datetime.date(2019, 9, 10)
-        first_sub.save()
-        second_sub.date_start = first_sub.date_end
-        second_sub.save()
+        second_sub = self._change_plan_to_pro_on_date(first_sub, datetime.date(2019, 9, 10))
 
         invoice_date = utils.months_from_date(first_sub.date_start, 1)
         user_record_date = invoice_date - relativedelta(days=1)
