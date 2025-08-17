@@ -529,6 +529,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
         # this is the key step where the expected transfer happens
         second_sub = first_sub.change_plan(pro_plan)
 
+        # manually set when the plan change happens otherwise it will be today
         first_sub = Subscription.visible_objects.get(id=first_sub.id)
         first_sub.date_end = datetime.date(2019, 9, 10)
         first_sub.save()
@@ -552,4 +553,11 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
 
         self.assertEqual(first_invoice.balance, Decimal('0.0000'))
         self.assertEqual(second_invoice.balance, Decimal('0.0000'))
+
+        # Credit calculation breakdown:
+        # - Initial credit: $5000.00
+        # - Standard plan (9/1-9/10): $300/month × (9/30) = $90.00
+        # - Pro plan (9/10-9/30): $600/month × (21/30) = $420.00
+        # - Total charges: $90 + $420 = $510.00
+        # - Expected remaining credit: $5000 - $510 = $4490.00
         self.assertEqual(self._get_credit_total(second_sub), Decimal('4490.0000'))
