@@ -542,7 +542,7 @@ class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
             num_users=0,
             record_date=user_record_date
         )
-        tasks.generate_invoices_based_on_date(utils.months_from_date(first_sub.date_start, 1))
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(first_sub.invoice_set.count(), 1)
         self.assertEqual(second_sub.invoice_set.count(), 1)
