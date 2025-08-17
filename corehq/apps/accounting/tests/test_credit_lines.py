@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
 
-from dimagi.utils.dates import add_months_to_date
+from dimagi.utils.dates import add_months_to_date, first_of_next_month
 
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.models import (
@@ -537,9 +537,10 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
             credit_amount, subscription=first_sub,
         )
 
-        second_sub = self._change_plan_to_pro_on_date(first_sub, datetime.date(2019, 9, 10))
+        change_date = datetime.date(2019, 9, 10)
+        second_sub = self._change_plan_to_pro_on_date(first_sub, change_date)
 
-        invoice_date = utils.get_first_day_of_months_later(first_sub.date_start, 1)
+        invoice_date = first_of_next_month(change_date)
         user_record_date = invoice_date - relativedelta(days=1)
         DomainUserHistory.objects.create(
             domain=self.domain,
