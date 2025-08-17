@@ -13,7 +13,7 @@ from corehq.util.dates import get_previous_month_date_range
 class UniqueConstraintInvoiceTest(BaseInvoiceTestCase):
 
     def test_unique_constraint_prevents_duplicate_invoice(self):
-        invoice_date = utils.months_from_date(self.subscription.date_start,
+        invoice_date = utils.get_first_day_of_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
         invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
 
@@ -38,7 +38,7 @@ class UniqueConstraintInvoiceTest(BaseInvoiceTestCase):
 
 class UniqueConstraintCustomerInvoiceTest(BaseCustomerInvoiceCase):
     def test_unique_constraint_prevents_duplicate_customer_invoice(self):
-        invoice_date = utils.months_from_date(self.main_subscription.date_start,
+        invoice_date = utils.get_first_day_of_months_later(self.main_subscription.date_start,
                                               random.randint(3, self.main_subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)

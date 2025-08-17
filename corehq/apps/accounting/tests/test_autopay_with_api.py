@@ -39,7 +39,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self._generate_non_autopayable_entities()
 
         # invoice date is 2 months before the end of the subscription (this is arbitrary)
-        invoice_date = utils.months_from_date(self.subscription.date_start, self.subscription_length - 2)
+        invoice_date = utils.get_first_day_of_months_later(self.subscription.date_start,
+                                                           self.subscription_length - 2)
         self.create_invoices(invoice_date)
 
     def _generate_autopayable_entities(self):

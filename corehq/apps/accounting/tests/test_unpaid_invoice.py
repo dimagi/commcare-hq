@@ -41,7 +41,7 @@ def _generate_invoice_and_subscription(days_ago, is_customer_billing_account=Fal
     account.save()
 
     domain = generator.arbitrary_domain()
-    subscription_start_date = utils.months_from_date(invoice_due_date, -2)
+    subscription_start_date = utils.get_first_day_of_months_later(invoice_due_date, -2)
 
     subscription = generator.generate_domain_subscription(
         account,
@@ -56,7 +56,7 @@ def _generate_invoice_and_subscription(days_ago, is_customer_billing_account=Fal
     subscription.is_active = True
     subscription.save()
 
-    invoice_date = utils.months_from_date(invoice_due_date, -1)
+    invoice_date = utils.get_first_day_of_months_later(invoice_due_date, -1)
     DomainUserHistory.objects.create(
         domain=domain.name,
         num_users=20,

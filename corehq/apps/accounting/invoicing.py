@@ -54,7 +54,7 @@ from corehq.apps.accounting.utils import (
     ensure_domain_instance,
     log_accounting_error,
     log_accounting_info,
-    months_from_date,
+    get_first_day_of_months_later,
 )
 from corehq.apps.accounting.utils.invoicing import (
     get_flagged_pay_annually_prepay_invoice,
@@ -690,7 +690,7 @@ class ProductLineItemFactory(LineItemFactory):
     def months_product_active_over_period(self, num_months):
         # Calculate the number of months out of num_months the subscription was active
         quantity = 0
-        date_start = months_from_date(self.invoice.date_end, -(num_months - 1))
+        date_start = get_first_day_of_months_later(self.invoice.date_end, -(num_months - 1))
         while date_start < self.invoice.date_end:
             if self.subscription.date_end and self.subscription.date_end <= date_start:
                 continue
