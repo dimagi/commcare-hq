@@ -541,8 +541,9 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
             date_start=datetime.date(2019, 9, 1),
         )
         credit_amount = Decimal('5000.00')
+        # Any type of credits is neither product nor has a feature type
         CreditLine.add_credit(
-            credit_amount, subscription=first_sub,
+            credit_amount, subscription=first_sub, is_product=False, feature_type=None
         )
 
         change_date = datetime.date(2019, 9, 10)
@@ -568,3 +569,80 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
         # - Total charges: $90 + $420 = $510.00
         # - Expected remaining credit: $5000 - $510 = $4490.00
         self.assertEqual(self._get_credit_total(second_sub), Decimal('4490.0000'))
+
+    def test_product_type_credits_transfer_in_invoice(self):
+        first_sub = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_start=datetime.date(2019, 9, 1),
+        )
+        credit_amount = Decimal('5000.00')
+        # Add product type credits
+        CreditLine.add_credit(
+            credit_amount, subscription=first_sub, is_product=True, feature_type=None
+        )
+
+        change_date = datetime.date(2019, 9, 10)
+        second_sub = self._change_plan_to_pro_on_date(first_sub, change_date)
+
+        invoice_date = first_of_next_month(change_date)
+        self._generate_user_history(num_users=0, invoice_date=invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
+
+        self.assertEqual(first_sub.invoice_set.count(), 1)
+        self.assertEqual(second_sub.invoice_set.count(), 1)
+
+        first_invoice = first_sub.invoice_set.first()
+        second_invoice = second_sub.invoice_set.first()
+
+        self.assertEqual(first_invoice.balance, Decimal('0.0000'))
+        self.assertEqual(second_invoice.balance, Decimal('0.0000'))
+
+        # Credit calculation breakdown:
+        # - Initial credit: $5000.00
+        # - Standard plan fee (9/1-9/10): $300/month × (9/30) = $90.00
+        # - Pro plan fee (9/10-9/30): $600/month × (21/30) = $420.00
+        # - Total charges: $90 + $420 = $510.00
+        # - Expected remaining credit: $5000 - $510 = $4490.00
+        self.assertEqual(self._get_credit_total(second_sub), Decimal('4490.0000'))
+
+    def test_user_feature_type_credits_transfer_in_invoice(self):
+        first_sub = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_start=datetime.date(2019, 9, 1),
+        )
+        credit_amount = Decimal('5000.00')
+        # Add User type credits
+        CreditLine.add_credit(
+            credit_amount, subscription=first_sub, is_product=False, feature_type=FeatureType.USER
+        )
+
+        change_date = datetime.date(2019, 9, 10)
+        second_sub = self._change_plan_to_pro_on_date(first_sub, change_date)
+
+        invoice_date = first_of_next_month(change_date)
+        # Standard plan has 4 users, Pro plan has 6 users
+        # 10 users will result in 6 excess users for Standard plan and 4 excess users for Pro plan
+        self._generate_user_history(num_users=10, invoice_date=invoice_date)
+
+        tasks.generate_invoices_based_on_date(invoice_date)
+
+        self.assertEqual(first_sub.invoice_set.count(), 1)
+        self.assertEqual(second_sub.invoice_set.count(), 1)
+
+        first_invoice = first_sub.invoice_set.first()
+        second_invoice = second_sub.invoice_set.first()
+
+        # No product type credit and ANY type credit are added
+        # Thus the balance will have the plan fee
+        # - Standard plan fee (9/1-9/10): $300/month × (9/30) = $90.00
+        # - Pro plan fee (9/10-9/30): $600/month × (21/30) = $420.00
+        self.assertEqual(first_invoice.balance, Decimal('90.0000'))
+        self.assertEqual(second_invoice.balance, Decimal('420.0000'))
+
+        # Credit calculation breakdown:
+        # - Initial credit: $5000.00
+        # - Standard plan excess users (9/1-9/10): $1/user/month × (6 users) * (9/30) = $1.80
+        # - Pro plan excess users (9/10-9/30): $1/user/month × (4 users) * (21/30) = $2.80
+        # - Total charges: $1.80 + $2.80 = $4.60
+        # - Expected remaining credit: $5000 - $4.60 = $4995.40
+        self.assertEqual(self._get_credit_total(second_sub), Decimal('4995.4000'))
