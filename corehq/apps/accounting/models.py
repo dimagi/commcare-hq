@@ -3527,40 +3527,11 @@ class CreditLine(models.Model):
 
     @classmethod
     def get_credits_for_line_item_in_invoice(cls, line_item, feature_type, is_product):
-        relevant_credits = [
-            cls.get_credits_by_subscription_and_features(
-                line_item.invoice.subscription,
-                feature_type=feature_type,
-                is_product=is_product,
-            ),
-            cls.get_credits_for_account(
-                line_item.invoice.subscription.account,
-                feature_type=feature_type,
-                is_product=is_product,
-            )
-        ]
-        if line_item.invoice.subscription.next_subscription:
-            active_sub = Subscription.get_active_subscription_by_domain(
-                line_item.invoice.subscription.subscriber.domain
-            )
-            if active_sub.account == line_item.invoice.subscription.account:
-                relevant_credits.append(
-                    cls.get_credits_by_subscription_and_features(
-                        active_sub,
-                        feature_type=feature_type,
-                        is_product=is_product,
-                    )
-                )
-            elif (line_item.invoice.subscription.next_subscription.account
-                  == line_item.invoice.subscription.account):
-                relevant_credits.append(
-                    cls.get_credits_by_subscription_and_features(
-                        line_item.invoice.subscription.next_subscription,
-                        feature_type=feature_type,
-                        is_product=is_product,
-                    )
-                )
-        return itertools.chain(*relevant_credits)
+        return cls.get_credits_for_invoice(
+            line_item.invoice,
+            feature_type=feature_type,
+            is_product=is_product
+        )
 
     @classmethod
     def get_credits_for_line_item_in_customer_invoice(cls, line_item, feature_type, is_product):
@@ -3578,10 +3549,18 @@ class CreditLine(models.Model):
         )
 
     @classmethod
-    def get_credits_for_invoice(cls, invoice):
+    def get_credits_for_invoice(cls, invoice, feature_type=None, is_product=False):
         relevant_credits = [
-            cls.get_credits_by_subscription_and_features(invoice.subscription),
-            cls.get_credits_for_account(invoice.subscription.account)
+            cls.get_credits_by_subscription_and_features(
+                invoice.subscription,
+                feature_type=feature_type,
+                is_product=is_product,
+            ),
+            cls.get_credits_for_account(
+                invoice.subscription.account,
+                feature_type=feature_type,
+                is_product=is_product,
+            )
         ]
         if invoice.subscription.next_subscription:
             # check for a transfer of subscription credits due to upgrades by
@@ -3592,13 +3571,19 @@ class CreditLine(models.Model):
             )
             if active_sub.account == invoice.subscription.account:
                 relevant_credits.append(
-                    cls.get_credits_by_subscription_and_features(active_sub)
+                    cls.get_credits_by_subscription_and_features(
+                        active_sub,
+                        feature_type=feature_type,
+                        is_product=is_product,
+                    )
                 )
             elif (invoice.subscription.next_subscription.account
                   == invoice.subscription.account):
                 relevant_credits.append(
                     cls.get_credits_by_subscription_and_features(
-                        invoice.subscription.next_subscription
+                        invoice.subscription.next_subscription,
+                        feature_type=feature_type,
+                        is_product=is_product,
                     )
                 )
         return itertools.chain(*relevant_credits)
