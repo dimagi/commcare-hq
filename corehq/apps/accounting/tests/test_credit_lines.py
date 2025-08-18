@@ -499,11 +499,6 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
             edition=SoftwarePlanEdition.PRO
         )
 
-    def tearDown(self):
-        for user in self.domain.all_users():
-            user.delete(self.domain.name, deleted_by=None)
-        super(BaseAccountingTest, self).tearDown()
-
     @classmethod
     def tearDownClass(cls):
         utils.clear_plan_version_cache()
