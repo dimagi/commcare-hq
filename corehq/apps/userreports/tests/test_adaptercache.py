@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from attrs import define, field
-from freezegun import freeze_time
+from time_machine import travel
 
 from ..adaptercache import MigrationCache, TTLCache
 
@@ -13,7 +13,7 @@ class TestTTLCache:
             assert since is None
             yield domain, Adapter(domain)
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             cache = TTLCache(iter_adapters)
 
             result = cache.get_adapters('one')
@@ -46,16 +46,16 @@ class TestTTLCache:
                 yield domain, adapter
                 yield 'two', adapter
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             cache = TTLCache(iter_adapters)
             result = cache.get_adapters('one')
 
-        with freeze_time('2020-01-02T00:00:00Z'):
+        with travel('2020-01-02T00:00:00Z', tick=False):
             cache.refresh()
             assert cache.get_adapters('one') == result
             assert 'two' in cache.adapters
 
-        with freeze_time('2020-01-04T01:00:00Z'):
+        with travel('2020-01-04T01:00:00Z', tick=False):
             cache.refresh()
             assert 'two' not in cache.adapters
             assert cache.get_adapters('one') != result
@@ -66,7 +66,7 @@ class TestTTLCache:
                 if since is None or adapter.modified > since:
                     yield domain, adapter
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             adapter1 = Adapter('one')
             adapters = {'one': adapter1, 'two': adapter1}
             cache = TTLCache(iter_adapters)
@@ -75,7 +75,7 @@ class TestTTLCache:
             assert cache.get_adapters('two') == result
             assert 'three' not in cache.adapters
 
-        with freeze_time('2020-01-02T00:00:00Z'):
+        with travel('2020-01-02T00:00:00Z', tick=False):
             adapters['two'] = Adapter('two')
             adapters['three'] = Adapter('three')
             cache.refresh()
@@ -90,7 +90,7 @@ class TestTTLCache:
                 if since is None or adapter.modified > since:
                     yield domain, adapter
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             adapter1 = Adapter('one')
             adapters = {'one': adapter1, 'two': adapter1}
             cache = TTLCache(iter_adapters)
@@ -98,7 +98,7 @@ class TestTTLCache:
             result = cache.get_adapters('one')
             assert cache.get_adapters('two') == result
 
-        with freeze_time('2020-01-02T00:00:00Z'):
+        with travel('2020-01-02T00:00:00Z', tick=False):
             adapter1.modified = datetime.now(UTC)  # update on refresh
             adapters = {'one': adapter1}
             cache.refresh()
@@ -111,13 +111,13 @@ class TestTTLCache:
                 if since is None or adapter.modified > since:
                     yield adapter.domain, adapter
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             adapters = [Adapter('one', 0), Adapter('one', 1)]
             cache = TTLCache(iter_adapters)
 
             assert cache.get_adapters('one') == adapters
 
-        with freeze_time('2020-01-02T00:00:00Z'):
+        with travel('2020-01-02T00:00:00Z', tick=False):
             adapters[0] = Adapter('one', 0)
             assert cache.get_adapters('one') != adapters
             cache.refresh()
@@ -129,7 +129,7 @@ class TestTTLCache:
                 if since is None or adapter.modified > since:
                     yield domain, adapter
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             adapter1 = Adapter('one')
             adapters = {'one': adapter1, 'two': adapter1}
             cache = TTLCache(iter_adapters)
@@ -137,7 +137,7 @@ class TestTTLCache:
             result = cache.get_adapters('one')
             assert cache.get_adapters('two') == result
 
-        with freeze_time('2020-01-02T00:00:00Z'):
+        with travel('2020-01-02T00:00:00Z', tick=False):
             adapter1.modified = datetime.now(UTC)
             adapter1.is_active = False
             adapters = {'three': adapter1}
@@ -150,7 +150,7 @@ class TestTTLCache:
             if since is None or adapter.modified > since:
                 yield adapter.domain, adapter
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             adapter = Adapter('one')
             cache = TTLCache(iter_adapters)
             assert cache.get_adapters('one') == [adapter]
@@ -160,7 +160,7 @@ class TestTTLCache:
             cache.refresh()
             assert cache.get_adapters('one') == []
 
-        with freeze_time('2020-01-01T01:00:00Z'):
+        with travel('2020-01-01T01:00:00Z', tick=False):
             adapter.modified = datetime.now(UTC)
             cache.refresh()
             assert cache.get_adapters('one') == [adapter]
@@ -174,14 +174,14 @@ class TestMigrationCache:
                 if since is None or adapter.modified > since:
                     yield adapter.domain, adapter
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             adapters = [Adapter('one'), Adapter('two')]
             cache = MigrationCache(iter_adapters)
             assert not cache.adapters.entries
 
             assert cache.get_adapters() == adapters
 
-        with freeze_time('2020-01-02T00:00:00Z'):
+        with travel('2020-01-02T00:00:00Z', tick=False):
             adapters.append(Adapter('three'))
             cache.refresh()
             assert cache.get_adapters() == adapters
@@ -192,14 +192,14 @@ class TestMigrationCache:
                 if since is None or adapter.modified > since:
                     yield adapter.domain, adapter
 
-        with freeze_time('2020-01-01T00:00:00Z'):
+        with travel('2020-01-01T00:00:00Z', tick=False):
             adapters = [Adapter('one'), Adapter('two', is_active=False)]
             cache = MigrationCache(iter_adapters)
             assert not cache.adapters.entries
 
             assert cache.get_adapters() == adapters[:1]
 
-        with freeze_time('2020-01-02T00:00:00Z'):
+        with travel('2020-01-02T00:00:00Z', tick=False):
             adapters[0].modified = datetime.now(UTC)
             adapters[0].is_active = False
             cache.refresh()
