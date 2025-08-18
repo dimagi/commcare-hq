@@ -527,6 +527,14 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
         new_sub.save()
         return new_sub
 
+    def _generate_user_history(self, num_users, invoice_date):
+        user_record_date = invoice_date - relativedelta(days=1)
+        DomainUserHistory.objects.create(
+            domain=self.domain,
+            num_users=num_users,
+            record_date=user_record_date
+        )
+
     def test_subscription_credits_transfer_in_invoice(self):
         first_sub = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.standard_plan,
@@ -541,12 +549,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
         second_sub = self._change_plan_to_pro_on_date(first_sub, change_date)
 
         invoice_date = first_of_next_month(change_date)
-        user_record_date = invoice_date - relativedelta(days=1)
-        DomainUserHistory.objects.create(
-            domain=self.domain,
-            num_users=0,
-            record_date=user_record_date
-        )
+        self._generate_user_history(num_users=0, invoice_date=invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(first_sub.invoice_set.count(), 1)
