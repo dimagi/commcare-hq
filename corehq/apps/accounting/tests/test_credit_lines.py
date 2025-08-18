@@ -535,7 +535,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
             record_date=user_record_date
         )
 
-    def test_subscription_credits_transfer_in_invoice(self):
+    def test_any_type_credits_transfer_in_invoice(self):
         first_sub = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.standard_plan,
             date_start=datetime.date(2019, 9, 1),
