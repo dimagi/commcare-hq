@@ -89,7 +89,7 @@ def check_headers(user_specs, domain, upload_couch_user, is_web_upload=False):
                 ))
             headers.discard(old_name)
 
-    if is_web_upload and toggles.DEACTIVATE_WEB_USERS.enabled(domain):
+    if is_web_upload:
         conditionally_allowed_headers.add('is_active_in_domain')
     if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         conditionally_allowed_headers.add('domain')
