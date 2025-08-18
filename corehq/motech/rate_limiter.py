@@ -77,20 +77,38 @@ SHOULD_RATE_LIMIT_REPEATERS = not settings.UNIT_TESTING
 @silence_and_report_error("Exception raised in the repeater rate limiter",
                           'commcare.repeaters.rate_limiter_errors')
 def rate_limit_repeater(domain, repeater_id):
-    limit_attempts = RATE_LIMIT_REPEATER_ATTEMPTS.enabled(domain, namespace=NAMESPACE_DOMAIN)
-    is_under_attempt_limit = repeater_attempts_rate_limiter.allow_usage(repeater_id) if limit_attempts else True
+    return not _allow_repeater(domain, repeater_id)
 
-    if global_repeater_rate_limiter.allow_usage() and is_under_attempt_limit:
+
+def _allow_repeater(domain, repeater_id):
+    """
+    Allow a repeater to run
+    1. if global limit is not exceeded,
+       AND if feature flag RATE_LIMIT_REPEATER_ATTEMPTS enabled, check if repeater's attempts limit is not exceeded
+    2. OR if repeater's limit is not exceeded for the domain
+    Limit repeater by default
+    """
+    if global_repeater_rate_limiter.allow_usage() and _is_under_attempt_limit(domain, repeater_id):
         allow_usage = True
     elif repeater_rate_limiter.allow_usage(domain):
         allow_usage = True
     else:
         allow_usage = False
-        metrics_counter('commcare.repeaters.rate_limited', tags={
-            'domain': domain,
-        })
+        _track_repeater_rate_limited(domain)
 
-    return not allow_usage
+    return allow_usage
+
+
+def _is_under_attempt_limit(domain, repeater_id):
+    if RATE_LIMIT_REPEATER_ATTEMPTS.enabled(domain, namespace=NAMESPACE_DOMAIN):
+        return repeater_attempts_rate_limiter.allow_usage(repeater_id)
+    return True
+
+
+def _track_repeater_rate_limited(domain):
+    metrics_counter('commcare.repeaters.rate_limited', tags={
+        'domain': domain,
+    })
 
 
 @run_only_when(SHOULD_RATE_LIMIT_REPEATERS)

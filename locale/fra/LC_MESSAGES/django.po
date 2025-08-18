@@ -11067,38 +11067,6 @@ msgstr ""
 "href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-"
 "Tabs-on-Case-Detail-Screen' target='_blank'>site d'aide</a>."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing"
-msgstr "Impression"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Document Template"
-msgstr "Modèle de document"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Opens file in new tab."
-msgstr "Ouvre le fichier dans un nouvel onglet"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Open HTML"
-msgstr "Ouvrez en format HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Upload HTML"
-msgstr "Uploader en HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Replace HTML"
-msgstr "Remplacer HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing the case detail is not supported on this version of CommCare"
-msgstr ""
-"L'impression des détails de dossier ne sont pas pris en compte par cette "
-"version de CommCare"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Custom Case List XML"
 msgstr "Liste de dossier personnalisée XML"
@@ -11556,10 +11524,6 @@ msgstr "XML personnalisé de la liste de cas"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Case tile configuration"
 msgstr "Configuration de la tuile de cas"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
-msgid "Print template"
-msgstr "Modèle d’impression"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Search properties"
@@ -15935,16 +15899,6 @@ msgid "List is empty."
 msgstr "La liste est vide."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "Masquer la carte"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "Afficher tous"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "Affiner la recherche"
 
@@ -15957,6 +15911,16 @@ msgstr "Tout sélectionner"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "Trier par"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "Masquer la carte"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "Afficher tous"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -17183,7 +17147,9 @@ msgstr ""
 "ou 'manquant'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr ""
 "Le type de données '{}' ne peut pas avoir le type de correspondance '{}'."
 
@@ -22718,6 +22684,7 @@ msgstr "Résumé d'utilisation"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/reports/filters/select.py
 msgid "Feature"
 msgstr "Fonctionnalité"
 
@@ -31264,6 +31231,30 @@ msgstr "Aucune restriction de reconstruction requise"
 msgid "UCR Domains Data Report"
 msgstr "Rapport de données sur les domaines UCR"
 
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Stats Report"
+msgstr "Aperçus des fonctionnalités"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled By"
+msgstr "Activé"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled At"
+msgstr "Activé"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Not Checked"
+msgid "Not recorded"
+msgstr "Non vérifié"
+
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "Nom du domaine"
@@ -31642,10 +31633,6 @@ msgstr "audio"
 #: corehq/apps/hqmedia/controller.py
 msgid "video"
 msgstr "vidéo"
-
-#: corehq/apps/hqmedia/controller.py
-msgid "text"
-msgstr "texte"
 
 #: corehq/apps/hqmedia/models.py
 msgid "Generic Multimedia"
@@ -32070,10 +32057,6 @@ msgstr "Erreurs trouvées"
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
 msgid "New Audio Uploaded Successfully"
 msgstr "Téléversement d'un nouvel audio réussi"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "New Template Uploaded Successfully"
-msgstr "Chargement du nouveau modèle avec succès"
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
 msgid "View Full Size"
@@ -39413,6 +39396,12 @@ msgstr "Statut du rapport"
 msgid "Rebuild restriction feature flag status"
 msgstr "Statut du drapeau de restriction de reconstruction"
 
+#: corehq/apps/reports/filters/select.py
+#, fuzzy
+#| msgid "Select Status"
+msgid "Select Feature"
+msgstr "Sélectionner le statut"
+
 #: corehq/apps/reports/filters/simple.py
 #: corehq/motech/repeaters/views/repeat_records.py
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
@@ -45359,6 +45348,7 @@ msgstr "Échec de la demande d’authentification unique"
 
 #: corehq/apps/sso/templates/sso/acs_errors.html
 #: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -46018,6 +46008,30 @@ msgstr ""
 "\n"
 "      Veuillez contacter un·e administrateur·rice du projet pour rétablir l'accès.\n"
 "    "
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid "Single Sign-On"
+msgid "Single Sign-On Error"
+msgstr "Authentification unique"
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Invitation link has expired.\n"
+#| "                  Contact your project administrator to send new invite.\n"
+#| "                "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your project's\n"
+"                SSO settings. Please contact your project administrator to resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                  Le lien d'invitation a expiré.\n"
+"                  Contactez l'administrateur de votre projet pour qu'il vous envoie une nouvelle invitation.\n"
+"                "
 
 #: corehq/apps/sso/templates/sso/sso_request_denied.html
 msgid "Single Sign-On Request Denied"
@@ -50005,9 +50019,14 @@ msgid "Require Account Confirmation?"
 msgstr "Exiger la confirmation du compte ?"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their email "
+#| "and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "Le compte de l'utilisateur ne sera pas actif tant qu'il n'aura pas confirmé "
 "son e-mail et défini un mot de passe."
@@ -57837,6 +57856,12 @@ msgstr "Bannières de domaine personnalisées"
 msgid "App Dependencies"
 msgstr "Dépendances d’application"
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "Désactiver le verrouillage des travailleurs mobiles"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Rapports de l'Éditeur de Rapports"
@@ -58864,6 +58889,38 @@ msgstr "Les colonnes requises sont {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Printing"
+#~ msgstr "Impression"
+
+#~ msgid "Document Template"
+#~ msgstr "Modèle de document"
+
+#~ msgid "Opens file in new tab."
+#~ msgstr "Ouvre le fichier dans un nouvel onglet"
+
+#~ msgid "Open HTML"
+#~ msgstr "Ouvrez en format HTML"
+
+#~ msgid "Upload HTML"
+#~ msgstr "Uploader en HTML"
+
+#~ msgid "Replace HTML"
+#~ msgstr "Remplacer HTML"
+
+#~ msgid "Printing the case detail is not supported on this version of CommCare"
+#~ msgstr ""
+#~ "L'impression des détails de dossier ne sont pas pris en compte par cette "
+#~ "version de CommCare"
+
+#~ msgid "Print template"
+#~ msgstr "Modèle d’impression"
+
+#~ msgid "text"
+#~ msgstr "texte"
+
+#~ msgid "New Template Uploaded Successfully"
+#~ msgstr "Chargement du nouveau modèle avec succès"
 
 #~ msgid "Cookies Required for CSRF"
 #~ msgstr "Cookies requis pour CSRF"

@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, override_settings
 from datetime import datetime
-from freezegun import freeze_time
+from time_machine import travel
 from unittest.mock import patch, MagicMock
 
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
@@ -127,7 +127,7 @@ class EnterpriseODataReportTests(SimpleTestCase):
         return report
 
 
-@freeze_time(datetime(month=10, day=1, year=2024))
+@travel(datetime(month=10, day=1, year=2024), tick=False)
 class EnterpriseFormReportTests(SimpleTestCase):
     def setUp(self):
         super().setUp()
