@@ -4,9 +4,7 @@ from unittest import mock
 
 from django.core import mail
 from django.db import models
-from django.test import SimpleTestCase, TestCase
-
-import pytest
+from django.test import SimpleTestCase
 
 from dimagi.utils.dates import add_months_to_date
 
@@ -19,11 +17,9 @@ from corehq.apps.accounting.models import (
     CustomerBillingRecord,
     CustomerInvoice,
     Invoice,
-    SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
     SubscriptionType,
-    plan_enabled,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -31,13 +27,8 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCardManager,
     FakeStripeCustomerManager,
 )
-from corehq.apps.accounting.tests.utils import (
-    DomainSubscriptionMixin,
-    mocked_stripe_api,
-)
-from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.accounting.tests.utils import mocked_stripe_api
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.smsbillables.models import (
     SmsBillable,
     SmsGatewayFee,
@@ -358,42 +349,3 @@ class SimpleBillingAccountTest(SimpleTestCase):
     def test_has_enterprise_admin_does_case_insensitive_match(self):
         account = BillingAccount(is_customer_billing_account=True, enterprise_admin_emails=['TEST@dimagi.com'])
         self.assertTrue(account.has_enterprise_admin('test@DIMAGI.com'))
-
-
-class TestPlanEnabled(TestCase, DomainSubscriptionMixin):
-    domain = 'test-plan-enabled'
-
-    def setUp(self):
-        self.domain_obj = create_domain(self.domain)
-        self.addCleanup(self.domain_obj.delete)
-        self.addCleanup(clear_plan_version_cache)
-        self.addCleanup(Subscription.clear_caches, self.domain)
-
-    def test_std_pro_enabled(self):
-        self.setup_subscription(self.domain, SoftwarePlanEdition.STANDARD)
-        assert plan_enabled(SoftwarePlanEdition.PRO, self.domain) is False
-
-    def test_pro_pro_enabled(self):
-        self.setup_subscription(self.domain, SoftwarePlanEdition.PRO)
-        assert plan_enabled(SoftwarePlanEdition.PRO, self.domain) is True
-
-    def test_adv_pro_enabled(self):
-        self.setup_subscription(self.domain, SoftwarePlanEdition.ADVANCED)
-        assert plan_enabled(SoftwarePlanEdition.PRO, self.domain) is True
-
-    def test_pro_std_enabled(self):
-        self.setup_subscription(self.domain, SoftwarePlanEdition.PRO)
-        assert plan_enabled(SoftwarePlanEdition.STANDARD, self.domain) is True
-
-    def test_pro_adv_enabled(self):
-        self.setup_subscription(self.domain, SoftwarePlanEdition.PRO)
-        assert plan_enabled(SoftwarePlanEdition.ADVANCED, self.domain) is False
-
-    def test_no_plan(self):
-        self.setup_subscription(self.domain, SoftwarePlanEdition.PRO)
-        with pytest.raises(AssertionError):
-            plan_enabled("AIN'T GOT NO PLAN", self.domain)
-
-    def test_no_subs(self):
-        assert Subscription.get_active_subscription_by_domain(self.domain) is None
-        assert plan_enabled(SoftwarePlanEdition.PRO, self.domain) is False
