@@ -67,9 +67,6 @@ DATABASES = {
         'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
         'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
     }
 }
 
