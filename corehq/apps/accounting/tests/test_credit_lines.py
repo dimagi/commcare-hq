@@ -510,9 +510,9 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
         super(TestSubscriptionChangeTransfersSubscriptionLevelCredit, cls).tearDownClass()
 
     def _get_credit_total(self, subscription):
-        credit_lines = CreditLine.get_credits_by_subscription_and_features(
-            subscription
-        )
+        any_type_credit_lines = CreditLine.get_credits_by_subscription_and_features(subscription)
+        other_type_credit_lines = CreditLine.get_non_general_credits_by_subscription(subscription)
+        credit_lines = any_type_credit_lines.union(other_type_credit_lines)
         return sum([c.balance for c in credit_lines])
 
     def _change_plan_to_pro_on_date(self, subscription, date):
