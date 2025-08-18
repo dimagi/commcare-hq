@@ -103,7 +103,9 @@ class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
             set this to True to allow session based access to this resource
         """
         super(LoginAndDomainAuthentication, self).__init__(*args, **kwargs)
-        self.decorator_map = get_auth_decorator_map(require_domain=True, allow_sessions=allow_session_auth)
+        self.decorator_map = get_auth_decorator_map(
+            require_domain=True, allow_sessions=allow_session_auth, allow_api_key_in_basic=True
+        )
 
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
