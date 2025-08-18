@@ -10988,37 +10988,6 @@ msgstr ""
 "href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-"
 "Tabs-on-Case-Detail-Screen' target='_blank'>Site de Ajuda</a>."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing"
-msgstr "Impressão"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Document Template"
-msgstr "Modelo de Documento"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Opens file in new tab."
-msgstr "Abre o arquivo em uma nova aba."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Open HTML"
-msgstr "Abrir HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Upload HTML"
-msgstr "Enviar HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Replace HTML"
-msgstr "Substituir HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing the case detail is not supported on this version of CommCare"
-msgstr ""
-"A impressão do detalhe do caso não é suportada nesta versão do CommCare"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Custom Case List XML"
 msgstr "XML Personalizado da Lista de Casos"
@@ -11477,10 +11446,6 @@ msgstr "XML personalizado da lista de casos"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Case tile configuration"
 msgstr "Configuração do bloco de casos"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
-msgid "Print template"
-msgstr "Modelo de impressão"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Search properties"
@@ -15793,16 +15758,6 @@ msgid "List is empty."
 msgstr "A lista está vazia."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "Ocultar Mapa"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-#, fuzzy
-#| msgid "Show all"
-msgid "Show Map"
-msgstr "Mostrar tudo"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "Refinar busca"
 
@@ -15815,6 +15770,16 @@ msgstr "Selecionar tudo"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "Ordenar por"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "Ocultar Mapa"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "Mostrar tudo"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -17034,7 +16999,9 @@ msgstr ""
 "'ausente'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "O tipo de dado '{}' não pode ter o tipo de correspondência '{}'."
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -22550,6 +22517,7 @@ msgstr "Resumo de Uso"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/reports/filters/select.py
 msgid "Feature"
 msgstr "Recurso"
 
@@ -31032,6 +31000,30 @@ msgstr "Nenhuma restrição de reconstrução necessária"
 msgid "UCR Domains Data Report"
 msgstr "Relatório de Dados de Domínios UCR"
 
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Stats Report"
+msgstr "Pré-visualizações de Funcionalidades"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled By"
+msgstr "Ativado"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled At"
+msgstr "Ativado"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Not Checked"
+msgid "Not recorded"
+msgstr "Não Verificado"
+
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "Nome do domínio"
@@ -31388,10 +31380,6 @@ msgstr "áudio"
 #: corehq/apps/hqmedia/controller.py
 msgid "video"
 msgstr "vídeo"
-
-#: corehq/apps/hqmedia/controller.py
-msgid "text"
-msgstr "texto"
 
 #: corehq/apps/hqmedia/models.py
 msgid "Generic Multimedia"
@@ -31811,10 +31799,6 @@ msgstr "Erros encontrados"
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
 msgid "New Audio Uploaded Successfully"
 msgstr "Novo Áudio Enviado com Sucesso"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "New Template Uploaded Successfully"
-msgstr "Novo Modelo Enviado com Sucesso"
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
 msgid "View Full Size"
@@ -39150,6 +39134,12 @@ msgstr "Status do Registro"
 msgid "Rebuild restriction feature flag status"
 msgstr "Reconstruir status do recurso de restrição por feature flag"
 
+#: corehq/apps/reports/filters/select.py
+#, fuzzy
+#| msgid "Select Status"
+msgid "Select Feature"
+msgstr "Selecionar Status"
+
 #: corehq/apps/reports/filters/simple.py
 #: corehq/motech/repeaters/views/repeat_records.py
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
@@ -45057,6 +45047,7 @@ msgstr "Falha na Solicitação de Single Sign-On"
 
 #: corehq/apps/sso/templates/sso/acs_errors.html
 #: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -45717,6 +45708,30 @@ msgstr ""
 "\n"
 "      Por favor, entre em contato com um administrador do projeto para restaurar o acesso.\n"
 "    "
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid "Single Sign-On"
+msgid "Single Sign-On Error"
+msgstr "Login Único (Single Sign-On)"
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Invitation link has expired.\n"
+#| "                  Contact your project administrator to send new invite.\n"
+#| "                "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your project's\n"
+"                SSO settings. Please contact your project administrator to resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                  O link do convite expirou.\n"
+"                  Entre em contato com o administrador do projeto para enviar um novo convite.\n"
+"                "
 
 #: corehq/apps/sso/templates/sso/sso_request_denied.html
 msgid "Single Sign-On Request Denied"
@@ -49639,9 +49654,14 @@ msgid "Require Account Confirmation?"
 msgstr "Exigir Confirmação de Conta?"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their email "
+#| "and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "A conta do usuário não estará ativa até que ele confirme o e-mail e defina "
 "uma senha."
@@ -57392,6 +57412,12 @@ msgstr "Banners de domínio personalizado"
 msgid "App Dependencies"
 msgstr "Dependências do App"
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "Desativar bloqueio de agentes móveis"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Relatórios do Construtor de Relatórios"
@@ -58424,6 +58450,37 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#~ msgid "Printing"
+#~ msgstr "Impressão"
+
+#~ msgid "Document Template"
+#~ msgstr "Modelo de Documento"
+
+#~ msgid "Opens file in new tab."
+#~ msgstr "Abre o arquivo em uma nova aba."
+
+#~ msgid "Open HTML"
+#~ msgstr "Abrir HTML"
+
+#~ msgid "Upload HTML"
+#~ msgstr "Enviar HTML"
+
+#~ msgid "Replace HTML"
+#~ msgstr "Substituir HTML"
+
+#~ msgid "Printing the case detail is not supported on this version of CommCare"
+#~ msgstr ""
+#~ "A impressão do detalhe do caso não é suportada nesta versão do CommCare"
+
+#~ msgid "Print template"
+#~ msgstr "Modelo de impressão"
+
+#~ msgid "text"
+#~ msgstr "texto"
+
+#~ msgid "New Template Uploaded Successfully"
+#~ msgstr "Novo Modelo Enviado com Sucesso"
 
 #~ msgid "Cookies Required for CSRF"
 #~ msgstr "Cookies Necessários para CSRF"

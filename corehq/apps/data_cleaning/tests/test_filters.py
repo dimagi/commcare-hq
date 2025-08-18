@@ -669,7 +669,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         super().setUpClass()
 
         cls.deactivated_user = CommCareUser.create(cls.domain, 'deactivated-user-test', 'Passw0rd!', None, None)
-        cls.deactivated_user.is_active = False
+        cls.deactivated_user.set_is_active(cls.domain, False)
         user_adapter.index(cls.deactivated_user)
         cls.deactivated_user.save()
 

@@ -1,5 +1,5 @@
 from django.test import RequestFactory, TestCase
-from freezegun import freeze_time
+from time_machine import travel
 from django.contrib.auth.models import User
 from corehq.apps.hqwebapp.models import UserAccessLog
 
@@ -27,7 +27,7 @@ class TestLoginAccessHandler(TestCase):
 
 
 class TestHandleLogin(TestCase):
-    @freeze_time('2020-01-02 03:20:15')
+    @travel('2020-01-02 03:20:15', tick=False)
     def test_login_stores_correct_fields_in_database(self):
         factory = RequestFactory()
         user = User(username='test_user')
@@ -50,7 +50,7 @@ class TestHandleLogout(TestCase):
         factory = RequestFactory()
         self.request = factory.post('/logout')
 
-    @freeze_time('2020-01-02 03:20:15')
+    @travel('2020-01-02 03:20:15', tick=False)
     def test_logout_stores_correct_fields_in_database(self):
         user = User(username='test_user')
         self.request.META['HTTP_USER_AGENT'] = 'Mozilla'
@@ -73,7 +73,7 @@ class TestHandleLogout(TestCase):
 
 
 class TestHandleFailedLogin(TestCase):
-    @freeze_time('2020-01-02 03:20:15')
+    @travel('2020-01-02 03:20:15', tick=False)
     def test_logout_stores_correct_fields_in_database(self):
         factory = RequestFactory()
         request = factory.post('/login')

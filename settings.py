@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# flake8: noqa: F405
+# flake8: noqa: E266, F405
 
 import inspect
 from collections import defaultdict
@@ -176,6 +176,7 @@ MIDDLEWARE = [
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
+    'corehq.apps.sso.middleware.SingleSignOnErrorMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -190,6 +191,7 @@ MINIMUM_ZXCVBN_SCORE = 2
 MINIMUM_PASSWORD_LENGTH = 8
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
+FORMS_URLFIELD_ASSUME_HTTPS = True
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -199,14 +201,11 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 PASSWORD_HASHERS = (
-    # this is the default list with SHA1 moved to the front
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
     'django.contrib.auth.hashers.MD5PasswordHasher',
-    'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
-    'django.contrib.auth.hashers.CryptPasswordHasher',
 )
 PASSWORD_RESET_TIMEOUT = 3600
 

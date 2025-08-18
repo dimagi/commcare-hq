@@ -1,9 +1,9 @@
 from contextlib import contextmanager
 from datetime import datetime
-from unittest.mock import patch, PropertyMock
+from unittest.mock import PropertyMock, patch
 
 from django.contrib.messages import get_messages
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.test.client import Client
 from django.urls import reverse
 
@@ -24,13 +24,16 @@ from corehq.apps.domain.views import FlagsAndPrivilegesView
 from corehq.apps.domain.views.settings import (
     MAX_ACTIVE_ALERTS,
     EditDomainAlertView,
+    FeaturePreviewsView,
     ManageDomainAlertsView,
 )
 from corehq.apps.hqwebapp.models import Alert
+from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.users.models import WebUser
+from corehq.feature_previews import FeaturePreview
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater
-from corehq.toggles import StaticToggle, Tag
+from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, Tag
 from corehq.util.test_utils import privilege_enabled
 
 
@@ -636,3 +639,83 @@ class TestFlagsAndPrivilegesViewAccess(TestCase):
                 self.assertTrue(toggle['can_edit'])
             else:
                 self.assertFalse(toggle['can_edit'])
+
+
+class TestFeaturePreviewsView(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.user = WebUser.create(
+            domain=cls.domain,
+            username='testuser@test.com',
+            password='password',
+            created_by=None,
+            created_via=None,
+        )
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
+
+        cls.test_feature = FeaturePreview(
+            slug='test-feature',
+            label='Test Feature',
+            description='Test description',
+        )
+
+        cls.factory = RequestFactory()
+        cls.request = cls.factory.post('/fake-url/')
+        cls.request.couch_user = cls.user
+
+        cls.view = FeaturePreviewsView()
+        cls.view.args = (cls.domain,)
+        cls.view.request = cls.request
+
+    def test_enables_feature_and_creates_audit(self):
+        self.view.update_feature(feature=self.test_feature, current_state=False, new_state=True)
+
+        audit_records = ToggleAudit.objects.filter(slug='test-feature')
+        self.assertEqual(audit_records.count(), 1)
+
+        audit = audit_records.first()
+        self.assertEqual(audit.slug, 'test-feature')
+        self.assertEqual(audit.username, 'testuser@test.com')
+        self.assertEqual(audit.action, ToggleAudit.ACTION_ADD)
+        self.assertEqual(audit.namespace, NAMESPACE_DOMAIN)
+        self.assertEqual(audit.item, 'test-domain')
+
+    def test_disables_feature_and_creates_audit(self):
+        self.view.update_feature(feature=self.test_feature, current_state=True, new_state=False)
+
+        audit_records = ToggleAudit.objects.filter(slug='test-feature')
+        self.assertEqual(audit_records.count(), 1)
+
+        audit = audit_records.first()
+        self.assertEqual(audit.slug, 'test-feature')
+        self.assertEqual(audit.username, 'testuser@test.com')
+        self.assertEqual(audit.action, ToggleAudit.ACTION_REMOVE)
+        self.assertEqual(audit.namespace, NAMESPACE_DOMAIN)
+        self.assertEqual(audit.item, 'test-domain')
+
+    def test_update_feature_no_change_does_not_create_audit(self):
+        self.view.update_feature(feature=self.test_feature, current_state=True, new_state=True)
+
+        audit_records = ToggleAudit.objects.filter(slug='test-feature')
+        self.assertEqual(audit_records.count(), 0)
+
+    def test_update_feature_multiple_changes_create_multiple_audits(self):
+        self.view.update_feature(feature=self.test_feature, current_state=False, new_state=True)
+        self.view.update_feature(feature=self.test_feature, current_state=True, new_state=False)
+        self.view.update_feature(feature=self.test_feature, current_state=False, new_state=True)
+
+        audit_records = ToggleAudit.objects.filter(slug='test-feature').order_by('created')
+        self.assertEqual(audit_records.count(), 3)
+
+        actions = [audit.action for audit in audit_records]
+        self.assertEqual(actions, [
+            ToggleAudit.ACTION_ADD,
+            ToggleAudit.ACTION_REMOVE,
+            ToggleAudit.ACTION_ADD
+        ])
