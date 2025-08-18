@@ -3527,7 +3527,7 @@ class CreditLine(models.Model):
 
     @classmethod
     def get_credits_for_line_item_in_invoice(cls, line_item, feature_type, is_product):
-        return itertools.chain(
+        relevant_credits = [
             cls.get_credits_by_subscription_and_features(
                 line_item.invoice.subscription,
                 feature_type=feature_type,
@@ -3538,7 +3538,29 @@ class CreditLine(models.Model):
                 feature_type=feature_type,
                 is_product=is_product,
             )
-        )
+        ]
+        if line_item.invoice.subscription.next_subscription:
+            active_sub = Subscription.get_active_subscription_by_domain(
+                line_item.invoice.subscription.subscriber.domain
+            )
+            if active_sub.account == line_item.invoice.subscription.account:
+                relevant_credits.append(
+                    cls.get_credits_by_subscription_and_features(
+                        active_sub,
+                        feature_type=feature_type,
+                        is_product=is_product,
+                    )
+                )
+            elif (line_item.invoice.subscription.next_subscription.account
+                  == line_item.invoice.subscription.account):
+                relevant_credits.append(
+                    cls.get_credits_by_subscription_and_features(
+                        line_item.invoice.subscription.next_subscription,
+                        feature_type=feature_type,
+                        is_product=is_product,
+                    )
+                )
+        return itertools.chain(*relevant_credits)
 
     @classmethod
     def get_credits_for_line_item_in_customer_invoice(cls, line_item, feature_type, is_product):
