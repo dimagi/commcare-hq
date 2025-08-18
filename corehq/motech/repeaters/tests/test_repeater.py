@@ -32,6 +32,7 @@ from corehq.apps.userreports.pillow import (
     ConfigurableReportTableManager,
 )
 from corehq.apps.userreports.tests.utils import (
+    bootstrap_pillow,
     get_sample_data_source,
     get_sample_doc_and_indicators,
 )
@@ -1675,9 +1676,7 @@ def _get_pillow(configs, processor_chunk_size=0):
     pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
     # overwrite processors since we're only concerned with UCR here
     table_manager = ConfigurableReportTableManager(data_source_providers=[])
-    ucr_processor = ConfigurableReportPillowProcessor(
-        table_manager
-    )
-    table_manager.bootstrap(configs)
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     pillow.processors = [ucr_processor]
+    bootstrap_pillow(pillow, *configs)
     return pillow
