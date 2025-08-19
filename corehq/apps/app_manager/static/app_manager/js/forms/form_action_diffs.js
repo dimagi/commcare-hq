@@ -17,7 +17,7 @@ export function getDiff(baseline, incoming) {
 
     if (incoming.open_case.name_update_multi) {
         const nameDiff = getNameDiff(baseline.open_case.name_update_multi, incoming.open_case.name_update_multi);
-        if (nameDiff) {
+        if (Object.keys(nameDiff).length) {
             diff['open_case'] = nameDiff;
         }
     }
@@ -96,23 +96,19 @@ function getNameDiff(original, updated) {
     const rawDiff = getUpdateMultiDiff(normalizedOriginal, normalizedUpdated);
 
     const result = {};
-    let hasResult = false;
     if ('add' in rawDiff) {
         result['add'] = rawDiff['add']['name'];
-        hasResult = true;
     }
 
     if ('delete' in rawDiff) {
         result['delete'] = rawDiff['delete']['name'];
-        hasResult = true;
     }
 
     if ('update' in rawDiff) {
         result['update'] = rawDiff['update']['name'];
-        hasResult = true;
     }
 
-    return hasResult ? result : null;
+    return result;
 }
 
 function normalizeUpdateObject(updateObject) {
