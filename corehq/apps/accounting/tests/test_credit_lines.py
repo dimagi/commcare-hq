@@ -559,7 +559,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
 
         # Credit calculation breakdown:
         # - Initial credit: $5000.00
-        # - Standard plan (9/1-9/10): $300/month × (9/30) = $90.00
+        # - Standard plan (9/1-9/9): $300/month × (9/30) = $90.00
         # - Pro plan (9/10-9/30): $600/month × (21/30) = $420.00
         # - Total charges: $90 + $420 = $510.00
         # - Expected remaining credit: $5000 - $510 = $4490.00
@@ -594,7 +594,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
 
         # Credit calculation breakdown:
         # - Initial credit: $5000.00
-        # - Standard plan fee (9/1-9/10): $300/month × (9/30) = $90.00
+        # - Standard plan fee (9/1-9/9): $300/month × (9/30) = $90.00
         # - Pro plan fee (9/10-9/30): $600/month × (21/30) = $420.00
         # - Total charges: $90 + $420 = $510.00
         # - Expected remaining credit: $5000 - $510 = $4490.00
@@ -629,14 +629,14 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
 
         # No product type credit and ANY type credit are added
         # Thus the balance will have the plan fee
-        # - Standard plan fee (9/1-9/10): $300/month × (9/30) = $90.00
+        # - Standard plan fee (9/1-9/9): $300/month × (9/30) = $90.00
         # - Pro plan fee (9/10-9/30): $600/month × (21/30) = $420.00
         self.assertEqual(first_invoice.balance, Decimal('90.0000'))
         self.assertEqual(second_invoice.balance, Decimal('420.0000'))
 
         # Credit calculation breakdown:
         # - Initial credit: $5000.00
-        # - Standard plan excess users (9/1-9/10): $1/user/month × (6 users) * (9/30) = $1.80
+        # - Standard plan excess users (9/1-9/9): $1/user/month × (6 users) * (9/30) = $1.80
         # - Pro plan excess users (9/10-9/30): $1/user/month × (4 users) * (21/30) = $2.80
         # - Total charges: $1.80 + $2.80 = $4.60
         # - Expected remaining credit: $5000 - $4.60 = $4995.40
