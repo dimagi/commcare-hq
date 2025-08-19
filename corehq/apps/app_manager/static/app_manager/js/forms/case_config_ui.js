@@ -665,7 +665,6 @@ $(function () {
             const usercaseUpdate  = o.usercase_update || {};
             self.usercase_update = {
                 update: usercaseUpdate.update || {},
-                update_multi: usercaseUpdate.update_multi || {},
             };
             self.usercase_preload = {
                 preload: (o.usercase_preload || {}).preload || {},
