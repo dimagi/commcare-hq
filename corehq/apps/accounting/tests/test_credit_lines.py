@@ -481,7 +481,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
 
     @classmethod
     def setUpClass(cls):
-        super(TestSubscriptionChangeTransfersSubscriptionLevelCredit, cls).setUpClass()
+        super().setUpClass()
 
         generator.bootstrap_test_software_plan_versions()
         generator.init_default_currency()
@@ -502,7 +502,7 @@ class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest)
     @classmethod
     def tearDownClass(cls):
         utils.clear_plan_version_cache()
-        super(TestSubscriptionChangeTransfersSubscriptionLevelCredit, cls).tearDownClass()
+        super().tearDownClass()
 
     def _get_credit_total(self, subscription):
         any_type_credit_lines = CreditLine.get_credits_by_subscription_and_features(subscription)
