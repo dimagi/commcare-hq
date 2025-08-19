@@ -412,9 +412,9 @@ class RegisterDomainView(TemplateView):
             'form': kwargs.get('form') or DomainRegistrationForm(),
             'invitation_links': invitation_links,
             'is_new_user': self.is_new_user,
+            'name': self.request.user.first_name or self.request.user.username,
             'pricing_page_url': settings.PRICING_PAGE_URL,
             'show_multiple_invites': len(invitations) > 1,
-            'user_name': self.request.user.first_name or self.request.user.username,
         })
         return context
 
