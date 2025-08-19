@@ -159,6 +159,7 @@ class BaseExportView(BaseProjectDataView):
             'allow_deid': allow_deid,
             'has_excel_dashboard_access': domain_has_privilege(self.domain, privileges.EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, privileges.DAILY_SAVED_EXPORT),
+            'has_geojson_export_access': domain_has_privilege(self.domain, privileges.GEOJSON_EXPORT),
             'has_api_access': domain_has_privilege(self.domain, privileges.API_ACCESS),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,

@@ -54,7 +54,7 @@
       </div>
       <!-- /ko -->
 
-      {% if request|toggle_enabled:"SUPPORT_GEO_JSON_EXPORT" %}
+      {% if has_geojson_export_access %}
       <div id="select-geo-property" class="mb-3" hidden>
         <label class="form-label" for="geo-property-select">
           {% trans 'Select geo property' %}
