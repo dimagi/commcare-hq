@@ -442,22 +442,6 @@ def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
     )
 
 
-def api_auth_allow_key_as_password_LIMITED_USE(*, allow_creds_in_data=True, oauth_scopes=None):
-    """
-    Intentionally does not support digest auth to allow using api key as password if desired.
-    See determine_authtype_from_header for more details on how defaulting to BASIC drops DIGEST support
-    This decorator arose because our previous version of authenticating through API keys
-    (providing an authentication header) was not being respected by Excel. This decorator should be used
-    sparingly, as we do not want the widespread ability to circumvent normal BASIC authentication
-    """
-    return get_multi_auth_decorator(
-        default=BASIC,
-        oauth_scopes=oauth_scopes,
-        allow_creds_in_data=allow_creds_in_data,
-        allow_api_key_in_basic=True,
-    )
-
-
 # Use these decorators on views to allow sesson-auth or an extra authorization method
 login_or_digest = login_or_digest_ex()
 login_or_basic = login_or_basic_ex()
