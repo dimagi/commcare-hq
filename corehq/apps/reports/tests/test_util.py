@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
 
 from testil import eq
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq.apps.reports.util import get_user_id_from_form, datespan_from_beginning
 from corehq.form_processor.exceptions import XFormNotFound
@@ -28,7 +28,7 @@ DOMAIN = 'test_domain'
 USER_ID = "5bc1315c-da6f-466d-a7c4-4580bc84a7b9"
 
 
-@freeze_time("2023-02-10")
+@travel("2023-02-10", tick=False)
 class TestDateSpanFromBeginning(SimpleTestCase):
     def test_start_and_end_date_dont_change_in_utc(self):
         start_time = datetime(year=2020, month=4, day=5)
