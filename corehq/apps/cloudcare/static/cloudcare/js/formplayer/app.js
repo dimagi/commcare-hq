@@ -23,7 +23,7 @@ import gtx from "cloudcare/js/gtx";
 import "backbone.radio";
 import "jquery.cookie/jquery.cookie";  // $.cookie
 
-// Marionette.setRenderer(TemplateCache.render);
+Marionette.View.setRenderer(TemplateCache.render);
 
 const WebApp = Marionette.Application.extend({
     getXSRF: function (options) {
