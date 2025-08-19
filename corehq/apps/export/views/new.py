@@ -22,7 +22,7 @@ from memoized import memoized
 
 from dimagi.utils.web import json_response
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow_noop
@@ -65,7 +65,6 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
-from corehq.privileges import API_ACCESS, DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -158,9 +157,9 @@ class BaseExportView(BaseProjectDataView):
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
             'allow_deid': allow_deid,
-            'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
-            'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
-            'has_api_access': domain_has_privilege(self.domain, API_ACCESS),
+            'has_excel_dashboard_access': domain_has_privilege(self.domain, privileges.EXCEL_DASHBOARD),
+            'has_daily_saved_export_access': domain_has_privilege(self.domain, privileges.DAILY_SAVED_EXPORT),
+            'has_api_access': domain_has_privilege(self.domain, privileges.API_ACCESS),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
@@ -176,7 +175,7 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def _possible_geo_properties(self):
-        if not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain):
+        if not domain_has_privilege(self.domain, privileges.GEOJSON_EXPORT):
             return []
         if self._is_bulk_case_export:
             return []
@@ -206,16 +205,12 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def format_options(self):
-        format_options = ["xls", "xlsx", "csv"]
-
-        should_support_geojson = (
-            toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
-            and not self._is_bulk_case_export
-        )
-        if should_support_geojson:
-            format_options.append("geojson")
-
-        return format_options
+        if (
+            not self._is_bulk_case_export
+            and domain_has_privilege(self.domain, privileges.GEOJSON_EXPORT)
+        ):
+            return ["xls", "xlsx", "csv", "geojson"]
+        return ["xls", "xlsx", "csv"]
 
     @property
     def parent_pages(self):
@@ -229,9 +224,18 @@ class BaseExportView(BaseProjectDataView):
 
         if (
             self.domain != export.domain
-                or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
-                or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))
-                or (export.export_format == "geojson" and not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain))
+            or (
+                export.export_format == "html"
+                and not domain_has_privilege(self.domain, privileges.EXCEL_DASHBOARD)
+            )
+            or (
+                export.is_daily_saved_export
+                and not domain_has_privilege(self.domain, privileges.DAILY_SAVED_EXPORT)
+            )
+            or (
+                export.export_format == "geojson"
+                and not domain_has_privilege(self.domain, privileges.GEOJSON_EXPORT)
+            )
         ):
             raise BadExportConfiguration()
 
