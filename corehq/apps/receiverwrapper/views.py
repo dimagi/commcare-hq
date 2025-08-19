@@ -452,6 +452,9 @@ def secure_post(request, domain, app_id=None):
     else:
         authtype = determine_authtype_from_request(request, default=BASIC)
 
+    if toggles.SUPER_SLOW_FORMS.enabled_for_request(request):
+        import time
+        time.sleep(16 * 60)  # 16 minutes
     try:
         decorated_view = authtype_map[authtype]
     except KeyError:
