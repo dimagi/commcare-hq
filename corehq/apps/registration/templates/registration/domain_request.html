@@ -116,10 +116,7 @@
           <div class="alert alert-info">
             <div class="row icon-row">
               <div class="col-xs-1 text-center">
-                <span class="fa-stack">
-                  <i class="fa fa-circle fa-stack-2x"></i>
-                  <i class="fa fa-briefcase fa-stack-1x"></i>
-                </span>
+                {% include 'registration/partials/icon_stack.html' with icon_class='fa fa-briefcase' %}
               </div>
               <div class="col-xs-11">
                 <h5><b>{% trans "Subscription" %}</b></h5>
@@ -138,10 +135,7 @@
 
             <div class="row icon-row">
               <div class="col-xs-1 text-center">
-                <span class="fa-stack">
-                  <i class="fa fa-circle fa-stack-2x"></i>
-                  <i class="fcc fcc-globe fa-stack-1x"></i>
-                </span>
+                {% include 'registration/partials/icon_stack.html' with icon_class='fcc fcc-globe' %}
               </div>
               <div class="col-xs-11">
                 <h5><b>{% trans "Server Location" %}</b></h5>
