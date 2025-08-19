@@ -7,13 +7,14 @@ import _ from "underscore";
 import Backbone from "backbone";
 import Marionette from "backbone.marionette";
 import markdowner from "markdown-it/dist/markdown-it";
-import bootstrap from "bootstrap5";
+import {Modal} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import GGAnalytics from "analytix/js/google";
 import noopMetrics from "analytix/js/noopMetrics";
 import CloudcareUtils from "cloudcare/js/utils";
 import AppsAPI from "cloudcare/js/formplayer/apps/api";
 import Const from "cloudcare/js/formplayer/constants";
+
 import FormplayerUtils from "cloudcare/js/formplayer/utils/utils";
 import ProgressBar from "cloudcare/js/formplayer/layout/views/progress_bar";
 import UsersModels from "cloudcare/js/formplayer/users/models";
@@ -74,10 +75,10 @@ FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
 FormplayerFrontend.showRestoreAs = function (user) {
     import("cloudcare/js/formplayer/users/views").then(function (UsersViews) {
         FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-            UsersViews.RestoreAsBanner({model: user, smallScreen: false}));
+            UsersViews.default.RestoreAsBanner({model: user, smallScreen: false}));
         const mobileRegion = FormplayerFrontend.regions.getRegion('mobileRestoreAsBanner');
         if (mobileRegion.$el.length) {      // This region doesn't exist in app preview
-            mobileRegion.show(UsersViews.RestoreAsBanner({model: user, smallScreen: true}));
+            mobileRegion.show(UsersViews.default.RestoreAsBanner({model: user, smallScreen: true}));
         }
     });
 };
@@ -130,7 +131,7 @@ FormplayerFrontend.on('clearForm', function () {
     $('#cloudcare-debugger').html("");
     $('#cloudcare-main').removeClass('has-debugger');
     $('.atwho-container').remove();
-    bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
+    Modal.getOrCreateInstance($('#case-detail-modal')).hide();
     sessionStorage.removeItem('collapsedIx');
 });
 
