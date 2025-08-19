@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 from corehq.apps.accounting.const import DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 from corehq.apps.accounting.models import CreditLine, Subscription
-from corehq.apps.accounting.utils import get_first_day_of_months_later
+from corehq.apps.accounting.utils import get_first_day_x_months_later
 from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_overdue_invoice_over_threshold,
@@ -87,7 +87,7 @@ class BillingModalsMixin(object):
             if monthly_fee:
                 prepaid_credits = get_total_credits_available_for_product(current_subscription)
                 num_months_remaining = prepaid_credits / monthly_fee
-                prepaid_remaining_date = get_first_day_of_months_later(date.today(), int(num_months_remaining))
+                prepaid_remaining_date = get_first_day_x_months_later(date.today(), int(num_months_remaining))
                 partial_month_remaining = num_months_remaining % 1
                 num_days_in_month = 30  # Approximate
                 prepaid_remaining_date += timedelta(days=int(partial_month_remaining * num_days_in_month))

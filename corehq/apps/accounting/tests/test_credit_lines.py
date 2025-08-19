@@ -131,7 +131,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         Tests line item credits for three invoicing periods.
         """
         for month_num in range(2, 5):
-            invoice_date = utils.get_first_day_of_months_later(self.subscription.date_start, month_num)
+            invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, month_num)
             tasks.calculate_users_in_all_domains(invoice_date)
             tasks.generate_invoices_based_on_date(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
@@ -163,7 +163,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         # other subscription credit that shouldn't count toward this invoice
         other_domain = generator.arbitrary_domain()
         # so that the other subscription doesn't draw from the same account credits, have it start 4 months later
-        new_subscription_start = utils.get_first_day_of_months_later(self.subscription.date_start, 4)
+        new_subscription_start = utils.get_first_day_x_months_later(self.subscription.date_start, 4)
 
         other_subscription = generator.generate_domain_subscription(
             self.account,
@@ -232,7 +232,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
     def _test_final_invoice_balance(self):
         for month_num in range(2, 5):
-            invoice_date = utils.get_first_day_of_months_later(self.subscription.date_start, month_num)
+            invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, month_num)
             tasks.calculate_users_in_all_domains(invoice_date)
             tasks.generate_invoices_based_on_date(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')

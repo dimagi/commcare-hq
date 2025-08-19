@@ -12,10 +12,10 @@ class TestWireInvoice(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestWireInvoice, self).setUp()
-        invoice_date = utils.get_first_day_of_months_later(self.subscription.date_start, 2)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 2)
         self.create_invoices(invoice_date)
 
-        invoice_date = utils.get_first_day_of_months_later(self.subscription.date_start, 3)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 3)
         self.create_invoices(invoice_date)
 
         self.invoices = Invoice.objects.all()
@@ -42,10 +42,10 @@ class TestCustomerAccountWireInvoice(BaseInvoiceTestCase):
         self.account.is_customer_billing_account = True
         self.account.save()
 
-        invoice_date = utils.get_first_day_of_months_later(self.subscription.date_start, 2)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 2)
         self.create_invoices(invoice_date)
 
-        invoice_date = utils.get_first_day_of_months_later(self.subscription.date_start, 3)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 3)
         self.create_invoices(invoice_date)
 
     def test_factory(self):

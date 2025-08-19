@@ -34,7 +34,7 @@ def log_accounting_info(message):
     logger.info("[BILLING] %s" % message)
 
 
-def get_first_day_of_months_later(reference_date, months_from_date):
+def get_first_day_x_months_later(reference_date, months_from_date):
     year, month = add_months(reference_date.year, reference_date.month, months_from_date)
     return datetime.date(year, month, 1)
 
