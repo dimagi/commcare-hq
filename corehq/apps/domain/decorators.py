@@ -401,8 +401,6 @@ def get_multi_auth_decorator(
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
-            assert not (authtype == DIGEST and allow_api_key_in_basic), \
-                'api keys as passwords are not supported for digest auth'
             if authtype == FORMPLAYER and not allow_formplayer:
                 auth_logger.info(
                     "Request rejected reason=%s request=%s",
@@ -440,7 +438,7 @@ def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
         default=DIGEST,
         oauth_scopes=oauth_scopes,
         allow_creds_in_data=allow_creds_in_data,
-        allow_api_key_in_basic=False,  # if supporting digest auth, you cannot use an api key as a password
+        allow_api_key_in_basic=True,
     )
 
 
