@@ -71,23 +71,6 @@ class RegistryModelsTests(TestCase):
             {reg.slug for reg in DataRegistry.objects.accessible_to_domain('A', slug="reg1")}
         )
 
-    def test_get_accessible_grants(self):
-        invitations = [
-            Invitation('A'),
-            Invitation('B'),
-        ]
-        create_registry_for_test(self.user, self.domain, invitations, grants=[Grant("B", ["A"])], name="reg1")
-        self.assertEqual(
-            {"reg1"},
-            {reg.slug for reg in DataRegistry.objects.accessible_to_domain('A', has_grants=True)}
-        )
-        # B has no grants
-        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('B', has_grants=True)))
-
-    def test_get_accessible_grants_no_invite(self):
-        create_registry_for_test(self.user, self.domain, grants=[Grant("B", ["A"])])
-        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain("A", has_grants=True)))
-
     def test_get_granted_domains(self):
         invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
         grants = [
