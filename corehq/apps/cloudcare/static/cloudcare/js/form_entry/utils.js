@@ -48,7 +48,7 @@ module.initialRender = function (formJSON, resourceMap, $div) {
         import("cloudcare/js/debugger/debugger"),
         import("cloudcare/js/form_entry/form_ui"),
     ).done(function (Debugger, FormUI) {
-        var form = FormUI.Form(formJSON),
+        var form = FormUI.default.Form(formJSON),
             $debug = $('#cloudcare-debugger'),
             CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry,
             cloudCareDebugger;

@@ -277,10 +277,8 @@ FormplayerFrontend.on("persistentMenuSelect", function (selections) {
     });
 });
 
-export default {
-    start: function () {
-        return new Router({
-            controller: API,
-        });
-    },
-};
+export function start() {
+    return new Router({
+        controller: API,
+    });
+}

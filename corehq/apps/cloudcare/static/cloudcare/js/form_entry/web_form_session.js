@@ -297,7 +297,7 @@ function WebFormSession(params) {
         });
         $.subscribe('formplayer.' + constants.DIRTY, function () {
             import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
-                FormplayerFrontend.trigger('setUnsavedFormInProgress');
+                FormplayerFrontend.default.trigger('setUnsavedFormInProgress');
             });
         });
         applyLangListener(self);
