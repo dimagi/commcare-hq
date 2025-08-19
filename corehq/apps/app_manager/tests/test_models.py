@@ -188,21 +188,19 @@ class OpenCaseAction_ApplyUpdates_Tests(SimpleTestCase):
         self.assertEqual(action.condition.answer, 'bob')
         self.assertEqual(action.condition.operator, '=')
 
-    def test_can_assign_with_update(self):
+    def test_ignores_direct_name_update(self):
         action = OpenCaseAction({'name_update': {'question_path': 'name'}})
 
         action.apply_updates({'name_update': {'question_path': 'name2'}}, OpenCaseDiff({}))
 
-        self.assertEqual(action.name_update.question_path, 'name2')
+        self.assertEqual(action.name_update.question_path, 'name')
 
-    def test_diffs_override_updates(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+    def test_ignores_direct_name_update_multi(self):
+        action = OpenCaseAction({'name_update': {'question_name': 'name'}})
 
-        update = {'name_update': {'question_path': 'name2', 'update_mode': 'always'}}
-        diff = {'update': [{'question_path': 'name2', 'update_mode': 'edit'}]}
-        action.apply_updates(update, OpenCaseDiff(diff))
+        action.apply_updates({'name_update_multi': [{'question_path': 'name2'}]}, OpenCaseDiff({}))
 
-        self.assertEqual(action.name_update.update_mode, 'edit')
+        self.assertEqual(action.name_update_multi, [])
 
     def test_with_invalid_key_raises_exception(self):
         action = OpenCaseAction({'name_update': {'question_path': 'name'}})
@@ -565,14 +563,23 @@ class UpdateCaseAction_ApplyUpdates_Tests(SimpleTestCase):
                 'delete': {'two': [{'question_path': 'question_two'}]}
             }))
 
-    def test_updates_no_diffs(self):
+    def test_ignores_direct_updates(self):
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': 'one'}
         }})
 
         actions.apply_updates({'update': {'one': {'question_path': 'two'}}}, UpdateCaseDiff({}))
 
-        self.assertEqual(actions.update['one'].question_path, 'two')
+        self.assertEqual(actions.update['one'].question_path, 'one')
+
+    def test_ignores_direct_update_multi(self):
+        actions = UpdateCaseAction({'update': {
+            'one': {'question_path': 'one'}
+        }})
+
+        actions.apply_updates({'update_multi': {'one': {'question_path': 'two'}}}, UpdateCaseDiff({}))
+
+        self.assertEqual(actions.update_multi, {})
 
     def test_updates_condition(self):
         actions = UpdateCaseAction()

@@ -431,14 +431,22 @@ class UpdateCaseAction(FormAction):
         return True
 
     def apply_updates(self, updates, diffs, allow_conflicts=True):
+        # Remove the 'update' properties. Update/update_multi
+        # are intended to be updated via diffs
+        updates = self._get_non_update_properties(updates)
         self.update_object(updates)
         self.make_multi()
+
         self.apply_diffs_to_mappings(self.update_multi, diffs)
 
         if allow_conflicts:
             self.normalize_update()
         else:
             self.make_single()
+
+    @staticmethod
+    def _get_non_update_properties(updates):
+        return {key: updates[key] for key in updates if key not in ['update', 'update_multi']}
 
     def get_property_names(self):
         all_names = set()
@@ -576,6 +584,9 @@ class OpenCaseAction(FormAction):
     _NAME_UPDATE_MULTI_FIELD_NAME = 'name_update_multi'
 
     def apply_updates(self, updates, diffs, allow_conflicts=True):
+        # Remove the 'update' properties. name_update/name_update_multi
+        # are intended to be updated via diffs
+        updates = self._get_non_update_properties(updates)
         self.update_object(updates)
         self.make_multi()
 
@@ -585,6 +596,10 @@ class OpenCaseAction(FormAction):
             self.normalize_name_update()
         else:
             self.make_single()
+
+    @staticmethod
+    def _get_non_update_properties(updates):
+        return {key: updates[key] for key in updates if key not in ['name_update', 'name_update_multi']}
 
     def apply_name_update(self, diffs):
         # UpdateCaseAction's 'update' dictionary is a representation of any generic updates.
