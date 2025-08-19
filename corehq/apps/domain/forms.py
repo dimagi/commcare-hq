@@ -94,6 +94,7 @@ from corehq.apps.app_manager.models import (
     AppReleaseByLocation,
     LatestEnabledBuildProfiles,
     RemoteApp,
+    CredentialApplication,
 )
 from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
@@ -3182,3 +3183,45 @@ class ImportAppForm(forms.Form):
         from corehq.apps.domain.views.import_apps import SERVER_SUBDOMAIN_MAPPING
         server_address = SERVER_SUBDOMAIN_MAPPING[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
+
+
+class DomainCredentialIssuingAppForm(forms.Form):
+    app_id = forms.CharField(
+        label=gettext_lazy("Enable credentials for application"),
+        required=False,
+        widget=forms.Select(choices=[]),
+        help_text=gettext_lazy("Select the application that will be used to issue credentials to workers."),
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        credential_app = CredentialApplication.objects.filter(domain=domain).first()
+        if credential_app:
+            initial = {
+                'app_id': credential_app.app_id,
+            }
+            kwargs.setdefault('initial', {}).update(initial)
+
+        super(DomainCredentialIssuingAppForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].widget.choices = self.get_domain_apps_choices(domain)
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                gettext_lazy("Credential Issuing Application"),
+                crispy.Field('app_id'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Save'),
+                    type='submit',
+                    css_class='btn-primary disable-on-submit'
+                )
+            )
+        )
+
+    def get_domain_apps_choices(self, domain):
+        choices = [('', gettext_lazy("No application"))]
+        choices.extend([
+            (app.id, app.name) for app in get_apps_in_domain(domain)
+        ])
+        return choices
