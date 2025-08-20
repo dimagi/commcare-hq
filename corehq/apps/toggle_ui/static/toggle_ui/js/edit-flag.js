@@ -108,6 +108,11 @@ function toggleItem(namespace, value, last_used, service_type) {
     self.last_used = ko.observable(last_used);
     self.service_type = ko.observable(service_type);
 
+    self.dimagiUsers = ko.observableArray();
+    self.showDimagiUsers = () => {
+        self.dimagiUsers.push('esoergel@dimagi.com');
+    };
+
     self.domainUrl = ko.computed(() => {
         return initialPageData.reverse('domain_internal_settings', self.value());
     });
