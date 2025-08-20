@@ -6,11 +6,15 @@ from .repeat_records import (  # noqa: F401
 )
 from .repeaters import (  # noqa: F401
     AddCaseRepeaterView,
+    AddConnectFormRepeaterView,
     AddFormRepeaterView,
     AddRepeaterView,
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
+    EditConnectFormRepeaterView,
+    EditDataRegistryCaseUpdateRepeater,
     EditFormRepeaterView,
+    EditReferCaseRepeaterView,
     EditRepeaterView,
     drop_repeater,
     pause_repeater,
