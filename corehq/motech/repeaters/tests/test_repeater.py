@@ -42,7 +42,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.models import ConnectionSettings
 from corehq.pillows.case import get_case_pillow
 from corehq.util.json import CommCareJSONEncoder
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_disabled, flag_enabled
 
 from ..const import (
     MAX_BACKOFF_ATTEMPTS,
@@ -1515,18 +1515,27 @@ class TestRepeatRecordsReady(TestCase):
             ),
         ))
 
-    def test_next_check_values(self):
+    def test_returns_only_overdue_records_ordered_by_next_check(self):
         self._create_repeat_records_just_now()
         payload_ids = [rr.payload_id for rr in self.repeater.repeat_records_ready.all()]
         # Ordered by next_check
         assert payload_ids == ['🦅', '🥃']
 
     @flag_enabled('BACKOFF_REPEATERS')
-    def test_next_check_backoff_repeaters(self):
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_returns_all_queued_records_ordered_by_registered_at(self):
         self._create_repeat_records_just_now()
         payload_ids = [rr.payload_id for rr in self.repeater.repeat_records_ready.all()]
         # Ordered by registered_at
         assert payload_ids == ['🥃', '🦅', '🌭', 'x']
+
+    @flag_enabled('BACKOFF_REPEATERS')
+    @flag_disabled('PROCESS_REPEATERS')
+    def test_returns_only_overdue_records_if_process_repeaters_disabled(self):
+        self._create_repeat_records_just_now()
+        payload_ids = [rr.payload_id for rr in self.repeater.repeat_records_ready.all()]
+        # Ordered by next_check
+        assert payload_ids == ['🦅', '🥃']
 
     def test_states(self):
         now = datetime.utcnow()

@@ -416,7 +416,9 @@ class Repeater(RepeaterSuperProxy):
         were registered, otherwise it will order by the next check date
         """
         query = self.repeat_records.filter(state__in=RECORD_QUEUED_STATES)
-        if toggles.BACKOFF_REPEATERS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN):
+        if toggles.PROCESS_REPEATERS.enabled(
+            self.domain, namespace=toggles.NAMESPACE_DOMAIN
+        ) and toggles.BACKOFF_REPEATERS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN):
             return query.order_by('registered_at')
         else:
             return (
