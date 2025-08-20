@@ -58,8 +58,8 @@ msgstr "Nombre de la cuenta"
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/enterprise/filters.py corehq/apps/enterprise/interface.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/filters.py
+#: corehq/apps/enterprise/interface.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/smsbillables/filters.py
 msgid "Project Space"
@@ -1141,6 +1141,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -4341,6 +4342,7 @@ msgstr "Usuarios Agregados:"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -4451,8 +4453,7 @@ msgstr "Correo electrónico profesional"
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
-#: corehq/apps/dashboard/views.py corehq/apps/domain/forms.py
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Organization"
 msgstr "Organización"
 
@@ -6326,8 +6327,8 @@ msgstr "Logo de demostración"
 msgid "Disable"
 msgstr "Deshabilitar"
 
-#: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/app_manager/static_strings.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/sms/forms.py corehq/messaging/scheduling/forms.py
 msgid "Disabled"
 msgstr "Deshabilitado"
 
@@ -6358,8 +6359,8 @@ msgstr "Habilitar Configuración de Visualización de Menú por Módulo"
 msgid "Enable"
 msgstr "Habilitar"
 
-#: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/app_manager/static_strings.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/sms/forms.py corehq/messaging/scheduling/forms.py
 msgid "Enabled"
 msgstr "Habilitado"
 
@@ -12579,6 +12580,7 @@ msgid "Time"
 msgstr "Hora"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid "Info"
 msgstr "Información"
 
@@ -14379,6 +14381,7 @@ msgstr "¿Estás seguro de que deseas eliminar este widget?"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/bootstrap5/notification_unsubscribe.html
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -21052,49 +21055,6 @@ msgid "Renew Plan"
 msgstr "Renovar el Plan"
 
 #: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Email To"
-msgstr "Enviar al Correo electrónico"
-
-#: corehq/apps/domain/forms.py
-msgid "Estimated annual expenditures on airtime:"
-msgstr "Gasto anual estimado en tiempo de aire:"
-
-#: corehq/apps/domain/forms.py
-msgid "Estimated annual expenditures on devices:"
-msgstr "Gasto anual estimado en dispositivos:"
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"We grant pro-bono subscriptions to match the duration of your project, up to"
-" a maximum of 12 months at a time (at which point you need to reapply)."
-msgstr ""
-"Otorgamos suscripciones gratuitas que coincidan a la duración de su proyecto"
-" hasta un máximo de 12 meses cada vez (en este punto deberá aplicar "
-"nuevamente)."
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"If you have already been in touch with someone from Dimagi, please list "
-"their name."
-msgstr ""
-"Si ya ha estado en contacto con alguien de Dimagi, por favor liste el nombre"
-" de esa persona."
-
-#: corehq/apps/domain/forms.py
-msgid "Number of expected users"
-msgstr "Número de usuarios esperados"
-
-#: corehq/apps/domain/forms.py corehq/apps/domain/views/pro_bono.py
-msgid "Pro-Bono Application"
-msgstr "Aplicación Pro-Bono"
-
-#: corehq/apps/domain/forms.py
-msgid "Submit Pro-Bono Application"
-msgstr "Ingrese una Aplicación Pro-Bono"
-
-#: corehq/apps/domain/forms.py
 msgid "Test or Demo Project"
 msgstr "Pruebe nuestro Proyecto Demostrativo"
 
@@ -22566,7 +22526,7 @@ msgstr "Resumen de Uso"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/reports/filters/select.py
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/select.py
 msgid "Feature"
 msgstr "Función"
 
@@ -23653,6 +23613,11 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Email To"
+msgstr "Enviar al Correo electrónico"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 #: corehq/apps/reports/forms.py
 msgid "Additional Recipients"
 msgstr "Destinatarios Adicionales"
@@ -23962,13 +23927,6 @@ msgstr "Esto no copiará campos de usuario."
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
 msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "Esto no copiará tablas de búsqueda (también conocidas como fixtures)."
-
-#: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
-#: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
-msgid ""
-"Thank you for your submission.  A representative will be in contact with you"
-" shortly."
-msgstr "Gracias por su envío. Un representante lo contactará pronto."
 
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
@@ -31088,7 +31046,7 @@ msgstr "Informe de datos de dominios UCR"
 #: corehq/apps/hqadmin/reports.py
 #, fuzzy
 #| msgid "Feature Previews"
-msgid "Feature Preview Stats Report"
+msgid "Feature Preview Status Report"
 msgstr "Vistas Previas de Función"
 
 #: corehq/apps/hqadmin/reports.py
@@ -31108,6 +31066,30 @@ msgstr "Habilitado"
 #| msgid "Not Checked"
 msgid "Not recorded"
 msgstr "No verificado"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Audit Report"
+msgstr "Vistas Previas de Función"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Shared By"
+msgid "Changed By"
+msgstr "Compartido por"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Changes to"
+msgid "Changed At"
+msgstr "Cambios en"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Update Information"
+msgid "Update Randomness"
+msgstr "Actualizar Información"
 
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
@@ -31205,6 +31187,12 @@ msgstr "Superusuario"
 #: corehq/reports.py
 msgid "Accounting Admin"
 msgstr "Administrador de Contabilidad"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#, fuzzy
+#| msgid "Contact"
+msgid "Is Contractor"
+msgstr "Contacto"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
@@ -32773,6 +32761,7 @@ msgstr "Configuración de Mi Cuenta"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 msgid "Sign Out"
 msgstr "Cerrar Sesión"
 
@@ -34231,6 +34220,10 @@ msgid "Payment request failed"
 msgstr "La solicitud de pago falló"
 
 #: corehq/apps/integration/payments/services.py
+msgid "Only payments in '{}' or '{}' state are eligible for verification."
+msgstr "Solo los pagos en estado '{}' o '{}' son elegibles para verificación."
+
+#: corehq/apps/integration/payments/services.py
 msgid "Invalid payee details"
 msgstr "Detalles del beneficiario no válidos"
 
@@ -34241,6 +34234,13 @@ msgstr "El pago no ha sido verificado"
 #: corehq/apps/integration/payments/services.py
 msgid "Payment has already been requested"
 msgstr "El pago ya ha sido solicitado"
+
+#: corehq/apps/integration/payments/services.py
+msgid ""
+"Only payments in the '{}' state are eligible for verification reversal."
+msgstr ""
+"Solo los pagos en estado '{}' son elegibles para la reversión de "
+"verificación."
 
 #: corehq/apps/integration/payments/tables.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -34297,6 +34297,40 @@ msgstr "No disponible"
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
 msgid "Payments Verification Report"
 msgstr "Informe de verificación de pagos"
+
+#: corehq/apps/integration/payments/views.py
+msgid "One or more case IDs are required for verification."
+msgstr "Se requiere uno o más IDs de caso para la verificación."
+
+#: corehq/apps/integration/payments/views.py
+#, fuzzy
+#| msgid "You can only have 3 alerts activated at any one time"
+msgid "You can only verify for up to {} cases at a time."
+msgstr "Solo puedes tener 3 alertas activadas al mismo tiempo"
+
+#: corehq/apps/integration/payments/views.py
+msgid ""
+"Revert verification request is in progress for your project. Please try "
+"again after some time."
+msgstr ""
+"La solicitud de reversión de verificación está en curso para tu proyecto. "
+"Por favor, inténtalo de nuevo más tarde."
+
+#: corehq/apps/integration/payments/views.py
+msgid ""
+"Payment submissions are currently active for your project and should be "
+"completed shortly. Please try again later."
+msgstr ""
+"Las presentaciones de pago están actualmente activas para tu proyecto y "
+"deberían completarse en breve. Por favor, inténtalo más tarde."
+
+#: corehq/apps/integration/payments/views.py
+msgid "One or more case IDs are required to revert verification."
+msgstr "Se requiere uno o más IDs de caso para revertir la verificación."
+
+#: corehq/apps/integration/payments/views.py
+msgid "You can only revert verification for up to {} cases at a time."
+msgstr "Solo puedes revertir la verificación para hasta {} casos a la vez."
 
 #: corehq/apps/integration/payments/views.py
 msgid "Payments Configuration"
@@ -34502,8 +34536,23 @@ msgid "Confirm Payments"
 msgstr "Confirmar pagos"
 
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 msgid "Are you sure you want to proceed with the selected payments?"
 msgstr "¿Estás seguro de que deseas proceder con los pagos seleccionados?"
+
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_alert.html
+msgid ""
+"Successfully reverted verification for selected record(s). Updated status "
+"will reflect shortly."
+msgstr ""
+"Verificación revertida exitosamente para el/los registro(s) seleccionado(s)."
+" El estado actualizado se reflejará en breve."
+
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
+#, fuzzy
+#| msgid "Verification Pending"
+msgid "Revert Verification of Pending Payments"
+msgstr "Verificación Pendiente"
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, fuzzy, python-format
@@ -34514,8 +34563,8 @@ msgstr "¿Estás seguro de que deseas proceder con los pagos seleccionados?"
 #| "    "
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s records for payments!\n"
-"      Verification status for these will be refreshed in a few seconds.\n"
+"      Successfully verified %(success_count)s records for payments! Updated\n"
+"      status will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
@@ -34552,6 +34601,12 @@ msgstr ""
 "        <a href=\"%(config_url)s\">Configuración de pagos</a>\n"
 "        página.\n"
 "      "
+
+#: corehq/apps/integration/templates/payments/payments_verify_report.html
+#, fuzzy
+#| msgid "Phone Verification"
+msgid "Revert Verification"
+msgstr "Verificación de Teléfono"
 
 #: corehq/apps/integration/views.py
 msgid "Biometric Integration"
@@ -39266,6 +39321,30 @@ msgstr "Seleccione Usuario Móvil"
 #, python-format
 msgid "%s & Others"
 msgstr "%s y Otros"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Active Web User"
+msgstr "# Usuarios Activos"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Deactivated Web User"
+msgstr "Mostrar Usuarios Móviles Desactivados"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Active Mobile Workers"
+msgid "Active Mobile Worker"
+msgstr "Trabajadores móviles activos"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Deactivated Mobile Workers"
+msgid "Deactivated Mobile Worker"
+msgstr "Trabajadores móviles desactivados"
 
 #: corehq/apps/reports/filters/users.py
 #, fuzzy
@@ -50338,10 +50417,14 @@ msgid "You are already signed in."
 msgstr "Ya has iniciado sesión."
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  To accept this invitation, you must first <a href=\"%(sign_out_url)s\">sign out</a>.\n"
+#| "                "
 msgid ""
 "\n"
-"                  To accept this invitation, you must first <a href=\"%(sign_out_url)s\">sign out</a>.\n"
+"                  To accept this invitation, you must first sign out.\n"
 "                "
 msgstr ""
 "\n"
@@ -58613,6 +58696,41 @@ msgstr "Las columnas requeridas son {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Ingrese un JSON válido"
+
+#~ msgid "Estimated annual expenditures on airtime:"
+#~ msgstr "Gasto anual estimado en tiempo de aire:"
+
+#~ msgid "Estimated annual expenditures on devices:"
+#~ msgstr "Gasto anual estimado en dispositivos:"
+
+#~ msgid ""
+#~ "We grant pro-bono subscriptions to match the duration of your project, up to"
+#~ " a maximum of 12 months at a time (at which point you need to reapply)."
+#~ msgstr ""
+#~ "Otorgamos suscripciones gratuitas que coincidan a la duración de su proyecto"
+#~ " hasta un máximo de 12 meses cada vez (en este punto deberá aplicar "
+#~ "nuevamente)."
+
+#~ msgid ""
+#~ "If you have already been in touch with someone from Dimagi, please list "
+#~ "their name."
+#~ msgstr ""
+#~ "Si ya ha estado en contacto con alguien de Dimagi, por favor liste el nombre"
+#~ " de esa persona."
+
+#~ msgid "Number of expected users"
+#~ msgstr "Número de usuarios esperados"
+
+#~ msgid "Pro-Bono Application"
+#~ msgstr "Aplicación Pro-Bono"
+
+#~ msgid "Submit Pro-Bono Application"
+#~ msgstr "Ingrese una Aplicación Pro-Bono"
+
+#~ msgid ""
+#~ "Thank you for your submission.  A representative will be in contact with you"
+#~ " shortly."
+#~ msgstr "Gracias por su envío. Un representante lo contactará pronto."
 
 #~ msgid "Printing"
 #~ msgstr "Imprimir"
