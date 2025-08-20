@@ -1,13 +1,12 @@
 import itertools
 from datetime import date, timedelta
 
+from corehq.apps.accounting.const import DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 from corehq.apps.accounting.models import CreditLine, Subscription
-from corehq.apps.accounting.utils import months_from_date
+from corehq.apps.accounting.utils import get_first_day_x_months_later
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
 from corehq.apps.accounting.utils.invoicing import (
-    get_oldest_unpaid_invoice_over_threshold,
-)
-from corehq.apps.accounting.utils.downgrade import (
-    is_subscription_eligible_for_downgrade_process,
+    get_oldest_overdue_invoice_over_threshold,
 )
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
@@ -17,8 +16,8 @@ from corehq.util.quickcache import quickcache
 @quickcache(['domain_name'], timeout=60 * 60)
 def get_overdue_invoice(domain_name):
     current_subscription = Subscription.get_active_subscription_by_domain(domain_name)
-    if current_subscription and is_subscription_eligible_for_downgrade_process(current_subscription):
-        overdue_invoice, _ = get_oldest_unpaid_invoice_over_threshold(date.today(), domain_name)
+    if current_subscription and Downgrade.is_subscription_eligible_for_process(current_subscription):
+        overdue_invoice, _ = get_oldest_overdue_invoice_over_threshold(date.today(), domain_name)
         return overdue_invoice
 
 
@@ -76,7 +75,7 @@ class BillingModalsMixin(object):
         if overdue_invoice:
             days_overdue = (date.today() - overdue_invoice.date_due).days
             context['invoice_month'] = overdue_invoice.date_start.strftime('%B %Y')
-            context['days_until_downgrade'] = max(1, 61 - days_overdue)
+            context['days_until_downgrade'] = max(1, DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE - days_overdue)
         return context
 
     @property
@@ -88,7 +87,7 @@ class BillingModalsMixin(object):
             if monthly_fee:
                 prepaid_credits = get_total_credits_available_for_product(current_subscription)
                 num_months_remaining = prepaid_credits / monthly_fee
-                prepaid_remaining_date = months_from_date(date.today(), int(num_months_remaining))
+                prepaid_remaining_date = get_first_day_x_months_later(date.today(), int(num_months_remaining))
                 partial_month_remaining = num_months_remaining % 1
                 num_days_in_month = 30  # Approximate
                 prepaid_remaining_date += timedelta(days=int(partial_month_remaining * num_days_in_month))

@@ -1,16 +1,22 @@
 import time
-
 from unittest import mock
+
+from django.conf import settings
 from django.http import HttpResponse
-from django.test import override_settings, SimpleTestCase, TestCase
-from django.urls import path, include
+from django.test import (
+    RequestFactory,
+    SimpleTestCase,
+    TestCase,
+    override_settings,
+)
+from django.urls import include, path
 from django.views import View
-from testil import Regex
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import FakeUser, WebUser
+from corehq.middleware import SyncUserLanguageMiddleware
 from corehq.util.timer import set_request_duration_reporting_threshold, TimingContext
 
 
@@ -23,9 +29,14 @@ class SlowClassView(View):
 
 @set_request_duration_reporting_threshold(0.1)
 def slow_function_view(request):
-    timer = TimingContext()
-    with timer("sleep"):
-        time.sleep(0.2)
+    timer = TimingContext('slow_function_view')
+    with timer:
+        with timer('part1'):
+            ...
+            with timer('part1a'):
+                ...
+        with timer('part2'):
+            time.sleep(0.2)
     response = HttpResponse()
     response.request_timer = timer
     return response
@@ -34,6 +45,7 @@ def slow_function_view(request):
 class TestReportDispatcher(ReportDispatcher):
     map_name = "REPORTS"
     prefix = "test"
+    __test__ = False
 
     @classmethod
     def get_reports(cls, domain):
@@ -46,6 +58,7 @@ class TestReportDispatcher(ReportDispatcher):
 class TestNoDomainReportDispatcher(ReportDispatcher):
     map_name = "REPORTS"
     prefix = "test_no_domain"
+    __test__ = False
 
     @classmethod
     def get_reports(cls, domain):
@@ -57,6 +70,7 @@ class TestNoDomainReportDispatcher(ReportDispatcher):
 class TestCustomReportDispatcher(TestNoDomainReportDispatcher):
     map_name = "REPORTS"
     prefix = "test_custom"
+    __test__ = False
 
     def dispatch(self, request, *args, **kwargs):
         return CustomReport(request).view_response
@@ -134,7 +148,7 @@ urlpatterns = [
     ROOT_URLCONF='corehq.tests.test_middleware',
     MIDDLEWARE=('corehq.middleware.LogLongRequestMiddleware',)
 )
-@mock.patch('corehq.middleware.add_breadcrumb')
+@mock.patch('corehq.util.timer.add_breadcrumb')
 @mock.patch('corehq.middleware.notify_exception')
 class TestLogLongRequestMiddleware(SimpleTestCase):
 
@@ -148,9 +162,17 @@ class TestLogLongRequestMiddleware(SimpleTestCase):
         res = self.client.get('/slow_function')
         self.assertEqual(res.status_code, 200)
         notify_exception.assert_called_once()
-        add_breadcrumb.assert_has_calls([
-            mock.call(category="timing", message=Regex(r"^sleep: 0.\d+"), level="info")
-        ])
+        calls = add_breadcrumb.mock_calls
+        self.assertEqual(len(calls), 4)
+        for call in calls:
+            self.assertEqual(call.kwargs['level'], "info")
+        for call, pattern in zip(calls, [
+            r"⏱  100%  slow_function_view: 0.20.s",
+            r"⏱    0%   → part1: 0.000s",
+            r"⏱    0%   →  → part1a: 0.000s",
+            r"⏱  100%   → part2: 0.20.s",
+        ]):
+            self.assertRegex(call.kwargs['message'], pattern)
 
 
 @override_settings(
@@ -164,21 +186,17 @@ class TestLogLongRequestMiddlewareReports(TestCase):
         super().setUpClass()
         cls.domain = Domain(name="long_request", is_active=True)
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
 
         cls.username = 'fingile'
         cls.password = '*******'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain.name, deleted_by=None)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super().tearDownClass()
 
     def test_slow_domain_report(self, notify_exception):
         res = self.client.get('/domain1/slow_report/')
@@ -230,3 +248,48 @@ class TestSecureCookiesMiddleware(SimpleTestCase):
     def test_ignores_if_no_cookies_set(self):
         response = self.client.get('/no_cookie')
         self.assertFalse(response.cookies)
+
+
+class TestSyncUserLanguageMiddleware(SimpleTestCase):
+
+    def setUp(self):
+        self.request = RequestFactory().get('/')
+        self.request.LANGUAGE_CODE = 'en'
+
+    def run_middleware(self):
+        def get_response(request):
+            return HttpResponse('OK')
+
+        middleware = SyncUserLanguageMiddleware(get_response)
+        return middleware(self.request)
+
+    def test_user_language_sets_language_cookie(self):
+        couch_user = FakeUser(language='fra')
+        self.request.couch_user = couch_user
+        response = self.run_middleware()
+
+        language_cookie = response.cookies.get(settings.LANGUAGE_COOKIE_NAME)
+        assert language_cookie.value == couch_user.language
+
+    def test_same_language_does_not_set_cookie(self):
+        couch_user = FakeUser(language=self.request.LANGUAGE_CODE)
+        self.request.couch_user = couch_user
+        response = self.run_middleware()
+
+        language_cookie = response.cookies.get(settings.LANGUAGE_COOKIE_NAME)
+        assert language_cookie is None
+
+    def test_no_user_language_does_not_set_cookie(self):
+        couch_user = FakeUser(language=None)
+        self.request.couch_user = couch_user
+        response = self.run_middleware()
+
+        language_cookie = response.cookies.get(settings.LANGUAGE_COOKIE_NAME)
+        assert language_cookie is None
+
+    def test_no_couch_user_does_not_set_cookie(self):
+        self.request.couch_user = None
+        response = self.run_middleware()
+
+        language_cookie = response.cookies.get(settings.LANGUAGE_COOKIE_NAME)
+        assert language_cookie is None

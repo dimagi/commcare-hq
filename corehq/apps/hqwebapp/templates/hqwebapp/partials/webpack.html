@@ -1,0 +1,10 @@
+{% load hq_shared_tags %}
+
+{% if js_entry %}
+  <script>
+    console.log("Loaded JS entry point: {{ js_entry }}");
+  </script>
+  {% for bundle_path in js_entry|webpack_bundles %}
+    <script src="{% static bundle_path %}"></script>
+  {% endfor %}
+{% endif %}

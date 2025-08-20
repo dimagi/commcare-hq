@@ -70,7 +70,8 @@ class CustomDeletion(BaseDeletion):
 
 class ModelDeletion(BaseDeletion):
 
-    def __init__(self, app_label, model_name, domain_filter_kwarg, extra_models=None, audit_action=None):
+    def __init__(self, app_label, model_name, domain_filter_kwarg,
+                 extra_models=None, manager="objects", audit_action=None):
         """Deletes all records of an app model matching the provided domain
         filter.
 
@@ -80,6 +81,8 @@ class ModelDeletion(BaseDeletion):
         :param extra_models: (optional) a collection of other models in the same
             app which will be deleted along with ``model_name`` via cascaded deletion.
             The ``extra_models`` is used only for auditing purposes.
+        :param manager: (optional) manager to use for delete operation.
+            Default: ``objects``.
         :param audit_action: (optional) an audit action to be provided as a
             keyword argument when deleting records (e.g.
             ``<QuerySet>.delete(audit_action=audit_action)``). Necessary for
@@ -92,10 +95,12 @@ class ModelDeletion(BaseDeletion):
         super(ModelDeletion, self).__init__(app_label, models)
         self.domain_filter_kwarg = domain_filter_kwarg
         self.model_name = model_name
+        self.manager_name = manager
         self.delete_kwargs = {} if audit_action is None else {"audit_action": audit_action}
 
-    def get_model_class(self):
-        return apps.get_model(self.app_label, self.model_name)
+    def get_model_manager(self):
+        model = apps.get_model(self.app_label, self.model_name)
+        return getattr(model, self.manager_name)
 
     def execute(self, domain_name):
         if not domain_name:
@@ -105,26 +110,26 @@ class ModelDeletion(BaseDeletion):
             # in some of the SMS models).
             raise RuntimeError("Expected a valid domain name")
         if self.is_app_installed():
-            model = self.get_model_class()
-            model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete(**self.delete_kwargs)
+            manager = self.get_model_manager()
+            manager.filter(**{self.domain_filter_kwarg: domain_name}).delete(**self.delete_kwargs)
 
 
 class PartitionedModelDeletion(ModelDeletion):
     def execute(self, domain_name):
         if not self.is_app_installed():
             return
-        model = self.get_model_class()
+        manager = self.get_model_manager()
         for db_name in get_db_aliases_for_partitioned_query():
-            model.objects.using(db_name).filter(**{self.domain_filter_kwarg: domain_name}).delete()
+            manager.using(db_name).filter(**{self.domain_filter_kwarg: domain_name}).delete()
 
 
 class DjangoUserRelatedModelDeletion(ModelDeletion):
     def execute(self, domain_name):
         if not self.is_app_installed():
             return
-        model = self.get_model_class()
+        manager = self.get_model_manager()
         filter_kwarg = f"{self.domain_filter_kwarg}__contains"
-        total, counts = model.objects.filter(**{filter_kwarg: f"@{domain_name}.commcarehq.org"}).delete()
+        total, counts = manager.filter(**{filter_kwarg: f"@{domain_name}.commcarehq.org"}).delete()
         logger.info("Deleted %s %s", total, self.model_name)
         logger.info(counts)
 
@@ -248,7 +253,7 @@ def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
-        'FCMNotificationContent'
+        'FCMNotificationContent', 'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]
     filters = [
         'alertevent__schedule__domain',
@@ -259,6 +264,14 @@ def _delete_sms_content_events_schedules(domain_name):
     _delete_filtered_models('scheduling', models, [
         Q(**{name: domain_name}) for name in filters
     ])
+
+
+def _disable_toggles(domain_name):
+    from corehq.toggles import NAMESPACE_DOMAIN, toggles_enabled_for_domain
+    from corehq.toggles.shortcuts import set_toggle
+
+    for slug in toggles_enabled_for_domain(domain_name):
+        set_toggle(slug, domain_name, False, NAMESPACE_DOMAIN)
 
 
 def _delete_django_users(domain_name):
@@ -301,8 +314,9 @@ def _delete_demo_user_restores(domain_name):
 DOMAIN_DELETE_OPERATIONS = [
     DjangoUserRelatedModelDeletion('otp_static', 'StaticDevice', 'user__username', ['StaticToken']),
     DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
-    DjangoUserRelatedModelDeletion('two_factor', 'PhoneDevice', 'user__username'),
+    DjangoUserRelatedModelDeletion('phonenumber', 'PhoneDevice', 'user__username'),
     DjangoUserRelatedModelDeletion('users', 'HQApiKey', 'user__username'),
+    DjangoUserRelatedModelDeletion('data_cleaning', 'BulkEditSession', 'user__username'),
     CustomDeletion('auth', _delete_django_users, ['User']),
     ModelDeletion('products', 'SQLProduct', 'domain'),
     ModelDeletion('locations', 'SQLLocation', 'domain'),
@@ -312,6 +326,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('sms', 'DailyOutboundSMSLimitReached', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
     ModelDeletion('sms', 'Email', 'domain'),
+    ModelDeletion('sms', 'ConnectMessage', 'domain'),
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),
     ModelDeletion('ivr', 'Call', 'domain'),
@@ -336,6 +351,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
     ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
+    ModelDeletion('app_manager', 'CredentialApplication', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),
@@ -349,11 +365,20 @@ DOMAIN_DELETE_OPERATIONS = [
         'StockLevelsConfig', 'StockRestoreConfig',
     ]),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
+    ModelDeletion('users', 'SQLUserData', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', [
         'CustomDataFieldsProfile', 'Field',
     ]),
+    ModelDeletion('data_analytics', 'DomainMetrics', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
+    ModelDeletion('data_cleaning', 'BulkEditSession', 'domain', [
+        'BulkEditFilter',
+        'BulkEditPinnedFilter',
+        'BulkEditColumn',
+        'BulkEditRecord',
+        'BulkEditChange',
+    ]),
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
         'CaseProperty',
         'CasePropertyGroup',
@@ -370,6 +395,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'CustomActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'UpdateCaseDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseDuplicate', 'action__caseruleaction__rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseDuplicateNew', 'action__caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseDeduplicationActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CreateScheduleInstanceActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),
@@ -382,10 +408,14 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('integration', 'GaenOtpServerSettings', 'domain'),
     ModelDeletion('integration', 'HmacCalloutSettings', 'domain'),
     ModelDeletion('integration', 'SimprintsIntegration', 'domain'),
+    ModelDeletion('integration', 'KycConfig', 'domain'),
+    ModelDeletion('integration', 'MoMoConfig', 'domain'),
+    ModelDeletion('ip_access', 'IPAccessConfig', 'domain'),
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent'
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent',
+        'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
     ModelDeletion('scheduling', 'AlertEvent', 'schedule__domain'),
@@ -401,6 +431,7 @@ DOMAIN_DELETE_OPERATIONS = [
     PartitionedModelDeletion('scheduling_partitioned', 'CaseTimedScheduleInstance', 'domain'),
     PartitionedModelDeletion('scheduling_partitioned', 'TimedScheduleInstance', 'domain'),
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
+    ModelDeletion('export', 'DeIdHash', 'domain'),
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
     CustomDeletion('export', _delete_data_files, []),
@@ -426,6 +457,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'TableauUser', 'server__domain'),
     ModelDeletion('reports', 'QueryStringHash', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
+    CustomDeletion('toggles', _disable_toggles, []),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
     ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
@@ -440,6 +472,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'InvalidUCRData', 'domain'),
     ModelDeletion('userreports', 'UCRExpression', 'domain'),
     ModelDeletion('users', 'ConnectIDUserLink', 'domain'),
+    ModelDeletion('users', 'ConnectIDMessagingKey', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'DeactivateMobileWorkerTrigger', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
@@ -456,11 +489,14 @@ DOMAIN_DELETE_OPERATIONS = [
         'FHIRImportResourceType', 'ResourceTypeRelationship',
         'FHIRImportResourceProperty',
     ]),
-    ModelDeletion('repeaters', 'Repeater', 'domain'),
-    ModelDeletion('motech', 'ConnectionSettings', 'domain'),
+    ModelDeletion('repeaters', 'Repeater', 'domain', manager='all_objects'),
+    ModelDeletion('repeaters', 'DataSourceUpdate', 'domain'),
+    ModelDeletion('motech', 'ConnectionSettings', 'domain', manager='all_objects'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
     ModelDeletion('fixtures', 'LookupTable', 'domain'),
+    ModelDeletion('case_search', 'CSQLFixtureExpression', 'domain'),
+    ModelDeletion('case_search', 'CSQLFixtureExpressionLog', 'expression__domain'),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
@@ -469,6 +505,12 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('events', 'AttendanceTrackingConfig', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
+    ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),
+    ModelDeletion('campaign', 'Dashboard', 'domain', extra_models=[
+        'DashboardMap',
+        'DashboardReport',
+        'DashboardGauge'
+    ]),
 ]
 
 

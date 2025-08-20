@@ -53,11 +53,6 @@ class TagTest(SimpleTestCase):
         expected_template = self._get_file('rendered', '{}.html'.format(rendered_filename))
         expected = self._render_template(expected_template)
 
-        # Removed when Django 2.x is no longer supported
-        import django
-        if django.VERSION[0] < 3:
-            expected = expected.replace("&#x27;", "&#39;")
-
         self.assertEqual(
             self._normalize_whitespace(actual),
             self._normalize_whitespace(expected),
@@ -82,92 +77,74 @@ class TagTest(SimpleTestCase):
             'domain': 'hqsharedtags'
         })
 
-    def test_javascript_libraries_jquery_only(self):
-        self._test('javascript_libraries_jquery_only', {})
-
-    def test_javascript_libraries_hq(self):
-        self._test('javascript_libraries_hq', {
-            'hq': True,
-        })
-
-    def test_javascript_libraries_hq_bootstrap5(self):
-        self._test(
-            'javascript_libraries_hq',
-            {
-                'hq': True,
-                'use_bootstrap5': True,
-            },
-            rendered_filename='javascript_libraries_hq_bootstrap5'
-        )
-
-    def test_requirejs_main(self):
+    def test_js_entry(self):
         self.assertEqual(
             self.render("""
-                {% extends "requirejs_base.html" %}
+                {% extends "webpack_base.html" %}
                 {% load hq_shared_tags %}
-                {% requirejs_main "requirejs/main" %}
-                {% block content %}{{requirejs_main}}{% endblock %}
+                {% js_entry "webpack/main" %}
+                {% block content %}{{js_entry}}{% endblock %}
             """).strip(),
-            "requirejs/main after tag\nrequirejs/main",
+            "webpack/main after tag\nwebpack/main",
         )
 
-    def test_requirejs_main_no_arg(self):
-        # this version can be used in a base template that may or may not use requirejs
+    def test_js_entry_no_arg(self):
+        # this version can be used in a base template that may or may not use webpack
         self.assertEqual(
             self.render("""
                 {% load hq_shared_tags %}
-                {% requirejs_main %}
-                {% if requirejs_main %}unexpected truth{% endif %}
-                {{requirejs_main}}
+                {% js_entry %}
+                {% if js_entry %}unexpected truth 2{% endif %}
+                {{js_entry}}
             """).strip(),
-            "None",
+            "",
         )
 
-    def test_requirejs_main_in_context(self):
+    def test_js_entry_in_context(self):
         self.assertEqual(
             self.render(
                 """
-                {% extends "requirejs_base.html" %}
+                {% extends "webpack_base.html" %}
                 {% load hq_shared_tags %}
-                {% requirejs_main "requirejs/main" %}
-                {% block content %}{{requirejs_main}}{% endblock %}
+                {% js_entry "webpack/main" %}
+                {% block content %}{{js_entry}}{% endblock %}
                 """,
-                {"requirejs_main": "rjs/context"}
+                {"js_entry": "webpack/context"}
             ).strip(),
-            "rjs/context before tag\n\n"
-            "rjs/context after tag\n"
-            "rjs/context",
+            "webpack/context before tag\n\n"
+            "webpack/context after tag\n"
+            "webpack/context",
         )
 
-    def test_requirejs_main_multiple_tags(self):
-        msg = r"multiple 'requirejs_main' tags not allowed \(\"requirejs/two\"\)"
+    def test_js_entry_multiple_tags(self):
+        msg = r"multiple 'js_entry' tags not allowed \(\"webpack/two\"\)"
         with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
-                {% requirejs_main "requirejs/one" %}
-                {% requirejs_main "requirejs/two" %}
+                {% js_entry "webpack/one" %}
+                {% js_entry "webpack/two" %}
             """)
 
-    def test_requirejs_main_too_short(self):
-        msg = r"bad 'requirejs_main' argument: '"
+    def test_js_entry_too_short(self):
+        msg = r"bad 'js_entry' argument: '"
         with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
-                {% requirejs_main ' %}
+                {% js_entry ' %}
             """)
 
-    def test_requirejs_main_bad_string(self):
-        msg = r"bad 'requirejs_main' argument: \.'"
+    def test_js_entry_bad_string(self):
+        msg = r"bad 'js_entry' argument: \.'"
         with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
-                {% requirejs_main .' %}
+                {% js_entry .' %}
             """)
 
-    def test_requirejs_main_mismatched_delimiter(self):
-        msg = r"bad 'requirejs_main' argument: 'x\""
+    def test_js_entry_mismatched_delimiter(self):
+        msg = r"bad 'js_entry' argument: 'x\""
         with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
-                {% requirejs_main 'x" %}
+                {% js_entry 'x" %}
             """)

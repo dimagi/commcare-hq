@@ -130,6 +130,19 @@ def detail_column_enum_variable(module, detail_type, column, key_as_var):
     )
 
 
+@pattern('m%d.%s.%s_%s_%s.alt_text.%s')
+def detail_column_alt_text_variable(module, detail_type, column, key_as_var):
+    field = _clean_field_for_mobile(column.field)
+    return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.alt_text.{key_as_var}".format(
+        module=module,
+        detail_type=detail_type,
+        d=column,
+        field=field,
+        d_id=column.id + 1,
+        key_as_var=key_as_var,
+    )
+
+
 @pattern('m%d.%s.%s_%s_%s.graph.key.%s')
 def graph_configuration(module, detail_type, column, key):
     field = _clean_field_for_mobile(column.field)
@@ -205,8 +218,7 @@ def module_locale(module):
 
 @pattern('forms.m%df%d')
 def form_locale(form):
-    return "forms.m{module.id}f{form.id}".format(module=form.get_module(),
-                                                  form=form)
+    return "forms.m{module.id}f{form.id}".format(module=form.get_module(), form=form)
 
 
 @pattern('training.root.title')
@@ -415,6 +427,22 @@ def form_custom_icon_locale(form, icon_form):
     )
 
 
+@pattern('forms.m%df%d.submit_label')
+def form_submit_label_locale(form):
+    return "forms.m{module.id}f{form.id}.submit_label".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
+@pattern('forms.m%df%d.submit_notification_label')
+def form_submit_notification_label_locale(form):
+    return "forms.m{module.id}f{form.id}.submit_notification_label".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
 @pattern('case_list_form.m%d.icon')
 def case_list_form_icon_locale(module):
     return "case_list_form.m{module.id}.icon".format(module=module)
@@ -456,6 +484,11 @@ def persistent_case_context_detail(module):
 @pattern('m%d_no_items_text')
 def no_items_text_detail(module):
     return detail(module, 'no_items_text')
+
+
+@pattern('m%d_select_text')
+def select_text_detail(module):
+    return detail(module, 'select_text')
 
 
 def fixture_detail(module):

@@ -3,10 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-  {% requirejs_main 'scheduling/js/conditional_alert_main' %}
-
-{% endblock %}
+{% js_entry_b3 'scheduling/js/conditional_alert_main' %}
 
 {% block stylesheets %}{{ block.super }}
   <style>
@@ -43,13 +40,11 @@
     <p class="help-block alert alert-info">
       <i class="fa fa-info-circle"></i>
       {% blocktrans %}
-        Since you are a Superuser, you will see additional options. See
-        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts+-+Superuser+Options">Superuser Options</a>
-        for more information.
+        Since you are a Superuser, you will see additional options.
       {% endblocktrans %}
     </p>
   {% endif %}
-  {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
+  {% include 'data_interfaces/partials/bootstrap3/case_rule_criteria.html' with form=criteria_form %}
 
   <div class="row">
     <div class="col-sm-12">

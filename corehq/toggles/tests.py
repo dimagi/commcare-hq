@@ -19,6 +19,7 @@ from corehq.toggles import (
 )
 from .models import generate_toggle_id, Toggle
 from .shortcuts import (
+    get_editable_toggle_tags_for_user,
     namespaced_item,
     find_users_with_toggle_enabled,
     find_domains_with_toggle_enabled,
@@ -27,6 +28,7 @@ from .shortcuts import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.toggles.sql_models import ToggleEditPermission
 
 
 class ToggleTestCase(TestCase):
@@ -193,11 +195,12 @@ class PredictablyRandomToggleTests(TestCase):
         super(PredictablyRandomToggleTests, cls).setUpClass()
         cls.user_toggle = Toggle(
             slug='user_toggle',
-            enabled_users=['arthur', 'diana'])
+            enabled_users=['arthur', 'diana', '!frank'])
         cls.user_toggle.save()
         cls.domain_toggle = Toggle(
             slug='domain_toggle',
-            enabled_users=[namespaced_item('dc', NAMESPACE_DOMAIN)])
+            enabled_users=[namespaced_item('dc', NAMESPACE_DOMAIN),
+                           namespaced_item('!darkhorse', NAMESPACE_DOMAIN)])
         cls.domain_toggle.save()
 
     @classmethod
@@ -217,6 +220,18 @@ class PredictablyRandomToggleTests(TestCase):
         )
         self.assertTrue(toggle.enabled('diana', namespace=NAMESPACE_USER))
         self.assertFalse(toggle.enabled('jessica', namespace=NAMESPACE_USER))
+        self.assertFalse(toggle.enabled('frank', namespace=NAMESPACE_USER))
+        # update randomness to 100%
+        toggle = PredictablyRandomToggle(
+            'user_toggle',
+            'A toggle for testing',
+            TAG_CUSTOM,
+            [NAMESPACE_USER],
+            randomness=1.00
+        )
+        self.assertTrue(toggle.enabled('diana', namespace=NAMESPACE_USER))
+        self.assertTrue(toggle.enabled('jessica', namespace=NAMESPACE_USER))
+        self.assertFalse(toggle.enabled('frank', namespace=NAMESPACE_USER))
 
     @override_settings(DISABLE_RANDOM_TOGGLES=False)
     def test_domain_namespace_disabled(self):
@@ -229,9 +244,21 @@ class PredictablyRandomToggleTests(TestCase):
         )
         self.assertTrue(toggle.enabled('dc', namespace=NAMESPACE_DOMAIN))
         self.assertFalse(toggle.enabled('marvel', namespace=NAMESPACE_DOMAIN))
+        self.assertFalse(toggle.enabled('darkhorse', namespace=NAMESPACE_DOMAIN))
+        # update randomness to 100%
+        toggle = PredictablyRandomToggle(
+            'domain_toggle',
+            'A toggle for testing',
+            TAG_CUSTOM,
+            [NAMESPACE_DOMAIN],
+            randomness=1.00
+        )
+        self.assertTrue(toggle.enabled('dc', namespace=NAMESPACE_DOMAIN))
+        self.assertTrue(toggle.enabled('marvel', namespace=NAMESPACE_DOMAIN))
+        self.assertFalse(toggle.enabled('darkhorse', namespace=NAMESPACE_DOMAIN))
 
 
-class DyanmicPredictablyRandomToggleTests(TestCase):
+class DynamicPredictablyRandomToggleTests(TestCase):
 
     def test_default_randomness_no_doc(self):
         for randomness in [0, .5, 1]:
@@ -399,3 +426,23 @@ class NamespaceTests(TestCase):
         self.assertFalse(user_toggle.enabled(self.second_user.username))
         self.assertTrue(user_toggle.enabled_for_request(self.request))
         self.assertFalse(user_toggle.enabled_for_request(self.second_request))
+
+
+class TestToggleEditPermissionShortcuts(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.users = ['arthur', 'diane']
+        cls.tag_custom_edit_permission = ToggleEditPermission.objects.create(
+            tag_slug=TAG_CUSTOM.slug,
+            enabled_users=['arthur']
+        )
+        cls.addClassCleanup(cls.tag_custom_edit_permission.delete)
+
+    def test_get_tags_with_edit_permission(self):
+        allowed_tags = get_editable_toggle_tags_for_user('arthur')
+        assert allowed_tags == [TAG_CUSTOM]
+
+        allowed_tags = get_editable_toggle_tags_for_user('diane')
+        assert allowed_tags == []

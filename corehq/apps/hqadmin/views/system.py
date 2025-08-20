@@ -1,4 +1,3 @@
-import json
 import socket
 from collections import defaultdict, namedtuple
 
@@ -33,9 +32,7 @@ from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqadmin.utils import get_celery_stats
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
-    get_hqadmin_base_context,
 )
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.receiverwrapper.rate_limiter import (
     global_submission_rate_limiter,
 )
@@ -47,8 +44,6 @@ class SystemInfoView(BaseAdminSectionView):
     urlname = 'system_info'
     template_name = "hqadmin/system_info.html"
 
-    @use_datatables
-    @use_jquery_ui
     @method_decorator(require_superuser_or_contractor)
     def dispatch(self, request, *args, **kwargs):
         return super(SystemInfoView, self).dispatch(request, *args, **kwargs)
@@ -57,7 +52,7 @@ class SystemInfoView(BaseAdminSectionView):
     def page_context(self):
         environment = settings.SERVER_ENVIRONMENT
 
-        context = get_hqadmin_base_context(self.request)
+        context = {}
         context['couch_update'] = self.request.GET.get('couch_update', 5000)
         context['celery_update'] = self.request.GET.get('celery_update', 10000)
         context['db_update'] = self.request.GET.get('db_update', 30000)
@@ -146,8 +141,8 @@ def system_ajax(request):
                     traw['name'] = None
                 ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
-            return HttpResponse(json.dumps(ret), content_type='application/json')
-    return HttpResponse('{}', content_type='application/json')
+            return JsonResponse(ret, safe=False)
+    return JsonResponse({})
 
 
 @require_superuser_or_contractor
@@ -255,7 +250,7 @@ def _get_branches_merged_into_autostaging(cwd=None):
 def _get_submodules():
     """
     returns something like
-    ['corehq/apps/hqmedia/static/hqmedia/MediaUploader', ...]
+    ['submodules/commcare-translations', 'submodules/django-digest-src', ...]
     """
     import sh
     git = sh.git.bake(_tty_out=False)

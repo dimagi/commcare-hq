@@ -1,6 +1,7 @@
 from django.utils.translation import get_language
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -11,7 +12,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.filters.users import \
-    ExpandedMobileWorkerFilter as EMWF
+    SubmittedByExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import (
@@ -33,10 +34,11 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                          ProjectReportParametersMixin,
                          CompletionOrSubmissionTimeMixin, MultiFormDrilldownMixin,
                          DatespanMixin):
-    name = gettext_noop('Submit History')
+    name = gettext_noop('Submission History')
+    description = gettext_lazy('View all submitted data.')
     slug = 'submit_history'
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.SubmittedByExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -77,7 +79,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     @property
     def es_query(self):
         time_filter = form_es.submitted if self.by_submission_time else form_es.completed
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
 
         query = (form_es.FormES()
                  .domain(self.domain)

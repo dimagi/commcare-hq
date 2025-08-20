@@ -57,7 +57,7 @@
                         data-content="{% blocktrans %}
                              Cases of these types will be displayed in Case List and Case Search screens, in addition to the Case Type inputted above.
                              <a target='_blank'
-                             href='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim'>(More   Information)</a>
+                             href='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2146962056/Case+Search+Configuration'>(More   Information)</a>
                               {% endblocktrans %}">
                   </span>
                 </label>
@@ -80,7 +80,7 @@
                         data-title="{% trans "Parent Menu" %}"
                         data-content="{% blocktrans %}
                                Nest this menu under another for easier application navigation.
-                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>
+                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>
                                {% endblocktrans %}">
                   </span>
                 </label>
@@ -259,6 +259,28 @@
               {% if not module.is_surveys %}
                 {% include "app_manager/partials/case_list_session_endpoint.html" with module=module %}
               {% endif %}
+            {% endif %}
+
+            {% if request|toggle_enabled:'CASE_LIST_LAZY' and app.cloudcare_enabled %}
+              <div class="form-group">
+              {% include "app_manager/partials/modules/case_list_lazy_loading.html" %}
+              </div>
+            {% endif %}
+
+            {% if request|toggle_enabled:'CASE_LIST_OPTIMIZATIONS' and not module.is_surveys %}
+              <div class="form-group">
+                <label class="control-label {% css_label_class %}">
+                  {% trans "Show Case List Optimizations" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Case List Optimizations" %}"
+                        data-content="{% blocktrans %}Set caching and lazy loading for case list columns for better performance. Once saved, reload this page to reveal/hide relevant column on case list. {% endblocktrans %}"
+                  ></span>
+                </label>
+                <div id="show_case_list_optimization_options" class="{% css_field_class %} commcare-feature" data-since-version="2.56">
+                  <input id="show_case_list_optimization_options-input" type="checkbox" data-bind="checked: show_case_list_optimization_options" />
+                  <input type="hidden" name="show_case_list_optimization_options" data-bind="value: show_case_list_optimization_options"/>
+                </div>
+              </div>
             {% endif %}
 
             {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}

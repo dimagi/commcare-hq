@@ -13,7 +13,6 @@ from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 
 from casexml.apps.case import const
 from casexml.apps.case.xml.parser import case_id_from_block, case_update_from_block
-from custom.covid.casesync import get_ush_extension_cases_to_close
 
 _soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
@@ -135,8 +134,6 @@ def close_extension_cases(case_db, cases, device_id, synctoken_id):
 
 def get_all_extensions_to_close(domain, cases):
     if toggles.EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
-        if toggles.USH_DONT_CLOSE_PATIENT_EXTENSIONS.enabled(domain):
-            return get_ush_extension_cases_to_close(domain, cases)
         return get_extensions_to_close(domain, cases)
     return set()
 
@@ -226,14 +223,22 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
                 yield from _extract_case_blocks(value, new_path, form_id=form_id)
 
 
-def get_case_updates(xform):
+def get_case_updates(xform, for_case=None):
     if not xform:
         return []
-    updates = sorted(
-        [case_update_from_block(cb) for cb in extract_case_blocks(xform)],
-        key=lambda update: update.id
-    )
-    by_case_id = groupby(updates, lambda update: update.id)
+
+    updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+
+    if for_case:
+        updates = [update for update in updates if update.id == for_case]
+        by_case_id = [(for_case, updates)]
+    else:
+        updates = sorted(
+            updates,
+            key=lambda update: update.id
+        )
+        by_case_id = groupby(updates, lambda update: update.id)
+
     return list(itertools.chain(
         *[order_updates(updates) for case_id, updates in by_case_id]
     ))

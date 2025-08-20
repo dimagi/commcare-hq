@@ -1,3 +1,4 @@
+import pytz
 import json
 from collections import defaultdict
 from functools import cached_property
@@ -5,10 +6,11 @@ from functools import cached_property
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth.views import PasswordResetConfirmView
+from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetView
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
@@ -17,15 +19,17 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound
+from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_ip
 
 from corehq import feature_previews, privileges, toggles
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
+from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
@@ -48,17 +52,32 @@ from corehq.apps.domain.forms import (
     DomainMetadataForm,
     PrivacySecurityForm,
     ProjectSettingsForm,
+    IPAccessConfigForm,
+    DomainCredentialIssuingAppForm,
     clean_password
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.domain.views.import_apps import ImportAppStepsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.toggle_ui.models import ToggleAudit
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
+from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.apps.app_manager.models import CredentialApplication
+
+MAX_ACTIVE_ALERTS = 3
 
 
 class BaseProjectSettingsView(BaseDomainView):
@@ -127,6 +146,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     page_title = gettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -219,6 +239,7 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
+    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -262,13 +283,84 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator([
+    domain_admin_required,
+    use_bootstrap5,
+    toggles.IP_ACCESS_CONTROLS.required_decorator(),
+], name='dispatch')
+class EditIPAccessConfigView(BaseProjectSettingsView):
+    template_name = 'domain/admin/ip_access_config.html'
+    urlname = 'ip_access_config'
+    page_title = gettext_lazy("IP Access")
+
+    @property
+    @memoized
+    def form(self):
+        initial = {}
+        domain_config = self.ip_access_config
+        if domain_config:
+            display_spacer = ", "
+            initial.update({
+                'country_allowlist': domain_config.country_allowlist,
+                'ip_allowlist': display_spacer.join(domain_config.ip_allowlist),
+                'ip_denylist': display_spacer.join(domain_config.ip_denylist),
+                'comment': domain_config.comment
+            })
+        if self.request.method == 'POST':
+            return IPAccessConfigForm(self.request.POST, initial=initial,
+                                      current_ip=self.current_ip, current_country=self.ip_country)
+        return IPAccessConfigForm(initial=initial)
+
+    @cached_property
+    def ip_access_config(self):
+        try:
+            return IPAccessConfig.objects.get(domain=self.domain)
+        except IPAccessConfig.DoesNotExist:
+            return None
+
+    @cached_property
+    def ip_country(self):
+        if settings.MAXMIND_LICENSE_KEY:
+            return get_ip_country(self.current_ip)
+        return None
+
+    @property
+    def current_ip(self):
+        return get_ip(self.request)
+
+    @property
+    def page_context(self):
+        return {
+            'ip_access_config_form': self.form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            domain_config = self.ip_access_config
+            should_save = True
+            if not domain_config:
+                should_save = False
+                domain_config = IPAccessConfig()
+                domain_config.domain = self.domain
+            for attr, value in self.form.cleaned_data.items():
+                current_value = getattr(domain_config, attr)
+                if value != current_value:
+                    should_save = True
+                    setattr(domain_config, attr, value)
+            if should_save:
+                domain_config.save()
+                messages.success(request, _("Your IP Access settings have been saved!"))
+            return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
 @location_safe
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
     if logo is None:
         raise Http404()
 
-    return HttpResponse(logo[0], content_type=logo[1])
+    return HttpResponse(logo, content_type='image/png')
 
 
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
@@ -277,6 +369,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -317,6 +410,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CaseSearchConfigView(BaseAdminProjectSettingsView):
     urlname = 'case_search_config'
     page_title = gettext_lazy('Case Search')
@@ -410,6 +504,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -449,8 +544,21 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
+            ToggleAudit.objects.log_toggle_action(
+                feature.slug,
+                self.request.couch_user.username,
+                [f"{NAMESPACE_DOMAIN}:{self.domain}"],
+                ToggleAudit.ACTION_ADD if new_state else ToggleAudit.ACTION_REMOVE,
+            )
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
+
+
+class DomainPasswordResetView(PasswordResetView):
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.kwargs.get('domain')
+        return kwargs
 
 
 class CustomPasswordResetView(PasswordResetConfirmView):
@@ -468,10 +576,17 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                     )
                 )
                 return '{}?username={}'.format(
-                    reverse('domain_login', args=[couch_user.domain]),
+                    reverse('commcare_user_account_confirmed', args=[couch_user.domain]),
                     couch_user.raw_username,
                 )
         return super().get_success_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {"username": self.user.username}
+        )
+        return context
 
     def get(self, request, *args, **kwargs):
 
@@ -487,15 +602,36 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 messages.error(request, _(e.message))
                 return HttpResponseRedirect(request.path_info)
         response = super().post(request, *args, **kwargs)
-        uidb64 = kwargs.get('uidb64')
-        uid = urlsafe_base64_decode(uidb64)
-        user = User.objects.get(pk=uid)
-        couch_user = CouchUser.from_django_user(user)
-        clear_login_attempts(couch_user)
+
+        if self.get_context_data().get('form').is_valid():
+            uidb64 = kwargs.get('uidb64')
+            uid = urlsafe_base64_decode(uidb64)
+            user = User.objects.get(pk=uid)
+            couch_user = CouchUser.from_django_user(user)
+            clear_login_attempts(couch_user)
+            if couch_user.is_commcare_user():
+                couch_user.self_set_password = True
+                couch_user.save()
+
+            domain = couch_user.domain if couch_user.is_commcare_user() else None
+            log_user_change(by_domain=None, for_domain=domain, couch_user=couch_user, changed_by_user=couch_user,
+                            changed_via=USER_CHANGE_VIA_WEB, change_messages=UserChangeMessage.password_reset(),
+                            by_domain_required_for_log=False, for_domain_required_for_log=False)
+            context = {'username': couch_user.raw_username}
+            email = couch_user.get_email()
+            send_html_email_async.delay(
+                subject=_('Successful password reset for {}').format(couch_user.raw_username),
+                recipient=email,
+                html_content=render_to_string('domain/email/password_reset_confirmation.html', context),
+                text_content=render_to_string('domain/email/password_reset_confirmation.txt', context),
+                domain=domain,
+                use_domain_gateway=True
+            )
         return response
 
 
 @method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
     urlname = 'recovery_measures_history'
     page_title = gettext_lazy("Recovery Measures History")
@@ -518,14 +654,119 @@ class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'
     urlname = 'domain_manage_mobile_workers'
 
 
-@method_decorator(toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(), name='dispatch')
-class ManageDomainAlertsView(BaseAdminProjectSettingsView):
+@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
+class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Credentials Application")
+    template_name = 'domain/admin/application_credentials.html'
+    urlname = 'domain_manage_application_credentials'
+
+    @property
+    def form(self):
+        if self.request.method == 'POST':
+            return DomainCredentialIssuingAppForm(self.domain, self.request.POST)
+        return DomainCredentialIssuingAppForm(self.domain)
+
+    @property
+    def main_context(self):
+        context = super().main_context
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form
+        if not form.is_valid():
+            messages.error(request, _("There was an error saving your settings. Please try again!"))
+            return self.get(request, *args, **kwargs)
+
+        is_new_credential_app = self.set_credential_app(form.cleaned_data)
+
+        success_message = _("Settings saved!")
+        if is_new_credential_app:
+            success_message = _(
+                "Settings saved! Please remember to configure the credential criteria for the issuing"
+                " app in the app manager settings."
+            )
+
+        messages.success(request, success_message)
+        return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+    def set_credential_app(self, form_data):
+        domain_issuing_app_record = CredentialApplication.objects.filter(domain=self.domain).first()
+        new_issuing_app_id = form_data['app_id']
+
+        if not new_issuing_app_id:
+            self.remove_issuing_app(domain_issuing_app_record)
+            return False
+        elif not domain_issuing_app_record:
+            self.create_issuing_app(new_issuing_app_id)
+            return True
+        elif new_issuing_app_id != domain_issuing_app_record.app_id:
+            self.update_issuing_app(new_issuing_app_id, domain_issuing_app_record)
+            return True
+        return False
+
+    def create_issuing_app(self, new_app_id):
+        domain_issuing_app_record = CredentialApplication.objects.create(
+            domain=self.domain,
+            app_id=new_app_id,
+        )
+        application = get_app(self.domain, new_app_id)
+        self.add_credential_to_app_features(application, domain_issuing_app_record)
+
+    def update_issuing_app(self, new_app_id, current_credential_app_record):
+        old_app = get_app(self.domain, current_credential_app_record.app_id)
+        new_app = get_app(self.domain, new_app_id)
+
+        current_credential_app_record.app_id = new_app_id
+        current_credential_app_record.save()
+
+        self.remove_credential_from_app_features(old_app)
+        self.add_credential_to_app_features(new_app, current_credential_app_record)
+
+    def remove_issuing_app(self, domain_issuing_app_record):
+        if domain_issuing_app_record:
+            issuing_app = get_app(self.domain, domain_issuing_app_record.app_id)
+            self.remove_credential_from_app_features(issuing_app)
+            domain_issuing_app_record.delete()
+
+    def remove_credential_from_app_features(self, app):
+        app.profile.get('features', {}).pop('credentials', None)
+        app.save()
+
+    def add_credential_to_app_features(self, app, domain_issuing_app):
+        app_features = app.profile.get('features', {})
+        app_features['credentials'] = domain_issuing_app.activity_level
+        app.profile['features'] = app_features
+        app.save()
+
+
+@method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),
+                   require_can_manage_domain_alerts], name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
+class BaseDomainAlertsView(BaseProjectSettingsView):
+    @staticmethod
+    def _convert_user_time_to_server_time(timestamp, timezone):
+        return UserTime(
+            timestamp,
+            tzinfo=pytz.timezone(timezone)
+        ).server_time()
+
+    @staticmethod
+    def _convert_server_time_to_user_time(timestamp, timezone):
+        return ServerTime(timestamp).user_time(pytz.timezone(timezone))
+
+
+class ManageDomainAlertsView(BaseDomainAlertsView):
     template_name = 'domain/admin/manage_alerts.html'
     urlname = 'domain_manage_alerts'
     page_title = gettext_lazy("Manage Project Alerts")
@@ -536,6 +777,14 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
             'form': self.form,
             'alerts': [
                 {
+                    'start_time': (
+                        self._convert_server_time_to_user_time(alert.start_time, alert.timezone).ui_string()
+                        if alert.start_time else None
+                    ),
+                    'end_time': (
+                        self._convert_server_time_to_user_time(alert.end_time, alert.timezone).ui_string()
+                        if alert.end_time else None
+                    ),
                     'active': alert.active,
                     'html': alert.html,
                     'id': alert.id,
@@ -548,8 +797,8 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
     @cached_property
     def form(self):
         if self.request.method == 'POST':
-            return DomainAlertForm(self.request.POST)
-        return DomainAlertForm()
+            return DomainAlertForm(self.request, self.request.POST)
+        return DomainAlertForm(self.request)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -561,17 +810,149 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         return HttpResponseRedirect(self.page_url)
 
     def _create_alert(self):
+        start_time = self.form.cleaned_data['start_time']
+        end_time = self.form.cleaned_data['end_time']
+        timezone = self.request.project.default_timezone
+
+        start_time = (
+            self._convert_user_time_to_server_time(start_time, timezone).done()
+            if start_time else None
+        )
+        end_time = (
+            self._convert_user_time_to_server_time(end_time, timezone).done()
+            if end_time else None
+        )
+
         Alert.objects.create(
             created_by_domain=self.domain,
             domains=[self.domain],
             text=self.form.cleaned_data['text'],
+            start_time=start_time,
+            end_time=end_time,
+            timezone=timezone,
             created_by_user=self.request.couch_user.username,
         )
 
 
-@toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
-@domain_admin_required
+class EditDomainAlertView(BaseDomainAlertsView):
+    template_name = 'domain/admin/edit_alert.html'
+    urlname = 'domain_edit_alert'
+    page_title = gettext_lazy("Edit Project Alert")
+
+    @property
+    @memoized
+    def page_url(self):
+        return reverse(ManageDomainAlertsView.urlname, args=[self.domain])
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.form
+        }
+
+    @cached_property
+    def form(self):
+        if self.request.method == 'POST':
+            return DomainAlertForm(self.request, self.request.POST)
+
+        alert = self._get_alert()
+        assert alert, "Alert not found"
+
+        initial = {
+            'text': alert.text,
+            'start_time': (
+                self._convert_server_time_to_user_time(alert.start_time, alert.timezone).done()
+                if alert.start_time else None
+            ),
+            'end_time': (
+                self._convert_server_time_to_user_time(alert.end_time, alert.timezone).done()
+                if alert.end_time else None
+            ),
+        }
+        return DomainAlertForm(self.request, initial=initial)
+
+    def _get_alert(self):
+        try:
+            return Alert.objects.get(created_by_domain=self.domain, pk=self.kwargs.get('alert_id'))
+        except Alert.DoesNotExist:
+            return None
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            alert = self._get_alert()
+            if not alert:
+                messages.error(request, _("Alert not found!"))
+            else:
+                self._update_alert(alert)
+                messages.success(request, _("Alert saved!"))
+        else:
+            messages.error(request, _("There was an error saving your alert. Please try again!"))
+            return self.get(request, *args, **kwargs)
+        return HttpResponseRedirect(self.page_url)
+
+    def _update_alert(self, alert):
+        alert.text = self.form.cleaned_data['text']
+
+        start_time = self.form.cleaned_data['start_time']
+        end_time = self.form.cleaned_data['end_time']
+        timezone = self.request.project.default_timezone
+
+        alert.start_time = (
+            self._convert_user_time_to_server_time(start_time, timezone).done()
+            if start_time else None
+        )
+        alert.end_time = (
+            self._convert_user_time_to_server_time(end_time, timezone).done()
+            if end_time else None
+        )
+
+        alert.save()
+
+
+@method_decorator(
+    [
+        use_bootstrap5,
+        require_can_edit_apps,
+    ],
+    name='dispatch',
+)
+class ImportAppFromAnotherServerView(BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Import App from Another Server")
+    urlname = 'import_app_from_another_server_main'
+    template_name = 'domain/import_app_from_another_server_main.html'
+
+    def get_recent_import_details(self):
+        """
+        Returns the details of the most recent import app steps.
+        """
+        if self.request.GET.get('source_domain'):
+            return {
+                'source_server': self.request.GET.get('source_server'),
+                'source_domain': self.request.GET.get('source_domain'),
+                'source_app_id': self.request.GET.get('source_app_id'),
+                'new_app_id': self.request.GET.get('new_app_id'),
+            }
+        return {}
+
+    @property
+    def page_context(self):
+        context = {
+            'htmx_import_app_steps_view_url': reverse(
+                ImportAppStepsView.urlname,
+                args=[self.domain,],
+            ),
+        }
+        recent_import_details = self.get_recent_import_details()
+        if recent_import_details:
+            context.update({
+                'import_details': json.dumps(recent_import_details),
+            })
+        return context
+
+
 @require_POST
+@requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS)
+@require_can_manage_domain_alerts
 def update_domain_alert_status(request, domain):
     alert_id = request.POST.get('alert_id')
     assert alert_id, 'Missing alert ID'
@@ -584,9 +965,9 @@ def update_domain_alert_status(request, domain):
     return HttpResponseRedirect(reverse(ManageDomainAlertsView.urlname, kwargs={'domain': domain}))
 
 
-@toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
-@domain_admin_required
 @require_POST
+@requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS)
+@require_can_manage_domain_alerts
 def delete_domain_alert(request, domain):
     alert_id = request.POST.get('alert_id')
     assert alert_id, 'Missing alert ID'
@@ -611,6 +992,11 @@ def _load_alert(alert_id, domain):
 
 def _apply_update(request, alert):
     command = request.POST.get('command')
+    if command == "activate":
+        if Alert.objects.filter(created_by_domain=request.domain, active=True).count() >= MAX_ACTIVE_ALERTS:
+            messages.error(request, _("Alert not activated. Only 3 active alerts allowed."))
+            return
+
     if command in ['activate', 'deactivate']:
         _update_alert(alert, command)
         messages.success(request, _("Alert updated!"))
@@ -623,4 +1009,4 @@ def _update_alert(alert, command):
         alert.active = True
     elif command == 'deactivate':
         alert.active = False
-    alert.save(update_fields=['active'])
+    alert.save()

@@ -7,7 +7,7 @@
   </select>
   <br><br>
 
-  <!-- .hqwebapp-select2: Doesn't need javascript initialization, depends on hqwebapp/js/widgets module -->
+  <!-- .hqwebapp-select2: Doesn't need javascript initialization, depends on hqwebapp/js/bootstrap3/widgets module -->
   <select class="form-control hqwebapp-select2">
     <option>uno</option>
     <option>dos</option>
@@ -42,18 +42,3 @@
     </select>
   </div>
 </div>
-
-<script>
-  $(function () {
-    $("#example-select2 .basic").select2();
-
-    $("#example-select2 .ko-model-dynamic").koApplyBindings(function () {
-      return {
-        letters: ['eins', 'zwei', 'drei'],
-        value: ko.observable('eins'),
-      };
-    });
-
-    $("#example-select2 .ko-model-static").koApplyBindings();
-  });
-</script>

@@ -1,0 +1,10 @@
+--- 
++++ 
+@@ -1,6 +1,6 @@
+ 
+ import $ from "jquery";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ 
+ var module = {};
+ 

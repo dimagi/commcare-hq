@@ -35,9 +35,11 @@ from corehq.apps.fixtures.interface import (
 from corehq.apps.hqadmin.reports import (
     AdminPhoneNumberReport,
     DeployHistoryReport,
-    DeviceLogSoftAssertReport,
+    FeaturePreviewStatusReport,
+    FeaturePreviewAuditReport,
     UserAuditReport,
     UserListReport,
+    UCRDataLoadReport,
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
@@ -51,7 +53,6 @@ from corehq.apps.reports.standard.cases.duplicate_cases import (
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
-from corehq.apps.reports.standard.web_user_activity import WebUserActivityReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -69,10 +70,7 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.generic_inbound.reports import ApiRequestLogReport
-from corehq.motech.repeaters.views import (
-    DomainForwardingRepeatRecords,
-    SQLRepeatRecordReport,
-)
+from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 from corehq.apps.geospatial.reports import (
     CaseManagementMap,
     CaseGroupingReport,
@@ -89,7 +87,6 @@ def REPORTS(project):
     reports.extend(_get_configurable_reports(project))
 
     monitoring_reports = (
-        WebUserActivityReport,
         monitoring.WorkerActivityReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
@@ -108,7 +105,7 @@ def REPORTS(project):
     if toggles.CASE_LIST_EXPLORER.enabled(project.name) or domain_can_access_case_list_explorer:
         inspect_reports.append(CaseListExplorer)
 
-    if toggles.CASE_DEDUPE.enabled(project.name):
+    if domain_has_privilege(project.name, privileges.CASE_DEDUPE):
         inspect_reports.append(DuplicateCasesExplorer)
 
     deployments_reports = (
@@ -130,7 +127,6 @@ def REPORTS(project):
             commtrack.SimplifiedInventoryReport,
             commtrack.InventoryReport,
             commtrack.CurrentStockStatusReport,
-            commtrack.StockStatusMapReport,
         )
         reports.insert(0, (gettext_lazy("CommCare Supply"), supply_reports))
 
@@ -331,17 +327,18 @@ ENTERPRISE_INTERFACES = (
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
         UserListReport,
-        DeviceLogSoftAssertReport,
         AdminPhoneNumberReport,
+        FeaturePreviewStatusReport,
+        FeaturePreviewAuditReport,
         UserAuditReport,
         DeployHistoryReport,
+        UCRDataLoadReport,
     )),
 )
 
 DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
-        SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         ApiRequestLogReport,
     )),
@@ -355,7 +352,7 @@ USER_MANAGEMENT_REPORTS = (
 )
 
 GEOSPATIAL_MAP = (
-    (_("Case Mapping"), (
+    (_("Microplanning"), (
         CaseManagementMap,
         CaseGroupingReport,
     )),

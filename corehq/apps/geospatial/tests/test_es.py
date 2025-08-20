@@ -25,6 +25,7 @@ def fake_get_max_doc_count(query, case_property, precision):
     return 2 * x + 9_983
 
 
+@patch('corehq.apps.geospatial.es.MAX_GEOHASH_DOC_COUNT', 10000)
 def test_find_precision():
     with patch(
         'corehq.apps.geospatial.es.get_max_doc_count',
@@ -36,14 +37,19 @@ def test_find_precision():
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestGetMaxDocCount(TestCase):
-    # See https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html#_simple_low_precision_request
-    # and https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html#_high_precision_requests
-    # for more context about this test
+    """
+    Verify ``get_max_doc_count()`` using an example pulled from
+    Elasticsearch docs.
+
+    For more context, see
+    https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html#_simple_low_precision_request
+    and https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html#_high_precision_requests
+    """  # noqa: E501
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        with flag_enabled('USH_CASE_CLAIM_UPDATES'):
+        with flag_enabled('MICROPLANNING'):
             case_search_es_setup(DOMAIN, cls._get_case_blocks())
 
     @staticmethod

@@ -1,0 +1,39 @@
+{% load i18n %}
+
+<script type="text/template" id="query-view-list-template">
+  <div id="query-list-contents">
+  <form>
+    <% if (sidebarEnabled) { %>
+      <div class="query-button-container border bg-white p-2 sticky-top shadow-sm">
+        <div class="d-flex flex-row-reverse d-block d-lg-none">
+          <button type="button" class="btn-close" aria-label="{% trans "Close" %}"
+            data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+          </button>
+        </div>
+        <button class="btn btn-outline-primary" type="button" id="query-clear-button">{% trans "Clear" %}</button>
+        <button class="btn btn-primary" type="submit" id="query-submit-button">{% trans "Search" %}</button>
+      </div>
+    <% } %>
+    <% if (title.length > 0 && !sidebarEnabled) { %>
+      <h2 tabindex="0"><%- title %></h2>
+    <% } %>
+    <% if (description.length > 0 && !sidebarEnabled) { %>
+      <div class="query-description" tabindex="0">
+        <%= description %>
+      </div>
+    <% } %>
+    <table class="table <%= grouped ? '' : 'table-striped table-bordered' %>" role="presentation">
+      <tbody id="query-properties">
+      </tbody>
+    </table>
+    <% if (!sidebarEnabled) {%>
+      <button class="btn btn-outline-primary" type="button" id="query-clear-button">
+        <div>{% trans "Clear" %}</div>
+      </button>
+      <button class="btn btn-primary" type="submit" id="query-submit-button">
+        <div>{% trans "Search" %}</div>
+      </button>
+    <% } %>
+  </form>
+  </div>
+</script>

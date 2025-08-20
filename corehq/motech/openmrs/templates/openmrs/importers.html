@@ -1,10 +1,10 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% block title %}OpenMRS Importers{% endblock %}
 
-{% requirejs_main 'openmrs/js/openmrs_importers' %}
+{% js_entry 'openmrs/js/openmrs_importers' %}
 
 {% block page_content %}
 
@@ -14,7 +14,6 @@
 {% include 'openmrs/partials/openmrs_importer_template.html' %}
 
 <form id="openmrs-importers"
-      class="form-horizontal"
       method="post"
       data-bind="submit: submit">
 
@@ -25,25 +24,29 @@
                       afterRender: initOpenmrsImporterTemplate
                   }"></div>
 
-  <p>
-    <button type="button"
-            class="btn btn-primary"
-            data-bind="click: addOpenmrsImporter">
-      <i class="fa fa-plus"></i>
-      {% trans "Add OpenMRS Importer" %}
-    </button>
-  </p>
+  <div class="mb-3 row">
+    <div class="field-control">
+      <button type="button"
+              class="btn btn-outline-primary"
+              data-bind="click: addOpenmrsImporter">
+        <i class="fa fa-plus"></i>
+        {% trans "Add OpenMRS Importer" %}
+      </button>
+    </div>
+  </div>
 
   <div class="form-actions">
-    <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
-      <button class="btn btn-primary" type="submit">
-        {% trans "Update OpenMRS Importers" %}
-      </button>
-      <button class="btn btn-default"
-              type="button"
-              data-bind="click: importNow">
-        {% trans "Import Now" %}
-      </button>
+    <div class="row">
+      <div class="field-control">
+        <button class="btn btn-primary" type="submit">
+          {% trans "Update OpenMRS Importers" %}
+        </button>
+        <button class="btn btn-outline-primary"
+                type="button"
+                data-bind="click: importNow">
+          {% trans "Import Now" %}
+        </button>
+      </div>
     </div>
   </div>
 </form>

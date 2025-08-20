@@ -24,10 +24,15 @@ from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
 from datetime import datetime, date
 from django.test import TestCase
+from django.utils.functional import classproperty
 
 
 @only_run_with_partitioned_database
 class BaseSchedulingPartitionedDBAccessorsTest(DefaultShardingTestConfigMixIn, TestCase):
+
+    @classproperty
+    def __test__(cls):
+        return cls is not BaseSchedulingPartitionedDBAccessorsTest
 
     @classmethod
     def setUpClass(cls):

@@ -13,9 +13,6 @@ DATABASES = {
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
         'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
     },
 }
 
@@ -39,7 +36,6 @@ redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
     # match production settings
-    'PARSER_CLASS': 'redis.connection.HiredisParser',
     'REDIS_CLIENT_KWARGS': {
         'health_check_interval': 15,
     },
@@ -56,9 +52,9 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch2'
-ELASTICSEARCH_PORT = 9200  # ES 2 port
-ELASTICSEARCH_MAJOR_VERSION = 2
+ELASTICSEARCH_HOST = 'elasticsearch6'
+ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 6
 
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
@@ -70,7 +66,6 @@ S3_BLOB_DB_SETTINGS = {
     "config": {
         "connect_timeout": 3,
         "read_timeout": 5,
-        "signature_version": "s3"
     },
 }
 
@@ -87,7 +82,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 365
 
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))
 
-######## Email setup ########
+# ####### Email setup ########
 
 EMAIL_LOGIN = "notifications@example.com"
 EMAIL_PASSWORD = "******"
@@ -95,7 +90,7 @@ EMAIL_SMTP_HOST = "smtp.example.com"
 EMAIL_SMTP_PORT = 587
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-####### Bitly ########
+# ###### Bitly ########
 
 BITLY_OAUTH_TOKEN = None
 
@@ -164,9 +159,6 @@ COMPRESS_OFFLINE = False
 FORMPLAYER_URL = 'http://formplayer:8080'
 FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
 FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
-
-CCHQ_API_THROTTLE_REQUESTS = 200
-CCHQ_API_THROTTLE_TIMEFRAME = 10
 
 RESTORE_PAYLOAD_DIR_NAME = 'restore'
 SHARED_TEMP_DIR_NAME = 'temp'

@@ -1,10 +1,9 @@
 import os
 from collections import OrderedDict
+from unittest import mock
 from xml.etree import cElementTree as ElementTree
 
 from django.test import SimpleTestCase, TestCase
-
-from unittest import mock
 
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
@@ -13,9 +12,6 @@ from casexml.apps.phone.tests.utils import (
 
 from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
-from corehq.apps.app_manager.fixtures.mobile_ucr import (
-    ReportFixturesProviderV1,
-)
 from corehq.apps.app_manager.models import (
     Application,
     GraphConfiguration,
@@ -54,11 +50,6 @@ from corehq.apps.userreports.tests.utils import (
     mock_datasource_config,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.toggles import (
-    ADD_ROW_INDEX_TO_MOBILE_UCRS,
-    MOBILE_UCR,
-    NAMESPACE_DOMAIN,
-)
 from corehq.util.test_utils import flag_enabled
 
 
@@ -260,18 +251,35 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         with mock_report_configurations(cls.report_configs_by_id):
             cls.suite = cls.app.create_suite()
         cls.data = [
-            {'color_94ec39e6': 'red', 'count': 2, 'computed_owner_name_40cc88a0': 'cory', 'fav_fruit_abc123': 'c'},
-            {'color_94ec39e6': 'black', 'count': 1, 'computed_owner_name_40cc88a0': 'ctsims', 'fav_fruit_abc123': 'b'},
-            {'color_94ec39e6': 'red', 'count': 3, 'computed_owner_name_40cc88a0': 'daniel', 'fav_fruit_abc123': 'b'},
+            {
+                'color_94ec39e6': 'red',
+                'count': 2,
+                'computed_owner_name_40cc88a0': 'cory',
+                'fav_fruit_abc123': 'c',
+            },
+            {
+                'color_94ec39e6': 'black',
+                'count': 1,
+                'computed_owner_name_40cc88a0': 'ctsims',
+                'fav_fruit_abc123': 'b',
+            },
+            {
+                'color_94ec39e6': 'red',
+                'count': 3,
+                'computed_owner_name_40cc88a0': 'daniel',
+                'fav_fruit_abc123': 'b'
+            },
         ]
         with mock_report_data(cls.data):
             with mock_report_configuration_get(cls.report_configs_by_id):
                 with mock.patch('corehq.apps.app_manager.fixtures.mobile_ucr.get_apps_in_domain',
                                 lambda domain, include_remote: [cls.app]):
                     with mock_datasource_config():
-                        fixtures = call_fixture_generator(report_fixture_generator, cls.user)
-                        fixture = [f for f in fixtures if f.attrib.get('id') == ReportFixturesProviderV1.id][0]
-        cls.fixture = ElementTree.tostring(fixture, encoding='utf-8')
+                        cls.fixtures = list(call_fixture_generator(report_fixture_generator, cls.user))
+
+    def _get_fixture_xml_by_id(self, id):
+        return next(ElementTree.tostring(fixture, encoding='utf-8')
+                    for fixture in self.fixtures if fixture.attrib.get('id') == id)
 
     def test_filter_entry(self):
         self.assertXmlPartialEqual("""
@@ -282,18 +290,25 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.name"/>
               </text>
             </command>
+            <instance id="commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664"
+                      src="jr://fixture/commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664"/>
+            <instance id="commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664"
+                      src="jr://fixture/commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664"/>
             <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
             <instance id="commcaresession" src="jr://instance/session"/>
-            <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
               <datum autoselect="true" detail-persistent="report_context_tile" id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update"/>
-              <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='fav_fruit_abc123_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.fav_fruit_abc123_1" />
-              <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
-              <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" autoselect="true"/>
+              <datum detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.fav_fruit_abc123_1"
+                     id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1"
+                     nodeset="instance('commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664')/filters/filter[@field='fav_fruit_abc123_1']/option" value="./@value"/>
+              <datum detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"
+                     id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1"
+                     nodeset="instance('commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664')/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value"/>
+              <datum autoselect="true" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664')/rows" value="./@id"/>
             </session>
           </entry>
         </partial>
-        """, self.suite, "entry[1]")
+        """, self.suite, "entry[1]")  # noqa E501
 
         self.assertXmlPartialEqual("""
         <partial>
@@ -303,15 +318,18 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.name"/>
               </text>
             </command>
+            <instance id="commcare-reports:45152061d8dc4d2a8d987a0568abe1ae"
+                      src="jr://fixture/commcare-reports:45152061d8dc4d2a8d987a0568abe1ae"/>
             <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
-            <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
               <datum autoselect="true" detail-persistent="report_context_tile" id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update"/>
-              <datum autoselect="true" detail-confirm="reports.45152061d8dc4d2a8d987a0568abe1ae.summary" detail-select="reports.45152061d8dc4d2a8d987a0568abe1ae.select" id="report_id_45152061d8dc4d2a8d987a0568abe1ae" nodeset="instance('reports')/reports/report[@id='45152061d8dc4d2a8d987a0568abe1ae']" value="./@id"/>
+              <datum autoselect="true" detail-confirm="reports.45152061d8dc4d2a8d987a0568abe1ae.summary"
+                     detail-select="reports.45152061d8dc4d2a8d987a0568abe1ae.select" id="report_id_45152061d8dc4d2a8d987a0568abe1ae"
+                     nodeset="instance('commcare-reports:45152061d8dc4d2a8d987a0568abe1ae')/rows" value="./@id"/>
             </session>
           </entry>
         </partial>
-        """, self.suite, "entry[2]")
+        """, self.suite, "entry[2]")  # noqa E501
 
     def test_filter_detail(self):
         self.assertXmlPartialEqual("""
@@ -332,12 +350,13 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             </field>
           </detail>
         </partial>
-        """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1']")
+        """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1']")  # noqa E501
 
     def test_data_detail(self):
         self.assertXmlPartialEqual("""
         <partial>
-          <detail nodeset="rows/row[column[@id='fav_fruit_abc123']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]" id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data">
+          <detail id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data"
+                  nodeset="row[fav_fruit_abc123=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1][computed_owner_name_40cc88a0=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
             <title>
               <text>
                 <locale id="cchq.report_data_table"/>
@@ -352,7 +371,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </template>
               <sort direction="ascending" order="1" type="int">
                 <text>
-                  <xpath function="column[@id='row_index']"/>
+                  <xpath function="row_index"/>
                 </text>
               </sort>
             </field>
@@ -364,7 +383,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="column[@id='color_94ec39e6']"/>
+                  <xpath function="color_94ec39e6"/>
                 </text>
               </template>
             </field>
@@ -376,80 +395,82 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="column[@id='count']"/>
+                  <xpath function="count"/>
                 </text>
               </template>
             </field>
           </detail>
         </partial>
-        """, self.suite, "detail/detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data']")
+        """, self.suite, "detail/detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data']")  # noqa E501
 
     def test_graph(self):
         self.assertXmlPartialEqual("""
         <partial>
           <template form="graph">
             <graph type="bar">
-              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[@is_total_row='False'][column[@id='fav_fruit_abc123']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
+               <series nodeset="instance('commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664')/rows/row[@is_total_row='False'][fav_fruit_abc123=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1][computed_owner_name_40cc88a0=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
                 <configuration/>
-                <x function="column[@id='color_94ec39e6']"/>
-                <y function="column[@id='count']"/>
+                <x function="color_94ec39e6" />
+                <y function="count"/>
               </series>
               <configuration/>
             </graph>
           </template>
         </partial>
-        """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary']/detail/field/template[@form='graph']")
+        """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary']/detail/field/template[@form='graph']")  # noqa E501
 
     def test_fixture_rows(self):
         self.assertXmlPartialEqual("""
         <partial>
-          <rows>
             <row index="0" is_total_row="False">
-              <column id="row_index">0</column>
-              <column id="color_94ec39e6">red</column>
-              <column id="computed_owner_name_40cc88a0">cory</column>
-              <column id="count">2</column>
-              <column id="fav_fruit_abc123">c</column>
+              <row_index>0</row_index>
+              <color_94ec39e6>red</color_94ec39e6>
+              <computed_owner_name_40cc88a0>cory</computed_owner_name_40cc88a0>
+              <count>2</count>
+              <fav_fruit_abc123>c</fav_fruit_abc123>
             </row>
             <row index="1" is_total_row="False">
-              <column id="row_index">1</column>
-              <column id="color_94ec39e6">black</column>
-              <column id="computed_owner_name_40cc88a0">ctsims</column>
-              <column id="count">1</column>
-              <column id="fav_fruit_abc123">b</column>
+              <row_index>1</row_index>
+              <color_94ec39e6>black</color_94ec39e6>
+              <computed_owner_name_40cc88a0>ctsims</computed_owner_name_40cc88a0>
+              <count>1</count>
+              <fav_fruit_abc123>b</fav_fruit_abc123>
             </row>
             <row index="2" is_total_row="False">
-              <column id="row_index">2</column>
-              <column id="color_94ec39e6">red</column>
-              <column id="computed_owner_name_40cc88a0">daniel</column>
-              <column id="count">3</column>
-              <column id="fav_fruit_abc123">b</column>
+              <row_index>2</row_index>
+              <color_94ec39e6>red</color_94ec39e6>
+              <computed_owner_name_40cc88a0>daniel</computed_owner_name_40cc88a0>
+              <count>3</count>
+              <fav_fruit_abc123>b</fav_fruit_abc123>
             </row>
-          </rows>
         </partial>
-        """, self.fixture, "reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows")
+        """, self._get_fixture_xml_by_id('commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664'), "rows/row")
 
     def test_fixture_filters(self):
-        self.assertXmlPartialEqual("""
-        <partial>
-          <filters>
-            <filter field="fav_fruit_abc123_1">
-              <option value="b">banana</option>
-              <option value="c">clementine</option>
-            </filter>
-            <filter field="computed_owner_name_40cc88a0_1">
-              <option value="ctsims">Clayton Sims</option>
-              <option value="cory">Cory Zue</option>
-              <option value="daniel">Daniel Roberts</option>
-            </filter>
-          </filters>
-        </partial>
-        """, self.fixture, "reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters")
+        self.assertXmlPartialEqual(
+            """
+                <partial>
+                  <filters>
+                    <filter field="fav_fruit_abc123_1">
+                      <option value="b">banana</option>
+                      <option value="c">clementine</option>
+                    </filter>
+                    <filter field="computed_owner_name_40cc88a0_1">
+                      <option value="ctsims">Clayton Sims</option>
+                      <option value="cory">Cory Zue</option>
+                      <option value="daniel">Daniel Roberts</option>
+                    </filter>
+                  </filters>
+                </partial>
+            """,
+            self._get_fixture_xml_by_id('commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664'),
+            "filters"
+        )
 
     def test_hidden_columns_data_detail(self):
         self.assertXmlPartialEqual("""
         <partial>
-          <detail id="reports.45152061d8dc4d2a8d987a0568abe1ae.data" nodeset="rows/row">
+          <detail id="reports.45152061d8dc4d2a8d987a0568abe1ae.data" nodeset="row">
             <title>
               <text>
                 <locale id="cchq.report_data_table"/>
@@ -464,7 +485,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </template>
               <sort direction="ascending" order="1" type="int">
                 <text>
-                  <xpath function="column[@id='row_index']"/>
+                  <xpath function="row_index"/>
                 </text>
               </sort>
             </field>
@@ -476,7 +497,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="column[@id='color_94ec39e6']"/>
+                  <xpath function="color_94ec39e6"/>
                 </text>
               </template>
             </field>
@@ -488,7 +509,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="column[@id='count']"/>
+                  <xpath function="count"/>
                 </text>
               </template>
             </field>
@@ -504,7 +525,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               <text/>
             </title>
             <field>
-              <style horz-align="left" font-size="small">
+              <style horz-align="left" font-size="small" show-border="false" show-shading="false">
                 <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
               </style>
               <header>
@@ -522,7 +543,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             </field>
           </detail>
         </partial>
-        """, self.suite, "detail[@id='report_context_tile']")
+        """, self.suite, "detail[@id='report_context_tile']")  # noqa E501
 
         # Entry for form from case module
         self.assertXmlPartialEqual("""
@@ -542,7 +563,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
           </entry>
         </partial>
-        """, self.suite, "entry[3]")
+        """, self.suite, "entry[3]")  # noqa E501
 
         # Entry for form from survey module
         self.assertXmlPartialEqual("""
@@ -560,7 +581,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
           </entry>
         </partial>
-        """, self.suite, "entry[4]")
+        """, self.suite, "entry[4]")  # noqa E501
 
 
 class TestReportAutoFilters(SimpleTestCase):
@@ -578,7 +599,7 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
     def test_autogenerate_instance_declaration(self):
         app = self._make_app("Untitled Application")
         report_app_config = self._make_report_app_config("my_report")
-        module = self._add_report_module(app, report_app_config)
+        self._add_report_module(app, report_app_config)
         form = self._add_form_with_report_reference(app, report_app_config)
 
         expected_declaration = ("""<instance id="commcare-reports:{}" src="jr://fixture/commcare-reports:{}"/>"""
@@ -589,7 +610,7 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
         app = self._make_app("Untitled Application")
 
         report_app_config1 = self._make_report_app_config("duplicate")
-        module1 = self._add_report_module(app, report_app_config1)
+        self._add_report_module(app, report_app_config1)
 
         report_app_config2 = self._make_report_app_config("duplicate")
         module2 = self._add_report_module(app, report_app_config2)
@@ -600,7 +621,7 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
     def test_allow_duplicates_on_different_apps(self):
         app1 = self._make_app("Untitled Application")
         report_app_config1 = self._make_report_app_config("duplicate")
-        module1 = self._add_report_module(app1, report_app_config1)
+        self._add_report_module(app1, report_app_config1)
 
         app2 = self._make_app("Untitled Application")
         report_app_config2 = self._make_report_app_config("duplicate")
@@ -637,7 +658,7 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
     def _add_form_with_report_reference(self, app, report_app_config):
         other_module = app.add_module(Module.new_module('m0', None))
         form = other_module.new_form('f0', None)
-        report_reference = "instance('commcare-reports:{}')/rows/row[0]/@index".format(report_app_config.report_slug)
+        report_reference = f"instance('commcare-reports:{report_app_config.report_slug}')/rows/row[0]/@index"
         form.source = self.get_xml('very_simple_form').decode('utf-8')
         form.source = form.source.replace(
             """<bind nodeset="/data/question1" type="xsd:string"/>""",
@@ -647,5 +668,6 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
         return form
 
     def _render_form(self, app, form):
-        with mock.patch('corehq.apps.app_manager.suite_xml.features.mobile_ucr.get_apps_in_domain', lambda d: [app]):
+        _patch = 'corehq.apps.app_manager.suite_xml.features.mobile_ucr.get_apps_in_domain'
+        with mock.patch(_patch, lambda d: [app]):
             return form.render_xform().decode('utf-8')

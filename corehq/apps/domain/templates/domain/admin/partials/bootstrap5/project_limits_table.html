@@ -1,0 +1,38 @@
+{% comment %}
+This page is for internal admin use only, and thus is not marked up for translation.
+If this page is ever converted to a user-facing UI
+or otherwise intended for a non-English-only audience, it should be translated.
+{% endcomment %}
+
+<div class="row">
+  <div class="col-md-10">
+    {% for header, rate_infos in project_limits %}
+    <h1>{{ header }}</h1>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Window Size</th>
+          <th>% Usage</th>
+          <th>Usage</th>
+          <th>Limit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rate_info in rate_infos %}
+        <tr>
+          <td>{{ rate_info.key }}</td>
+          <td>
+            {{ rate_info.percent_usage }}%
+            <div class="progress" role="progressbar" aria-label="Percent Usage" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>
+            </div>
+          </td>
+          <td>{{ rate_info.current_usage }}</td>
+          <td>{{ rate_info.limit }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}
+  </div>
+</div>

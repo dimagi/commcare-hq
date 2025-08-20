@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -12,7 +12,7 @@
+ import noopMetrics from "analytix/js/noopMetrics";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import "reports/v2/js/datagrid/binding_handlers";  // for custom ko bindingHandlers
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // for modal bindings
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // for modal bindings
+ 
+ var datagridController = function (options) {
+     assertProperties.assert(options, [

@@ -20,7 +20,7 @@ from corehq.form_processor.utils.xform import (
 from corehq.util.test_utils import create_and_save_a_case
 
 from ..forms import LocationFilterForm
-from ..permissions import can_edit_form_location, user_can_access_case
+from ..permissions import can_edit_form_location, can_edit_workers_location, user_can_access_case
 from ..views import EditLocationView, LocationsListView
 from .util import LocationHierarchyTestCase
 
@@ -126,7 +126,7 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
 
 
 @mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
-@mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
+@mock.patch('corehq.apps.users.views.mobile.users.UserES', UserESFake)
 class TestAccessRestrictions(LocationHierarchyTestCase):
     domain = 'test-access-restrictions-domain'
     location_type_names = ['state', 'county', 'city']
@@ -201,11 +201,11 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
 
     def test_can_edit_workers_location(self):
         self.assertTrue(
-            user_views._can_edit_workers_location(
+            can_edit_workers_location(
                 self.suffolk_user, self.boston_worker)
         )
         self.assertFalse(
-            user_views._can_edit_workers_location(
+            can_edit_workers_location(
                 self.suffolk_user, self.cambridge_worker)
         )
 

@@ -40,6 +40,8 @@ def activation_24hr_reminder_email():
             "first_name": user.first_name,
             'url_prefix': get_static_url_prefix(),
         }
+        from corehq.apps.registration.utils import project_logo_emails_context
+        email_context.update(project_logo_emails_context(request.domain))
 
         message_plaintext = render_to_string(
             'registration/email/confirm_account_reminder.txt', email_context)

@@ -1,0 +1,24 @@
+{% load i18n %}
+
+{% if not can_access_all_locations %}
+    <div role="region" id="sr-no-shared-location-region" class="sr-only" aria-live="off" aria-relevant="all"></div>
+    <div class="alert alert-warning" id="no-common-location" hidden>
+        <p>
+            {% blocktrans %}
+            WARNING: "{{ request_username  }}" will no longer be able to access or edit "{{ couch_username }}"
+            if they don't share a location.
+            {% endblocktrans %}
+        </p>
+    </div>
+    {% endif %}
+{% if not editable_user_can_access_all_locations %}
+    <div role="region" id="sr-no-locations-assigned-region" class="sr-only" aria-live="off" aria-relevant="all"></div>
+    <div class="alert alert-warning" id="no-assigned-locations" hidden>
+        <p>
+            {% blocktrans %}
+                WARNING: {{ user_type }} "{{ couch_username }}" must have at least one location assigned.
+                They won't be able to log in otherwise.
+            {% endblocktrans %}
+        </p>
+    </div>
+{% endif %}

@@ -1,9 +1,8 @@
-import json
 import pytz
 import re
 from collections import OrderedDict, defaultdict
 
-from django.conf.urls import re_path as url, include
+from django.urls import re_path as url, include
 from django.contrib import messages
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -20,6 +19,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
+    check_access_and_redirect,
     safe_cached_download,
     safe_download,
 )
@@ -39,7 +39,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.toggles import toggles_enabled_for_request
 from corehq.util.metrics import metrics_counter
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import set_file_download
 
@@ -56,6 +55,7 @@ def _get_build_profile_id(request):
 
 
 @safe_download
+@check_access_and_redirect
 def download_odk_profile(request, domain, app_id):
     """
     See ApplicationBase.create_profile
@@ -74,6 +74,7 @@ def download_odk_profile(request, domain, app_id):
 
 
 @safe_download
+@check_access_and_redirect
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
@@ -87,6 +88,7 @@ def download_odk_media_profile(request, domain, app_id):
     )
 
 
+@check_access_and_redirect
 @safe_cached_download
 def download_suite(request, domain, app_id):
     """
@@ -101,6 +103,7 @@ def download_suite(request, domain, app_id):
     )
 
 
+@check_access_and_redirect
 @safe_cached_download
 def download_media_suite(request, domain, app_id):
     """
@@ -115,6 +118,7 @@ def download_media_suite(request, domain, app_id):
     )
 
 
+@check_access_and_redirect
 @safe_cached_download
 def download_app_strings(request, domain, app_id, lang):
     """
@@ -128,6 +132,7 @@ def download_app_strings(request, domain, app_id, lang):
     )
 
 
+@check_access_and_redirect
 @safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
@@ -166,6 +171,7 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
+@check_access_and_redirect
 @safe_cached_download
 def download_file(request, domain, app_id, path):
     download_target_version = request.GET.get('download_target_version') == 'true'
@@ -260,10 +266,6 @@ def download_file(request, domain, app_id, path):
                 except Resolver404:
                     # ok this was just a url that doesn't exist
                     pass
-                else:
-                    # this resource should exist but doesn't
-                    _assert = soft_assert('@'.join(['jschweers', 'dimagi.com']))
-                    _assert(False, 'Expected build resource %s not found' % path)
                 raise Http404()
         try:
             callback, callback_args, callback_kwargs = resolve_path(path)
@@ -274,6 +276,7 @@ def download_file(request, domain, app_id, path):
 
 
 @safe_download
+@check_access_and_redirect
 def download_profile(request, domain, app_id):
     """
     See ApplicationBase.create_profile
@@ -291,6 +294,7 @@ def download_profile(request, domain, app_id):
 
 
 @safe_download
+@check_access_and_redirect
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
@@ -303,6 +307,7 @@ def download_media_profile(request, domain, app_id):
     )
 
 
+@check_access_and_redirect
 @safe_cached_download
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:
@@ -409,20 +414,24 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
 
 def download_index_files(app, build_profile_id=None):
     if app.copy_of:
+        def needed_for_ccz(path):
+            if profiles:
+                return path.startswith(prefix) and path.split('/')[1] not in profiles
+            else:
+                return path.startswith(prefix)
+
         prefix = 'files/'
+        profiles = None
         if build_profile_id is not None:
             prefix += build_profile_id + '/'
-            needed_for_CCZ = lambda path: path.startswith(prefix)
         else:
             profiles = set(app.build_profiles)
-            needed_for_CCZ = lambda path: (path.startswith(prefix) and
-                                           path.split('/')[1] not in profiles)
         if not (prefix + 'profile.ccpr') in app.blobs:
             # profile hasnt been built yet
             app.create_build_files(build_profile_id=build_profile_id)
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
-                 for path in app.blobs if needed_for_CCZ(path)]
+                 for path in app.blobs if needed_for_ccz(path)]
     else:
         files = list(app.create_all_files().items())
     files = [
@@ -434,14 +443,10 @@ def download_index_files(app, build_profile_id=None):
 
 def source_files(app):
     """
-    Return the app's source files, including the app json.
+    Return the app's source files
     Return format is a list of tuples where the first item in the tuple is a
     file name and the second is the file contents.
     """
     if not app.copy_of:
         app.set_media_versions()
-    files = download_index_files(app)
-    app_json = json.dumps(
-        app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-    )
-    return sorted(files)
+    return download_index_files(app)

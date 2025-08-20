@@ -144,7 +144,7 @@ class DataSetMapForm(forms.ModelForm):
                         DataSetMapListView.urlname,
                         kwargs={'domain': self.domain},
                     ),
-                    css_class="btn btn-default",
+                    css_class="btn btn-outline-primary",
                 ),
             ),
         )
@@ -369,18 +369,19 @@ class DataValueMapBaseForm(forms.ModelForm):
 class DataValueMapCreateForm(DataValueMapBaseForm):
 
     def get_form_helper(self):
-        helper = FormHelper()
-        helper.form_style = 'inline'
-        helper.form_show_labels = False
+        helper = hqcrispy.HQFormHelper()
         helper.layout = crispy.Layout(
-            twbscrispy.InlineField('column'),
-            twbscrispy.InlineField('data_element_id'),
-            twbscrispy.InlineField('category_option_combo_id'),
-            twbscrispy.InlineField('comment'),
-            twbscrispy.StrictButton(
-                mark_safe(f'<i class="fa fa-plus"></i> {_("Add")}'),  # nosec: no user input
-                css_class='btn-primary',
-                type='submit',
+            twbscrispy.InlineField('column', wrapper_class="col"),
+            twbscrispy.InlineField('data_element_id', wrapper_class="col"),
+            twbscrispy.InlineField('category_option_combo_id', wrapper_class="col"),
+            twbscrispy.InlineField('comment', wrapper_class="col"),
+            crispy.Div(
+                twbscrispy.StrictButton(
+                    mark_safe(f'<i class="fa fa-plus"></i> {_("Add")}'),  # nosec: no user input
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                css_class="col"
             )
         )
         return helper
@@ -400,7 +401,7 @@ class DataValueMapUpdateForm(DataValueMapBaseForm):
         ]
 
     def get_form_helper(self):
-        helper = FormHelper()
+        helper = hqcrispy.HQFormHelper()
         helper.form_style = 'default'
         helper.form_show_labels = True
         helper.layout = crispy.Layout(
@@ -410,21 +411,17 @@ class DataValueMapUpdateForm(DataValueMapBaseForm):
                 crispy.Field('data_element_id'),
                 crispy.Field('category_option_combo_id'),
                 crispy.Field('comment'),
-                css_class='modal-body',
-            ),
-            twbscrispy.FormActions(
                 twbscrispy.StrictButton(
-                    "Update DataValue Map",
-                    css_class='btn btn-primary',
+                    _("Update DataValue Map"),
+                    css_class='btn btn-primary float-end',
                     type='submit',
                 ),
                 crispy.HTML('<button type="button" '
-                            '        class="btn btn-default" '
-                            '        data-dismiss="modal">'
-                            'Cancel'
-                            '</button>'),
-                css_class='modal-footer',
-            )
+                            + '        class="btn btn-outline-primary float-end mx-3" '
+                            + '        data-bs-dismiss="modal">'
+                            + _('Cancel')
+                            + '</button>'),
+            ),
         )
         return helper
 

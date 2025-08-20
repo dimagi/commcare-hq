@@ -1,0 +1,21 @@
+.notifications-container {
+  .alert  {
+    box-shadow: none;
+    margin-bottom: 0;
+    border-radius: 0;
+    padding: 9px;
+
+    .btn-close {
+      margin-top: -10px;
+    }
+  }
+}
+
+.alert-build {
+  #build-errors > li {
+    font-size: 11px;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid fade($cc-dark-warm-accent-low, 20);
+  }
+}

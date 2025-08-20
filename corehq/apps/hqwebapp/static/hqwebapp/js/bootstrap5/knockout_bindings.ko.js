@@ -1,14 +1,16 @@
-hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
+define("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     'jquery',
     'underscore',
     'knockout',
-    "es6!hqwebapp/js/bootstrap5_loader",
+    "bootstrap5",
     'jquery-ui/ui/widgets/sortable',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
+    'langcodes/js/langcodes',   // $.langcodes
 ], function (
     $,
     _,
     ko,
-    bootstrap
+    bootstrap,
 ) {
     // Need this due to https://github.com/knockout/knockout/pull/2324
     // so that ko.bindingHandlers.foreach.update works properly
@@ -18,10 +20,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     ko.bindingHandlers.hqbSubmitReady = {
         update: function (element, valueAccessor) {
             var value = (valueAccessor()) ? valueAccessor()() : null;
-            if (value)
-                $(element).addClass("btn-primary").removeClass("disabled");
-            else
-                $(element).addClass("disabled").removeClass("btn-primary");
+            if (value) {$(element).addClass("btn-primary").removeClass("disabled");} else {$(element).addClass("disabled").removeClass("btn-primary");}
         },
     };
 
@@ -124,7 +123,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
                             "NOT UPDATING THE SORT OF THE ACTUAL LIST! " +
                             "Did you forget to add `attr: {'data-order': _sortableOrder}` " +
                             "to the data-bind attribute of your main sorting " +
-                            "element?"
+                            "element?",
                         );
                         return;
                     }
@@ -192,7 +191,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
             var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
             var forceUpdate = function () {
                 ko.bindingHandlers.multirow_sortable.update(
-                    element, valueAccessor, allBindingsAccessor, viewModel, bindingContext
+                    element, valueAccessor, allBindingsAccessor, viewModel, bindingContext,
                 );
             };
             list.subscribe(forceUpdate);
@@ -246,8 +245,8 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
                 } else {
                     // Clicking a row selects it for sorting and unselects all other rows.
                     $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
-                    for (var i = 0; i < list().length; i++) {
-                        list()[i].selectedForSort(false);
+                    for (var j = 0; j < list().length; j++) {
+                        list()[j].selectedForSort(false);
                     }
                     getExportColumnByRow($(this)).selectedForSort(true);
                 }
@@ -345,7 +344,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     };
 
     ko.bindingHandlers.modal = {
-        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
             viewModel.binding_modal = new bootstrap.Modal(element);
         },
         update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -375,23 +374,28 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
          */
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             let value = valueAccessor(),
-                templateID = value,
+                templateId = value,
                 ifValue = true;
             if (typeof value === 'object') {
-                templateID = value.templateId;
+                templateId = value.templateId;
                 ifValue = _.has(value, 'if') ? value.if : true;
             }
-            let modalElement = $('<div></div>').addClass('modal fade').attr("tabindex", "-1").appendTo('body'),
+            let modalElement = $('<div></div>')
+                    .addClass('modal fade')
+                    .attr("id", templateId)
+                    .attr("aria-labelledby", templateId + "-title")
+                    .attr("tabindex", "-1")
+                    .appendTo('body'),
                 newValueAccessor = function () {
                     let clickAction = function () {
                         if (!ifValue) {
                             return;
                         }
                         ko.bindingHandlers.template.init(modalElement.get(0), function () {
-                            return templateID;
+                            return templateId;
                         }, allBindingsAccessor, viewModel, bindingContext);
                         ko.bindingHandlers.template.update(modalElement.get(0), function () {
-                            return templateID;
+                            return templateId;
                         }, allBindingsAccessor, viewModel, bindingContext);
 
                         let modal = new bootstrap.Modal(modalElement.get(0));
@@ -417,7 +421,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
                 };
             ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
-        update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        update: function (element, valueAccessor) {
             $(element).data('ajaxSource', ko.utils.unwrapObservable(valueAccessor()));
         },
     };
@@ -534,7 +538,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
                 controlsDescendantBindings: true,
             };
         },
-        update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        update: function (element, valueAccessor) {
             $(element).empty();
             $(element).append(ko.unwrap(valueAccessor()));
         },
@@ -608,7 +612,6 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     ko.bindingHandlers.paste = {
         init: function (element, valueAccessor) {
             ko.bindingHandlers.__copyPasteSharedInit();
-            var callback = valueAccessor();
             $(element).data('pasteCallback', valueAccessor());
         },
     };
@@ -647,7 +650,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
                 options.sanitize = false;
             }
             if (options.title || options.content) { // don't show empty popovers
-                $(element).popover(options);
+                new bootstrap.Popover(element, options);
             }
         },
     };
@@ -709,7 +712,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
 
     ko.bindingHandlers.onEnterKey = {
         // calls a function when the enter key is pressed on an input
-        init: function (element, valueAccessor, allBindings, viewModel) {
+        init: function (element, valueAccessor) {
             $(element).keypress(function (event) {
                 if (event.key === "Enter" || event.keyCode === 13) {
                     valueAccessor()();

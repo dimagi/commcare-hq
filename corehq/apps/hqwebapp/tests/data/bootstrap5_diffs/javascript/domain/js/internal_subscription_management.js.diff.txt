@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,6 @@
+-import "commcarehq";
+ import $ from "jquery";
+ import ko from "knockout";
+-import "hqwebapp/js/bootstrap3/widgets";
++import "hqwebapp/js/bootstrap5/widgets";
+ 
+ $(function () {
+     var viewModel = {

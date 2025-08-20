@@ -1,15 +1,17 @@
 import json
 import math
+import uuid
 from contextlib import contextmanager
 from copy import deepcopy
-from unittest.mock import ANY
-
-import uuid
+from unittest.mock import ANY, patch
+from django.conf import settings
 from django.test import SimpleTestCase, override_settings
-from nose.tools import nottest
-from unittest.mock import patch
-from corehq.apps.es.utils import check_task_progress
 
+from nose.tools import nottest
+
+from corehq.apps.es import const
+from corehq.apps.es.utils import check_task_progress, get_es_reindex_setting_value
+from corehq.apps.users.models import CommCareUser
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
     Elasticsearch,
@@ -18,6 +20,20 @@ from corehq.util.es.elasticsearch import (
     TransportError,
 )
 
+from ..client import (
+    BaseAdapter,
+    BulkActionItem,
+    ElasticMultiplexAdapter,
+    Tombstone,
+    _client_default,
+    _client_for_export,
+    _elastic_hosts,
+    create_document_adapter,
+    get_client,
+    manager,
+)
+from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD, SCROLL_KEEPALIVE
+from ..exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 from .utils import (
     TestDoc,
     TestDocumentAdapter,
@@ -27,20 +43,6 @@ from .utils import (
     temporary_index,
     test_adapter,
 )
-from ..client import (
-    BaseAdapter,
-    BulkActionItem,
-    ElasticMultiplexAdapter,
-    Tombstone,
-    create_document_adapter,
-    get_client,
-    manager,
-    _elastic_hosts,
-    _client_default,
-    _client_for_export,
-)
-from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD, SCROLL_KEEPALIVE
-from ..exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 
 
 @override_settings(ELASTICSEARCH_HOSTS=["localhost"],
@@ -267,21 +269,14 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         a transient setting once its set without restarting the cluster, so we
         explicitly set the default value (`all`) instead.
         """
-        self.adapter.cluster_routing(enabled=True)  # default value
+        try:
+            self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
+        except TransportError:
+            # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
+            pass
         if verify:
             settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-            self.assertEqual(settings["transient"]["cluster.routing.allocation.enable"], "all")
-        #
-        # The code below is better. Use it instead when able Elastic v5+
-        #
-        #try:
-        #    self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
-        #except TransportError:
-        #    # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
-        #    pass
-        #if verify:
-        #    settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-        #    self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
+            self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
 
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()
@@ -292,10 +287,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_get_task(self):
         with self._mock_single_task_response() as (task_id, patched):
             task = self.adapter.get_task(task_id)
-            if self.adapter.elastic_major_version == 2:
-                patched.assert_called_once_with(task_id=task_id, detailed=True)
-            else:
-                patched.assert_called_once_with(task_id=task_id)
+            patched.assert_called_once_with(task_id=task_id)
             self.assertIn("running_time_in_nanos", task)
 
     def test_cancel_task_with_invalid_task_id(self):
@@ -379,12 +371,8 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
                     info["tasks"].pop(t_id)
                 else:
                     es5_response['task'] = info['tasks'][t_id]
-        if self.adapter.elastic_major_version == 2:
-            with patch.object(self.adapter._es.tasks, "list", return_value=response) as patched:
-                yield task_id, patched
-        else:
-            with patch.object(self.adapter._es.tasks, "get", return_value=es5_response) as patched:
-                yield task_id, patched
+        with patch.object(self.adapter._es.tasks, "get", return_value=es5_response) as patched:
+            yield task_id, patched
 
     def test_get_task_missing(self):
         node_name = list(self.adapter._es.nodes.info()["nodes"])[0]
@@ -500,14 +488,38 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
             with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
 
-                # purge_ids is not added here as it is required temporarily
-                # And setting it would require turning on inline script updates on test es docker
                 manager.reindex(
                     test_adapter.index_name, SECONDARY_INDEX,
                     wait_for_completion=True,
                     refresh=True,
                     requests_per_second=2,
                 )
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def test_reindex_with_copy_doc_ids(self):
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            # Ensure that primary index does not contain `doc_id` field
+            for doc_id in all_ids:
+                doc = test_adapter.get(doc_id)
+                self.assertIsNone(doc.get('doc_id'))
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                manager.reindex(
+                    test_adapter.index_name, SECONDARY_INDEX,
+                    wait_for_completion=True,
+                    refresh=True,
+                )
+                # After reindex `doc_id` should be present in all the docs
+                for doc_id in all_ids:
+                    result = manager._es.get(index=SECONDARY_INDEX, doc_type=test_adapter.type, id=doc_id)
+                    self.assertEqual(doc_id, result['_source']['doc_id'])
 
                 self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
 
@@ -543,6 +555,81 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
                     check_task_progress(task_id)
 
                 self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def test_reindex_with_query_parameter_set(self):
+        SUBINDEX = 'subindex'
+        subindex_adapter = create_document_adapter(test_adapter.__class__, SUBINDEX, test_adapter.type)
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+            self.assertEqual(len(all_ids), 9)
+
+            with temporary_index(SUBINDEX, subindex_adapter.type, subindex_adapter.mapping):
+
+                manager.reindex(
+                    test_adapter.index_name, SUBINDEX,
+                    wait_for_completion=True,
+                    refresh=True,
+                    requests_per_second=2,
+                    # only index documents that match this query
+                    query={"value": "val_7"},
+                )
+
+                self.assertEqual(list(self._get_all_doc_ids_in_index(SUBINDEX)), ['7'])
+
+    def test_reindex_for_users_index(self):
+        from corehq.apps.es.users import user_adapter
+
+        SECONDARY_INDEX = 'secondary_user_index'
+        domain = 'es_reindex_users_index'
+
+        # Setup Indices
+        with temporary_index(user_adapter.index_name, user_adapter.type, user_adapter.mapping):
+            with temporary_index(SECONDARY_INDEX, user_adapter.type, user_adapter.mapping):
+
+                mobile_user = CommCareUser(
+                    _id='1', username="amazing_user", domain=domain, password='**************',
+                    created_by=None, created_via=None
+                )
+
+                # Save user to the source index
+                with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]), \
+                     patch.object(user_adapter.model_cls, 'get_user_data', return_value={}):
+
+                    id, source = user_adapter.from_python(mobile_user)
+                    # Manually set password field because now it is removed in from_python
+                    source['password'] = '12345678'
+                    manager._es.index(
+                        user_adapter.index_name,
+                        user_adapter.type,
+                        source,
+                        id,
+                        refresh=True
+                    )
+
+                # Get the saved user from ES
+                user_es = user_adapter.get(mobile_user._id)
+
+                # Ensure that password field exists in the user dict
+                assert 'password' in user_es, "password does not exist in source index"
+                self.assertEqual(user_es['password'], '12345678')
+
+                # Reindex the user index to the secondary index
+                with patch.object(const, 'HQ_USERS_INDEX_NAME', user_adapter.index_name):
+                    manager.reindex(
+                        user_adapter.index_name, SECONDARY_INDEX,
+                        wait_for_completion=True,
+                        refresh=True,
+                        requests_per_second=2,
+                    )
+
+                # Get the saved user from the secondary index
+                user = manager._es.search(index=SECONDARY_INDEX, body={})['hits']['hits'][0]['_source']
+                # Ensure that password field does not exist in the user dict
+                print(user)
+                self.assertEqual(user['doc_id'], '1')
+                assert 'password' not in user, "password exists in source index"
 
     def _index_test_docs_for_reindex(self):
         all_ids = set([str(i) for i in range(1, 10)])
@@ -603,7 +690,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             self.adapter.index_close(test_adapter.index_name)
             with self.assertRaises(TransportError) as test:
                 test_adapter.index(TestDoc("2", "test"))
-            self.assertEqual(test.exception.status_code, 403)
+            self.assertEqual(test.exception.status_code, 400)
             self.assertEqual(test.exception.error, "index_closed_exception")
 
     def test_index_put_alias(self):
@@ -731,7 +818,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         }
         self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
-        del mapping["_meta"]
+        mapping["_meta"] = {}
         self.adapter.index_put_mapping(self.index, type_, mapping)
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
 
@@ -2059,8 +2146,6 @@ class TestTombstone(SimpleTestCase):
 
 
 @es_test
-@override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
-@override_settings(ES_FOR_TEST_INDEX_SWAPPED=False)
 class TestCreateDocumentAdapter(SimpleTestCase):
 
     def test_create_document_adapter_returns_doc_adapter(self):
@@ -2081,7 +2166,7 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(type(test_adapter), TestDocumentAdapter)
         self.assertEqual(test_adapter.index_name, 'test_some-primary')
 
-    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_MULTIPLEXED', True)
     def test_returns_multiplexer_adapter_with_multiplexed_setting(self):
         test_adapter = create_document_adapter(
             TestDocumentAdapter,
@@ -2093,8 +2178,8 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(test_adapter.index_name, 'test_some-primary')
         self.assertEqual(test_adapter.secondary.index_name, 'test_some-secondary')
 
-    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
-    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_MULTIPLEXED', True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_SWAPPED', True)
     def test_returns_multiplexer_with_swapped_indexes(self):
         test_adapter = create_document_adapter(
             TestDocumentAdapter,
@@ -2106,9 +2191,9 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(test_adapter.primary.index_name, "test_some-secondary")
         self.assertEqual(test_adapter.secondary.index_name, "test_some-primary")
 
-    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
-    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
-    def test_returns_doc_adapater_with_secondary_index(self):
+    @patch.object(const, 'ES_FOR_TEST_INDEX_MULTIPLEXED', False)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_SWAPPED', True)
+    def test_returns_doc_adapter_with_secondary_index(self):
         test_adapter = create_document_adapter(
             TestDocumentAdapter,
             "some-primary",
@@ -2118,8 +2203,8 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(type(test_adapter), TestDocumentAdapter)
         self.assertEqual(test_adapter.index_name, "test_some-secondary")
 
-    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
-    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_MULTIPLEXED', True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_SWAPPED', True)
     def test_settings_have_no_effect_if_secondary_is_None(self):
         test_adapter = create_document_adapter(
             TestDocumentAdapter,
@@ -2127,6 +2212,64 @@ class TestCreateDocumentAdapter(SimpleTestCase):
             "test_doc",
         )
         self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    @override_settings(ES_MULTIPLEX_TO_VERSION=None)
+    def test_reindex_config_has_no_effect_if_es_multiplex_to_version_is_not_set(self):
+        with override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True):
+            setting_name = 'ES_FOR_TEST_INDEX_MULTIPLEXED'
+            # The variable set in django settings would be ignore and the default would be used
+            setting_val = get_es_reindex_setting_value(setting_name, False)
+
+            self.assertEqual(setting_val, False)
+
+            with patch.object(const, setting_name, setting_val):
+                test_adapter = create_document_adapter(
+                    TestDocumentAdapter,
+                    "some-primary",
+                    "test_doc",
+                    secondary="some-secondary",
+                )
+            self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    def test_reindex_config_works_if_es_multiplex_to_version_is_set(self):
+        # ES_MULTIPEX_TO_VERSION is set in testsettings.py
+        with override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True):
+            setting_name = 'ES_FOR_TEST_INDEX_MULTIPLEXED'
+            # Since ES_MULTIPLEX_to_VERSION is set, the value in settings would be used
+            setting_val = get_es_reindex_setting_value(setting_name, False)
+            self.assertEqual(setting_val, True)
+
+            with patch.object(const, setting_name, setting_val):
+                test_adapter = create_document_adapter(
+                    TestDocumentAdapter,
+                    "some-primary",
+                    "test_doc",
+                    secondary="some-secondary",
+                )
+                self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+
+    def test_reindex_log_has_unique_values(self):
+        dupes = self._get_duplicate_items(const.ES_REINDEX_LOG)
+        assert dupes == [], f"ES_REINDEX_LOG contains following duplicate values: {dupes}"
+
+    def test_es_multiplex_to_version_is_set_correctly_in_tests(self):
+        val = getattr(settings, 'ES_MULTIPLEX_TO_VERSION', None)
+        self.assertEqual(
+            val,
+            const.ES_REINDEX_LOG[-1],
+            "ES_MULTIPLEX_TO_VERSION should be equal to the last value in ES_REINDEX_LOG. Update testsettings.py"
+        )
+
+    def _get_duplicate_items(self, arr):
+        seen = set()
+        dupes = set()
+
+        for elem in arr:
+            if elem in seen:
+                dupes.add(elem)
+            else:
+                seen.add(elem)
+        return list(dupes)
 
 
 class OneshotIterable:

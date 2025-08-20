@@ -47,7 +47,7 @@ class AuthenticationTestBase(TestCase):
         )
 
     def _construct_api_auth_header(self, username, api_key):
-        return f'ApiKey {username}:{api_key.key}'
+        return f'ApiKey {username}:{api_key.plaintext_key}'
 
     def _construct_basic_auth_header(self, username, password):
         # https://stackoverflow.com/q/5495452/8207
@@ -131,6 +131,17 @@ class LoginAuthenticationTest(AuthenticationTestBase):
         self.api_key.refresh_from_db()
         self.assertIsNotNone(self.api_key.last_used)
 
+    def test_login_with_deactivated_user(self):
+        def reactivate_user():
+            self.user.is_active = True
+            self.user.save()
+        self.user.is_active = False
+        self.user.save()
+        self.addCleanup(reactivate_user)
+        self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())
+        self.api_key.refresh_from_db()
+        self.assertIsNone(self.api_key.last_used)
+
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
 
@@ -188,6 +199,16 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
         self.addCleanup(project.delete)
         self.assertAuthenticationFail(LoginAndDomainAuthentication(),
                                       self._get_request_with_api_key(domain=project.name))
+
+    def test_login_with_domain_deactivated_user(self):
+        def reactivate_user():
+            self.user.set_is_active(self.domain, True)
+            self.user.save()
+        self.user.set_is_active(self.domain, False)
+        self.user.save()
+        self.addCleanup(reactivate_user)
+        self.assertAuthenticationFail(LoginAndDomainAuthentication(),
+                                      self._get_request_with_api_key(domain=self.domain))
 
     @softer_assert()  # prevent "None is invalid domain" asserts
     def test_auth_type_basic_no_domain(self):

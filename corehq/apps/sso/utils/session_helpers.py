@@ -30,7 +30,7 @@ def _get_saml_user_data_property(request, prop_slug):
     """
     value = request.session.get('samlUserdata', {}).get(prop_slug)
     if isinstance(value, list):
-        # for Azure AD the data is usually returned as a list
+        # for Entra ID the data is usually returned as a list
         value = value[0] if value else ''
     return value
 

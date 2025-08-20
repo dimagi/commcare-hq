@@ -11,7 +11,7 @@ from eulxml.xpath.ast import (
 
 from corehq.apps.case_search.const import MAX_RELATED_CASES
 from corehq.apps.case_search.exceptions import XPathFunctionException
-from corehq.apps.es import CaseSearchES, filters, queries
+from corehq.apps.es import filters, queries
 
 
 @dataclass
@@ -57,13 +57,8 @@ def subcase(node, context):
     subcase_query = _parse_normalize_subcase_query(node)
     ids = _get_parent_case_ids_matching_subcase_query(subcase_query, context)
     if subcase_query.invert:
-        if not ids:
-            return filters.match_all()
-        return filters.NOT(filters.doc_id(ids))
-    # uncomment once we are on ES > 2.4
-    # if not ids:
-    #     return filters.match_none()
-    return filters.doc_id(ids)
+        return filters.NOT(filters.doc_id(ids)) if ids else filters.match_all()
+    return filters.doc_id(ids) if ids else filters.match_none()
 
 
 def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
@@ -72,35 +67,10 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
 
     Only cases with `[>,=] case_count_gt` subcases will be returned.
     """
-    # TODO: validate that the subcase filter doesn't contain any ancestor filtering
-    from corehq.apps.case_search.filter_dsl import (
-        build_filter_from_ast,
-    )
-
-    if subcase_query.subcase_filter:
-        subcase_filter = build_filter_from_ast(subcase_query.subcase_filter, context)
-    else:
-        subcase_filter = filters.match_all()
-
-    es_query = (
-        CaseSearchES().domain(context.domain)
-        .nested(
-            'indices',
-            queries.filtered(
-                queries.match_all(),
-                filters.AND(
-                    filters.term('indices.identifier', subcase_query.index_identifier),
-                    filters.NOT(filters.term('indices.referenced_id', ''))  # exclude deleted indices
-                )
-            )
-        )
-        .filter(subcase_filter)
-        .source(['indices.referenced_id', 'indices.identifier'])
-    )
 
     counts_by_parent_id = Counter(
         index['referenced_id']
-        for subcase in es_query.run().hits
+        for subcase in _run_subcase_query(subcase_query, context)
         for index in subcase['indices']
         if index['identifier'] == subcase_query.index_identifier
     )
@@ -117,6 +87,34 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
     return [
         case_id for case_id, count in counts_by_parent_id.items() if subcase_query.filter_count(count)
     ]
+
+
+def _run_subcase_query(subcase_query, context):
+    from corehq.apps.case_search.filter_dsl import (
+        build_filter_from_ast,
+    )
+
+    if subcase_query.subcase_filter:
+        subcase_filter = build_filter_from_ast(subcase_query.subcase_filter, context)
+    else:
+        subcase_filter = filters.match_all()
+
+    return (
+        context.helper.get_base_queryset('subcase_query')
+        .nested(
+            'indices',
+            queries.filtered(
+                queries.match_all(),
+                filters.AND(
+                    filters.term('indices.identifier', subcase_query.index_identifier),
+                    filters.NOT(filters.term('indices.referenced_id', ''))  # exclude deleted indices
+                )
+            )
+        )
+        .filter(subcase_filter)
+        .source(['indices.referenced_id', 'indices.identifier'])
+        .run().hits
+    )
 
 
 def _parse_normalize_subcase_query(node) -> SubCaseQuery:

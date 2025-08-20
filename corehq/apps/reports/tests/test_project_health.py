@@ -1,8 +1,8 @@
 import datetime
+import uuid
+from unittest import mock
 
 from django.test import RequestFactory, TestCase
-
-from unittest import mock
 
 from dimagi.utils.dates import add_months
 
@@ -27,10 +27,11 @@ class SetupProjectPerformanceMixin(object):
     USERNAME2 = "testuser2"
     WEB_USER = "webuser"
     USER_TYPE = "CommCareUser"
+    APP_ID = uuid.uuid4().hex
     now = datetime.datetime.utcnow()
-    year, month = add_months(now.year, now.month, 1)
-    month_as_date = datetime.date(year, month, 1)
-    prev_month_as_date = datetime.date(now.year, now.month, 1)
+    month_as_date = datetime.date(now.year, now.month, 1)
+    prev_year, prev_month = add_months(now.year, now.month, -1)
+    prev_month_as_date = datetime.date(prev_year, prev_month, 1)
 
     @classmethod
     def class_setup(cls):
@@ -72,7 +73,7 @@ class SetupProjectPerformanceMixin(object):
             domain_name=cls.DOMAIN_NAME,
             user_type=cls.USER_TYPE,
             num_of_forms=16,
-            app_id=MISSING_APP_ID,
+            app_id=cls.APP_ID,
         )
         malt_user.save()
         malt_user1 = MALTRow.objects.create(
@@ -92,7 +93,7 @@ class SetupProjectPerformanceMixin(object):
             domain_name=cls.DOMAIN_NAME,
             user_type=cls.USER_TYPE,
             num_of_forms=15,
-            app_id=MISSING_APP_ID,
+            app_id=cls.APP_ID,
         )
         malt_user_prev.save()
 
@@ -103,24 +104,33 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
     def setUpClass(cls):
         super(MonthlyPerformanceSummaryTests, cls).setUpClass()
         cls.class_setup()
-        users_in_group = []
-        active_not_deleted_users = [cls.user._id, cls.user1._id, cls.user2._id]
-        cls.prev_month = MonthlyPerformanceSummary(
+        cls.users_in_group = []
+        cls.active_not_deleted_users = [cls.user._id, cls.user1._id, cls.user2._id]
+        cls.prev_month, cls.month = cls.get_summary_for_two_months(
+            cls.users_in_group, cls.active_not_deleted_users
+        )
+
+    @classmethod
+    def get_summary_for_two_months(cls, users_in_group, active_not_deleted_users, app_id=None):
+        prev_month_summary = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
             performance_threshold=15,
             month=cls.prev_month_as_date,
             previous_summary=None,
             selected_users=users_in_group,
             active_not_deleted_users=active_not_deleted_users,
+            app_id=app_id,
         )
-        cls.month = MonthlyPerformanceSummary(
+        month_summary = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
             performance_threshold=15,
             month=cls.month_as_date,
-            previous_summary=cls.prev_month,
+            previous_summary=prev_month_summary,
             selected_users=users_in_group,
             active_not_deleted_users=active_not_deleted_users,
+            app_id=app_id,
         )
+        return prev_month_summary, month_summary
 
     @classmethod
     def tearDownClass(cls):
@@ -145,6 +155,29 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
         _get_all_user_stubs() should contain two users from this month
         """
         self.assertEqual(len(list(self.month._get_all_user_stubs())), 2)
+
+    def test_filter_by_selected_users(self):
+        prev_month_summary, month_summary = self.get_summary_for_two_months(
+            [self.user1._id],
+            self.active_not_deleted_users,
+        )
+
+        self.assertEqual(prev_month_summary.number_of_active_users, 0)
+        self.assertEqual(prev_month_summary.number_of_performing_users, 0)
+        self.assertEqual(month_summary.number_of_active_users, 1)
+        self.assertEqual(month_summary.number_of_performing_users, 1)
+
+    def test_filter_by_app_id(self):
+        prev_month_summary, month_summary = self.get_summary_for_two_months(
+            self.users_in_group,
+            self.active_not_deleted_users,
+            self.APP_ID,
+        )
+
+        self.assertEqual(prev_month_summary.number_of_active_users, 1)
+        self.assertEqual(prev_month_summary.number_of_performing_users, 1)
+        self.assertEqual(month_summary.number_of_active_users, 1)
+        self.assertEqual(month_summary.number_of_performing_users, 1)
 
 
 @mock.patch('corehq.apps.reports.standard.project_health.GroupES', GroupESFake)

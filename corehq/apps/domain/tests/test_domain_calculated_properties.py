@@ -1,11 +1,13 @@
-import datetime
 import json
+import uuid
+from datetime import datetime, timedelta
 
 from django.test import TestCase
 
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.calculations import (
+    active_mobile_users,
     all_domain_stats,
     calced_props,
     get_sms_count,
@@ -18,6 +20,8 @@ from corehq.apps.es.sms import SMSES, sms_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.tests.utils import create_form_for_test
 
 
 @es_test(requires=[case_adapter, form_adapter, sms_adapter, user_adapter])
@@ -36,7 +40,7 @@ class BaseCalculatedPropertiesTest(TestCase):
             '_id': 'some_sms_id',
             'domain': self.domain.name,
             'direction': INCOMING,
-            'date': json_format_datetime(datetime.datetime.utcnow()),
+            'date': json_format_datetime(datetime.utcnow()),
         }
         sms_adapter.index(sms_doc, refresh=True)
 
@@ -64,3 +68,23 @@ class GetSMSCountTest(BaseCalculatedPropertiesTest):
     def test_days_as_str_is_valid(self):
         count = get_sms_count(self.domain.name, days='30')
         self.assertEqual(count, 1)
+
+
+class MobileWorkerCountTest(BaseCalculatedPropertiesTest):
+
+    def test_yearly_mobile_worker_counts(self):
+        yesterday = datetime.utcnow() - timedelta(days=1)
+        last_year = datetime.utcnow() - timedelta(days=364)
+
+        for date in [yesterday, last_year]:
+            for user_number in range(5):
+                user = CommCareUser.create(self.domain.name, str(uuid.uuid4()), "123", None, None)
+                form = create_form_for_test(self.domain.name, received_on=date, user_id=user.user_id).to_json()
+                form['form']['meta']['userID'] = user.user_id
+                form['form']['meta']['username'] = user.username
+
+                user_adapter.index(user, refresh=True)
+                form_adapter.index(form, refresh=True)
+
+        self.assertEqual(active_mobile_users(self.domain.name), 5)
+        self.assertEqual(active_mobile_users(self.domain.name, '365'), 10)

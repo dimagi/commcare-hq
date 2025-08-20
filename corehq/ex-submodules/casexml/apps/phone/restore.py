@@ -4,7 +4,6 @@ import shutil
 import tempfile
 import uuid
 from datetime import datetime, timedelta
-from looseversion import LooseVersion
 from io import BytesIO
 from typing import Optional
 from uuid import uuid4
@@ -17,6 +16,7 @@ from django.utils.text import slugify
 
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
+from looseversion import LooseVersion
 from memoized import memoized
 
 from casexml.apps.case.xml import V1, check_version
@@ -25,15 +25,16 @@ from couchforms.openrosa_response import (
     get_response_element,
     get_simple_response_xml,
 )
+from dimagi.utils.logging import notify_error
 
+from corehq.apps.app_manager.exceptions import CannotRestoreException
 from corehq.apps.domain.models import Domain
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.metrics import metrics_counter, metrics_histogram
+from corehq.util.metrics import metrics_counter, metrics_histogram, limit_domains
 from corehq.util.timer import TimingContext
-from dimagi.utils.logging import notify_error
 
 from .checksum import CaseStateHash
 from .const import (
@@ -42,13 +43,14 @@ from .const import (
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_SYNC_CACHE_TIMEOUT,
 )
-from .data_providers import get_async_providers, get_element_providers
+from .data_providers.case.livequery import do_livequery
 from .exceptions import (
     BadStateException,
     InvalidSyncLogException,
     RestoreException,
     SyncLogUserMismatch,
 )
+from .fixtures import get_fixture_elements
 from .models import (
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
@@ -58,7 +60,11 @@ from .models import (
 from .restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from .tasks import ASYNC_RESTORE_SENT, get_async_restore_payload
 from .utils import get_cached_items_with_count
-from .xml import get_progress_element, get_sync_element
+from .xml import (
+    get_progress_element,
+    get_registration_element,
+    get_sync_element,
+)
 
 logger = logging.getLogger('restore')
 
@@ -237,7 +243,7 @@ class CachedResponse(object):
         """
         name = 'restore-{}.xml'.format(uuid4().hex)
         get_blob_db().put(
-            NoClose(fileobj),
+            fileobj,
             domain=domain,
             parent_id=restore_user_id,
             type_code=CODES.restore,
@@ -361,6 +367,7 @@ class RestoreState:
             is_async: bool = False,
             overwrite_cache: bool = False,
             auth_type: Optional[str] = None,
+            timing_context: Optional[TimingContext] = None,
     ):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
@@ -379,6 +386,7 @@ class RestoreState:
         self.overwrite_cache = overwrite_cache
         self.auth_type = auth_type
         self._last_sync_log = Ellipsis
+        self.timing_context = timing_context or TimingContext()
 
     def validate_state(self):
         check_version(self.params.version)
@@ -515,7 +523,7 @@ class RestoreConfig(object):
     :param restore_user:    The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
-    :param is_async:           Whether to get the restore response using a celery task
+    :param is_async:        Whether to get the restore response using a celery task
     :param skip_fixtures:   Whether to include fixtures in the restore payload
     """
 
@@ -531,19 +539,20 @@ class RestoreConfig(object):
         self.is_async = is_async
         self.skip_fixtures = skip_fixtures
 
+        self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
+
         self.restore_state = RestoreState(
             self.project,
             self.restore_user,
             self.params, is_async,
             self.cache_settings.overwrite_cache,
-            auth_type=auth_type
+            auth_type=auth_type,
+            timing_context=self.timing_context,
         )
 
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
-
-        self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
 
     @property
     @memoized
@@ -595,6 +604,10 @@ class RestoreConfig(object):
             )
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
                                     status=412)  # precondition failed
+        except CannotRestoreException as e:
+            response = get_simple_response_xml(str(e), ResponseNature.OTA_RESTORE_ERROR)
+            response = HttpResponse(response, content_type="text/xml; charset=utf-8", status=400)
+
         if not is_async:
             self._record_timing(response.status_code)
         return response
@@ -714,13 +727,19 @@ class RestoreConfig(object):
         username = self.restore_user.username
         count_items = self.params.include_item_count
         with RestoreContent(username, count_items) as content:
-            for provider in get_element_providers(self.timing_context, skip_fixtures=self.skip_fixtures):
-                with self.timing_context(provider.__class__.__name__):
-                    content.extend(provider.get_elements(self.restore_state))
+            with self.timing_context('SyncElementProvider'):
+                content.append(get_sync_element(self.restore_state.current_sync_log._id))
 
-            for provider in get_async_providers(self.timing_context, async_task):
-                with self.timing_context(provider.__class__.__name__):
-                    provider.extend_response(self.restore_state, content)
+            with self.timing_context('RegistrationElementProvider'):
+                content.append(get_registration_element(self.restore_state.restore_user))
+
+            if not self.skip_fixtures:
+                with self.timing_context('FixtureElementProvider'):
+                    for element in get_fixture_elements(self.restore_state, self.timing_context):
+                        content.append(element)
+
+            with self.timing_context('CasePayloadProvider'):
+                do_livequery(self.timing_context, self.restore_state, content, async_task)
 
             return content.get_fileobj()
 
@@ -787,6 +806,7 @@ class RestoreConfig(object):
             'status_code': status,
             'device_type': 'webapps' if self.params.is_webapps else 'other',
             'domain': self.domain,
+            'domain_limited': limit_domains(self.domain),
         }
         timer_buckets = (1, 5, 20, 60, 120, 300, 600)
         for timer in timing.to_list(exclude_root=True):
@@ -794,19 +814,17 @@ class RestoreConfig(object):
             extra_tags = {}
             if timer.name in RESTORE_SEGMENTS:
                 segment = RESTORE_SEGMENTS[timer.name]
+                segment_timer_buckets = timer_buckets
             elif timer.name.startswith('fixture:'):
                 segment = 'fixture'
+                segment_timer_buckets = (0.25, 0.5, 1, 5, 20, 60, 120, 300, 600)
                 extra_tags = {'fixture': timer.name.split(':')[1]}
 
             if segment:
                 metrics_histogram(
                     'commcare.restores.{}.duration.seconds'.format(segment), timer.duration,
-                    bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
+                    bucket_tag='duration', buckets=segment_timer_buckets, bucket_unit='s',
                     tags={**tags, **extra_tags}
-                )
-                metrics_counter(
-                    'commcare.restores.{}'.format(segment),
-                    tags={**tags, **extra_tags},
                 )
 
         tags['type'] = 'sync' if self.params.sync_log_id else 'restore'
@@ -818,7 +836,6 @@ class RestoreConfig(object):
             else:
                 tags['app'] = ''
 
-        metrics_counter('commcare.restores.count', tags=tags)
         metrics_histogram(
             'commcare.restores.duration.seconds', timing.duration,
             bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
@@ -848,19 +865,3 @@ RESTORE_SEGMENTS = {
     "FixtureElementProvider": "fixtures",
     "CasePayloadProvider": "cases",
 }
-
-
-class NoClose(object):
-    """HACK file object with no-op `close()` to avoid close by S3Transfer
-
-    https://github.com/boto/s3transfer/issues/80
-    """
-
-    def __init__(self, fileobj):
-        self.fileobj = fileobj
-
-    def __getattr__(self, name):
-        return getattr(self.fileobj, name)
-
-    def close(self):
-        pass

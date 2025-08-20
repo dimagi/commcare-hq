@@ -7,11 +7,10 @@ from django.urls import reverse
 from corehq.apps.domain.models import Domain
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.fixtures.views import update_tables
 from corehq.apps.users.models import WebUser
-
 from ..interface import FixtureEditInterface
 from ..models import LookupTable, LookupTableRow, Field, TypeField
-from corehq.apps.fixtures.views import update_tables
 
 DOMAIN = "lookup"
 USER = "test@test.com"

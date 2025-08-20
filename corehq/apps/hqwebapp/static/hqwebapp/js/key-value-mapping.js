@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 // To stack icon-uploader modal on top of key-value-mapping modal
 // Hide modal into the stack
 $(document).on('show.bs.modal', '#hqimage', function () {

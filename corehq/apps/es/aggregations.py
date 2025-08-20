@@ -586,6 +586,22 @@ class GeohashGridAggregation(Aggregation):
         }
 
 
+class GeoBoundsAggregation(Aggregation):
+    """
+    A metric aggregation that computes the bounding box containing all
+    geo_point values for a field.
+
+    More info: `Geo Bounds Aggregation <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-metrics-geobounds-aggregation.html>`_
+    """  # noqa: E501
+    type = 'geo_bounds'
+
+    def __init__(self, name, field):
+        self.name = name
+        self.body = {
+            'field': field,
+        }
+
+
 class NestedAggregation(Aggregation):
     """
     A special single bucket aggregation that enables aggregating nested documents.

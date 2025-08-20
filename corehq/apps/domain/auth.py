@@ -1,5 +1,6 @@
 import base64
 import binascii
+from datetime import datetime, timezone as tz
 import logging
 import requests
 from functools import wraps
@@ -8,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.debug import sensitive_variables
 
 from no_exceptions.exceptions import Http400
@@ -19,9 +20,11 @@ from django.utils import timezone
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
+from corehq import privileges
+
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey, ConnectIDUserLink
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.metrics import metrics_counter
 
@@ -156,7 +159,7 @@ def basic_or_api_key(realm=''):
         def wrapper(request, *args, **kwargs):
             username, password = get_username_and_password_from_request(request)
             if username and password:
-                request.check_for_password_as_api_key = True
+                request.check_for_api_key_as_password = True
                 user = authenticate(username=username, password=password, request=request)
                 if user is not None and user.is_active:
                     request.user = user
@@ -211,19 +214,37 @@ def formplayer_as_user_auth(view):
 class ApiKeyFallbackBackend(object):
 
     def authenticate(self, request, username, password):
-        if not getattr(request, 'check_for_password_as_api_key', False):
+        if not getattr(request, 'check_for_api_key_as_password', False):
             return None
 
         try:
-            user = User.objects.get(username=username, api_keys__key=password)
-        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            user = User.objects.get(username=username)
+
+            is_unexpired_filter = (
+                Q(expiration_date__isnull=True) | Q(expiration_date__gte=datetime.now(tz.utc))
+            )
+
+            api_domain_filter = Q(domain='')
+            domain = getattr(request, 'domain', '')
+            if domain:
+                api_domain_filter = api_domain_filter | Q(domain=domain)
+
+            ip = get_ip(request)
+            api_whitelist_filter = Q(ip_allowlist=[]) | Q(ip_allowlist__contains=[ip])
+
+            keys_qs = user.api_keys.filter(is_unexpired_filter, api_domain_filter,
+                                           api_whitelist_filter, is_active=True)
+
+            for key in keys_qs:
+                if key.plaintext_key == password:
+                    request.skip_two_factor_check = True
+                    return user
             return None
-        else:
-            request.skip_two_factor_check = True
-            return user
+        except User.DoesNotExist:
+            return None
 
 
-def get_active_users_by_email(email):
+def get_active_users_by_email(email, domain=None):
     UserModel = get_user_model()
     possible_users = UserModel._default_manager.filter(
         Q(username__iexact=email) | Q(email__iexact=email),
@@ -234,15 +255,18 @@ def get_active_users_by_email(email):
         if user.username.lower() == email.lower():
             yield user
         else:
-            # also any mobile workers from TWO_STAGE_USER_PROVISIONING domains should be included
+            # also any mobile workers with domains with TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION privilege
+            # should be included
             couch_user = CouchUser.get_by_username(user.username, strict=True)
             if (couch_user
                     and couch_user.is_commcare_user()
-                    and TWO_STAGE_USER_PROVISIONING.enabled(couch_user.domain)):
+                    and domain_has_privilege(couch_user.domain,
+                                             privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                    and (domain is None or couch_user.domain == domain)):
                 yield user
             # intentionally excluded:
             # - WebUsers who have changed their email address from their login (though could revisit this)
-            # - CommCareUsers not belonging to domains with TWO_STAGE_USER_PROVISIONING enabled
+            # - CommCareUsers not belonging to domains with TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION privilege
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):
@@ -273,9 +297,23 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return False
 
         # ensure API Key exists
+        query = Q()
+        domain = getattr(request, 'domain', '')
+        if domain:
+            domain_accessible = Q(domain='') | Q(domain=domain)
+            query = domain_accessible
         try:
-            key = user.api_keys.get(key=api_key)
+            filtered_keys = user.api_keys.filter(query)
         except HQApiKey.DoesNotExist:
+            return self._unauthorized()
+
+        # ensure API Key exists
+        key = None
+        for filtered_key in filtered_keys:
+            if filtered_key.plaintext_key == api_key:
+                key = filtered_key
+                break
+        if not key:
             return self._unauthorized()
 
         # update api_key.last used every 30 seconds
@@ -356,11 +394,12 @@ class ConnectIDAuthBackend:
             return None
         link = ConnectIDUserLink.objects.get(
             connectid_username=connect_username,
-            domain=couch_user.domain
+            domain=couch_user.domain,
+            commcare_user__username=couch_user.username
         )
-
-        if (couch_user.username != link.commcare_user.username):
+        if not link.is_active:
             return None
+
         return link.commcare_user
 
 
@@ -389,3 +428,20 @@ def user_can_access_domain_specific_pages(request):
         return False
 
     return couch_user.is_member_of(project) or (couch_user.is_superuser and not project.restrict_superusers)
+
+
+def connectid_token_auth(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        auth_header = request.META.get("HTTP_AUTHORIZATION")
+        if not auth_header:
+            return HttpResponseForbidden()
+        _, token = auth_header.split(" ")
+        if not token:
+            return HttpResponseBadRequest("ConnectID Token Required")
+        username = get_connectid_userinfo(token)
+        if username is None:
+            return HttpResponseForbidden()
+        request.connectid_username = username
+        return view_func(request, *args, **kwargs)
+    return _inner

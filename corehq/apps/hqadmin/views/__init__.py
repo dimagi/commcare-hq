@@ -31,5 +31,4 @@ from corehq.apps.hqadmin.views.users import (
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
     default,
-    get_hqadmin_base_context,
 )

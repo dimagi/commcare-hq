@@ -3,7 +3,7 @@ from django.template.loader import render_to_string
 
 from celery.schedules import crontab
 
-from corehq.apps.celery import periodic_task
+from corehq.apps.celery import periodic_task_when_true
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser
@@ -49,7 +49,8 @@ def incomplete_self_started_domains():
     return email_domains
 
 
-@periodic_task(
+@periodic_task_when_true(
+    settings.IS_SAAS_ENVIRONMENT,
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue',
 )

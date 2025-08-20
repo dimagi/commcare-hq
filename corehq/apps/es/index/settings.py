@@ -110,6 +110,8 @@ class _IndexSettingsKey(SettingsKeyCollection):
     APPS = "hqapps"
     CASES = "hqcases"
     CASE_SEARCH = "case_search"
+    CASE_SEARCH_BHA = "case_search_bha"
+    CASE_SEARCH_CC_PERF = "case_search_cc_perf"
     DOMAINS = "hqdomains"
     FORMS = "xforms"
     GROUPS = "hqgroups"
@@ -157,4 +159,12 @@ DEFAULT_TUNING_SETTINGS = {
         IndexTuningKey.REPLICAS: 0,
         IndexTuningKey.SHARDS: 2,
     },
+    IndexSettingsKey.CASE_SEARCH_BHA: {
+        IndexTuningKey.REPLICAS: 1,
+        IndexTuningKey.SHARDS: 2,
+    },
+    IndexSettingsKey.CASE_SEARCH_CC_PERF: {
+        IndexTuningKey.REPLICAS: 1,
+        IndexTuningKey.SHARDS: 2,
+    }
 }

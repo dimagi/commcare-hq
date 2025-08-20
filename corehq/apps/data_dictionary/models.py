@@ -6,6 +6,9 @@ from django.utils.translation import gettext as _, gettext_lazy
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager.app_schemas.case_properties import expire_case_properties_caches
 from corehq.apps.case_importer import exceptions
 
 
@@ -34,10 +37,18 @@ class CaseType(models.Model):
                 case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
             return case_type_obj
 
-    def save(self, *args, **kwargs):
+    @classmethod
+    def clear_cache(cls, domain):
         from .util import get_data_dict_case_types
-        get_data_dict_case_types.clear(self.domain)
+        get_data_dict_case_types.clear(domain)
+
+    def save(self, *args, **kwargs):
+        self.clear_cache(self.domain)
         return super(CaseType, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_cache(self.domain)
+        return super(CaseType, self).delete(*args, **kwargs)
 
 
 class CasePropertyGroup(models.Model):
@@ -57,9 +68,10 @@ class CasePropertyGroup(models.Model):
 
     def unique_error_message(self, model_class, unique_check):
         if unique_check == ('case_type', 'name'):
-            return gettext_lazy('Group "{}" already exists for case type "{}"'.format(
-                self.name, self.case_type.name
-            ))
+            return gettext_lazy('Group "{group}" already exists for case type "{case_type}"').format(
+                group=self.name,
+                case_type=self.case_type.name
+            )
         else:
             return super().unique_error_message(model_class, unique_check)
 
@@ -139,10 +151,19 @@ class CaseProperty(models.Model):
         )
         get_data_dict_props_by_case_type.clear(domain)
         get_gps_properties.clear(domain, case_type)
+        if domain_has_privilege(domain, privileges.BULK_DATA_EDITING):
+            from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+            clear_caches_case_data_cleaning(domain, case_type)
+        if domain_has_privilege(domain, privileges.DATA_DICTIONARY):
+            expire_case_properties_caches(domain)
 
     def save(self, *args, **kwargs):
         self.clear_caches(self.case_type.domain, self.case_type.name)
         return super(CaseProperty, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches(self.case_type.domain, self.case_type.name)
+        return super(CaseProperty, self).delete(*args, **kwargs)
 
     def check_validity(self, value):
         if value and self.data_type == 'date':

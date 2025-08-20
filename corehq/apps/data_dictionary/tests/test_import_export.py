@@ -82,8 +82,9 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
             'Case property \"mistake\" referenced in \"caseType1-vl\" sheet that does not exist in '
             '\"caseType1\" sheet. Row(s) affected: 5, 6',
             "Error in \"caseType1\" sheet, row 5: "
-            "{'data_type': [\"Value 'Nonsense' is not a valid choice.\"]}"
-
+            "{'data_type': [\"Value 'Nonsense' is not a valid choice.\"]}",
+            'Error in "caseType1" sheet, row 6: Invalid case property name. It should start with a '
+            'letter, and only contain letters, numbers, "-", and "_"',
         }
         message_str = str(messages[0])
         soup = BeautifulSoup(message_str, features="lxml")

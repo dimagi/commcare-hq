@@ -13,6 +13,9 @@ GROUP_MAPPING = {
         "case_sharing": {
             "type": "boolean"
         },
+        "doc_id": {
+            "type": "keyword"
+        },
         "doc_type": {
             "type": "keyword"
         },
@@ -36,13 +39,13 @@ GROUP_MAPPING = {
             "type": "text"
         },
         "removed_users": {
-            "type": "text"
+            "type": "keyword"
         },
         "reporting": {
             "type": "boolean"
         },
         "users": {
-            "type": "text"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

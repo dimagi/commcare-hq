@@ -1,12 +1,15 @@
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
+from corehq.apps.es import canonical_name_adapter_map
 from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es import const as es_const
 from corehq.pillows.utils import get_all_expected_es_indices
 
 
 @es_test
+@override_settings(ENABLE_BHA_CASE_SEARCH_ADAPTER=True)
 class ProdIndexManagementTest(SimpleTestCase):
 
     maxDiff = None  # show the entire diff for test failures
@@ -18,6 +21,8 @@ class ProdIndexManagementTest(SimpleTestCase):
         if not settings.PILLOWTOPS:
             # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
             settings.PILLOWTOPS = settings._PILLOWTOPS
+        canonical_name_adapter_map.reset_cache()
+        cls.addClassCleanup(canonical_name_adapter_map.reset_cache)
 
     @classmethod
     def tearDownClass(cls):
@@ -65,7 +70,7 @@ class ProdIndexManagementTest(SimpleTestCase):
 
 EXPECTED_PROD_INDICES = [
     {
-        "index": "test_case_search_2018-05-29",
+        "index": f"test_{es_const.HQ_CASE_SEARCH_INDEX_NAME}",
         "type": "case",
         "hq_index_name": "case_search",
         "meta": {
@@ -96,19 +101,93 @@ EXPECTED_PROD_INDICES = [
                         }
                     }
                 },
-                "number_of_replicas": 1,
-                "number_of_shards": 5,
+                "number_of_replicas": 0,
+                "number_of_shards": 1,
+            }
+        }
+    },
+    {
+        "index": f"test_{es_const.HQ_CASE_SEARCH_BHA_INDEX_NAME}",
+        "type": "case",
+        "hq_index_name": "case_search_bha",
+        "meta": {
+            "settings": {
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": [
+                                "lowercase"
+                            ]
+                        },
+                        "phonetic": {
+                            "filter": [
+                                "standard",
+                                "lowercase",
+                                "soundex"
+                            ],
+                            "tokenizer": "standard"
+                        }
+                    },
+                    "filter": {
+                        "soundex": {
+                            "replace": "true",
+                            "type": "phonetic",
+                            "encoder": "soundex"
+                        }
+                    }
+                },
+                "number_of_replicas": 0,
+                "number_of_shards": 1,
+            }
+        }
+    },
+    {
+        "index": "test_case-search-cc-perf-2025-06-19",
+        "type": "case",
+        "hq_index_name": "case_search_cc_perf",
+        "meta": {
+            "settings": {
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": [
+                                "lowercase"
+                            ]
+                        },
+                        "phonetic": {
+                            "filter": [
+                                "standard",
+                                "lowercase",
+                                "soundex"
+                            ],
+                            "tokenizer": "standard"
+                        }
+                    },
+                    "filter": {
+                        "soundex": {
+                            "replace": "true",
+                            "type": "phonetic",
+                            "encoder": "soundex"
+                        }
+                    }
+                },
+                "number_of_replicas": 0,
+                "number_of_shards": 1,
             }
         }
     },
     {
         "hq_index_name": "hqapps",
-        "index": "test_hqapps_2020-02-26",
+        "index": f"test_{es_const.HQ_APPS_INDEX_NAME}",
         "type": "app",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -123,12 +202,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqcases",
-        "index": "test_hqcases_2016-03-04",
+        "index": f"test_{es_const.HQ_CASES_INDEX_NAME}",
         "type": "case",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -145,12 +224,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqdomains",
-        "index": "test_hqdomains_2021-03-08",
+        "index": f"test_{es_const.HQ_DOMAINS_INDEX_NAME}",
         "type": "hqdomain",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -169,12 +248,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqgroups",
-        "index": "test_hqgroups_2017-05-29",
+        "index": f"test_{es_const.HQ_GROUPS_INDEX_NAME}",
         "type": "group",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -191,11 +270,11 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqusers",
-        "index": "test_hqusers_2017-09-07",
+        "index": f"test_{es_const.HQ_USERS_INDEX_NAME}",
         "type": "user",
         "meta": {
             "settings": {
-                "number_of_shards": 2,
+                "number_of_shards": 1,
                 "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
@@ -211,12 +290,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "smslogs",
-        "index": "test_smslogs_2020-01-28",
+        "index": f"test_{es_const.HQ_SMS_INDEX_NAME}",
         "type": "sms",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -233,12 +312,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "xforms",
-        "index": "test_xforms_2016-07-07",
+        "index": f"test_{es_const.HQ_FORMS_INDEX_NAME}",
         "type": "xform",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {

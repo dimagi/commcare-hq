@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import _ from "underscore";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // fadeVisible
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // fadeVisible
+ 
+ var drilldownOptionFilterControl = function (options) {
+     var self = {};
+@@ -57,7 +57,7 @@
+ 
+     self.changeMessage = function (key) {
+         self.message(self.notifications[key]);
+-        $('.drilldown-notification-tooltip').tooltip();
++        $('.drilldown-notification-tooltip').tooltip();  /* todo B5: plugin:tooltip */
+     };
+     return self;
+ };

@@ -41,17 +41,15 @@ class UserChangeLogger(object):
 
         if not is_new_user:
             self.original_user_doc = self.user.to_json()
-            self.original_user_data = self.user.get_user_data(user_domain).raw
         else:
             self.original_user_doc = None
-            self.original_user_data = None
 
         self.fields_changed = {}
         self.change_messages = {}
 
         self._save = False  # flag to check if log needs to be saved for updates
 
-    def add_changes(self, changes):
+    def add_changes(self, changes, skip_confirmation=False):
         """
         Add changes to user properties.
         Ignored for new user since the whole user doc is logged for a new user
@@ -60,7 +58,7 @@ class UserChangeLogger(object):
         if self.is_new_user:
             return
         for name, new_value in changes.items():
-            if self.original_user_doc[name] != new_value:
+            if skip_confirmation or self.original_user_doc[name] != new_value:
                 self.fields_changed[name] = new_value
                 self._save = True
 
@@ -153,25 +151,41 @@ class BaseUserImporter(object):
         if self.role_updated:
             self.user.set_role(self.user_domain, role_qualified_id)
 
+    def update_user_data(self, data, uncategorized_data, profile_name, profiles_by_name):
+        from corehq.apps.users.user_data import UserDataError
+        user_data = self.user.get_user_data(self.user_domain)
+        old_profile_id = user_data.profile_id
+        old_user_data = user_data.raw
+
+        if PROFILE_SLUG in data:
+            raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
+        if profile_name:
+            profile_id = profiles_by_name[profile_name].pk
+        elif profile_name == '':
+            profile_id = None
+        else:
+            profile_id = ...
+
+        try:
+            user_data.update(data, profile_id=profile_id)
+            user_data.update(uncategorized_data)
+        except UserDataError as e:
+            raise UserUploadError(str(e))
+        if user_data.profile_id and user_data.profile_id != old_profile_id:
+            self.logger.add_info(UserChangeMessage.profile_info(user_data.profile_id, profile_name))
+
+        if old_user_data != user_data.raw:
+            self.logger.add_changes({'user_data': user_data.raw}, skip_confirmation=True)
+
     def save_log(self):
         # Tracking for role is done post save to have role setup correctly on save
         if self.role_updated:
             new_role = self.user.get_role(domain=self.user_domain)
             self.logger.add_info(UserChangeMessage.role_change(new_role))
-
-        self._include_user_data_changes()
         return self.logger.save()
-
-    def _include_user_data_changes(self):
-        new_user_data = self.user.get_user_data(self.user_domain).raw
-        if self.logger.original_user_data != new_user_data:
-            self.logger.add_changes({'user_data': new_user_data})
 
 
 class CommCareUserImporter(BaseUserImporter):
-    def update_password(self, password):
-        self.user.set_password(password)
-        self.logger.add_change_message(UserChangeMessage.password_reset())
 
     def update_phone_numbers(self, phone_numbers):
         """
@@ -191,24 +205,6 @@ class CommCareUserImporter(BaseUserImporter):
         self.user.set_full_name(str(name))
         self.logger.add_changes({'first_name': self.user.first_name, 'last_name': self.user.last_name})
 
-    def update_user_data(self, data, uncategorized_data, profile_name, domain_info):
-        from corehq.apps.users.user_data import UserDataError
-        user_data = self.user.get_user_data(self.user_domain)
-        old_profile_id = user_data.profile_id
-        if PROFILE_SLUG in data:
-            raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
-        if profile_name:
-            profile_id = domain_info.profiles_by_name[profile_name].pk
-
-        try:
-            user_data.update(data, profile_id=profile_id if profile_name else ...)
-            user_data.update(uncategorized_data)
-        except UserDataError as e:
-            raise UserUploadError(str(e))
-
-        if user_data.profile_id and user_data.profile_id != old_profile_id:
-            self.logger.add_info(UserChangeMessage.profile_info(user_data.profile_id, profile_name))
-
     def update_language(self, language):
         self.user.language = language
         self.logger.add_changes({'language': language})
@@ -218,7 +214,7 @@ class CommCareUserImporter(BaseUserImporter):
         self.logger.add_changes({'email': self.user.email})
 
     def update_status(self, is_active):
-        self.user.is_active = is_active
+        self.user.set_is_active(self.user_domain, is_active)
         self.logger.add_changes({'is_active': is_active})
 
     def update_locations(self, location_codes, domain_info):
@@ -312,13 +308,21 @@ def _fmt_phone(phone_number):
 
 
 class WebUserImporter(BaseUserImporter):
-    def add_to_domain(self, role_qualified_id, location_id):
-        self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
+    def add_to_domain(self, role_qualified_id, primary_location_id, assigned_location_ids,
+                      tableau_role, tableau_group_ids, profile):
+        self.user.add_as_web_user(self.user_domain, role=role_qualified_id,
+                                primary_location_id=primary_location_id,
+                                assigned_location_ids=assigned_location_ids,
+                                tableau_role=tableau_role, tableau_group_ids=tableau_group_ids,
+                                profile=profile)
         self.role_updated = bool(role_qualified_id)
 
         self.logger.add_info(UserChangeMessage.added_as_web_user(self.user_domain))
-        if location_id:
+        if primary_location_id:
             self._log_primary_location_info()
+        if assigned_location_ids:
+            assigned_locations = self.user.get_sql_locations(self.user_domain)
+            self.logger.add_info(UserChangeMessage.assigned_locations_info(assigned_locations))
 
     def _log_primary_location_info(self):
         primary_location = self.user.get_sql_location(self.user_domain)

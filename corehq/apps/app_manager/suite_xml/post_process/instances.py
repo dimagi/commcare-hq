@@ -330,12 +330,12 @@ class register_factory(object):
 
 
 INSTANCE_KWARGS_BY_ID = {
-    'groups': dict(id='groups', src='jr://fixture/user-groups'),
-    'reports': dict(id='reports', src='jr://fixture/commcare:reports'),
-    'ledgerdb': dict(id='ledgerdb', src='jr://instance/ledgerdb'),
-    'casedb': dict(id='casedb', src='jr://instance/casedb'),
-    'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
-    'registry': dict(id='registry', src='jr://instance/remote/registry'),
+    'groups': {'id': 'groups', 'src': 'jr://fixture/user-groups'},
+    'reports': {'id': 'reports', 'src': 'jr://fixture/commcare:reports'},
+    'ledgerdb': {'id': 'ledgerdb', 'src': 'jr://instance/ledgerdb'},
+    'casedb': {'id': 'casedb', 'src': 'jr://instance/casedb'},
+    'commcaresession': {'id': 'commcaresession', 'src': 'jr://instance/session'},
+    'registry': {'id': 'registry', 'src': 'jr://instance/remote/registry'},
 }
 
 
@@ -408,6 +408,11 @@ def location_fixture_instances(app, instance_name):
             and not LocationFixtureConfiguration.for_domain(app.domain).sync_flat_fixture):
         return Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name))
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('case-search-fixture')
+def case_search_fixture_instances(app, instance_name):
+    return Instance(id=instance_name, src=f'jr://fixture/{instance_name}')
 
 
 def get_all_instances_referenced_in_xpaths(app, xpaths):

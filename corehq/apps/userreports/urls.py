@@ -26,10 +26,11 @@ from corehq.apps.userreports.views import (
     export_data_source,
     rebuild_data_source,
     report_source_json,
-    resume_building_data_source,
     undelete_data_source,
     undelete_report,
     update_report_description,
+    subscribe_to_data_source_changes,
+    unsubscribe_from_data_source,
 )
 
 urlpatterns = [
@@ -57,8 +58,6 @@ urlpatterns = [
         name='undo_delete_data_source'),
     url(r'^data_sources/rebuild/(?P<config_id>[\w-]+)/$', rebuild_data_source,
         name='rebuild_configurable_data_source'),
-    url(r'^data_sources/resume/(?P<config_id>[\w-]+)/$', resume_building_data_source,
-        name='resume_build'),
     url(r'^data_sources/build_in_place/(?P<config_id>[\w-]+)/$', build_data_source_in_place,
         name='build_in_place'),
     url(r'^data_sources/preview/(?P<config_id>[\w-]+)/$',
@@ -69,6 +68,10 @@ urlpatterns = [
         name=DataSourceSummaryView.urlname),
     url(r'^data_sources/export/(?P<config_id>[\w-]+)/$', export_data_source,
         name='export_configurable_data_source'),
+    url(r'^data_sources/subscribe/(?P<config_id>[\w-]+)/$', subscribe_to_data_source_changes,
+        name='subscribe_to_configurable_data_source'),
+    url(r'^data_sources/unsubscribe/(?P<config_id>[\w-]+)/$', unsubscribe_from_data_source,
+        name='unsubscribe_from_configurable_data_source'),
     url(r'^expression_debugger/$', ExpressionDebuggerView.as_view(),
         name='expression_debugger'),
     url(r'^data_source_debugger/$', DataSourceDebuggerView.as_view(),

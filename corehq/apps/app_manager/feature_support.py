@@ -128,13 +128,6 @@ class CommCareFeatureSupportMixin(object):
         return self._require_minimum_version('2.35')
 
     @property
-    def enable_detail_print(self):
-        """
-        Ability to print case detail screen, based on an HTML template, only supported > 2.35
-        """
-        return self._require_minimum_version('2.35')
-
-    @property
     def supports_practice_users(self):
         """
         Ability to configure practice mobile workers for apps
@@ -217,6 +210,13 @@ class CommCareFeatureSupportMixin(object):
         )
 
     @property
+    def supports_select_text(self):
+        """
+        Ability to configure select button text through bulk translations
+        """
+        return self._require_minimum_version('2.54')
+
+    @property
     def supports_menu_instances(self):
         return self._require_minimum_version('2.54')
 
@@ -241,3 +241,29 @@ class CommCareFeatureSupportMixin(object):
             toggles.CASE_LIST_CLICKABLE_ICON.enabled(self.domain)
             and self._require_minimum_version('2.54')
         )
+
+    @property
+    def supports_grouped_case_search_properties(self):
+        return (
+            self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_alt_text(self):
+        """
+        Alt text for case list icons and clickable icons
+        """
+        return (
+            self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_case_list_optimizations(self):
+        return (
+            toggles.CASE_LIST_OPTIMIZATIONS.enabled(self.domain)
+            and self._require_minimum_version('2.56')
+        )
+
+    @property
+    def support_document_upload(self):
+        return self._require_minimum_version('2.57')

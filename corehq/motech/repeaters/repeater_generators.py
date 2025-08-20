@@ -3,12 +3,12 @@ import warnings
 from collections import namedtuple
 from datetime import datetime
 from uuid import uuid4
+from jsonpath_ng import parse
 
 import attr
 from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
-
 from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -23,8 +23,11 @@ from corehq.form_processor.models import CommCareCase
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
+from corehq.util.json import CommCareJSONEncoder
+
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
+CONNECT_XMLNS = 'http://commcareconnect.com/data/v1/learn'
 
 
 def _get_test_form(domain):
@@ -706,6 +709,47 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
 
+class ConnectFormRepeaterPayloadGenerator(FormRepeaterJsonPayloadGenerator):
+
+    def get_payload(self, repeat_record, form):
+        form_json = super().get_payload(repeat_record, form)
+        # res.serialize from super() returns a JSON string
+        form_json = json.loads(form_json)
+        fields = ("domain", "id", "app_id", "build_id", "received_on", "metadata")
+        payload = {}
+        for field in fields:
+            payload[field] = form_json.get(field)
+        jsonpath_expr = parse('$..@xmlns')
+        matching_blocks = [
+            match
+            for match in jsonpath_expr.find(form_json)
+            if match.value == CONNECT_XMLNS
+        ]
+        for block in matching_blocks:
+            # context is the surrounding dict level
+            context = block.context
+            full_path = [str(context.path)]
+            # use the value here because for the matching block we want the entire dictionary
+            match_dict = {str(context.path): context.value}
+            context = context.context
+            # stop at last key rather than the root
+            while context.context:
+                match_dict = {str(context.path): match_dict}
+                full_path = [str(context.path)] + full_path
+                context = context.context
+            constructed_dict = payload
+            for key in full_path:
+                # traverse to the first missing key then put the match dict there
+                # to avoid overrwiting other matches
+                if key in constructed_dict:
+                    constructed_dict = constructed_dict[key]
+                    match_dict = match_dict[key]
+                else:
+                    constructed_dict[key] = match_dict[key]
+                    break
+        return json.dumps(payload)
+
+
 class FormDictPayloadGenerator(BasePayloadGenerator):
     format_name = 'form_dict'
     format_label = _('Python dictionary')
@@ -726,7 +770,7 @@ class UserPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, user):
         from corehq.apps.api.resources.v0_5 import CommCareUserResource
-        resource = CommCareUserResource(api_name='v0.5')
+        resource = CommCareUserResource(api_name='v1')
         bundle = resource.build_bundle(obj=user)
         return json.dumps(resource.full_dehydrate(bundle).data, cls=DjangoJSONEncoder)
 
@@ -739,3 +783,19 @@ class LocationPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, location):
         return json.dumps(location.to_json())
+
+
+class DataSourcePayloadGenerator(BasePayloadGenerator):
+    format_name = 'json'
+    format_label = _('JSON')
+
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_payload(self, repeat_record, payload_doc):
+        """
+        Returns the request body to be forwarded to CommCare Analytics
+        for ``payload_doc``, which is a ``DataSourceUpdate``.
+        """
+        return json.dumps(payload_doc.to_json(), cls=CommCareJSONEncoder)

@@ -1,29 +1,39 @@
 import uuid
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.translation import gettext
 
-from corehq.util.workbook_reading.datamodels import Cell
+from casexml.apps.case.mock import CaseBlock
 
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType, CasePropertyGroup
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
+    delete_case_property,
     generate_data_dictionary,
-    get_values_hints_dict,
+    get_case_property_count,
+    get_case_property_deprecated_dict,
+    get_case_property_description_dict,
+    get_case_property_group_name_for_properties,
+    get_case_property_label_dict,
     get_column_headings,
-    map_row_values_to_column_names,
+    get_data_dict_deprecated_case_types,
+    get_values_hints_dict,
     is_case_type_deprecated,
-    get_data_dict_deprecated_case_types
+    is_case_type_or_prop_name_valid,
+    is_case_type_unused,
+    is_case_property_unused,
+    map_row_values_to_column_names,
+    update_url_query_params,
 )
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import case_search_es_setup, es_test
+from corehq.util.workbook_reading.datamodels import Cell
 
 
-@patch('corehq.apps.data_dictionary.util._get_all_case_properties')
+@patch('corehq.apps.data_dictionary.util._get_properties_by_case_type')
 class GenerateDictionaryTest(TestCase):
     domain = uuid.uuid4().hex
-
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
 
     def test_no_types(self, mock):
         mock.return_value = {}
@@ -97,6 +107,30 @@ class GenerateDictionaryTest(TestCase):
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 1)
 
 
+class DeleteCasePropertyTest(TestCase):
+    domain = uuid.uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_type = 'my-case-type'
+        cls.case_prop_name = 'my-prop'
+        cls.case_type_obj = CaseType(name=cls.case_type, domain=cls.domain)
+        cls.case_type_obj.save()
+        cls.case_prop_obj = CaseProperty(case_type=cls.case_type_obj, name=cls.case_prop_name)
+        cls.case_prop_obj.save()
+
+    def test_delete_case_property(self):
+        error = delete_case_property(self.case_prop_name, self.case_type, self.domain)
+        does_exist = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            case_type__name=self.case_type,
+            name=self.case_prop_name,
+        ).exists()
+        self.assertFalse(does_exist)
+        self.assertEqual(error, None)
+
+
 class MiscUtilTest(TestCase):
     domain = uuid.uuid4().hex
 
@@ -105,14 +139,39 @@ class MiscUtilTest(TestCase):
         super().setUpClass()
         cls.case_type_name = 'caseType'
         cls.deprecated_case_type_name = 'depCaseType'
-        cls.case_type_obj = CaseType(name=cls.case_type_name, domain=cls.domain)
-        cls.case_type_obj.save()
-        cls.dep_case_type_obj = CaseType(
+        cls.case_type_obj = CaseType.objects.create(name=cls.case_type_name, domain=cls.domain)
+        cls.dep_case_type_obj = CaseType.objects.create(
             name=cls.deprecated_case_type_name,
             domain=cls.domain,
             is_deprecated=True
         )
-        cls.dep_case_type_obj.save()
+        cls.case_type_group = CasePropertyGroup.objects.create(
+            case_type=cls.case_type_obj,
+            name='TestGroup'
+        )
+        cls.case_type_deprecated_group = CasePropertyGroup.objects.create(
+            case_type=cls.case_type_obj,
+            name='DeprecatedTestGroup',
+            deprecated=True,
+        )
+        CaseProperty.objects.create(
+            name='case_prop_1',
+            case_type=cls.case_type_obj,
+            description='foo',
+            group=cls.case_type_group,
+        )
+        CaseProperty.objects.create(
+            name='case_prop_2',
+            case_type=cls.case_type_obj,
+            deprecated=True,
+            label='Prop'
+        )
+        CaseProperty.objects.create(
+            name='case_prop_3',
+            case_type=cls.dep_case_type_obj,
+            deprecated=True,
+            description='bar',
+        )
 
         cls.invalid_col = 'barr'
         cls.invalid_header_row = [Cell('Foo'), Cell(cls.invalid_col), Cell('Test Column'), Cell(None)]
@@ -123,9 +182,6 @@ class MiscUtilTest(TestCase):
             'bar': 'col_2',
             'test column': 'col_3',
         }
-
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
 
     def test_no_data_dict_info(self):
         case_type_name = 'bare'
@@ -171,15 +227,25 @@ class MiscUtilTest(TestCase):
         self.assertEqual(errors, expected_errors)
 
     def test_map_row_values_to_column_names(self):
-        column_headings, _ = get_column_headings(self.valid_header_row, self.valid_values)
-        row_vals = map_row_values_to_column_names(self.row, column_headings, default_val='empty')
+        sheet_name = 'foobar'
+        column_headings, _ = get_column_headings(self.valid_header_row, self.valid_values, sheet_name)
+        row_vals, errors = map_row_values_to_column_names(
+            self.row, column_headings, sheet_name, default_val='empty'
+        )
         expected_output = {
             'col_1': 'a',
             'col_2': 'b',
             'col_3': 'empty',
         }
+        self.assertEqual(len(errors), 0)
         for key, val in expected_output.items():
             self.assertEqual(row_vals[key], val)
+
+    def test_map_row_values_to_column_names_errors(self):
+        sheet_name = 'foobar'
+        column_headings, _ = get_column_headings(self.valid_header_row, self.valid_values, sheet_name)
+        row_vals, errors = map_row_values_to_column_names(self.row, column_headings[0:1], sheet_name=sheet_name)
+        self.assertEqual(errors[0], f'Column 2 in "{sheet_name}" sheet is missing a header')
 
     def test_is_case_type_deprecated(self):
         is_deprecated = is_case_type_deprecated(self.domain, self.deprecated_case_type_name)
@@ -191,3 +257,162 @@ class MiscUtilTest(TestCase):
         deprecated_case_types = get_data_dict_deprecated_case_types(self.domain)
         self.assertEqual(len(deprecated_case_types), 1)
         self.assertEqual(deprecated_case_types, {self.deprecated_case_type_name})
+
+    def test_is_case_type_or_prop_name_valid(self):
+        valid_names = [
+            'foobar',
+            'f00bar32',
+            'foo-bar_32',
+        ]
+        invalid_names = [
+            'foo bar',
+            '32foobar',
+            'foob@r',
+            '_foobar',
+        ]
+        for valid_name in valid_names:
+            self.assertTrue(is_case_type_or_prop_name_valid(valid_name))
+        for invalid_name in invalid_names:
+            self.assertFalse(is_case_type_or_prop_name_valid(invalid_name))
+
+    def test_get_case_property_description_dict(self):
+        desc_dict = get_case_property_description_dict(self.domain)
+        expected_response = {
+            'caseType': {
+                'case_prop_1': 'foo',
+                'case_prop_2': '',
+            },
+            'depCaseType': {
+                'case_prop_3': 'bar',
+            }
+        }
+        self.assertEqual(desc_dict, expected_response)
+
+    def test_get_case_property_label_dict(self):
+        label_dict = get_case_property_label_dict(self.domain)
+        expected_response = {
+            'caseType': {
+                'case_prop_1': '',
+                'case_prop_2': 'Prop',
+            },
+            'depCaseType': {
+                'case_prop_3': '',
+            }
+        }
+        self.assertEqual(label_dict, expected_response)
+
+    def test_get_case_property_deprecated_dict(self):
+        dep_dict = get_case_property_deprecated_dict(self.domain)
+        expected_response = {
+            'caseType': [
+                'case_prop_2',
+            ],
+            'depCaseType': [
+                'case_prop_3',
+            ]
+        }
+        self.assertEqual(dep_dict, expected_response)
+
+    def test_get_case_property_group_name_for_properties(self):
+        # Deprecated case prop
+        CaseProperty.objects.create(
+            name='deprecated_case_prop',
+            case_type=self.case_type_obj,
+            label='Deprecated Case Prop',
+            deprecated=True,
+            group=self.case_type_group,
+        )
+        # Deprecated group's case prop
+        CaseProperty.objects.create(
+            name='deprecated_group_case_prop_1',
+            case_type=self.case_type_obj,
+            label='Deprecated group prop',
+            group=self.case_type_deprecated_group,
+        )
+
+        case_group_name_for_property = get_case_property_group_name_for_properties(self.domain,
+                                                                                   self.case_type_name)
+        self.assertEqual(
+            case_group_name_for_property,
+            {'case_prop_1': 'TestGroup'}
+        )
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestUnusedCaseTypeAndProperty(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-unused-types-and-props'
+        cls.case_blocks = [
+            cls._create_case_block(
+                case_type='case-type',
+                name='Case A',
+                props={'prop': True, 'empty-prop': '', 'null-prop': None},
+            ),
+        ]
+        case_search_es_setup(cls.domain, cls.case_blocks)
+
+    @classmethod
+    def _create_case_block(cls, case_type, name, props):
+        return CaseBlock(
+            case_id=uuid.uuid4().hex,
+            case_type=case_type,
+            case_name=name,
+            update=props,
+        )
+
+    def test_unused_case_type_returns_true(self):
+        self.assertTrue(is_case_type_unused(self.domain, 'random-case-type'))
+
+    def test_used_case_type_returns_false(self):
+        self.assertFalse(is_case_type_unused(self.domain, 'case-type'))
+
+    def test_unused_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'random-prop'))
+
+    def test_used_case_property_returns_false(self):
+        self.assertFalse(is_case_property_unused(self.domain, 'case-type', 'prop'))
+
+    def test_empty_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'empty-prop'))
+
+    def test_null_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'null-prop'))
+
+
+class TestUpdateUrlQueryParams(SimpleTestCase):
+    url = "http://example.com"
+
+    def test_add_params(self):
+        result = update_url_query_params(self.url, {"fruit": "orange", "biscuits": "oreo"})
+        self.assertEqual(result, f"{self.url}?fruit=orange&biscuits=oreo")
+
+    def test_update_params(self):
+        result = update_url_query_params(f"{self.url}?fruit=apple", {"fruit": "orange", "biscuits": "oreo"})
+        self.assertEqual(result, f"{self.url}?fruit=orange&biscuits=oreo")
+
+    def test_no_params(self):
+        result = update_url_query_params(self.url, {})
+        self.assertEqual(result, self.url)
+
+
+class TestGetCasePropertyCount(TestCase):
+
+    domain = 'test-count'
+
+    def test_returns_accurate_count(self):
+        """Count is directly reflective of linked CaseProperty objects"""
+        case_type = CaseType.objects.create(name='count', domain=self.domain)
+        for i in range(5):
+            CaseProperty.objects.create(name=f'count-{i}', case_type=case_type)
+        assert get_case_property_count(self.domain, case_type.name) == 5
+
+    def test_exludes_deprecated_properties(self):
+        case_type = CaseType.objects.create(name='count', domain=self.domain)
+        for i in range(5):
+            CaseProperty.objects.create(name=f'count-{i}', case_type=case_type)
+        for i in range(2):
+            CaseProperty.objects.create(name=f'count-dep-{i}', case_type=case_type, deprecated=True)
+        assert get_case_property_count(self.domain, case_type.name) == 5

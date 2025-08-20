@@ -31,57 +31,32 @@ Configuring a FHIRImportConfig
 Currently, all configuration is managed via Django Admin (except for
 adding Connection Settings).
 
-.. warning::
-    Django Admin cannot filter select box values by domain. Name your
-    Connection Setting with the name of your domain so that typing the
-    domain name in the select box will find it fast.
-
-    .. TODO: Is this definitely true? Is there no way to filter select
-             box values by domain?
-
 In Django Admin, navigate to FHIR > FHIR Import Configs. If you have any
 FHIRImportConfig instances, they will be listed there, and you can
 filter by domain. To add a new one, click "Add FHIR Import Config +".
 
-The form is quite straight forward. You will need to provide the ID of a
-mobile worker in the "Owner ID" field. All cases that are imported will
-be assigned to this user.
-
-This workflow will not scale for large projects. When such a project
-comes up, we have planned for two approaches, and will implement one or
-both based on the project's requirements:
-
-1. Set the owner to a user, group or location.
-2. Assign a FHIRImportConfig to a CommCare location, and set ownership
-   to the mobile worker at that location.
+The form is quite straightforward. You will need to provide the ID of a
+mobile worker, location, or group in the "Owner ID" field. All imported
+cases will be assigned to this ID.
 
 
 Mapping imported FHIR resource properties
 -----------------------------------------
 
-Resource properties are mapped via the Admin interface using
-ValueSource definitions, similar to :ref:`admin-interface-mapping` for
-data forwarding and the FHIR API. But there are a few important
-differences:
+Resource properties are mapped via the Admin interface using ValueSource
+definitions, similar to :ref:`admin-interface-mapping` for data
+forwarding and the FHIR API. But there are a few important differences:
 
 The first difference is that FHIRRepeater and the FHIR API use
 FHIRResourceType instances (rendered as "FHIR Resource Types" in Django
 Admin) to configure mapping; FHIRImportConfig uses
 FHIRImportResourceType instances ("FHIR Import Resource Types").
 
-To see what this looks like, navigate to FHIR > FHIR Importer Resource
-Types, and click "Add FHIR Importer Resource Type".
+To see what this looks like, navigate to FHIR > FHIR Import Resource
+Types, and click "Add FHIR Import Resource Type".
 
 Select the FHIR Import Config, set the name of the FHIR resource type,
 and select the case type.
-
-.. note::
-    The resource types you can import are not limited to the resource
-    types that can be managed using the Data Dictionary. But if you want
-    to send the same resources back to FHIR when they are modified in
-    CommCare, then you will either need to stick to the Data Dictionary
-    FHIR resource types limitation, or add the resource type you want to
-    the list in `corehq/motech/fhir/const.py`_.)
 
 The "Import related only" checkbox controls that third import strategy
 mentioned earlier.
@@ -105,14 +80,14 @@ Patient's phone number. They might look like this:
 .. code:: javascript
 
     {
-      "jsonpath":"$.telecom[0].system",
+      "jsonpath": "$.telecom[0].system",
       "value": "phone"
     }
 
 .. code:: javascript
 
     {
-      "jsonpath":"$.telecom[0].value",
+      "jsonpath": "$.telecom[0].value",
       "case_property": "phone_number"
     }
 
@@ -124,7 +99,7 @@ item whose "system" is set to "phone". That is defined like this:
 .. code:: javascript
 
     {
-      "jsonpath":"$.telecom[?system='phone'].value",
+      "jsonpath": "$.telecom[?system='phone'].value",
       "case_property": "phone_number"
     }
 
@@ -135,37 +110,49 @@ some of the imported values before overwriting existing values on the
 case. It is wise to confirm with the delivery team how to treat case
 properties that can be edited.
 
-
-.. _corehq/motech/fhir/const.py: https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/fhir/const.py#L35
-.. _Patient search parameters: https://www.hl7.org/fhir/patient.html#search
+.. _Patient search parameters: https://hl7.org/fhir/R4/patient.html#search
 
 
 Configuring related resources
 -----------------------------
 
-If a FHIR Importer resource type has "Import related only" checked, we
+If a FHIR Import resource type has "Import related only" checked, we
 need to configure how the resource type is related.
 
-Navigate to FHIR > JSON Path to resource types, and click "Add JSON Path
-to resource type".
+For example, Patient resources may have associated ServiceRequests, which you
+may want to import. To achieve this, you'd set up a FHIRImportResourceType for
+ServiceRequests, with "import related only" checked, so only those associated
+with patients in the import are fetched.
 
-A ServiceRequest.subject is a reference to the Patient it is referring.
+Navigate to FHIR > "Resource type relationships", and click "Add
+resource type relationship".
 
-Set "Resource type" to "ServiceRequest".
+Relationships are configured on the child resource type, with a
+reference to their parent, just like a typical foreign key relationship.
+Options available in this config are:
 
-Set "JSONPath" to "$.subject.reference".
+* Resource type - the type of the child or descendant resource.
+* Jsonpath - the path used to identify the parent or ancestor resource.
+* Related resource type - the type of the parent or ancestor resource.
+* Related resource is parent - checkbox indicating whether CommCare
+  should set up a parent/child index between the two cases.
 
-Set "Related resource type" to "Patient".
+.. admonition:: Example: Adding a patient service request
 
-If the "Related resource is parent" checkbox is not checked, then
-CommCare will just create a case for the Patient. If it is checked, then
-CommCare will also create an index on the case for the ServiceRequest as
-a child case, and link it to the case for the Patient as its parent
-case.
+    First set up a ServiceRequest resource type as described in the previous
+    section. Check "import related only" to only fetch those linked to patients
+    in the import. Then navigate to the "Add resource type relationship" page.
 
-The child-to-parent relationship will follow the direction of the
-reference. So if a Foo resource has a reference to a Bar resource,
-then in CommCare the "foo" case will be the child of the "bar" case.
+    ``ServiceRequest.subject`` references the Patient it is referring.
+    To set up this relationship:
+
+    * Set "Resource type" to "ServiceRequest".
+    * Set "Jsonpath" to ``$.subject.reference``.
+    * Set "Related resource type" to "Patient".
+
+    If the "Related resource is parent" checkbox is checked, then CommCare will
+    create an index on the ServiceRequest case, making the Patient case its
+    parent.
 
 
 Testing FHIRImportConfig configuration

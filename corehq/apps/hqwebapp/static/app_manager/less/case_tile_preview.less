@@ -1,18 +1,21 @@
 #case-tile-preview {
     display: grid;
-    grid-template-columns: repeat(12, 8%) min-content 5px;  // TODO: maybe don't hard code the grid dimensions (here and everywhere)
-    grid-template-rows: repeat(3, 35px);
+    grid-template-columns: repeat(12, 1fr) min-content 5px;
+    grid-template-rows: repeat(9, auto) min-content 5px;
     width: 100%;
-    margin: 10px;
-    padding: 5px;
 
     .cell {
+        display: grid;
         margin: 2px;
-        border: 1px @cc-light-cool-accent-low dotted;
+        border: 1px @cc-brand-mid dotted;
         position: relative;
 
         // TODO: to be truly adorable, add transitions on changes to grid style, this doesn't work
         transition: 2s;
+
+        &.odd-tab {
+            background-color: @cc-bg;
+        }
 
         .content {
             padding: 5px;

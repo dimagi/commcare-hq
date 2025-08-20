@@ -10,9 +10,10 @@ from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     FilteredModelIteratorBuilder,
     ManyFilters,
+    MultimediaBlobMetaFilter,
     SimpleFilter,
-    UniqueFilteredModelIteratorBuilder,
     UnfilteredModelIteratorBuilder,
+    UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
     UsernameFilter,
 )
@@ -25,6 +26,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('blobs.BlobMeta', MultimediaBlobMetaFilter()),
 
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
@@ -40,11 +42,23 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.FuzzyProperties', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.IgnorePatterns', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('campaign.Dashboard', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('campaign.DashboardMap', SimpleFilter('dashboard__domain')),
+    FilteredModelIteratorBuilder('campaign.DashboardReport', SimpleFilter('dashboard__domain')),
+    FilteredModelIteratorBuilder('campaign.DashboardGauge', SimpleFilter('dashboard__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('timedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
                                        SimpleFilter('randomtimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSCallbackContent',
+                                       SimpleFilter('alertevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSCallbackContent',
+                                       SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSCallbackContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSCallbackContent',
                                        SimpleFilter('casepropertytimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.EmailContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.EmailContent', SimpleFilter('timedevent__schedule__domain')),
@@ -82,6 +96,22 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
                                        SimpleFilter('randomtimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.FCMNotificationContent',
                                        SimpleFilter('casepropertytimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.ConnectMessageContent',
+                                       SimpleFilter('alertevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.ConnectMessageContent',
+                                       SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.ConnectMessageContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.ConnectMessageContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.ConnectMessageSurveyContent',
+                                       SimpleFilter('alertevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.ConnectMessageSurveyContent',
+                                       SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.ConnectMessageSurveyContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.ConnectMessageSurveyContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
     FilteredModelIteratorBuilder('scheduling.AlertSchedule', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling.AlertEvent', SimpleFilter('schedule__domain')),
     FilteredModelIteratorBuilder('scheduling.ImmediateBroadcast', SimpleFilter('domain')),
@@ -114,6 +144,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
                                        SimpleFilter('caserulecriteria__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CreateScheduleInstanceActionDefinition',
                                  SimpleFilter('caseruleaction__rule__domain')),
+    FilteredModelIteratorBuilder('data_interfaces.CaseDeduplicationActionDefinition',
+                                 SimpleFilter('caseruleaction__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleAction', SimpleFilter('rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleCriteria', SimpleFilter('rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleSubmission', SimpleFilter('domain')),
@@ -123,6 +155,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('integration.GaenOtpServerSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.HmacCalloutSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.SimprintsIntegration', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('integration.KycConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('integration.MoMoConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('ip_access.IPAccessConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.ForceCloseEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
@@ -143,6 +178,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('sms.MessagingSubEvent', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.PhoneNumber', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SMS', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('sms.ConnectMessage', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.Keyword', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.KeywordAction', SimpleFilter('keyword__domain')),
     FilteredModelIteratorBuilder('sms.QueuedSMS', SimpleFilter('domain')),
@@ -154,12 +190,14 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('user_importer.UserUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.ConnectIDUserLink', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.ConnectIDMessagingKey', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DeactivateMobileWorkerTrigger', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DomainRequest', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.Invitation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.RoleAssignableBy', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('users.RolePermission', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('users.UserRole', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.SQLUserData', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.CommtrackConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.ActionConfig', SimpleFilter('commtrack_config__domain')),
@@ -168,6 +206,12 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('commtrack.StockLevelsConfig', SimpleFilter('commtrack_config__domain')),
     FilteredModelIteratorBuilder('commtrack.StockRestoreConfig', SimpleFilter('commtrack_config__domain')),
     FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('data_cleaning.BulkEditSession', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('data_cleaning.BulkEditFilter', SimpleFilter('session__domain')),
+    FilteredModelIteratorBuilder('data_cleaning.BulkEditPinnedFilter', SimpleFilter('session__domain')),
+    FilteredModelIteratorBuilder('data_cleaning.BulkEditColumn', SimpleFilter('session__domain')),
+    FilteredModelIteratorBuilder('data_cleaning.BulkEditRecord', SimpleFilter('session__domain')),
+    FilteredModelIteratorBuilder('data_cleaning.BulkEditChange', SimpleFilter('session__domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseProperty', SimpleFilter('case_type__domain')),
     FilteredModelIteratorBuilder('data_dictionary.CasePropertyGroup', SimpleFilter('case_type__domain')),
@@ -180,16 +224,19 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ApplicationReleaseLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ResourceOverride', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.CredentialApplication', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('repeaters.Repeater', SimpleFilter('domain')),
+    # Repeat Records might foreign key to deleted repeaters, override default manager to include deleted repeaters
+    FilteredModelIteratorBuilder('repeaters.Repeater', SimpleFilter('domain'), use_all_objects=True),
+    FilteredModelIteratorBuilder('repeaters.DataSourceUpdate', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.RequestLog', SimpleFilter('domain')),
-    # NH (2021-01-08): Including SQLRepeatRecord because we dump (Couch)
+    # NH (2021-01-08): Including RepeatRecord because we dump (Couch)
     # RepeatRecord, but this does not seem like a good idea.
-    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
+    FilteredModelIteratorBuilder('repeaters.RepeatRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.RepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
     FilteredModelIteratorBuilder('saved_reports.ScheduledReportLog', SimpleFilter('domain')),
     UnfilteredModelIteratorBuilder('saved_reports.ScheduledReportsCheckpoint'),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
@@ -201,7 +248,6 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('domain.AllowedUCRExpressionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.DomainAuditRecordEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.OperatorCallLimitSettings', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('domain.ProjectLimit', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.SMSAccountConfirmationSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.SuperuserProjectEntryRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.TransferDomainRequest', SimpleFilter('domain')),
@@ -209,6 +255,10 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('fixtures.LookupTable', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('fixtures.LookupTableRow', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('fixtures.LookupTableRowOwner', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_search.CSQLFixtureExpression', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_search.CSQLFixtureExpressionLog', SimpleFilter('expression__domain')),
+    FilteredModelIteratorBuilder('hqmedia.LogoForSystemEmailsReference', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('userreports.UCRExpression', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableAPI', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableApiValidation', SimpleFilter('api__domain')),
     FilteredModelIteratorBuilder('generic_inbound.RequestLog', SimpleFilter('domain')),
@@ -220,6 +270,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('events.AttendanceTrackingConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('geospatial.GeoConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('email.EmailSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('dhis2.SQLDataSetMap', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('dhis2.SQLDataValueMap', SimpleFilter('dataset_map__domain')),
+    FilteredModelIteratorBuilder('export.DeIdHash', SimpleFilter('domain')),
 ]]
 
 
@@ -227,6 +280,20 @@ class SqlDataDumper(DataDumper):
     slug = 'sql'
 
     def dump(self, output_stream):
+        """
+        When serializing data using JsonLinesSerializer().serialize(...), the additional parameters are set for
+        the following reasons:
+
+        use_natural_primary_keys is necessary for sharded models to ensure the primary key, which will not be
+        unique across shards, is not used. This can be thought of as "use natural primary keys when defined".
+
+        use_natural_foreign_keys is necessary for foreign keys that reference primary keys on models that have a
+        natural_key method defined. This can be thought of as "use natural foreign keys when defined". For example,
+        SQLUserData has a foreign key to User based on the primary key. However a natural_key method is defined on
+        the User model, so its primary key will not be serialized when use_natural_primary_keys=True. To resolve,
+        we set use_natural_foreign_keys=True which will result in natural keys being serialized as part of the
+        foreign key field when referencing a model with natural_key defined.
+        """
         stats = Counter()
         objects = get_objects_to_dump(
             self.domain,
@@ -235,9 +302,10 @@ class SqlDataDumper(DataDumper):
             stats_counter=stats,
             stdout=self.stdout,
         )
+
         JsonLinesSerializer().serialize(
             objects,
-            use_natural_foreign_keys=False,
+            use_natural_foreign_keys=True,
             use_natural_primary_keys=True,
             stream=output_stream
         )
@@ -337,6 +405,7 @@ def get_apps_and_models(app_or_model_label):
             except LookupError:
                 from corehq.util.couch import get_document_class_by_doc_type
                 from corehq.util.exceptions import DocumentClassNotFound
+
                 # ignore this if it's a couch doc type
                 try:
                     get_document_class_by_doc_type(label)

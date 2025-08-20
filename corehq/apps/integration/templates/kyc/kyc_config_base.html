@@ -1,0 +1,8 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry 'integration/js/kyc/kyc_configure' %}
+
+{% block page_content %}
+  <div>{% include 'kyc/partials/kyc_config_form_partial.html' %}</div>
+{% endblock %}

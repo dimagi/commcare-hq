@@ -70,52 +70,24 @@ class TestCaseListReport(TestCase):
     def _send_cases_to_es(cls):
         case_adapter.bulk_index(cls.case_list, refresh=True)
 
-    def test_with_project_data_slug(self):
-        report_slugs = ['project_data']
+    def assert_filters_yield_cases(self, report_slugs, expected_case_ids):
         q_dict_get = QueryDict('', mutable=True)
         q_dict_get.setlist('case_list_filter', report_slugs)
         self.request.GET = q_dict_get
         data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
-        expected_case_ids = ['id-1', 'id-2', 'id-3', 'id-5']
-        queried_case_ids = [case['_id'] for case in data]
-        self.assertCountEqual(expected_case_ids, queried_case_ids)
+        self.assertCountEqual(expected_case_ids, [case['_id'] for case in data])
+
+    def test_with_project_data_slug(self):
+        self.assert_filters_yield_cases(['project_data'], ['id-1', 'id-2', 'id-3', 'id-5'])
 
     def test_with_deactivated_slug(self):
-        report_slugs = ['t__5']
-        q_dict_get = QueryDict('', mutable=True)
-        q_dict_get.setlist('case_list_filter', report_slugs)
-        self.request.GET = q_dict_get
-        data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
-        expected_case_ids = ['id-1']
-        queried_case_ids = [case['_id'] for case in data]
-        self.assertCountEqual(expected_case_ids, queried_case_ids)
+        self.assert_filters_yield_cases(['t__5'], ['id-1'])
 
     def test_with_web_user_slug(self):
-        report_slugs = ['t__6']
-        q_dict_get = QueryDict('', mutable=True)
-        q_dict_get.setlist('case_list_filter', report_slugs)
-        self.request.GET = q_dict_get
-        data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
-        expected_case_ids = ['id-4']
-        queried_case_ids = [case['_id'] for case in data]
-        self.assertCountEqual(expected_case_ids, queried_case_ids)
+        self.assert_filters_yield_cases(['t__6'], ['id-4'])
 
     def test_with_multiple_slugs(self):
-        report_slugs = ['project_data', 't__6']
-        q_dict_get = QueryDict('', mutable=True)
-        q_dict_get.setlist('case_list_filter', report_slugs)
-        self.request.GET = q_dict_get
-        data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
-        expected_case_ids = ['id-1', 'id-2', 'id-3', 'id-4', 'id-5']
-        queried_case_ids = [case['_id'] for case in data]
-        self.assertCountEqual(expected_case_ids, queried_case_ids)
+        self.assert_filters_yield_cases(['project_data', 't__6'], ['id-1', 'id-2', 'id-3', 'id-4', 'id-5'])
 
     def test_with_slugs_and_user_ids(self):
-        report_slugs = ['t__5', 'u__active1']
-        q_dict_get = QueryDict('', mutable=True)
-        q_dict_get.setlist('case_list_filter', report_slugs)
-        self.request.GET = q_dict_get
-        data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
-        expected_case_ids = ['id-1', 'id-2', 'id-3']
-        queried_case_ids = [case['_id'] for case in data]
-        self.assertCountEqual(expected_case_ids, queried_case_ids)
+        self.assert_filters_yield_cases(['t__5', 'u__active1'], ['id-1', 'id-2', 'id-3'])

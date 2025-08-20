@@ -16,6 +16,7 @@ from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
     reindex_and_clean,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.pillows.groups_to_user import (
     get_group_pillow,
     remove_group_from_users,
@@ -133,14 +134,15 @@ def _create_es_user(user_id, domain):
         last_name='Casual',
         is_active=True,
     )
-    user_adapter.index(user, refresh=True)
+    with patch_user_data_db_layer():
+        user_adapter.index(user, refresh=True)
     return user
 
 
 @es_test(requires=[user_adapter])
 class GroupToUserPillowDbTest(TestCase):
 
-    def test_pillow(self):
+    def process_pillow(self):
         user_id = uuid.uuid4().hex
         domain = 'dbtest-group-user'
         _create_es_user(user_id, domain)
@@ -163,8 +165,11 @@ class GroupToUserPillowDbTest(TestCase):
         _assert_es_user_and_groups(self, user_id, [group._id], [group.name])
         return user_id, group
 
+    def test_pillow(self):
+        self.process_pillow()
+
     def test_pillow_deletion(self):
-        user_id, group = self.test_pillow()
+        user_id, group = self.process_pillow()
         group.soft_delete()
 
         # send to kafka

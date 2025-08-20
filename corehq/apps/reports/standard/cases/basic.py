@@ -7,7 +7,7 @@ from corehq.apps.es import cases as case_es
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.exceptions import BadRequestError, TooManyOwnerIDsError
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
@@ -17,10 +17,7 @@ from corehq.apps.reports.standard import (
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
-    all_project_data_filter,
-    deactivated_case_owners,
-    get_case_owners,
-    query_location_restricted_cases,
+    add_case_owners_and_location_access,
 )
 from corehq.elastic import ESError
 from corehq.util.es.elasticsearch import TransportError
@@ -42,8 +39,12 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     search_class = case_es.CaseES
 
     def _base_query(self):
+        if getattr(self, 'rendered_as', None) == 'export':
+            search_class = self.search_class(for_export=True)
+        else:
+            search_class = self.search_class()
         return (
-            self.search_class()
+            search_class
             .domain(self.domain)
             .size(self.pagination.count)
             .start(self.pagination.start)
@@ -52,7 +53,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def _build_query(self):
         query = self._base_query()
         query.es_query['sort'] = self.get_sorting_block()
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
 
         if self.case_filter:
             query = query.filter(self.case_filter)
@@ -65,37 +66,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        case_owner_filters = []
-
-        if (
-            self.request.can_access_all_locations
-            and EMWF.show_project_data(mobile_user_and_group_slugs)
-        ):
-            case_owner_filters.append(all_project_data_filter(self.domain, mobile_user_and_group_slugs))
-
-        if (
-            self.request.can_access_all_locations
-            and EMWF.show_deactivated_data(mobile_user_and_group_slugs)
-        ):
-            case_owner_filters.append(deactivated_case_owners(self.domain))
-
-        # Only show explicit matches
-        if (
-            EMWF.selected_user_ids(mobile_user_and_group_slugs)
-            or EMWF.selected_user_types(mobile_user_and_group_slugs)
-            or EMWF.selected_group_ids(mobile_user_and_group_slugs)
-            or EMWF.selected_location_ids(mobile_user_and_group_slugs)
-        ):
-            case_owner_filters.append(case_es.owner(self.case_owners))
-
-        query = query.OR(*case_owner_filters)
-
-        if not self.request.can_access_all_locations:
-            query = query_location_restricted_cases(
-                query,
-                self.request.domain,
-                self.request.couch_user,
-            )
+        query = add_case_owners_and_location_access(
+            query,
+            self.request.domain,
+            self.request.couch_user,
+            self.request.can_access_all_locations,
+            mobile_user_and_group_slugs
+        )
 
         search_string = CaseSearchFilter.get_value(self.request, self.domain)
         if search_string:
@@ -107,7 +84,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def es_results(self):
         try:
-            return self._build_query().run().raw
+            return self._run_es_query()
         except ESError as e:
             original_exception = e.args[0]
             if isinstance(original_exception, TransportError):
@@ -115,12 +92,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                     if original_exception.info.get('status') == 400:
                         raise BadRequestError()
             raise e
+        except TooManyOwnerIDsError:
+            raise BadRequestError(
+                _("Cannot filter by that many case owners. Choose a more specific group or location.")
+            )
 
-    @property
-    @memoized
-    def case_owners(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        return get_case_owners(self.request, self.domain, mobile_user_and_group_slugs)
+    def _run_es_query(self):
+        return self._build_query().run().raw
 
     def get_case(self, row):
         if '_source' in row:
@@ -138,10 +116,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     @property
     def shared_pagination_GET_params(self):
-        shared_params = super(CaseListMixin, self).shared_pagination_GET_params
+        shared_params = super().shared_pagination_GET_params
         shared_params.append(dict(
             name=SelectOpenCloseFilter.slug,
-            value=self.request.GET.get(SelectOpenCloseFilter.slug, '')
+            value=self.get_request_param(SelectOpenCloseFilter.slug, ''),
         ))
         return shared_params
 
@@ -154,7 +132,9 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
     # request. but currently these are too tightly bound to decouple
 
     name = gettext_lazy('Case List')
+    description = gettext_lazy('View all cases within your project space.')
     slug = 'case_list'
+    use_bootstrap5 = True
 
     @classmethod
     def get_subpages(cls):
@@ -201,13 +181,20 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
-            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
-            DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False),
-            DataTablesColumn(_("Created Date"), prop_name="opened_on"),
-            DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False),
-            DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
-            DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
+            DataTablesColumn(_("Case Type"), prop_name="type.exact",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Created Date"), prop_name="opened_on",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Modified Date"), prop_name="modified_on",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5)
         )
         headers.custom_sort = [[5, 'desc']]
         return headers

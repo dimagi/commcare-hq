@@ -1,0 +1,29 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load case_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block head %}{{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
+{% endblock %}
+
+{% js_entry 'reports/js/bootstrap5/form_data_main' %}
+
+{% block title %}Form: {{ form_name }} {% if form_received_on %} ({{ form_received_on|to_user_time:request }}){% endif %}{% endblock %}
+
+{% block page_content %}
+  {% initial_page_data 'ordered_question_values' ordered_question_values %}
+  {% initial_page_data 'question_response_map' question_response_map %}
+  {% initial_page_data 'xform_id' instance.get_id %}
+  {% registerurl "edit_form" instance.domain "---" %}
+
+  {% if instance.problem and request|toggle_enabled:'SUPPORT' %}
+    <div class="alert alert-danger">
+      {% blocktrans %}
+        This form's case changes were not processed because of errors that occurred during case processing:
+      {% endblocktrans %}
+      <strong>{{ instance.problem }}</strong>
+    </div>
+  {% endif %}
+  {% include "reports/form/partials/bootstrap5/single_form.html" %}
+{% endblock %}

@@ -1,0 +1,21 @@
+<div class="row mb-3">
+  <label for="id-email" class="field-label">
+    Email
+  </label>
+  <div class="field-control">
+    <!-- note the placeholder attribute has a suggested value filled in that will disappear when you type -->
+    <input
+      id="id-email"
+      class="form-control"
+      placeholder="name@example.com"
+      type="email"
+      name="email"
+      autocomplete="off"
+      aria-labelledby="email-help"
+    />
+    <!-- The form text below will always remain below the field. Note the usage of aria-labelledby attribute on the input applied to the id of the form-text element. This is best practice for accessibility. -->
+    <div id="email-help" class="form-text">
+      We'll never share your email with anyone else.
+    </div>
+  </div>
+</div>

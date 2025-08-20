@@ -1,17 +1,20 @@
 import re
+from corehq import toggles
 from typing import TYPE_CHECKING, Optional
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from django.utils.translation import gettext_lazy as _
 
 import attr
 import requests
+import time
 from oauthlib.oauth2 import LegacyApplicationClient, BackendApplicationClient
 from requests import Session
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
 
+import settings
 from corehq.motech.exceptions import ConfigurationError
 from corehq.util.public_only_requests.public_only_requests import make_session_public_only, get_public_only_session
 
@@ -183,6 +186,9 @@ class OAuth2ClientGrantManager(AuthManager):
         client_secret: str,
         token_url: str,
         refresh_url: str,
+        pass_credentials_in_header: bool,
+        include_client_id: bool,
+        scope: str,
         connection_settings: 'ConnectionSettings',
     ):
         self.base_url = base_url
@@ -190,6 +196,9 @@ class OAuth2ClientGrantManager(AuthManager):
         self.client_secret = client_secret
         self.token_url = token_url
         self.refresh_url = refresh_url
+        self.pass_credentials_in_header = pass_credentials_in_header
+        self.include_client_id = include_client_id
+        self.scope = scope
         self.connection_settings = connection_settings
 
     @property
@@ -206,22 +215,44 @@ class OAuth2ClientGrantManager(AuthManager):
         self.connection_settings.save()
 
     def get_session(self, domain_name: str) -> Session:
+        # Compare to OAuth2PasswordGrantManager.get_session()
+
         def set_last_token(token):
             # Used by OAuth2Session
             self.last_token = token
 
-        # This adds an extra round trip for all access tokens without refresh tokens.
-        # That is not ideal, but is the only way to ensure that we are able to guarantee
-        # the token will work without error, or refactoring the way sessions are used across
-        # all repeaters.
-        if not self.last_token or self.last_token.get('refresh_token') is None:
-            client = BackendApplicationClient(client_id=self.client_id)
+        request_fresh_token = not self.last_token or self.last_token.get('refresh_token') is None
+        additional_headers = self.connection_settings.plaintext_custom_headers
+
+        if toggles.SUPERSET_ANALYTICS.enabled(domain_name):
+            if (
+                self.last_token
+                and self.last_token.get('expires_at')
+                and self.last_token.get('expires_at') > (time.time() + 10)  # 10 seconds buffer for delays
+            ):
+                request_fresh_token = False
+
+        if request_fresh_token:
+            client = BackendApplicationClient(client_id=self.client_id, scope=self.scope)
             session = OAuth2Session(client=client)
-            self.last_token = session.fetch_token(
-                token_url=self.token_url,
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-            )
+            if self.pass_credentials_in_header:
+                auth = HTTPBasicAuth(self.client_id, self.client_secret)
+                self.last_token = session.fetch_token(
+                    token_url=self.token_url,
+                    auth=auth,
+                    include_client_id=self.include_client_id,
+                    headers=additional_headers,
+                )
+            else:
+                self.last_token = session.fetch_token(
+                    token_url=self.token_url,
+                    client_id=self.client_id,
+                    client_secret=self.client_secret,
+                    include_client_id=self.include_client_id,
+                    headers=additional_headers,
+                )
+
+        self._check_last_token(domain_name)
 
         refresh_kwargs = {
             'client_id': self.client_id,
@@ -234,8 +265,29 @@ class OAuth2ClientGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
-        make_session_public_only(session, domain_name, src='motech_oauth_send_attempt')
+
+        if additional_headers:
+            session.headers.update(additional_headers)
+
+        make_session_public_only(
+            session,
+            domain_name,
+            src='motech_oauth_send_attempt',
+        )
         return session
+
+    def _check_last_token(self, domain_name):
+        if toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain_name):
+            # This is a workaround for a presumed issue with the MTN MoMo API sandbox where
+            # the token type is not set to 'Bearer' as expected, but rather 'access_token'.
+            # This is a temporary fix until more clarity can be gained around this.
+            is_mtn_momo_sandbox = urlparse(self.base_url).hostname == 'sandbox.momodeveloper.mtn.com'
+            token_type = self.last_token.get('token_type')
+
+            if is_mtn_momo_sandbox and token_type == 'access_token':
+                new_token = self.last_token
+                new_token['token_type'] = 'Bearer'
+                self.last_token = new_token
 
 
 class OAuth2PasswordGrantManager(AuthManager):
@@ -254,6 +306,8 @@ class OAuth2PasswordGrantManager(AuthManager):
         token_url: str,
         refresh_url: str,
         pass_credentials_in_header: bool,
+        include_client_id: bool,
+        scope: str,
         connection_settings: 'ConnectionSettings',
     ):
         self.base_url = base_url
@@ -264,6 +318,8 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.token_url = token_url
         self.refresh_url = refresh_url
         self.pass_credentials_in_header = pass_credentials_in_header
+        self.include_client_id = include_client_id
+        self.scope = scope
         self.connection_settings = connection_settings
 
     @property
@@ -285,12 +341,13 @@ class OAuth2PasswordGrantManager(AuthManager):
             # Used by OAuth2Session
             self.last_token = token
 
-        # This adds an extra round trip for all access tokens without refresh tokens.
-        # That is not ideal, but is the only way to ensure that we are able to guarantee
-        # the token will work without error, or refactoring the way sessions are used across
+        # This adds an extra round trip for all access tokens without
+        # refresh tokens. That is not ideal, but is the only way to
+        # ensure that we are able to guarantee the token will work
+        # without error, or refactoring the way sessions are used across
         # all repeaters.
         if not self.last_token or self.last_token.get('refresh_token') is None:
-            client = LegacyApplicationClient(client_id=self.client_id)
+            client = LegacyApplicationClient(client_id=self.client_id, scope=self.scope)
             session = OAuth2Session(client=client)
             if self.pass_credentials_in_header:
                 auth = HTTPBasicAuth(self.client_id, self.client_secret)
@@ -299,6 +356,7 @@ class OAuth2PasswordGrantManager(AuthManager):
                     username=self.username,
                     password=self.password,
                     auth=auth,
+                    include_client_id=self.include_client_id,
                 )
             else:
                 self.last_token = session.fetch_token(
@@ -307,6 +365,7 @@ class OAuth2PasswordGrantManager(AuthManager):
                     password=self.password,
                     client_id=self.client_id,
                     client_secret=self.client_secret,
+                    include_client_id=self.include_client_id,
                 )
 
         # Return session that refreshes token automatically
@@ -321,24 +380,30 @@ class OAuth2PasswordGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
-        make_session_public_only(session, domain_name, src='motech_oauth_send_attempt')
+        make_session_public_only(
+            session,
+            domain_name,
+            src='motech_oauth_send_attempt',
+        )
         return session
 
 
 class ApiKeyAuthManager(AuthManager):
-    def __init__(self, api_key):
+    def __init__(self, header_name, api_key):
+        self.header_name = header_name
         self.api_key = api_key
 
     def get_auth(self):
-        return CustomValueAuth(self.api_key)
+        return CustomValueAuth(self.header_name, self.api_key)
 
 
 class CustomValueAuth(AuthBase):
-    def __init__(self, header_value):
+    def __init__(self, header_name, header_value):
+        self.header_name = header_name or "Authorization"
         self.header_value = header_value
 
     def __call__(self, r):
-        if not re.compile('^https').match(r.url):
+        if not settings.DEBUG and not re.compile('^https').match(r.url):
             raise RequestException(None, r, "Endpoint must be 'HTTPS' to use API Key auth")
-        r.headers["Authorization"] = self.header_value
+        r.headers[self.header_name] = self.header_value
         return r

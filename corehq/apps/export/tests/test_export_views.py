@@ -151,12 +151,33 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
+    @patch("corehq.apps.export.views.new.get_case_types_for_domain", lambda *a: ['random_case'])
+    def test_create_case_export_with_invalid_case(self):
+        resp = self.client.get(
+            reverse(CreateNewCustomCaseExportView.urlname, args=[self.domain.name]),
+            {'export_tag': 'some_case'}
+        )
+        self.assertEqual(resp.status_code, 302)
+
+    @patch("corehq.apps.export.views.new.get_case_types_for_domain", lambda *a: ['random_case'])
     def test_create_case_export(self):
         resp = self.client.get(
             reverse(CreateNewCustomCaseExportView.urlname, args=[self.domain.name]),
             {'export_tag': 'random_case'}
         )
         self.assertEqual(resp.status_code, 200)
+
+    @patch("corehq.apps.export.views.new.get_case_types_for_domain", lambda *a: ['random_case'])
+    def test_no_access_outside_of_domain(self):
+        export = CaseExportInstance(
+            name='export', domain="other-domain", xmlns='my_xmlns', case_type="case-type"
+        )
+        export.save()  # cleaned up in tearDown
+
+        resp = self.client.get(
+            reverse(EditNewCustomCaseExportView.urlname, args=[self.domain.name, export._id]),
+        )
+        self.assertEqual(resp.status_code, 404)
 
     def test_commit_form_export(self):
         export_post_data = json.dumps({

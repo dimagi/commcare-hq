@@ -389,7 +389,8 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
+    def hard_delete_forms(
+            self, domain, form_ids, return_ids=False, delete_attachments=True, *, publish_changes=True):
         """Delete forms permanently
 
         :param publish_changes: Flag for change feed publication.
@@ -398,12 +399,17 @@ class XFormInstanceManager(RequireDBManager):
         assert isinstance(form_ids, list)
 
         deleted_count = 0
+        deleted_ids = []
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             # cascade should delete the operations
-            _, deleted_models = self.using(db_name).filter(
-                domain=domain, form_id__in=split_form_ids
-            ).delete()
+            query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
+            with transaction.atomic():
+                if return_ids:
+                    found_forms = list(query.values_list('form_id', flat=True))
+                _, deleted_models = query.delete()
             deleted_count += deleted_models.get(self.model._meta.label, 0)
+            if return_ids:
+                deleted_ids.extend(found_forms)
 
         if delete_attachments and deleted_count:
             if deleted_count != len(form_ids):
@@ -421,7 +427,7 @@ class XFormInstanceManager(RequireDBManager):
         if publish_changes:
             self.publish_deleted_forms(domain, form_ids)
 
-        return deleted_count
+        return deleted_ids if return_ids else deleted_count
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):
@@ -538,6 +544,13 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return XFormOperation.objects.get_form_operations(self.__original_form_id)
 
     def natural_key(self):
+        """
+        Django requires returning a tuple in natural_key methods:
+        https://docs.djangoproject.com/en/3.2/topics/serialization/#serialization-of-natural-keys
+        We intentionally do not follow this to optimize corehq.apps.dump_reload.sql.load.SqlDataLoader when other
+        models reference CommCareCase or XFormInstance via a foreign key. This means our loader code may break in
+        future Django upgrades.
+        """
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
         return self.form_id
@@ -630,6 +643,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return operations
 
     @property
+    @memoized
     def metadata(self):
         from ..utils import clean_metadata
         if const.TAG_META in self.form_data:
@@ -642,6 +656,13 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     def name(self):
         return self.form_data.get(const.TAG_NAME, "")
+
+    @property
+    def device_id(self):
+        try:
+            return self.metadata and self.metadata.deviceID
+        except MissingFormXml:
+            pass
 
     @memoized
     def get_sync_token(self):
@@ -780,7 +801,7 @@ class XFormOperation(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.form, self.user_id, self.date
+        return self.form_id, self.user_id, self.date
 
     @property
     def user(self):

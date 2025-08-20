@@ -3,10 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-
-{% block js %}{{ block.super }}
-  {% requirejs_main 'scheduling/js/create_schedule_main' %}
-{% endblock %}
+{% js_entry_b3 'scheduling/js/create_schedule_main' %}
 
 {% block page_content %}{{ block.super }}
   {% initial_page_data 'read_only_mode' read_only_mode %}
@@ -14,7 +11,7 @@
     <i class="fa fa-info-circle"></i>
     {% blocktrans %}
       For information on Broadcasts, see the
-      <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Broadcasts">Broadcasts</a>
+      <a target="_blank" href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944996/Broadcast+Messaging">Broadcasts</a>
       help page.
     {% endblocktrans %}
   </p>

@@ -5,6 +5,7 @@ from smtplib import SMTPSenderRefused
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODE
 from unittest.mock import create_autospec, patch, PropertyMock, ANY
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports import views
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.saved_reports import models
@@ -81,8 +82,17 @@ class TestReportConfig(TestCase):
         self.assertEqual(self.config.filters.get('startdate'), None)
         self.assertEqual(self.config.filters.get('enddate'), None)
 
+    def test_report_config_for_type_domain_report_is_not_deleted_when_access_dispatcher(self):
+        # The dispatcher property surprisingly deletes the report config when the report type
+        # doesn't match any of the list of dispatcher's prefix
+        config = ReportConfig(report_type='domain_report')
+        config.save()
+        self.addCleanup(config.delete)
+        config._dispatcher
+        self.assertEqual(config.doc_type, 'ReportConfig')
 
-class TestReportNotification(SimpleTestCase):
+
+class TestReportNotification(TestCase):
     def test_unauthorized_user_cannot_view_report(self):
         report = ReportNotification(owner_id='5', domain='test_domain', recipient_emails=[])
         bad_user = self._create_user(id='3', is_domain_admin=False)
@@ -118,7 +128,7 @@ class TestReportNotification(SimpleTestCase):
         return user
 
 
-class TestRecipientsByLanguage(SimpleTestCase):
+class TestRecipientsByLanguage(TestCase):
     def test_existing_user_with_no_language_gets_default_language(self):
         report = self._create_report_for_emails('test@dimagi.com')
         self._establish_user_languages([{'username': 'test@user.com', 'language': None}])
@@ -132,6 +142,23 @@ class TestRecipientsByLanguage(SimpleTestCase):
 
         recipients_by_language = report.recipients_by_language
         self.assertEqual(recipients_by_language, {'en': ['test@dimagi.com']})
+
+    def test_omit_deactivated_web_users(self):
+        report = self._create_report_for_emails('deactivate@dimagi.com')
+        self._establish_user_languages([])
+        domain = Domain(name="test_domain", is_active=True)
+        domain.save()
+        self.addCleanup(domain.delete)
+
+        web_user = WebUser.create(domain.name, 'deactivate@dimagi.com', 'secret', None, None)
+        self.addCleanup(web_user.delete, domain.name, deleted_by=None)
+        recipients = report.recipients_by_language
+        self.assertEqual(recipients, {'en': ['deactivate@dimagi.com']})
+
+        new_report = self._create_report_for_emails('deactivate@dimagi.com')
+        web_user.deactivate(domain.name, web_user)
+        empty_recipients = new_report.recipients_by_language
+        self.assertEqual(empty_recipients, {})
 
     def setUp(self):
         owner_patcher = patch.object(ReportNotification, 'owner_email', new_callable=PropertyMock)

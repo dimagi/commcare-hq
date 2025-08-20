@@ -4,6 +4,7 @@ from contextlib import ExitStack
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -11,7 +12,6 @@ from django.db.transaction import TransactionManagementError
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
-from unittest.mock import patch
 
 from casexml.apps.phone.models import SyncLogSQL
 from couchforms.models import UnfinishedSubmissionStub
@@ -51,15 +51,27 @@ from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CaseType,
+)
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseRuleAction,
     CaseRuleCriteria,
     CaseRuleSubmission,
     DomainCaseRuleRun,
+)
+from corehq.apps.domain.dbaccessors import (
+    deleted_domain_exists,
+    domain_exists,
+    domain_or_deleted_domain_exists,
 )
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
 from corehq.apps.domain.models import Domain, TransferDomainRequest
@@ -109,37 +121,38 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
     DomainRequest,
+    HqPermissions,
     Invitation,
     PermissionInfo,
-    HqPermissions,
     RoleAssignableBy,
     RolePermission,
-    UserRole,
     UserHistory,
+    UserRole,
     WebUser,
 )
+from corehq.apps.users.user_data import SQLUserData
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.form_processor.tests.utils import (
-    create_case,
-    create_form_for_test,
-)
+from corehq.form_processor.tests.utils import create_case, create_form_for_test
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     Repeater,
-    SQLRepeatRecord,
-    SQLRepeatRecordAttempt,
+    RepeatRecord,
+    RepeatRecordAttempt,
 )
+from corehq.toggles import NAMESPACE_DOMAIN, set_toggle
+from corehq.toggles.shortcuts import toggle_enabled
+from corehq.util.test_utils import flag_enabled
 from settings import HQ_ACCOUNT_ROOT
 
 from .. import deletion as mod
-from .test_utils import delete_es_docs_patch, suspend
+from .test_utils import delete_es_docs_patch, domain_tombstone_patch, suspend
 
 
 class TestDeleteDomain(TestCase):
@@ -317,6 +330,21 @@ class TestDeleteDomain(TestCase):
 
     def test_case_deletion_sql(self):
         self._test_case_deletion()
+
+    # This is necessary to patch Toggle.enabled to return True for this flag.
+    # Otherwise, the delete call will think the flag isn't enabled and won't disable it.
+    @flag_enabled('CASE_LIST_LOOKUP')
+    def test_disable_toggles(self):
+        slug = 'CASE_LIST_LOOKUP'
+
+        # These calls actually update the Toggle document
+        set_toggle(slug, self.domain.name, True, NAMESPACE_DOMAIN)
+        set_toggle(slug, self.domain2.name, True, NAMESPACE_DOMAIN)
+
+        self.domain.delete()
+
+        self.assertFalse(toggle_enabled(slug, self.domain.name, namespace=NAMESPACE_DOMAIN))
+        self.assertTrue(toggle_enabled(slug, self.domain2.name, namespace=NAMESPACE_DOMAIN))
 
     def test_form_deletion(self):
         form_states = [state_tuple[0] for state_tuple in XFormInstance.STATES]
@@ -498,19 +526,22 @@ class TestDeleteDomain(TestCase):
         self._assert_consumption_counts(self.domain.name, 0)
         self._assert_consumption_counts(self.domain2.name, 1)
 
-    def _assert_custom_data_fields_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            CustomDataFieldsDefinition.objects.filter(domain=domain_name),
-        ], count)
-
-    def test_custom_data_fields(self):
+    def test_user_data_cascading(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            CustomDataFieldsDefinition.get_or_create(domain_name, 'UserFields')
+            user = User.objects.create(username=f'mobileuser@{domain_name}.{HQ_ACCOUNT_ROOT}')
+            definition = CustomDataFieldsDefinition.get_or_create(domain_name, 'UserFields')
+            profile = CustomDataFieldsProfile.objects.create(name='myprofile', definition=definition)
+            SQLUserData.objects.create(domain=domain_name, user_id='123', django_user=user,
+                                       profile=profile, data={})
+
+        models = [User, CustomDataFieldsDefinition, CustomDataFieldsProfile, SQLUserData]
+        for model in models:
+            self.assertEqual(model.objects.count(), 2)
 
         self.domain.delete()
 
-        self._assert_custom_data_fields_counts(self.domain.name, 0)
-        self._assert_custom_data_fields_counts(self.domain2.name, 1)
+        for model in models:
+            self.assertEqual(model.objects.count(), 1)
 
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([
@@ -965,8 +996,8 @@ class TestDeleteDomain(TestCase):
     def _assert_repeaters_count(self, domain_name, count):
         self._assert_queryset_count([
             Repeater.objects.filter(domain=domain_name),
-            SQLRepeatRecord.objects.filter(domain=domain_name),
-            SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
+            RepeatRecord.objects.filter(domain=domain_name),
+            RepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)
 
     def test_repeaters_delete(self):
@@ -984,9 +1015,7 @@ class TestDeleteDomain(TestCase):
                 domain=domain_name,
                 registered_at=datetime.utcnow(),
             )
-            record.sqlrepeatrecordattempt_set.create(
-                state=RECORD_SUCCESS_STATE,
-            )
+            record.attempt_set.create(state=State.Success)
             self._assert_repeaters_count(domain_name, 1)
             self.addCleanup(repeater.delete)
 
@@ -1048,6 +1077,28 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(count_lookup_tables(self.domain2.name), 1)
         self.assertEqual(count_lookup_table_rows(self.domain2.name), 1)
         self.assertEqual(count_lookup_table_row_owners(self.domain2.name), 1)
+
+
+@suspend(domain_tombstone_patch)
+class TestDomainTombstones(TestCase):
+
+    def setUp(self):
+        self.domain = Domain(name="test", is_active=True)
+        self.domain.save()
+        self.addCleanup(ensure_deleted, self.domain)
+
+    def test_delete_domain_leave_tombstone_argument_is_required(self):
+        with self.assertRaises(TypeError):
+            self.domain.delete()
+        self.assertTrue(domain_exists("test"))
+
+    def test_delete_domain_leave_tombstone(self):
+        self.domain.delete(leave_tombstone=True)
+        self.assertTrue(deleted_domain_exists("test"))
+
+    def test_delete_domain_dont_leave_tombstone(self):
+        self.domain.delete(leave_tombstone=False)
+        self.assertFalse(domain_or_deleted_domain_exists("test"))
 
 
 class HardDeleteFormsAndCasesInDomainTests(TestCase):
@@ -1209,7 +1260,7 @@ def ensure_deleted(domain):
         with ExitStack() as stack:
             for op in DOMAIN_DELETE_OPERATIONS:
                 stack.enter_context(patch.object(op, "execute", make_exe(op)))
-            domain.delete()
+            domain.delete(leave_tombstone=False)
 
 
 def get_product_plan_version(edition=SoftwarePlanEdition.ADVANCED):

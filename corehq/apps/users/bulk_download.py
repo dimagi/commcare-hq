@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.utils.translation import gettext
+from memoized import memoized
 
 from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
@@ -15,6 +16,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import add_on_tableau_details
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
+from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.dbaccessors import (
     count_invitations_by_filters,
     count_mobile_users_by_filters,
@@ -24,7 +26,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_users_by_filters,
     get_web_users_by_filters,
 )
-from corehq.apps.users.models import DeactivateMobileWorkerTrigger, UserRole
+from corehq.apps.users.models import DeactivateMobileWorkerTrigger, UserRole, CouchUser, HqPermissions
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
@@ -88,14 +90,53 @@ def get_phone_numbers(user_data):
     return phone_numbers_dict
 
 
-def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition, deactivation_triggers):
-    model_data = {}
-    uncategorized_data = {}
-    user_data = user.get_user_data(domain)
-    model_data, uncategorized_data = fields_definition.get_model_and_uncategorized(user_data.to_dict())
-    profile_name = (user_data.profile.name
-                    if user_data.profile and domain_has_privilege(domain, privileges.APP_USER_PROFILES)
-                    else "")
+class UserDataContributor:
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.unrecognized_user_data_keys = set()
+        self.has_profile_privilege = domain_has_privilege(domain, privileges.APP_USER_PROFILES)
+
+    @property
+    @memoized
+    def fields_definition(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            UserFieldsView,
+        )
+        return CustomDataFieldsDefinition.get_or_create(
+            self.domain,
+            UserFieldsView.field_type
+        )
+
+    def get_headers(self):
+        user_headers = []
+        if self.has_profile_privilege:
+            user_headers += ['user_profile']
+        user_data_fields = [f.slug for f in self.fields_definition.get_fields(include_system=False)]
+        user_headers.extend(build_data_headers(user_data_fields))
+        user_headers.extend(build_data_headers(
+            self.unrecognized_user_data_keys,
+            header_prefix='uncategorized_data'
+        ))
+        return user_headers
+
+    def get_data_dict(self, user):
+        model_data = {}
+        uncategorized_data = {}
+        user_data = user.get_user_data(self.domain)
+        model_data, uncategorized_data = self.fields_definition.get_model_and_uncategorized(user_data.to_dict())
+        profile_name = (user_data.profile.name
+                        if user_data.profile and self.has_profile_privilege
+                        else "")
+        self.unrecognized_user_data_keys.update(uncategorized_data)
+        return {
+            'data': model_data,
+            'uncategorized_data': uncategorized_data,
+            'user_profile': profile_name,
+        }
+
+
+def make_mobile_user_dict(user, group_names, location_cache, domain, deactivation_triggers):
     role = user.get_role(domain)
     activity = user.reporting_metadata
     location_codes = get_location_codes(location_cache, user.location_id, user.assigned_location_ids)
@@ -104,8 +145,6 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
 
     user_dict = {
-        'data': model_data,
-        'uncategorized_data': uncategorized_data,
         'group': group_names,
         'name': user.full_name,
         'password': "********",  # dummy display string for passwords
@@ -113,12 +152,11 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         'username': user.raw_username,
         'language': user.language,
         'user_id': user._id,
-        'is_active': str(user.is_active),
+        'is_active': str(user.is_active_in_domain(domain)),
         'User IMEIs (read only)': get_devices(user),
         'location_code': location_codes,
         'role': role.name if role else '',
         'domain': domain,
-        'user_profile': profile_name,
         'registered_on (read only)': _format_date(user.created_on),
         'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
         'last_sync (read only)': activity.last_sync_for_user.sync_date,
@@ -148,25 +186,35 @@ def make_web_user_dict(user, location_cache, domain):
     role_name = get_user_role_name(domain_membership)
     location_codes = get_location_codes(location_cache, domain_membership.location_id,
                                         domain_membership.assigned_location_ids)
-    return {
+    dict = {
         'username': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
         'role': role_name,
         'location_code': location_codes,
-        'status': gettext('Active User'),
+        'status': gettext('Active User') if user.is_active else gettext('Inactive User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
         'domain': domain,
+        'is_active_in_domain': str(user.is_active_in_domain(domain) if user.is_active else ''),
     }
+
+    return dict
 
 
 def make_invited_web_user_dict(invite, location_cache):
     location_codes = []
     try:
-        location_codes.append(location_cache.get(invite.supply_point))
+        # The primary location must be the first value in the list. On import, it assigns
+        # the fist listed location as the primary location.
+        location_codes.append(location_cache.get(getattr(invite.primary_location, 'location_id', None)))
+        assigned_location_ids = invite.assigned_locations.all().values_list('location_id', flat=True)
+        for loc_id in assigned_location_ids:
+            location_code = location_cache.get(loc_id)
+            if location_code not in location_codes:
+                location_codes.append(location_code)
     except SQLLocation.DoesNotExist:
         pass
     return {
@@ -181,6 +229,7 @@ def make_invited_web_user_dict(invite, location_cache):
         'last_login (read only)': 'N/A',
         'remove': '',
         'domain': invite.domain,
+        'user_profile': invite.profile.name if invite.profile else '',
     }
 
 
@@ -191,19 +240,12 @@ def get_user_rows(user_dicts, user_headers):
 
 
 def parse_mobile_users(domain, user_filters, task=None, total_count=None):
-    from corehq.apps.users.views.mobile.custom_data_fields import (
-        UserFieldsView,
-    )
-    fields_definition = CustomDataFieldsDefinition.get_or_create(
-        domain,
-        UserFieldsView.field_type
-    )
-    unrecognized_user_data_keys = set()
     user_groups_length = 0
     max_location_length = 0
     phone_numbers_length = 0
     user_dicts = []
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    user_data_contributor = UserDataContributor(domain)
 
     current_user_downloaded_count = 0
     for current_domain in domains_list:
@@ -215,10 +257,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             }
         else:
             deactivation_triggers = {}
-        for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
-            group_memoizer = load_memoizer(current_domain)
+        group_memoizer = load_memoizer(current_domain)
+        for user in get_mobile_users_by_filters(current_domain, user_filters):
             group_names = sorted([
-                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+                group.name for group in group_memoizer.by_user_id(user.user_id)
             ], key=alphanumeric_sort_key)
 
             user_dict = make_mobile_user_dict(
@@ -226,11 +268,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
                 group_names,
                 location_cache,
                 current_domain,
-                fields_definition,
                 deactivation_triggers,
             )
+            user_dict.update(user_data_contributor.get_data_dict(user))
             user_dicts.append(user_dict)
-            unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
             user_groups_length = max(user_groups_length, len(group_names))
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
 
@@ -249,17 +290,9 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         {'phone-number': list(range(1, phone_numbers_length + 1))}
     ))
 
-    if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
-        user_headers += ['user_profile']
-
     if EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
         user_headers += ['deactivate_after']
-    user_data_fields = [f.slug for f in fields_definition.get_fields(include_system=False)]
-    user_headers.extend(build_data_headers(user_data_fields))
-    user_headers.extend(build_data_headers(
-        unrecognized_user_data_keys,
-        header_prefix='uncategorized_data'
-    ))
+    user_headers.extend(user_data_contributor.get_headers())
     user_headers.extend(json_to_headers(
         {'group': list(range(1, user_groups_length + 1))}
     ))
@@ -272,15 +305,17 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 
-def parse_web_users(domain, user_filters, task=None, total_count=None):
+def parse_web_users(domain, user_filters, owner, task=None, total_count=None):
     user_dicts = []
     max_location_length = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     progress = 0
+    user_data_contributor = UserDataContributor(domain)
     for current_domain in domains_list:
         location_cache = LocationIdToSiteCodeCache(current_domain)
         for user in get_web_users_by_filters(current_domain, user_filters):
             user_dict = make_web_user_dict(user, location_cache, current_domain)
+            user_dict.update(user_data_contributor.get_data_dict(user))
             user_dicts.append(user_dict)
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
             progress += 1
@@ -293,15 +328,17 @@ def parse_web_users(domain, user_filters, task=None, total_count=None):
 
     user_headers = [
         'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
-        'last_login (read only)', 'status', 'remove'
+        'last_login (read only)', 'status', 'remove', 'is_active_in_domain',
     ]
+    user_headers.extend(user_data_contributor.get_headers())
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.extend(json_to_headers(
             {'location_code': list(range(1, max_location_length + 1))}
         ))
     if is_cross_domain:
         user_headers += ['domain']
-    if TABLEAU_USER_SYNCING.enabled(domain):
+    if (TABLEAU_USER_SYNCING.enabled(domain)
+            and owner.has_permission(domain, get_permission_name(HqPermissions.view_user_tableau_config))):
         user_headers += ['tableau_role', 'tableau_groups']
         user_dicts = add_on_tableau_details(domain, user_dicts)
     return user_headers, get_user_rows(user_dicts, user_headers)
@@ -450,7 +487,9 @@ def dump_web_users(domain, download_id, user_filters, task, owner_id):
 
     DownloadBase.set_progress(task, 0, total_count)
 
-    user_headers, user_rows = parse_web_users(domain, user_filters, task, total_count)
+    owner = CouchUser.get_by_user_id(owner_id, domain)
+    user_headers, user_rows = parse_web_users(domain, user_filters,
+                                            owner, task, total_count)
 
     headers = [('users', [user_headers])]
     rows = [('users', user_rows)]

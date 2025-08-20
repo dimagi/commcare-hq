@@ -28,6 +28,7 @@ from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
+    create_unique_index_name,
 )
 from corehq.util.json import CommCareJSONEncoder
 
@@ -342,6 +343,13 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         super().__init__(*args, **kwargs)
 
     def natural_key(self):
+        """
+        Django requires returning a tuple in natural_key methods:
+        https://docs.djangoproject.com/en/3.2/topics/serialization/#serialization-of-natural-keys
+        We intentionally do not follow this to optimize corehq.apps.dump_reload.sql.load.SqlDataLoader when other
+        models reference CommCareCase or XFormInstance via a foreign key. This means our loader code may break in
+        future Django upgrades.
+        """
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
         return self.case_id
@@ -818,7 +826,14 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
             ["domain", "external_id", "type"],
-            ["domain", "type"],
+            ["domain", "type", "id"],
+        ]
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('form_processor',
+                                                       'commcarecase',
+                                                       ['deleted_on']),
+                         condition=models.Q(deleted_on__isnull=False))
         ]
         app_label = "form_processor"
         db_table = 'form_processor_commcarecasesql'
@@ -903,7 +918,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.attachment_id
+        return self.case_id, self.attachment_id
 
     def from_form_attachment(self, attachment, attachment_src):
         """
@@ -1104,7 +1119,7 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.domain, self.case, self.identifier
+        return self.domain, self.case_id, self.identifier
 
     @property
     def is_deleted(self):
@@ -1199,6 +1214,15 @@ class CaseTransactionManager(RequireDBManager):
             .filter(type_filter=self.model.TYPE_FORM)
             .order_by("-server_date")
             .first()
+        )
+
+    def get_last_n_recent_form_transaction(self, case_id, limit):
+        return (
+            self.partitioned_query(case_id)
+            .filter(case_id=case_id, revoked=False)
+            .annotate(type_filter=F('type').bitand(self.model.TYPE_FORM))
+            .filter(type_filter=self.model.TYPE_FORM)
+            .order_by("-server_date")[:limit]
         )
 
     def get_transactions_by_type(self, case_id, transaction_type):
@@ -1307,7 +1331,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.case, self.form_id, self.type
+        return self.case_id, self.form_id, self.type
 
     @staticmethod
     def _should_process(transaction_type):
@@ -1370,6 +1394,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     @property
     def xmlns(self):
         return self.details.get('xmlns', None) if self.details else None
+
+    @property
+    def device_id(self):
+        return self.details.get('device_id', None) if self.details else None
 
     @classmethod
     @memoized
@@ -1461,7 +1489,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
                 server_date=xform.received_on,
                 type=transaction_type,
                 revoked=not xform.is_normal,
-                details=FormSubmissionDetail(xmlns=xform.xmlns).to_json()
+                details=FormSubmissionDetail(xmlns=xform.xmlns, device_id=xform.device_id).to_json()
             )
 
     @classmethod
@@ -1529,6 +1557,7 @@ class CaseTransactionDetail(JsonObject):
 class FormSubmissionDetail(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_FORM
     xmlns = StringProperty()
+    device_id = StringProperty()
 
 
 class RebuildWithReason(CaseTransactionDetail):

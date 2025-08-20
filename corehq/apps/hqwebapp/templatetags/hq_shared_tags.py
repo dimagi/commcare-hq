@@ -6,26 +6,28 @@ from django import template
 from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
-from django.template.base import (
-    Token,
-    TokenType,
-    Variable,
-    VariableDoesNotExist,
-)
+from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
+from django.templatetags import i18n
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from django_prbac.utils import has_privilege
+from langcodes import langs_by_code
 
 from dimagi.utils.web import json_handler
 
 from corehq import privileges
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
+from corehq.apps.hqwebapp.exceptions import (
+    AlreadyRenderedException,
+    TemplateTagJSONException,
+)
 from corehq.apps.hqwebapp.models import Alert
 from corehq.motech.utils import pformat_json
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone
 
 register = template.Library()
 
@@ -114,7 +116,10 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_enterprise_links_for_dropdown
+    from corehq.apps.domain.views.base import (
+        get_domain_links_for_dropdown,
+        get_enterprise_links_for_dropdown,
+    )
     domain_links = get_domain_links_for_dropdown(request.couch_user)
 
     # Enterprise permissions projects aren't in the dropdown, but show a hint they exist
@@ -249,7 +254,16 @@ def css_field_class():
 
 @register.simple_tag
 def css_action_class():
-    from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+    from corehq.apps.hqwebapp.crispy import (
+        CSS_ACTION_CLASS,
+        get_form_action_class,
+    )
+    from corehq.apps.hqwebapp.utils.bootstrap import (
+        BOOTSTRAP_5,
+        get_bootstrap_version,
+    )
+    if get_bootstrap_version() == BOOTSTRAP_5:
+        return get_form_action_class()
     return CSS_ACTION_CLASS
 
 
@@ -411,8 +425,8 @@ def prelogin_url(urlname):
     Fetches the correct dimagi.com url for a "prelogin" view.
     """
     urlname_to_url = {
-        'go_to_pricing': 'https://dimagi.com/commcare/pricing/',
-        'public_pricing': 'https://dimagi.com/commcare/pricing/',
+        'go_to_pricing': 'https://dimagi.com/commcare-pricing/',
+        'public_pricing': 'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview',  # noqa: E501
 
     }
     return urlname_to_url.get(urlname, 'https://dimagi.com/commcare/')
@@ -544,16 +558,23 @@ def view_pdb(element):
     return element
 
 
+@register.filter
+def is_new_user(user):
+    now = datetime.now()
+    one_week_ago = now - timedelta(days=7)
+    return True if user.created_on >= one_week_ago else False
+
+
 @register.tag
-def registerurl(parser, token):
-    split_contents = token.split_contents()
+def registerurl(parser, original_token):
+    split_contents = original_token.split_contents()
     tag = split_contents[0]
     url_name = parse_literal(split_contents[1], parser, tag)
     expressions = [parser.compile_filter(arg) for arg in split_contents[2:]]
 
     class FakeNode(template.Node):
-        # must mock token or error handling code will fail and not reveal real error
-        token = Token(TokenType.TEXT, '', (0, 0), 0)
+        token = original_token
+        origin = parser.origin
 
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]
@@ -584,15 +605,28 @@ def html_attr(value):
     return conditional_escape(value)
 
 
-def _create_page_data(parser, token, node_slug):
-    split_contents = token.split_contents()
+@register.filter
+def language_name_local(lang_code):
+    """
+    Override built-in language_name_local filter to work with 3-letter lang
+    codes and always title case its output. KeyError will be raised if language
+    is missing from either langs_by_code or django.conf.locale.LANG_INFO.
+    """
+    lang = langs_by_code[lang_code]
+    lang_code = lang.get('two', lang_code)
+    lang_name = i18n.language_name_local(lang_code)
+    return lang_name.title()
+
+
+def _create_page_data(parser, original_token, node_slug):
+    split_contents = original_token.split_contents()
     tag = split_contents[0]
     name = parse_literal(split_contents[1], parser, tag)
     value = parser.compile_filter(split_contents[2])
 
     class FakeNode(template.Node):
-        # must mock token or error handling code will fail and not reveal real error
-        token = Token(TokenType.TEXT, '', (0, 0), 0)
+        token = original_token
+        origin = parser.origin
 
         def render(self, context):
             resolved = value.resolve(context)
@@ -625,73 +659,128 @@ def analytics_ab_test(parser, token):
     return _create_page_data(parser, token, 'analytics_ab_test')
 
 
-@register.tag
-def requirejs_main(parser, token):
-    """
-    Indicate that a page should be using RequireJS, by naming the
-    JavaScript module to be used as the page's main entry point.
-
-    The base template must have a `{% requirejs_main ... %}` tag before
-    the `requirejs_main` variable is accessed anywhere in the template.
-    The base template need not specify a value in its `{% requirejs_main %}`
-    tag, allowing it to be extended by templates that may or may not
-    use requirejs. In this case the `requirejs_main` template variable
-    will have a value of `None` unless an extending template has a
-    `{% requirejs_main "..." %}` with a value.
-    """
+def _bundler_main(parser, token, flag, node_class):
     bits = token.contents.split(None, 1)
     if len(bits) == 1:
         tag_name = bits[0]
         value = None
     else:
         tag_name, value = bits
-    if getattr(parser, "__saw_requirejs_main", False):
+
+    # Treat js_entry_b3 identically to js_entry
+    # Some templates check for {% if js_entry %}
+    tag_name = tag_name.rstrip("_b3")
+
+    if getattr(parser, flag, False):
         raise TemplateSyntaxError(
             "multiple '%s' tags not allowed (%s)" % tuple(bits))
-    parser.__saw_requirejs_main = True
+    setattr(parser, flag, True)
 
     if value and (len(value) < 2 or value[0] not in '"\'' or value[0] != value[-1]):
         raise TemplateSyntaxError("bad '%s' argument: %s" % tuple(bits))
 
-    # use a block to allow extension template to set requirejs_main for base
+    # use a block to allow extension template to set <bundler>_main for base
     return loader_tags.BlockNode("__" + tag_name, NodeList([
-        RequireJSMainNode(tag_name, value and value[1:-1])
+        node_class(tag_name, value and value[1:-1])
     ]))
 
 
-class RequireJSMainNode(template.Node):
+@register.tag
+def js_entry(parser, token):
+    """
+    Indicate that a page should be using Webpack, by naming the
+    JavaScript module to be used as the page's main entry point.
+
+    The base template need not specify a value in its `{% js_entry %}`
+    tag, allowing it to be extended by templates that may or may not
+    use webpack. In this case the `js_entry` template variable
+    will have a value of `None` unless an extending template has a
+    `{% js_entry "..." %}` with a value.
+    """
+    return _bundler_main(parser, token, "__saw_js_entry", WebpackMainNode)
+
+
+@register.tag
+def js_entry_b3(parser, token):
+    """
+    Alias for js_entry. Use this to mark entry points that should be part of the
+    bootstrap 3 bundle of webpack.
+    """
+    return js_entry(parser, token)
+
+
+class WebpackMainNode(template.Node):
 
     def __init__(self, name, value):
         self.name = name
         self.value = value
+        self.origin = None
 
     def __repr__(self):
-        return "<RequireJSMain Node: %r>" % (self.value,)
+        return "<WebpackMain Node: %r>" % (self.value,)
 
     def render(self, context):
-        if self.name not in context:
+        if self.name not in context and self.value:
             # set name in block parent context
             context.dicts[-2][self.name] = self.value
+
         return ''
+
+
+@register.filter
+def webpack_bundles(entry_name):
+    from corehq.apps.hqwebapp.utils.bootstrap import (
+        BOOTSTRAP_3,
+        BOOTSTRAP_5,
+        get_bootstrap_version,
+    )
+    from corehq.apps.hqwebapp.utils.webpack import (
+        WebpackManifestNotFoundError,
+        get_webpack_manifest,
+    )
+    bootstrap_version = get_bootstrap_version()
+
+    try:
+        if bootstrap_version == BOOTSTRAP_5:
+            manifest = get_webpack_manifest()
+            webpack_folder = 'webpack'
+        else:
+            manifest = get_webpack_manifest('manifest_b3.json')
+            webpack_folder = 'webpack_b3'
+    except WebpackManifestNotFoundError:
+        # If we're in tests, the manifest genuinely may not be available,
+        # as it's only generated for the test job that includes javascript.
+        if settings.UNIT_TESTING:
+            return []
+
+        raise TemplateSyntaxError(
+            f"No webpack manifest found!\n"
+            f"'{entry_name}' will not load correctly.\n\n"
+            f"Did you run `yarn dev` or `yarn build`?\n\n\n"
+        )
+
+    bundles = manifest.get(entry_name, [])
+    if not bundles:
+        webpack_error = (
+            f"No webpack manifest entry found for '{entry_name}'.\n\n"
+            f"Is this a newly added entry point?\n"
+            f"Did you try restarting `yarn dev`?\n\n\n"
+        )
+        if bootstrap_version == BOOTSTRAP_3:
+            webpack_error = (
+                f"{webpack_error}"
+                f"Additionally, did you remember to use `js_entry_b3` "
+                f"on this Bootstrap 3 page?\n\n\n\n"
+            )
+        raise TemplateSyntaxError(webpack_error)
+    return [
+        f"{webpack_folder}/{bundle}" for bundle in bundles
+    ]
 
 
 @register.inclusion_tag('hqwebapp/basic_errors.html')
 def bootstrap_form_errors(form):
     return {'form': form}
-
-
-@register.inclusion_tag('hqwebapp/includes/core_libraries.html', takes_context=True)
-def javascript_libraries(context, **kwargs):
-    return {
-        'request': getattr(context, 'request', None),
-        'underscore': kwargs.pop('underscore', False),
-        'jquery_ui': kwargs.pop('jquery_ui', False),
-        'ko': kwargs.pop('ko', False),
-        'analytics': kwargs.pop('analytics', False),
-        'hq': kwargs.pop('hq', False),
-        'helpers': kwargs.pop('helpers', False),
-        'use_bootstrap5': kwargs.pop('use_bootstrap5', False),
-    }
 
 
 @register.simple_tag
@@ -719,7 +808,18 @@ def breadcrumbs(page, section, parents=None):
 
 @register.filter
 def request_has_privilege(request, privilege_name):
-    from corehq.apps.accounting.utils import domain_has_privilege
     from corehq import privileges
+    from corehq.apps.accounting.utils import domain_has_privilege
     privilege = _get_obj_from_name_or_instance(privileges, privilege_name)
     return domain_has_privilege(request.domain, privilege)
+
+
+@register.filter
+def to_user_time(dt, request):
+    """Convert a datetime to a readable string in the user's timezone"""
+    if not dt:
+        return "---"
+    if not isinstance(dt, datetime):
+        raise ValueError("to_user_time only accepts datetimes")
+    timezone = get_timezone(request, getattr(request, 'domain', None))
+    return ServerTime(dt).user_time(timezone).ui_string()

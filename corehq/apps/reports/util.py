@@ -1,6 +1,8 @@
+import dataclasses
 import json
 import logging
 import math
+from typing import List
 import warnings
 from collections import defaultdict, namedtuple
 from datetime import datetime
@@ -15,6 +17,7 @@ from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
+from dimagi.ext.jsonobject import DateTimeProperty
 
 from celery.schedules import crontab
 
@@ -33,6 +36,7 @@ from corehq.form_processor.models import XFormInstance
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
 
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
@@ -46,7 +50,7 @@ def user_list(domain):
     #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
-    users.sort(key=lambda user: (not user.is_active, user.username))
+    users.sort(key=lambda user: (not user.is_active_in_domain(domain), user.username))
     return users
 
 
@@ -147,43 +151,20 @@ def get_user_id_from_form(form_id):
     return user_id
 
 
-def namedtupledict(name, fields):
-    cls = namedtuple(name, fields)
-
-    def __getitem__(self, item):
-        if isinstance(item, str):
-            warnings.warn(
-                "namedtuple fields should be accessed as attributes",
-                DeprecationWarning,
-            )
-            return getattr(self, item)
-        return cls.__getitem__(self, item)
-
-    def get(self, item, default=None):
-        warnings.warn(
-            "namedtuple fields should be accessed as attributes",
-            DeprecationWarning,
-        )
-        return getattr(self, item, default)
-    # return a subclass of cls that has the above __getitem__
-    return type(name, (cls,), {
-        '__getitem__': __getitem__,
-        'get': get,
-    })
-
-
-class SimplifiedUserInfo(
-        namedtupledict('SimplifiedUserInfo', (
-            'user_id',
-            'username_in_report',
-            'raw_username',
-            'is_active',
-            'location_id',
-        ))):
+@dataclasses.dataclass
+class SimplifiedUserInfo:
+    user_id: str
+    username_in_report: str
+    raw_username: str
+    is_active: bool
+    location_id: str
+    _active_by_domain: dict
 
     ES_FIELDS = [
         '_id', 'domain', 'username', 'first_name', 'last_name',
-        'doc_type', 'is_active', 'location_id', '__group_ids'
+        'doc_type', 'is_active', 'location_id', '__group_ids',
+        'domain_membership.is_active', 'domain_memberships.is_active',
+        'domain_membership.domain', 'domain_memberships.domain',
     ]
 
     @property
@@ -193,19 +174,40 @@ class SimplifiedUserInfo(
             return getattr(self, '__group_ids')
         return Group.by_user_id(self.user_id, False)
 
+    def is_active_in_domain(self, domain):
+        return self.is_active and self._active_by_domain.get(domain, False)
+
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            warnings.warn(
+                "namedtuple fields should be accessed as attributes",
+                DeprecationWarning,
+            )
+            return getattr(self, item)
+        return super().__getitem__(self, item)
+
+    def get(self, item, default=None):
+        warnings.warn(
+            "namedtuple fields should be accessed as attributes",
+            DeprecationWarning,
+        )
+        return getattr(self, item, default)
+
 
 def _report_user(user):
     """
     Accepts a user object or a dict such as that returned from elasticsearch.
-    Make sure the following fields (attributes) are available:
-    _id, username, first_name, last_name, doc_type, is_active
+    Make sure the SimplifiedUserInfo.ES_FIELDS attributes are available
     """
     if not isinstance(user, dict):
-        user_report_attrs = [
+        kwargs = {attr: getattr(user, attr) for attr in [
             'user_id', 'username_in_report', 'raw_username', 'is_active', 'location_id'
-        ]
-        return SimplifiedUserInfo(**{attr: getattr(user, attr)
-                                     for attr in user_report_attrs})
+        ]}
+        kwargs['_active_by_domain'] = {
+            dm.domain: dm.is_active for dm in user.domain_memberships
+        }
+        user = SimplifiedUserInfo(**kwargs)
+        return user
     else:
         username = user.get('username', '')
         raw_username = (username.split("@")[0]
@@ -214,12 +216,16 @@ def _report_user(user):
         first = user.get('first_name', '')
         last = user.get('last_name', '')
         username_in_report = _get_username_fragment(raw_username, first, last)
+        dms = user.get('domain_membership', user.get('domain_memberships'))
+        dms = dms if isinstance(dms, list) else [dms]
+        active_by_domain = {dm['domain']: dm.get('is_active', True) for dm in dms}
         info = SimplifiedUserInfo(
             user_id=user.get('_id', ''),
             username_in_report=username_in_report,
             raw_username=raw_username,
             is_active=user.get('is_active', None),
-            location_id=user.get('location_id', None)
+            location_id=user.get('location_id', None),
+            _active_by_domain=active_by_domain,
         )
         if '__group_ids' in user:
             group_ids = user['__group_ids']
@@ -382,12 +388,16 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, recipient, link, subject=None, domain=None):
+def send_report_download_email(title, recipient, link, subject=None, domain=None, limit=None):
     if subject is None:
         subject = _("%s: Requested export excel data") % title
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
+
+    if limit:
+        body += f"<br><br>This download is limited to {limit:,d} rows. " \
+                "If you need to export more than this, please use filters to create multiple exports."
 
     send_HTML_email(
         subject,
@@ -398,14 +408,31 @@ def send_report_download_email(title, recipient, link, subject=None, domain=None
     )
 
 
-class DatatablesParams(object):
-    def __init__(self, count, start, desc, echo, search=None):
+class DatatablesPagination:
+    """This generates the pagination object for HQ reports.
+    Most reports only care about `count` and `start`
+    The legacy variables (desc, echo, search) should be removed after the Bootstrap 5 migration.
+    - `desc` should be replaced by `DatatablesServerSideParams(...).order`
+    - `echo` should be replaced by `DatatablesServerSideParams(...).draw`
+    - `search` should be replaced by `DatatablesServerSideParams(...).search`
+    """
+
+    def __init__(self, count, start, desc=False, echo=None, search=None, use_bootstrap5=False):
+        """
+        :param count: int - the limit/length of a page
+        :param start: int - the page num (zero indexed), aka skip (or start)
+        legacy variables from Datatables 1.9 or earlier (to be removed)
+        :param desc: boolean (True if sSortDir_0 == 'desc')
+        :param echo: the id of the request made by Datatables aka 'draw' in > 1.10
+        :param search: string, the value of sSearch
+        """
         self.count = count
         self.start = start
         self.end = start + count
-        self.desc = desc
-        self.echo = echo
-        self.search = search
+        self._desc = desc
+        self._echo = echo
+        self._search = search
+        self.use_bootstrap5 = use_bootstrap5
 
     def __repr__(self):
         return json.dumps({
@@ -414,8 +441,38 @@ class DatatablesParams(object):
             'echo': self.echo,
         }, indent=2)
 
+    @property
+    def echo(self):
+        if self.use_bootstrap5:
+            warnings.warn(
+                "Please use datatables_params.draw instead",
+                DeprecationWarning,
+            )
+        return self._echo
+
+    @property
+    def desc(self):
+        if self.use_bootstrap5:
+            warnings.warn(
+                "Please use datatables_params.order instead",
+                DeprecationWarning,
+            )
+        return self._desc
+
+    @property
+    def search(self):
+        if self.use_bootstrap5:
+            warnings.warn(
+                "Please use datatables_params.search instead",
+                DeprecationWarning,
+            )
+        return self._search
+
     @classmethod
     def from_request_dict(cls, query):
+        """Only use this method to populate the legacy values
+        Datatables 1.9 or earlier, where use_bootstrap5 = False
+        """
         count = int(query.get("iDisplayLength", "10"))
         start = int(query.get("iDisplayStart", "0"))
 
@@ -423,7 +480,128 @@ class DatatablesParams(object):
         echo = query.get("sEcho", "0")
         search = query.get("sSearch", "")
 
-        return DatatablesParams(count, start, desc, echo, search)
+        return cls(count, start, desc, echo, search, use_bootstrap5=False)
+
+    @classmethod
+    def from_datatables_params(cls, datatables_params):
+        """Use this for bootstrap5 reports,
+        Datatables 1.10 or greater
+        :param datatables_params: DatatablesServerSideParams instance
+        """
+        return cls(datatables_params.length, datatables_params.start, use_bootstrap5=True)
+
+
+class DatatablesServerSideParams:
+    """These are the datatables parameters which accept queries
+    using datatables 1.10 or greater using serverSide = True.
+    """
+    def __init__(self, draw, start, length, columns, order, search, data):
+        """See docs here for reference: https://datatables.net/manual/server-side
+        :param draw: int
+        :param start: int
+        :param length: int
+        :param columns: list of dicts with format
+            {
+                'data': int(index),
+                'name': str(),
+                'searchable': boolean,
+                'orderable': boolean,
+                'search': {'value': str(), 'regex': boolean},
+            }
+        :param order: list of dicts with format
+            {
+                'column': int(index),
+                'dir': str('asc' or 'desc'),
+            }
+        :param search: dict with format {'value': str(), 'regex': boolean}
+        :param data: QueryDict from `request.GET` or `request.POST`
+        """
+        self.columns = columns
+        self.order = order
+        self.draw = draw
+        self.start = start
+        self.length = length
+        self.search = search
+        self.data = data
+
+    @classmethod
+    def from_request(cls, request):
+        """This populates the params with either a GET or POST request
+        :param request: a standard request object
+        :return instance of DatatablesServerSideParams:
+        """
+        data = cls.get_request_data(request)
+        draw = int(data.get('draw', 0))
+        start = int(data.get('start', 0))
+        length = int(data.get('length', 10))
+        columns = cls._get_columns(data)
+        order = cls._get_order(data)
+        search = {
+            'value': data.get('search[value]', ''),
+            'regex': bool(data.get('search[regex]') == 'true'),
+        }
+        return cls(draw, start, length, columns, order, search, data)
+
+    @staticmethod
+    def _get_columns(request_data):
+        columns = []
+        ind = 0
+        while True:
+            try:
+                columns.append({
+                    'data': int(request_data.get(f'columns[{ind}][data]')),
+                    'name': request_data.get(f'columns[{ind}][name]', ''),
+                    'searchable': bool(request_data.get(f'columns[{ind}][searchable]') == 'true'),
+                    'orderable': bool(request_data.get(f'columns[{ind}][orderable]') == 'true'),
+                    'search': {
+                        'value': request_data.get(f'columns[{ind}][search][value]', ''),
+                        'regex': bool(request_data.get(f'columns[{ind}][search][regex]') == 'true'),
+                    }
+                })
+                ind += 1
+            except (ValueError, TypeError):
+                break
+        return columns
+
+    @staticmethod
+    def _get_order(request_data):
+        order = []
+        ind = 0
+        while True:
+            try:
+                order.append({
+                    'column': int(request_data.get(f'order[{ind}][column]')),
+                    'dir': request_data.get(f'order[{ind}][dir]'),
+                })
+                ind += 1
+            except (ValueError, TypeError):
+                break
+        return order
+
+    @classmethod
+    def get_request_data(cls, request):
+        return request.POST if request.method == 'POST' else request.GET
+
+    def get_value(self, param, default_value=None, as_list=False):
+        return self.get_value_from_data(self.data, param,
+                                        default_value=default_value, as_list=as_list)
+
+    @staticmethod
+    def get_value_from_data(data, param, default_value=None, as_list=False):
+        if param in data:
+            return data.getlist(param) if as_list else data.get(param)
+        # for bootstrap 5 reports using Datatables > 1.10
+        for hq_param in [f"hq[{param}][]", f"hq[{param}]"]:
+            if hq_param in data:
+                return data.getlist(hq_param) if as_list else data.get(hq_param)
+        if default_value is None and as_list:
+            return []
+        return default_value
+
+    @classmethod
+    def get_value_from_request(cls, request, param, default_value=None, as_list=False):
+        return cls.get_value_from_data(cls.get_request_data(request), param,
+                                       default_value=default_value, as_list=as_list)
 
 
 # --- Tableau API util methods ---
@@ -437,7 +615,7 @@ def tableau_username(HQ_username):
     return 'HQ/' + HQ_username
 
 
-def _group_json_to_tuples(group_json):
+def _group_json_to_tuples(group_json) -> TableauGroupTuple:
     group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
     # Remove default Tableau group and HQ group:
     group_tuples_without_defaults = []
@@ -482,6 +660,40 @@ def _notify_tableau_exception(e, domain):
     })
 
 
+def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
+                            session: TableauAPISession = None) -> List[TableauGroupTuple]:
+    if not interested_group_ids:
+        return []
+    group_json = get_tableau_group_json(domain, session)
+    filtered_group_json = [group for group in group_json if group['id'] in interested_group_ids]
+    return _group_json_to_tuples(filtered_group_json)
+
+
+def get_tableau_groups_by_names(interested_group_names: List, domain: str,
+                            session: TableauAPISession = None) -> List[TableauGroupTuple]:
+    group_json = get_tableau_group_json(domain, session)
+    filtered_group_json = [group for group in group_json if group['name'] in interested_group_names]
+    return _group_json_to_tuples(filtered_group_json)
+
+
+def get_tableau_group_ids_by_names(group_names: List, domain: str,
+                              session: TableauAPISession = None) -> List[str]:
+    '''
+    Returns a list of all Tableau group ids on the site derived from tableau group names passed in.
+    '''
+    if not group_names:
+        return []
+    group_json = get_tableau_group_json(domain, session)
+    filtered_group_json = [group for group in group_json if group['name'] in group_names]
+    return [tup.id for tup in _group_json_to_tuples(filtered_group_json)]
+
+
+@quickcache(['domain'], timeout=2 * 60)
+def get_tableau_group_json(domain: str, session: TableauAPISession = None):
+    session = session or TableauAPISession.create_session_for_domain(domain)
+    return session.query_groups()
+
+
 def get_matching_tableau_users_from_other_domains(user):
     return list(TableauUser.objects.filter(
         username=user.username,
@@ -497,17 +709,21 @@ def add_tableau_user(domain, username):
     these details to the Tableau instance.
     '''
     try:
-        session = TableauAPISession.create_session_for_domain(domain)
-    except TableauConnectedApp.DoesNotExist as e:
-        _notify_tableau_exception(e, domain)
-        return
-    user, created, matching_tableau_users_from_other_domains_exist = _add_tableau_user_local(session, username)
-    if created and not matching_tableau_users_from_other_domains_exist:
         try:
-            _add_tableau_user_remote(session, user)
-        except TableauAPIError as e:
-            if e.code != 409017:  # This is the "user already added to site" code.
-                raise
+            session = TableauAPISession.create_session_for_domain(domain)
+        except TableauConnectedApp.DoesNotExist as e:
+            _notify_tableau_exception(e, domain)
+            return
+        user, created, matching_tableau_users_from_other_domains_exist = _add_tableau_user_local(session, username)
+        if created and not matching_tableau_users_from_other_domains_exist:
+            try:
+                _add_tableau_user_remote(session, user)
+            except TableauAPIError as e:
+                if e.code != 409017:  # This is the "user already added to site" code.
+                    raise
+    except TableauAPIError as e:
+        # Don't block main thread
+        _notify_tableau_exception(e, domain)
 
 
 def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
@@ -542,8 +758,12 @@ def delete_tableau_user(domain, username, session=None):
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
     session = session or TableauAPISession.create_session_for_domain(domain)
-    if get_matching_tableau_users_from_other_domains(
-            TableauUser.objects.get(username=username, server__domain=domain)):
+    try:
+        tableau_user = TableauUser.objects.get(username=username, server__domain=domain)
+    except TableauUser.DoesNotExist:
+        notify_exception(None, f"TableauUser not found for {username} on {domain}")
+        return
+    if get_matching_tableau_users_from_other_domains(tableau_user):
         _delete_user_local(session, username)
     else:
         deleted_user_id = _delete_user_local(session, username)
@@ -564,30 +784,39 @@ def _delete_user_remote(session, deleted_user_id):
 
 
 @atomic
-def update_tableau_user(domain, username, role=None, groups=[], session=None):
+def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = None, session=None,
+                        blocking_exception=True):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.
     '''
-    session = session or TableauAPISession.create_session_for_domain(domain)
-    user = TableauUser.objects.filter(
-        server=session.tableau_connected_app.server
-    ).get(username=username)
-    if role:
-        for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
-            local_tableau_user.role = role
-            local_tableau_user.save()
+    try:
+        session = session or TableauAPISession.create_session_for_domain(domain)
+        user = TableauUser.objects.filter(
+            server=session.tableau_connected_app.server
+        ).get(username=username)
+        if role:
+            for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+                local_tableau_user.role = role
+                local_tableau_user.save()
 
-    # Group management
-    allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(domain)
-    existing_groups = _group_json_to_tuples(session.get_groups_for_user_id(user.tableau_user_id))
-    edited_groups_list = list(filter(lambda group: group.name in allowed_groups_for_domain, groups))
-    other_groups = [group for group in existing_groups if group.name not in allowed_groups_for_domain]
-    # The list of groups for the user should be a combination of those edited by the web admin and the existing
-    # groups the user belongs to that are not editable on that domain.
-    new_groups = edited_groups_list + other_groups
+        # Group management
+        allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(domain)
+        existing_groups = _group_json_to_tuples(session.get_groups_for_user_id(user.tableau_user_id))
+        if groups is None:
+            groups = existing_groups
+        edited_groups_list = list(filter(lambda group: group.name in allowed_groups_for_domain, groups))
+        other_groups = [group for group in existing_groups if group.name not in allowed_groups_for_domain]
+        # The list of groups for the user should be a combination of those edited by the web admin and the existing
+        # groups the user belongs to that are not editable on that domain.
+        new_groups = edited_groups_list + other_groups
 
-    _update_user_remote(session, user, groups=new_groups)
+        _update_user_remote(session, user, groups=new_groups)
+    except TableauAPIError as e:
+        if blocking_exception:
+            raise
+        else:
+            _notify_tableau_exception(e, domain)
 
 
 def _update_user_remote(session, user, groups=[]):
@@ -619,7 +848,9 @@ def _get_hq_group_id(session):
 def sync_all_tableau_users():
     domains_grouped_by_server = defaultdict(list)  # Looks like {(server name, tableau site): [domains]...}
     for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
-        server = TableauServer.objects.get(domain=domain)
+        server = TableauConnectedApp.get_server(domain)
+        if not server:
+            continue
         server_details = (server.server_name, server.target_site)
         domains_grouped_by_server[server_details].append(domain)
     for list_of_domains_for_server in domains_grouped_by_server.values():
@@ -812,3 +1043,45 @@ def domain_copied_cases_by_owner(domain, owner_ids):
         .owner(owner_ids)\
         .NOT(case_property_missing(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME))\
         .values_list('_id', flat=True)
+
+
+def get_commcare_version_and_date_from_last_usage(last_submission=None, last_device=None, formatted=False):
+    """
+    Gets CommCare version and date from the last submission, or fall back to the last used device.
+
+    Args:
+    last_submission: Dictionary containing Last Submission data from ES
+    last_device: Dictionary containing DeviceIdLastUsed data from ES
+    """
+    from corehq.apps.reports.standard.deployments import format_commcare_version
+
+    version = None
+    version_in_use = None
+    date_of_use = None
+
+    if last_submission and last_submission.get('commcare_version'):
+        version = last_submission.get('commcare_version')
+        date_of_use = last_submission.get('submission_date')
+
+    elif last_device and last_device.get('commcare_version'):
+        version = last_device.get('commcare_version')
+        date_of_use = last_device.get('last_used')
+
+    if version:
+        version_in_use = format_commcare_version(version) if formatted else version
+
+    if date_of_use:
+        date_of_use = DateTimeProperty.deserialize(date_of_use)
+
+    return version_in_use, date_of_use
+
+
+def report_date_to_json(date, timezone, date_format, is_phonetime=True):
+    if date:
+        if is_phonetime:
+            user_time = PhoneTime(date, timezone).user_time(timezone)
+        else:
+            user_time = ServerTime(date).user_time(timezone)
+        return user_time.ui_string(date_format)
+    else:
+        return ''

@@ -1,12 +1,13 @@
 /* eslint-env mocha */
+import _ from "underscore";
+import viewModels from "export/js/models";
 
 describe('ExportColumn', function () {
     var selectedColumn,
         advancedColumn,
         deletedColumn,
         table,
-        instance,
-        viewModels = hqImport('export/js/models');
+        instance;
 
     beforeEach(function () {
         var mockObservable = function () { return 'foo'; };
@@ -78,5 +79,4 @@ describe('ExportColumn', function () {
         // All the columns should be visible
         assert.equal(columns.length, 3);
     });
-
 });

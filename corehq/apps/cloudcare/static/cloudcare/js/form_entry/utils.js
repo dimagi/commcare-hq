@@ -1,10 +1,27 @@
-/*global MapboxGeocoder*/
-hqDefine("cloudcare/js/form_entry/utils", function () {
-    var errors = hqImport("cloudcare/js/form_entry/errors"),
-        formEntryConst = hqImport("cloudcare/js/form_entry/const"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+define("cloudcare/js/form_entry/utils", [
+    'jquery',
+    'knockout',
+    'underscore',
+    '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/utils',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/formplayer/constants',
+], function (
+    $,
+    ko,
+    _,
+    MapboxGeocoder,
+    initialPageData,
+    toggles,
+    cloudcareUtils,
+    UsersModels,
+    formEntryConst,
+    errors,
+) {
     var module = {
         resourceMap: undefined,
     };
@@ -39,10 +56,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      */
     module.initialRender = function (formJSON, resourceMap, $div) {
         var defer = $.Deferred();
-        hqRequire([
-            "cloudcare/js/debugger/debugger",
-            "cloudcare/js/form_entry/form_ui",
-        ], function (Debugger, FormUI) {
+        $.when(
+            import("cloudcare/js/debugger/debugger"),
+            import("cloudcare/js/form_entry/form_ui"),
+        ).done(function (Debugger, FormUI) {
             var form = FormUI.Form(formJSON),
                 $debug = $('#cloudcare-debugger'),
                 CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry,
@@ -51,7 +68,8 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             ko.cleanNode($div[0]);
             $div.koApplyBindings(form);
 
-            if ($debug.length) {
+            if ($debug.length && (UsersModels.getCurrentUser().isAppPreview
+                || !cloudcareUtils.smallScreenIsEnabled())) {
                 cloudCareDebugger = new CloudCareDebugger({
                     baseUrl: formJSON.xform_url,
                     formSessionId: formJSON.session_id,
@@ -76,7 +94,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      * @param {boolean} showGeolocationButton - show geolocation button. Defaults to false. (optional)
      * @param {boolean} geolocateOnLoad - geolocate the user's location on load. Defaults to false. (optional)
-     * @param {boolean} setProximity - set proximity to user's location. Defaults to false. (optional)
+     * @param {boolean} useBoundingBox - use default locations bbox to filter results. Defaults to false. (optional)
      * @param {string} responseDataTypes - set Mapbox's data type response https://docs.mapbox.com/api/search/geocoding/#data-types (optional)
     */
     module.renderMapboxInput = function ({
@@ -86,12 +104,12 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         inputOnKeyDown,
         showGeolocationButton = false,
         geolocateOnLoad = false,
-        setProximity = false,
-        responseDataTypes = 'address'
+        useBoundingBox = false,
+        responseDataTypes = 'address',
     }) {
         showGeolocationButton = showGeolocationButton || toggles.toggleEnabled('GEOCODER_MY_LOCATION_BUTTON');
         geolocateOnLoad = geolocateOnLoad || toggles.toggleEnabled('GEOCODER_AUTOLOAD_USER_LOCATION');
-        setProximity = setProximity || toggles.toggleEnabled('GEOCODER_USER_PROXIMITY');
+        var setProximity = toggles.toggleEnabled('GEOCODER_USER_PROXIMITY');
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
@@ -105,6 +123,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             }).catch(error => console.log("Unable to set geocoder proximity: ", error.message));
         } else if (defaultGeocoderLocation.coordinates) {
             geocoder.setProximity(defaultGeocoderLocation.coordinates);
+        }
+        if (setProximity && useBoundingBox && defaultGeocoderLocation.bbox) {
+            geocoder.setBbox(defaultGeocoderLocation.bbox);
         }
         geocoder.on('clear', clearCallBack);
         geocoder.on('result', (item) => itemCallback(item.result));
@@ -144,7 +165,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * Composes a broadcast object from mapbox result to be used by receivers
      * @param {Object} mapboxResult - Mapbox query result object
      */
-    module.getBroadcastObject = function (mapboxResult) {
+    module.getAddressBroadcastObject = function (mapboxResult) {
         var broadcastObj = {
             full: mapboxResult.place_name,
             geopoint: mapboxResult.geometry.coordinates[1] + ' ' + mapboxResult.geometry.coordinates[0],
@@ -221,8 +242,14 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     module.getBroadcastContainer = (question) => {
         return getRoot(question, function (container) {
             // Return first containing repeat group, or form if there are no ancestor repeats
-            var parent = container.parent;
-            return parent && parent.type && parent.type() === formEntryConst.REPEAT_TYPE;
+            if (container) {
+                const pType = ko.utils.unwrapObservable(container.type);
+                const repeatable = ko.utils.unwrapObservable(container.repeatable);
+                return container && pType && pType === formEntryConst.GROUP_TYPE
+                    && repeatable && repeatable === 'true';
+            }
+            return false;
+
         });
     };
 

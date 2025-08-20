@@ -1,0 +1,21 @@
+<div id="js-pagination-example">
+  <ul
+    class="list-group"
+    data-bind="foreach: items"
+  >
+    <li
+      class="list-group-item"
+      data-bind="text: $data"
+    ></li>
+  </ul>
+  <pagination
+    data-apply-bindings="false"
+    params="
+      goToPage: goToPage,
+      slug: 'style-guide',
+      perPage: perPage,
+      onLoad: onPaginationLoad,
+      totalItems: totalItems
+    "
+  ></pagination>
+</div>

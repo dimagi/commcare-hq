@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ {% if field.is_hidden %}
+ 	{{ field }}
+     {% if field.errors %}
+-      <div class="controls has-error error">
++      <div class="controls has-error error">  {# todo B5: css:has-error #}
+         {% include 'bootstrap3to5/layout/help_text_and_errors.html' %}
+       </div>
+     {% endif %}

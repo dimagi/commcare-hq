@@ -1,0 +1,46 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry "prototype/js/example/knockout_pagination" %}
+
+
+{% block content %}
+{% registerurl "prototype_example_paginated_data" %}
+  <h1>
+    Prototype Example
+  </h1>
+  <p class="lead">
+    This is an example endpoint for a rapid prototype working with tabular data and knockout.
+  </p>
+
+  <div id="prototype-example-knockout-pagination">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Color</th>
+          <th>Big Cats</th>
+          <th>Date of Birth</th>
+          <th>Application</th>
+          <th>Opened On</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- ko foreach: rows -->
+        <tr>
+          <!-- ko foreach: $data.columns -->
+          <td data-bind="text: $data"></td>
+          <!-- /ko -->
+        </tr>
+        <!-- /ko -->
+      </tbody>
+    </table>
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage,
+                        slug: 'style-guide',
+                        perPage: itemsPerPage,
+                        onLoad: onPaginationLoad,
+                        totalItems: totalItems"></pagination>
+  </div>
+{% endblock content %}

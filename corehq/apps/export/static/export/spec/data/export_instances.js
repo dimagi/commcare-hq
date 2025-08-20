@@ -1,4 +1,4 @@
-SampleExportInstances = {
+export default {
     basic: {
         "name": null,
         "type": "form",

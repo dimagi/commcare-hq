@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -338,7 +338,7 @@
+         model = DataCorrectionsModel(options);
+         $modal.koApplyBindings(model);
+         $trigger.click(function () {
+-            $modal.modal();
++            $modal.modal();  /* todo B5: plugin:modal */
+             setupSelect2($modal);
+ 
+         });

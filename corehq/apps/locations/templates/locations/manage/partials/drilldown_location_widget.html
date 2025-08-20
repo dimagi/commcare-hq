@@ -1,6 +1,10 @@
 {% load hq_shared_tags %}
 
-<select class="locations-widget-primary form-control" id="{{ css_id }}" name="{{ name }}" style="width: 30em;"
+<!--
+    Both B3 form-control and B5 form-select are used to avoid needing to split this template.
+    When USE_BOOTSTRAP5 is removed, form-control can be removed.
+-->
+<select class="locations-widget-primary form-control form-select" id="{{ css_id }}" name="{{ name }}" style="width: 30em;"
   {% if attrs.disabled %}
         disabled="disabled"
   {% endif %}

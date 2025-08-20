@@ -1,0 +1,36 @@
+<div id="js-paginated-table-example">
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>Case Type</th>
+        <th>Name</th>
+        <th>Color</th>
+        <th>Big Cats</th>
+        <th>Date of Birth</th>
+        <th>Application</th>
+        <th>Opened On</th>
+        <th>Owner</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- ko foreach: rows -->
+      <tr>
+        <!-- ko foreach: $data.columns -->
+        <td data-bind="text: $data"></td>
+        <!-- /ko -->
+      </tr>
+      <!-- /ko -->
+    </tbody>
+  </table>
+  <pagination
+    data-apply-bindings="false"
+    params="
+      goToPage: goToPage,
+      slug: 'style-guide',
+      perPage: itemsPerPage,
+      onLoad: onPaginationLoad,
+      totalItems: totalItems
+    "
+  ></pagination>
+</div>

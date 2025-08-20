@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime
 from uuid import uuid4
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls.base import reverse
@@ -20,7 +21,9 @@ class HeartbeatTests(TestCase):
     def setUpClass(cls):
         super(HeartbeatTests, cls).setUpClass()
         cls.domain_obj = create_domain(uuid4().hex)
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.user = CommCareUser.create(cls.domain_obj.name, 'user1', '123', None, None)
+        cls.addClassCleanup(cls.user.delete, None, None)
         cls.app, cls.build = cls._create_app_and_build()
         cls.url = reverse('phone_heartbeat', args=[cls.domain_obj.name, cls.build.get_id])
 
@@ -35,11 +38,6 @@ class HeartbeatTests(TestCase):
         build = app.make_build()
         build.save(increment_version=False)
         return app, build
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain_obj.delete()
-        super(HeartbeatTests, cls).tearDownClass()
 
     def _auth_headers(self, user):
         return {
@@ -160,3 +158,12 @@ class HeartbeatTests(TestCase):
         device = CommCareUser.get(self.user.get_id).get_device('4')
         self.assertIsNone(device.fcm_token)
         self.assertIsNone(device.fcm_token_timestamp)
+
+    @patch("corehq.apps.ota.views.deterministic_random")
+    def test_incude_user_for_integrity_reporting(self, deterministic_random_mock):
+        deterministic_random_mock.return_value = 0.001
+        resp = self._do_request(
+            self.user,
+            device_id='4',
+        )
+        self.assertTrue(resp.json()["report_integrity"] == self.user.user_id)

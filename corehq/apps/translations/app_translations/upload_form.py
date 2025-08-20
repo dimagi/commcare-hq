@@ -77,8 +77,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         # Setup
         rows = get_unicode_dicts(rows)
-        template_translation_el = self._get_template_translation_el()
-        self._add_missing_translation_elements_to_itext(template_translation_el)
+        self._update_or_create_translation_elements()
         self._populate_markdown_stats(rows)
         self.msgs = []
 
@@ -87,11 +86,26 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         # Update the translations
         for lang in self.langs:
-            translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
-            assert(translation_node.exists())
+            translation_element = self.itext.find("./{f}translation[@lang='%s']" % lang)
+            assert translation_element.exists()
 
             for row in rows:
                 if row['label'] in label_ids_to_skip:
+                    continue
+                if row['label'] == 'submit_label':
+                    try:
+                        self.form.submit_label[lang] = row[self._get_col_key('default', lang)]
+                    except KeyError:
+                        pass
+                    continue
+                if row['label'] == 'submit_notification_label':
+                    notification_value = ''
+                    try:
+                        notification_value = row[self._get_col_key('default', lang)]
+                    except KeyError:
+                        pass
+                    if notification_value:
+                        self.form.submit_notification_label[lang] = notification_value
                     continue
                 try:
                     self._add_or_remove_translations(lang, row)
@@ -102,37 +116,54 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         return [(t, _('Error in {sheet}: {msg}').format(sheet=self.sheet_name, msg=m)) for (t, m) in self.msgs]
 
-    def _get_template_translation_el(self):
-        # Make language nodes for each language if they don't yet exist
-        #
+    def _update_or_create_translation_elements(self):
+        """
+        Create new elements if necessary and ensure existing elements are up to date with the current app config
+        """
+        template_element = self._get_template_translation_element()
+        for lang in self.langs:
+            translation_element = self.itext.find("./{f}translation[@lang='%s']" % lang)
+            if translation_element.exists():
+                self._update_default_attr_if_needed(translation_element, lang)
+            else:
+                self._create_translation_element(template_element, lang)
+
+    def _get_template_translation_element(self):
         # Currently operating under the assumption that every xForm has at least
-        # one translation element, that each translation element has a text node
-        # for each question and that each text node has a value node under it.
+        # one translation element, that each translation element has a text element
+        # for each question and that each text element has a value element under it.
         # Get a translation element to be used as a template for new elements, preferably of default lang
         default_lang = self.app.default_language
-        default_trans_el = self.itext.find("./{f}translation[@lang='%s']" % default_lang)
-        if default_trans_el.exists():
-            return default_trans_el
+        default_element = self.itext.find("./{f}translation[@lang='%s']" % default_lang)
+        if default_element.exists():
+            return default_element
+
+        # If no default element found, fallback to finding any translation element
         non_default_langs = copy.copy(self.app.langs)
         non_default_langs.remove(default_lang)
         for lang in non_default_langs:
-            trans_el = self.itext.find("./{f}translation[@lang='%s']" % lang)
-            if trans_el.exists():
-                return trans_el
-        raise Exception(_("Form has no translation node present to be used as a template."))
+            translation_element = self.itext.find("./{f}translation[@lang='%s']" % lang)
+            if translation_element.exists():
+                return translation_element
 
-    def _add_missing_translation_elements_to_itext(self, template_translation_el):
-        for lang in self.langs:
-            trans_el = self.itext.find("./{f}translation[@lang='%s']" % lang)
-            if not trans_el.exists():
-                new_trans_el = copy.deepcopy(template_translation_el.xml)
-                new_trans_el.set('lang', lang)
-                if lang != self.app.langs[0]:
-                    # If the language isn't the default language
-                    new_trans_el.attrib.pop('default', None)
-                else:
-                    new_trans_el.set('default', '')
-                self.itext.xml.append(new_trans_el)
+        raise XFormException(_("Form has no translation element present to be used as a template."))
+
+    def _create_translation_element(self, template, lang):
+        translation_element = copy.deepcopy(template.xml)
+        translation_element.set('lang', lang)
+        self._update_default_attr_if_needed(translation_element, lang)
+        self.itext.xml.append(translation_element)
+
+    def _update_default_attr_if_needed(self, element, element_lang):
+        """
+        A default language is set at both the app and form level (in translation elements), and it is
+        possible that they can get out of sync. This ensures the translation element in a form is up to date
+        with the app's default language.
+        """
+        if element_lang != self.app.default_language:
+            element.attrib.pop('default', None)
+        else:
+            element.set('default', '')
 
     def _populate_markdown_stats(self, rows):
         # Aggregate Markdown vetoes, and translations that currently have Markdown
@@ -156,6 +187,8 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 if not self._has_translation(row):
                     label_ids_to_skip.add(row['label'])
             for label in label_ids_to_skip:
+                if label == 'submit_notification_label':
+                    continue
                 self.msgs.append((
                     messages.error,
                     _("You must provide at least one translation for the label '{}'.").format(label)))
@@ -178,8 +211,8 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             if self.is_multi_sheet and not new_translation:
                 # If the cell corresponding to the label for this question
                 # in this language is empty, fall back to another language
-                for l in self.langs:
-                    key = self._get_col_key(trans_type, l)
+                for language in self.langs:
+                    key = self._get_col_key(trans_type, language)
                     if key not in row:
                         continue
                     fallback = row[key]

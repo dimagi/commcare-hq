@@ -1,0 +1,23 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+
+{% block page_content %}
+
+{% initial_page_data "server_type" server_type %}
+{% initial_page_data "ticket" ticket %}
+{% initial_page_data "validate_hostname" validate_hostname %}
+{% initial_page_data "view_url" view_url %}
+{% initial_page_data "viz_id" viz_id %}
+{% registerurl 'get_tableau_server_ticket' request.domain %}
+
+{% js_entry "reports/js/tableau" %}
+
+<body>
+    <div id="loadingDiv" class="fa-5x">
+        <i class="fa fa-spin fa-spinner"></i>
+    </div>
+    <div id="vizContainer"></div>
+    <div id="errorMessage" class="alert alert-danger d-none"></div>
+</body>
+
+{% endblock %}

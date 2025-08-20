@@ -1,5 +1,4 @@
 import re
-import uuid
 from collections import namedtuple
 
 from django.contrib import messages
@@ -16,6 +15,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_permission,
@@ -24,11 +24,12 @@ from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
+from ..const import RECORD_QUEUED_STATES, State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
     RepeatRecord,
-    are_repeat_records_migrated,
+    forwards_to_commcare_connect,
     get_all_repeater_types,
 )
 
@@ -41,19 +42,30 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Data Forwarding")
     template_name = 'repeaters/repeaters.html'
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-    @property
-    def repeater_types_info(self):
+    def get_repeater_types_info(self, state_counts):
+        def get_repeaters_with_state_counts(repeater_class):
+            repeaters = repeater_class.objects.by_domain(self.domain)
+            for repeater in repeaters:
+                assert not hasattr(repeater, "count_State"), repeater.count_State
+                repeater.count_State = {s.name: state_counts[repeater.id][s] for s in State}
+                repeater.count_State['EmptyOrSuccess'] = (
+                    repeater.count_State[State.Empty.name]
+                    + repeater.count_State[State.Success.name]
+                )
+            return repeaters
+
         return [
             RepeaterTypeInfo(
                 class_name=r._repeater_type,
                 friendly_name=r.friendly_name,
                 has_config=r._has_config,
-                instances=r.objects.by_domain(self.domain),
+                instances=get_repeaters_with_state_counts(r),
             )
             for r in get_all_repeater_types().values()
             if r.available_for_domain(self.domain)
@@ -61,18 +73,19 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        if are_repeat_records_migrated(self.domain):
-            report = 'repeat_record_report'
-        else:
-            report = 'couch_repeat_record_report'
+        state_counts = RepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
         return {
-            'report': report,
-            'repeater_types_info': self.repeater_types_info,
-            'pending_record_count': RepeatRecord.count(self.domain),
+            'report': 'repeat_record_report',
+            'repeater_types_info': self.get_repeater_types_info(state_counts),
+            'pending_record_count': sum(
+                count for repeater_id, states in state_counts.items()
+                for state, count in states.items()
+                if state in RECORD_QUEUED_STATES
+            ),
             'user_can_configure': (
-                self.request.couch_user.is_superuser or
-                self.request.couch_user.can_edit_motech() or
-                toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+                self.request.couch_user.is_superuser
+                or self.request.couch_user.can_edit_motech()
+                or toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
             )
         }
 
@@ -82,6 +95,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     repeater_form_class = GenericRepeaterForm
     template_name = 'repeaters/add_form_repeater.html'
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
@@ -137,8 +151,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         return self.set_repeater_attr(repeater, self.add_repeater_form.cleaned_data)
 
     def set_repeater_attr(self, repeater, cleaned_data):
-        if not repeater.repeater_id:
-            repeater.repeater_id = uuid.uuid4().hex
+        assert repeater.repeater_id, repeater
         repeater.domain = self.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.request_method = cleaned_data['request_method']
@@ -188,6 +201,7 @@ class AddRepeaterView(BaseRepeaterView):
         )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
     template_name = 'repeaters/add_form_repeater.html'
@@ -216,7 +230,10 @@ class EditRepeaterView(BaseRepeaterView):
             )
         else:
             repeater_id = self.kwargs['repeater_id']
-            repeater = Repeater.objects.get(repeater_id=repeater_id)
+            try:
+                repeater = Repeater.objects.get(id=repeater_id, domain=self.domain)
+            except Repeater.DoesNotExist:
+                raise Http404()
             data = repeater.to_json()
             data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(
@@ -233,7 +250,7 @@ class EditRepeaterView(BaseRepeaterView):
         return super(EditRepeaterView, self).dispatch(request, *args, **kwargs)
 
     def initialize_repeater(self):
-        return Repeater.objects.get(repeater_id=self.kwargs['repeater_id'])
+        return Repeater.objects.get(id=self.kwargs['repeater_id'])
 
     def post_save(self, request, repeater):
         messages.success(request, _("Forwarder Successfully Updated"))
@@ -264,6 +281,17 @@ class AddFormRepeaterView(AddRepeaterView):
         ) if xmlns]
         return repeater
 
+    def make_repeater(self):
+        repeater = super().make_repeater()
+        if forwards_to_commcare_connect(repeater):
+            # CommCare Connect uses Traefik Proxy, which (despite
+            # complaints from the community) insists on defaulting to
+            # returning 404 responses due to temporary overloading.
+            # Add 404 to back-off codes so that 404 responses get
+            # retried later.
+            repeater.add_backoff_code(404)
+        return repeater
+
 
 class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     urlname = 'edit_form_repeater'
@@ -272,6 +300,10 @@ class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     @property
     def page_url(self):
         return reverse(AddFormRepeaterView.urlname, args=[self.domain])
+
+
+class EditConnectFormRepeaterView(EditFormRepeaterView):
+    urlname = "edit_connect_form_repeater"
 
 
 class AddCaseRepeaterView(AddRepeaterView):
@@ -312,7 +344,7 @@ class EditDataRegistryCaseUpdateRepeater(EditCaseRepeaterView):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def drop_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(repeater_id=repeater_id)
+    rep = Repeater.objects.get(id=repeater_id)
     rep.retire()
     messages.success(request, "Forwarding stopped!")
     return HttpResponseRedirect(
@@ -324,7 +356,7 @@ def drop_repeater(request, domain, repeater_id):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def pause_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(repeater_id=repeater_id)
+    rep = Repeater.objects.get(id=repeater_id)
     rep.pause()
     messages.success(request, "Forwarding paused!")
     return HttpResponseRedirect(
@@ -336,7 +368,7 @@ def pause_repeater(request, domain, repeater_id):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def resume_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(repeater_id=repeater_id)
+    rep = Repeater.objects.get(id=repeater_id)
     rep.resume()
     messages.success(request, "Forwarding resumed!")
     return HttpResponseRedirect(

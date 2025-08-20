@@ -8,6 +8,7 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad as crypto_pad
 from Crypto.Util.Padding import unpad as crypto_unpad
 from Crypto.Util.py3compat import bord
+from Crypto.Random import get_random_bytes
 
 from corehq.motech.const import AUTH_PRESETS, OAUTH2_PWD
 
@@ -30,16 +31,11 @@ def simple_pad(bytestring, block_size, char=PAD_CHAR):
     return bytestring + padding
 
 
-def b64_aes_encrypt(message):
+def b64_aes_cbc_encrypt(message):
     """
-    AES-encrypt and base64-encode `message`.
+    AES-encrypt and base64-encode `message` using CBC mode.
 
-    Uses Django SECRET_KEY as AES key.
-
-    >>> settings.SECRET_KEY = 'xyzzy'
-    >>> b64_aes_encrypt('Around you is a forest.')
-    'Vh2Tmlnr5+out2PQDefkudZ2frfze5onsAlUGTLv3Oc='
-
+    Uses Django SECRET_KEY as AES key and generates a random IV.
     """
     if isinstance(settings.SECRET_KEY, bytes):
         secret_key_bytes = settings.SECRET_KEY
@@ -48,34 +44,38 @@ def b64_aes_encrypt(message):
     aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
     # We never need to unpad the key, so simple_pad() is fine (and
     # allows us to decrypt old values).
-    aes = AES.new(aes_key, AES.MODE_ECB)
+    iv = get_random_bytes(AES_BLOCK_SIZE)
+    aes = AES.new(aes_key, AES.MODE_CBC, iv)
 
     message_bytes = message if isinstance(message, bytes) else message.encode('utf8')
     plaintext_bytes = crypto_pad(message_bytes, AES_BLOCK_SIZE, style='iso7816')
     ciphertext_bytes = aes.encrypt(plaintext_bytes)
-    b64ciphertext_bytes = b64encode(ciphertext_bytes)
+
+    b64ciphertext_bytes = b64encode(iv + ciphertext_bytes)
     return b64ciphertext_bytes.decode('ascii')
 
 
-def b64_aes_decrypt(message):
+def b64_aes_cbc_decrypt(message):
     """
-    Base64-decode and AES-decrypt ASCII `message`.
+    Base64-decode and AES-decrypt ASCII `message` using CBC mode.
 
     Uses Django SECRET_KEY as AES key.
 
     >>> settings.SECRET_KEY = 'xyzzy'
-    >>> b64_aes_decrypt('Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
+    >>> b64_aes_cbc_decrypt('6WbQuezOKqp4AMOCoUOndVnAUDL13e0fl3cpxcgHX/AlcPwN4+poaetdjwgikz0F')
     'Around you is a forest.'
-
     """
     if isinstance(settings.SECRET_KEY, bytes):
         secret_key_bytes = settings.SECRET_KEY
     else:
         secret_key_bytes = settings.SECRET_KEY.encode('ascii')
     aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    aes = AES.new(aes_key, AES.MODE_ECB)
 
-    ciphertext_bytes = b64decode(message)
+    decoded_bytes = b64decode(message)
+    iv = decoded_bytes[:AES_BLOCK_SIZE]
+    ciphertext_bytes = decoded_bytes[AES_BLOCK_SIZE:]
+
+    aes = AES.new(aes_key, AES.MODE_CBC, iv)
     padded_plaintext_bytes = aes.decrypt(ciphertext_bytes)
     plaintext_bytes = unpad(padded_plaintext_bytes)
     return plaintext_bytes.decode('utf8')
@@ -212,7 +212,6 @@ def api_setting_matches_preset(connection):
             return url.split(connection.url.rstrip('/'))[1]
         except IndexError:
             return None
-
     for preset_slug, preset in AUTH_PRESETS.items():
         if (
             split_url(connection.token_url) == preset.token_endpoint

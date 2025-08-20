@@ -1,0 +1,10 @@
+--- 
++++ 
+@@ -2,6 +2,6 @@
+ import "knockout";
+ import "ko.mapping";
+ import "underscore";
+-import "bootstrap";
++import "bootstrap5";
+ 
+ // nothing to do, this is just to define the major common dependencies for HQ

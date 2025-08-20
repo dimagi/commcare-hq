@@ -1,6 +1,7 @@
 import json
 import uuid
 from datetime import datetime
+from unittest.mock import patch
 
 from django.utils.http import urlencode
 
@@ -164,14 +165,17 @@ class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     resource = v0_4.CommCareCaseResource
 
-    def _test_es_query(self, url_params, expected_query, fake_es=None):
-        fake_es = fake_es or FakeFormESView()
-        v0_3.MOCK_CASE_ES_VIEW = fake_es
-
+    def _test_es_query(self, url_params, expected_query):
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
-        actual = fake_es.queries[0]['query']['bool']['filter']
+        actual = self.fake_es.queries[0]['query']['bool']['filter']
         self.checkQuery(actual, expected_query, is_raw_query=True)
+        assert len(self.fake_es.queries) == 1
+
+    def _assert_auth_get_resource(self, *args, **kw):
+        self.fake_es = FakeFormESView()
+        with patch.object(v0_3.CommCareCaseResource, "case_es", lambda *a: self.fake_es):
+            return super()._assert_auth_get_resource(*args, **kw)
 
     def test_get_list_legacy_filters(self):
         expected = [
@@ -229,11 +233,11 @@ class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
         Tests authorization function properly blocks domains without proper subscription
         :return:
         """
-        community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        new_user = WebUser.create(community_domain.name, 'test', 'testpass', None, None)
+        free_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(free_domain.name, 'test', 'testpass', None, None)
         new_user.save()
 
-        self.addCleanup(community_domain.delete)
+        self.addCleanup(free_domain.delete)
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 403)
@@ -243,11 +247,11 @@ class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
         Tests superuser overrides authorization
         :return:
         """
-        community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        new_user = WebUser.create(community_domain.name, 'test', 'testpass', None, None, is_superuser=True)
+        free_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(free_domain.name, 'test', 'testpass', None, None, is_superuser=True)
         new_user.save()
 
-        self.addCleanup(community_domain.delete)
+        self.addCleanup(free_domain.delete)
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 200)

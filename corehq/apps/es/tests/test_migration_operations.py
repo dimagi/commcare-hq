@@ -14,7 +14,9 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.migration_operations import (
     CreateIndex,
+    CreateIndexIfNotExists,
     DeleteIndex,
+    DeleteOnlyIfIndexExists,
     MappingUpdateFailed,
     UpdateIndexMapping,
     make_mapping_meta,
@@ -138,7 +140,7 @@ class TestCreateIndex(BaseCase):
         migration = TestMigration(CreateIndex(*self.create_index_args))
         with self.assertRaises(RequestError) as context:
             migration.apply()
-        self.assertEqual(context.exception.error, "index_already_exists_exception")
+        self.assertEqual(context.exception.error, "resource_already_exists_exception")
 
     def test_reverse_deletes_index(self):
         migration = TestMigration(CreateIndex(*self.create_index_args))
@@ -335,11 +337,7 @@ class TestCreateIndexIfNotExists(BaseCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # It's not possible to import files starting with number
-        # Therefore using import_module to import migration file
-        from importlib import import_module
-        migration_module = import_module("corehq.apps.es.migrations.0001_bootstrap_es_indexes")
-        cls.CreateIndexIfNotExists = migration_module.CreateIndexIfNotExists
+        cls.CreateIndexIfNotExists = CreateIndexIfNotExists
 
     def test_does_not_fail_if_index_exists(self):
         manager.index_create(self.index)
@@ -375,6 +373,38 @@ class TestCreateIndexIfNotExists(BaseCase):
         self.assertIndexExists(self.index)
         migration.unapply()
         self.assertIndexExists(self.index)
+
+
+@es_test
+class TestDeleteOnlyIfIndexExists(BaseCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.DeleteOnlyIfIndexExists = DeleteOnlyIfIndexExists
+
+    def test_deletes_index_if_exists(self):
+        migration = TestMigration(self.DeleteOnlyIfIndexExists(self.index))
+        manager.index_create(self.index)
+        self.assertIndexExists(self.index)
+        migration.apply()
+        # Index is deleted after running the migrations
+        self.assertIndexDoesNotExist(self.index)
+
+    def test_does_not_fail_if_index_does_not_exists(self):
+        self.assertIndexDoesNotExist(self.index)
+        migration = TestMigration(self.DeleteOnlyIfIndexExists(self.index))
+        migration.apply()
+        # Index still does not exist and no errors were raised in the tests.
+        self.assertIndexDoesNotExist(self.index)
+
+    def test_reverse_is_noop(self):
+        manager.index_create(self.index)
+        migration = TestMigration(self.DeleteOnlyIfIndexExists(self.index))
+        migration.apply()
+        self.assertIndexDoesNotExist(self.index)
+        migration.unapply()
+        self.assertIndexDoesNotExist(self.index)
 
 
 @es_test
@@ -443,7 +473,7 @@ class TestDeleteIndex(BaseCase):
         )
         with self.assertRaises(RequestError) as context:
             migration.unapply()
-        self.assertEqual(context.exception.error, "index_already_exists_exception")
+        self.assertEqual(context.exception.error, "resource_already_exists_exception")
 
     def test_describe(self):
         operation = DeleteIndex(self.index)
@@ -607,8 +637,9 @@ class TestUpdateIndexMapping(BaseCase):
             self.type,
             {"prop": {"type": "integer"}},
         ))
+        error_type = "RequestError"
         literal = (
-            "TransportError(400, 'illegal_argument_exception', 'mapper [prop] "
+            f"{error_type}(400, 'illegal_argument_exception', 'mapper [prop] "
             "of different type, current_type [text], merged_type [integer]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
@@ -624,8 +655,9 @@ class TestUpdateIndexMapping(BaseCase):
             self.type,
             {"prop": {"type": "keyword"}},
         ))
+        error_type = "RequestError"
         literal = (
-            "TransportError(400, 'illegal_argument_exception', "
+            f"{error_type}(400, 'illegal_argument_exception', "
             "'mapper [prop] of different type, current_type [text], merged_type [keyword]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
@@ -774,9 +806,9 @@ class TestMappingTransformFunctions(SimpleTestCase):
         old_mapping = {
             "_meta": {"created": "now"},
             "properties": {
-                "value": {"type": "string"},
+                "value": {"type": "text"},
                 "dict_val": {
-                    "properties": {"nested_val": {"type": "string", "index": "not_analyzed"}}
+                    "properties": {"nested_val": {"type": "keyword"}}
                 }
 
             },

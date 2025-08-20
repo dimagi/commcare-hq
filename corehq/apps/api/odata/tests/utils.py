@@ -79,7 +79,8 @@ class OdataTestMixin(object):
 
     @property
     def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': self.instance._id})
+        return reverse(self.view_urlname, kwargs={
+            'domain': self.domain.name, 'config_id': self.instance._id, 'api_version': 'v1'})
 
 
 @es_test
@@ -149,6 +150,5 @@ class FormOdataTestMixin(OdataTestMixin):
 
 def generate_api_key_from_web_user(web_user):
     api_key = HQApiKey.objects.get_or_create(user=web_user.get_django_user())[0]
-    api_key.key = api_key.generate_key()
     api_key.save()
     return api_key

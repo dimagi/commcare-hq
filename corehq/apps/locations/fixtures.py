@@ -1,11 +1,12 @@
 from collections import defaultdict
 from itertools import groupby
-from xml.etree.cElementTree import Element, SubElement
+from xml.etree.cElementTree import Element
 
 from django.contrib.postgres.fields.array import ArrayField
-from django.db.models import IntegerField, Q
+from django.db.models import IntegerField
+from django.utils.functional import cached_property
 
-from django_cte import With
+from django_cte import CTE, with_cte
 from django_cte.raw import raw_cte_sql
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -17,12 +18,12 @@ from corehq.apps.app_manager.const import (
     SYNC_HIERARCHICAL_FIXTURE,
 )
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.fixtures.models import UserLookupTableStatus
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import (
     LocationFixtureConfiguration,
     LocationType,
     SQLLocation,
-    get_domain_locations,
 )
 
 
@@ -54,35 +55,65 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def should_sync_locations(last_sync, locations_queryset, restore_state):
-    """
-    Determine if any locations (already filtered to be relevant
-    to this user) require syncing.
-    """
-    restore_user = restore_state.restore_user
-    return (
-        _app_has_changed(last_sync, restore_state.params.app_id)
-        or _fixture_has_changed(last_sync, restore_user)
-        or _locations_have_changed(last_sync, locations_queryset, restore_user)
-    )
+int_field = IntegerField()
+int_array = ArrayField(int_field)
+
+
+class UserLocations:
+    def __init__(self, restore_user):
+        self.user = restore_user
+        self.domain = self.user.domain
+
+    @cached_property
+    def queryset(self):
+        # Doing this lazily lets us defer evaluation unless actually needed
+        user_locations = self.user.get_sql_locations(self.domain)
+        user_location_pks = list(user_locations.order_by().values_list("pk", flat=True))
+
+        if not user_location_pks:
+            return SQLLocation.objects.none()
+        return _location_queryset_helper(self.domain, user_location_pks)
+
+    def have_changed(self, last_sync_date):
+        if LocationType.objects.filter(domain=self.domain, last_modified__gte=last_sync_date).exists():
+            return True
+        # this check is much faster - short circuit out if nothing at all changed
+        if not SQLLocation.objects.filter(domain=self.domain, last_modified__gte=last_sync_date).exists():
+            return False
+        return self.queryset.filter(last_modified__gte=last_sync_date).exists()
+
+
+def _location_queryset_helper(domain, location_pks):
+    fixture_ids = CTE(raw_cte_sql(
+        """
+        SELECT "id", "path", "depth"
+        FROM get_location_fixture_ids(%s::TEXT, %s)
+        """,
+        [domain, location_pks],
+        {"id": int_field, "path": int_array, "depth": int_field},
+    ))
+
+    return with_cte(fixture_ids, select=fixture_ids.join(
+        SQLLocation.objects.all(),
+        id=fixture_ids.col.id,
+    )).annotate(
+        path=fixture_ids.col.path,
+        depth=fixture_ids.col.depth,
+    ).prefetch_related('location_type', 'parent')
 
 
 def _app_has_changed(last_sync, app_id):
+    # Needed only to support the app-specific config for hierarchical vs flat fixtures
     return (last_sync and last_sync.build_id is not None
             and app_id is not None
             and app_id != last_sync.build_id)
 
 
-def _fixture_has_changed(last_sync, restore_user):
-    return (not last_sync or not last_sync.date or
-            restore_user.get_fixture_last_modified() >= last_sync.date)
-
-
-def _locations_have_changed(last_sync, locations_queryset, restore_user):
-    return locations_queryset.filter(last_modified__gte=last_sync.date).values('last_modified').union(
-        LocationType.objects.filter(domain=restore_user.domain,
-                                    last_modified__gte=last_sync.date).values('last_modified'),
-    ).exists()
+def _fixture_has_changed(last_sync_date, restore_user):
+    """True if the user's location assignments have been changed or if something has been deleted"""
+    last_modified = UserLookupTableStatus.get_last_modified(
+        restore_user.user_id, UserLookupTableStatus.Fixture.LOCATION)
+    return last_modified >= last_sync_date
 
 
 class LocationFixtureProvider(FixtureProvider):
@@ -109,13 +140,17 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user, restore_state.params.app):
             return []
 
-        # This just calls get_location_fixture_queryset but is memoized to the user
-        locations_queryset = restore_user.get_locations_to_sync()
-        if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
+        user_locations = UserLocations(restore_user)
+        last_sync = restore_state.last_sync_log
+        if last_sync and last_sync.date and not (
+            _app_has_changed(last_sync, restore_state.params.app_id)
+            or _fixture_has_changed(last_sync.date, restore_user)
+            or user_locations.have_changed(last_sync.date)
+        ):
             return []
 
         return self.serializer.get_xml_nodes(restore_user.domain, self.id, restore_user.user_id,
-                                             locations_queryset)
+                                             user_locations.queryset)
 
 
 class HierarchicalLocationSerializer(object):
@@ -241,43 +276,6 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
-int_field = IntegerField()
-int_array = ArrayField(int_field)
-
-
-def get_location_fixture_queryset(user):
-    if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        return get_domain_locations(user.domain).prefetch_related('location_type')
-
-    user_locations = user.get_sql_locations(user.domain)
-
-    if user_locations.query.is_empty():
-        return user_locations
-
-    user_location_ids = list(user_locations.order_by().values_list("id", flat=True))
-
-    return _location_queryset_helper(user.domain, user_location_ids)
-
-
-def _location_queryset_helper(domain, location_pks):
-    fixture_ids = With(raw_cte_sql(
-        """
-        SELECT "id", "path", "depth"
-        FROM get_location_fixture_ids(%s::TEXT, %s)
-        """,
-        [domain, location_pks],
-        {"id": int_field, "path": int_array, "depth": int_field},
-    ))
-
-    return fixture_ids.join(
-        SQLLocation.objects.all(),
-        id=fixture_ids.col.id,
-    ).annotate(
-        path=fixture_ids.col.path,
-        depth=fixture_ids.col.depth,
-    ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
-
-
 def _append_children(node, location_db, locations, data_fields):
     for type, locs in _group_by_type(locations):
         locs = sorted(locs, key=lambda loc: loc.name)
@@ -285,7 +283,8 @@ def _append_children(node, location_db, locations, data_fields):
 
 
 def _group_by_type(locations):
-    key = lambda loc: (loc.location_type.code, loc.location_type)
+    def key(loc):
+        return (loc.location_type.code, loc.location_type)
     for (code, type), locs in groupby(sorted(locations, key=key), key=key):
         yield type, list(locs)
 

@@ -9,38 +9,35 @@
     <i class="fa fa-thumbs-up"></i>
   </a>
 
-  <div class="modal fade"
+  <div class="modal fade modal-lg"
        id="modal-feedback-form-widget"
-       role="dialog">
+       tabindex="-1"
+       aria-labelledby="feedbackFormModalTitle"
+       aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-            <span class="sr-only">
-              {% trans "Close" %}
-            </span>
-          </button>
-          <h4 class="modal-title">
+          <h4 class="modal-title" id="feedbackFormModalTitle">
             {% blocktrans %}
               We would love to get your feedback
             {% endblocktrans %}
           </h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body form"
+        <div class="modal-body"
              data-bind="visible: !showSuccess()">
-          <div class="form-group">
-            <label class="control-label">
+          <div class="mb-3">
+            <label class="form-label">
               {% blocktrans %}
                 How would you rate this feature?
               {% endblocktrans %}
             </label>
-            <div class="row feedback-smiles">
+            <div class="row mb-3 feedback-smiles">
               <div class="col-sm-4">
                 <button type="button"
                         data-bind="click: rateBad, css: { selected: rating() === 1 }"
                         class="btn btn-link rate-bad">
-                  <i class="fa fa-frown-o"></i>
+                  <i class="fa-regular fa-face-frown"></i>
                   {% trans "Don't Like It / Not Useful" %}
                 </button>
               </div>
@@ -48,7 +45,7 @@
                 <button type="button"
                         data-bind="click: rateOk, css: { selected: rating() === 2 }"
                         class="btn btn-link rate-ok">
-                  <i class="fa fa-meh-o"></i>
+                  <i class="fa-regular fa-face-meh"></i>
                   {% trans "Not Sure / Confusing" %}
                 </button>
               </div>
@@ -56,14 +53,14 @@
                 <button type="button"
                         data-bind="click: rateGood, css: { selected: rating() === 3 }"
                         class="btn btn-link rate-good">
-                  <i class="fa fa-smile-o"></i>
+                  <i class="fa-regular fa-face-smile"></i>
                   {% trans "Love It / Useful" %}
                 </button>
               </div>
             </div>
           </div>
-          <div class="form-group">
-            <label class="control-label">
+          <div class="mb-3">
+            <label class="form-label">
               {% trans "Any other comments?" %}
             </label>
             <textarea data-bind="value: additionalFeedback"

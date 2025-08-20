@@ -1,0 +1,79 @@
+--- 
++++ 
+@@ -1,19 +1,24 @@
+-import $ from "jquery";
+-import _ from "underscore";
+-import initialPageData from "hqwebapp/js/initial_page_data";
+-import datatablesConfig from "reports/js/bootstrap3/datatables_config";
+-import standardHQReportModule from "reports/js/bootstrap3/standard_hq_report";
+-import "reports/js/datepicker";
++import 'commcarehq';
+ 
+-// Page-specific scripts
+-import "data_interfaces/js/bootstrap3/case_management";
+-import "data_interfaces/js/archive_forms";
+-import "reports/js/inspect_data";
+-import "reports/js/bootstrap3/project_health_dashboard";
+-import "reports/js/bootstrap3/aggregate_user_status";
+-import "reports/js/bootstrap3/application_status";
+-import "reports/js/user_history";
+-import "reports/js/case_activity";
++import $ from 'jquery';
++import _ from 'underscore';
++import {Popover} from 'bootstrap5';
++
++import initialPageData from 'hqwebapp/js/initial_page_data';
++import datatablesConfig from 'reports/js/bootstrap5/datatables_config';
++import standardHQReportModule from 'reports/js/bootstrap5/standard_hq_report';
++
++import 'reports/js/datepicker';
++
++import 'data_interfaces/js/bootstrap5/case_management';
++import 'data_interfaces/js/archive_forms';
++import 'reports/js/inspect_data';
++import 'reports/js/bootstrap5/project_health_dashboard';
++import 'reports/js/bootstrap5/aggregate_user_status';
++import 'reports/js/bootstrap5/application_status';
++import 'reports/js/user_history';
++import 'reports/js/case_activity';
++
+ 
+ function renderPage(slug, tableOptions) {
+     if (tableOptions && tableOptions.datatables) {
+@@ -24,7 +29,6 @@
+                 defaultRows: tableConfig.default_rows,
+                 startAtRowNum: tableConfig.start_at_row,
+                 showAllRowsOption: tableConfig.show_all_rows,
+-                loadingTemplateSelector: '#js-template-loading-report',
+                 autoWidth: tableConfig.headers.auto_width,
+             };
+         if (!tableConfig.sortable) {
+@@ -46,7 +50,7 @@
+             });
+         }
+         if (tableConfig.bad_request_error_text) {
+-            options.badRequestErrorText = "<span class='label label-important'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
++            options.badRequestErrorText = "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
+         }
+         if (tableConfig.left_col.is_fixed) {
+             _.extend(options, {
+@@ -63,10 +67,15 @@
+         reportTables.render();
+     }
+ 
+-    $('.header-popover').popover({
+-        trigger: 'hover',
+-        placement: 'bottom',
+-        container: 'body',
++    const tableHeadersWithInfo = document.getElementsByClassName('header-popover');
++    Array.from(tableHeadersWithInfo).forEach((elem) => {
++        new Popover(elem, {
++            title: elem.dataset.title,
++            content: elem.dataset.content,
++            trigger: 'hover',
++            placement: 'bottom',
++            container: 'body',
++        });
+     });
+ }
+ 

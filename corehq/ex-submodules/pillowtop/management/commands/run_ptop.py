@@ -93,19 +93,7 @@ class Command(BaseCommand):
             help="comma-separated UCR tables IDs to exclude. Applicable for form/case/ucr pillows",
         )
 
-    def handle(self, **options):
-        run_all = options['run_all']
-        list_all = options['list_all']
-        list_checkpoints = options['list_checkpoints']
-        pillow_name = options['pillow_name']
-        pillow_key = options['pillow_key']
-        num_processes = options['num_processes']
-        process_number = options['process_number']
-        processor_chunk_size = options['processor_chunk_size']
-        dedicated_migration_process = options['dedicated_migration_process']
-        exclude_ucrs = options['exclude_ucrs']
-        assert 0 <= process_number < num_processes
-        assert processor_chunk_size
+    def handle(self, run_all, list_all, list_checkpoints, pillow_key, pillow_name, **options):
         if list_all:
             print("\nPillows registered in system:")
             for config in get_all_pillow_configs():
@@ -114,34 +102,49 @@ class Command(BaseCommand):
             print("\n\tRun with --pillow-name <name> to run a pillow")
             print("\n\tRun with --pillow-key <key> to run a group of pillows together\n")
             sys.exit()
+        if list_checkpoints:
+            for pillow in get_all_pillow_instances():
+                print(pillow.checkpoint.checkpoint_id)
+            sys.exit()
 
         if run_all:
             pillows_to_run = get_all_pillow_configs()
-        elif not run_all and not pillow_name and pillow_key:
+        elif not pillow_name and pillow_key:
             # get pillows from key
             if pillow_key not in settings.PILLOWTOPS:
-                print("\n\tError, key %s is not in settings.PILLOWTOPS, legal keys are: %s" % \
+                print("\n\tError, key %s is not in settings.PILLOWTOPS, legal keys are: %s" %
                       (pillow_key, list(settings.PILLOWTOPS)))
                 sys.exit()
-            else:
-                pillows_to_run = [get_pillow_config_from_setting(pillow_key, config)
-                                  for config in settings.PILLOWTOPS[pillow_key]]
-
-        elif not run_all and not pillow_key and pillow_name:
-            other_options = {}
-            if exclude_ucrs:
-                other_options = {'exclude_ucrs': exclude_ucrs.split(",")}
-            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number,
-            processor_chunk_size=processor_chunk_size, dedicated_migration_process=dedicated_migration_process,
-            **other_options)
-            start_pillow(pillow)
-            sys.exit()
-        elif list_checkpoints:
-            for pillow in get_all_pillow_instances():
-                print(pillow.checkpoint.checkpoint_id)
+            pillows_to_run = [get_pillow_config_from_setting(pillow_key, config)
+                              for config in settings.PILLOWTOPS[pillow_key]]
+        elif not pillow_key and pillow_name:
+            run_pillow_by_name(pillow_name, options)
             sys.exit()
         else:
             print("\nNo command set, please see --help for runtime instructions")
             sys.exit()
 
         start_pillows(pillows=[pillow_config.get_instance() for pillow_config in pillows_to_run])
+
+
+def run_pillow_by_name(pillow_name, options):
+    num_processes = options['num_processes']
+    process_number = options['process_number']
+    processor_chunk_size = options['processor_chunk_size']
+    dedicated_migration_process = options['dedicated_migration_process']
+    exclude_ucrs = options['exclude_ucrs']
+    assert 0 <= process_number < num_processes
+    assert processor_chunk_size
+
+    other_options = {}
+    if exclude_ucrs:
+        other_options = {'exclude_ucrs': exclude_ucrs.split(",")}
+    pillow = get_pillow_by_name(
+        pillow_name,
+        num_processes=num_processes,
+        process_num=process_number,
+        processor_chunk_size=processor_chunk_size,
+        dedicated_migration_process=dedicated_migration_process,
+        **other_options
+    )
+    start_pillow(pillow)

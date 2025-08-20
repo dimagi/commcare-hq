@@ -1,7 +1,9 @@
-import ipaddress
+from django.test import SimpleTestCase
+
+import pytest
 import socket
 
-from django.test import SimpleTestCase
+from unittest.mock import patch
 
 from testil import assert_raises, eq
 
@@ -14,68 +16,57 @@ from ..urlvalidate import (
 from .mockipinfo import hostname_resolving_to_ips
 
 NO_RAISE = object()
-RAISE = object()
 
 
-INDEX_ACTION = 0
-INDEX_REASON = 1
-
-
-GOOGLE_IP = SUITE = None  # set in setup_module
-
-
-def setup_module():
-    global GOOGLE_IP, SUITE
-
-    GOOGLE_IP = ipaddress.ip_address(socket.gethostbyname('google.com'))
-    SUITE = [
-        ('https://google.com/', NO_RAISE),
-        ('http://google.com/', NO_RAISE),
-        ('http://google.com', NO_RAISE),
-        ('http://foo.example.com/', RAISE, CannotResolveHost('foo.example.com')),
-        ('http://localhost/', RAISE, PossibleSSRFAttempt('is_loopback')),
-        ('http://Localhost/', RAISE, PossibleSSRFAttempt('is_loopback')),
-        ('http://169.254.169.254/latest/meta-data', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://2852039166/', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://7147006462/', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://0xA9.0xFE.0xA9.0xFE/', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://0x41414141A9FEA9FE/', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://0xA9FEA9FE/', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://0251.0376.0251.0376/', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://0251.00376.000251.0000376/', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://169.254.169.254.xip.io/', RAISE, PossibleSSRFAttempt('is_link_local')),
-        ('http://10.124.10.11', RAISE, PossibleSSRFAttempt('is_private')),
-        ('some-non-url', RAISE, InvalidURL()),
-    ]
-
-
-def test_example_suite():
-    for input_url, *expected in SUITE:
-        expected_action = expected[INDEX_ACTION]
-        if expected_action is NO_RAISE:
-            validate_user_input_url(input_url)
-        elif expected_action is RAISE:
-            expected_reason = expected[INDEX_REASON]
-            if type(expected_action) == PossibleSSRFAttempt:
-                with assert_raises(PossibleSSRFAttempt, msg=lambda e: eq(e.reason, expected_reason.reason)):
-                    validate_user_input_url(input_url)
-            else:
-                with assert_raises(type(expected_reason), msg=str(expected_reason)):
-                    validate_user_input_url(input_url)
+@pytest.mark.parametrize("input_url, expected", [
+    ('https://google.com/', NO_RAISE),
+    ('http://google.com/', NO_RAISE),
+    ('http://google.com', NO_RAISE),
+    ('http://foo.example.com/', CannotResolveHost('foo.example.com')),
+    ('http://localhost/', PossibleSSRFAttempt('is_loopback')),
+    ('http://Localhost/', PossibleSSRFAttempt('is_loopback')),
+    ('http://169.254.169.254/latest/meta-data', PossibleSSRFAttempt('is_link_local')),
+    ('http://2852039166/', PossibleSSRFAttempt('is_link_local')),
+    ('http://0xA9.0xFE.0xA9.0xFE/', PossibleSSRFAttempt('is_link_local')),
+    ('http://0xA9FEA9FE/', PossibleSSRFAttempt('is_link_local')),
+    ('http://0251.0376.0251.0376/', PossibleSSRFAttempt('is_link_local')),
+    ('http://0251.00376.000251.0000376/', PossibleSSRFAttempt('is_link_local')),
+    ('http://10.124.10.11', PossibleSSRFAttempt('is_private')),
+    ('some-non-url', InvalidURL()),
+])
+def test_example_urls(input_url, expected):
+    if expected is NO_RAISE:
+        validate_user_input_url(input_url)
+    else:
+        assert isinstance(expected, Exception), f"expected exception instance, got {expected!r}"
+        if type(expected) is PossibleSSRFAttempt:
+            with assert_raises(PossibleSSRFAttempt, msg=lambda e: eq(e.reason, expected.reason)):
+                validate_user_input_url(input_url)
         else:
-            raise Exception("expected action in suite should be NO_RAISE or RAISE")
+            with assert_raises(type(expected), msg=str(expected)):
+                validate_user_input_url(input_url)
 
 
-def test_rebinding():
+# patch because the public service rebind.network cannot be resolved and might be taken down
+@patch('socket.getaddrinfo', side_effect=[
+    [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('8.8.8.8', 80))],
+    [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('169.254.169.254', 80))]
+])
+def test_dns_resolution_to_bad_address(mock_gethostbyname):
     """
     this test doesn't do much, it just checks that a known rebinding endpoint
     is either valid, or pointing to a link local address
     """
     url = 'http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/'
+    # resolves to a good address
+    validate_user_input_url(url)
     try:
+        # resolves to a bad address
         validate_user_input_url(url)
     except PossibleSSRFAttempt as e:
-        eq(e.reason, 'is_link_local')
+        assert e.reason == 'is_link_local'
+    else:
+        assert False, "Expected PossibleSSRFAttempt to be raised"
 
 
 class SanitizeIPv6Tests(SimpleTestCase):

@@ -22,7 +22,7 @@ from corehq.apps.sso.models import (
 @unit_testing_only
 def create_idp(slug, account, include_certs=False):
     idp = IdentityProvider(
-        name=f"Azure AD for {account.name}",
+        name=f"Entra ID for {account.name}",
         slug=slug,
         owner=account,
     )
@@ -118,13 +118,9 @@ def get_public_cert_file(expiration_in_seconds=certificates.DEFAULT_EXPIRATION):
         key_pair,
         expiration_in_seconds
     )
-    cert_bytes = certificates.crypto.dump_certificate(
-        certificates.crypto.FILETYPE_PEM,
-        cert
-    )
     return SimpleUploadedFile(
         "certificate.cer",
-        cert_bytes,
+        cert.public_bytes(certificates.serialization.Encoding.PEM),
         content_type="application/x-x509-ca-cert",
     )
 

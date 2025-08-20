@@ -1,5 +1,5 @@
 from corehq.messaging.smsbackends.telerivet.views import TelerivetSetupView, incoming_message, message_status
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 from .views import create_backend, get_last_inbound_sms, send_sample_sms
 
 

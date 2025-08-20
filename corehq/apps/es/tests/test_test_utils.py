@@ -1,5 +1,8 @@
+import re
+from contextlib import nullcontext
+
+import pytest
 from django.test import SimpleTestCase
-from nose.tools import assert_raises_regex
 from testil import assert_raises
 from unittest.mock import patch
 
@@ -121,17 +124,14 @@ class TestPartialESTest(SimpleTestCase):
 
 
 @es_test_attr
-def test_index_state_with_function_decorator():
+@es_test(requires=[pigs_adapter])
+def test_pig_index_exists():
+    assert_index_exists(pigs_adapter)
 
-    @es_test(requires=[pigs_adapter])
-    def test_pig_index_exists():
-        assert_index_exists(pigs_adapter)
 
-    def test_pig_index_does_not_exist():
-        assert_not_index_exists(pigs_adapter)
-
-    yield test_pig_index_exists,
-    yield test_pig_index_does_not_exist,
+@es_test_attr
+def test_pig_index_does_not_exist():
+    assert_not_index_exists(pigs_adapter)
 
 
 def assert_index_exists(adapter):
@@ -148,47 +148,46 @@ def assert_not_index_exists(adapter):
 
 @es_test_attr
 def test_setup_class_expects_classmethod():
-    with assert_raises_regex(ValueError, "^'setup_class' expects a classmethod"):
+    with assert_raises(ValueError, msg=re.compile("^'setup_class' expects a classmethod")):
         @es_test(requires=[pigs_adapter], setup_class=True)
         class TestExpectsClassmethod:
             def setUpClass(self):
                 pass
 
 
+@pytest.mark.parametrize("args", [
+    (),  # without type/mapping
+    ("test_doc", {"_meta": {}}),  # with type/mapping
+])
 @es_test
-def test_temporary_index():
+def test_temporary_index(args):
     index = "test_index"
+    with temporary_index(index, *args):
+        assert manager.index_exists(index)
+    assert not manager.index_exists(index)
 
-    def test_temporary_index_with_args(*args):
-        with temporary_index(index, *args):
+
+@pytest.mark.parametrize("has_index, type_, mapping", [
+    # test while index exists
+    (True, "test_doc", None),  # no mapping
+    (True, None, {}),  # no type
+
+    # test while index does not exist
+    (False, "test_doc", None),  # no mapping
+    (False, None, {}),  # no type
+])
+@es_test
+def test_temporary_index_fails_with_invalid_args(has_index, type_, mapping):
+    index = "test_index"
+    with (temporary_index(index) if has_index else nullcontext()):
+        if has_index:
             assert manager.index_exists(index)
-        assert not manager.index_exists(index)
+        else:
+            assert not manager.index_exists(index)
 
-    yield test_temporary_index_with_args,  # without type/mapping
-    yield test_temporary_index_with_args, "test_doc", {"_meta": {}}  # with type/mapping
-
-
-@es_test
-def test_temporary_index_fails_with_invalid_args():
-    index = "test_index"
-
-    def test_temporary_index_with_args(type_, mapping):
         index_was_present = manager.index_exists(index)
         with assert_raises(ValueError):
             with temporary_index(index, type_, mapping):
                 pass
         assert index_was_present == manager.index_exists(index), \
             "unexpected index existence change"
-
-    no_mapping = ("test_doc", None)
-    no_type = (None, {})
-
-    with temporary_index(index):
-        # test while index exists
-        assert manager.index_exists(index)
-        yield test_temporary_index_with_args, *no_mapping
-        yield test_temporary_index_with_args, *no_type
-    # test while index does not exist
-    assert not manager.index_exists(index)
-    yield test_temporary_index_with_args, *no_mapping
-    yield test_temporary_index_with_args, *no_type

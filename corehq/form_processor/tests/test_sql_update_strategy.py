@@ -1,5 +1,6 @@
+import pytest
 from django.test import TestCase
-from freezegun import freeze_time
+from time_machine import travel
 from unittest.mock import patch
 from testil import eq
 from corehq.util.soft_assert.core import SoftAssert
@@ -43,14 +44,14 @@ class SqlUpdateStrategyTest(TestCase):
     @patch.object(SoftAssert, '_call')
     def test_reconcile_transactions(self, soft_assert_mock):
         """ tests a transanction with an early client date and late server date """
-        with freeze_time("2018-10-10"):
+        with travel("2018-10-10", tick=False):
             case = self._create_case()
 
-        with freeze_time("2018-10-11"):
+        with travel("2018-10-11", tick=False):
             new_old_xform = self._create_form()
-        with freeze_time("2018-10-08"):
+        with travel("2018-10-08", tick=False):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
-        with freeze_time("2018-10-11"):
+        with travel("2018-10-11", tick=False):
             self._save(new_old_xform, case, new_old_trans)
 
         case = CommCareCase.objects.get_case(case.case_id)
@@ -66,10 +67,10 @@ class SqlUpdateStrategyTest(TestCase):
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
     def test_reconcile_not_necessary(self):
-        with freeze_time("2018-10-10"):
+        with travel("2018-10-10", tick=False):
             case = self._create_case()
 
-        with freeze_time("2018-10-11"):
+        with travel("2018-10-11", tick=False):
             new_old_xform = self._create_form()
             new_old_trans = self._create_case_transaction(case, new_old_xform)
             self._save(new_old_xform, case, new_old_trans)
@@ -79,19 +80,19 @@ class SqlUpdateStrategyTest(TestCase):
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
 
     def test_ignores_before_rebuild_transaction(self):
-        with freeze_time("2018-10-10"):
+        with travel("2018-10-10", tick=False):
             case = self._create_case()
 
-        with freeze_time("2018-10-11"):
+        with travel("2018-10-11", tick=False):
             new_old_xform = self._create_form()
-        with freeze_time("2018-10-08"):
+        with travel("2018-10-08", tick=False):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
-        with freeze_time("2018-10-11"):
+        with travel("2018-10-11", tick=False):
             self._save(new_old_xform, case, new_old_trans)
 
         self.assertFalse(case.check_transaction_order())
 
-        with freeze_time("2018-10-13"):
+        with travel("2018-10-13", tick=False):
             new_rebuild_xform = self._create_form()
             rebuild_detail = RebuildWithReason(reason="shadow's golden coin")
             rebuild_transaction = CaseTransaction.rebuild_transaction(case, rebuild_detail)
@@ -102,10 +103,10 @@ class SqlUpdateStrategyTest(TestCase):
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
 
     def test_first_transaction_not_create(self):
-        with freeze_time("2018-10-10"):
+        with travel("2018-10-10", tick=False):
             case = self._create_case()
 
-        with freeze_time("2018-10-08"):
+        with travel("2018-10-08", tick=False):
             new_old_xform = self._create_form()
             new_old_trans = self._create_case_transaction(case, new_old_xform)
             self._save(new_old_xform, case, new_old_trans)
@@ -119,17 +120,17 @@ class SqlUpdateStrategyTest(TestCase):
     @patch.object(SoftAssert, '_call')
     def test_reconcile_transactions_within_fudge_factor(self, soft_assert_mock):
         """ tests a transanction with an early client date and late server date """
-        with freeze_time("2018-10-10"):
+        with travel("2018-10-10", tick=False):
             case = self._create_case()
 
-        with freeze_time("2018-10-11 06:00"):
+        with travel("2018-10-11 06:00", tick=False):
             new_old_xform = self._create_form()
-        with freeze_time("2018-10-10 18:00"):
+        with travel("2018-10-10 18:00", tick=False):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
-        with freeze_time("2018-10-11 06:00"):
+        with travel("2018-10-11 06:00", tick=False):
             self._save(new_old_xform, case, new_old_trans)
 
-        with freeze_time("2018-10-11"):
+        with travel("2018-10-11", tick=False):
             new_old_xform = self._create_form()
             new_old_trans = self._create_case_transaction(case, new_old_xform)
             self._save(new_old_xform, case, new_old_trans)
@@ -205,19 +206,16 @@ class SqlUpdateStrategyTest(TestCase):
         soft_assert_mock.reset_mock()
 
 
-def test_update_known_properties_with_empty_values():
-    def test(prop):
-        case = SqlCaseUpdateStrategy.case_implementation_class()
-        setattr(case, prop, "value")
-        action = CaseUpdateAction(block=None, **{prop: ""})
+@pytest.mark.parametrize("prop", [p for p, d in KNOWN_PROPERTIES.items() if d is not None])
+def test_update_known_properties_with_empty_values(prop):
+    case = SqlCaseUpdateStrategy.case_implementation_class()
+    setattr(case, prop, "value")
+    action = CaseUpdateAction(block=None, **{prop: ""})
 
-        SqlCaseUpdateStrategy(case)._update_known_properties(action)
+    SqlCaseUpdateStrategy(case)._update_known_properties(action)
 
-        eq(getattr(case, prop), "")
+    eq(getattr(case, prop), "")
 
-    # verify that at least one property will be tested
+
+def test_at_least_one_property_will_be_tested():
     assert any(v is not None for v in KNOWN_PROPERTIES.values()), KNOWN_PROPERTIES
-
-    for prop, default in KNOWN_PROPERTIES.items():
-        if default is not None:
-            yield test, prop

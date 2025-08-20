@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends report_base|default:"reports/async/bootstrap3/default.html" %}
++{% extends report_base|default:"reports/async/bootstrap5/default.html" %}
+ {% load hq_shared_tags %}
+ 
+ {% block reportcontent %}

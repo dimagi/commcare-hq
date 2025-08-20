@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+   <head>
+     <meta name="viewport" content="width=device-width">
+   </head>
+-  <body style="background: black;">
++  <body style="background: black;">  {# todo B5: inline style #}
+     {% if is_image %}
+       <img src="{{ download_url }}">
+     {% else %}
+@@ -12,7 +12,7 @@
+           <source src="{{ download_url }}">
+         </audio>
+       {% else %}
+-        <video controls autoplay name="{{ content_name }}" style="top: 10%; left: 10%; position: absolute;">
++        <video controls autoplay name="{{ content_name }}" style="top: 10%; left: 10%; position: absolute;">  {# todo B5: inline style #}
+           <source src="{{ download_url }}">
+         </video>
+       {% endif %}

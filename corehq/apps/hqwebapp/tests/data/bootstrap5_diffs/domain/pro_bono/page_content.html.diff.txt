@@ -1,0 +1,10 @@
+--- 
++++ 
+@@ -16,6 +16,6 @@
+     <p><strong>Number of expected users:</strong> {{ pro_bono_form.num_expected_users.value }}</p>
+     <p><strong>Dimagi contact:</strong> {{ pro_bono_form.dimagi_contact.value }}</p>
+   {% else %}
+-    {% crispy pro_bono_form %}
++    {% crispy pro_bono_form %}  {# todo B5: crispy #}
+   {% endif %}
+ {% endblock %}

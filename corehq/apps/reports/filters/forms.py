@@ -1,18 +1,18 @@
-from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
+from corehq.apps.reports.util import DatatablesServerSideParams
 from couchforms.analytics import (
     get_all_xmlns_app_id_pairs_submitted_to_in_domain,
 )
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.reports.analytics.couchaccessors import (
     get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
@@ -39,9 +39,6 @@ PARAM_SLUG_XMLNS = 'xmlns'
 
 PARAM_VALUE_STATUS_ACTIVE = 'active'
 PARAM_VALUE_STATUS_DELETED = 'deleted'
-
-# TODO: Replace with library method
-mark_safe_lazy = lazy(mark_safe, str)
 
 
 class FormsByApplicationFilterParams(object):
@@ -91,7 +88,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     css_class = "span5"
     drilldown_empty_text = gettext_lazy("You don't have any applications set up, so there are no forms "
                                         "to choose from. Please create an application!")
-    template = "reports/filters/form_app_module_drilldown.html"
+    template = "reports/filters/bootstrap3/form_app_module_drilldown.html"
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
@@ -146,7 +143,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             'all_form_retrieval_failed': self.all_form_retrieval_failed,
         })
 
-        show_advanced = self.request.GET.get('show_advanced') == 'on'
+        show_advanced = DatatablesServerSideParams.get_value_from_request(
+            self.request, 'show_advanced') == 'on'
 
         #set Default app type to active only when advanced option is not selected
         if self.display_app_type and not context['selected'] and not show_advanced:
@@ -359,7 +357,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     def _hide_fuzzy_results(self):
-        return self.request.GET.get('%s_%s' % (self.slug, self.fuzzy_slug)) == 'yes'
+        return DatatablesServerSideParams.get_value_from_request(
+            self.request, f"{self.slug}_{self.fuzzy_slug}") == 'yes'
 
     @property
     @memoized
@@ -377,7 +376,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     def _show_unknown(self):
-        return self.request.GET.get('%s_%s' % (self.slug, self.unknown_slug))
+        return DatatablesServerSideParams.get_value_from_request(
+            self.request, f"{self.slug}_{self.unknown_slug}"
+        )
 
     @property
     @memoized
@@ -387,7 +388,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     def _selected_unknown_xmlns(self):
         if self._show_unknown:
-            return self.request.GET.get('%s_%s_xmlns' % (self.slug, self.unknown_slug), '')
+            return DatatablesServerSideParams.get_value_from_request(
+                self.request, f"{self.slug}_{self.unknown_slug}_xmlns", ""
+            )
         return ''
 
     @memoized
@@ -454,7 +457,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         for param in params:
             if param['slug'] == PARAM_SLUG_APP_ID:
                 return True
-        if request.GET.get('show_advanced') == 'on':
+        if DatatablesServerSideParams.get_value_from_request(request, 'show_advanced') == 'on':
             return True
         return False
 
@@ -622,14 +625,14 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     default_text = gettext_lazy("Completion Time")
 
     def _generate_help_message():
-        completion_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        completion_help = mark_safe(gettext_lazy(  # nosec: no user input
             "<strong>Completion</strong> time is when the form is completed on the phone."))
 
-        submission_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        submission_help = mark_safe(gettext_lazy(  # nosec: no user input
             "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
                 hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME'])))
 
-        return format_html("{}<br />{}", completion_help, submission_help)
+        return format_html_lazy("{}<br />{}", completion_help, submission_help)
 
     help_text = _generate_help_message()
 

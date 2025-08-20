@@ -1,0 +1,81 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div>
+  <div class="alert alert-success">
+    <h4>
+      {% blocktrans %}
+        Your application has been successfully imported!
+      {% endblocktrans %}
+    </h4>
+    <p class="lead mb-1">
+      {% blocktrans %}
+        You're almost done — if your application contains multimedia files,
+        follow these steps to copy them to your new application.
+      {% endblocktrans %}
+    </p>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">
+      {% blocktrans %}
+        Step 1: Download Multimedia from Source App
+      {% endblocktrans %}
+    </div>
+    <div class="card-body">
+      <p class="mb-2">
+        {% blocktrans %}
+          Go to the source application's multimedia page and download the
+          multimedia files as a ZIP:
+        {% endblocktrans %}
+      </p>
+      <a href="{{ source_multimedia_url }}" target="_blank">
+        <i class="fa fa-external-link"></i>
+        {% blocktrans %}
+          Go to Source App Multimedia Download Page
+        {% endblocktrans %}
+      </a>
+      <p class="mb-1">
+        {% blocktrans %}
+          Click "Download ZIP".
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">
+      {% blocktrans %}
+        Step 2: Upload Multimedia to New App
+      {% endblocktrans %}
+    </div>
+    <div class="card-body">
+      <p class="mb-2">
+        {% blocktrans %}
+          Go to your new application's multimedia page and upload the downloaded
+          files:
+        {% endblocktrans %}
+      </p>
+      <a href="{{ current_multimedia_url }}" target="_blank">
+        <i class="fa fa-external-link"></i>
+        {% blocktrans %}
+          Go to New App Multimedia Upload Page
+        {% endblocktrans %}
+      </a>
+      <p class="mb-1">
+        {% blocktrans %}
+          Upload Multimedia Files under Step 3.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+
+  <p class="lead">
+    {% blocktrans %}
+      All done? Click below to go to your new application.
+    {% endblocktrans %}
+  </p>
+  <a href="{{ new_app_url }}" class="btn btn-primary">
+    {% trans "Go to Application" %}
+  </a>
+</div>

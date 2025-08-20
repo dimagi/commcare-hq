@@ -8,6 +8,7 @@ import pytz
 
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
@@ -21,7 +22,7 @@ from corehq.apps.domain.calculations import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
-from corehq.apps.es import CaseES, UserES
+from corehq.apps.es import CaseES
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
@@ -554,12 +555,26 @@ class TestFormESAccessors(TestCase):
         self.assertEqual(results['2013-07-15'], 1)
 
     def test_get_paged_forms_by_type(self):
+        user = 'u1'
         self._send_form_to_es()
-        self._send_form_to_es()
+        self._send_form_to_es(user_id=user)
+        app1, app2 = '123', '456'
+        xmlns = 'abc'
+        self._send_form_to_es(form_name='test_a', app_id=app1, xmlns=xmlns)
+        self._send_form_to_es(form_name='test_b', app_id=app2, xmlns=xmlns)
 
         paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], size=1)
         self.assertEqual(len(paged_result.hits), 1)
-        self.assertEqual(paged_result.total, 2)
+        self.assertEqual(paged_result.total, 4)
+
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], app_ids=[app2], xmlns=[xmlns])
+        self.assertEqual(len(paged_result.hits), 1)
+        form_dict = paged_result.hits[0]['form']
+        self.assertEqual(form_dict['@name'], 'test_b')
+
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], user_ids=[user])
+        self.assertEqual(len(paged_result.hits), 1)
+        self.assertEqual(paged_result.hits[0]['user_id'], user)
 
     def test_timezone_differences(self):
         """
@@ -1000,7 +1015,7 @@ class TestUserESAccessors(TestCase):
         super(TestUserESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, is_active=True):
-        self.user.is_active = is_active
+        self.user.set_is_active(self.domain, is_active)
         user_adapter.index(self.user, refresh=True)
 
     def test_active_user_query(self):
@@ -1010,7 +1025,6 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(len(results), 1)
         metadata = results[0].pop('user_data_es')
         self.assertEqual({
-            'commcare_project': 'user-esaccessors-test',
             PROFILE_SLUG: self.profile.id,
             'job': 'reporter',
             'office': 'phone_booth',
@@ -1022,6 +1036,7 @@ class TestUserESAccessors(TestCase):
             'domain': self.user.domain,
             'username': self.user.username,
             'is_active': True,
+            'domain_membership': {'domain': self.user.domain, 'is_active': True},
             'first_name': self.user.first_name,
             'last_name': self.user.last_name,
             'doc_type': 'CommCareUser',
@@ -1039,20 +1054,12 @@ class TestUserESAccessors(TestCase):
             'domain': self.user.domain,
             'username': self.user.username,
             'is_active': False,
+            'domain_membership': {'domain': self.user.domain, 'is_active': True},
             'first_name': self.user.first_name,
             'last_name': self.user.last_name,
             'doc_type': 'CommCareUser',
             'location_id': None
         })
-
-    def test_domain_allow_enterprise(self):
-        self._send_user_to_es()
-        self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
-        self.assertEqual([], UserES().domain(self.source_domain).values_list('username', flat=True))
-        self.assertEqual(
-            ['superman'],
-            UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)
-        )
 
 
 @es_test(requires=[group_adapter])
@@ -1186,7 +1193,7 @@ class TestCaseESAccessors(TestCase):
 
         self._send_case_to_es(opened_on=opened_on)
         self._send_case_to_es(opened_on=opened_on_not_active_range)
-        self._send_case_to_es(opened_on=opened_on, case_type='commcare-user')
+        self._send_case_to_es(opened_on=opened_on, case_type=USERCASE_TYPE)
 
         results = get_total_case_counts_by_owner(self.domain, datespan)
         self.assertEqual(results[self.owner_id], 2)
@@ -1256,7 +1263,7 @@ class TestCaseESAccessors(TestCase):
         opened_on = datetime(2013, 7, 15)
 
         self._send_case_to_es(opened_on=opened_on)
-        self._send_case_to_es(opened_on=opened_on, case_type='commcare-user')
+        self._send_case_to_es(opened_on=opened_on, case_type=USERCASE_TYPE)
 
         results = get_case_counts_opened_by_user(self.domain, datespan)
         self.assertEqual(results[self.user_id], 1)

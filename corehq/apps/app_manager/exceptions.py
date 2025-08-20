@@ -1,5 +1,3 @@
-import couchdbkit
-
 from corehq.apps.app_manager.const import APP_V2
 
 
@@ -79,7 +77,8 @@ class XFormValidationError(XFormException):
             return msg
         # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
         #
-        # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
+        # ... and if possible split the third line that looks like
+        # e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
         # and just return the undecorated string
         #
         # ... unless the first line says
@@ -194,3 +193,49 @@ class DangerousXmlException(Exception):
 
 class AppMisconfigurationError(AppManagerException):
     """Errors in app configuration that are the user's responsibility"""
+
+
+class CannotRestoreException(Exception):
+    """Errors that inherit from this exception will always fail hard in restores"""
+
+
+class MobileUCRTooLargeException(CannotRestoreException):
+
+    def __init__(self, message, row_count):
+        super().__init__(message)
+        self.row_count = row_count
+
+
+class AppInDifferentDomainException(AppManagerException):
+    """
+    We generally request an app with a domain and an app_id.
+    If the returned app is not in the targeted domain, we raise this exception.
+    """
+    pass
+
+
+class InvalidPropertyException(Exception):
+    def __init__(self, invalid_property):
+        self.invalid_property = invalid_property
+        message = f"Invalid key found: {self.invalid_property}"
+        super().__init__(message)
+
+
+class MissingPropertyException(Exception):
+    def __init__(self, *missing_properties):
+        self.missing_properties = missing_properties
+        if self.missing_properties:
+            message = f"The following properties were not found: {', '.join(self.missing_properties)}"
+        else:
+            message = "No missing properties specified"
+        super().__init__(message)
+
+
+class DiffConflictException(Exception):
+    def __init__(self, *conflicting_keys):
+        self.conflicting_keys = conflicting_keys
+        if self.conflicting_keys:
+            message = f"The following keys were affected by multiple actions: {', '.join(self.conflicting_keys)}"
+        else:
+            message = "No conflicting keys specified"
+        super().__init__(message)

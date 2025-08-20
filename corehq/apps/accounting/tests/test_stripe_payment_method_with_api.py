@@ -38,13 +38,15 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
         self.payment_method.set_autopay(self.card, self.billing_account, None)
-        self.assertEqual(self.card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
+        refetched_card = self.payment_method.get_card(self.card.id)
+        self.assertEqual(refetched_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
         self.assertEqual(self.billing_account.auto_pay_user, self.web_user_email)
         self.assertTrue(self.billing_account.auto_pay_enabled)
 
     def test_replace_card_for_autopay(self):
         self.payment_method.set_autopay(self.card, self.billing_account, None)
-        self.assertEqual(self.card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
+        refetched_card = self.payment_method.get_card(self.card.id)
+        self.assertEqual(refetched_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
         self.assertEqual(self.billing_account.auto_pay_user, self.web_user_email)
         self.assertTrue(self.billing_account.auto_pay_enabled)
 
@@ -57,7 +59,8 @@ class TestStripePaymentMethod(BaseAccountingTest):
         other_stripe_card = other_payment_method.create_card('tok_mastercard', self.billing_account, None, True)
 
         self.assertEqual(self.billing_account.auto_pay_user, other_web_user)
-        self.assertTrue(other_stripe_card.metadata["auto_pay_{}".format(self.billing_account.id)])
+        refetched_other_stripe_card = other_payment_method.get_card(other_stripe_card.id)
+        self.assertTrue(refetched_other_stripe_card.metadata["auto_pay_{}".format(self.billing_account.id)])
         # The old autopay card should be removed from this billing account
         card = self.payment_method.all_cards[0]
         self.assertFalse(card.metadata["auto_pay_{}".format(self.billing_account.id)] == 'True')
@@ -67,22 +70,25 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
         # Use the card for first billing account
         self.payment_method.set_autopay(self.card, self.billing_account, None)
-        self.assertEqual(self.card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
+        refetched_card = self.payment_method.get_card(self.card.id)
+        self.assertEqual(refetched_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
         self.assertEqual(self.billing_account.auto_pay_user, self.web_user_email)
         self.assertTrue(self.billing_account.auto_pay_enabled)
 
         # Use the same card for the second billing account
         self.payment_method.set_autopay(self.card, billing_account_2, None)
-        self.assertEqual(self.card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True',
+        refetched_card = self.payment_method.get_card(self.card.id)
+        self.assertEqual(refetched_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True',
                                             "auto_pay_{}".format(billing_account_2.id): 'True'})
 
     def test_unset_autopay(self):
         self.payment_method.set_autopay(self.card, self.billing_account, None)
-        self.assertEqual(self.card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
+        refetched_card = self.payment_method.get_card(self.card.id)
+        self.assertEqual(refetched_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
 
-        self.payment_method.unset_autopay(self.card, self.billing_account)
-
-        self.assertEqual(self.card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'False'})
+        self.payment_method.unset_autopay(refetched_card, self.billing_account)
+        refetched_card = self.payment_method.get_card(self.card.id)
+        self.assertEqual(refetched_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'False'})
         self.assertIsNone(self.billing_account.auto_pay_user)
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
@@ -115,6 +121,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
     def test_all_cards_return_empty_array_for_customer_have_no_cards(self):
         payment_method = StripePaymentMethod(web_user="no_card@gmail.com")
+        self.addCleanup(payment_method.customer.delete)
         payment_method.save()
         cards = payment_method.all_cards
         self.assertEqual(len(cards), 0)
@@ -164,12 +171,12 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertIsNotNone(result.id, card3.id)
 
     def test_remove_card_successful(self):
-        self.assertEqual(len(self.payment_method.customer.cards), 1)
+        self.assertEqual(len(self.payment_method.all_cards), 1)
         self.payment_method.set_autopay(self.card, self.billing_account, None)
         self.assertEqual(self.card.id, self.payment_method.get_autopay_card(self.billing_account).id)
 
         self.payment_method.remove_card(self.card.id)
-        self.assertEqual(len(self.payment_method.customer.cards), 0)
+        self.assertEqual(len(self.payment_method.all_cards), 0)
         self.billing_account.refresh_from_db()
         self.assertIsNone(self.billing_account.auto_pay_user)
         self.assertFalse(self.billing_account.auto_pay_enabled)
@@ -204,7 +211,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
         description = "Test charge"
         amount_in_dollars = Decimal('100')
         # Idempotency key ensures that the charge can be retried without fear of double charging
-        idempotency_key = 'test_idempotency_key_12345'
+        idempotency_key = f"{self.card.id}-idempotency-test"
         transaction_id_first_attempt = self.payment_method.create_charge(
             card=self.card.id,
             amount_in_dollars=amount_in_dollars,

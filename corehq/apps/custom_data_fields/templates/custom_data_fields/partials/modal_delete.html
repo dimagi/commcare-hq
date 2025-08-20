@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 
 <div
@@ -11,15 +12,15 @@
   <div class="modal-dialog">
     <div class="modal-content" data-bind="with: modalModel">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h3 class="modal-title" id="delete-confirm-modal-label">
+        <h4 class="modal-title" id="delete-confirm-modal-label">
             {% blocktrans with "<!-- ko text: modalName --><!-- /ko -->" as item %}
               Are you sure you want to delete {{ item }}?
             {% endblocktrans %}
-        </h3>
+        </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
       </div>
 
-      <div class="modal-body" style="line-height: 18px" data-bind="css: {hide: !hasModalDetail}">
+      <div class="modal-body" data-bind="css: {hide: !hasModalDetail}">
         {% blocktrans with entity_string=view.entity_string|lower %}
           <p>
             Deleting this field can cause you to lose data for any {{ entity_string }} with information stored in this field.
@@ -32,11 +33,11 @@
       </div>
 
       <div class="modal-footer">
-        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+        <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</a>
         <button aria-hidden="true"
-                data-dismiss="modal"
+                data-bs-dismiss="modal"
                 data-bind="click: $root.confirmRemoveModel"
-                class="btn btn-danger">
+                class="btn btn-outline-danger">
           {% trans "Delete" %}
         </button>
       </div>

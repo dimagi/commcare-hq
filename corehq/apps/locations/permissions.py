@@ -99,6 +99,7 @@ see.
 
 from functools import wraps
 
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
@@ -110,15 +111,12 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
 from corehq import privileges
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-)
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
 from corehq.middleware import get_view_func
 
 from .models import SQLLocation
-
 
 # TODO: gettext_lazy is likely not having the desired effect, as format_html will immediately
 # evaluate it against the current language.
@@ -209,8 +207,8 @@ def location_safe(view):
 
 
 # Use this decorator for views that need to be marked location safe but do not actually
-# apply location restrictions to the data they return e.g. case search. This is generally only applicable to endpoints
-# whose client is expected to be the application engine (mobile / web apps).
+# apply location restrictions to the data they return e.g. case search. This is generally only applicable to
+# endpoints whose client is expected to be the application engine (mobile / web apps).
 location_safe_bypass = location_safe
 
 
@@ -230,13 +228,16 @@ def conditionally_location_safe(conditional_function):
 def location_restricted_response(request):
     from corehq.apps.hqwebapp.views import no_permissions
     notify_exception(request, NOTIFY_EXCEPTION_MSG)
-    return no_permissions(request, message=LOCATION_ACCESS_DENIED)
+    return no_permissions(request, exception=LocationPermissionDenied())
 
 
 def location_restricted_exception(request):
-    from corehq.apps.hqwebapp.views import no_permissions_exception
     notify_exception(request, NOTIFY_EXCEPTION_MSG)
-    return no_permissions_exception(request, message=LOCATION_ACCESS_DENIED)
+    return LocationPermissionDenied()
+
+
+class LocationPermissionDenied(PermissionDenied):
+    user_facing_message = LOCATION_ACCESS_DENIED
 
 
 def _view_obj_is_safe(obj, request, *view_args, **view_kwargs):
@@ -285,6 +286,17 @@ def user_can_access_any_location_id(domain, user, location_ids):
             .accessible_to_user(domain, user)
             .filter(location_id__in=location_ids)
             .exists())
+
+
+def user_can_change_locations(domain, couch_user, current_loc_ids, loc_ids_being_assigned):
+    from corehq.apps.locations.models import SQLLocation
+    locs_accessible_to_user = set(SQLLocation.objects.accessible_to_user(
+        domain, couch_user).values_list('location_id', flat=True))
+    # symmetric_difference = XOR, represents the locations that are being added/removed. All of these locations
+    # must be accessible to user
+    problem_location_ids = (set(current_loc_ids).symmetric_difference(set(loc_ids_being_assigned))
+                            - locs_accessible_to_user)
+    return list(problem_location_ids)
 
 
 def user_can_access_other_user(domain, user, other_user):
@@ -342,3 +354,12 @@ def can_edit_or_view_location(view_fn):
         return location_restricted_response(request)
 
     return require_can_edit_or_view_locations(_inner)
+
+
+def can_edit_workers_location(web_user, mobile_worker):
+    if web_user.has_permission(mobile_worker.domain, 'access_all_locations'):
+        return True
+    loc_id = mobile_worker.location_id
+    if not loc_id:
+        return False
+    return user_can_access_location_id(mobile_worker.domain, web_user, loc_id)

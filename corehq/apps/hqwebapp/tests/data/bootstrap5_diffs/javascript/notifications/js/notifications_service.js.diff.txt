@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -9,7 +9,7 @@
+ import _ from "underscore";
+ import RMI from "jquery.rmi/jquery.rmi";
+ import noopMetrics from "analytix/js/noopMetrics";
+-import "hqwebapp/js/bootstrap3/hq.helpers";
++import "hqwebapp/js/bootstrap5/hq.helpers";
+ 
+ var module = {};
+ var _private = {};

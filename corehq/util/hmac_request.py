@@ -65,7 +65,6 @@ def validate_request_hmac(setting_name, audit_user='system'):
                 return HttpResponse(status=401)
 
             digest = get_hmac_digest(shared_key, data)
-
             if expected_digest != digest:
                 auth_logger.info(
                     "Request rejected reason=%s request=%s",

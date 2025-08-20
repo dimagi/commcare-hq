@@ -4,6 +4,7 @@ from copy import copy
 from datetime import datetime
 from io import BytesIO
 
+from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -26,7 +27,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
+from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs, retry_on_couch_error
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from corehq import privileges, toggles
@@ -38,6 +39,7 @@ from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSE_LINKS, LICENSES
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.blobs.mixin import CODES, BlobMixin
+from corehq.util.view_utils import absolute_reverse
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -253,6 +255,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
         return hashlib.md5(data).hexdigest()
 
     @classmethod
+    @retry_on_couch_error
     def get_by_hash(cls, file_hash):
         result = cls.view('hqmedia/by_hash', key=file_hash, include_docs=True).first()
         if not result:
@@ -408,7 +411,7 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "fa fa-picture-o"
+        return "fa-regular fa-image"
 
 
 class CommCareAudio(CommCareMultimedia):
@@ -642,11 +645,6 @@ class ModuleMediaMixin(MediaMixin):
                 media.append(ApplicationMediaReference(details.lookup_image, media_class=CommCareImage,
                                                        is_menu_media=True, **kwargs))
 
-            # Print template - not language-specific
-            if display and details.display == 'long' and details.print_template:
-                media.append(ApplicationMediaReference(details.print_template['path'],
-                                                       media_class=CommCareMultimedia, **kwargs))
-
             # Icon-formatted columns
             for column in details.get_columns():
                 if column.format == 'enum-image' or column.format == 'clickable-icon':
@@ -682,11 +680,6 @@ class ModuleMediaMixin(MediaMixin):
                 if details.lookup_image == old_path:
                     details.lookup_image = new_path
                     count += 1
-
-            # Print template
-            if display and details.display == 'long' and details.print_template:
-                details.print_template['path'] = new_path
-                count += 1
 
             # Icon-formatted columns
             for column in details.get_columns():
@@ -1030,3 +1023,14 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]
         return has_restored
+
+
+class LogoForSystemEmailsReference(models.Model):
+    domain = models.CharField(max_length=255, unique=True, null=False)
+    # Doc ID of the CommCareImage the object references
+    image_id = models.CharField(max_length=255, null=False)
+
+    def full_url_to_image(self):
+        from corehq.apps.hqmedia.views import ViewMultimediaFile
+        image = CommCareImage.get(self.image_id)
+        return absolute_reverse(ViewMultimediaFile.urlname, args=[image.doc_type, image._id])

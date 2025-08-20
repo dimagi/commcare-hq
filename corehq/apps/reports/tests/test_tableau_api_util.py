@@ -10,6 +10,7 @@ from corehq.apps.reports.models import (
 from corehq.apps.reports.util import (
     TableauGroupTuple,
     get_all_tableau_groups,
+    get_tableau_groups_by_ids,
     get_tableau_groups_for_user,
     get_matching_tableau_users_from_other_domains,
     add_tableau_user,
@@ -72,6 +73,18 @@ class TestTableauAPIUtil(TestTableauAPISession):
         self.assertEqual(len(group_tuples), 3)
         self.assertEqual(group_tuples[0].name, 'group1')
         self.assertEqual(group_tuples[2].id, 'zx39n')
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_get_tableau_groups_by_ids(self, mock_request):
+        mock_request.side_effect = _mock_create_session_responses(self) + [
+            self.tableau_instance.query_groups_response()
+        ]
+
+        interested_group_ids = ["1a2b3", "zx39n"]
+        group_tuples = get_tableau_groups_by_ids(interested_group_ids, self.domain)
+        self.assertEqual(len(group_tuples), 2)
+        self.assertEqual(group_tuples[0].name, 'group1')
+        self.assertEqual(group_tuples[1].name, 'group3')
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_get_tableau_groups_for_user(self, mock_request):
@@ -154,6 +167,20 @@ class TestTableauAPIUtil(TestTableauAPISession):
         mock_update_user_remote.assert_called_once()
         self.assertListEqual(sorted([TableauGroupTuple(name='group5', id='u908e'),
                                      TableauGroupTuple(name='group1', id='1a2b3'),
+                                     TableauGroupTuple(name='group2', id='c4d5e')]),
+                             sorted(mock_update_user_remote.call_args.kwargs['groups']))
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    @mock.patch('corehq.apps.reports.util._update_user_remote')
+    def test_update_tableau_user_without_updating_groups(self, mock_update_user_remote, mock_request):
+        TableauServer.objects.filter(domain=self.domain).update(allowed_tableau_groups=['group1'])
+        mock_request.side_effect = (_mock_create_session_responses(self)
+        + [self.tableau_instance.get_groups_for_user_id_response()])
+
+        update_tableau_user(self.domain, 'pbeasley', 'Viewer')
+
+        mock_update_user_remote.assert_called_once()
+        self.assertListEqual(sorted([TableauGroupTuple(name='group1', id='1a2b3'),
                                      TableauGroupTuple(name='group2', id='c4d5e')]),
                              sorted(mock_update_user_remote.call_args.kwargs['groups']))
 

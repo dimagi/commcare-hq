@@ -1,5 +1,5 @@
-import re
 from contextlib import contextmanager
+from django.forms.widgets import DateTimeInput
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
@@ -12,11 +12,9 @@ from crispy_forms.layout import Field
 from crispy_forms.layout import LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
-CSS_LABEL_CLASS = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
-CSS_LABEL_CLASS_BOOTSTRAP5 = 'col-xs-12 col-sm-4 col-md-4 col-lg-3'
-CSS_FIELD_CLASS = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'
-CSS_FIELD_CLASS_BOOTSTRAP5 = 'col-xs-12 col-sm-8 col-md-8 col-lg-9'
-CSS_ACTION_CLASS = CSS_FIELD_CLASS + ' col-sm-offset-4 col-md-offset-4 col-lg-offset-2'
+CSS_LABEL_CLASS = 'field-label'
+CSS_FIELD_CLASS = 'field-control'
+CSS_ACTION_CLASS = CSS_FIELD_CLASS
 
 
 class HQFormHelper(FormHelper):
@@ -27,11 +25,7 @@ class HQFormHelper(FormHelper):
     def __init__(self, *args, **kwargs):
         super(HQFormHelper, self).__init__(*args, **kwargs)
         from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-        bootstrap_version = get_bootstrap_version()
-        use_bootstrap5 = bootstrap_version == BOOTSTRAP_5
-        if use_bootstrap5:
-            self.label_class = CSS_LABEL_CLASS_BOOTSTRAP5
-            self.field_class = CSS_FIELD_CLASS_BOOTSTRAP5
+        self.use_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
 
         if 'autocomplete' not in self.attrs:
             self.attrs.update({
@@ -72,11 +66,8 @@ class ErrorsOnlyField(Field):
     template = 'hqwebapp/crispy/field/errors_only_field.html'
 
 
-def _get_offsets(context):
-    label_class = context.get('label_class', '')
-    use_bootstrap5 = context.get('use_bootstrap5')
-    return (label_class.replace('col', 'offset') if use_bootstrap5
-            else re.sub(r'(xs|sm|md|lg)-', r'\g<1>-offset-', label_class))
+def get_form_action_class():
+    return CSS_FIELD_CLASS
 
 
 class FormActions(OriginalFormActions):
@@ -94,11 +85,9 @@ class FormActions(OriginalFormActions):
                 template_pack=template_pack,
             )
         fields_html = mark_safe(fields_html)  # nosec: just concatenated safe fields
-        offsets = _get_offsets(context)
         context.update({
             'formactions': self,
             'fields_output': fields_html,
-            'offsets': offsets,
             'field_class': context.get('field_class', '')
         })
         return render_to_string(self.template, context.flatten())
@@ -268,6 +257,10 @@ class FieldWithExtras(Field):
         return super(FieldWithExtras, self).render(form, context, template_pack=template_pack, **kwargs)
 
 
+class CheckboxField(Field):
+    template = "bootstrap3to5/layout/prepended_appended_text.html"
+
+
 class FieldWithHelpBubble(FieldWithExtras):
     """Add a help bubble after the field label.
 
@@ -345,6 +338,10 @@ class FieldsetAccordionGroup(AccordionGroup):
 
 class RadioSelect(Field):
     template = "hqwebapp/crispy/radioselect.html"
+
+
+class DatetimeLocalWidget(DateTimeInput):
+    input_type = "datetime-local"
 
 
 def make_form_readonly(form):

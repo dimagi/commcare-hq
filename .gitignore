@@ -24,7 +24,7 @@ startover.sh
 celery.db
 tmp.sh
 /requirements/local.in
-/requirements/local.txt
+/requirements/local*.txt
 /resource_versions.yaml
 /loadtest/results/
 /loadtest/localsettings.py
@@ -47,7 +47,8 @@ formplayer.properties
 application.properties
 formplayer.jar
 .vscode/*
-
+/.env
+/.venv
 submodules/formdesigner
 submodules/vellum/Vellum
 
@@ -57,9 +58,6 @@ ptop*.json
 /.coverage
 /coverage-report
 /coverage-js
-
-# pyenv
-.python-version
 
 # Sphinx
 docs/_build
@@ -75,6 +73,7 @@ docker/data
 !couchviews.lock
 !migrations.lock
 !serializer-pickle-files.lock
+!uv.lock
 !yarn.lock
 fab/config.py
 extensions/
@@ -85,3 +84,9 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 # direnv
 .envrc
 .direnv
+
+# webpack build related
+/webpack/_build/
+
+# ruff
+ruff.toml

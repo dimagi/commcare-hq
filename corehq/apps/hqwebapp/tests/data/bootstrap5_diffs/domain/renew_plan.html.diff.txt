@@ -1,0 +1,24 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+-{% extends "domain/bootstrap3/base_change_plan.html" %}
++{% extends "domain/bootstrap5/base_change_plan.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% load compress %}
+ {% load menu_tags %}
+ 
+-{% js_entry_b3 'accounting/js/renew_plan_selection' %}
++{% js_entry 'accounting/js/renew_plan_selection' %}
+ 
+ {% block plan_breadcrumbs %}{% endblock %}
+ 
+@@ -35,7 +35,7 @@
+ 
+     <div class="text-center plan-next">
+       {% if downgrade_messages %}
+-        <a class="btn btn-default btn-lg"
++        <a class="btn btn-outline-primary btn-lg"
+           href="{% url 'custom_plan_request_quote' domain %}">
+           {% trans 'Talk to Sales' %}
+         </a>

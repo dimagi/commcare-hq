@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+ {% load hq_shared_tags %}
+ {% load i18n %}
+-<div class="form-group">
++<div class="row mb-3">
+   <fieldset id="{{ filter.css_id }}">
+-    <label class="control-label dont-break-out col-sm-3 col-md-2 col-lg-2">{{ context_.label }}</label>
+-    <div class="controls col-sm-9 col-md-8 col-lg-6">
++    <label class="field-label dont-break-out">{{ context_.label }}</label>
++    <div class="field-control">
+       {% block filter-controls %}{% endblock %}
+     </div>
+   </fieldset>

@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 import pytz
 
 from django.test import TestCase
@@ -8,20 +8,21 @@ from django.test.testcases import SimpleTestCase
 
 from couchforms.geopoint import GeoPoint
 
-from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
+from corehq.privileges import DATA_DICTIONARY
+from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.case_search.xpath_functions.comparison import adjust_input_date_by_timezone
 from corehq.apps.es import queries
 from corehq.apps.es.client import manager
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_search_adapter,
-    case_property_starts_with,
+    case_property_date_range,
     case_property_geo_distance,
     case_property_missing,
     case_property_query,
-    case_property_range_query,
+    case_property_starts_with,
     case_property_text_query,
+    case_search_adapter,
     wrap_case_search_hit,
 )
 from corehq.apps.es.const import SIZE_LIMIT
@@ -29,7 +30,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
-from corehq.util.test_utils import create_and_save_a_case, flag_enabled
+from corehq.util.test_utils import create_and_save_a_case, flag_enabled, privilege_enabled
 
 
 @es_test
@@ -166,6 +167,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                     "case_properties.value": {
                                                                         "value": "polly",
                                                                         "fuzziness": "AUTO",
+                                                                        "prefix_length": 2,
                                                                         "max_expansions": 100
                                                                     }
                                                                 }
@@ -217,6 +219,51 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
         }
         self.checkQuery(query, expected, validate_query=False)
 
+    def test_fuzzy_property_query(self):
+        query = self.es.domain('swashbucklers').filter(
+            case_property_query("foo", "backbeard", fuzzy=True)
+        )
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"domain.exact": "swashbucklers"}},
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [{"term": {"case_properties.key.exact": "foo"}}],
+                                        "must": {
+                                            "bool": {
+                                                "should": [
+                                                    {"fuzzy": {"case_properties.value": {
+                                                        "value": "backbeard",
+                                                        "fuzziness": "AUTO",
+                                                        "max_expansions": 100,
+                                                        "prefix_length": 2
+                                                    }}},
+                                                    {"match": {"case_properties.value": {
+                                                        "query": "backbeard",
+                                                        "operator": "or",
+                                                        "fuzziness": "0"
+                                                    }}}
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {"match_all": {}}
+                    ],
+                    "must": {"match_all": {}}
+                }
+            },
+            "size": 1000000
+        }
+        self.checkQuery(query, expected, validate_query=False)
+
 
 class TestCaseSearchHitConversions(SimpleTestCase):
     maxDiff = None
@@ -260,7 +307,6 @@ class TestCaseSearchHitConversions(SimpleTestCase):
     def test_wrap_case_search_hit_include_score(self):
         case = wrap_case_search_hit(self.make_hit(), include_score=True)
         self.assertEqual(case.case_json[RELEVANCE_SCORE], "1.095")
-
 
     @staticmethod
     def make_hit():
@@ -345,10 +391,11 @@ class BaseCaseSearchTest(TestCase):
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
         self._bootstrap_cases_in_es_for_domain(domain, input_cases)
-        self.assertItemsEqual(
-            query.get_ids(),
-            output
-        )
+        if query:
+            self.assertItemsEqual(
+                query.get_ids(),
+                output
+            )
         if xpath_query:
             self.assertItemsEqual(
                 CaseSearchES().xpath_query(self.domain, xpath_query).get_ids(),
@@ -380,23 +427,27 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             [
                 {'_id': 'c1', 'foo': 'redbeard'},
                 {'_id': 'c2', 'foo': 'blackbeard'},
+                {'_id': 'c3', 'foo': 'backbird'},
             ],
+            # 'backbird' is a fuzzy match - off by two edits
+            # 'blackbeard' is even closer, but it is omitted because of prefix_length=2
             CaseSearchES().domain(self.domain).case_property_query("foo", "backbeard", fuzzy=True),
             None,
-            ['c2']
+            ['c3']
         )
 
-    def test_regex_case_property_query(self):
+    def test_fuzzy_date(self):
         self._assert_query_runs_correctly(
             self.domain,
             [
-                {'_id': 'c1', 'foo': 'redbeard'},
-                {'_id': 'c2', 'foo': 'blackbeard'},
-                {'_id': 'c3', 'foo': 'redblack'},
+                {'_id': 'c1', 'dob': date(2020, 3, 1)},
+                {'_id': 'c2', 'dob': date(2020, 1, 3)},
+                {'_id': 'c3', 'dob': date(2002, 3, 1)},
+                {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
-            CaseSearchES().domain(self.domain).regexp_case_property_query("foo", ".*beard.*"),
             None,
-            ['c1', 'c2']
+            "fuzzy-date(dob, '2020-03-01')",
+            ['c1', 'c2', 'c3']
         )
 
     def test_multiple_case_search_queries(self):
@@ -468,20 +519,6 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             ['c1']
         )
 
-    def test_numeric_range_query(self):
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'num': '1'},
-                {'_id': 'c2', 'num': '2'},
-                {'_id': 'c3', 'num': '3'},
-                {'_id': 'c4', 'num': '4'},
-            ],
-            CaseSearchES().domain(self.domain).numeric_range_case_property_query('num', gte=2, lte=3),
-            'num <= 3 and num >= 2',
-            ['c2', 'c3']
-        )
-
     def test_date_range_query(self):
         self._assert_query_runs_correctly(
             self.domain,
@@ -492,7 +529,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
                 {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
             CaseSearchES().domain(self.domain).add_query(
-                case_property_range_query('dob', gte='2020-03-02', lte='2020-03-03'),
+                case_property_date_range('dob', gte='2020-03-02', lte='2020-03-03'),
                 clause=queries.MUST
             ),
             "dob >= '2020-03-02' and dob <= '2020-03-03'",
@@ -514,9 +551,9 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             )
         )
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @patch('corehq.pillows.case_search.get_gps_properties', return_value={'coords'})
-    def test_geopoint_query(self, _):
+    @privilege_enabled(DATA_DICTIONARY)
+    def test_geopoint_query_for_gps_properties(self, _):
         self._bootstrap_cases_in_es_for_domain(self.domain, [
             {'_id': 'c1', 'coords': "42.373611 -71.110558 0 0"},
             {'_id': 'c2', 'coords': "42 Wallaby Way"},
@@ -527,6 +564,18 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), kilometers=1000),
         ).get_ids()
         self.assertItemsEqual(res, ['c3', 'c4'])
+
+    @flag_enabled('MICROPLANNING')
+    @patch('corehq.pillows.case_search.get_geo_case_property', return_value='domain_coord')
+    def test_geopoint_query_for_domain_geo_case_property(self, *args):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'domain_coord': "42 Wallaby Way"},
+            {'_id': 'c2', 'domain_coord': "-33.856159 151.215256 0 0"},
+        ])
+        res = CaseSearchES().domain(self.domain).set_query(
+            case_property_geo_distance('domain_coord', GeoPoint(-33.1, 151.8), kilometers=1000),
+        ).get_ids()
+        self.assertItemsEqual(res, ['c2'])
 
     def test_starts_with_query(self):
         self._assert_query_runs_correctly(

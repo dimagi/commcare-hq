@@ -1,0 +1,108 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<fieldset>
+  <legend>{% trans 'Saved Credit Cards' %}</legend>
+  <table class='table table-striped'>
+    <tbody data-bind="template: {name: 'card-row', foreach: cards}"></tbody>
+  </table>
+
+  <!-- ko with: newCard -->
+    <button type='button' class="btn btn-primary new-card" data-bs-toggle="modal" href="#card-modal">
+      <i class='fa fa-plus'></i> {% trans 'Add Card' %}
+    </button>
+    <div data-bind="template: {name: 'new-stripe-card-template'}"></div>
+    {% include 'accounting/partials/new_stripe_card_template.html' %}
+  <!-- /ko -->
+</fieldset>
+
+<div class="modal fade" id="success-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
+        <h4 class="modal-title">{% trans "Credit Card" %}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-success">
+          {% trans "Your request was successful!" %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button style="" type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">  {# todo B5: inline-style #}
+          {% trans 'Close' %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/html" id="delete-card-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
+        <h4 class="modal-title">{% trans "Delete Card" %}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-success"
+             data-bind="visible: isDeleting">
+          <i class="fa fa-refresh fa-spin"></i> {% trans "Processing your request" %}
+        </div>
+        <div class="alert alert-danger"
+             data-bind="visible: deleteErrorMsg() != '',
+                            text: deleteErrorMsg">
+        </div>
+        {% blocktrans %}
+          Actually remove <strong><span data-bind='text: brand'></span></strong> card
+          ************<strong><span data-bind="text: last4"></span></strong>?
+        {% endblocktrans %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+          {% trans 'Cancel' %}
+        </button>
+        <button type="button" class="btn btn-outline-danger"
+                data-bind="click: deleteCard,
+                               enable: !isDeleting()">
+          {% trans 'Delete' %}
+        </button>
+      </div>
+    </div>
+  </div>
+</script>
+
+<script type="text/html" id="card-row">
+  <tr>
+    <td>
+      <i class="fa-regular fa-credit-card"></i> <strong><span data-bind="text: brand"></span></strong>
+      <span class="badge text-bg-success"
+            data-bind="visible: is_autopay">
+                {% trans 'Autopay card' %}
+            </span>
+    </td>
+    <td>
+      ************<strong><span data-bind="text: last4"></span></strong>
+    </td>
+    <td><span data-bind="text: exp_month"></span>/<span data-bind="text: exp_year"></span></td>
+    <td>
+      <button data-bind="visible: is_autopay,
+                               click: unSetAutopay,
+                               enable: $parent.autoPayButtonEnabled"
+              class='btn btn-outline-primary autopay-button'>
+        {% trans 'Remove Autopay' %}
+      </button>
+      <button data-bind="visible: !is_autopay(),
+                               click: setAutopay,
+                               enable: $parent.autoPayButtonEnabled"
+              class='btn btn-outline-primary autopay-button'>
+        {% trans 'Set as autopay card' %}
+      </button>
+    </td>
+    <td>
+      <button class="btn btn-outline-danger" href="#" data-bind="openModal: 'delete-card-modal'">
+        <i class="fa fa-remove"></i> {% trans 'Delete Card' %}
+      </button>
+    </td>
+  </tr>
+</script>

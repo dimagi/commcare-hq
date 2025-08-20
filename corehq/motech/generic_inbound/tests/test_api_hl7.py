@@ -1,5 +1,5 @@
 from django.urls import reverse
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq import privileges
 from corehq.form_processor.models import CommCareCase
@@ -27,7 +27,7 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain_name)
         super().tearDownClass()
 
-    @freeze_time('2023-05-02 13:01:51')
+    @travel('2023-05-02 13:01:51', tick=False)
     def test_post_hl7(self):
         response_content = self._test_generic_api({
             'facility': {
@@ -43,13 +43,12 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
         self._check_logging(log, response_content)
         self._check_data(log, {"facility": "GOOD HEALTH HOSPITAL"})
 
-
-    @freeze_time('2023-05-02 13:01:51')
+    @travel('2023-05-02 13:01:51', tick=False)
     def test_post_not_supported_type(self):
         generic_api = self._make_api({}, backend=ApiBackendOptions.hl7)
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(
-            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
+            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}"
         )
         self.assertEqual(response.status_code, 400)
         log = RequestLog.objects.last()
@@ -57,7 +56,7 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
                    "MSA|AE||Error parsing HL7: Invalid message"
         self.assertEqual(response.content.decode(), expected)
 
-    @freeze_time('2023-05-02 13:01:51')
+    @travel('2023-05-02 13:01:51', tick=False)
     def test_validation_errors(self):
         api = self._make_api(
             property_expressions={
@@ -113,8 +112,6 @@ class TestGenericInboundAPIViewHL7(GenericInboundAPIViewBaseTest):
             if key in expected_properties
         }
         self.assertDictEqual(actual_properties, expected_properties)
-
-
 
     def _test_generic_api(self, properties_expression):
         response = self._call_api(properties_expression, backend=ApiBackendOptions.hl7)

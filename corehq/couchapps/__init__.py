@@ -5,7 +5,6 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'schemas_by_xmlns_or_case_type': settings.META_DB,
     'export_instances_by_domain': settings.META_DB,
     'export_instances_by_is_daily_saved': settings.META_DB,
-    'receiverwrapper': 'receiverwrapper',
     'users_extra': settings.USERS_GROUPS_DB,
     'deleted_users_by_username': settings.USERS_GROUPS_DB,
     'all_docs': (
@@ -24,4 +23,5 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'registry_data_sources': settings.META_DB,
     'registry_data_sources_by_last_modified': settings.META_DB,
     'registry_report_configs': settings.META_DB,
+    'users_by_domain': settings.USERS_GROUPS_DB,
 })

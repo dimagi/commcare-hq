@@ -1,0 +1,37 @@
+--- 
++++ 
+@@ -1,12 +1,10 @@
+-
+ import "commcarehq";
+ import $ from "jquery";
+ import _ from "underscore";
+ import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min";
+ import initialPageData from "hqwebapp/js/initial_page_data";
++import { TempusDominus } from "tempusDominus";
+ import "select2/dist/js/select2.full.min";
+-import "jquery-ui/ui/widgets/datepicker";
+-import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
+ 
+ var init = function () {
+     var MAPBOX_ACCESS_TOKEN = initialPageData.get(
+@@ -110,7 +108,19 @@
+     });
+ 
+     _.each($(".date-picker"), function (input) {
+-        $(input).datepicker({ dateFormat: "yy-mm-dd" });
++        new TempusDominus(
++            input,
++            {
++                display: {
++                    theme: 'light',
++                    components: {
++                        clock: false,
++                    },
++                },
++                localization: {
++                    format: 'yyyy-MM-dd',
++                },
++            });
+     });
+ };
+ 

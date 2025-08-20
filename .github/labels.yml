@@ -16,7 +16,7 @@ rules:
     patterns: ['corehq/apps/app_manager/suite_xml/xml_models.py']
 
   - labels: ['dependencies']
-    patterns: ['requirements/**|package.json|yarn.lock']
+    patterns: ['requirements/**|package.json|uv.lock|yarn.lock']
 
   - labels: ['Risk: High']
     patterns:
@@ -29,6 +29,7 @@ rules:
       - 'corehq/apps/hqwebapp/templates/hqwebapp/includes/core_libraries.html'
       - 'corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/requirejs_config.js'
       - 'corehq/apps/domain/decorators.py'
+      - 'corehq/util/context_processors.py'
 
   - labels: ['Risk: Medium']
     patterns:

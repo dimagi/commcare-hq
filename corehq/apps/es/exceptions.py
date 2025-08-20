@@ -27,3 +27,7 @@ class IndexMultiplexedException(Exception):
 
 class IndexAlreadySwappedException(Exception):
     pass
+
+
+class IndexNotSubindexException(Exception):
+    pass

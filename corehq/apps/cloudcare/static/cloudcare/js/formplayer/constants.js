@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/formplayer/constants", function () {
+define("cloudcare/js/formplayer/constants", [], function () {
     return {
         ALLOWED_SAVED_OPTIONS: ['oneQuestionPerScreen', 'language'],
 
@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         PREVIEW_APP_ENVIRONMENT: 'preview-app',
         GENERIC_ERROR: gettext(
             'An unexpected error occurred. ' +
-            'Please report an issue if you continue to see this message.'
+            'Please report an issue if you continue to see this message.',
         ),
 
         LayoutStyles: {
@@ -25,12 +25,31 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         FORMAT_ADDRESS: "Address",
         FORMAT_ADDRESS_POPUP: "AddressPopup",
         FORMAT_CLICKABLE_ICON: "ClickableIcon",
+        FORMAT_MARKDOWN: "Markdown",
+
+        ENTITIES: "entities",
+        QUERY: "query",
+
+        // values are snake case as recommended for Datadog tags
+        requestInitiatedByTagsMapping: {
+            DYNAMIC_SEARCH: 'dynamic_search',
+            FIELD_CHANGE: "field_change",
+            PAGINATION: "pagination",
+            CLICKABLE_ICON: "clickable_icon",
+        },
+
+        //Custom Properties
+        POST_FORM_SYNC: "cc-sync-after-form",
 
         SMALL_SCREEN_WIDTH_PX: 992,
 
         BREADCRUMB_HEIGHT_PX: 46.125,
-        BREADCRUMB_WIDTH_OFFSET_PX: 106.5, // unavailable breadcrumb space i.e. padding, home and hamburger icons
+        BREADCRUMB_WIDTH_OFFSET_PX: 120.41, // unavailable breadcrumb space i.e. padding, home and hamburger icons
 
         COLLAPSIBLE_TILE_MAX_HEIGHT: 150,
+
+        MILLIS_BEFORE_SHOW_LOADING: 1000,
+
+        SCROLLABLE_CONTENT_CONTAINER: '#content-plus-version-info-container',
     };
 });

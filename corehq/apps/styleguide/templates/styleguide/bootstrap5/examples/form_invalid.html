@@ -1,0 +1,59 @@
+<div class="row mb-3">
+  <label for="id-first-name" class="field-label">
+    Full Name
+  </label>
+  <div class="field-control">
+
+    <!-- this is how an invalid input is marked with the is-invalid class -->
+    <input
+      id="id-first-name"
+      class="form-control is-invalid"
+      type="text"
+      name="full_name"
+      autocomplete="off"
+    />
+
+    <!-- Note that span.invalid-feedback element comes before .form-text -->
+    <span class="invalid-feedback">
+      Please enter your full name. Thank you!
+    </span>
+
+    <div class="form-text">
+      This is the space for help text for a field.
+    </div>
+  </div>
+</div>
+<div class="row mb-3">
+  <label for="id-favorite-color" class="field-label">
+    Favorite Color
+  </label>
+  <div class="field-control">
+    <select
+      id="id-favorite-color"
+      class="form-select hqwebapp-select2 is-invalid"
+      name="favorite_color"
+    >
+      <option value="red">Red</option>
+      <option value="green">Green</option>
+      <option value="blue">Blue</option>
+    </select>
+    <span class="invalid-feedback">
+      Please select a favorite color.
+    </span>
+  </div>
+</div>
+<div class="row mb-3">
+  <label for="id-hopes" class="field-label">
+    Hopes and Dreams
+  </label>
+  <div class="field-control">
+    <textarea
+      id="id-hopes"
+      class="form-control vertical-resize is-invalid"
+      name="hopes"
+    ></textarea>
+    <span class="invalid-feedback">
+      Please enter your response to "Hopes and Dreams".
+    </span>
+  </div>
+</div>

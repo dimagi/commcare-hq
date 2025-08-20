@@ -1,0 +1,18 @@
+<script type="text/template" id="cell-grid-style-template">
+  .<%- model.prefix %>-cell-grid-style {
+  display: grid;
+  grid-template-columns: repeat(<%- model.numColumns %>, 1fr);
+  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>);
+  background-color: transparent;
+  color: #685c53;
+  justify-items: left;
+  border-radius: .3rem;
+  <% if (model.prefix === "persistent") { %>
+    margin: 20px 20px 10px 20px;
+  <% } else if (model.isMultiSelect) { %>
+    margin: 10px 30px 0 10px;
+  <% } else { %>
+    margin: 10px 20px 0 20px;
+  <% } %>
+  }
+</script>

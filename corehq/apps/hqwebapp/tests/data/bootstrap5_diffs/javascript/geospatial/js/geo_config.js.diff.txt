@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ 
+ const ROAD_NETWORK_ALGORITHM = initialPageData.get('road_network_algorithm_slug');
+ 

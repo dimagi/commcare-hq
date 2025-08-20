@@ -1,26 +1,24 @@
-from django.core.exceptions import PermissionDenied
 from django.urls import reverse
-from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
+from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.reports.extension_points import customize_user_query
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.apps.users.util import cached_user_id_to_user_display
 from corehq.const import USER_DATETIME_FORMAT
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
+from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -32,9 +30,7 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
-
-#TODO: replace with common code
-mark_safe_lazy = lazy(mark_safe, str)
+from ..util import DatatablesServerSideParams
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
@@ -48,7 +44,7 @@ class UserTypeFilter(BaseReportFilter):
     # note, don't use this as a guideline for anything.
     slug = "ufilter"
     label = gettext_lazy("User Type")
-    template = "reports/filters/filter_users.html"
+    template = "reports/filters/bootstrap3/filter_users.html"
 
     @property
     def filter_context(self):
@@ -80,9 +76,9 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         users = util.user_list(self.domain)
-        return [(user.user_id,
-                 "%s%s" % (user.username_in_report, "" if user.is_active else " (Inactive)"))
-                for user in users]
+        return [(user.user_id, "%s%s" % (
+            user.username_in_report, "" if user.is_active_in_domain(self.domain) else " (Inactive)"
+        )) for user in users]
 
     @classmethod
     def get_default_text(cls, user_filter):
@@ -121,14 +117,16 @@ class EmwfUtils(object):
     def user_tuple(self, u):
         user = util._report_user(u)
         uid = "u__%s" % user.user_id
-        is_active = False
-        if u['doc_type'] == 'WebUser':
-            name = "%s [Web User]" % user.username_in_report
-        elif user.is_active:
-            is_active = True
-            name = "%s [Active Mobile Worker]" % user.username_in_report
+        is_active = user.is_active_in_domain(self.domain)
+        if u['doc_type'] == 'WebUser' and is_active:
+            user_type = _("Active Web User")
+        elif u['doc_type'] == 'WebUser':
+            user_type = _("Deactivated Web User")
+        elif is_active:
+            user_type = _("Active Mobile Worker")
         else:
-            name = "%s [Deactivated Mobile Worker]" % user.username_in_report
+            user_type = _("Deactivated Mobile Worker")
+        name = f"{user.username_in_report} [{user_type}]"
         return uid, name, is_active
 
     def reporting_group_tuple(self, g):
@@ -142,16 +140,18 @@ class EmwfUtils(object):
 
     def location_tuple(self, location):
         location_id = location.location_id
-        text = location.get_path_display()
+        use_location_display_name = USE_LOCATION_DISPLAY_NAME.enabled(get_request_domain())
+        text = location.display_name if use_location_display_name else location.get_path_display()
+        tooltip = location.get_path_display() if use_location_display_name else location.display_name
         if self.namespace_locations:
             location_id = f'l__{location_id}'
             text = f'{text} [location]'
-        return (location_id, text)
+        return (location_id, text, None, tooltip)
 
     @property
     @memoized
     def static_options(self):
-        types = ['ACTIVE', 'DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
+        types = ['ACTIVE', 'DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'DEACTIVATED_WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         return [self.user_type_tuple(getattr(HQUserType, t)) for t in types]
@@ -196,17 +196,20 @@ class UsersUtils(EmwfUtils):
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
-        mobile_user_and_group_slugs = request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        mobile_user_and_group_slugs = DatatablesServerSideParams.get_value_from_request(
+            request, ExpandedMobileWorkerFilter.slug, as_list=True
+        )
 
         user_ids = emwf.selected_user_ids(mobile_user_and_group_slugs)
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
-    location_search_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+    location_search_help = mark_safe(gettext_lazy(  # nosec: no user input
         'When searching by location, put your location name in quotes to show only exact matches. '
         'To more easily find a location, you may specify multiple levels by separating with a "/". '
         'For example, "Massachusetts/Suffolk/Boston". '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/'
+        'commcarepublic/pages/2215051298/Organization+Data+Management#Search-for-Locations"'
         'target="_blank">Learn more</a>.'
     ))
 
@@ -216,10 +219,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = gettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options_all_users'
-    filter_help_inline = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+    filter_help_inline = mark_safe(gettext_lazy(  # nosec: no user input
         '<i class="fa fa-info-circle"></i> See '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
-        ' target="_blank"> Filter Definitions</a>.'))
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/Report+and+Export+Filters"'  # noqa: E501
+        'target="_blank"> Filter Definitions</a>.'))
 
     @property
     @memoized
@@ -271,7 +274,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         defaults = [
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
+            self.utils.user_type_tuple(HQUserType.WEB),
+            self.utils.user_type_tuple(HQUserType.DEACTIVATED_WEB)
         ]
+
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -279,10 +285,15 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     @memoized
     def selected(self):
-        selected_ids = self.request.GET.getlist(self.slug)
+        selected_ids = DatatablesServerSideParams.get_value_from_request(
+            self.request, self.slug, as_list=True
+        )
+        return self._get_selected_from_selected_ids(selected_ids)
+
+    def _get_selected_from_selected_ids(self, selected_ids):
         if not selected_ids:
-            return [{'id': url_id, 'text': text}
-                    for url_id, text in self.get_default_selections()]
+            return [{'id': selection_tuple[0], 'text': selection_tuple[1]}
+                    for selection_tuple in self.get_default_selections()]
 
         selected = (self.selected_static_options(selected_ids)
                     + self._selected_user_entries(selected_ids)
@@ -336,13 +347,17 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        q = cls._base_user_es_query(domain, request_user)
+        es_domains = cls._es_query_domains(domain, request_user)
+        q = user_es.UserES().domain(es_domains, include_inactive=True)
         q = customize_user_query(request_user, domain, q)
-        if (
-            ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
-            and request_user.has_permission(domain, 'access_all_locations')
-        ):
-            return q.show_inactive()
+        if not request_user.has_permission(domain, 'access_all_locations'):
+            q = q.location(list(
+                SQLLocation.objects
+                .accessible_to_user(domain, request_user)
+                .location_ids()
+            ))
+        if ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs):
+            return q
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
@@ -352,31 +367,28 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_type_filters = []
         has_user_ids = bool(user_ids)
 
-        can_access_all_locations = request_user.has_permission(domain, 'access_all_locations')
-        if has_user_ids and not can_access_all_locations:
-            cls._verify_users_are_accessible(domain, request_user, user_ids)
-
-        if has_user_ids:
-            # if userid are passed then remove default active filter
-            # and move it with mobile worker filter
-            q = q.remove_default_filter('active')
-            if HQUserType.DEACTIVATED in user_types:
-                deactivated_mbwf = filters.AND(user_es.is_active(False), user_es.mobile_users())
-                user_type_filters.append(deactivated_mbwf)
-            if HQUserType.ACTIVE in user_types:
-                activated_mbwf = filters.AND(user_es.is_active(), user_es.mobile_users())
-                user_type_filters.append(activated_mbwf)
-        elif HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
-            q = q.show_inactive()
-        elif HQUserType.DEACTIVATED in user_types:
-            q = q.show_only_inactive()
-
+        if HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
+            user_type_filters.append(filters.AND(
+                user_es.mobile_users(),
+                user_es.domain(
+                    es_domains,
+                    include_active=(HQUserType.ACTIVE in user_types),
+                    include_inactive=(HQUserType.DEACTIVATED in user_types),
+                ),
+            ))
         if HQUserType.ADMIN in user_types:
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
-        if HQUserType.WEB in user_types:
-            user_type_filters.append(user_es.web_users())
+        if HQUserType.WEB in user_types or HQUserType.DEACTIVATED_WEB in user_types:
+            user_type_filters.append(filters.AND(
+                user_es.web_users(),
+                user_es.domain(
+                    es_domains,
+                    include_active=HQUserType.WEB in user_types,
+                    include_inactive=HQUserType.DEACTIVATED_WEB in user_types
+                ),
+            ))
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 
@@ -384,61 +396,45 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             if has_user_ids:
                 return q.OR(*user_type_filters, filters.OR(filters.term("_id", user_ids)))
             else:
-                query = user_es.mobile_users()
-                if not can_access_all_locations:
-                    query = filters.AND(
-                        query,
-                        user_es.location(list(
-                            SQLLocation.objects
-                            .accessible_to_user(domain, request_user)
-                            .location_ids()
-                        ))
-                    )
-                return q.OR(*user_type_filters, query)
+                return q.OR(*user_type_filters)
 
         # return matching user types and exact matches
         location_query = SQLLocation.active_objects.get_locations_and_children(location_ids)
-        if not can_access_all_locations:
+        if not request_user.has_permission(domain, 'access_all_locations'):
             location_query = location_query.accessible_to_user(domain, request_user)
         location_ids = list(location_query.location_ids())
 
-        group_id_filter = filters.term("__group_ids", group_ids)
-
-        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
-            group_and_location_filter = filters.AND(
-                group_id_filter,
-                user_es.location(location_ids),
-            )
-        else:
-            group_and_location_filter = filters.OR(
-                group_id_filter,
-                user_es.location(location_ids),
-            )
-
         id_filter = filters.OR(
             filters.term("_id", user_ids),
-            group_and_location_filter,
+            filters.AND(
+                user_es.is_active(domain),
+                filters.OR(
+                    filters.term("__group_ids", group_ids),
+                    user_es.location(location_ids),
+                )
+            ),
         )
 
         if user_type_filters:
             return q.OR(
                 id_filter,
-                group_and_location_filter,
                 filters.OR(*user_type_filters),
             )
         return q.filter(id_filter)
 
     @classmethod
-    def _base_user_es_query(cls, domain, request_user):
-        return user_es.UserES().domain(domain, allow_enterprise=True)
+    def _es_query_domains(cls, domain, request_user):
+        domains = [domain] if isinstance(domain, str) else domain
+        domains += list(cls._get_enterprise_domains(domains))
+        return domains
 
-    @staticmethod
-    def _verify_users_are_accessible(domain, request_user, user_ids):
-        # This function would be very slow if called with many user ids
-        for user_id in user_ids:
-            other_user = CommCareUser.get(user_id)
-            if not user_can_access_other_user(domain, request_user, other_user):
-                raise PermissionDenied("One or more users are not accessible")
+    @classmethod
+    def _get_enterprise_domains(cls, domains):
+        from corehq.apps.enterprise.models import EnterprisePermissions
+        for domain in domains:
+            source_domain = EnterprisePermissions.get_source_domain(domain)
+            if source_domain:
+                yield source_domain
 
     @property
     def options(self):
@@ -456,6 +452,16 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             cls.slug: 'g__%s' % group_id
         }
 
+    @classmethod
+    def for_reporting_location(cls, loc_id):
+        return {
+            cls.slug: 'l__%s' % loc_id
+        }
+
+
+class SubmittedByExpandedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    label = gettext_lazy("Submitted By")
+
 
 class EnterpriseUsersUtils(EmwfUtils):
 
@@ -465,8 +471,11 @@ class EnterpriseUsersUtils(EmwfUtils):
         is_active = False
         report_username = user_obj.username_in_report
         if user['doc_type'] == 'WebUser':
-            name = f"{report_username} [Web User]"
-        elif user_obj.is_active:
+            if WebUser.get_by_user_id(user_obj.user_id).is_active_in_domain(self.domain):
+                name = f"{report_username} [Active Web User]"
+            else:
+                name = f"{report_username} [Deactivated Web User]"
+        elif user_obj.is_active_in_domain(user['domain']):
             is_active = True
             name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
         else:
@@ -487,6 +496,7 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
             self.utils.user_type_tuple(HQUserType.WEB),
+            self.utils.user_type_tuple(HQUserType.DEACTIVATED_WEB),
         ]
 
     @property
@@ -502,12 +512,10 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
         return context
 
     @classmethod
-    def _base_user_es_query(cls, domain, request_user):
+    def _es_query_domains(cls, domain, request_user):
         if not request_user.has_permission(domain, 'access_all_locations'):
-            return super()._base_user_es_query(domain, request_user)
-
-        domains = list(set(EnterprisePermissions.get_domains(domain)) | {domain})
-        return user_es.UserES().domains(domains)
+            return super()._es_query_domains(domain, request_user)
+        return list(set(EnterprisePermissions.get_domains(domain)) | {domain})
 
 
 class AffectedUserFilter(EnterpriseUserFilter):
@@ -519,7 +527,8 @@ class ChangedByUserFilter(EnterpriseUserFilter):
     label = gettext_lazy("Modified by User(s)")
 
     def get_default_selections(self):
-        return [self.utils.user_type_tuple(HQUserType.WEB)]
+        return [self.utils.user_type_tuple(HQUserType.WEB),
+        self.utils.user_type_tuple(HQUserType.DEACTIVATED_WEB)]
 
 
 class UserPropertyFilter(BaseSingleOptionFilter):
@@ -529,7 +538,9 @@ class UserPropertyFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        from corehq.apps.reports.standard.users.reports import UserHistoryReport
+        from corehq.apps.reports.standard.users.reports import (
+            UserHistoryReport,
+        )
         properties = UserHistoryReport.get_primary_properties(self.domain)
         properties.pop("username", None)
         return list(properties.items())
@@ -546,7 +557,6 @@ class ChangeActionFilter(BaseMultipleOptionFilter):
         (ALL, gettext_noop('All')),
         (str(UserHistory.CREATE), gettext_noop('Create')),
         (str(UserHistory.UPDATE), gettext_noop('Update')),
-        (str(UserHistory.DELETE), gettext_noop('Delete')),
     ]
     default_options = ['0']
 
@@ -572,14 +582,28 @@ class UserUploadRecordFilter(BaseSingleOptionFilter):
         ]
 
 
+class WebUserFilter(BaseMultipleOptionFilter):
+    slug = 'web_user'
+    label = _('Web user')
+    default_text = _('Show all')
+
+    @property
+    def options(self):
+        query = user_es.UserES().domain(self.domain).web_users()
+        return [
+            user_details for user_details in query.values_list('username', 'username')
+        ]
+
+
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
     try:
-        request_obj = request.POST if request.method == 'POST' else request.GET
-        if request_obj.get('ufilter', ''):
-            ufilter = request_obj.getlist('ufilter')
-        group = request_obj.get('group', '')
-        individual = request_obj.get('individual', '')
+        if DatatablesServerSideParams.get_value_from_request(request, 'ufilter', ''):
+            ufilter = DatatablesServerSideParams.get_value_from_request(
+                request, 'ufilter', as_list=True
+            )
+        group = DatatablesServerSideParams.get_value_from_request(request, 'group', '')
+        individual = DatatablesServerSideParams.get_value_from_request(request, 'individual', '')
         show_commtrack = request.project.commtrack_enabled
     except (KeyError, AttributeError):
         pass

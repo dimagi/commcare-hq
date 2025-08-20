@@ -1,5 +1,8 @@
-{% extends "reports/base_template.html" %}
+{% extends "reports/bootstrap3/base_template.html" %}
+{% load hq_shared_tags %}
 {% load i18n %}
+
+{% js_entry_b3 "accounting/js/report_filter_actions" %}
 
 {% block report_filter_actions %}
   <div id="savedReports" class="{{ report_filter_form_action_css_class }}">

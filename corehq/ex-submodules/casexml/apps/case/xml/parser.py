@@ -82,6 +82,13 @@ class CaseActionBase(object):
     def __repr__(self):
         return f"{type(self).__name__}(block={self.raw_block!r})"
 
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+                and self.__dict__ == other.__dict__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @classmethod
     def _from_block_and_mapping(cls, block, mapping):
         def _normalize(val):
@@ -344,6 +351,16 @@ class CaseUpdate(object):
 
     def __str__(self):
         return "%s: %s" % (self.version, self.id)
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+                and self.__dict__ == other.__dict__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def _filtered_action(self, func):
         # filters the actions, assumes exactly 0 or 1 match.

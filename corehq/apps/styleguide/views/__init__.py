@@ -2,9 +2,12 @@ import os
 
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.utils.decorators import method_decorator
 from django.views.generic import *
 
+from corehq.apps.styleguide.context import (
+    get_common_icons,
+    get_custom_icons,
+)
 from corehq.apps.styleguide.example_forms import (
     BasicCrispyForm,
     CheckboxesForm,
@@ -62,11 +65,22 @@ class BaseStyleGuideArticleView(TemplateView):
         """
         return {}
 
-    def example(self, filename):
-        examples = os.path.join(os.path.dirname(__file__),
+    def example(self, filename, js_filename=None):
+        html_dir = os.path.join(os.path.dirname(__file__),
                                 '..', 'templates', 'styleguide', 'bootstrap3', 'examples')
-        with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
-            return content.read()
+        with open(os.path.join(html_dir, filename), 'r', encoding='utf-8') as content:
+            content = content.read()
+        if js_filename:
+            js_dir = os.path.join(os.path.dirname(__file__),
+                                  '..', 'static', 'styleguide', 'bootstrap3', 'js')
+            with open(os.path.join(js_dir, js_filename), 'r', encoding='utf-8') as js_content:
+                js_content = js_content.read()
+            return {
+                'html': content,
+                'js': js_content,
+            }
+        else:
+            return content
 
     def render_to_response(self, context, **response_kwargs):
         context.update(self.section_context)
@@ -93,46 +107,8 @@ class AtomsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def page_context(self):
         return {
-            'common_icons': [
-                {
-                    'name': 'Common FontAwesome primary icons',
-                    'icons': [
-                        'fa-plus', 'fa-trash', 'fa-remove', 'fa-search',
-                        'fa-angle-double-right', 'fa-angle-double-down',
-                    ],
-                },
-                {
-                    'name': 'Common FontAwesome secondary icons',
-                    'icons': [
-                        'fa-cloud-download', 'fa-cloud-upload',
-                        'fa-warning', 'fa-info-circle', 'fa-question-circle', 'fa-check',
-                        'fa-external-link',
-                    ],
-                }
-            ],
-            'custom_icons': [
-                {
-                    'name': 'Custom HQ icons',
-                    'icons': [
-                        'fcc-flower', 'fcc-applications', 'fcc-commtrack', 'fcc-reports', 'fcc-data', 'fcc-users',
-                        'fcc-settings', 'fcc-help', 'fcc-exchange', 'fcc-messaging', 'fcc-chart-report',
-                        'fcc-form-report', 'fcc-datatable-report', 'fcc-piegraph-report', 'fcc-survey',
-                        'fcc-casemgt', 'fcc-blankapp', 'fcc-globe', 'fcc-app-createform', 'fcc-app-updateform',
-                        'fcc-app-completeform',
-                    ],
-                },
-                {
-                    'name': 'Custom HQ icons specific to form builder',
-                    'icons': [
-                        'fcc-fd-text', 'fcc-fd-numeric', 'fcc-fd-data', 'fcc-fd-variable', 'fcc-fd-single-select',
-                        'fcc-fd-single-circle', 'fcc-fd-multi-select', 'fcc-fd-multi-box', 'fcc-fd-decimal',
-                        'fcc-fd-long', 'fcc-fd-datetime', 'fcc-fd-audio-capture', 'fcc-fd-android-intent',
-                        'fcc-fd-signature', 'fcc-fd-multi-box', 'fcc-fd-single-circle', 'fcc-fd-hash',
-                        'fcc-fd-external-case', 'fcc-fd-external-case-data', 'fcc-fd-expand', 'fcc-fd-collapse',
-                        'fcc-fd-case-property', 'fcc-fd-edit-form',
-                    ],
-                },
-            ],
+            'common_icons': get_common_icons(),
+            'custom_icons': get_custom_icons(),
             'swatches': {
                 'RED': {
                     'main': ('e73c27', 'cc-att-neg-mid'),
@@ -301,6 +277,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'molecules/pagination',
             'molecules/search_box',
             'molecules/inline_edit',
+            'molecules/help',
             'molecules/feedback',
         ]
 
@@ -311,16 +288,17 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'examples': {
                 'selections': {
                     'button_group': self.example('button_group.html'),
-                    'select2': self.example('select2.html'),
-                    'multiselect': self.example('multiselect.html'),
+                    'select2': self.example('select2.html', 'select2.js'),
+                    'multiselect': self.example('multiselect.html', 'multiselect.js'),
                 },
                 'checkbox_in_form': self.example('checkbox_in_form.html'),
                 'lonely_checkbox': self.example('lonely_checkbox.html'),
                 'modals': self.example('modals.html'),
-                'pagination': self.example('pagination.html'),
-                'search_box': self.example('search_box.html'),
-                'inline_edit': self.example('inline_edit.html'),
-                'feedback': self.example('feedback.html'),
+                'pagination': self.example('pagination.html', 'pagination.js'),
+                'search_box': self.example('search_box.html', 'search_box.js'),
+                'inline_edit': self.example('inline_edit.html', 'inline_edit.js'),
+                'help': self.example('help.html'),
+                'feedback': self.example('feedback.html', 'feedback.js'),
             },
         }
 

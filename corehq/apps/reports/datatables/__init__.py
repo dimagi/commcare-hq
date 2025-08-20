@@ -12,7 +12,8 @@ class DataTablesColumn(object):
     def __init__(self, name, span=0, sort_type=None, sort_direction=None,
                  help_text=None, sortable=True, rotate=False,
                  expected=None, prop_name=None, visible=True, data_slug=None,
-                 alt_prop_name=None, width=None, css_class=None, sql_col=None):
+                 alt_prop_name=None, width=None, css_class=None, sql_col=None,
+                 use_bootstrap5=False):
         self.html = name
         self.css_span = span
         self.sort_type = sort_type
@@ -30,6 +31,7 @@ class DataTablesColumn(object):
         self.width = width
         self.css_class = css_class
         self.sql_col = sql_col
+        self.use_bootstrap5 = use_bootstrap5
 
     @property
     def render_html(self):
@@ -49,12 +51,44 @@ class DataTablesColumn(object):
             expected=self.expected,
             width=self.width
         )
-        return render_to_string("reports/datatables/column.html", dict(
+        if self.use_bootstrap5:
+            template_path = "reports/datatables/bootstrap5/column.html"
+        else:
+            template_path = "reports/datatables/bootstrap3/column.html"
+        return render_to_string(template_path, dict(
             col=column_params
         ))
 
     @property
     def render_aoColumns(self):
+        # todo eventually this should be renamed to render_column and references to
+        # `render_aoColumns` should be updated.
+        if self.use_bootstrap5:
+            return self._bootstrap5_render_column()
+        return self._bootstrap3_render_aoColumns()
+
+    def _bootstrap5_render_column(self):
+        column = {
+            "order": self.sort_direction,
+            "orderable": self.sortable,
+        }
+        if self.prop_name:
+            column['name'] = self.prop_name
+        if self.sort_type:
+            column['type'] = self.sort_type
+        if self.rotate:
+            column["width"] = "10px"
+        if not self.visible:
+            column["visible"] = self.visible
+        if self.data_slug:
+            column['data'] = {
+                'slug': self.data_slug,
+            }
+        if self.css_class:
+            column['className'] = self.css_class
+        return column
+
+    def _bootstrap3_render_aoColumns(self):
         aoColumns = dict(asSorting=self.sort_direction)
 
         if self.prop_name:

@@ -303,7 +303,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     name = StringProperty()
     is_active = BooleanProperty()
     # date_created is expected to be a naive datetime specified in UTC
-    # Defaulting to a lambda rather than utcnow directly to make freezegun function. Not ideal
+    # Defaulting to a lambda rather than utcnow directly to make time-machine function. Not ideal
     date_created = DateTimeProperty(default=lambda: datetime.utcnow())
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     default_geocoder_location = DictProperty()
@@ -448,6 +448,13 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
+    exports_use_elasticsearch = BooleanProperty(default=False)
+
+    # For domains that have been migrated to a different environment
+    redirect_url = StringProperty()
+
+    # name that users see for connect messaging channels tied to this domain
+    connect_messaging_channel_name = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -679,16 +686,21 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return name
 
     @classmethod
-    def get_all(cls, include_docs=True):
+    def get_all(cls, include_docs=True, include_snapshots=False):
         domains = Domain.view("domain/not_snapshots", include_docs=False).all()
+        if include_snapshots:
+            snapshots = Domain.get_db().view("domain/snapshots", include_docs=True, reduce=False).all()
+            # make snapshots look like items returned from domains/not_snapshots view
+            snapshots = [{'id': d['id'], 'key': d['doc']['name'], 'value': None} for d in snapshots]
+            domains = domains + snapshots
         if not include_docs:
             return domains
         else:
             return map(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
 
     @classmethod
-    def get_all_names(cls):
-        return sorted({d['key'] for d in cls.get_all(include_docs=False)})
+    def get_all_names(cls, include_snapshots=False):
+        return sorted({d['key'] for d in cls.get_all(include_docs=False, include_snapshots=include_snapshots)})
 
     @classmethod
     def get_deleted_domain_names(cls):
@@ -772,10 +784,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             'domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True
         )
 
-    def delete(self, leave_tombstone=False):
-        if not leave_tombstone and not settings.UNIT_TESTING:
-            raise ValueError(
-                'Cannot delete domain without leaving a tombstone except during testing')
+    def delete(self, *, leave_tombstone):
+        # The default vaule of leave_tombstone is set to False for tests.
+        # This can be temporarily undone with @suspend(domain_tombstones_patch)
         self._pre_delete()
         if leave_tombstone:
             domain = self.get(self._id)
@@ -821,10 +832,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if not self.has_custom_logo:
             return None
 
-        return (
-            self.fetch_attachment(LOGO_ATTACHMENT),
-            self.blobs[LOGO_ATTACHMENT].content_type
-        )
+        return self.fetch_attachment(LOGO_ATTACHMENT)
 
     def get_odata_feed_limit(self):
         return self.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
@@ -1099,20 +1107,6 @@ class AllowedUCRExpressionSettings(models.Model):
         allowed_expressions_for_domain = set(cls.get_allowed_ucr_expressions(domain_name))
         restricted_expressions = set(all_restricted_ucr_expressions())
         return restricted_expressions - allowed_expressions_for_domain
-
-
-class ProjectLimitType():
-    LIVE_GOOGLE_SHEETS = 'lgs'
-
-    CHOICES = (
-        (LIVE_GOOGLE_SHEETS, "Live Google Sheets"),
-    )
-
-
-class ProjectLimit(models.Model):
-    domain = models.CharField(max_length=256, db_index=True)
-    limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
-    limit_value = models.IntegerField(default=20)
 
 
 class OperatorCallLimitSettings(models.Model):

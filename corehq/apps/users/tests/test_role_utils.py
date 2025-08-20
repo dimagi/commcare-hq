@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from corehq.apps.users.models import HqPermissions, UserRole
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser, PermissionInfo
 from corehq.apps.users.role_utils import (
     UserRolePresets,
     archive_custom_roles_for_domain,
@@ -9,7 +9,13 @@ from corehq.apps.users.role_utils import (
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
     enable_attendance_coordinator_role_for_domain,
-    archive_attendance_coordinator_role_for_domain
+    archive_attendance_coordinator_role_for_domain,
+    get_commcare_analytics_access_for_user_domain,
+)
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.permissions import (
+    COMMCARE_ANALYTICS_SQL_LAB,
+    COMMCARE_ANALYTICS_USER_ROLES,
 )
 
 
@@ -118,3 +124,76 @@ class RoleUtilsTests(TestCase):
         for role in UserRole.objects.get_by_domain(self.domain):
             if role.id != self.role1.id:
                 role.delete()
+
+
+class TestCommcareAnalyticsRolesByUser(TestCase):
+
+    DOMAIN = "domain1"
+    USERNAME = "username"
+    PASSWORD = "***"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain(cls.DOMAIN)
+        cls.user = WebUser.create("domain1", cls.USERNAME, cls.PASSWORD, None, None)
+
+        cls.hq_no_cca_role = cls._create_role("No CCA role", analytics_roles=None)
+
+        cls.limited_cca_roles = [
+            COMMCARE_ANALYTICS_SQL_LAB,
+        ]
+        cls.hq_limited_cca_role = cls._create_role("Limited CCA role", analytics_roles=cls.limited_cca_roles)
+        cls.hq_all_cca_roles_role = cls._create_role("All CCA roles", analytics_roles=[], all_roles=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        for role in UserRole.objects.get_by_domain(cls.domain):
+            role.delete()
+
+        cls.user.delete(deleted_by_domain=cls.domain.name, deleted_by=None)
+        cls.domain.delete()
+        super().tearDownClass()
+
+    def test_admin_user(self):
+        self.user.domain_memberships[0].is_admin = True
+
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access['roles'], COMMCARE_ANALYTICS_USER_ROLES)
+        self.assertTrue(cca_access['permissions']['can_edit'])
+        self.assertTrue(cca_access['permissions']['can_view'])
+
+    def test_non_admin_user(self):
+        self.user.set_role(self.domain.name, self.hq_no_cca_role.get_qualified_id())
+        self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
+
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access['roles'], [])
+        self.assertFalse(cca_access['permissions']['can_edit'])
+        self.assertFalse(cca_access['permissions']['can_view'])
+
+    def test_user_has_limited_roles(self):
+        self.user.set_role(self.domain.name, self.hq_limited_cca_role.get_qualified_id())
+        self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
+
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access['roles'], self.limited_cca_roles)
+
+    def test_user_has_all_roles(self):
+        self.user.set_role(self.domain.name, self.hq_all_cca_roles_role.get_qualified_id())
+        self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
+
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access['roles'], COMMCARE_ANALYTICS_USER_ROLES)
+
+    @classmethod
+    def _create_role(cls, role_name, analytics_roles=None, all_roles=False):
+        if analytics_roles is None:
+            analytics_roles = []
+        permissions_infos = [PermissionInfo('commcare_analytics_roles', analytics_roles)]
+        permissions = HqPermissions.from_permission_list(permissions_infos)
+        if all_roles:
+            permissions.commcare_analytics_roles = True
+
+        role = UserRole.create(domain=cls.domain, name=role_name, permissions=permissions)
+        return role

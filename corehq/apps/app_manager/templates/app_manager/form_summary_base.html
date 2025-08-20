@@ -43,7 +43,7 @@
     <!-- ko if: module_filter -->
     <ul class="fa-ul" data-bind="visible: $root.showRelevance">
       <li>
-        <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
+        <i data-bind="attr: {'class': 'fa-li text-muted fa-solid fa-code-branch'}"></i>
         <span data-bind="text: module_filter, css: getDiffClass('module_filter'), popover: getDiffPopover(changes['module_filter'], 'module_filter')"></span>
       </li>
     </ul>
@@ -71,7 +71,7 @@
         <!-- ko if: form_filter -->
         <ul class="fa-ul" data-bind="visible: $root.showRelevance">
           <li>
-            <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
+            <i data-bind="attr: {'class': 'fa-li text-muted fa-solid fa-code-branch'}"></i>
             <span data-bind="text: form_filter, css: getDiffClass('form_filter'), popover: getDiffPopover(changes['form_filter'], 'form_filter')"></span>
           </li>
         </ul>
@@ -138,7 +138,7 @@
       <!-- /ko -->
       <!-- ko if: relevant -->
       <li data-bind="visible: $root.showRelevance" >
-        <i class = "fa-li fa text-muted fa-code-fork"></i>
+        <i class = "fa-li text-muted fa-solid fa-code-branch"></i>
         <span data-bind="text: relevant, css: getDiffClass('relevant'), popover: getDiffPopover(changes['relevant'], 'relevant')"></span>
       </li>
       <!-- /ko -->

@@ -1,24 +1,25 @@
 from django import forms
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy, gettext_noop
+from django.utils.translation import gettext_lazy
 from django.utils.html import format_html
 
-from crispy_forms.bootstrap import PrependedText
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.layout import Fieldset, Layout
 
 from corehq.apps.consumption.shortcuts import (
     get_default_monthly_consumption,
     set_default_consumption_for_product,
 )
-from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper
 from corehq.apps.products.models import SQLProduct
 
 
 class CommTrackSettingsForm(forms.Form):
     use_auto_emergency_levels = forms.BooleanField(
-        label=gettext_noop("Use default emergency levels"), required=False)
+        label=gettext_lazy("Use default emergency levels"),
+        required=False,
+    )
 
     stock_emergency_level = forms.DecimalField(
         label=gettext_lazy("Emergency Level (months)"), required=False)
@@ -28,7 +29,9 @@ class CommTrackSettingsForm(forms.Form):
         label=gettext_lazy("Overstock Level (months)"), required=False)
 
     use_auto_consumption = forms.BooleanField(
-        label=gettext_lazy("Use automatic consumption calculation"), required=False)
+        label=gettext_lazy("Use automatic consumption calculation"),
+        required=False,
+    )
     consumption_min_transactions = forms.IntegerField(
         label=gettext_lazy("Minimum Transactions (Count)"), required=False)
     consumption_min_window = forms.IntegerField(
@@ -37,11 +40,13 @@ class CommTrackSettingsForm(forms.Form):
         label=gettext_lazy("Optimal Window for Calculation (Days)"), required=False)
     individual_consumption_defaults = forms.BooleanField(
         label=gettext_lazy("Configure consumption defaults individually by supply point"),
-        required=False
+        required=False,
     )
 
     sync_consumption_fixtures = forms.BooleanField(
-        label=gettext_lazy("Sync consumption fixtures"), required=False)
+        label=gettext_lazy("Sync consumption fixtures"),
+        required=False,
+    )
 
     def clean(self):
         cleaned_data = super(CommTrackSettingsForm, self).clean()
@@ -56,18 +61,15 @@ class CommTrackSettingsForm(forms.Form):
             for key in consumption_keys:
                 if not cleaned_data.get(key):
                     self._errors[key] = self.error_class([_(
-                        "You must use automatic consumption calculation or " +
-                        " specify a value for all consumption settings."
+                        "You must use automatic consumption calculation or "
+                        + " specify a value for all consumption settings."
                     )])
 
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+        self.helper = HQFormHelper()
 
         self.helper.layout = Layout(
             Fieldset(
@@ -78,19 +80,21 @@ class CommTrackSettingsForm(forms.Form):
             ),
             Fieldset(
                 _('Consumption Settings'),
-                PrependedText('use_auto_consumption', ''),
+                'use_auto_consumption',
                 'consumption_min_transactions',
                 'consumption_min_window',
                 'consumption_optimal_window',
-                PrependedText('individual_consumption_defaults', ''),
+                'individual_consumption_defaults',
             ),
             Fieldset(
                 _('Phone Settings'),
-                PrependedText('sync_consumption_fixtures', ''),
+                'sync_consumption_fixtures',
             ),
-            hqcrispy.FormActions(
-                ButtonHolder(
-                    Submit('submit', gettext_lazy('Submit'))
+            FormActions(
+                StrictButton(
+                    _("Submit"),
+                    type="submit",
+                    css_class='btn-primary',
                 )
             )
         )
@@ -112,10 +116,8 @@ class ConsumptionForm(forms.Form):
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
         super(ConsumptionForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
         layout = []
         products = SQLProduct.active_objects.filter(domain=domain)
@@ -134,11 +136,6 @@ class ConsumptionForm(forms.Form):
                 )
             )
 
-        layout.append(hqcrispy.FormActions(
-            ButtonHolder(
-                Submit('submit', gettext_lazy('Update Default Consumption Info'))
-            )
-        ))
         self.helper.layout = Layout(*layout)
 
     def save(self):

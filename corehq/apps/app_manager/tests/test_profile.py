@@ -1,9 +1,10 @@
 import uuid
 import xml.etree.cElementTree as ET
 from itertools import combinations
+from unittest.mock import patch
 
 from django.conf import settings
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import TestCase, override_settings
 
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
@@ -21,8 +22,7 @@ from corehq.util.test_utils import flag_enabled
 
 
 @flag_enabled('CUSTOM_PROPERTIES')
-@flag_enabled('APP_DEPENDENCIES')
-class ProfileTest(SimpleTestCase, TestXmlMixin):
+class ProfileTest(TestCase, TestXmlMixin):
     file_path = ('data',)
 
     def setUp(self):
@@ -85,7 +85,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
 
     def _test_dependencies(self, profile, key, value, setting):
         node = profile.find('./features/dependencies')
-        if node:
+        if node is not None:
             app_dependencies = node.findall('./android_package')
             actual_value = [n.get('id') for n in app_dependencies]
         else:
@@ -103,9 +103,12 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
             '"force" should always be true for custom properties"{}"'.format(key)
         )
 
-    def test_profile_properties(self):
+    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    def test_profile_properties(self, *args):
         for setting in get_custom_commcare_settings():
             if setting['id'] == 'users':
+                continue
+            if setting['id'] == 'credentials':
                 continue
             if setting.get('widget') == 'multiSelect':
                 for values in all_combinations(setting['values']):
@@ -140,6 +143,22 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         profile = self.app.create_profile(build_profile_id=self.build_profile_id)
         self._test_custom_property(ET.fromstring(profile), 'heartbeat-url',
                                    self.app.heartbeat_url(self.build_profile_id))
+
+    def test_credentials_in_profile(self):
+        self.app.profile = {
+            'features': {
+                'credentials': '3MON_ACTIVE',
+            }
+        }
+        profile = self.app.create_profile()
+
+        profile_xml = ET.fromstring(profile)
+        credentials_element = self._get_node(profile_xml, "credentials", './features/{}')
+
+        self.assertEqual(credentials_element.attrib.get("active"), "true")
+        credential_el = credentials_element[0]
+        self.assertEqual(credential_el.attrib.get("type"), "APP_ACTIVITY")
+        self.assertEqual(credential_el.attrib.get("level"), "3MON_ACTIVE")
 
     def test_version(self):
         profile_xml = ET.fromstring(self.app.create_profile())

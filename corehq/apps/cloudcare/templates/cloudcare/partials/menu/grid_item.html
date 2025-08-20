@@ -1,0 +1,30 @@
+<script type="text/template" id="menu-view-grid-item-template">
+  <div>
+    <% if (imageUrl) { %>
+    <div class="gridicon badge-container" style="background-image: url('<%- imageUrl %>');">
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
+    </div>
+    <% } else { %>
+    <div class="gridicon gridicon-circle badge-container">
+      <% if (navState === "JUMP") { %>
+      <i class="fa fa-pencil gridicon-icon" aria-hidden="true"></i>
+      <% } else { %>
+      <i class="fa fa-folder gridicon-icon" aria-hidden="true"></i>
+      <% } %>
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
+    </div>
+    <% } %>
+    <div class="module-column-name text-center">
+      <h3><%- displayText ? displayText : "" %></h3>
+    </div>
+  </div>
+  <% if (menuIndex % 2 === 1) { %>
+  <div class="clearfix d-xs-block"></div>
+  <% } %>
+  <% if (menuIndex % 3 === 2) { %>
+  <div class="clearfix d-sm-block"></div>
+  <% } %>
+  <% if (menuIndex % 4 === 3) { %>
+  <div class="clearfix d-md-block d-lg-block"></div>
+  <% } %>
+</script>

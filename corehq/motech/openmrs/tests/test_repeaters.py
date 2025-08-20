@@ -515,14 +515,12 @@ class CaseLocationTests(LocationHierarchyTestCase):
         cape_town_repeater = OpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Cape Town'].location_id,
-            'repeater_id': uuid.uuid4().hex,
             'connection_settings_id': self.conn.id,
         })
         cape_town_repeater.save()
         western_cape_repeater = OpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Western Cape'].location_id,
-            'repeater_id': uuid.uuid4().hex,
             'connection_settings_id': self.conn.id,
         })
         western_cape_repeater.save()
@@ -551,7 +549,6 @@ class CaseLocationTests(LocationHierarchyTestCase):
             domain=self.domain,
             location_id=gardens.location_id,
             connection_settings=self.conn,
-            repeater_id=uuid.uuid4().hex,
         )
         gardens_repeater.save()
 
@@ -571,14 +568,12 @@ class CaseLocationTests(LocationHierarchyTestCase):
             domain=self.domain,
             location_id=self.locations['Cape Town'].location_id,
             connection_settings_id=self.conn.id,
-            repeater_id=uuid.uuid4().hex,
         )
         cape_town_repeater.save()
         western_cape_repeater = OpenmrsRepeater(
             domain=self.domain,
             location_id=self.locations['Western Cape'].location_id,
             connection_settings_id=self.conn.id,
-            repeater_id=uuid.uuid4().hex,
         )
         western_cape_repeater.save()
 
@@ -730,17 +725,29 @@ class DeleteCasePropertyTests(SimpleTestCase):
         """)
         self.assert_expected_case_block(case_property, case_block_re)
 
-    def test_too_much_rope_error(self):
+    def test_deletable_kwargs_1(self):
         case_property = "case_id"
-        with self.assertRaises(TypeError):
-            delete_case_property(DOMAIN, "CASE_ID", case_property)
+        case_block_re = strip_xml(f"""
+            <case case_id="CASE_ID" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <case_id />
+              </update>
+            </case>
+        """)
+        self.assert_expected_case_block(case_property, case_block_re)
 
-    def test_too_much_rope_no_error(self):
+    def test_deletable_kwargs_2(self):
         case_property = "update"
         case_block_re = strip_xml(f"""
             <case case_id="CASE_ID" »
                   date_modified="{DATETIME_PATTERN}" »
-                  xmlns="http://commcarehq.org/case/transaction/v2" />
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <update />
+              </update>
+            </case>
         """)
         self.assert_expected_case_block(case_property, case_block_re)
 

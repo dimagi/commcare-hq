@@ -1,11 +1,13 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load humanize %}
 
-{% requirejs_main 'hqadmin/js/system_info' %}
+{% js_entry_b3 'hqadmin/js/system_info' %}
 
-{% block reportcontent %}
+{% block title %}{{ current_page.page_name }}{% endblock %}
+
+{% block page_content %}
   {% initial_page_data "celery_update" celery_update %}
   {% initial_page_data "couch_update" couch_update %}
   {% initial_page_data "is_bigcouch" is_bigcouch %}

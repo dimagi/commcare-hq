@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
@@ -17,7 +17,7 @@ from corehq.apps.reports.standard.cases.case_data import (
     resave_case_view,
     undo_close_case_view,
 )
-from corehq.apps.reports.standard.tableau import TableauView, tableau_visualization_ajax
+from corehq.apps.reports.standard.tableau import TableauView, get_tableau_server_ticket
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
@@ -62,6 +62,7 @@ from .views import (
     view_form_attachment,
     view_scheduled_report,
     copy_cases,
+    reassign_cases,
 )
 
 custom_report_urls = [
@@ -79,7 +80,8 @@ release_management_urls = [
 urlpatterns = [
     ConfigurableReportView.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
-    url(r'^copy_cases/$', copy_cases, name='copy_cases'),
+    url(r'^copy_cases/$', copy_cases, name='copy_cases_action'),
+    url(r'^reassign_cases/$', reassign_cases, name='reassign_cases_action'),
 
     # Report Builder
     url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(),
@@ -153,11 +155,8 @@ urlpatterns = [
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
 
-    # V2 Reports
-    url(r'^v2/', include('corehq.apps.reports.v2.urls')),
-
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
-    url(r'^tableau/visualization/$', tableau_visualization_ajax, name='tableau_visualization_ajax'),
+    url(r'^tableau/ticket/$', get_tableau_server_ticket, name='get_tableau_server_ticket'),
 
     # Internal Use
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),

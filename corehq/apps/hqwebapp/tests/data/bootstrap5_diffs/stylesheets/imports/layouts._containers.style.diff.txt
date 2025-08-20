@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,32 +1,15 @@
+@@ -1,22 +1,10 @@
 -body, html {
 -    height: 100%;
 +html, body {
@@ -16,12 +16,6 @@
 +    padding-bottom: $navbar-footer-height;
  }
 -
- 
- .container.ui-widget,
- .container.ui-widget.ui-widget-content {
-   border: none;
--}
--
 -.footer-mobile {
 -  font-size: 10px;
 -  text-align: center;
@@ -33,8 +27,3 @@
 -    margin: 0;
 -  }
 -}
--
--.ui-widget-content a.btn-primary {
--  color: white;
--}
-+}

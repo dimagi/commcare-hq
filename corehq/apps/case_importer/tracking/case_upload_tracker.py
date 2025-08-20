@@ -1,11 +1,9 @@
-import time
-
+from celery import uuid
 from django.db import transaction
 
 from memoized import memoized
 
 from corehq.apps.case_importer.exceptions import ImporterFileNotFound
-from corehq.apps.case_importer.tracking.exceptions import TimedOutWaitingForCaseUploadRecord
 from corehq.apps.case_importer.tracking.filestorage import (
     persistent_file_store,
     transient_file_store,
@@ -19,6 +17,7 @@ from corehq.apps.case_importer.util import (
     open_spreadsheet_download_ref,
 )
 from corehq.apps.case_importer.const import ALL_CASE_TYPE_IMPORT
+
 
 class CaseUpload(object):
 
@@ -38,15 +37,6 @@ class CaseUpload(object):
     @memoized
     def _case_upload_record(self):
         return CaseUploadRecord.objects.get(upload_id=self.upload_id)
-
-    def wait_for_case_upload_record(self):
-        for wait_seconds in [1, 2, 5, 10, 20]:
-            try:
-                self._case_upload_record
-                return
-            except CaseUploadRecord.DoesNotExist:
-                time.sleep(wait_seconds)
-        raise TimedOutWaitingForCaseUploadRecord()
 
     def get_tempfile(self):
         return transient_file_store.get_tempfile_ref_for_contents(self.upload_id)
@@ -68,9 +58,6 @@ class CaseUpload(object):
     def trigger_upload(self, domain, config_list, comment=None, is_bulk=False):
         """
         Save a CaseUploadRecord and trigger a task that runs the upload
-
-        The task triggered by this must call case_upload.wait_for_case_upload_record() before using it
-        to avoid a race condition.
         """
         from corehq.apps.case_importer.tasks import bulk_import_async
         original_filename = transient_file_store.get_filename(self.upload_id)
@@ -78,7 +65,7 @@ class CaseUpload(object):
             case_upload_file_meta = persistent_file_store.write_file(f, original_filename, domain)
 
         config_list_json = [c.to_json() for c in config_list]
-        task = bulk_import_async.delay(config_list_json, domain, self.upload_id)
+        task_id = uuid()
         case_type = config_list[0].case_type
         if is_bulk:
             case_type = ALL_CASE_TYPE_IMPORT
@@ -87,12 +74,14 @@ class CaseUpload(object):
             domain=domain,
             comment=comment,
             upload_id=self.upload_id,
-            task_id=task.task_id,
+            task_id=task_id,
             couch_user_id=config_list[0].couch_user_id,  # Will be the same for all configs in a bulk import,
                                                          # so we can use the first one in the list.
             case_type=case_type,
             upload_file_meta=case_upload_file_meta,
         ).save()
+
+        bulk_import_async.apply_async((config_list_json, domain, self.upload_id), task_id=task_id)
 
     def store_task_result(self, task_status):
         self._case_upload_record.save_task_status_json(task_status)

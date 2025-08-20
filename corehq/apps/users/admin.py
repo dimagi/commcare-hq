@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django_digest.models import PartialDigest, UserNonce
 
 from .models import HQApiKey, UserHistory
+from .user_data import SQLUserData
 
 
 class DDUserNonceAdmin(admin.ModelAdmin):
@@ -23,7 +24,7 @@ admin.site.register(PartialDigest, DDPartialDigestAdmin)
 class ApiKeyInline(admin.TabularInline):
     model = HQApiKey
     readonly_fields = ('created',)
-    exclude = ('key',)
+    exclude = ('encrypted_key',)
     extra = 0
 
     def has_add_permission(self, request, obj):
@@ -70,7 +71,7 @@ class HQApiKeyAdmin(admin.ModelAdmin):
     list_filter = ['created', 'domain']
 
     readonly_fields = ('created',)
-    exclude = ('key',)
+    exclude = ('encrypted_key',)
 
 
 admin.site.register(HQApiKey, HQApiKeyAdmin)
@@ -93,3 +94,11 @@ class UserHistoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UserHistory, UserHistoryAdmin)
+
+
+class UserDataAdmin(admin.ModelAdmin):
+    list_display = ['django_user', 'domain', 'profile', 'modified_on']
+    search_fields = ('django_user', 'domain')
+
+
+admin.site.register(SQLUserData, UserDataAdmin)

@@ -17,7 +17,7 @@ REPEATER_SEQ = """
         SELECT setval('repeaters_repeater_id_seq', NEW.value, true);
 """
 UNDO_REPEATER_SEQ = """
-    DROP VIEW repeaters_repeater_id_seq_view;
+    DROP VIEW IF EXISTS repeaters_repeater_id_seq_view;
 """
 
 REPEATERS_APP_LABEL = "repeaters"

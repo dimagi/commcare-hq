@@ -14,6 +14,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.urls import reverse
@@ -62,12 +63,6 @@ from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqadmin.views.users import BaseAdminSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_jquery_ui,
-    use_timepicker,
-    use_typeahead,
-)
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
@@ -76,7 +71,7 @@ from corehq.apps.sms.api import (
     get_inbound_phone_entry,
     incoming,
     send_sms,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
     send_sms_with_backend_name,
 )
 from corehq.apps.sms.forms import (
@@ -126,11 +121,12 @@ from corehq.apps.smsforms.models import (
 )
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, CouchUser, HqPermissions
+from corehq.apps.users.models import CommCareUser, ConnectIDUserLink, CouchUser, HqPermissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
+from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
@@ -201,15 +197,10 @@ class ComposeMessageView(BaseMessagingSectionView):
             'timezone_now': datetime.now(tz=tz),
             'form': ComposeMessageForm(domain=self.domain)
         })
-        page_context.update(get_sms_autocomplete_context(self.request, self.domain))
         return page_context
 
-    @use_typeahead
-    def dispatch(self, *args, **kwargs):
-        return super(ComposeMessageView, self).dispatch(*args, **kwargs)
 
-
-def get_sms_autocomplete_context(request, domain):
+def get_sms_autocomplete_context(domain):
     """A helper view for sms autocomplete"""
     phone_users = CouchUser.view("users/phone_users_by_domain",
         startkey=[domain], endkey=[domain, {}], include_docs=True
@@ -224,7 +215,7 @@ def get_sms_autocomplete_context(request, domain):
             continue
         contacts.append(user.username)
         user_id = user._id
-    return {"sms_contacts": contacts}
+    return contacts
 
 
 @login_and_domain_required
@@ -235,14 +226,13 @@ def send_to_recipients(request, domain):
     # Currently the permission to publish an app is just the login_and_domain_required
     # decorator, and this view matches that.
 
-    recipients = request.POST.get('recipients')
+    recipients = request.POST.getlist('recipients')
     message = request.POST.get('message')
     if not recipients:
         messages.error(request, _("You didn't specify any recipients"))
     elif not message:
         messages.error(request, _("You can't send an empty message"))
     else:
-        recipients = [x.strip() for x in recipients.split(',') if x.strip()]
         phone_numbers = []
         # formats: GroupName (group), "Username", +15555555555
         group_names = []
@@ -301,7 +291,7 @@ def send_to_recipients(request, domain):
                 empty_groups = group_names
 
         users.extend(CouchUser.view('_all_docs', keys=login_ids, include_docs=True).all())
-        users = [user for user in users if user.is_active and not user.is_deleted()]
+        users = [user for user in users if user.is_active_in_domain(domain) and not user.is_deleted()]
 
         phone_numbers.extend([(user, user.phone_number) for user in users])
 
@@ -337,14 +327,9 @@ def send_to_recipients(request, domain):
 
         logged_event.completed()
 
-        def comma_reminder():
-            messages.error(request, _("Please remember to separate recipients"
-                " with a comma."))
-
         if empty_groups or failed_numbers or unknown_usernames or no_numbers:
             if empty_groups:
                 messages.error(request, _("The following groups don't exist: ") + (', '.join(empty_groups)))
-                comma_reminder()
             if no_numbers:
                 messages.error(request,
                     _("The following users don't have phone numbers: ") + (', '.join(no_numbers)))
@@ -354,7 +339,6 @@ def send_to_recipients(request, domain):
             if unknown_usernames:
                 messages.error(request,
                     _("Couldn't find the following user(s): ") + (', '.join(unknown_usernames)))
-                comma_reminder()
             if sent:
                 messages.success(request, _("Successfully sent: ") + (', '.join(sent)))
             else:
@@ -542,7 +526,7 @@ def api_send_sms(request, domain):
         if backend_id is not None:
             success = send_sms_with_backend_name(domain, phone_number, text, backend_id, metadata)
         elif vn is not None:
-            success = send_sms_to_verified_number(vn, text, metadata)
+            success = send_message_to_verified_number(vn, text, metadata)
         else:
             success = send_sms(domain, None, phone_number, text, metadata)
 
@@ -638,10 +622,6 @@ class ChatOverSMSView(BaseMessagingSectionView):
     urlname = 'chat_contacts'
     template_name = 'sms/chat_contacts.html'
     page_title = _("Chat over SMS")
-
-    @use_datatables
-    def dispatch(self, *args, **kwargs):
-        return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
 
 
 def get_case_contact_info(domain_obj, case_ids):
@@ -751,8 +731,7 @@ def chat_contact_list(request, domain):
     total_records = len(data)
 
     if sSearch:
-        regex = re.compile('^.*%s.*$' % sSearch)
-        data = [row for row in data if regex.match(row[0]) or regex.match(row[2])]
+        data = [row for row in data if sSearch in row[0] or sSearch in row[2]]
     filtered_records = len(data)
 
     data.sort(key=lambda row: row[0])
@@ -765,7 +744,7 @@ def chat_contact_list(request, domain):
         'iTotalDisplayRecords': filtered_records,
     }
 
-    return HttpResponse(json.dumps(result))
+    return JsonResponse(result)
 
 
 def get_contact_name_for_chat(contact, domain_obj):
@@ -954,7 +933,7 @@ class ChatMessageHistory(View, DomainViewMixin):
 
     def get(self, request, *args, **kwargs):
         if not self.contact:
-            return HttpResponse('[]')
+            return JsonResponse([], safe=False)
 
         data, last_sms = self.get_response_data(request.couch_user.get_id)
         if last_sms:
@@ -963,7 +942,7 @@ class ChatMessageHistory(View, DomainViewMixin):
             except Exception:
                 notify_exception(request, "Error updating last read message for %s" % last_sms.pk)
 
-        return HttpResponse(json.dumps(data))
+        return JsonResponse(data, safe=False)
 
 
 class ChatLastReadMessage(View, DomainViewMixin):
@@ -989,9 +968,9 @@ class ChatLastReadMessage(View, DomainViewMixin):
 
             if lrm:
                 lrm_timestamp = json_format_datetime(lrm.message_timestamp)
-        return HttpResponse(json.dumps({
+        return JsonResponse({
             'message_timestamp': lrm_timestamp,
-        }))
+        })
 
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
@@ -1116,7 +1095,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         except (BadSMSConfigException, SQLMobileBackend.DoesNotExist, TypeError, ValueError):
             raise Http404()
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         item_id, backend = self._get_backend_from_item_id(item_id)
 
         if backend.is_global or backend.domain != self.domain:
@@ -1468,7 +1447,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
         except (BadSMSConfigException, SQLMobileBackend.DoesNotExist, TypeError, ValueError):
             raise Http404()
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         item_id, backend = self._get_backend_from_item_id(item_id)
 
         if not backend.is_global:
@@ -1664,7 +1643,6 @@ class SMSLanguagesView(BaseMessagingSectionView):
     template_name = "sms/languages.html"
     page_title = gettext_noop("Languages")
 
-    @use_jquery_ui
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(SMSLanguagesView, self).dispatch(*args, **kwargs)
@@ -1976,7 +1954,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
     @method_decorator(domain_admin_required)
-    @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2059,3 +2036,45 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
                     + _(" failed to fetch templates. Please make sure the gateway is configured properly.")
                 )
         return context
+
+
+class ConnectMessagingUserView(BaseMessagingSectionView):
+    urlname = 'connect_messaging_user'
+    template_name = 'sms/connect_messaging_user.html'
+    page_title = _("Connect Messaging Users")
+
+    @method_decorator(toggles.COMMCARE_CONNECT.required_decorator())
+    @method_decorator(domain_admin_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ConnectMessagingUserView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        page_context = super(ConnectMessagingUserView, self).page_context
+        page_context.update({
+            "create_channel_url": reverse("create_channels", args=[self.domain])
+        })
+        return page_context
+
+
+@toggles.COMMCARE_CONNECT.required_decorator()
+@domain_admin_required
+def create_channels(request, domain, *args, **kwargs):
+    user_links = ConnectIDUserLink.objects.filter(domain=domain, channel_id__isnull=True)
+    backend = ConnectBackend()
+    channel_users = []
+    for link in user_links:
+        success = backend.create_channel(link)
+        if success:
+            channel_users.append(link.commcare_user.username)
+    if success:
+        messages.success(
+            request,
+            _("Channels created for the following users: \n") + ('\n '.join(channel_users))
+        )
+    else:
+        messages.warning(
+            request,
+            _("No channels created")
+        )
+    return HttpResponseRedirect(reverse(ConnectMessagingUserView.urlname, args=[domain]))

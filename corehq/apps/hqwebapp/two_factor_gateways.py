@@ -13,7 +13,7 @@ from tastypie.http import HttpTooManyRequests
 from twilio.base.exceptions import TwilioRestException
 from twilio.http.http_client import TwilioHttpClient
 from twilio.rest import Client
-from two_factor.models import PhoneDevice
+from two_factor.plugins.phonenumber.models import PhoneDevice
 
 import settings
 from corehq.apps.users.models import CouchUser

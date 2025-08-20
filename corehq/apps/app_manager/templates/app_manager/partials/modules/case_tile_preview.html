@@ -1,0 +1,80 @@
+{% load i18n %}
+
+<button class="btn btn-default btn-xs pull-right"
+        data-bind="click: resetCaseTilePreview, visible: showCaseTileConfigColumns()">
+  <i class="fa fa-magic"></i>
+  {% trans "Reset Grid" %}
+</button>
+
+<div data-bind="visible: caseTileTemplate()">
+  <div id="case-tile-preview" data-bind="foreach: caseTilePreviewColumns">
+    <div class="cell" data-bind="visible: showInTilePreview, style: {
+          'grid-row-start': tileRowStart,
+          'grid-row-end': tileRowEnd,
+          'grid-column-start': tileColumnStart,
+          'grid-column-end': tileColumnEnd,
+      }, css: {
+          'odd-tab': $parent.tabPolarity($data),
+      },">
+      <div class="content" data-bind="style: {
+        'justify-self': horizontalAlign,
+        'text-align': horizontalAlign,
+        'align-self': verticalAlign,
+      }">
+        <!-- ko if: $data.original -->
+          #<span data-bind="text: $index()"></span>:
+        <!-- /ko -->
+        <!-- ko text: tileContent --><!-- /ko -->
+      </div>
+      <!-- TODO: align less terribly, this gets messed up as screen/tiles resize -->
+      <div class="controls" data-bind="if: $data.original">
+        <table style="width: 100%;"><tbody><tr><td style="text-align: center;">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-xs btn-default"
+                    data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, -1, 0, 0); }, enable: tileColumnStart() > 1">
+              <i class="fa fa-arrow-left"></i>
+            </button>
+            <button type="button" class="btn btn-xs btn-default"
+                    data-bind="click: function () { $parent.adjustTileGridArea($index(), -1, 0, 0, 0); }, enable: tileRowStart() > 1">
+              <i class="fa fa-arrow-up"></i>
+            </button>
+            <button type="button" class="btn btn-xs btn-default"
+                    data-bind="click: function () { $parent.adjustTileGridArea($index(), 1, 0, 0, 0); }, enable: tileRowEnd() < tileRowMax()">
+              <i class="fa fa-arrow-down"></i>
+            </button>
+            <button type="button" class="btn btn-xs btn-default"
+                    data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 1, 0, 0); }, enable: tileColumnEnd() < tileColumnMax()">
+              <i class="fa fa-arrow-right"></i>
+            </button>
+          </div>
+          <div class="btn-group" role="group" style="float: left; margin: 0 2px;">
+            <button type="button" class="btn btn-xs btn-default"
+                    data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, -1, 0);}, enable: tileWidth() > 1">
+              <i class="fa fa-minus"></i>
+            </button>
+            <button type="button" class="btn btn-xs" disabled>
+              <i class="fa-solid fa-left-right"></i>
+            </button>
+            <button type="button" class="btn btn-xs btn-default"
+                    data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 1, 0); }, enable: tileColumnEnd() < tileColumnMax()">
+              <i class="fa fa-plus"></i>
+            </button>
+          </div>
+          <div class="btn-group" role="group" style="float: right; margin: 0 2px;">
+            <button type="button" class="btn btn-xs btn-default"
+                    data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, -1); }, enable: tileHeight() > 1">
+              <i class="fa fa-minus"></i>
+            </button>
+            <button type="button" class="btn btn-xs" disabled>
+              <i class="fa-solid fa-up-down"></i>
+            </button>
+            <button type="button" class="btn btn-xs btn-default"
+                    data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, 1); }, enable: tileRowEnd() < tileRowMax()">
+              <i class="fa fa-plus"></i>
+            </button>
+          </div>
+        </td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>

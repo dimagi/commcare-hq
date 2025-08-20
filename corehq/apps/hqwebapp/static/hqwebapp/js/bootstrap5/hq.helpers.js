@@ -1,13 +1,16 @@
-hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
+define("hqwebapp/js/bootstrap5/hq.helpers", [
     'jquery',
     'knockout',
     'underscore',
     'analytix/js/google',
+    'bootstrap5',
+    'jquery.cookie/jquery.cookie',  // $.cookie
 ], function (
     $,
     ko,
     _,
-    googleAnalytics
+    googleAnalytics,
+    bootstrap,
 ) {
     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
     $(document).on('submit', 'form', function (ev) {
@@ -34,11 +37,6 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
         $.post(postUrl, {note_id: noteId});
         $(this).parents('.alert').hide(150);
     });
-
-    if ($.timeago) {
-        $.timeago.settings.allowFuture = true;
-        $(".timeago").timeago();
-    }
 
     window.onerror = function (message, file, line, col, error) {
         var stack = error ? error.stack : null;
@@ -75,18 +73,10 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
             if (opts) {
                 options = _.extend(options, opts);
             }
-            if (!$link.data('content')) {
-                options.content = function () {
-                    return $('#popover_content_wrapper').html();
-                };
-            }
-            if (!$link.data("title")) {
-                options.template = '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>';
-            }
-            $link.popover(options);
+            new bootstrap.Popover($link, options);
 
             // Prevent jumping to the top of the page when link is clicked
-            $helpElem.find('a').click(function (event) {
+            $link.click(function (event) {
                 googleAnalytics.track.event("Clicked Help Bubble", $(this).data('title'), '-');
                 event.preventDefault();
             });
@@ -94,6 +84,9 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     };
 
     $.fn.changeButtonState = function (state) {
+        if (!$(this).data('reset-text')) {
+            $(this).data('reset-text', $(this).text());
+        }
         $(this).text($(this).data(state + '-text'));
         return this;
     };
@@ -136,7 +129,7 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
             throw new Error("Multiple elements passed to koApplyBindings");
         }
         ko.applyBindings(context, this.get(0));
-        this.removeClass('ko-template');
+        this.find('.ko-template').addBack().removeClass('ko-template');
     };
 
     $.ajaxSetup({
@@ -145,16 +138,17 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
             // Ignore HTTP methods that do not require CSRF protection
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type)) {
                 if (!this.crossDomain) {
-                    var $csrfToken = $("#csrfTokenContainer").val();
-                    xhr.setRequestHeader("X-CSRFToken", $csrfToken);
+                    var csrfToken = $("#csrfTokenContainer").val();
+                    if (csrfToken) {
+                        xhr.setRequestHeader("X-CSRFToken", csrfToken);
+                    }
                 }
                 var xsrfToken = $.cookie('XSRF-TOKEN');
-                xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
+                if (xsrfToken) {
+                    xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
+                }
             }
             xhr.withCredentials = true;
         },
     });
-
-    // Return something so that hqModules understands that the module has been defined
-    return 1;
 });

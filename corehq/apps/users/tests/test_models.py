@@ -1,18 +1,25 @@
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
+from django.db import IntegrityError, transaction
 from django.test import SimpleTestCase, TestCase
+
+from couchdbkit.schema.base import DocumentBase
 
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
+    User,
     WebUser,
     DeviceAppMeta,
     HqPermissions,
+    ConnectIDUserLink,
+    ConnectIDMessagingKey,
 )
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 
 
 class CouchUserTest(SimpleTestCase):
@@ -215,8 +222,6 @@ class DeviceAppMetaLatestRequestTests(SimpleTestCase):
 class HQPermissionsTests(SimpleTestCase):
     def test_normalize_removes_permissions_from_location_restricted_user(self):
         permissions = HqPermissions(
-            edit_web_users=True,
-            view_web_users=True,
             edit_groups=True,
             view_groups=True,
             edit_apps=True,
@@ -228,8 +233,6 @@ class HQPermissionsTests(SimpleTestCase):
 
         permissions.normalize()
 
-        self.assertFalse(permissions.edit_web_users)
-        self.assertFalse(permissions.view_web_users)
         self.assertFalse(permissions.edit_groups)
         self.assertFalse(permissions.view_groups)
         self.assertFalse(permissions.edit_apps)
@@ -312,3 +315,95 @@ class HQPermissionsTests(SimpleTestCase):
         left = HqPermissions(view_reports=True)
         right = HqPermissions()
         self.assertEqual(HqPermissions.diff(left, right), ['view_reports'])
+
+
+class CouchUserSaveRaceConditionTests(TestCase):
+
+    def test_couch_user_save_race_condition(self):
+        """
+        WebUser and CommCareUser use the same underlying save method that is being tested here
+        """
+        username = 'race-test-user@test.com'
+        user = WebUser.create(self.domain.name, username, '***', None, None)
+        self.addCleanup(user.delete, None, deleted_by=None)
+
+        rev_before = WebUser.get_by_username(username)._rev
+        super_save = DocumentBase.save
+
+        def race_save(self, *args, **kw):
+            """
+            Simulate a scenario where another process calls get_by_username while the current process is executing
+            user.save(). The call happens after user.save() is called, but prior to the user object actually being
+            saved to Couch (prior to super().save() being called)
+            """
+            WebUser.get_by_username(username)
+            return super_save(self, *args, **kw)
+
+        with patch.object(DocumentBase, "save", race_save):
+            user.save()
+
+        rev_after = WebUser.get_by_username(username)._rev
+        diff = int(rev_after.split('-')[0]) - int(rev_before.split('-')[0])
+        self.assertEqual(diff, 1)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain('race-user-test')
+        cls.addClassCleanup(cls.domain.delete)
+
+
+class ConnectIDUserLinkTests(TestCase):
+    domain_name = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        user = User.objects.create(
+            username="bob",
+            password="123",
+        )
+        cls.addClassCleanup(user.delete)
+        cls.connect_id_user_link = ConnectIDUserLink.objects.create(
+            connectid_username='user123',
+            commcare_user=user,
+            domain=cls.domain_name,
+        )
+        cls.addClassCleanup(cls.connect_id_user_link.delete)
+
+    def tearDown(self):
+        # Clear cached property
+        try:
+            del self.connect_id_user_link.__dict__['messaging_key']
+        except KeyError:
+            pass
+        ConnectIDMessagingKey.objects.all().delete()
+        super().tearDown()
+
+    def test_create_messaging_key(self):
+        message_key = self.connect_id_user_link.messaging_key
+        assert ConnectIDMessagingKey.objects.count() == 1
+        saved_message_key = ConnectIDMessagingKey.objects.first()
+        assert message_key.key == saved_message_key.key
+
+    def test_messaging_key_exists(self):
+        ConnectIDMessagingKey.objects.create(
+            domain=self.domain_name,
+            connectid_user_link=self.connect_id_user_link,
+            key='foobar',
+        )
+        with patch.object(ConnectIDMessagingKey.objects, 'get_or_create') as mock_create:
+            mock_create.side_effect = [IntegrityError()]
+            message_key = self.connect_id_user_link.messaging_key
+        assert message_key.key == 'foobar'
+        assert ConnectIDMessagingKey.objects.count() == 1
+
+    def test_error_creating_duplicate_messaging_key(self):
+        self.connect_id_user_link.messaging_key
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                ConnectIDMessagingKey.objects.create(
+                    domain=self.domain_name,
+                    connectid_user_link=self.connect_id_user_link,
+                    key='foobar',
+                )

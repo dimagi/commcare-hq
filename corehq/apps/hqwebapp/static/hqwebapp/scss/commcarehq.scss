@@ -9,12 +9,14 @@
 @import "mixins";
 @import "commcarehq/mixins";
 @import "utilities";
+@import "commcarehq/animations";
 
 // Layout & components
 @import "root";
 @import "reboot";
 @import "type";
 @import "commcarehq/type";
+@import "commcarehq/print";
 @import "images";
 @import "containers";
 @import "commcarehq/containers";
@@ -65,7 +67,6 @@
 
 // Custom Widgets
 @import "commcarehq/ace_cle";
-@import "commcarehq/appcues";
 @import "commcarehq/backgrounds";
 @import "commcarehq/datagrid";
 @import "commcarehq/datatables";
@@ -76,6 +77,7 @@
 @import "commcarehq/form_steps";
 @import "commcarehq/helpbubble";
 @import "commcarehq/hubspot";
+@import "commcarehq/htmx";
 @import "commcarehq/icons";
 @import "commcarehq/inline_edit";
 @import "commcarehq/label";
@@ -84,8 +86,8 @@
 @import "commcarehq/mapbox";
 @import "commcarehq/notifications";
 @import "commcarehq/pagination";
-@import "commcarehq/panels";
-@import "commcarehq/paused";
+@import "commcarehq/card";
+@import "commcarehq/plan_notice";
 @import "commcarehq/radio_select";
 @import "commcarehq/readable_forms";
 @import "commcarehq/report";

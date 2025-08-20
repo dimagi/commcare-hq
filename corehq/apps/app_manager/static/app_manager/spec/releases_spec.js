@@ -1,10 +1,17 @@
 /* eslint-env mocha */
-/* global $, sinon */
+import $ from "jquery";
+import _ from "underscore";
+import sinon from "sinon";
+
+import initialPageData from "hqwebapp/js/initial_page_data";
+import releasesModels from "app_manager/js/releases/releases";
+
+import "commcarehq";
 
 describe('App Releases', function () {
     function getSavedApps(num, extraProps, releasesMain) {
         extraProps = extraProps || {};
-        var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel,
+        var savedAppModel = releasesModels.savedAppModel,
             savedApps = [];
         for (var version = 0; version <= num; version ++) {
             savedApps.push(savedAppModel(
@@ -38,23 +45,22 @@ describe('App Releases', function () {
         };
     describe('SavedApp', function () {
         var releases = null,
-            ajax_stub;
+            ajaxStub;
 
         beforeEach(function () {
-            var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel,
-                registerUrl = hqImport("hqwebapp/js/initial_page_data").registerUrl;
-            registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
-            registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
-            registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz");
-            registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
-            registerUrl("app_form_summary_diff", "/a/test-domain/apps/compare/---..---");
-            ajax_stub = sinon.stub($, 'ajax');
-            releases = releasesMainModel(options);
+            initialPageData.registerUrl("current_app_version", "/a/test-domain/apps/---/current_version/");
+            initialPageData.registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
+            initialPageData.registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
+            initialPageData.registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz");
+            initialPageData.registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
+            initialPageData.registerUrl("app_form_summary_diff", "/a/test-domain/apps/compare/---..---");
+            ajaxStub = sinon.stub($, 'ajax');
+            releases = releasesModels.releasesMainModel(options);
             releases.savedApps(getSavedApps(5, {}, releases));
         });
 
         afterEach(function () {
-            ajax_stub.restore();
+            ajaxStub.restore();
         });
 
         it('should only make one request when downloading zip', function () {
@@ -67,51 +73,50 @@ describe('App Releases', function () {
             var app = releases.savedApps()[0];
             app.download_application_zip();
             assert.equal($.ajax.callCount, 1);
-            assert.equal(ajax_stub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
+            assert.equal(ajaxStub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
         });
 
         it('should use the correct URL for downloading multimedia', function () {
             var app = releases.savedApps()[0];
             app.download_application_zip(true);
             assert.equal($.ajax.callCount, 1);
-            assert.equal(ajax_stub.firstCall.args[0].url, releases.reverse('download_multimedia_zip', app.id()));
+            assert.equal(ajaxStub.firstCall.args[0].url, releases.reverse('download_multimedia_zip', app.id()));
         });
 
         it('should use the correct URL for different saved apps', function () {
             _.each(releases.savedApps(), function (app) {
-                ajax_stub.reset();
-                ajax_stub.onFirstCall(0).yieldsTo("success", {
+                ajaxStub.reset();
+                ajaxStub.onFirstCall(0).yieldsTo("success", {
                     download_id: '123' + app.id(),
                     download_url: 'pollUrl',
                 });
-                ajax_stub.onSecondCall().yieldsTo("success", 'ready_123' + app.id());
+                ajaxStub.onSecondCall().yieldsTo("success", 'ready_123' + app.id());
 
                 app.download_application_zip();
                 assert.equal($.ajax.callCount, 2);
-                assert.equal(ajax_stub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
+                assert.equal(ajaxStub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
             });
         });
 
     });
 
     describe('app_code', function () {
-        var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
-        var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel;
+        var savedAppModel = releasesModels.savedAppModel;
         var savedApp,
             releases;
         beforeEach(function () {
-            releases = releasesMainModel(options);
+            releases = releasesModels.releasesMainModel(options);
 
             this.server = sinon.fakeServer.create();
             this.server.respondWith(
                 "GET",
                 new RegExp(savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL),
-                [200, { "Content-type": "text/html" }, 'http://bit.ly/media/']
+                [200, { "Content-type": "text/html" }, 'http://bit.ly/media/'],
             );
             this.server.respondWith(
                 "GET",
                 new RegExp(savedAppModel.URL_TYPES.SHORT_ODK_URL),
-                [200, { "Content-type": "text/html" }, 'http://bit.ly/nomedia/']
+                [200, { "Content-type": "text/html" }, 'http://bit.ly/nomedia/'],
             );
         });
 

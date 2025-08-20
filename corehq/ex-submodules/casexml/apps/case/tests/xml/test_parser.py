@@ -1,4 +1,4 @@
-from casexml.apps.case.xml.parser import CaseUpdate
+from casexml.apps.case.xml.parser import CaseUpdate, CaseCreateAction
 from casexml.apps.case.xml import V2
 from django.test import SimpleTestCase
 
@@ -40,6 +40,29 @@ class CaseUpdateTests(SimpleTestCase):
         self.assertEqual(case_update.get_normalized_update_property_names(),
                          {'name', 'owner_id', 'type'})
 
+    def test_equality(self):
+        create_block = {
+            'case_name': 'test_case',
+            'owner_id': '12345',
+            'case_type': 'test_case_type'
+        }
+        case_block = self._create_case_block(create_block)
+
+        case_update_1 = CaseUpdate('case_id', V2, case_block)
+        case_update_2 = CaseUpdate('case_id', V2, case_block)
+        self.assertEqual(case_update_1, case_update_2)
+
+    def test_non_equality(self):
+        create_block = {
+            'case_name': 'test_case',
+            'owner_id': '12345',
+            'case_type': 'test_case_type'
+        }
+        case_block = self._create_case_block(create_block)
+        case_update_1 = CaseUpdate('case_id', V2, case_block)
+        case_update_2 = CaseUpdate('case_id2', V2, case_block)
+        self.assertNotEqual(case_update_1, case_update_2)
+
     def _create_case_block(self, create_block=None, update_block=None):
         block = {
             '@case_id': '1111',
@@ -55,3 +78,20 @@ class CaseUpdateTests(SimpleTestCase):
             block['update'] = update_block
 
         return block
+
+
+class CaseActionTests(SimpleTestCase):
+    def test_equality(self):
+        block = {
+            'case_name': 'test'
+        }
+        action1 = CaseCreateAction(block)
+        action2 = CaseCreateAction(block)
+
+        self.assertEqual(action1, action2)
+
+    def test_non_equality(self):
+        action1 = CaseCreateAction({'case_name': 'one'})
+        action2 = CaseCreateAction({'case_name': 'two'})
+
+        self.assertNotEqual(action1, action2)

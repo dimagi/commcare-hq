@@ -34,7 +34,8 @@ def notify_about_to_expire_api_keys():
         .filter(is_active=True) \
         .exclude(expiration_date=None) \
         .exclude(expiration_date__lt=datetime.now()) \
-        .exclude(expiration_date__gt=datetime.today() + timedelta(days=5))
+        .exclude(expiration_date__gt=datetime.today() + timedelta(days=5)) \
+        .filter(user__is_active=True)
 
     url = absolute_reverse(ApiKeyView.urlname)
 

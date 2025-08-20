@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
@@ -235,6 +237,8 @@ class ScheduledReportTest(TestCase):
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 1)
 
 
+@patch('corehq.apps.reports.standard.monitoring.util.get_simplified_users',
+       new=lambda q: [])
 @es_test(requires=[case_adapter, form_adapter], setup_class=True)
 class ScheduledReportSendingTest(TestCase):
 

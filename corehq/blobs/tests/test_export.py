@@ -1,108 +1,74 @@
 import doctest
-import os
 import tarfile
-import uuid
 from io import BytesIO, RawIOBase
 from tempfile import NamedTemporaryFile
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.hqmedia.models import (
-    CommCareAudio,
-    CommCareImage,
-    CommCareVideo,
-)
 from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.export import EXPORTERS
+from corehq.blobs.export import BlobExporter
+from corehq.blobs.management.commands.run_blob_import import Command as ImportCommand
+from corehq.blobs.tests.fixtures import blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
 
 
-class TestBlobExport(TestCase):
+class TestBlobExporter(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.domain = 'exporter-test'
+        cls.blob_data = b'binary data not valid utf-8 \xe4\x94'
+        cls.exporter = BlobExporter(cls.domain)
 
-        cls.db = TemporaryFilesystemBlobDB()
-        assert get_blob_db() is cls.db, (get_blob_db(), cls.db)
-        cls.data = data = b'binary data not valid utf-8 \xe4\x94'
-        cls.blob_metas = []
-        cls.not_found = set()
+    def setUp(self):
+        super().setUp()
+        self.db = blob_db()
 
-        cls.domain_name = str(uuid.uuid4)
-
-        for type_code in [CODES.form_xml, CODES.multimedia, CODES.data_export]:
-            for domain in (cls.domain_name, str(uuid.uuid4())):
-                meta = cls.db.put(BytesIO(data), meta=new_meta(domain=domain, type_code=type_code))
-                lost = new_meta(domain=domain, type_code=type_code, content_length=42)
-                cls.blob_metas.append(meta)
-                cls.blob_metas.append(lost)
-                lost.save()
-                cls.not_found.add(lost.key)
-
-    @classmethod
-    def tearDownClass(cls):
-        for blob in cls.blob_metas:
-            blob.delete()
-        cls.db.close()
-        super().tearDownClass()
-
-    def test_migrate_all(self):
-        expected = {
-            m.key for m in self.blob_metas
-            if m.domain == self.domain_name and m.key not in self.not_found
-        }
-        with NamedTemporaryFile() as out:
-            exporter = EXPORTERS['all_blobs'](self.domain_name)
-            exporter.migrate(out.name, force=True)
-            with tarfile.open(out.name, 'r:gz') as tgzfile:
-                self.assertEqual(expected, set(tgzfile.getnames()))
-
-    def test_migrate_multimedia(self):
-        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images',
-                                  'commcare-hq-logo.png')
-        with open(image_path, 'rb') as f:
-            image_data = f.read()
-
-        files = (
-            (CommCareImage, self.domain_name, image_data),
-            (CommCareAudio, self.domain_name, b'fake audio'),
-            (CommCareVideo, self.domain_name, b'fake video'),
-            (CommCareAudio, 'other_domain', b'fake audio 1'),
+    def test_only_blob_in_targeted_domain_is_exported(self):
+        # create blob that should be ignored
+        self.db.put(BytesIO(self.blob_data), meta=new_meta(domain='random', type_code=CODES.form_xml))
+        expected_meta = self.db.put(
+            BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml)
         )
 
-        blob_keys = []
-        for doc_class, domain, data in files:
-            obj = doc_class.get_by_data(data)
-            obj.attach_data(data)
-            obj.add_domain(domain)
-            self.addCleanup(obj.delete)
-            self.assertEqual(data, obj.get_display_file(False))
-            blob_keys.append(obj.blobs[obj.attachment_id].key)
-
-        expected = set(blob_keys[:-1])
         with NamedTemporaryFile() as out:
-            exporter = EXPORTERS['multimedia'](self.domain_name)
-            exporter.migrate(out.name, force=True)
+            self.exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
-                self.assertEqual(expected, set(tgzfile.getnames()))
+                self.assertEqual([expected_meta.key], tgzfile.getnames())
 
-    def test_export_and_import_compressed_blobs(self):
+    def test_different_blob_types_are_exported(self):
+        form = self.db.put(BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml))
+        multimedia = self.db.put(
+            BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.multimedia)
+        )
+
         with NamedTemporaryFile() as out:
-            exporter = EXPORTERS['all_blobs'](self.domain_name)
-            exporter.migrate(out.name, force=True)
-            self.import_and_verify(out.name)
+            self.exporter.migrate(out.name, force=True)
+            with tarfile.open(out.name, 'r:gz') as tgzfile:
+                self.assertEqual({form.key, multimedia.key}, set(tgzfile.getnames()))
 
-    def import_and_verify(self, filename):
-        from ..management.commands.run_blob_import import Command as ImportCommand
-        expected_metas = {m for m in self.blob_metas
-            if m.key not in self.not_found and m.domain == self.domain_name}
-        self.assertTrue(any(m.is_compressed for m in expected_metas))
-        with TemporaryFilesystemBlobDB() as dest_db:
-            assert get_blob_db() is dest_db, (get_blob_db(), dest_db)
-            ImportCommand.handle(None, filename)
-            for meta in expected_metas:
-                with dest_db.get(meta=meta) as fh:
-                    self.assertEqual(fh.read(), self.data, meta.type_code)
+    def test_blob_meta_referencing_missing_blob_is_not_exported(self):
+        expected_meta = self.db.put(
+            BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml)
+        )
+        orphaned_meta = new_meta(domain=self.domain, type_code=CODES.form_xml, content_length=42)
+        orphaned_meta.save()
+
+        with NamedTemporaryFile() as out:
+            self.exporter.migrate(out.name, force=True)
+            with tarfile.open(out.name, 'r:gz') as tgzfile:
+                self.assertEqual([expected_meta.key], tgzfile.getnames())
+
+    def test_exported_blobs_can_be_imported_successfully(self):
+        form = self.db.put(BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml))
+        with NamedTemporaryFile() as out:
+            self.exporter.migrate(out.name, force=True)
+            with TemporaryFilesystemBlobDB() as dest_db:
+                assert get_blob_db() is dest_db, (get_blob_db(), dest_db)
+                ImportCommand.handle(None, out.name)
+                with dest_db.get(meta=form) as fh:
+                    self.assertEqual(fh.read(), self.blob_data)
 
 
 class TestExtendingExport(TestCase):
@@ -110,14 +76,14 @@ class TestExtendingExport(TestCase):
     domain_name = 'extending-export-test-domain'
 
     def setUp(self):
-        self.db = TemporaryFilesystemBlobDB()
-        assert get_blob_db() is self.db, (get_blob_db(), self.db)
+        super().setUp()
+        self.db = blob_db()
         self.blob_metas = []
 
     def tearDown(self):
         for meta in self.blob_metas:
             meta.delete()
-        self.db.close()
+        super().tearDown()
 
     def test_extends(self):
 
@@ -130,7 +96,7 @@ class TestExtendingExport(TestCase):
             meta = self.db.put(BytesIO(blob), meta=meta_meta)  # Naming ftw
             self.blob_metas.append(meta)
         with NamedTemporaryFile() as file_one:
-            exporter = EXPORTERS['all_blobs'](self.domain_name)
+            exporter = BlobExporter(self.domain_name)
             exporter.migrate(file_one.name, force=True)
             with tarfile.open(file_one.name, 'r:gz') as tgzfile:
                 keys_in_file_one = set(m.key for m in self.blob_metas[-3:])
@@ -145,7 +111,7 @@ class TestExtendingExport(TestCase):
                 meta = self.db.put(BytesIO(blob), meta=meta_meta)
                 self.blob_metas.append(meta)
             with NamedTemporaryFile() as file_two:
-                exporter = EXPORTERS['all_blobs'](self.domain_name)
+                exporter = BlobExporter(self.domain_name)
                 exporter.migrate(
                     file_two.name,
                     already_exported=keys_in_file_one, force=True,
@@ -163,7 +129,7 @@ class TestExtendingExport(TestCase):
                     meta = self.db.put(BytesIO(blob), meta=meta_meta)
                     self.blob_metas.append(meta)
                 with NamedTemporaryFile() as file_three:
-                    exporter = EXPORTERS['all_blobs'](self.domain_name)
+                    exporter = BlobExporter(self.domain_name)
                     exporter.migrate(
                         file_three.name,
                         already_exported=keys_in_file_one | keys_in_file_two, force=True,

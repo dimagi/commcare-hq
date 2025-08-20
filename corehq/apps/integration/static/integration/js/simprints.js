@@ -1,24 +1,16 @@
-hqDefine('integration/js/simprints', [
-    'jquery',
-    'knockout',
-], function (
-    $,
-    ko
-) {
-    'use strict';
+import ko from "knockout";
 
-    return {
-        simprintsFormModel: function (formData) {
-            var self = {};
+export default {
+    simprintsFormModel: function (formData) {
+        var self = {};
 
-            self.isEnabled = ko.observable(formData.is_enabled);
-            self.projectId = ko.observable(formData.project_id);
-            self.userId = ko.observable(formData.user_id);
-            self.moduleId = ko.observable(formData.module_id);
+        self.isEnabled = ko.observable(formData.is_enabled);
+        self.projectId = ko.observable(formData.project_id);
+        self.userId = ko.observable(formData.user_id);
+        self.moduleId = ko.observable(formData.module_id);
 
-            // todo slug validation
+        // todo slug validation
 
-            return self;
-        },
-    };
-});
+        return self;
+    },
+};

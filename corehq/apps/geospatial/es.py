@@ -1,16 +1,23 @@
 from math import ceil
 
-from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
-from corehq.apps.es import filters
+from corehq.apps.es import filters, queries, CaseSearchES
 from corehq.apps.es.aggregations import (
     FilterAggregation,
+    GeoBoundsAggregation,
     GeohashGridAggregation,
     NestedAggregation,
 )
-from corehq.apps.es.case_search import PROPERTY_GEOPOINT_VALUE, PROPERTY_KEY
-from corehq.apps.geospatial.const import MAX_GEOHASH_DOC_COUNT
+from corehq.apps.es.case_search import (
+    CASE_PROPERTIES_PATH,
+    PROPERTY_GEOPOINT_VALUE,
+    PROPERTY_KEY,
+)
+from corehq.apps.geospatial.const import MAX_GEOHASH_DOC_COUNT, DEFAULT_QUERY_LIMIT
 
-AGG_NAME = 'geohashes'
+CASE_PROPERTIES_AGG = 'case_properties'
+CASE_PROPERTY_AGG = 'case_property'
+GEOHASHES_AGG = 'geohashes'
+BUCKET_CASES_AGG = 'bucket_cases'
 
 
 def find_precision(query, case_property):
@@ -50,6 +57,7 @@ def get_max_doc_count(query, case_property, precision):
     #
     #     'aggregations': {
     #         'case_properties': {
+    #             'doc_count': 66,
     #             'case_property': {
     #                 'doc_count': 6,
     #                 'geohashes': {
@@ -70,32 +78,46 @@ def get_max_doc_count(query, case_property, precision):
     #                 }
     #             }
     #         }
+    #     },
+    #     'hits': {
+    #         'hits': [],
+    #         'max_score': 0.0,
+    #         'total': 6
     #     }
     buckets = (
         queryset.raw['aggregations']
-        ['case_properties']
-        ['case_property']
-        [AGG_NAME]
+        [CASE_PROPERTIES_AGG]
+        [CASE_PROPERTY_AGG]
+        [GEOHASHES_AGG]
         ['buckets']
     )
     return max(bucket['doc_count'] for bucket in buckets) if buckets else 0
 
 
 def apply_geohash_agg(query, case_property, precision):
-    nested_agg = NestedAggregation('case_properties', CASE_PROPERTIES_PATH)
+    nested_agg = NestedAggregation(
+        name=CASE_PROPERTIES_AGG,
+        path=CASE_PROPERTIES_PATH,
+    )
     filter_agg = FilterAggregation(
-        'case_property',
-        filters.term(PROPERTY_KEY, case_property),
+        name=CASE_PROPERTY_AGG,
+        filter=filters.term(PROPERTY_KEY, case_property),
     )
     geohash_agg = GeohashGridAggregation(
-        AGG_NAME,
-        PROPERTY_GEOPOINT_VALUE,
-        precision,
+        name=GEOHASHES_AGG,
+        field=PROPERTY_GEOPOINT_VALUE,
+        precision=precision,
+    )
+    geobounds_agg = GeoBoundsAggregation(
+        name=BUCKET_CASES_AGG,
+        field=PROPERTY_GEOPOINT_VALUE,
     )
     return query.aggregation(
         nested_agg.aggregation(
             filter_agg.aggregation(
-                geohash_agg
+                geohash_agg.aggregation(
+                    geobounds_agg
+                )
             )
         )
     )
@@ -112,3 +134,37 @@ def mid(lower, upper):
     """
     assert lower <= upper
     return ceil(lower + (upper - lower) / 2)
+
+
+def case_query_for_missing_geopoint_val(
+        domain, geo_case_property, case_type=None, offset=0, sort_by=None
+):
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .filter(_geopoint_value_missing_for_property(geo_case_property))
+        .size(DEFAULT_QUERY_LIMIT)
+    )
+    if case_type:
+        query = query.case_type(case_type)
+    if sort_by:
+        query.sort(sort_by)
+    if offset:
+        query.start(offset)
+    return query
+
+
+def _geopoint_value_missing_for_property(geo_case_property_name):
+    """
+    Query to find docs with missing 'geopoint_value' for the given case property.
+    """
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        queries.filtered(
+            queries.match_all(),
+            filters.AND(
+                filters.term(PROPERTY_KEY, geo_case_property_name),
+                filters.missing(PROPERTY_GEOPOINT_VALUE)
+            )
+        )
+    )

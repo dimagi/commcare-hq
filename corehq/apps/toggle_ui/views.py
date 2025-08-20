@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
-from django.http.response import Http404, HttpResponse
+from django.http.response import Http404, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
@@ -16,7 +16,6 @@ from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
 
 from corehq.apps.domain.decorators import require_superuser_or_contractor
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
@@ -43,7 +42,12 @@ from corehq.toggles import (
     toggles_enabled_for_user,
 )
 from corehq.toggles.models import Toggle
-from corehq.toggles.shortcuts import namespaced_item, parse_toggle
+from corehq.toggles.shortcuts import (
+    can_user_edit_tag,
+    get_editable_toggle_tags_for_user,
+    namespaced_item,
+    parse_toggle,
+)
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 
@@ -55,7 +59,6 @@ class ToggleListView(BasePageView):
     page_title = "Feature Flags"
     template_name = 'toggle/flags.html'
 
-    @use_datatables
     @method_decorator(require_superuser_or_contractor)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleListView, self).dispatch(request, *args, **kwargs)
@@ -101,11 +104,15 @@ class ToggleListView(BasePageView):
             'page_url': self.page_url,
             'show_usage': self.show_usage,
             'toggles': toggles,
+            'editable_tags_slugs': self._editable_tags_slugs(),
             'tags': ALL_TAG_GROUPS,
             'user_counts': user_counts,
             'last_used': last_used,
             'last_modified': last_modified,
         }
+
+    def _editable_tags_slugs(self):
+        return [tag.slug for tag in get_editable_toggle_tags_for_user(self.request.user.username)]
 
 
 @method_decorator(require_superuser_or_contractor, name='dispatch')
@@ -126,10 +133,6 @@ class ToggleEditView(BasePageView):
     @property
     def usage_info(self):
         return self.request.GET.get('usage_info') == 'true'
-
-    @property
-    def show_service_type(self):
-        return self.request.GET.get('show_service_type') == 'true'
 
     @property
     def toggle_slug(self):
@@ -154,6 +157,10 @@ class ToggleEditView(BasePageView):
         """
         return find_static_toggle(self.toggle_slug)
 
+    @property
+    def can_edit_toggle(self):
+        return can_user_edit_tag(self.request.user.username, self.static_toggle.tag)
+
     def get_toggle(self):
         if not self.static_toggle:
             raise Http404()
@@ -169,6 +176,7 @@ class ToggleEditView(BasePageView):
         context = {
             'static_toggle': self.static_toggle,
             'toggle': toggle,
+            'can_edit_toggle': self.can_edit_toggle,
             'namespaces': namespaces,
             'usage_info': self.usage_info,
             'server_environment': settings.SERVER_ENVIRONMENT,
@@ -179,13 +187,14 @@ class ToggleEditView(BasePageView):
         }
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
-
-        if self.show_service_type:
             context['service_type'], context['by_service'] = _get_service_type(toggle)
 
         return context
 
     def post(self, request, *args, **kwargs):
+        if not self.can_edit_toggle:
+            return HttpResponseForbidden("You do not have permission to edit this feature flag.")
+
         toggle = self.get_toggle()
 
         item_list = request.POST.get('item_list', [])
@@ -217,9 +226,8 @@ class ToggleEditView(BasePageView):
         }
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
-        if self.show_service_type:
             data['service_type'], data['by_service'] = _get_service_type(toggle)
-        return HttpResponse(json.dumps(data), content_type="application/json")
+        return JsonResponse(data)
 
     def _save_randomness(self, toggle, randomness):
         if 0 <= randomness <= 1:
@@ -258,7 +266,7 @@ def _call_save_fn_and_clear_cache_and_enable_dependencies(request_username, stat
         enabled = entry in currently_enabled
         namespace, entry = parse_toggle(entry)
         _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled)
-        _clear_cache_for_toggle(namespace, entry)
+        clear_toggle_cache_by_namespace(namespace, entry)
         _enable_dependencies(request_username, static_toggle, entry, namespace, enabled)
 
 
@@ -278,7 +286,6 @@ def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
         if is_enabled:
             _notify_on_change(static_toggle, [item], request_username)
 
-        _clear_cache_for_toggle(namespace, item)
         _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled)
 
 
@@ -289,7 +296,7 @@ def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
             static_toggle.save_fn(domain, enabled)
 
 
-def _clear_cache_for_toggle(namespace, entry):
+def clear_toggle_cache_by_namespace(namespace, entry):
     if namespace == NAMESPACE_DOMAIN:
         domain = entry
         toggles_enabled_for_domain.clear(domain)
@@ -389,12 +396,15 @@ def set_toggle(request, toggle_slug):
     if not static_toggle:
         raise Http404()
 
+    if (not can_user_edit_tag(request.user.username, static_toggle.tag)):
+        return HttpResponseForbidden("You do not have permission to edit this feature flag.")
+
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
     _set_toggle(request.user.username, static_toggle, item, namespace, enabled)
 
-    return HttpResponse(json.dumps({'success': True}), content_type="application/json")
+    return JsonResponse({'success': True})
 
 
 @require_superuser_or_contractor

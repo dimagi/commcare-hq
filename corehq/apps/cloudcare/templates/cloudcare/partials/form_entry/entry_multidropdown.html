@@ -1,0 +1,13 @@
+<script type="text/html" id="multidropdown-entry-ko-template">
+  <select multiple class="form-select" data-bind="
+        options: choices,
+        selectedOptions: rawAnswer,
+        css: { 'is-invalid': $parent.hasError() },
+        attr: {
+            id: entryId,
+            'aria-required': $parent.required() ? 'true' : 'false',
+        },
+        valueAllowUnset: true,
+        ">
+  </select>
+</script>

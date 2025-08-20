@@ -38,16 +38,19 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop, activate
+from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
+
 from memoized import memoized
 from sentry_sdk import last_event_id
+from two_factor.utils import default_device
 from two_factor.views import LoginView
 
 from corehq.apps.accounting.decorators import (
@@ -99,12 +102,17 @@ from corehq.apps.users.util import format_username, is_dimagi_email
 from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
-from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
+from corehq.util.metrics import (
+    create_metrics_event,
+    limit_domains,
+    metrics_counter,
+    metrics_gauge,
+)
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.view_utils import reverse
+from corehq.util.view_utils import reverse, set_language_cookie
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
@@ -113,7 +121,6 @@ from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception, notify_error
 from dimagi.utils.web import get_url_base
-from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
@@ -206,7 +213,7 @@ def redirect_to_default(req, domain=None):
     if domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
-            template='two_factor/core/otp_required.html',
+            template='two_factor/core/bootstrap3/otp_required.html',
             status=403,
         )
 
@@ -331,8 +338,8 @@ def server_up(req):
 
 
 @use_bootstrap5
-def _no_permissions_message(request, template_name="403.html", message=None):
-    t = loader.get_template(template_name)
+def _no_permissions_message(request, message=None):
+    t = loader.get_template("403.html")
     return t.render(
         context={
             'MEDIA_URL': settings.MEDIA_URL,
@@ -344,16 +351,18 @@ def _no_permissions_message(request, template_name="403.html", message=None):
 
 
 @use_bootstrap5
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
-    """
-    403 error handler.
-    """
-    return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
+def no_permissions(request, redirect_to=None, message=None, exception=None):
+    """403 error handler. Called automatically by Django on PermissionDenied
 
-
-@use_bootstrap5
-def no_permissions_exception(request, template_name="403.html", message=None):
-    return Http403(_no_permissions_message(request, template_name, message))
+    :param exception: Instance of PermissionDenied or subclass. Class name will
+    be reported to datadog.
+    """
+    metrics_counter('commcare.no_permissions.count', tags={
+        'domain': limit_domains(getattr(request, 'domain', '__other__')),
+        'exception_type': exception.__class__.__name__ if exception else 'Other',
+    })
+    message = message or getattr(exception, 'user_facing_message', None)
+    return HttpResponseForbidden(_no_permissions_message(request, message))
 
 
 @use_bootstrap5
@@ -363,6 +372,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
         context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
+            'support_email': settings.SUPPORT_EMAIL,
         },
         request=request,
     ))
@@ -387,7 +397,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
+    template_name = custom_login_page if custom_login_page else 'login_and_password/bootstrap3/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
@@ -397,11 +407,13 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'next': req_params.get('next', '/a/%s/' % domain_name),
             'allow_domain_requests': domain_obj.allow_domain_requests,
             'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
+            'default_password_reset_link': reverse('domain_password_reset_email', kwargs={'domain': domain_name}),
         })
     else:
         commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
         context.update({
             'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
+            'default_password_reset_link': reverse('password_reset_email'),
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
@@ -422,10 +434,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
-            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
             # reset cookie to an empty list on login to show domain alerts again
             response.set_cookie('viewed_domain_alerts', [])
-            activate(couch_user.language)
 
     return response
 
@@ -462,12 +472,16 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 @xframe_options_sameorigin
 @location_safe
 def iframe_domain_login(req, domain):
-    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
-        'current_page': {'page_name': _('Your session has expired')},
-        'restrict_domain_creation': True,
-        'is_session_expiration': True,
-        'ANALYTICS_IDS': {},
-    })
+    return domain_login(
+        req,
+        domain,
+        custom_template_name="hqwebapp/bootstrap3/iframe_domain_login.html",
+        extra_context={
+            'current_page': {'page_name': _('Your session has expired')},
+            'restrict_domain_creation': True,
+            'is_session_expiration': True,
+            'ANALYTICS_IDS': {},
+        })
 
 
 @xframe_options_sameorigin
@@ -478,14 +492,32 @@ def iframe_sso_login_pending(request):
 
 class HQLoginView(LoginView):
     form_list = [
-        ('auth', EmailAuthenticationForm),
-        ('token', HQAuthenticationTokenForm),
-        ('backup', HQBackupTokenForm),
+        (LoginView.AUTH_STEP, EmailAuthenticationForm),
+        (LoginView.TOKEN_STEP, HQAuthenticationTokenForm),
+        (LoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
     extra_context = {}
 
+    def has_token_step(self):
+        """
+        Overrides the two_factor LoginView has_token_step to ensure this step is excluded if a valid backup
+        token exists. Created https://github.com/jazzband/django-two-factor-auth/issues/709 to track work to
+        potentially include this in django-two-factor-auth directly.
+        """
+        return (
+            default_device(self.get_user())
+            and self.BACKUP_STEP not in self.storage.validated_step_data
+            and not self.remember_agent
+        )
+
+    # override two_factor LoginView condition_dict to include the method defined above
+    condition_dict = {
+        LoginView.TOKEN_STEP: has_token_step,
+        LoginView.BACKUP_STEP: LoginView.has_backup_step,
+    }
+
     def post(self, *args, **kwargs):
-        if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
+        if settings.ENFORCE_SSO_LOGIN and self.steps.current == self.AUTH_STEP:
             # catch anyone who by-passes the javascript and tries to log in directly
             username = self.request.POST.get('auth-username')
             idp = IdentityProvider.get_required_identity_provider(username) if username else None
@@ -504,7 +536,7 @@ class HQLoginView(LoginView):
         context.update(self.extra_context)
         context['enforce_sso_login'] = (
             settings.ENFORCE_SSO_LOGIN
-            and self.steps.current == 'auth'
+            and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
         if domain and not is_domain_using_sso(domain):
@@ -516,9 +548,9 @@ class HQLoginView(LoginView):
 
 class CloudCareLoginView(HQLoginView):
     form_list = [
-        ('auth', CloudCareAuthenticationForm),
-        ('token', HQAuthenticationTokenForm),
-        ('backup', HQBackupTokenForm),
+        (HQLoginView.AUTH_STEP, CloudCareAuthenticationForm),
+        (HQLoginView.TOKEN_STEP, HQAuthenticationTokenForm),
+        (HQLoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
 
 
@@ -531,8 +563,9 @@ def logout(req, default_domain_redirect='domain_login'):
     LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
-        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
-        return HttpResponseRedirect('%s' % domain_login_url)
+        if not (req.couch_user.is_web_user() and not req.couch_user.is_active_in_domain(domain)):
+            domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
+            return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
 
@@ -569,6 +602,7 @@ def ping_response(request):
 
 @location_safe
 @login_required
+@use_bootstrap5
 def login_new_window(request):
     return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
 
@@ -705,6 +739,130 @@ def jserror(request):
     return HttpResponse('')
 
 
+def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
+    report = dict([(key, post_params.get(key, '')) for key in (
+        'subject',
+        'username',
+        'domain',
+        'url',
+        'message',
+        'app_id',
+        'cc',
+        'email',
+        '500traceback',
+        'sentry_id',
+    )])
+
+    try:
+        full_name = couch_user.full_name
+        if couch_user.is_commcare_user():
+            email = report['email']
+        else:
+            email = couch_user.get_email()
+    except Exception:
+        full_name = None
+        email = report['email']
+    report['full_name'] = full_name
+    report['email'] = email or report['username']
+
+    if report['domain']:
+        domain = report['domain']
+    elif len(couch_user.domains) == 1:
+        # This isn't a domain page, but the user has only one domain, so let's use that
+        domain = couch_user.domains[0]
+    else:
+        domain = "<no domain>"
+
+    other_recipients = [el.strip() for el in report['cc'].split(",") if el]
+
+    message_parts = [(
+        f"username: {report['username']}\n"
+        f"full name: {report['full_name']}\n"
+        f"domain: {report['domain']}\n"
+        f"url: {report['url']}\n"
+        f"recipients: {', '.join(other_recipients)}\n"
+    )]
+
+    domain_object = Domain.get_by_name(domain) if report['domain'] else None
+    debug_context = {
+        'datetime': datetime.utcnow(),
+        'self_started': '<unknown>',
+        'has_handoff_info': '<unknown>',
+        'project_description': '<unknown>',
+        'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
+    }
+    if domain_object:
+        current_project_description = domain_object.project_description if domain_object else None
+        new_project_description = post_params.get('project_description')
+        if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
+                and current_project_description != new_project_description):
+            domain_object.project_description = new_project_description
+            domain_object.save()
+
+        message_parts.append((
+            "software plan: {software_plan}\n"
+        ).format(
+            software_plan=Subscription.get_subscribed_plan_by_domain(domain),
+        ))
+
+        debug_context.update({
+            'self_started': domain_object.internal.self_started,
+            'has_handoff_info': bool(domain_object.internal.partner_contact),
+        })
+
+    subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
+
+    if full_name and not any([c in full_name for c in '<>"']):
+        reply_to = '"{full_name}" <{email}>'.format(**report)
+    else:
+        reply_to = report['email']
+
+    # if the person looks like a commcare user, fogbugz can't reply
+    # to their email, so just use the default
+    if settings.HQ_ACCOUNT_ROOT in reply_to:
+        reply_to = settings.SERVER_EMAIL
+
+    message_parts.append("Message:\n\n{message}\n".format(message=report['message']))
+    if domain_object and domain_object.project_description:
+        message_parts.append(f"Project description: {domain_object.project_description}\n")
+
+    if post_params.get('five-hundred-report'):
+        extra_message = ("This message was reported from a 500 error page! "
+                         "Please fix this ASAP (as if you wouldn't anyway)...")
+        extra_debug_info = (
+            "datetime: {datetime}\n"
+            "Is self start: {self_started}\n"
+            "Has Support Hand-off Info: {has_handoff_info}\n"
+            "Sentry Error: {sentry_error}\n"
+        ).format(**debug_context)
+        traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
+        cache.cache.delete(report['500traceback'])
+        message_parts.append("\n\n".join([extra_debug_info, extra_message, traceback_info]))
+
+    message = "".join(message_parts)
+    email = EmailMessage(
+        subject=subject,
+        body=message,
+        to=[to_email],
+        headers={'Reply-To': reply_to},
+        cc=other_recipients
+    )
+
+    if uploaded_file:
+        filename = uploaded_file.name
+        content = uploaded_file.read()
+        email.attach(filename=filename, content=content)
+
+    # only fake the from email if it's an @dimagi.com account
+    is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+    if is_dimagi_email(report['username']) and not is_icds_env:
+        email.from_email = report['username']
+    else:
+        email.from_email = to_email
+
+    return email
+
+
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
     def post(self, req, *args, **kwargs):
@@ -727,125 +885,33 @@ class BugReportView(View):
 
     @staticmethod
     def _get_email_message(post_params, couch_user, uploaded_file):
-        report = dict([(key, post_params.get(key, '')) for key in (
-            'subject',
-            'username',
-            'domain',
-            'url',
-            'message',
-            'app_id',
-            'cc',
-            'email',
-            '500traceback',
-            'sentry_id',
-        )])
-
-        try:
-            full_name = couch_user.full_name
-            if couch_user.is_commcare_user():
-                email = report['email']
-            else:
-                email = couch_user.get_email()
-        except Exception:
-            full_name = None
-            email = report['email']
-        report['full_name'] = full_name
-        report['email'] = email or report['username']
-
-        if report['domain']:
-            domain = report['domain']
-        elif len(couch_user.domains) == 1:
-            # This isn't a domain page, but the user has only one domain, so let's use that
-            domain = couch_user.domains[0]
-        else:
-            domain = "<no domain>"
-
-        other_recipients = [el.strip() for el in report['cc'].split(",") if el]
-
-        message = (
-            f"username: {report['username']}\n"
-            f"full name: {report['full_name']}\n"
-            f"domain: {report['domain']}\n"
-            f"url: {report['url']}\n"
-            f"recipients: {', '.join(other_recipients)}\n"
+        return _get_email_message_base(
+            post_params,
+            couch_user,
+            uploaded_file,
+            to_email=settings.SUPPORT_EMAIL,
         )
 
-        domain_object = Domain.get_by_name(domain) if report['domain'] else None
-        debug_context = {
-            'datetime': datetime.utcnow(),
-            'self_started': '<unknown>',
-            'has_handoff_info': '<unknown>',
-            'project_description': '<unknown>',
-            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
-        }
-        if domain_object:
-            current_project_description = domain_object.project_description if domain_object else None
-            new_project_description = post_params.get('project_description')
-            if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
-                    and current_project_description != new_project_description):
-                domain_object.project_description = new_project_description
-                domain_object.save()
 
-            message += ((
-                "software plan: {software_plan}\n"
-            ).format(
-                software_plan=Subscription.get_subscribed_plan_by_domain(domain),
-            ))
+@method_decorator([login_required], name='dispatch')
+class SolutionsFeatureRequestView(View):
+    urlname = 'solutions_feature_request'
 
-            debug_context.update({
-                'self_started': domain_object.internal.self_started,
-                'has_handoff_info': bool(domain_object.internal.partner_contact),
-                'project_description': domain_object.project_description,
-            })
+    @property
+    def to_email_address(self):
+        return 'solutions-feedback@dimagi.com'
 
-        subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
-
-        if full_name and not any([c in full_name for c in '<>"']):
-            reply_to = '"{full_name}" <{email}>'.format(**report)
-        else:
-            reply_to = report['email']
-
-        # if the person looks like a commcare user, fogbugz can't reply
-        # to their email, so just use the default
-        if settings.HQ_ACCOUNT_ROOT in reply_to:
-            reply_to = settings.SERVER_EMAIL
-
-        message += "Message:\n\n{message}\n".format(message=report['message'])
-        if post_params.get('five-hundred-report'):
-            extra_message = ("This message was reported from a 500 error page! "
-                             "Please fix this ASAP (as if you wouldn't anyway)...")
-            extra_debug_info = (
-                "datetime: {datetime}\n"
-                "Is self start: {self_started}\n"
-                "Has Support Hand-off Info: {has_handoff_info}\n"
-                "Project description: {project_description}\n"
-                "Sentry Error: {sentry_error}\n"
-            ).format(**debug_context)
-            traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
-            cache.cache.delete(report['500traceback'])
-            message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
-
-        email = EmailMessage(
-            subject=subject,
-            body=message,
-            to=[settings.SUPPORT_EMAIL],
-            headers={'Reply-To': reply_to},
-            cc=other_recipients
+    def post(self, request, *args, **kwargs):
+        if not settings.IS_DIMAGI_ENVIRONMENT or not request.couch_user.is_dimagi:
+            return HttpResponse(status=400)
+        email = _get_email_message_base(
+            post_params=request.POST,
+            couch_user=request.couch_user,
+            uploaded_file=request.FILES.get('feature_request'),
+            to_email=self.to_email_address,
         )
-
-        if uploaded_file:
-            filename = uploaded_file.name
-            content = uploaded_file.read()
-            email.attach(filename=filename, content=content)
-
-        # only fake the from email if it's an @dimagi.com account
-        is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if is_dimagi_email(report['username']) and not is_icds_env:
-            email.from_email = report['username']
-        else:
-            email.from_email = settings.SUPPORT_EMAIL
-
-        return email
+        email.send(fail_silently=False)
+        return HttpResponse()
 
 
 def render_static(request, template, page_name):
@@ -1057,7 +1123,7 @@ class CRUDPaginatedViewMixin(object):
         Return this in the post method of your view class.
         """
         response = getattr(self, '%s_response' % self.action)
-        return HttpResponse(json.dumps(response, cls=LazyEncoder))
+        return HttpResponse(json.dumps(response, cls=LazyEncoder), content_type='application/json')
 
     @property
     def create_response(self):
@@ -1100,7 +1166,7 @@ class CRUDPaginatedViewMixin(object):
     @property
     def delete_response(self):
         try:
-            response = self.get_deleted_item_data(self.item_id)
+            response = self.delete_item(self.item_id)
             return {
                 'deletedItem': response
             }
@@ -1162,7 +1228,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'hqwebapp/partials/update_item_form.html', {
+            'hqwebapp/partials/bootstrap3/update_item_form.html', {
                 'form': update_form
             }
         )
@@ -1199,7 +1265,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_updated_item_data")
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         """
         This should return a dict of data for the deleted item.
         {
@@ -1210,7 +1276,7 @@ class CRUDPaginatedViewMixin(object):
             'template': <knockout template id>
         }
         """
-        raise NotImplementedError("You must implement get_deleted_item_data")
+        raise NotImplementedError("You must implement delete_item")
 
 
 @login_required
@@ -1227,6 +1293,8 @@ def quick_find(request):
     is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_enterprise=True)
     if is_member or request.couch_user.is_superuser:
         doc_info = get_doc_info(result.doc)
+        if (doc_info.type == 'CommCareCase' or doc_info.type == 'XFormInstance') and doc_info.is_deleted:
+            raise Http404()
     else:
         raise Http404()
     if redirect and doc_info.link:
@@ -1476,3 +1544,27 @@ def check_sso_login_status(request):
         'sso_url': sso_url,
         'continue_text': continue_text,
     })
+
+
+@require_POST
+def set_language(request):
+    """
+    Redirect to the current page while setting the chosen language, if valid.
+    If no http referer is available or it is not safe, just set the language.
+    Based on django.views.i18n.set_language.
+    """
+    next_url = request.META.get("HTTP_REFERER")
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        response = HttpResponseRedirect(next_url)
+    else:
+        response = HttpResponse(status=204)
+
+    lang_code = request.POST.get("language")
+    valid_lang_codes = [lang_code for lang_code, __ in settings.LANGUAGES]
+    if lang_code and lang_code in valid_lang_codes:
+        response = set_language_cookie(response, lang_code)
+    return response

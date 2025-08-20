@@ -1,0 +1,9 @@
+{% extends 'mocha/base.html' %}
+{% load hq_shared_tags %}
+{% js_entry "notifications/spec/bootstrap5/main" %}
+
+{% block fixtures %}
+  <ul>
+    {% include 'notifications/partials/bootstrap5/global_notifications.html' %}
+  </ul>
+{% endblock %}

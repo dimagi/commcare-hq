@@ -3,10 +3,11 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from django.utils import translation
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext, gettext_lazy
 from django.utils.translation.trans_real import translation as get_translations
 
-from ...utils.translation import mark_safe_lazy, format_html_lazy
+from ...utils.translation import format_html_lazy
 
 CUSTOM_LANGUAGE = 'custom'
 
@@ -55,7 +56,7 @@ class TestCustomTranslationsDecorator(SimpleTestCase):
 class TestLazyMarkSafe(SimpleTestCase):
     @custom_translations({'Translate Me': 'Translated'})
     def test_lazy_translation(self):
-        translation_promise = mark_safe_lazy(gettext_lazy('Translate Me'))
+        translation_promise = mark_safe(gettext_lazy('Translate Me'))
 
         with translation.override(CUSTOM_LANGUAGE):
             translated = str(translation_promise)

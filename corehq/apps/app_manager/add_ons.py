@@ -100,7 +100,8 @@ _ADD_ONS = {
         name=_("Case Detail Overwrite"),
         description=_("Ability to overwrite one case list or detail's settings with another's. "
         "Available in menu settings, in the actions tab."),
-        help_link="https://confluence.dimagi.com/display/commcarepublic/Overwriting+Case+List+and+Case+Detail+Configuration"
+        help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+            "pages/2143951603/Case+List+and+Case+Detail+Configuration")
     ),
     "case_list_menu_item": AddOn(
         name=_("Case List Menu Item"),
@@ -124,7 +125,7 @@ _ADD_ONS = {
         name=_("Display Conditions"),
         description=_("Write logic to show or hide forms and menus on the mobile device. "
         "Available in form and menu settings."),
-        help_link="https://confluence.dimagi.com/display/commcarepublic/Application+Design",
+        help_link="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2431123463/App+Design",
         used_in_form=lambda f: bool(getattr(f, 'form_filter', False)),
         used_in_module=lambda m: bool(m.module_filter),
     ),
@@ -144,7 +145,9 @@ _ADD_ONS = {
         name=_("Register from case list"),
         description=_("Minimize duplicates by making registration forms available directly from the case list "
         "on the mobile device. Availabe in menu settings."),
-        help_link="https://confluence.dimagi.com/pages/viewpage.action?pageId=30605985",
+        help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+                   "2143951603/Case+List+and+Case+Detail+Configuration"
+                   "#Minimize-Duplicates%3A-Registration-From-the-Case-List"),
         used_in_module=lambda m: m.case_list_form.form_id,
     ),
     "subcases": AddOn(

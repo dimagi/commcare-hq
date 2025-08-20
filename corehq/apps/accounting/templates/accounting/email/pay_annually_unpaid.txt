@@ -1,0 +1,42 @@
+Dear Accounting Team,
+
+Pay annually product fees for project space {{ domain }} could not be
+automatically credited. This most likely means the original prepayment invoice
+for this subscription was not paid. If the current monthly invoice remains
+unpaid, the subscription will be subject to the auto pause process.
+
+Current Invoice
+  Statement Number: {{ current_invoice.invoice_number }}
+  Statement Period: {{ current_invoice.date_start }} to {{ current_invoice.date_end }}
+  Date Due: {{ current_invoice.date_due }}
+  Balance: {{ current_invoice.balance }}
+
+
+Prepayment Invoice
+  Statement Number: {{ prepay_invoice.invoice_number }}
+  Statement Period: {{ prepay_invoice.date_start }} to {{ prepay_invoice.date_end }}
+  Date Due: {{ prepay_invoice.date_due }}
+  Balance: {{ prepay_invoice.balance }}
+
+
+Billing Account Information
+  Account name: {{ billing_account.name }}
+  Contracted vs. Self-service: {{ billing_account.entry_point }}
+  Dimagi Contact: {{ billing_account.dimagi_contact }}
+  Billing Contacts: {{ billing_account.billingcontactinfo.email_list }}
+
+
+Subscription
+  Software Plan: {{ subscription.plan_version }}
+  Subscription Type: {{ subscription.service_type }}
+  Start Date: {{ subscription.date_start }}
+  End Date: {{ subscription.date_end }}
+  Do not invoice: {{ subscription.do_not_invoice }}
+  Auto generate credits: {{ subscription.auto_generate_credits }}
+
+
+You can view the project space here: {{ domain_url }}
+
+
+Cheers,
+--The CommCare HQ Team

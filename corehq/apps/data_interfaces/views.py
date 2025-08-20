@@ -29,7 +29,8 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
+from corehq.apps.analytics.tasks import track_workflow_noop
+from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.casegroups.dbaccessors import (
     get_case_groups_in_domain,
     get_number_of_case_groups_in_domain,
@@ -58,7 +59,7 @@ from corehq.apps.data_interfaces.forms import (
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
-    CaseDuplicate,
+    CaseDuplicateNew,
     DomainCaseRuleRun,
 )
 from corehq.apps.data_interfaces.tasks import (
@@ -70,8 +71,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
-from corehq.apps.hqwebapp.models import PageInfoContext
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import (
@@ -82,9 +81,6 @@ from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.reports.standard.cases.filters import CaseListExplorerColumns
-from corehq.apps.reports.v2.reports.explore_case_data import (
-    ExploreCaseDataReport,
-)
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -165,48 +161,8 @@ class DataInterfaceSection(BaseDomainView):
         return reverse("data_interfaces_default", args=[self.domain])
 
 
-@location_safe
-class ExploreCaseDataView(BaseDomainView):
-    template_name = "data_interfaces/explore_case_data.html"
-    urlname = "explore_case_data"
-    page_title = gettext_lazy("Explore Case Data")
-
-    @use_daterangepicker
-    def dispatch(self, request, *args, **kwargs):
-        if hasattr(request, 'couch_user') and not self.report_config.has_permission:
-            raise Http404()
-        return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse("data_interfaces_default", args=[self.domain])
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-    @property
-    @memoized
-    def report_config(self):
-        return ExploreCaseDataReport(self.request, self.domain)
-
-    @property
-    def page_context(self):
-        return {
-            'report': self.report_config.context,
-            'section': PageInfoContext(
-                title=DataInterfaceSection.section_name,
-                url=reverse(DataInterfaceSection.urlname, args=[self.domain]),
-            ),
-            'page': PageInfoContext(
-                title=self.page_title,
-                url=reverse(self.urlname, args=[self.domain]),
-            ),
-        }
-
-
 class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
-    template_name = "data_interfaces/list_case_groups.html"
+    template_name = "data_interfaces/bootstrap3/list_case_groups.html"
     urlname = 'case_group_list'
     page_title = gettext_lazy("Case Groups")
 
@@ -280,7 +236,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'template': 'new-group-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         case_group = CommCareCaseGroup.get(item_id)
         item_data = self._get_item_data(case_group)
         case_group.soft_delete()
@@ -292,7 +248,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
 @method_decorator(require_permission(HqPermissions.edit_messaging), name="dispatch")
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
-    template_name = 'data_interfaces/manage_case_groups.html'
+    template_name = 'data_interfaces/bootstrap3/manage_case_groups.html'
     urlname = 'manage_case_groups'
     page_title = gettext_noop("Manage Case Group")
 
@@ -473,7 +429,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'new-case-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         if not item_id:
             raise PaginatedItemException("The case's ID was blank.")
         current_cases = set(self.case_group.cases)
@@ -636,9 +592,11 @@ class BulkCaseActionSatusView(DataInterfaceSection):
 
     def get(self, request, *args, **kwargs):
         if self.is_copy_action:
-            action_text = "Copying"
+            progress_text = _('Copying cases. This may take some time.')
+            error_text = _('Bulk case copying failed. We have logged this failure.')
         else:
-            action_text = "Reassigning"
+            progress_text = _('Reassigning cases. This may take some time.')
+            error_text = _('Bulk case reassigning failed. We have logged this failure.')
 
         context = super(BulkCaseActionSatusView, self).main_context
         context.update({
@@ -646,10 +604,8 @@ class BulkCaseActionSatusView(DataInterfaceSection):
             'download_id': kwargs['download_id'],
             'poll_url': self.poll_url(kwargs['download_id']),
             'title': _(self.page_title),
-            'progress_text': _("{action_text} Cases. This may take some time...").format(action_text=action_text),
-            'error_text': _(
-                "Bulk Case {action_text} failed for some reason and we have noted this failure."
-            ).format(action_text=action_text),
+            'progress_text': progress_text,
+            'error_text': error_text,
         })
         return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
@@ -701,7 +657,7 @@ def find_by_id(request, domain):
         raise Http403()
 
     name = _("Find Data by ID")
-    return render(request, 'data_interfaces/find_by_id.html', {
+    return render(request, 'data_interfaces/bootstrap3/find_by_id.html', {
         'domain': domain,
         'current_page': {
             'title': name,
@@ -717,7 +673,7 @@ def find_by_id(request, domain):
 
 
 class AutomaticUpdateRuleListView(DataInterfaceSection):
-    template_name = 'data_interfaces/auto_update_rules.html'
+    template_name = 'data_interfaces/bootstrap3/auto_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = gettext_lazy("Automatically Update Cases")
 
@@ -843,7 +799,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
 
 
 class AddCaseRuleView(DataInterfaceSection):
-    template_name = "data_interfaces/case_rule.html"
+    template_name = "data_interfaces/bootstrap3/case_rule.html"
     urlname = 'add_case_rule'
     page_title = gettext_lazy("Add Case Rule")
 
@@ -991,9 +947,9 @@ class ViewCaseRuleView(EditCaseRuleView):
         return True
 
 
-@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
-    template_name = 'data_interfaces/list_deduplication_rules.html'
+    template_name = 'data_interfaces/bootstrap3/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
     page_title = gettext_lazy("Deduplicate Cases")
 
@@ -1011,7 +967,8 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         domain_obj = Domain.get_by_name(self.domain)
         hour = domain_obj.auto_case_update_hour
         context.update({
-            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
+            'help_site_url': ('https://dimagi.atlassian.net/wiki/spaces/'
+                              'commcarepublic/pages/2143957601/Automatically+Update+Cases'),
             'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
         })
         return context
@@ -1065,10 +1022,10 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def deactivate_response(self):
         return self.update_rule()
 
-    def get_deleted_item_data(self, rule_id):
+    def delete_item(self, rule_id):
         (rule, error) = self._get_rule(rule_id)
         if rule is None:
-            return {'success': False, 'error': error}
+            raise PaginatedItemException(error)
 
         rule.soft_delete()
 
@@ -1145,12 +1102,12 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 total_cases=progress_helper.get_total_cases_to_process(),
             )
         action = CaseDeduplicationActionDefinition.from_rule(rule)
-        return CaseDuplicate.objects.filter(action=action).count()
+        return CaseDuplicateNew.objects.filter(action=action).count()
 
 
-@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleCreateView(DataInterfaceSection):
-    template_name = "data_interfaces/edit_deduplication_rule.html"
+    template_name = "data_interfaces/bootstrap3/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
     page_title = gettext_lazy("Create Deduplication Rule")
 
@@ -1161,6 +1118,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             'all_case_properties': self.get_augmented_data_dict_props_by_case_type(self.domain),
             'case_types': sorted(list(get_case_types_for_domain(self.domain))),
             'criteria_form': self.case_filter_form,
+            'update_actions_enabled': toggles.CASE_DEDUPE_UPDATES.enabled(self.domain),
         })
         return context
 
@@ -1225,8 +1183,25 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         reset_and_backfill_deduplicate_rule(rule)
         messages.success(request, _("Successfully created deduplication rule: {}").format(rule.name))
+        self._track_rule_created(request.couch_user.username, rule, _action_definition)
+
         return HttpResponseRedirect(
             reverse(DeduplicationRuleEditView.urlname, kwargs={"domain": self.domain, "rule_id": rule.id})
+        )
+
+    def _track_rule_created(self, username, rule, action_definition):
+        from corehq.apps.accounting.models import Subscription, SubscriptionType
+        subscription = Subscription.get_active_subscription_by_domain(rule.domain)
+        managed_by_saas = bool(subscription and subscription.service_type == SubscriptionType.PRODUCT)
+
+        track_workflow_noop(
+            username,
+            'Created Dedupe Rule',
+            {
+                'domain': self.domain,
+                'num_properties': len(action_definition.case_properties),
+                'managed_by_saas': managed_by_saas,
+            }
         )
 
     @property
@@ -1250,11 +1225,17 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
                 if prop
             ],
             "include_closed": request.POST.get("include_closed") == "on",
-            "properties_to_update": [
+        }
+        if toggles.CASE_DEDUPE_UPDATES.enabled(self.domain):
+            properties_to_update = [
                 {"name": prop["name"], "value_type": prop["valueType"], "value": prop["value"]}
                 for prop in json.loads(request.POST.get("properties_to_update"))
-            ],
-        }
+            ]
+        else:
+            properties_to_update = []
+
+        action_params["properties_to_update"] = properties_to_update
+
         return rule_params, action_params
 
     def validate_rule_params(self, domain, rule_params, rule=None):
@@ -1276,7 +1257,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         update_properties = [prop['name'] for prop in action_params['properties_to_update']]
         update_properties_set = set(update_properties)
-        reserved_properties = set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES)
+        reserved_properties = set(prop.replace("@", "") for prop in INDEXED_METADATA_BY_KEY)
         reserved_properties.add(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
         reserved_properties_updated = (
@@ -1307,7 +1288,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         )
 
 
-@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     urlname = 'edit_deduplication_rule'
     page_title = gettext_lazy("Edit Deduplication Rule")

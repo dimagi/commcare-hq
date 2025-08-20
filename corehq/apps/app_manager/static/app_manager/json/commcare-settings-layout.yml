@@ -36,8 +36,8 @@
     - properties.logo_android_home
     - properties.logo_android_login
     - properties.logo_android_demo
-    - properties.logo_web_apps
     - hq.auto_gps_capture
+    - properties.cc-gps-auto-capture-accuracy
     - properties.lazy-load-video-files
     - properties.cc-login-duration-seconds
     - properties.cc-log-entity-detail-enabled
@@ -51,6 +51,14 @@
     - hq.target_commcare_flavor
     - features.dependencies  # Required Android apps
 
+- title: 'Web Apps Settings'
+  id: app-settings-web-app
+  collapse: true
+  settings:
+    - properties.logo_web_apps
+    - hq.show_breadcrumbs
+    - hq.persistent_menu
+
 - title: 'Advanced'
   id: app-settings-advanced
   collapse: true
@@ -62,6 +70,7 @@
     - hq.mobile_ucr_restore_version
     - hq.location_fixture_restore
     - hq.split_screen_dynamic_search
+    - features.credentials
 
 - title: 'Disabled'
   id: app-settings-disabled

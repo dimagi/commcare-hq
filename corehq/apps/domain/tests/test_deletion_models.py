@@ -36,13 +36,15 @@ IGNORE_APPS = {
     'start_enterprise',  # TODO delete this along with SMSs
     'tastypie',
     'telerivet',
+    'toggles',
     'toggle_ui',
     'sso',
-    'oauth_integrations',
 }
 
 IGNORE_MODELS = {
     'api.ApiUser',
+    'app_execution.AppWorkflowConfig',
+    'app_execution.AppExecutionLog',
     'app_manager.ExchangeApplication',
     'auth.Group',
     'auth.Permission',
@@ -50,24 +52,30 @@ IGNORE_MODELS = {
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
     'cleanup.DeletedCouchDoc',
+    'cleanup.DeletedSQLDoc',
     'domain.DomainAuditRecordEntry',
-    'domain.ProjectLimit',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
+    'experiments.ExperimentEnabler',
     'field_audit.AuditEvent',
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
     'fixtures.LookupTableRowOwner',     # handled by cascading delete
-    'repeaters.SQLRepeatRecord',         # handled by cascading delete
-    'repeaters.SQLRepeatRecordAttempt',  # handled by cascading delete
+    'registration.AsyncSignupRequest',
+    'registration.SelfSignupWorkflow',
+    'repeaters.RepeatRecord',         # handled by cascading delete
+    'repeaters.RepeatRecordAttempt',  # handled by cascading delete
     'sms.MigrationStatus',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',
     'util.TransientBounceEmail',
-    'registration.AsyncSignupRequest',
+    'users.ConnectIDUserLink',       # handled by cascading delete of django user model
+    'users.ConnectIDMessagingKey',   # handled by cascading delete of user link model (from user model)
+    'users.InvitationHistory',
     'users.UserHistory',
+    'ota.IntegritySamplePercentage',
 }
 
 

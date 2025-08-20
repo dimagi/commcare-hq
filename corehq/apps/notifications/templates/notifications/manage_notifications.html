@@ -1,19 +1,17 @@
-{% extends 'hqwebapp/bootstrap3/base_page.html' %}
+{% extends 'hqwebapp/bootstrap5/base_page.html' %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'notifications/js/manage_notifications' %}
+{% js_entry 'notifications/js/manage_notifications' %}
 
 {% block page_content %}
   {% initial_page_data 'alerts' alerts %}
   <div id="ko-alert-container">
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">
-          Create Notification
-        </h3>
+    <div class="card card-default mb-3">
+      <div class="card-header">
+        Create Notification
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <p>
           Enter notification text below and preview in the table below.  Notifications will not be public until the
           "activate notification" button is pressed.
@@ -21,13 +19,11 @@
         {% crispy form %}
       </div>
     </div>
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">
-          Current Notifications
-        </h3>
+    <div class="card card-default mb-3">
+      <div class="card-header">
+        Current Notifications
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <table class="table table-striped">
           <thead>
           <tr>
@@ -50,14 +46,14 @@
                 {% csrf_token %}
                 <input name="alert_id" type="hidden" data-bind="value: id">
                 <button type="submit" name="activate" class="btn btn-primary" data-bind="visible: !isActive">Activate</button>
-                <button type="submit" name="deactivate" class="btn btn-danger" data-bind="visible: isActive">Deactivate</button>
+                <button type="submit" name="deactivate" class="btn btn-outline-danger" data-bind="visible: isActive">Deactivate</button>
               </form>
             </td>
             <td>
               <form method="post" action="">
                 {% csrf_token %}
                 <input name="alert_id" type="hidden" data-bind="value: id">
-                <button type="submit" name="remove" class="btn btn-danger" data-bind="disable: isActive">Delete</button>
+                <button type="submit" name="remove" class="btn btn-outline-danger" data-bind="disable: isActive">Delete</button>
               </form>
             </td>
           </tr>

@@ -1,9 +1,17 @@
 External Packages
 =================
 
-This page discusses how to add new dependencies with yarn. Be cautious
-of adding new dependencies, which introduce an indefinite maintenance
-burden.
+This page discusses how to add new dependencies with yarn.
+
+Be cautious of adding new dependencies, which introduce an indefinite maintenance burden.
+
+Do **not** add packages via script tags. An external package's documentation may show
+how to include it via script tags, for the sake of getting up and running quickly.
+This is fine to do in development. However, when added to production,
+packages should be installed via yarn. Virtually any package that would be added to HQ 
+will be on `NPM <https://www.npmjs.com/>`_. In rare cases, we also include packages 
+directly from GitHub, as described below. Using yarn enables tooling to do things like 
+scan for outdated versions and for packages with recently discovered CVEs.
 
 Yarn
 ----
@@ -30,7 +38,7 @@ Specifying packages in ``package.json``
 
 To ensure a package gets installed for a project, you must specify it in
 the ``package.json`` file. This is equivalent to the
-``requirements.txt`` file for ``pip``. Similar to ``pip install`` for
+``pyproject.toml`` file for Python with ``uv``. Similar to ``uv sync`` for
 python, for yarn, use ``yarn upgrade`` When specifying a yarn package
 you can use many techniques. Here are a few examples:
 
@@ -82,13 +90,24 @@ Git branch    ``#<branch>``
 Using Yarn packages in HQ
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To use these packages in HQ you need to find where the js file you are
-looking for. In the case of jquery, it stores the minified jquery
-version in ``jquery/dist/jquery.min.js``:
+To use these packages in HQ, you can typically just import the name of the package.
+The library's ``package.json`` will have a ``main`` attribute that will signal to
+Webpack which code to include.
+
+Importing the library names rather than a specific file is more robust to library upgrades.
+
+In ESM modules:
 
 ::
 
-   <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    import DOMPurify from "dompurify";
 
-Note: The ``node_modules`` bit is intentionally left off the path.
-Django already knows to look in that folder.
+In modules using AMD style:
+
+::
+
+    define("my_app/js/my_module", [
+        "dompurify",
+    ], function (
+        DOMPurify,
+    ) {

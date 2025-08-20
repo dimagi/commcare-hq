@@ -33,13 +33,21 @@
             {% include "app_manager/partials/modules/case_search_property.html" %}
           </tbody>
         </table>
-        <p>
+        <div class="btn-group">
           <button type="button"
                   class="btn btn-default"
                   data-bind="click: addProperty">
-            <i class="fa fa-plus"></i> {% trans "Add search property" %}
+            <i class="fa fa-plus"></i> {% trans "Add Search Property" %}
           </button>
-        </p>
+          {% if app.supports_grouped_case_search_properties %}
+            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li data-bind="click: addGroupProperty"><a>{% trans "Add Group" %}</a></li>
+            </ul>
+          {% endif %}
+        </div>
       </div>
     </div>
     <div class="panel panel-appmanager">
@@ -110,7 +118,7 @@
           <tbody data-bind="foreach: custom_sort_properties, sortableList: custom_sort_properties" class="ui-sortable">
             <tr>
               <td>
-                <i class="grip fa fa-arrows-v icon-blue"></i>
+                <i class="grip fa-solid fa-up-down icon-blue"></i>
               </td>
               <td class="form-group">
                 <input class="form-control" type="text" data-bind="value: property_name"/>
@@ -287,7 +295,11 @@
                        spellcheck="false"
                        data-bind="
                          value: search_button_display_condition,
-                         xpathValidator: {text: search_button_display_condition, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+                         xpathValidator: {
+                           text: search_button_display_condition,
+                           allowCaseHashtags: true,
+                           errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
+                         }
                        "
               ></textarea>
             </div>
@@ -300,14 +312,20 @@
                     data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: search_filter, xpathValidator: {text: search_filter, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+              <textarea data-bind="
+                          value: search_filter,
+                          xpathValidator: {
+                            text: search_filter,
+                            allowCaseHashtags: true,
+                            errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
+                          }"
                         class="form-control vertical-resize"
                         id="search-filter"
                         spellcheck="false"
               ></textarea>
               <p class="help-block">
                 <button class="pull-right btn-xs btn btn-default" data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter">
-                  <i class="fa fa-mail-reply"></i>
+                  <i class="fa-solid fa-reply"></i>
                   {% trans "Copy case list filter" %}
                 </button>
                 {% trans "Example: age > 5" %}
@@ -323,7 +341,13 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: additional_relevant, xpathValidator: {text: additional_relevant, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+              <textarea data-bind="
+                          value: additional_relevant,
+                          xpathValidator: {
+                            text: additional_relevant,
+                            allowCaseHashtags: true,
+                            errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
+                          }"
                         class="form-control vertical-resize"
                         id="claim-relevant-condition"
                         spellcheck="false"
@@ -340,7 +364,11 @@
             <div class="{% css_field_class %}">
               <textarea data-bind="
                 value: blacklisted_owner_ids_expression,
-                xpathValidator: {text: blacklisted_owner_ids_expression, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+                xpathValidator: {
+                  text: blacklisted_owner_ids_expression,
+                  allowCaseHashtags: true,
+                  errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
+                }
               "
                         class="form-control vertical-resize"
                         id="blacklisted-user-ids"
@@ -405,8 +433,11 @@
                         <td>
                           <textarea data-bind="
                               value: caseIdXpath,
-                              xpathValidator: {text: caseIdXpath, allowCaseHashtags: false, errorHtml: $('#searchFilterXpathErrorHtml').html()}
-                              "
+                              xpathValidator: {
+                                text: caseIdXpath,
+                                allowCaseHashtags: false,
+                                errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
+                              }"
                                     class="form-control vertical-resize"
                                     spellcheck="false"
                           ></textarea>
@@ -458,11 +489,23 @@
             </div>
           </div>
           {% endif %}
+          {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search%}
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Clearing search terms resets search results" %}
+            </label>
+            <div class="{% css_field_class %} checkbox">
+              <label>
+                <input type="checkbox" data-bind="checked: search_on_clear" />
+              </label>
+            </div>
+          </div>
+          {% endif %}
           <span class="hide" id="searchFilterXpathErrorHtml">
             {% blocktrans %}
               This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.
             {% endblocktrans %}
-            </span>
+          </span>
         </div>
       </div>
     </div>

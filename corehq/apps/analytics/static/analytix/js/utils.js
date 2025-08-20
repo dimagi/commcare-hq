@@ -1,14 +1,13 @@
-/* globals JSON */
-hqDefine('analytix/js/utils', [
+
+define('analytix/js/utils', [
     'jquery',
     'underscore',
     'analytix/js/initial',
 ], function (
     $,
     _,
-    initialAnalytics
+    initialAnalytics,
 ) {
-    'use strict';
 
     /**
      * A helper function for for tracking google analytics events after a click

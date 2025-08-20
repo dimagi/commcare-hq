@@ -21,14 +21,14 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
 from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
+from corehq.toggles import ASYNC_RESTORE, BLOCK_SUMOLOGIC_LOGS, NAMESPACE_OTHER, SUMOLOGIC_LOGS
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.es.client import BulkActionItem
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.permissions import has_permission_to_view_report
+from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstance
@@ -71,7 +71,7 @@ class SubmissionPost(object):
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
                  partial_submission=False, case_db=None, force_logs=False,
-                 timing_context=None):
+                 timing_context=None, instance_json=None):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -86,6 +86,7 @@ class SubmissionPost(object):
         self.last_sync_token = last_sync_token
         self.openrosa_headers = openrosa_headers or {}
         self.instance = instance
+        self.instance_json = instance_json
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
@@ -166,8 +167,12 @@ class SubmissionPost(object):
             return '   √   '
 
         user = CouchUser.get_by_user_id(instance.user_id)
-        messages = [_("'{form_name}' successfully saved!")
-                    .format(form_name=self._get_form_name(instance, user))]
+        notification_text = self._get_form_submission_text(instance, user)
+        if notification_text:
+            messages = [notification_text]
+        else:
+            messages = [_("'{form_name}' successfully saved!")
+                        .format(form_name=self._get_form_name(instance, user))]
         if user and user.is_web_user():
             messages.extend(self._success_message_links(user, instance, cases))
         return "\n\n".join(messages)
@@ -182,6 +187,17 @@ class SubmissionPost(object):
                 return names[default_language]
         return instance.name
 
+    def _get_form_submission_text(self, instance, user):
+        if instance.build_id:
+            default_language, submission_text_by_lang = _get_form_submit_notification_text_info(instance.domain,
+                                                                                                instance.build_id)
+            submission_text_dict = submission_text_by_lang.get(instance.xmlns, {})
+            if user and user.language and submission_text_dict.get(user.language):
+                return submission_text_dict[user.language]
+            if submission_text_dict.get(default_language):
+                return submission_text_dict[default_language]
+        return None
+
     def _success_message_links(self, user, instance, cases):
         """Yield links to reports/exports, if accessible"""
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
@@ -189,8 +205,7 @@ class SubmissionPost(object):
         from corehq.apps.reports.standard.cases.case_data import CaseDataView
         from corehq.apps.reports.views import FormDataView
         form_link = case_link = form_export_link = case_export_link = None
-        form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
-        if has_permission_to_view_report(user, instance.domain, form_view):
+        if has_permission_to_view_report(user, instance.domain, SUBMISSION_HISTORY_PERMISSION):
             form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
         case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
         if cases and has_permission_to_view_report(user, instance.domain, case_view):
@@ -230,7 +245,6 @@ class SubmissionPost(object):
         elif case_export_link:
             yield _("Click to export your [case data]({}).").format(case_export_link)
 
-
     def run(self):
         self.track_load()
         with self.timing_context("process_xml"):
@@ -239,7 +253,13 @@ class SubmissionPost(object):
             if failure_response:
                 return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-            result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+            result = process_xform_xml(
+                self.domain,
+                self.instance,
+                self.attachments,
+                self.auth_context.to_json(),
+                instance_json=self.instance_json,
+            )
             submitted_form = result.submitted_form
 
             self._post_process_form(submitted_form)
@@ -383,7 +403,8 @@ class SubmissionPost(object):
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
-        if url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER):
+        if (url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER)
+                and not BLOCK_SUMOLOGIC_LOGS.enabled(self.domain)):
             SumoLogicLog(self.domain, instance).send_data(url)
 
     def _invalidate_caches(self, xform):
@@ -483,7 +504,7 @@ class SubmissionPost(object):
             for case_model in case_models
         ]
         try:
-            _, errors = case_search_adapter.bulk(actions, raise_errors=False)
+            _, errors = case_search_adapter.bulk(actions, raise_errors=False, refresh=True)
         except Exception as e:
             errors = [str(e)]
 
@@ -670,4 +691,16 @@ def _get_form_name_info(domain, build_id):
     return (
         app_build.default_language,
         {form.xmlns: dict(form.name) for form in app_build.get_forms() if form.form_type != 'shadow_form'}
+    )
+
+
+@quickcache(['domain', 'build_id'])
+def _get_form_submit_notification_text_info(domain, build_id):
+    try:
+        app_build = get_current_app(domain, build_id)
+    except ResourceNotFound:
+        return 'en', {}
+    return (
+        app_build.default_language,
+        {form.xmlns: dict(form.submit_notification_label) for form in app_build.get_forms()}
     )

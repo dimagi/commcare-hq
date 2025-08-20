@@ -9,7 +9,6 @@ from django.utils.translation import gettext_lazy as _
 
 from django_prbac.models import Grant, Role, UserRole
 
-from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.dates import add_months
 
 from corehq import privileges
@@ -18,13 +17,13 @@ from corehq.apps.accounting.exceptions import (
     ProductPlanNotFoundError,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import FormES
+from corehq.const import USER_DATE_FORMAT
 from corehq.toggles import domain_has_privilege_from_toggle
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
 logger = logging.getLogger('accounting')
-
-EXCHANGE_RATE_DECIMAL_PLACES = 9
 
 
 def log_accounting_error(message, show_stack_trace=False):
@@ -35,7 +34,7 @@ def log_accounting_info(message):
     logger.info("[BILLING] %s" % message)
 
 
-def months_from_date(reference_date, months_from_date):
+def get_first_day_x_months_later(reference_date, months_from_date):
     year, month = add_months(reference_date.year, reference_date.month, months_from_date)
     return datetime.date(year, month, 1)
 
@@ -103,7 +102,8 @@ def get_change_status(from_plan_version, to_plan_version):
     downgraded_privs = from_privs.difference(to_privs)
     upgraded_privs = to_privs
 
-    from corehq.apps.accounting.models import SubscriptionAdjustmentReason as Reason
+    from corehq.apps.accounting.models import \
+        SubscriptionAdjustmentReason as Reason
     if from_plan_version is None:
         adjustment_reason = Reason.CREATE
     else:
@@ -396,13 +396,13 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
 
 def pause_current_subscription(domain_name, web_user, current_subscription):
     from corehq.apps.accounting.models import (
-        Subscription,
         DefaultProductPlan,
+        FundingSource,
+        ProBonoStatus,
         SoftwarePlanEdition,
+        Subscription,
         SubscriptionAdjustmentMethod,
         SubscriptionType,
-        ProBonoStatus,
-        FundingSource,
     )
     cancel_future_subscriptions(domain_name, datetime.date.today(), web_user)
     paused_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -470,3 +470,51 @@ def get_paused_plan_context(request, domain):
         'change_plan_url': reverse(SelectPlanView.urlname, args=[domain]),
         'can_edit_billing_info': request.couch_user.is_domain_admin(domain),
     }
+
+
+def get_pending_plan_context(request, domain):
+    from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
+    from corehq.apps.domain.views import SelectPlanView
+    from corehq.apps.registration.models import SelfSignupWorkflow
+
+    current_sub = Subscription.get_active_subscription_by_domain(domain)
+    if (not current_sub
+            or not current_sub.plan_version.plan.edition == SoftwarePlanEdition.FREE
+            or not request.couch_user.can_edit_billing()
+            or not SelfSignupWorkflow.get_in_progress_for_domain(domain)):
+        return {}
+
+    return {
+        'should_show_pending_notice': True,
+        'change_plan_url': reverse(SelectPlanView.urlname, args=[domain]),
+    }
+
+
+def count_form_submitting_mobile_workers(domain, start, end):
+    """
+    Returns the count of mobile workers who have submitted a form in the time specified.
+    """
+    form_counts_by_worker = (
+        FormES(for_export=True)
+        .domain(domain)
+        .submitted(gte=start, lt=end)
+        .user_type('mobile')
+        .user_aggregation()
+        .size(0)
+        .run()
+        .aggregations.user.normalized_buckets
+    )
+    return len(form_counts_by_worker)
+
+
+def self_signup_workflow_in_progress(domain):
+    from corehq.apps.registration.models import SelfSignupWorkflow
+    return SelfSignupWorkflow.get_in_progress_for_domain(domain)
+
+
+def is_date_range_overlapping(start_1, end_1, start_2, end_2):
+    if end_1 is None:
+        end_1 = datetime.date.max
+    if end_2 is None:
+        end_2 = datetime.date.max
+    return start_1 < end_2 and start_2 < end_1

@@ -145,7 +145,11 @@ class FormProcessorSQL(object):
         publish_form_saved(processed_forms.submitted)
         cases = cases or []
         for case in cases:
-            publish_case_saved(case, send_post_save_signal=False)
+            publish_case_saved(
+                case,
+                associated_form_id=processed_forms.submitted.form_id,
+                send_post_save_signal=False
+            )
 
         if stock_result:
             for ledger in stock_result.models_to_save:

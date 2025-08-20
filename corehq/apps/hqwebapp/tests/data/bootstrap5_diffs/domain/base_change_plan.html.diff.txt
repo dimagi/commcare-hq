@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+@@ -14,7 +14,7 @@
+ 
+ {% block page_content %}
+   {% block plan_breadcrumbs %}
+-  <ol class="breadcrumb">
++  <ol class="breadcrumb">  {# todo B5: css-breadcrumb #}
+     {% for step in steps %}
+       <li>
+         <a href="{{ step.url }}" class="breadcrumb-{{ forloop.counter }}">{{ step.title }}</a>

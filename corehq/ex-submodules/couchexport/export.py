@@ -1,7 +1,9 @@
 from contextlib import contextmanager
 import itertools
-from couchexport.exceptions import SchemaMismatchException,\
-    UnsupportedExportFormat
+from couchexport.exceptions import (
+    SchemaMismatchException,
+    UnsupportedExportFormat,
+)
 from django.conf import settings
 from couchexport.models import Format
 from couchexport import writers
@@ -19,6 +21,7 @@ def get_writer(format, use_formatted_cells=False):
             Format.XLS: writers.Excel2003ExportWriter,
             Format.UNZIPPED_CSV: writers.UnzippedCsvExportWriter,
             Format.PYTHON_DICT: writers.PythonDictWriter,
+            Format.GEOJSON: writers.GeoJSONWriter,
         }[format]()
     except KeyError:
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)

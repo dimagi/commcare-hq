@@ -6,13 +6,11 @@ from unittest.mock import patch
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation, Grant
-from corehq.apps.userreports.models import (
-    RegistryDataSourceConfiguration
-)
 from corehq.apps.userreports.pillow import (
     RegistryDataSourceTableManager, get_kafka_ucr_registry_pillow,
 )
 from corehq.apps.userreports.tests.utils import (
+    cleanup_ucr,
     get_sample_registry_data_source,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -37,10 +35,6 @@ class RegistryDataSourceTableManagerTest(TestCase):
             Invitation(cls.domain), Invitation("other-domain"),
         ], grants=[Grant("other-domain", to_domains=[cls.domain])], name='bazz')
 
-    def tearDown(self):
-        for config in RegistryDataSourceConfiguration.all():
-            config.get_db().delete_doc(config.get_id)
-
     def test_bootstrap(self, ignored_mock):
         self._bootstrap_manager_with_data_source()
 
@@ -50,6 +44,7 @@ class RegistryDataSourceTableManagerTest(TestCase):
         data_source_1.save()
         table_manager = RegistryDataSourceTableManager()
         table_manager.bootstrap([data_source_1])
+        self.addCleanup(cleanup_ucr, data_source_1)
         # the "user-reports" domain is excluded because it has a migration in progress
         self.assertEqual({"granted-domain"}, table_manager.relevant_domains)
 
@@ -67,6 +62,7 @@ class RegistryDataSourceTableManagerTest(TestCase):
         data_source_2 = get_sample_registry_data_source(domain=self.domain, registry_slug=self.registry_1.slug)
         data_source_2.save()
         table_manager._add_or_update_data_source(data_source_2)
+        self.addCleanup(cleanup_ucr, data_source_2)
         expected_domains = {self.domain, "granted-domain"}
         self.assertEqual(expected_domains, table_manager.relevant_domains)
         for domain in expected_domains:
@@ -81,6 +77,7 @@ class RegistryDataSourceTableManagerTest(TestCase):
         data_source_2 = get_sample_registry_data_source(domain=self.domain, registry_slug=self.registry_2.slug)
         data_source_2.save()
         table_manager._add_or_update_data_source(data_source_2)
+        self.addCleanup(cleanup_ucr, data_source_2)
         expected_domains = {self.domain, "granted-domain", "other-domain"}
         self.assertEqual(expected_domains, table_manager.relevant_domains)
 
@@ -115,6 +112,7 @@ class RegistryDataSourceTableManagerTest(TestCase):
     def _bootstrap_manager_with_data_source(self):
         data_source_1 = get_sample_registry_data_source(domain=self.domain, registry_slug=self.registry_1.slug)
         data_source_1.save()
+        self.addCleanup(cleanup_ucr, data_source_1)
         table_manager = RegistryDataSourceTableManager()
         table_manager.bootstrap([data_source_1])
 
@@ -161,15 +159,11 @@ class RegistryUcrPillowTest(TestCase):
             domain=cls.participator_1, registry_slug=cls.registry_1.slug
         )
         cls.config.save()
+        cls.addClassCleanup(cls.config.delete)
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
+        cls.addClassCleanup(cls.adapter.drop_table)
         cls.pillow = get_kafka_ucr_registry_pillow(ucr_configs=[cls.config], processor_chunk_size=100)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.config.delete()
-        cls.adapter.drop_table()
-        super().tearDownClass()
 
     def tearDown(self):
         self.adapter.clear_table()

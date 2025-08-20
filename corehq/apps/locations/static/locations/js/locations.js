@@ -1,29 +1,24 @@
-hqDefine('locations/js/locations', [
-    'jquery',
-    'hqwebapp/js/initial_page_data',
-    'locations/js/location_tree',
-], function (
-    $,
-    initialPageData,
-    locationModels
-) {
-    $(function () {
-        var locs = initialPageData.get('locations'),
-            can_edit_root = initialPageData.get('can_edit_root'),
-            hierarchy = initialPageData.get('hierarchy'),
-            show_inactive = initialPageData.get('show_inactive');
+import "commcarehq";
+import $ from "jquery";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import locationModels from "locations/js/location_tree";
 
-        var options = {
-            show_inactive: show_inactive,
-            can_edit_root: can_edit_root,
-        };
+$(function () {
+    const locs = initialPageData.get('locations'),
+        canEditRoot = initialPageData.get('can_edit_root'),
+        hierarchy = initialPageData.get('hierarchy'),
+        showInactive = initialPageData.get('show_inactive');
 
-        var treeModel = locationModels.locationTreeViewModel(hierarchy, options);
+    var options = {
+        show_inactive: showInactive,
+        can_edit_root: canEditRoot,
+    };
 
-        $('#location_tree').koApplyBindings(treeModel);
-        treeModel.load(locs);
+    var treeModel = locationModels.locationTreeViewModel(hierarchy, options);
 
-        var model = locationModels.locationSearchViewModel(treeModel, options);
-        $('#location_search').koApplyBindings(model);
-    });
+    $('#location_tree').koApplyBindings(treeModel);
+    treeModel.load(locs);
+
+    var model = locationModels.locationSearchViewModel(treeModel, options);
+    $('#location_search').koApplyBindings(model);
 });

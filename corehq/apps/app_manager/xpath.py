@@ -349,10 +349,11 @@ class CaseClaimXpath(object):
 
     def default_relevant(self):
         # Checks to see if the searched-for case already exists in the casedb:
-        # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
+        # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0   # noqa: E501
         return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
 
-    def multi_select_relevant(self):
+    @classmethod
+    def multi_case_relevant(cls):
         # Verifies that there's at least one case that isn't yet owned by the user
         return XPath("$case_id").neq(XPath.string(""))
 
@@ -424,6 +425,11 @@ class SearchSelectedCasesInstanceXpath(InstanceXpath):
     @property
     def id(self):
         return self or self.default_id
+
+
+class LocationInstanceXpath(InstanceXpath):
+    id = 'locations'
+    path = 'locations/location'
 
 
 class CommCareSession(object):

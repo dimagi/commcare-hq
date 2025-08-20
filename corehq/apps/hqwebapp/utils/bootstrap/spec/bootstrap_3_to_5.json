@@ -8,6 +8,7 @@
         "badge-warning": "text-bg-warning",
         "badge-info": "text-bg-info",
         "badge-light": "text-bg-light",
+        "hide": "d-none",
         "label": "badge",
         "label-default": "text-bg-secondary",
         "label-primary": "text-bg-primary",
@@ -21,9 +22,11 @@
         "panel-modern-gray": "card-modern-gray",
         "panel-form-only": "card-form-only",
         "panel-heading": "card-header",
-        "panel-default": "card-default",
+        "panel-title-nolink": "card-title-nolink",
+        "panel-default": "",
         "panel-info": "text-bg-info",
         "panel-danger": "text-bg-danger",
+        "panel-group": "card-group",
         "panel": "card",
         "well": "card",
         "close": "btn-close",
@@ -59,24 +62,37 @@
         "col-lg-<num>": "col-xl-<num>",
         "col-md-<num>": "col-lg-<num>",
         "col-sm-<num>": "col-md-<num>",
-        "col-xs-<num>": "col-sm-<num>"
+        "col-xs-<num>": "col-sm-<num>",
+        "col-xl-offset-<num>": "offset-xxl-<num>",
+        "col-lg-offset-<num>": "offset-xl-<num>",
+        "col-md-offset-<num>": "offset-lg-<num>",
+        "col-sm-offset-<num>": "offset-md-<num>",
+        "col-xs-offset-<num>": "offset-sm-<num>"
+    },
+    "template_tag_renames": {
+        "js_entry_b3": "js_entry"
     },
     "data_attribute_renames": {
         "data-toggle": "data-bs-toggle",
         "data-target": "data-bs-target",
         "data-dismiss": "data-bs-dismiss"
     },
+    "dependency_renames": {
+        "bootstrap3": "bootstrap5"
+    },
     "flagged_css_changes": [
         "breadcrumb",
+        "checkbox",
         "close",
         "dl-horizontal",
         "dropdown",
         "form-group",
         "form-inline",
         "glyphicon",
+        "has-error",
+        "has-success",
         "input-group-addon",
         "input-group-btn",
-        "modal-header",
         "nav",
         "navbar",
         "navbar-dark",
@@ -90,9 +106,18 @@
     "flagged_js_plugins": [
         "affix",
         "button",
+        "createDateRangePicker",
+        "datetimepicker",
         "modal",
         "popover",
         "tab",
         "tooltip"
+    ],
+    "template_tags_with_dependencies": [
+        "extends",
+        "js_entry",
+        "js_entry_b3",
+        "static",
+        "include"
     ]
 }

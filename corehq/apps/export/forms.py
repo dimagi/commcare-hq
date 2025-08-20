@@ -8,7 +8,6 @@ from django.utils.translation import gettext_lazy
 
 import dateutil
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms.bootstrap import StrictButton
 
@@ -16,7 +15,6 @@ from corehq import privileges
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.export.filters import (
-    AND,
     NOT,
     OR,
     FormSubmittedByFilter,
@@ -52,7 +50,6 @@ from corehq.apps.reports.filters.users import (
 )
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util import flatten_non_iterable_list
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 
@@ -648,18 +645,17 @@ class AbstractExportFilterBuilder(object):
             (unknown, filters.OR(user_es.unknown_users())),
             (web, user_es.web_users()),
             (demo, user_es.demo_users()),
-            # Sets the is_active filter status correctly for if either active or deactivated users are selected
-            (active ^ deactivated, user_es.is_active(active)),
+            (active and not deactivated, user_es.is_active(self.domain_object.name)),
+            (deactivated and not active, user_es.is_inactive(self.domain_object.name)),
         ] if include]
 
         if not user_filters:
             return []
 
         query = (user_es.UserES()
-                 .domain(self.domain_object.name)
+                 .domain(self.domain_object.name, include_inactive=True)
                  .OR(*user_filters)
                  .remove_default_filter('not_deleted')
-                 .remove_default_filter('active')
                  .fields([]))
 
         user_ids = query.run().doc_ids
@@ -695,7 +691,7 @@ class AbstractExportFilterBuilder(object):
         :return: User filter with users at filtered locations and their descendants
         """
         if location_ids:
-            user_ids = user_ids_at_locations_and_descendants(location_ids)
+            user_ids = user_ids_at_locations_and_descendants(self.domain_object.name, location_ids)
             return self.export_user_filter(user_ids)
 
 
@@ -752,7 +748,8 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         if date_filter:
             form_filters.append(date_filter)
         if not can_access_all_locations:
-            form_filters.append(self._scope_filter(accessible_location_ids))
+            show_inactive_users = HQUserType.DEACTIVATED in user_types
+            form_filters.append(self._scope_filter(accessible_location_ids, show_inactive_users))
 
         return form_filters
 
@@ -765,8 +762,6 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
         if not location_filter and not group_filter:
             group_and_location_metafilter = None
-        elif FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain_object.name) and location_ids and group_ids:
-            group_and_location_metafilter = AND(group_filter, location_filter)
         else:
             group_and_location_metafilter = OR(*list(filter(None, [group_filter, location_filter])))
 
@@ -778,10 +773,11 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
         return all_user_filters
 
-    def _scope_filter(self, accessible_location_ids):
+    def _scope_filter(self, accessible_location_ids, include_inactive_users=False):
         # Filter to be applied in AND with filters for export for restricted user
         # Restricts to forms submitted by users at accessible locations
-        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids))
+        accessible_user_ids = mobile_user_ids_at_locations(
+            self.domain_object.name, list(accessible_location_ids), include_inactive_users)
         return FormSubmittedByFilter(accessible_user_ids)
 
 
@@ -908,7 +904,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
         # Filter to be applied in AND with filters for export to add scope for restricted user
         # Restricts to cases owned by accessible locations and their respective users Or Cases
         # Last Modified by accessible users
-        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids))
+        accessible_user_ids = mobile_user_ids_at_locations(self.domain_object.name, list(accessible_location_ids))
         accessible_ids = accessible_user_ids + list(accessible_location_ids)
         return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
 
@@ -931,9 +927,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(EmwfFilterFormExport, self).__init__(domain_object, *args, **kwargs)
-
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
 
     def get_model_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
         """
@@ -988,8 +981,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         self.timezone = timezone
         super(FilterCaseESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         # update date_range filter's initial values to span the entirety of
         # the domain's submission range
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
@@ -1046,8 +1037,6 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
         self.timezone = timezone
         super(FilterSmsESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         # update date_range filter's initial values to span the entirety of
         # the domain's submission range
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
@@ -1085,9 +1074,7 @@ class DatasourceExportDownloadForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         super(DatasourceExportDownloadForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
+        self.helper = HQFormHelper()
 
         self.fields['data_source'].choices = self.domain_datasources(domain)
 
@@ -1110,7 +1097,7 @@ class DatasourceExportDownloadForm(forms.Form):
                     css_class="btn-primary",
                     data_bind="enable: haveDatasources"
                 ),
-            )
+            ),
         )
 
     @staticmethod

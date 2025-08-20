@@ -1,0 +1,55 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<form
+  hx-post="{{ request.path_info }}"
+  hq-hx-action="save_expression"
+  hx-swap="outerHTML"
+  x-data="{ isUnsaved: false }"
+  @change="isUnsaved = true;"
+  @submit="isUnsaved = false;"
+>
+  {% if form.instance.pk %}
+    <input type="hidden" name="pk" value="{{ form.instance.pk }}" />
+  {% endif %}
+  <div class="row pb-3">
+    <div class="col-2">{{ form.name }}</div>
+    <div class="col-7">{{ form.csql }}</div>
+    <div class="col-3">
+      <button
+      type="button"
+      class="btn btn-outline-secondary"
+      data-bs-toggle="modal"
+      data-bs-target="#filterModal{{form.instance.pk}}"
+    >
+      <i class="fa-solid fa-filter"></i>
+    </button>
+      <button
+        type="submit"
+        class="btn btn-outline-primary"
+        x-bind:disabled="!isUnsaved"
+      >
+        <i class="fa-regular fa-save"></i> {% trans "Save" %}
+      </button>
+      <button
+        class="btn btn-outline-danger"
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="delete_expression"
+        hx-swap="delete"
+        hx-target="closest form"
+      >
+        <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+      </button>
+    </div>
+  </div>
+</form>
+
+{% block modals %}
+  <div class="modal fade" id="filterModal{{form.instance.pk}}" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        {{filter_modal_form}}
+      </div>
+    </div>
+  </div>
+{% endblock modals %}

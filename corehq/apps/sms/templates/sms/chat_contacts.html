@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'sms/js/chat_contacts' %}
+{% js_entry_b3 'sms/js/chat_contacts' %}
 
 {% block page_content %}
   {% registerurl "chat_contact_list" domain %}

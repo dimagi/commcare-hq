@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -4,10 +4,10 @@
+ import googleAnalytics from "analytix/js/google";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import multiselectUtils from "hqwebapp/js/multiselect_utils";
+-import "hqwebapp/js/bootstrap3/widgets";  // autocomplete widget for email recipient list
++import "hqwebapp/js/bootstrap5/widgets";  // autocomplete widget for email recipient list
+ import "jquery-ui/ui/widgets/datepicker";
++import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
+ import "hqwebapp/js/components/select_toggle";
+-import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
+ 
+ var addOptionsToSelect = function ($select, optList, selectedVal) {
+     for (var i = 0; i < optList.length; i++) {

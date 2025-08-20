@@ -6,10 +6,9 @@ from phonelog.models import DeviceReportEntry
 from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
     BaseReportFilter,
-    BaseSingleOptionFilter,
-    BaseTagsFilter,
 )
-from corehq.util.queries import fast_distinct, fast_distinct_in_domain
+from corehq.apps.reports.util import DatatablesServerSideParams
+from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
 
 
@@ -17,7 +16,7 @@ class DeviceLogTagFilter(BaseReportFilter):
     slug = "logtag"
     label = gettext_lazy("Filter Logs by Tag")
     errors_only_slug = "errors_only"
-    template = "reports/filters/devicelog_tags.html"
+    template = "reports/filters/bootstrap3/devicelog_tags.html"
 
     @quickcache(['self.domain'], timeout=10 * 60)
     def _all_values(self):
@@ -25,8 +24,12 @@ class DeviceLogTagFilter(BaseReportFilter):
 
     @property
     def filter_context(self):
-        errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
-        selected_tags = self.request.GET.getlist(self.slug)
+        errors_only = bool(DatatablesServerSideParams.get_value_from_request(
+            self.request, self.errors_only_slug, False
+        ))
+        selected_tags = DatatablesServerSideParams.get_value_from_request(
+            self.request, self.slug, as_list=True
+        )
         show_all = bool(not selected_tags)
         values = self._all_values()
         tags = [{
@@ -41,22 +44,6 @@ class DeviceLogTagFilter(BaseReportFilter):
             self.errors_only_slug: errors_only,
         }
         return context
-
-
-class DeviceLogDomainFilter(BaseSingleOptionFilter):
-    slug = "domain"
-    label = gettext_lazy("Filter Logs by Domain")
-
-    @property
-    @quickcache([], timeout=60 * 60)
-    def options(self):
-        return [(d, d) for d in fast_distinct(DeviceReportEntry, 'domain')]
-
-
-class DeviceLogCommCareVersionFilter(BaseTagsFilter):
-    slug = "commcare_version"
-    label = gettext_lazy("Filter Logs by CommCareVersion")
-    placeholder = gettext_lazy("Enter the CommCare Version you want e.g '2.28.1'")
 
 
 class BaseDeviceLogFilter(BaseMultipleOptionFilter):
@@ -78,7 +65,7 @@ class BaseDeviceLogFilter(BaseMultipleOptionFilter):
     @classmethod
     def get_selected(cls, request):
         return [cls.param_to_value(param)
-                for param in request.GET.getlist(cls.slug)]
+                for param in DatatablesServerSideParams.get_value_from_request(request, cls.slug, as_list=True)]
 
     @classmethod
     def param_to_value(cls, param):

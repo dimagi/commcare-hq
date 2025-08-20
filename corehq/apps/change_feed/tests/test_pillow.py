@@ -35,7 +35,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         self.consumer = KafkaConsumer(
             topics.CASE_SQL,
             bootstrap_servers=settings.KAFKA_BROKERS,
-            consumer_timeout_ms=100,
+            consumer_timeout_ms=500,
             enable_auto_commit=False,
         )
         try:

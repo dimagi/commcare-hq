@@ -3,10 +3,10 @@ import json
 from django import forms
 from django.utils.translation import gettext_noop
 
-from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 
 from corehq.apps.commtrack.util import all_sms_codes
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 
@@ -42,10 +42,8 @@ class ProductForm(forms.Form):
         kwargs['initial']['code'] = self.product.code
 
         super(ProductForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
         programs = Program.by_domain(self.product.domain)
         self.fields['program_id'].choices = tuple((prog.get_id, prog.name) for prog in programs)
@@ -94,7 +92,8 @@ class ProductForm(forms.Form):
                 'action': lambda o: o.caption,
                 'command': lambda o: o['caption'],
             }[conflict[0]](conflict[1])
-            raise forms.ValidationError('product id not unique (conflicts with %s "%s")' % (conflict[0], conflict_name))
+            raise forms.ValidationError('Product id is not unique (conflicts with %s "%s")'
+                                        % (conflict[0], conflict_name))
 
         return code.lower()
 

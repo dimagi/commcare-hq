@@ -1,0 +1,44 @@
+// Only webapps
+#breadcrumb-region {
+  z-index: $zindex-navbar-cloudcare - 1;
+}
+
+#breadcrumb-region .breadcrumb-nav {
+  background-color: white;
+  display: flex;
+  align-items: center;
+  height: $breadcrumb-height;
+
+  .breadcrumb {
+    background-color: unset;
+    padding: 0 0 0 $grid-gutter-width / 2;
+    margin-bottom: 0;
+    flex-grow: 1;
+
+    .breadcrumb-item {
+      &::before {
+        font-family: "FontAwesome";  // supports bsbreadcrumb-divider: \f054
+        color: $cc-neutral-hi;
+      }
+      a {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        display: block;
+      }
+    }
+  }
+}
+
+@media print {
+  #breadcrumb-region {
+    position: static;
+  }
+
+  #breadcrumb-region .breadcrumb,
+  .breadcrumb-form-container .breadcrumb {
+    font-size: 12px;
+    margin-bottom: 0px;
+    padding-left: 33px;
+  }
+}

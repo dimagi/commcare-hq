@@ -1,12 +1,13 @@
 import json
 
-from django.http import Http404, HttpResponse
+from django.conf import settings
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.translation import gettext as _
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.es.es_query import ESQuery
-from corehq.apps.es.transient_util import iter_index_cnames
+from corehq.apps.es.transient_util import doc_adapter_from_cname, iter_index_cnames
 from corehq.apps.hqwebapp.doc_lookup import (
     get_databases,
     get_db_from_db_name,
@@ -31,6 +32,12 @@ def doc_in_es(request):
     found_indices = {}
     es_doc_type = None
     for index in iter_index_cnames():
+        if not settings.IS_SAAS_ENVIRONMENT:
+            # If we're not in a SaaS environment, we don't need to check the sub-indices
+            # because they were not created in non-saas environments.
+            doc_adapter = doc_adapter_from_cname(index)
+            if doc_adapter.parent_index_cname:
+                continue
         es_doc = lookup_doc_in_es(doc_id, index)
         if es_doc:
             found_indices[index] = to_json(es_doc)
@@ -66,8 +73,8 @@ def raw_doc(request):
         if 'doc' in context:
             return HttpResponse(context['doc'], content_type="application/json")
         else:
-            return HttpResponse(json.dumps({"status": "missing"}),
-                                content_type="application/json", status=404)
+            return JsonResponse({"status": "missing"},
+                                status=404)
 
     context['all_databases'] = [db for db in get_databases()]
     return render(request, "hqadmin/raw_doc.html", context)

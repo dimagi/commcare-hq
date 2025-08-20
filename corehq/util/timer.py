@@ -1,9 +1,10 @@
+import itertools
 import time
 import uuid
-
 from functools import wraps
+
 from memoized import memoized
-import itertools
+from sentry_sdk import add_breadcrumb
 
 from dimagi.utils.logging import notify_exception
 
@@ -74,6 +75,17 @@ class NestableTimer(object):
     def to_list(self, exclude_root=False):
         root = [] if exclude_root else [self]
         return root + list(itertools.chain(*[sub.to_list() for sub in self.subs]))
+
+    def print(self, prefix=""):
+        if self.is_root_node:
+            print(f"{'name':<50} | duration | pct of parent | pct of total")
+            print(f"{'-'*50} | -------- | ------------- | ------------")
+        print(f"{prefix + self.name:<50} | "
+              f"{self.duration:8.3f} | "
+              f"{self.percent_of_parent or 100:13.3f} | "
+              f"{self.percent_of_total or 0:12.3f}")
+        for sub in self.subs:
+            sub.print(prefix + "  ")
 
     @property
     def is_leaf_node(self):
@@ -190,6 +202,9 @@ class TimingContext(object):
         """
         return self.root.to_dict()
 
+    def print(self):
+        return self.root.print()
+
     @property
     def duration(self):
         return self.root.duration
@@ -197,6 +212,23 @@ class TimingContext(object):
     def to_list(self, exclude_root=False):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""
         return self.root.to_list(exclude_root)
+
+    def add_to_sentry_breadcrumbs(self):
+        """Add timing context to the breadcrumbs section in sentry.
+
+        This must be called before sending to sentry, for instance if using
+        notify_exception rather than raising a hard error
+        """
+        def visit(element, prefix=""):
+            if element.duration is not None and element.percent_of_total is not None:
+                message = (f"⏱  {element.percent_of_total:>3.0f}% {prefix} "
+                           f"{element.name or ''}: {element.duration:0.3f}s")
+                add_breadcrumb(category="timing", message=message, level="info")
+            prefix += "  →"
+            for sub in element.subs:
+                visit(sub, prefix=prefix)
+
+        visit(self.root)
 
     def __repr__(self):
         return "TimingContext(root='{}')".format(

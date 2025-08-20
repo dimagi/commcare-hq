@@ -1,5 +1,4 @@
-/* globals process */
-
+/* globals module, process, require */
 module.exports = function (grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
@@ -28,23 +27,23 @@ module.exports = function (grunt) {
      */
     var apps = [
         'app_manager',
-        'export/ko',
-        'notifications',
+        'export',
+        'notifications/bootstrap3',
+        'notifications/bootstrap5',
         'reports_core/choiceListUtils',
         'locations',
-        'userreports',
+        'userreports/bootstrap3',
+        'userreports/bootstrap5',
         'cloudcare',
         'cloudcare/form_entry',
-        'hqwebapp',
+        'hqwebapp/bootstrap3',
+        'hqwebapp/bootstrap5',
+        'hqwebapp/components',
         'case_importer',
     ];
 
-    var custom = [
-        'champ',
-    ];
-
     var extensions = _.split(process.env.JS_TEST_EXTENSIONS || '', ','),
-        testPaths = _.filter(_.concat(apps, custom, extensions), function (path) { return path !== ''; });
+        testPaths = _.filter(_.concat(apps, extensions), function (path) { return path !== ''; });
 
     var runTest = function (queuedTests, taskPromise, finishedTests, failures) {
         if (finishedTests === undefined) {
@@ -72,9 +71,9 @@ module.exports = function (grunt) {
                 reporter: reporter,
             };
 
-        // For running in docker/travis
+        // For running in docker
         if (process.env.PUPPETEER_SKIP_DOWNLOAD) {
-            runnerOptions.executablePath = 'google-chrome-unstable';
+            runnerOptions.executablePath = 'google-chrome-stable';
         }
 
         grunt.log.writeln("\n");
@@ -93,7 +92,7 @@ module.exports = function (grunt) {
                         error && grunt.log.write(error));
                 }
                 fs.writeFile(filePath, JSON.stringify(data.coverage), { flag: 'w+' }, error =>
-                    error && grunt.log.write(error)
+                    error && grunt.log.write(error),
                 );
             }
             finishedTests.push(currentApp);
@@ -101,7 +100,7 @@ module.exports = function (grunt) {
                 _.without(queuedTests, currentApp),
                 taskPromise,
                 finishedTests,
-                failures
+                failures,
             );
         });
     };
@@ -136,7 +135,7 @@ module.exports = function (grunt) {
             var testStatement = "Running tests: " + paths.join(', ');
             grunt.log.writeln(testStatement.bold.green);
             runTest(paths, this.async());
-        }
+        },
     );
 
     grunt.registerTask('list', 'Lists all available apps to test', function () {

@@ -7,6 +7,8 @@ from django.conf import settings
 from django.db import connections, migrations
 from django.db.utils import DEFAULT_DB_ALIAS
 
+from corehq.util.django_migrations import skip_on_fresh_install
+
 # Use a separate user for the fdw connection because postgres_fdw
 # changes session settings like search_path that interfere with other
 # clients because of pg_bouncer connection pooling.
@@ -120,12 +122,14 @@ REPEATERS_APP_LABEL = "repeaters"
 
 class RepeatersMigration(migrations.RunSQL):
 
+    @skip_on_fresh_install
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         if self.should_apply(schema_editor):
             assert count_records(schema_editor.connection, "repeatrecord") == 0
             assert count_records(schema_editor.connection, "repeatrecordattempt") == 0
             self._run_sql(schema_editor, self.sql.format(**self.context))
 
+    @skip_on_fresh_install
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
         if self.should_apply(schema_editor):
             assert count_records(connections["repeaters"], "repeatrecord") == 0
@@ -161,7 +165,14 @@ class Migration(migrations.Migration):
 
     operations = [
         # Cannot be applied until the repeaters database has been initialized
-        # and migrated. The migration should be applied with:
+        # and migrated.
+        #
+        # After creating the new "repeaters" database and adding it to
+        # DATABASES and LOCAL_CUSTOM_DB_ROUTING, a "repeaters_fdw_user"
+        # must also be created on the postgres cluster.
+        # See https://github.com/dimagi/commcare-cloud/pull/5989
+        #
+        # Then the migration should be applied with:
         #
         #   ./manage.py migrate --database=repeaters  # initialize repeaters db
         #   ./manage.py migrate                       # create repeaters FDW

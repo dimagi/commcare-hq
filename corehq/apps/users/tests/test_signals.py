@@ -9,6 +9,8 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
+from corehq.apps.users.tests.util import patch_user_data_db_layer
+from corehq.tests.util.context import add_context
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import mock_out_couch
 
@@ -64,6 +66,9 @@ class TestUserSignals(SimpleTestCase):
 @es_test(requires=[user_adapter], setup_class=True)
 class TestUserSyncToEs(SimpleTestCase):
 
+    def setUp(self):
+        add_context(patch_user_data_db_layer(), self)
+
     @sync_users_to_es()
     def test_sync_to_es_create_update_delete(self, *mocks):
         domain = 'user_es_domain'
@@ -99,6 +104,7 @@ class TestUserSyncToEs(SimpleTestCase):
             'domain': user.domain,
             'username': user.username,
             'is_active': True,
+            'domain_membership': {'domain': user.domain, 'is_active': True},
             'first_name': user.first_name,
             'last_name': user.last_name,
             'doc_type': user.doc_type,

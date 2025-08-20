@@ -1,0 +1,39 @@
+{% load i18n %}
+
+<script type="text/html" id="form-navigation-ko-template">
+  <div class="formnav-container" data-bind="visible: showInFormNavigation">
+    <button type="button"
+            class="btn btn-formnav"
+            data-bind="click: prevQuestion, visible: enablePreviousButton">
+      <i class="fa fa-chevron-left"></i>
+    </button>
+    <button type="button"
+            disabled="disabled"
+            class="btn btn-formnav disabled"
+            data-bind="visible: !enablePreviousButton()">
+      <i class="fa fa-chevron-left"></i>
+    </button>
+
+    <button type="button"
+            class="btn btn-success btn-formnav-submit"
+            data-bind="visible: atLastIndex(), click: submitForm">{% trans "Complete" %} <i class="fa fa-chevron-right"></i></button>
+
+    <button type="button"
+            disabled="disabled"
+            class="btn btn-formnav disabled btn-formnav-next"
+            data-bind="visible: disableNextButton() && !atLastIndex()">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+    <button type="button"
+            class="btn btn-formnav btn-formnav-next"
+            data-bind="click: nextQuestion, visible: enableNextButton() && !atLastIndex()">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+    <button type="button"
+            class="btn btn-formnav btn-formnav-next"
+            data-bind="click: clickedNextOnRequired, visible: enableForceNextButton() && !atLastIndex()">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+
+  </div>
+</script>

@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "reports_core/filters/bootstrap3/filter_base.html" %}
++{% extends "reports_core/filters/bootstrap5/filter_base.html" %}
+ {% load hq_shared_tags %}
+ {% block filter-controls %}
+   <input type="text"

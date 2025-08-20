@@ -5,6 +5,7 @@ from django.utils.translation import (
     gettext as _,
     gettext_lazy
 )
+from enum import Enum
 
 register = template.Library()
 
@@ -117,10 +118,15 @@ def html_name(name):
     return html.strip_tags(name) or EMPTY_LABEL
 
 
+class EscapeMethod(Enum):
+    HTML = 'html'
+    JS = 'js'
+
+
 @register.simple_tag
 def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=None, element_type='input_text'):
     if element_type == 'input_text':
-        options = _get_dynamic_input_trans_options(name, langs=langs)
+        options = _get_dynamic_input_trans_options(name, EscapeMethod.HTML, langs=langs)
         template = '''
             <input type="text"
                    name="{input_name}" {input_id_attribute} {data_bind_attribute}
@@ -129,7 +135,7 @@ def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=No
                    placeholder="{placeholder}" />
         '''
     elif element_type == 'textarea':
-        options = _get_dynamic_input_trans_options(name, langs=langs, is_textarea=True)
+        options = _get_dynamic_input_trans_options(name, EscapeMethod.HTML, langs=langs)
         template = '''
             <textarea name="{input_name}" {input_id_attribute} {data_bind_attribute}
                       class="form-control vertical-resize"
@@ -149,16 +155,15 @@ def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=No
 
 
 @register.simple_tag
-def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
+def inline_edit_trans(name, langs=None, url='', saveValueName='',
         containerClass='', iconClass='', readOnlyClass='', disallow_edit='false'):
-    options = _get_dynamic_input_trans_options(name, langs=langs, allow_blank=False)
+    options = _get_dynamic_input_trans_options(name, EscapeMethod.JS, langs=langs, allow_blank=False)
     options.update({
         'url': url,
         'saveValueName': saveValueName,
         'containerClass': containerClass,
         'iconClass': iconClass,
         'readOnlyClass': readOnlyClass,
-        'postSave': postSave,
         'disallow_edit': disallow_edit
     })
 
@@ -174,14 +179,13 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
             containerClass: '{containerClass}',
             iconClass: '{iconClass}',
             readOnlyClass: '{readOnlyClass}',
-            postSave: {postSave},
             disallow_edit: {disallow_edit},
         "></inline-edit>
     '''
     return format_html(template, **options)
 
 
-def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True, is_textarea=False):
+def _get_dynamic_input_trans_options(name, escape_method: EscapeMethod, langs=None, allow_blank=True):
     if langs is None:
         langs = ["default"]
     placeholder = _("Untitled")
@@ -201,18 +205,15 @@ def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True, is_text
                 options['placeholder'] = name[lang] if (allow_blank or name[lang] != '') else placeholder
                 options['lang'] = lang
             break
-    if is_textarea:
-        options = _escape_options(options, keys_to_html_escape=['value'])
-    else:
-        options = _escape_options(options)
+    options = _escape_options(options, escape_method=escape_method)
     return options
 
 
-def _escape_options(options, keys_to_html_escape: list[str] = []):
-    escaped_options = {}
-    for (key, value) in options.items():
-        if key in keys_to_html_escape:
-            escaped_options[key] = html.escape(value)
-        else:
-            escaped_options[key] = html.escapejs(value)
+def _escape_options(options, escape_method: EscapeMethod):
+    if escape_method == EscapeMethod.HTML:
+        escape_func = html.escape
+    elif escape_method == EscapeMethod.JS:
+        escape_func = html.escapejs
+
+    escaped_options = {key: escape_func(value) for key, value in options.items()}
     return escaped_options

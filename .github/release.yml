@@ -1,0 +1,19 @@
+# .github/release.yml
+
+changelog:
+  exclude:
+    authors:
+      - dependabot
+      - token-generator-for-cchq
+  categories:
+    - title: Product Updates
+      labels:
+        - product/all-users-all-environments
+        - product/prod-india-all-users
+    - title: Custom Feature Updates
+      labels:
+        - product/feature-flag
+        - product/custom
+    - title: All other updates
+      labels:
+        - "*"

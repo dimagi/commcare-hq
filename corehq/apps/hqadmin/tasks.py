@@ -19,13 +19,12 @@ from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_static_url_prefix
 from pillowtop.utils import get_couch_pillow_instances
 
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, periodic_task_when_true, task
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import get_es_new
-from corehq.util.celery_utils import periodic_task_when_true
 from corehq.util.files import TransientTempfile
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.soft_assert import soft_assert
@@ -46,8 +45,7 @@ def check_pillows_for_rewind():
                         'This could mean we are in a rewind state'.format(checkpoint.checkpoint_id),
                 details={
                     'pillow checkpoint seq': checkpoint.get_current_sequence_id(),
-                    'stored seq': historical_seq
-                }
+                    'stored seq': historical_seq}
             )
 
 
@@ -79,7 +77,7 @@ def send_mass_emails(email_for_requesting_user, real_email, subject, html, text)
             'username': h['username'],
             'email': h['email'] or h['username'],
             'first_name': h['first_name'] or 'CommCare User',
-        } for h in UserES().web_users().run().hits]
+        } for h in UserES().web_users().active_on_any_domain().run().hits]
     else:
         recipients = [{
             'username': email_for_requesting_user,
@@ -196,7 +194,8 @@ def track_pg_limits():
             for table, sequence in results:
                 cursor.execute(f'select last_value from "{sequence}"')
                 current_value = cursor.fetchone()[0]
-                metrics_gauge('commcare.postgres.sequence.current_value', current_value, {'table': table, 'database': db})
+                metrics_gauge('commcare.postgres.sequence.current_value',
+                    current_value, {'table': table, 'database': db})
 
 
 @periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))

@@ -64,10 +64,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         return {
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
-            'toggle_client_secret': (
-                self.identity_provider.protocol == IdentityProviderProtocol.OIDC
-                and self.identity_provider.client_secret
-            ),
+            'is_oidc': self.identity_provider.protocol == IdentityProviderProtocol.OIDC,
         }
 
     @property
@@ -105,11 +102,17 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             SsoSamlEnterpriseSettingsForm if self.identity_provider.protocol == IdentityProviderProtocol.SAML
             else SsoOidcEnterpriseSettingsForm
         )
+
         if self.request.method == 'POST':
             return form_class(
-                self.identity_provider, self.request.POST, self.request.FILES
+                self.identity_provider,
+                self.request.POST,
+                self.request.FILES,
             )
-        return form_class(self.identity_provider)
+
+        return form_class(
+            self.identity_provider,
+        )
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

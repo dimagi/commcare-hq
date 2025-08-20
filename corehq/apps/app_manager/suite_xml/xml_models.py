@@ -91,14 +91,23 @@ class XPathEnum(TextXPath):
             v_val = get_value(v_key)
             variables.append(XPathVariable(name=v_key, locale_id=v_val))
         parts = []
-        for i, item in enumerate(enum):
-            template_context = get_template_context(item, i)
-            parts.append(template.format(**template_context))
+        if format == 'translatable-enum':
+            calculated_property = get_template_context()['calculated_property']
+            # converting variables into suite.xml recognized variables (i.e. $variable > $kvariable)
+            for item in enum:
+                key = item.key_as_variable
+                if key[1:] in calculated_property:
+                    calculated_property = calculated_property.replace(key[1:], key)
+            parts.append(calculated_property)
+        else:
+            for i, item in enumerate(enum):
+                template_context = get_template_context(item, i)
+                parts.append(template.format(**template_context))
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
             parts[-1] = parts[-1][:-2]  # removes extra comma from last string
             parts.append("), '\\s+', ' ')")
-        else:
+        elif format != "translatable-enum":
             parts.append("''")
             parts.append(")" * len(enum))
 
@@ -570,6 +579,14 @@ class QueryPrompt(DisplayNode):
 
     itemset = NodeField('itemset', Itemset)
 
+    group_key = StringField('@group_key', required=False)
+
+
+class QueryPromptGroup(DisplayNode):
+    ROOT_NAME = 'group'
+
+    key = StringField('@key')
+
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
@@ -582,8 +599,10 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     description = NodeField('description', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
+    prompt_groups = NodeListField('group', QueryPromptGroup)
     default_search = BooleanField("@default_search")
     dynamic_search = BooleanField("@dynamic_search")
+    search_on_clear = BooleanField("@search_on_clear", required=False)
 
     @property
     def id(self):
@@ -707,6 +726,10 @@ class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
 
+class AltText(AbstractTemplate):
+    ROOT_NAME = 'alt_text'
+
+
 class GraphTemplate(Template):
     # TODO: Is there a way to specify a default/static value for form?
     form = StringField('@form', choices=['graph'])
@@ -792,6 +815,8 @@ class Style(XmlObject):
     grid_width = StringField("grid/@grid-width")
     grid_x = StringField("grid/@grid-x")
     grid_y = StringField("grid/@grid-y")
+    show_border = BooleanField("@show-border")
+    show_shading = BooleanField("@show-shading")
 
 
 class Extra(XmlObject):
@@ -837,16 +862,18 @@ class EndpointAction(XmlObject):
 
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
-    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node')
+    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node', 'alt_text')
 
     sort = StringField('@sort')
-    print_id = StringField('@print-id')
+    lazy_loading = BooleanField('@lazy_loading', required=False)
+    cache_enabled = BooleanField('@cache_enabled', required=False)
     style = NodeField('style', Style)
     header = NodeField('header', Header)
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
     background = NodeField('background/text', Text)
     endpoint_action = NodeField('endpoint_action', EndpointAction)
+    alt_text = NodeField('alt_text', AltText)
 
 
 class Lookup(OrderedXmlObject):
@@ -890,7 +917,7 @@ class TileGroup(XmlObject):
 
 class Detail(OrderedXmlObject, IdNode):
     """
-    <detail id="">
+    <detail id="" lazy_loading="false">
         <title><text/></title>
         <lookup action="" image="" name="">
             <extra key="" value = "" />
@@ -908,10 +935,13 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
+
+    lazy_loading = BooleanField('@lazy_loading')
+    cache_enabled = BooleanField('@cache_enabled', required=False)
+
     ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
-    print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
@@ -919,6 +949,7 @@ class Detail(OrderedXmlObject, IdNode):
     fields = NodeListField('field', Field)
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
+    select_text = NodeField('select_text/text', Text)
     _variables = NodeField('variables', DetailVariableList)
     relevant = StringField('@relevant')
     tile_group = NodeField('group', TileGroup)

@@ -1,12 +1,16 @@
 /* eslint-env mocha */
-/* globals SampleExportInstances */
+import $ from "jquery";
+import _ from "underscore";
+import sinon from "sinon";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import constants from "export/js/const";
+import viewModels from "export/js/models";
+import SampleExportInstances from "export/spec/data/export_instances";
 
 describe('ExportInstance model', function () {
-    var constants = hqImport('export/js/const');
-    var viewModels = hqImport('export/js/models');
     var basicFormExport, savedFormExport;
-    hqImport('hqwebapp/js/initial_page_data').registerUrl(
-        "build_schema", "/a/---/data/export/build_full_schema/"
+    initialPageData.registerUrl(
+        "build_schema", "/a/---/data/export/build_full_schema/",
     );
     beforeEach(function () {
         basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
@@ -140,7 +144,7 @@ describe('ExportInstance model', function () {
             requests[0].respond(
                 200,
                 { 'Content-Type': 'application/json' },
-                JSON.stringify(response)
+                JSON.stringify(response),
             );
 
             // Should not have queued up a new request yet
@@ -153,7 +157,7 @@ describe('ExportInstance model', function () {
             requests[1].respond(
                 200,
                 { 'Content-Type': 'application/json' },
-                JSON.stringify(successResponse)
+                JSON.stringify(successResponse),
             );
 
             assert.isTrue(successSpy.called);
@@ -169,10 +173,8 @@ describe('ExportInstance model', function () {
 
         beforeEach(function () {
             instance = new viewModels.ExportInstance(basicFormExport);
-            recordSaveAnalyticsSpy = sinon.spy();
+            recordSaveAnalyticsSpy = sinon.stub(instance, 'recordSaveAnalytics'),
             server = sinon.fakeServer.create();
-
-            sinon.stub(instance, 'recordSaveAnalytics', recordSaveAnalyticsSpy);
         });
 
         afterEach(function () {
@@ -188,7 +190,7 @@ describe('ExportInstance model', function () {
                     200,
                     { "Content-Type": "application/json" },
                     '{ "redirect": "http://dummy/"}',
-                ]
+                ],
             );
 
             assert.equal(instance.saveState(), constants.SAVE_STATES.READY);
@@ -208,7 +210,7 @@ describe('ExportInstance model', function () {
                     500,
                     { "Content-Type": "application/json" },
                     '{ "status": "fail" }',
-                ]
+                ],
             );
             instance.save();
 

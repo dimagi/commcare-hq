@@ -13,7 +13,11 @@ import openpyxl
 import polib
 from memoized import memoized
 
+from couchexport.models import Format
+
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_current_app, get_version_build_id
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import location_safe
@@ -26,9 +30,7 @@ from corehq.apps.translations.forms import (
     PullResourceForm,
 )
 from corehq.apps.translations.generators import PoFileGenerator, Translation
-from corehq.apps.translations.integrations.transifex.exceptions import (
-    ResourceMissing,
-)
+from corehq.apps.translations.integrations.transifex.exceptions import TransifexApiException
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -71,7 +73,7 @@ class BaseTranslationsView(BaseDomainView):
 class ConvertTranslations(BaseTranslationsView):
     page_title = _('Convert Translations')
     urlname = 'convert_translations'
-    template_name = 'convert_translations.html'
+    template_name = 'translations/convert_translations.html'
 
     @property
     @memoized
@@ -150,14 +152,14 @@ class ConvertTranslations(BaseTranslationsView):
         uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
         worksheet = openpyxl.load_workbook(uploaded_file).worksheets[0]
         content = self._generate_po_content(worksheet)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
+        response = HttpResponse(content, content_type="text/plain; charset=utf-8")
         response['Content-Disposition'] = safe_filename_header(worksheet.title, 'po')
         return response
 
     def _excel_file_response(self):
         wb = self._generate_excel_file(self.convert_translation_form.cleaned_data.get('upload_file'))
         content = get_file_content_from_workbook(wb)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
+        response = HttpResponse(content, content_type=Format.from_format('xlsx').mimetype)
         response['Content-Disposition'] = safe_filename_header(self._uploaded_file_name.split('.po')[0], 'xlsx')
         return response
 
@@ -181,7 +183,7 @@ class ConvertTranslations(BaseTranslationsView):
                 else:
                     assert False, "unexpected filename: {}".format(filename)
         mem_file.seek(0)
-        response = HttpResponse(mem_file, content_type="text/html")
+        response = HttpResponse(mem_file, content_type='application/zip')
         zip_filename = 'Converted-' + uploaded_zipfile.filename.split('.zip')[0]
         response['Content-Disposition'] = safe_filename_header(zip_filename, "zip")
         return response
@@ -211,7 +213,7 @@ class ConvertTranslations(BaseTranslationsView):
 class PullResource(BaseTranslationsView):
     page_title = _('Pull Resource')
     urlname = 'pull_resource'
-    template_name = 'pull_resource.html'
+    template_name = 'translations/pull_resource.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(PullResource, self).dispatch(request, *args, **kwargs)
@@ -290,10 +292,10 @@ class PullResource(BaseTranslationsView):
         file_response = self._generate_response_file(request.domain, project_slug, resource_slug)
         if isinstance(file_response, openpyxl.Workbook):
             content = get_file_content_from_workbook(file_response)
-            response = HttpResponse(content, content_type="text/html; charset=utf-8")
+            response = HttpResponse(content, content_type=Format.from_format('xlsx').mimetype)
             response['Content-Disposition'] = safe_filename_header(resource_slug, "xlsx")
         else:
-            response = HttpResponse(file_response, content_type="text/html; charset=utf-8")
+            response = HttpResponse(file_response, content_type='application/zip')
             response['Content-Disposition'] = safe_filename_header(project_slug, "zip")
         return response
 
@@ -302,8 +304,8 @@ class PullResource(BaseTranslationsView):
             if self.pull_resource_form.is_valid():
                 try:
                     return self._pull_resource(request)
-                except ResourceMissing:
-                    messages.add_message(request, messages.ERROR, 'Resource not found')
+                except TransifexApiException as e:
+                    messages.add_message(request, messages.ERROR, 'Resource not found. {}'.format(e))
         return self.get(request, *args, **kwargs)
 
 
@@ -311,7 +313,7 @@ class PullResource(BaseTranslationsView):
 class BlacklistTranslations(BaseTranslationsView):
     page_title = _('Blacklist Translations')
     urlname = 'blacklist_translations'
-    template_name = 'blacklist_translations.html'
+    template_name = 'translations/blacklist_translations.html'
 
     def section_url(self):
         return self.page_url
@@ -341,7 +343,7 @@ class BlacklistTranslations(BaseTranslationsView):
 class AppTranslations(BaseTranslationsView):
     page_title = gettext_lazy('App Translations')
     urlname = 'app_translations'
-    template_name = 'app_translations.html'
+    template_name = 'translations/app_translations.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(AppTranslations, self).dispatch(request, *args, **kwargs)
@@ -356,14 +358,6 @@ class AppTranslations(BaseTranslationsView):
     @property
     def page_context(self):
         context = super(AppTranslations, self).page_context
-        if context['transifex_details_available']:
-            context['create_form'] = AppTranslationsForm.form_for('create')(self.domain)
-            context['update_form'] = AppTranslationsForm.form_for('update')(self.domain)
-            context['push_form'] = AppTranslationsForm.form_for('push')(self.domain)
-            context['pull_form'] = AppTranslationsForm.form_for('pull')(self.domain)
-            context['backup_form'] = AppTranslationsForm.form_for('backup')(self.domain)
-            if self.request.user.is_staff:
-                context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
         form_action = self.request.POST.get('action')
         if form_action:
             context[form_action + '_form'] = self.translations_form
@@ -378,7 +372,8 @@ class AppTranslations(BaseTranslationsView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'],
                          use_version_postfix='yes' in form_data['use_version_postfix'],
-                         update_resource=(form_data['action'] == 'update'))
+                         update_resource=('update_existing_resource' in form_data
+                                          and 'yes' in form_data['update_existing_resource']))
 
     def perform_push_request(self, request, form_data):
         if form_data['target_lang']:
@@ -426,7 +421,6 @@ class AppTranslations(BaseTranslationsView):
             return False
         backup_project_from_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to take backup.'))
-        return True
 
     def perform_delete_request(self, request, form_data):
         if not self.ensure_resources_present(request):
@@ -446,7 +440,7 @@ class AppTranslations(BaseTranslationsView):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:
-            if form_data['action'] in ['create', 'update', 'push']:
+            if form_data['action'] in ['create_or_update', 'push']:
                 return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
                 return self.perform_pull_request(request, form_data)
@@ -463,15 +457,80 @@ class AppTranslations(BaseTranslationsView):
                 try:
                     if self.perform_request(request, form_data):
                         return redirect(self.urlname, domain=self.domain)
-                except ResourceMissing as e:
+                except TransifexApiException as e:
                     messages.error(request, e)
         return self.get(request, *args, **kwargs)
+
+
+class CreateUpdateTranslations(AppTranslations):
+    page_title = gettext_lazy('Create or Update Translations')
+    urlname = 'create_update_translations'
+
+    @property
+    def page_context(self):
+        context = super(CreateUpdateTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('create_or_update')(self.domain)
+            context['page_action'] = 'create_update'
+        return context
+
+
+class PushTranslations(AppTranslations):
+    page_title = gettext_lazy('Push Translations')
+    urlname = 'push_translations'
+
+    @property
+    def page_context(self):
+        context = super(PushTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('push')(self.domain)
+            context['page_action'] = 'push'
+        return context
+
+
+class PullTranslations(AppTranslations):
+    page_title = gettext_lazy('Pull Translations')
+    urlname = 'pull_translations'
+
+    @property
+    def page_context(self):
+        context = super(PullTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('pull')(self.domain)
+            context['page_action'] = 'pull'
+        return context
+
+
+class BackupTranslations(AppTranslations):
+    page_title = gettext_lazy('Backup Translations')
+    urlname = 'backup_translations'
+
+    @property
+    def page_context(self):
+        context = super(BackupTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('backup')(self.domain)
+            context['page_action'] = 'backup'
+        return context
+
+
+class DeleteTranslations(AppTranslations):
+    page_title = gettext_lazy('Delete Translations')
+    urlname = 'delete_translations'
+
+    @property
+    def page_context(self):
+        context = super(DeleteTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('delete')(self.domain)
+            context['page_action'] = 'delete'
+        return context
 
 
 class DownloadTranslations(BaseTranslationsView):
     page_title = gettext_lazy('Download Translations')
     urlname = 'download_translations'
-    template_name = 'download_translations.html'
+    template_name = 'translations/download_translations.html'
 
     @property
     def page_context(self):
@@ -488,9 +547,25 @@ class DownloadTranslations(BaseTranslationsView):
             form = DownloadAppTranslationsForm(self.domain, self.request.POST)
             if form.is_valid():
                 form_data = form.cleaned_data
-                email_project_from_hq.delay(request.domain, form_data, request.user.email)
-                messages.success(request, _('Submitted request to download translations. '
-                                            'You should receive an email shortly.'))
+                try:
+                    if not form_data['version']:
+                        app = get_current_app(request.domain, form_data['app_id'])
+                        version = app.version
+                    else:
+                        version = form_data['version']
+                    get_version_build_id(request.domain, form_data['app_id'], version)
+                except BuildNotFoundException:
+                    if not form_data['version']:
+                        messages.error(request, _('Missing current Application Version. This can happen if the '
+                                                  'latest version was deleted without creating a new one. '
+                                                  'Please create a new Application Version before trying again.'))
+                    else:
+                        messages.error(request, _('Missing selected Application Version. Please create a new '
+                                                  'version before trying again.'))
+                else:
+                    email_project_from_hq.delay(request.domain, form_data, request.user.email)
+                    messages.success(request, _('Submitted request to download translations. '
+                                                'You should receive an email shortly.'))
                 return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
@@ -499,7 +574,7 @@ class DownloadTranslations(BaseTranslationsView):
 class MigrateTransifexProject(BaseTranslationsView):
     page_title = gettext_lazy('Migrate Project')
     urlname = 'migrate_transifex_project'
-    template_name = 'migrate_project.html'
+    template_name = 'translations/migrate_project.html'
 
     def section_url(self):
         return reverse(MigrateTransifexProject.urlname, args=self.args, kwargs=self.kwargs)

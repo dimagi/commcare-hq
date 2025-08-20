@@ -5,7 +5,7 @@
 
 {% block title %}{% trans "Thank you for logging in with Single Sign-On!" %}{% endblock %}
 
-{% requirejs_main 'hqwebapp/js/sso_inactivity' %}
+{% js_entry 'hqwebapp/js/sso_inactivity' %}
 
 {% block container_class %}container-fluid{% endblock %}
 

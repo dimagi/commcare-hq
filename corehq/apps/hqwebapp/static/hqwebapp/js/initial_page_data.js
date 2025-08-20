@@ -1,3 +1,4 @@
+
 /*
  *  Manage data needed by JavaScript but supplied by server,
  *  with special handling for urls.
@@ -6,7 +7,7 @@
  *  define data, then in JavaScript use this module's get function to
  *  access it.
  */
-hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($, _) {
+define('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($, _) {
     var dataSelector = ".initial-page-data",
         _initData = {},
         urlSelector = ".commcarehq-urls",
@@ -53,6 +54,17 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
             throw new Error("Duplicate key in initial page data: " + name);
         }
         _initData[name] = value;
+    };
+
+    /*
+     * Remove item from initial page data.
+     * Useful for mocha test cleanup.
+     */
+    var unregister = function (name) {
+        if (_initData[name] === undefined) {
+            throw new Error("Could not unregister initial page data: " + name);
+        }
+        delete _initData[name];
     };
 
     // http://stackoverflow.com/a/21903119/240553
@@ -116,10 +128,11 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         gather: gather,
         get: get,
         register: register,
+        unregister: unregister,
         getUrlParameter: getUrlParameter,
         getUrlParameterFromString: getUrlParameterFromString,
         registerUrl: registerUrl,
         reverse: reverse,
-        clear: clear
+        clear: clear,
     };
 });

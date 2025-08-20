@@ -1,0 +1,35 @@
+--- 
++++ 
+@@ -6,11 +6,11 @@
+ import googleAnalytics from "analytix/js/google";
+ import noopMetrics from "analytix/js/noopMetrics";
+ import casePropertyModal from "case/js/case_property_modal";
+-import dataCorrections from "reports/js/bootstrap3/data_corrections";
+-import singleForm from "reports/js/bootstrap3/single_form";
++import dataCorrections from "reports/js/bootstrap5/data_corrections";
++import singleForm from "reports/js/bootstrap5/single_form";
+ import "case/js/case_hierarchy";
+ import "case/js/repeat_records";
+-import "reports/js/bootstrap3/readable_form";
++import "reports/js/bootstrap5/readable_form";
+ import "bootstrap";  // needed for $.tab
+ import "jquery-memoized-ajax/jquery.memoized.ajax.min";
+ 
+@@ -80,7 +80,7 @@
+                 // form data panel uses sticky tabs when it's its own page
+                 // but that behavior would be disruptive here
+                 $panel.find(".sticky-tabs").removeClass("sticky-tabs");
+-                $panel.find(".nav-tabs a[data-toggle='tab']").first().tab('show');
++                $panel.find(".nav-tabs a[data-toggle='tab']").first().tab('show');  /* todo B5: plugin:tab */
+ 
+                 singleForm.initSingleForm({
+                     instance_id: data.xform_id,
+@@ -263,7 +263,7 @@
+     $propertiesModal.koApplyBindings(modalData);
+     $casePropertyNames.click(function () {
+         modalData.init($(this).data('property-name'));
+-        $propertiesModal.modal();
++        $propertiesModal.modal();  /* todo B5: plugin:modal */
+     });
+ 
+     // Analytics

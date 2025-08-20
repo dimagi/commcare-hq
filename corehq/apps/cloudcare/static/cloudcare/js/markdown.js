@@ -1,12 +1,17 @@
-/* global DOMPurify */
-hqDefine('cloudcare/js/markdown', [
+define('cloudcare/js/markdown', [
     'jquery',
+    'dompurify',
+    'markdown-it/dist/markdown-it',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
+    'hqwebapp/js/toggles',
 ], function (
     $,
+    DOMPurify,
+    markdowner,
     initialPageData,
-    HMACCallout
+    HMACCallout,
+    toggles,
 ) {
 
     function updateTarget(tokens, idx, target) {
@@ -59,7 +64,7 @@ hqDefine('cloudcare/js/markdown', [
                     let url = initialPageData.reverse("dialer_view");
                     anchor.attrs[hIndex][1] = url + "?callout_number=" + callout;
                 },
-                "dialer"
+                "dialer",
             ));
         }
 
@@ -73,7 +78,7 @@ hqDefine('cloudcare/js/markdown', [
                     let url = initialPageData.reverse("gaen_otp_view");
                     anchor.attrs[hIndex][1] = url + params;
                 },
-                "gaen_otp"
+                "gaen_otp",
             ));
             addDelegatedClickDispatch('gaen_otp',
                 function (element) {
@@ -88,7 +93,7 @@ hqDefine('cloudcare/js/markdown', [
                 },
                 function () {
                 },
-                "hmac_callout"
+                "hmac_callout",
             ));
             addDelegatedClickDispatch('hmac_callout',
                 function (element) {
@@ -100,24 +105,14 @@ hqDefine('cloudcare/js/markdown', [
     }
 
     function initMd() {
-        let md = window.markdownit({breaks: true}),
+        let md = markdowner({breaks: true}),
             // https://github.com/markdown-it/markdown-it/blob/6db517357af5bb42398b474efd3755ad33245877/docs/architecture.md#renderer
             defaultLinkOpen = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
                 return self.renderToken(tokens, idx, options);
             },
-            defaultHeadingOpen = md.renderer.rules.heading_open || function (tokens, idx, options, env, self) {
+            defaultTextOpen = md.renderer.rules.text || function (tokens, idx, options, env, self) {
                 return self.renderToken(tokens, idx, options);
             };
-
-        md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
-            let aIndex = tokens[idx].attrIndex('tabindex');
-
-            if (aIndex < 0) {
-                tokens[idx].attrPush(['tabindex', '0']);
-            }
-
-            return defaultHeadingOpen(tokens, idx, options, env, self);
-        };
 
         let renderers = getChainedRenderers();
         md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
@@ -127,6 +122,14 @@ hqDefine('cloudcare/js/markdown', [
 
             // pass token to default renderer.
             return defaultLinkOpen(tokens, idx, options, env, self);
+        };
+
+        md.renderer.rules.text = function (tokens, idx, options, env, self) {
+            if (tokens[idx - 1] && tokens[idx - 1].type === 'link_open') {
+                return '<u>' + tokens[idx].content + '</u>';
+            }
+
+            return defaultTextOpen(tokens, idx, options, env, self);
         };
         return md;
     }
@@ -138,7 +141,21 @@ hqDefine('cloudcare/js/markdown', [
             // lazy init to avoid dependency order issues
             md = initMd();
         }
-        return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
+        var rendered = md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
+        // sub case tile header with a caption
+        if (rendered.includes('<p><strong>') && toggles.toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
+            rendered = appendExtraStyleClass(rendered, '<p>', 'mb-0');
+            rendered = appendExtraStyleClass(rendered, '<h6>', 'mb-0');
+        }
+        return rendered;
+    }
+
+    function appendExtraStyleClass(htmlString, element, styleClass) {
+        if (htmlString.includes(element)) {
+            let styledElement = element.slice(0, -1) + ' class="' + styleClass + '"' + element.slice(-1);
+            return htmlString.replace(element, styledElement);
+        }
+        return htmlString;
     }
 
     /**

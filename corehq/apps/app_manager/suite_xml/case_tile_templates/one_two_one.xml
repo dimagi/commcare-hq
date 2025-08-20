@@ -4,7 +4,9 @@
       <locale id="{title_text_id}"/>
     </text>
   </title>
-
+  <variables>
+    {custom_variables}
+  </variables>
   <field>
     <style horz-align="left" vert-align="center" font-size="medium">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
@@ -37,22 +39,6 @@
         </xpath>
       </text>
     </template>
-  </field>
-
-  <field>
-    <header>
-      <text>
-        <locale id="{map_popup[locale_id]}"/>
-      </text>
-    </header>
-    <template form="{map_popup[format]}" width="0">
-      <text>
-        <xpath function="{map_popup[xpath_function]}">
-          {map_popup[variables]}
-        </xpath>
-      </text>
-    </template>
-    {map_popup[endpoint_action]}
   </field>
 
   <field>

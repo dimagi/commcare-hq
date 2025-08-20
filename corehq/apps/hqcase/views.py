@@ -19,10 +19,9 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import waf_allow, use_bootstrap5
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.toggles import CASE_API_V0_6
 from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 from corehq.apps.locations.permissions import user_can_access_case
@@ -40,6 +39,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
     template_name = "hqcase/explode_cases.html"
     page_title = "Explode Cases"
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(require_superuser_or_contractor)
     def dispatch(self, *args, **kwargs):
         return super(ExplodeCasesView, self).dispatch(*args, **kwargs)
@@ -88,7 +88,6 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @api_auth(allow_creds_in_data=False)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
-@CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 @location_safe
@@ -110,7 +109,6 @@ def case_api(request, domain, case_id=None):
 @api_auth(allow_creds_in_data=False)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
-@CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 def case_api_bulk_fetch(request, domain):

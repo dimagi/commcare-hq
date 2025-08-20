@@ -11,14 +11,12 @@ from xml.sax.saxutils import escape
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import (
-    Detail, XPathVariable, Text, TileGroup, Style, EndpointAction
-)
-from corehq.apps.app_manager.util import (
-    module_offers_search,
-    module_uses_inline_search,
+    Detail, DetailVariable, XPathVariable, TileGroup, Style, EndpointAction
 )
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
+
+CUSTOM = "custom"
 
 
 class CaseTileTemplates(models.TextChoices):
@@ -73,7 +71,7 @@ class CaseTileHelper(object):
         self.detail_column_infos = detail_column_infos
         self.entries_helper = entries_helper
 
-    def build_case_tile_detail(self):
+    def build_case_tile_detail(self, detail, start, end):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
         """
         Return a Detail node from an apps.app_manager.models.Detail that is
@@ -83,12 +81,12 @@ class CaseTileHelper(object):
         string.
         """
 
-        if self.detail.case_tile_template == 'custom':
+        if self.detail.case_tile_template == CUSTOM:
             from corehq.apps.app_manager.detail_screen import get_column_generator
-            title = Text(locale_id=id_strings.detail_title_locale(self.detail_type))
-            detail = Detail(id=self.detail_id, title=title)
 
-            for column_info in self.detail_column_infos:
+            start = start or 0
+            end = end or len(self.detail_column_infos)
+            for column_info in self.detail_column_infos[start:end]:
                 # column_info is an instance of DetailColumnInfo named tuple.
                 style = None
                 if any(field is not None for field in [column_info.column.grid_x, column_info.column.grid_y,
@@ -97,7 +95,9 @@ class CaseTileHelper(object):
                                   grid_height=column_info.column.height, grid_width=column_info.column.width,
                                   horz_align=column_info.column.horizontal_align,
                                   vert_align=column_info.column.vertical_align,
-                                  font_size=column_info.column.font_size)
+                                  font_size=column_info.column.font_size,
+                                  show_border=column_info.column.show_border,
+                                  show_shading=column_info.column.show_shading)
                 fields = get_column_generator(
                     self.app, self.module, self.detail,
                     detail_type=self.detail_type,
@@ -113,6 +113,7 @@ class CaseTileHelper(object):
             for template_field in case_tile_template_config(self.detail.case_tile_template).fields:
                 column = self._get_matched_detail_column(template_field)
                 context[template_field] = self._get_column_context(column)
+            context['custom_variables'] = self._get_custom_variables(self.detail.custom_variables_dict)
 
             # Populate the template
             detail_as_string = self._case_tile_template_string.format(**context)
@@ -128,23 +129,19 @@ class CaseTileHelper(object):
             DetailContributor.add_register_action(
                 self.app, self.module, detail.actions, self.build_profile_id, self.entries_helper)
 
-        # Add case search action if needed
-        if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            if (case_search_action := DetailContributor.get_case_search_action(
-                self.module,
-                self.build_profile_id,
-                self.detail_id
-            )) is not None:
-                detail.actions.append(case_search_action)
+        if self.detail_type.endswith('short'):
+            #  Excludes legacy tile template to preserve behavior of existing apps using this template.
+            if self.detail.case_tile_template not in [CaseTileTemplates.PERSON_SIMPLE.value, CUSTOM]:
+                self._populate_sort_elements_in_detail(detail)
 
-        self._populate_sort_elements_in_detail(detail)
-        DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
+            if self.module.has_grouped_tiles():
+                detail.tile_group = TileGroup(
+                    function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
+                    header_rows=self.detail.case_tile_group.header_rows
+                )
 
-        if self.module.has_grouped_tiles():
-            detail.tile_group = TileGroup(
-                function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
-                header_rows=self.detail.case_tile_group.header_rows
-            )
+            if hasattr(self.module, 'lazy_load_case_list_fields') and self.module.lazy_load_case_list_fields:
+                detail.lazy_loading = self.module.lazy_load_case_list_fields
 
         return detail
 
@@ -185,14 +182,14 @@ class CaseTileHelper(object):
             "prefix": escape(
                 column.header.get(default_lang, "")
             ),
-            "format": column.format
+            "format": column.format,
+            "variables": '',
+            "endpoint_action": '',
         }
 
-        context['variables'] = ''
-        if column.format in ["enum", "conditional-enum", "enum-image", "clickable-icon"]:
+        if column.format in ["enum", "conditional-enum", "enum-image", "clickable-icon", "translatable-enum"]:
             context["variables"] = self._get_enum_variables(column)
 
-        context['endpoint_action'] = ''
         if column.endpoint_action_id:
             context["endpoint_action"] = self._get_endpoint_action(column.endpoint_action_id)
         return context
@@ -204,6 +201,10 @@ class CaseTileHelper(object):
         else:
             xpath_function = self._escape_xpath_function(get_column_generator(
                 self.app, self.module, self.detail, column).xpath_function)
+        if column.format == "translatable-enum":
+            for enum in column.enum:
+                if enum.key in xpath_function and 'k' + enum.key not in xpath_function:
+                    xpath_function = xpath_function.replace(enum.key, 'k' + enum.key)
         return xpath_function
 
     @staticmethod
@@ -239,19 +240,17 @@ class CaseTileHelper(object):
             return f.read()
 
     def _populate_sort_elements_in_detail(self, detail):
-        #  Excludes legacy tile template to preserve behavior of existing apps using this template.
-        if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
-            xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
-            for field in detail.fields:
-                populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
-                if populated_xpath_function in xpath_to_field:
-                    # Adds sort element to the field
-                    field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
+        xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
+        for field in detail.fields:
+            populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
+            if populated_xpath_function in xpath_to_field:
+                # Adds sort element to the field
+                field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
 
-            # detail.fields contains only display properties, not sort-only properties.
-            # This adds to detail, hidden fields that contain sort elements.
-            for field in xpath_to_field.values():
-                detail.fields.append(field)
+        # detail.fields contains only display properties, not sort-only properties.
+        # This adds to detail, hidden fields that contain sort elements.
+        for field in xpath_to_field.values():
+            detail.fields.append(field)
 
     def _get_xpath_mapped_to_field_containing_sort(self):
         xpath_to_field = {}
@@ -280,3 +279,15 @@ class CaseTileHelper(object):
         elif initial_field.sort_node.order is None:
             return incoming_field
         return min(initial_field, incoming_field, key=lambda field: field.sort_node.order)
+
+    @staticmethod
+    def _get_custom_variables(custom_var_dict):
+        variables = []
+        for var_name, var_function in custom_var_dict.items():
+            variables.append(
+                DetailVariable(
+                    name=var_name,
+                    function=var_function
+                ).serialize()
+            )
+        return ''.join([bytes(variable).decode('utf-8') for variable in variables])

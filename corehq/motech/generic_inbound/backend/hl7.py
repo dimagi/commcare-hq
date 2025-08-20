@@ -29,8 +29,8 @@ class Hl7Backend(BaseApiBackend):
             content_type=HL7_CONTENT_TYPE
         )
 
-    def __init__(self, api_model, request_data):
-        super().__init__(api_model, request_data)
+    def __init__(self, configurable_api, request_data):
+        super().__init__(configurable_api, request_data)
         self.hl7_message = None
 
     def _get_body_for_eval_context(self):

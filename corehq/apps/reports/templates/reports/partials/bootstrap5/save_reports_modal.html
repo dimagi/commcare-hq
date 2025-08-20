@@ -1,0 +1,175 @@
+{% load i18n %}
+<div
+  id="report-config-modal"
+  class="modal fade"
+  tabindex="-1" role="dialog"
+  data-bind="modal: configBeingEdited"
+>
+  <div class="modal-dialog">
+    <div
+      class="modal-content"
+      data-bind="with: configBeingEdited"
+    >
+      <div class="modal-header">
+        <h4
+          class="modal-title"
+          data-bind="text: modalTitle"
+        ></h4>
+        <button
+          class="btn-close"
+          aria-label="{% trans "Close" %}" type="button"
+          data-bind="click: $root.unsetConfigBeingEdited"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form class="form">
+        <div class="modal-body">
+          <div
+            class="alert alert-danger"
+            data-bind="visible: error, text: errorMessage"
+          ></div>
+          <div class="mb-3">
+            <label class="form-label" for="save_report_modal_name">{% trans "Name" %}</label>
+            <input
+              class="form-control" id="save_report_modal_name" type="text"
+              data-bind="value: name"
+            />
+            <span class="help-inline">
+              <small class="badge text-bg-secondary">{% trans "Required" %}</small>
+            </span>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="save_report_modal_description">{% trans "Description" %}</label>
+            <textarea
+              id="save_report_modal_description"
+              class="form-control vertical-resize"
+              name="description"
+              rows="3"
+              data-bind="value: description"
+            ></textarea>
+          </div>
+
+          <div
+            data-bind="visible: has_ucr_datespan"
+          >
+            <div class="mb-3">
+              <label class="form-label" for="save_report_modal_ucr_datespan">{% trans "Date Filter" %}</label>
+              <select
+                class="form-select"
+                id="save_report_modal_ucr_datespan"
+                name="ucr_datespan"
+                data-bind="
+                  options: datespan_filters,
+                  optionsText: 'display',
+                  optionsValue: 'slug',
+                  value: datespan_slug
+                "
+              ></select>
+            </div>
+          </div>
+
+          <div
+            data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())"
+          >
+            <div class="mb-3">
+              <label class="form-label" for="save_report_modal_date_range">{% trans "Default Date Range" %}</label>
+              <select
+                id="save_report_modal_date_range"
+                class="form-select"
+                name="date_range"
+                data-bind="value: date_range"
+              >
+                <option value="last7">{% trans "Last 7 days" %}</option>
+                <option value="last30">{% trans "Last 30 days" %}</option>
+                <option value="lastmonth">{% trans "Last month" %}</option>
+                {% if not hide_lastyear %}
+                  <option value="lastyear">{% trans "Last year" %}</option>
+                {% endif %}
+                <option value="lastn">{% trans "Days ago" %}</option>
+                <option value="since">{% trans "Since a date" %}</option>
+                <option value="range">{% trans "From a date to a date" %}</option>
+              </select>
+            </div>
+            <div
+              class="mb-3"
+              data-bind="visible: date_range() === 'lastn'"
+            >
+              <label class="form-label" for="save_report_modal_days">{% trans "Number of Days" %}</label>
+              <input
+                id="save_report_modal_days"
+                class="form-control"
+                name="days"
+                type="number"
+                min="1"
+                step="1"
+                data-bind="value: days"
+              />
+              <span class="help-inline">
+                <small class="badge text-bg-secondary">{% trans "Required" %}</small>
+              </span>
+            </div>
+            <div
+              class="mb-3"
+              data-bind="visible: date_range() == 'since' || date_range() == 'range'"
+            >
+              <label class="form-label" for="save_report_modal_start_date">{% trans "Begin Date" %}</label>
+              <input
+                id="save_report_modal_start_date"
+                class="date-picker form-control"
+                name="start_date"
+                type="text"
+                placeholder="{% trans "YYYY-MM-DD" %}"
+                data-bind="value: start_date"
+              />
+              <span class="help-inline">
+                <small class="badge text-bg-secondary">{% trans "YYYY-MM-DD" %}</small>
+                <small class="badge text-bg-secondary">{% trans "Required" %}</small>
+              </span>
+            </div>
+            <div
+              class="mb-3"
+              data-bind="visible: date_range() == 'range'"
+            >
+              <label class="form-label" for="save_report_modal_end_date">{% trans "End Date" %}</label>
+              <input
+                id="save_report_modal_end_date"
+                class="date-picker form-control"
+                name="end_date"
+                type="text"
+                placeholder="{% trans "YYYY-MM-DD" %}"
+                data-bind="value: end_date"
+              />
+              <span class="help-inline">
+                <small class="badge text-bg-secondary">{% trans "YYYY-MM-DD" %}</small>
+                <small class="badge text-bg-secondary">{% trans "Required" %}</small>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            data-bind="click: $root.unsetConfigBeingEdited"
+          >
+            {% trans 'Cancel' %}
+          </button>
+          <div
+            class="btn-group"
+            data-bind="
+              click: $root.trackConfigBeingEdited({% if report.spec.report_meta.created_by_builder %}'{{ report.spec.report_meta.builder_report_type }}'{% endif %})
+            "
+          >
+            <span
+              id="modal-save-button"
+              data-bind="
+                saveButton2: $root.modalSaveButton.state,
+                saveOptions: $root.modalSaveButton.saveOptions
+              "
+            ></span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

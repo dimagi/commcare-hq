@@ -1,0 +1,29 @@
+{% load i18n %}
+
+{% if success_count %}
+  <div class="alert alert-success alert-dismissable fade show" role="alert">
+    {% blocktrans %}
+      Successfully verified {{ success_count }} records for payments! Updated
+      status will reflect shortly.
+    {% endblocktrans %}
+    <button
+      type="button"
+      class="btn-close float-end"
+      data-bs-dismiss="alert"
+      aria-label="{% trans Close %}"
+    ></button>
+  </div>
+{% endif %}
+{% if failure_count %}
+  <div class="alert alert-danger alert-dismissable fade show" role="alert">
+    {% blocktrans %}
+      Failed to verify {{ failure_count }} records for payments!
+    {% endblocktrans %}
+    <button
+      type="button"
+      class="btn-close float-end"
+      data-bs-dismiss="alert"
+      aria-label="{% trans Close %}"
+    ></button>
+  </div>
+{% endif %}

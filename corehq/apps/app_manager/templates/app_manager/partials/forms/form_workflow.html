@@ -101,45 +101,50 @@
               {% trans "Disable manual linking" %}
             </span>
           </div>
-          <div class="help-block" data-bind="visible: formLink.showLinkDatums()">
-            <button class="btn btn-default btn-xs" data-bind="click: formLink.fetchDatums">
-              <!-- ko if: formLink.datumsFetched() -->
+          <!-- ko ifnot: formLink.advancedMode -->
+            <div class="help-block" data-bind="visible: formLink.showLinkDatums()">
+              <button class="btn btn-default btn-xs" data-bind="click: formLink.fetchDatums">
+                <!-- ko if: formLink.datumsFetched() -->
                 {% trans "Refresh" %}
-              <!-- /ko -->
-              <!-- ko if: !formLink.datumsFetched() -->
+                <!-- /ko -->
+                <!-- ko if: !formLink.datumsFetched() -->
                 {% trans "Continue" %}
-              <!-- /ko -->
-            </button>
-          </div>
-          <div class="help-block" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
-            {% trans "No additional linking required." %}
-          </div>
-          <div class="text-danger" data-bind="visible: formLink.datumsError()">
-            {% trans "Error fetching link data." %}
-          </div>
-        </div>
-      </div>
-      <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
-        <div class="form-group">
-          <div class="panel panel-appmanager">
-            <div class="panel-heading">
-              <h4 class="panel-title panel-title-nolink">
-                <span data-bind="text: name"></span>
-                <span class="label label-primary" data-bind="text: caseType"></span>
-              </h4>
+                <!-- /ko -->
+              </button>
             </div>
-            <div class="panel-body">
-              <div class="controls">
-                <textarea name="_xpath"
-                          placeholder="XPath Expression"
-                          rows="1"
-                          data-bind="text: xpath, value: xpath"
-                          class="form-control vertical-resize"
-                          spellcheck="false">
-                </textarea>
+            <div class="help-block" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
+              {% trans "No additional linking required." %}
+            </div>
+            <div class="text-danger" data-bind="visible: formLink.datumsError()">
+              {% trans "Error fetching link data." %}
+            </div>
+            <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
+              <div class="form-group">
+                <div class="panel panel-appmanager">
+                  <div class="panel-heading">
+                    <h4 class="panel-title panel-title-nolink">
+                      <span data-bind="text: name"></span>
+                      <span class="label label-primary" data-bind="text: caseType"></span>
+                    </h4>
+                  </div>
+                  <div class="panel-body">
+                    <div class="controls">
+                      <textarea name="_xpath"
+                        placeholder="XPath Expression"
+                        rows="1"
+                        data-bind="text: xpath, value: xpath"
+                        class="form-control vertical-resize"
+                        spellcheck="false">
+                      </textarea>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          <!-- /ko -->
+          <!-- ko if: formLink.advancedMode && formLink.showLinkDatums() -->
+            <div data-bind="jqueryElement: formLink.advancedModeDatumsElement.ui"></div>
+          <!-- /ko -->
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@
 
 {% block title %}{% trans "Case Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
 
-{% requirejs_main 'app_manager/js/summary/case_summary' %}
+{% js_entry_b3 'app_manager/js/summary/case_summary' %}
 
 {% block content_extra %}
   <div class="ko-template" id="case-summary-header">
@@ -130,7 +130,7 @@
                 <td>
                   <span data-bind="html: $root.moduleFormReference(form_id)"></span>
                   <!-- ko foreach: errors -->
-                  <i class="fa fa-exclamation-triangle text-danger"
+                  <i class="fa-solid fa-triangle-exclamation text-danger"
                      data-bind="popover: { content: $data, placement: 'bottom', trigger: 'hover' }"></i>
                   <!-- /ko -->
                 </td>

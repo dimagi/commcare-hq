@@ -1,0 +1,174 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% js_entry 'data_interfaces/js/bootstrap5/case_dedupe_main' %}
+
+{% block page_content %}
+  {% initial_page_data 'all_case_properties' all_case_properties %}
+  {% initial_page_data 'case_types' case_types %}
+  {% initial_page_data 'name' name %}
+  {% initial_page_data 'case_type' case_type %}
+  {% initial_page_data 'match_type' match_type %}
+  {% initial_page_data 'case_properties' case_properties %}
+  {% initial_page_data 'include_closed' include_closed %}
+  {% initial_page_data 'properties_to_update' properties_to_update %}
+  <div id="case-dedupe-rule-definition">
+    {% if readonly %}
+      <p class="help-block alert alert-info"><i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          This deduplication rule is currently backfilling. You will be able to edit it once it has completed. <strong>{{ progress }}%</strong> ({{ complete }} / {{ total }}) cases processed.  {# todo B5: css-progress #}
+          Reload the page to see the updated progress.
+        {% endblocktrans %}
+      </p>
+    {% endif %}
+    <form id="rule-definition-form" class="form form-horizontal main-form" method="POST" action="#">
+      {% csrf_token %}
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
+        <legend>{% trans "Basic Information" %}</legend>
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2 requiredField">
+            {% trans "Name" %}
+            <span class="asteriskField">*</span>
+          </label>
+          <div class="controls col-sm-12 col-md-8 col-lg-8 col-xl-6">
+            <input type="text" name="name" class="textinput textInput form-control" required="true" data-bind="value:name" />
+          </div>
+        </div>
+      </fieldset>
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
+        <legend>{% trans "Rule Criteria" %}</legend>
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
+            {% trans "Case Type" %}
+            <span class="asteriskField">*</span>
+          </label>
+          <div class="controls col-sm-12 col-md-8 col-lg-8 col-xl-6">
+            <select name="case_type" class="hqwebapp-select2 form-select" data-bind="value: caseType, options: caseTypeOptions" required="true" {% if readonly %} disabled="disabled" {% endif %}>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
+            {% trans "Match Type" %}
+            <span class="asteriskField">*</span>
+          </label>
+          <div class="controls col-sm-12 col-md-8 col-lg-8 col-xl-6">
+            <select name="match_type" class="form-select" required="true" data-bind="
+              value: matchType,
+              options: matchTypeOptions,
+              optionsText: matchTypeOptionsText
+              " >
+            </select>
+          </div>
+        </div>
+        <div data-bind="template: {name: 'dedupe-case-property', foreach: caseProperties, as: 'caseProperty'} "></div>
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
+            {% trans "Add Case Property" %}
+          </label>
+          <button class="btn btn-outline-primary" type="button" data-bind="click: addCaseProperty">
+            <i class="fa fa-plus"></i>
+            {% trans "Add Case Property" %}
+          </button>
+          <input type="text" required hidden name="case_properties" data-bind="value: serializedCaseProperties" />
+        </div>
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
+            {% trans "Include Closed Cases" %}
+          </label>
+          <input type="checkbox" data-bind="checked: includeClosed" name="include_closed" />  {# todo B5: css-checkbox #}
+        </div>
+      </fieldset>
+      <div id="caseFilters" {% if readonly %} disabled="disabled" {% endif %}>
+        <div id="caseFiltersForm">
+          {% include "data_interfaces/partials/bootstrap5/case_rule_criteria.html" with form=criteria_form %}
+          {% crispy criteria_form %}  {# todo B5: crispy #}
+        </div>
+      </div>
+      {% if update_actions_enabled %}
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
+        <legend>{% trans "Actions" %}</legend>
+        <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
+            {% trans "Add Action" %}
+          </label>
+          <button class="btn btn-outline-primary" type="button" data-bind="click: addPropertyToUpdate">
+            <i class="fa fa-plus"></i>
+            {% trans "Add Update Case Property" %}
+          </button>
+          <input type="text" hidden name="properties_to_update" data-bind="value: serializedPropertiesToUpdate" />
+        </div>
+      </fieldset>
+      {%  endif %}
+      {% if not readonly %}
+        <div class="form-actions">
+          <div class="col-sm-1">
+            <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+          </div>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+
+  <script type="text/html" id="dedupe-case-property">
+    <div class="form-group card">  {# todo B5: css-form-group, css-well #}
+      <div class="col-sm-1">
+        <div class="row">
+          <div class="col-sm-6 text-center">
+            <button type="button" class="btn btn-outline-danger" data-bind="click: $parent.removeCaseProperty, visible:$parent.caseProperties().length > 1">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="col-sm-6 text-center">
+            <label class="form-label" data-bind="text: $parent.matchTypeText "></label>
+          </div>
+        </div>
+      </div>
+      <label class="form-label col-sm-2">{% trans "Case property" %}</label>
+      <div class="controls col-sm-2">
+        <case-property-input params="
+         valueObservable: caseProperty.name,
+         caseTypeObservable: $root.caseType,
+         allCaseProperties: $root.availablePropertyMap,
+        "></case-property-input>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/html" id="update-case-property-action">
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <button type="button" class="btn btn-outline-danger" data-bind="click: $parent.removePropertyToUpdate">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <label class="form-label col-sm-2">{% trans "Set case property" %}</label>
+      <div class="controls col-sm-2">
+        <case-property-input params="
+         valueObservable: name,
+         caseTypeObservable: $root.caseType,
+         allCaseProperties: $root.availableActionPropertyMap,
+        "></case-property-input>
+      </div>
+      <div class="controls col-sm-2">
+        <select class="select form-select" data-bind="value: valueType" required>
+          <option value="EXACT">{% trans 'to the exact value' %}</option>
+          <option value="CASE_PROPERTY">{% trans 'to the value from other case property' %}</option>
+        </select>
+      </div>
+      <div class="controls col-sm-2">
+        <!-- ko if: valueType() === 'EXACT' -->
+          <input type="text" class="textinput form-control" data-bind="value: value" required />
+        <!-- /ko -->
+        <!-- ko if: valueType() === 'CASE_PROPERTY' -->
+          <case-property-input params="
+           valueObservable: value,
+           caseTypeObservable: $root.caseType,
+          "></case-property-input>
+        <!-- /ko -->
+      </div>
+    </div>
+  </script>
+
+{% endblock %}

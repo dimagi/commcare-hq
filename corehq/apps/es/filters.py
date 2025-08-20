@@ -22,6 +22,10 @@ def match_all():
     return {"match_all": {}}
 
 
+def match_none():
+    return {"match_none": {}}
+
+
 def prefix(field, value):
     return {"prefix": {field: value}}
 
@@ -93,7 +97,7 @@ def doc_type(doc_type):
 
 def doc_id(doc_id):
     """Filter by doc_id.  Also accepts a list of doc ids"""
-    return term("_id", doc_id)
+    return {"ids": {"values": doc_id}}
 
 
 def missing(field):
@@ -137,50 +141,98 @@ def regexp(field, regex):
 def geo_bounding_box(field, top_left, bottom_right):
     """
     Only return geopoints stored in ``field`` that are located within
-    the bounding box defined by GeoPoints ``top_left`` and
-    ``bottom_right``.
+    the bounding box defined by ``top_left`` and ``bottom_right``.
 
-    :param field: The field where geopoints are stored
-    :param top_left: The GeoPoint of the top left of the bounding box,
-        a string in the format "latitude longitude" or "latitude
-        longitude altitude accuracy"
-    :param bottom_right: The GeoPoint of the bottom right of the
-        bounding box
-    :return: A filter dict
+    ``top_left`` and ``bottom_right`` accept a range of data types and
+    formats.
+
+    More info: `Geo Bounding Box Query <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/query-dsl-geo-bounding-box-query.html>`_
     """  # noqa: E501
-    from couchforms.geopoint import GeoPoint
+    return {
+        'geo_bounding_box': {
+            field: {
+                'top_left': top_left,
+                'bottom_right': bottom_right,
+            }
+        }
+    }
 
-    top_left_geo = GeoPoint.from_string(top_left, flexible=True)
-    bottom_right_geo = GeoPoint.from_string(bottom_right, flexible=True)
-    points_list = [
-        {"lat": float(top_left_geo.latitude), "lon": float(top_left_geo.longitude)},
-        {"lat": float(bottom_right_geo.latitude), "lon": float(bottom_right_geo.longitude)},
-    ]
-    return geo_shape(field, points_list)
 
-
-def geo_shape(field, points_list):
+def geo_polygon(field, points):
     """
-    Filters cases by case properties indexed using the the geo_point
+    Filters ``geo_point`` values in ``field`` that fall within the
+    polygon described by the list of ``points``.
+
+    More info: `Geo Polygon Query <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/query-dsl-geo-polygon-query.html>`_
+
+    :param field: A field with Elasticsearch data type ``geo_point``.
+    :param points: A list of points that describe a polygon.
+        Elasticsearch supports a range of formats for list items.
+    :return: A filter dict.
+    """  # noqa: E501
+    # NOTE: Deprecated in Elasticsearch 7.12
+    return {
+        'geo_polygon': {
+            field: {
+                'points': points,
+            }
+        }
+    }
+
+
+def geo_shape(field, shape, relation='intersects'):
+    """
+    Filters cases by case properties indexed using the ``geo_point``
     type.
 
-    More info: `The Geoshape query reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html>`_
+    More info: `The Geoshape query reference <https://www.elastic.co/guide/en/elasticsearch/reference/8.10/query-dsl-geo-shape-query.html>`_
 
     :param field: The field where geopoints are stored
-    :param points_list: A list of points for the polygon in the format [{lat: x, lon: y},...]
+    :param shape: A shape definition given in GeoJSON geometry format.
+        More info: `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
+    :param relation: The relation between the shape and the case
+        property values.
     :return: A filter definition
     """  # noqa: E501
-    from corehq.apps.es.case_search import (
-        PROPERTY_GEOPOINT_VALUE,
-        PROPERTY_KEY,
-    )
-    return AND(
-        term(PROPERTY_KEY, field),
-        {
-            "geo_polygon": {
-                PROPERTY_GEOPOINT_VALUE: {
-                    "points": points_list,
-                },
-            },
-        },
-    )
+    # NOTE: Available in Elasticsearch 8+.
+    #
+    # The geoshape query is available in Elasticsearch 5.6, but only
+    # supports the `geo_shape` type (not the `geo_point` type), which
+    # CommCare HQ does not use.
+
+    # TODO: After Elasticsearch is upgraded, switch from geo_polygon to
+    #       geo_shape. (Norman, 2023-11-01)
+    # e.g.
+    #
+    #     geo_polygon(field, points)
+    #
+    # becomes
+    #
+    #     shape = {
+    #         'type': 'polygon',
+    #         'coordinates': points,
+    #     }
+    #     geo_shape(field, shape, relation='within')
+    #
+    return {
+        "geo_shape": {
+            field: {
+                "shape": shape,
+                "relation": relation
+            }
+        }
+    }
+
+
+def geo_grid(field, geohash):
+    """
+    Filters cases by the geohash grid cell in which they are located.
+    """
+    # Available in Elasticsearch 8+
+    return {
+        "geo_grid": {
+            field: {
+                "geohash": geohash
+            }
+        }
+    }

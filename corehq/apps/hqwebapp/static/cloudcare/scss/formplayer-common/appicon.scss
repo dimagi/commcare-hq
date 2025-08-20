@@ -1,0 +1,208 @@
+@mixin make-appicon-size($container-height, $icon-height, $title-height, $title-size) {
+  .appicon {
+    min-height: $container-height;
+
+    .appicon-title {
+      height: $title-height;
+      bottom: $container-height * 0.07;
+      h3 {
+        font-size: $title-size;
+        padding: 0 calc($title-size / 2);
+      }
+    }
+    .appicon-icon {
+      top: $container-height * 0.09 + 5;
+      margin-left: calc(-1 * $icon-height / 2);
+      width: $icon-height;
+      height: $icon-height;
+      line-height: $icon-height;
+      font-size: $icon-height;
+    }
+    .appicon-custom {
+      // the default icons have internal padding in the image itself.
+      // this prevents users from needing to replicate that
+      top: $container-height * 0.09 + 10;
+      height: $icon-height - 10;
+      width: $icon-height - 10;
+    }
+  }
+}
+
+@mixin make-gridicon-size($icon-height) {
+  .gridicon {
+    width: $icon-height;
+    height: $icon-height;
+    margin: 10% auto;
+
+    .gridicon-icon {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      max-width: 100%;
+      max-height: 100%;
+      line-height: $icon-height;
+      font-size: calc($icon-height / 2);
+    }
+  }
+  .gridicon-circle {
+    border-radius: 2 * $icon-height;
+  }
+}
+
+.appicon, .gridicon {
+  background-color: $cc-neutral-mid;
+  text-align: center;
+  color: white;
+  position: relative;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+
+  border-radius: 5px;
+  transition: background 1s;
+  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.45);
+
+  .appicon-title {
+    width: 100%;
+    position: absolute;
+    text-overflow: ellipsis;
+    h3 {
+      text-overflow: ellipsis;
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-weight: 300;
+    }
+  }
+
+  .appicon-custom {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .appicon-icon, .gridicon-icon {
+    position: absolute;
+    box-sizing: border-box;
+    top: 0;
+    left: 50%;
+    transition: color 1s;
+  }
+
+  &:hover {
+    box-shadow: 0 0 2x 3px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.gridicon {
+  background-size: contain;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  // For icons with their own image, don't make assumptions about the shadowing
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.gridicon.gridicon-circle {
+  background-color: $cc-neutral-mid;
+  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.45);
+}
+
+@include make-appicon-size(170px, 85px, 35px, 16px);
+@include make-gridicon-size(70px);
+
+@include media-breakpoint-up(sm) {
+  @include make-appicon-size(200px, 105px, 35px, 16px);
+  @include make-gridicon-size(60px);
+}
+
+@include media-breakpoint-up(md) {
+  @include make-appicon-size(210px, 110px, 40px, 18px);
+  @include make-gridicon-size(70px);
+}
+
+@include media-breakpoint-up(lg) {
+  @include make-appicon-size(230px, 120px, 50px, 20px);
+  @include make-gridicon-size(130px);
+}
+
+.appicon-start {
+  background-color: $home-screen-start-button;
+  .appicon-icon { color: $white; }
+  &:hover {
+    background-color: darken($home-screen-start-button, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($home-screen-start-button, 20);
+    .appicon-icon { color: $white; }
+  }
+}
+
+.appicon-incomplete {
+  background-color: $dimagi-sunset;
+  .appicon-icon { color: $white; }
+  &:hover {
+    background-color: darken($dimagi-sunset, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($dimagi-sunset, 20);
+    .appicon-icon { color: $white; }
+  }
+}
+
+.appicon-sync {
+  background-color: $primary;
+  .appicon-icon {
+    color: $white;
+  }
+  &:hover {
+    background-color: darken($primary, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($cc-brand-mid, 20);
+    .appicon-icon { color: $white; }
+  }
+}
+
+.appicon-restore-as {
+  background-color: $purple-400;
+  .appicon-icon {
+    color: $white;
+  }
+  &:hover {
+    background-color: darken($purple-400, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($purple-400, 20);
+    .appicon-icon { color: $white; }
+  }
+}
+
+.appicon-settings {
+  background-color: $cc-neutral-low;
+  .appicon-icon {
+    color: $white;
+  }
+  &:hover {
+    background-color: darken($cc-neutral-low, 5);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($cc-neutral-low, 10);
+    .appicon-icon { color: $white; }
+  }
+}
+
+.appicon-default {
+  background-color: white;
+  color: lighten($cc-text, 30);
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+  .appicon-icon { color: $primary; }
+  &:hover {
+    background-color: darken(white, 5);
+  }
+}

@@ -105,7 +105,7 @@ class DetailContributor(SectionContributor):
                 if detail.custom_xml:
                     elements.append(self._get_custom_xml_detail(module, detail, detail_type))
                 else:
-                    if detail.sort_nodeset_columns_for_detail():
+                    if detail.sort_nodeset_columns_for_long_detail():
                         # list of DetailColumnInfo named tuples
                         detail_column_infos = get_detail_column_infos_for_tabs_with_sorting(detail)
                     else:
@@ -116,31 +116,22 @@ class DetailContributor(SectionContributor):
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
                         detail_id = id_strings.detail(module, detail_type)
-                        if detail.case_tile_template:
-                            helper = CaseTileHelper(self.app, module, detail, detail_id, detail_type,
-                                self.build_profile_id, detail_column_infos, self.entries_helper)
-
-                            d = helper.build_case_tile_detail()
-                            self._add_custom_variables(detail, d)
+                        locale_id = id_strings.detail_title_locale(detail_type)
+                        title = Text(locale_id=locale_id) if locale_id else Text()
+                        d = self.build_detail(
+                            module,
+                            detail_type,
+                            detail,
+                            detail_column_infos,
+                            title,
+                            tabs=list(detail.get_tabs()),
+                            id=detail_id,
+                        )
+                        if d:
                             elements.append(d)
-                        else:
-                            print_template_path = None
-                            if detail.print_template:
-                                print_template_path = detail.print_template['path']
-                            locale_id = id_strings.detail_title_locale(detail_type)
-                            title = Text(locale_id=locale_id) if locale_id else Text()
-                            d = self.build_detail(
-                                module,
-                                detail_type,
-                                detail,
-                                detail_column_infos,
-                                tabs=list(detail.get_tabs()),
-                                id=detail_id,
-                                title=title,
-                                print_template=print_template_path,
-                            )
-                            if d:
-                                elements.append(d)
+                            if (self.app.supports_case_list_optimizations
+                                    and module.show_case_list_optimization_options):
+                                _add_detail_optimizations(module_detail=detail, detail_xml_object=d)
 
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
@@ -159,14 +150,18 @@ class DetailContributor(SectionContributor):
 
         return elements
 
-    def build_detail(self, module, detail_type, detail, detail_column_infos, tabs=None, id=None,
-                     title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
+    def build_detail(self, module, detail_type, detail, detail_column_infos, title, tabs=None, id=None,
+                     nodeset=None, start=0, end=None, relevant=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template, relevant=relevant)
+        d = Detail(id=id, title=title, nodeset=nodeset, relevant=relevant)
+        if (detail_type == 'case_short' or detail_type == 'search_short') \
+                and hasattr(module, 'lazy_load_case_list_fields') and module.lazy_load_case_list_fields:
+            d.lazy_loading = module.lazy_load_case_list_fields
+
         self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
@@ -181,7 +176,7 @@ class DetailContributor(SectionContributor):
                     detail_type,
                     detail,
                     detail_column_infos,
-                    title=Text(locale_id=id_strings.detail_tab_title_locale(
+                    Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
                     nodeset=self._get_detail_tab_nodeset(module, detail, tab),
@@ -194,7 +189,13 @@ class DetailContributor(SectionContributor):
             if len(d.details):
                 helper = EntriesHelper(self.app)
                 datums = helper.get_datum_meta_module(module)
-                d.variables.extend([DetailVariable(name=datum.id, function=datum.datum.value) for datum in datums])
+                d.variables.extend([
+                    DetailVariable(name=datum.id, function=datum.datum.value)
+                    for datum in datums
+                    # FixtureSelect isn't supported under variables
+                    # More context here: https://github.com/dimagi/commcare-hq/pull/33769#discussion_r1410315708
+                    if datum.action != 'fixture_select'
+                ])
                 return d
             else:
                 return None
@@ -205,34 +206,47 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
-
             # Add variables
             variables = list(
                 schedule_detail_variables(module, detail, detail_column_infos)
             )
             if variables:
                 d.variables.extend(variables)
-
-            # Add fields
             if end is None:
                 end = len(detail_column_infos)
-            for column_info in detail_column_infos[start:end]:
-                # column_info is an instance of DetailColumnInfo named tuple.
-                fields = get_column_generator(
-                    self.app, module, detail, parent_tab_nodeset=nodeset,
-                    detail_type=detail_type, entries_helper=self.entries_helper,
-                    *column_info
-                ).fields
-                for field in fields:
-                    d.fields.append(field)
+
+            # Add fields
+            if detail.case_tile_template:
+                helper = CaseTileHelper(
+                    self.app,
+                    module,
+                    detail,
+                    id,
+                    detail_type,
+                    self.build_profile_id,
+                    detail_column_infos,
+                    self.entries_helper,
+                )
+                d = helper.build_case_tile_detail(d, start, end)
+            else:
+                for column_info in detail_column_infos[start:end]:
+                    # column_info is an instance of DetailColumnInfo named tuple.
+                    fields = get_column_generator(
+                        self.app, module, detail, parent_tab_nodeset=nodeset,
+                        detail_type=detail_type, entries_helper=self.entries_helper,
+                        *column_info
+                    ).fields
+                    for field in fields:
+                        d.fields.append(field)
+
+                # Add actions
+                if detail_type.endswith('short') and not module.put_in_root:
+                    if module.case_list_form.form_id:
+                        DetailContributor.add_register_action(
+                            self.app, module, d.actions, self.build_profile_id, self.entries_helper)
 
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
-                if module.case_list_form.form_id:
-                    DetailContributor.add_register_action(
-                        self.app, module, d.actions, self.build_profile_id, self.entries_helper)
-
                 if module_offers_search(module) and not module_uses_inline_search(module):
                     if (case_search_action := DetailContributor.get_case_search_action(
                         module,
@@ -240,6 +254,9 @@ class DetailContributor(SectionContributor):
                         id
                     )) is not None:
                         d.actions.append(case_search_action)
+            # Add select text
+            self.add_select_text_to_detail(d, self.app, detail_type, module)
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -485,6 +502,8 @@ class DetailContributor(SectionContributor):
                     grid_width=12,
                     grid_x=0,
                     grid_y=0,
+                    show_border=False,
+                    show_shading=False,
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath_function=xml)),
@@ -507,6 +526,8 @@ class DetailContributor(SectionContributor):
                     grid_width=12,
                     grid_x=0,
                     grid_y=0,
+                    show_border=False,
+                    show_shading=False,
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=TextXPath(
@@ -539,6 +560,11 @@ class DetailContributor(SectionContributor):
         if detail_type.endswith('short') and app.supports_empty_case_list_text:
             detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
 
+    @staticmethod
+    def add_select_text_to_detail(detail, app, detail_type, module):
+        if detail_type.endswith('short') and app.supports_select_text:
+            detail.select_text = Text(locale_id=id_strings.select_text_detail(module))
+
 
 class DetailsHelper(object):
 
@@ -566,6 +592,28 @@ class DetailsHelper(object):
             detail_type=detail_type,
         )
         return detail_id if detail_id in self.active_details else None
+
+
+def _add_detail_optimizations(module_detail, detail_xml_object):
+    """
+    Add optimizations on detail based on optimizations added on columns under the detail.
+    We set any optimization on the detail that is preset on any of the column.
+
+    This is needed by CommCare app to maintain consistency with features that already use these optimizations
+    via different settings/feature flags, which should get deprecated by this feature.
+    """
+    column_optimizations = [
+        column.optimization if column.supports_optimizations else None
+        for column in module_detail.get_columns()
+    ]
+    if 'cache_and_lazy_load' in column_optimizations:
+        detail_xml_object.cache_enabled = True
+        detail_xml_object.lazy_loading = True
+    else:
+        if 'cache' in column_optimizations:
+            detail_xml_object.cache_enabled = True
+        if 'lazy_load' in column_optimizations:
+            detail_xml_object.lazy_loading = True
 
 
 def get_nodeset_sort_elements(detail):

@@ -4,6 +4,7 @@ import os
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
+from corehq.const import USER_CHANGE_VIA_SYSTEM
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.fixtures.models import (
@@ -16,7 +17,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, SYSTEM_USER_ID
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED, NAMESPACE_DOMAIN
 from corehq.util.workbook_reading import make_worksheet
@@ -30,14 +31,15 @@ def populate_inddex_domain(domain):
     user = _get_or_create_user(domain)
     _import_cases(domain, user)
     _import_fixtures(domain)
-    _rebuild_datasource(domain)
+    return _rebuild_datasource(domain)
 
 
-def _get_or_create_user(domain):
+def _get_or_create_user(domain, create=True):
     username = format_username('nick', domain)
     user = CommCareUser.get_by_username(username, strict=True)
-    if not user:
-        user = CommCareUser.create(domain, username, 'secret', None, None)
+    if not user and create:
+        user = CommCareUser.create(domain, username, 'secret',
+                                   created_by=SYSTEM_USER_ID, created_via=USER_CHANGE_VIA_SYSTEM)
     return user
 
 
@@ -142,3 +144,4 @@ def _rebuild_datasource(domain):
     config_id = StaticDataSourceConfiguration.get_doc_id(
         domain, 'food_consumption_indicators')
     rebuild_indicators(config_id, source='populate_inddex_test_domain')
+    return config_id

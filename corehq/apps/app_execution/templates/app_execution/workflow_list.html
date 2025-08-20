@@ -1,0 +1,69 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% js_entry 'app_execution/js/workflow_charts' %}
+
+{% block page_content %}
+  <div>
+    <a class='btn btn-primary' href="{% url 'app_execution:new_workflow' request.domain %}">Create New</a>
+  </div>
+  <div class="row row-cols-lg-1 row-cols-xl-2">
+    <div id="timing_linechart" class="col">
+      <h4 class="text-center">{% trans "Average Timings" %}</h4>
+      <svg height="300px"></svg>
+    </div>
+    <div id="status_barchart" class="col">
+      <h4 class="text-center">{% trans "Status" %}</h4>
+      <svg height="300px"></svg>
+    </div>
+  </div>
+  <table class="table table-striped table-hover">
+  <thead>
+  <tr>
+    <th>{% translate 'Name' %}</th>
+    <th>{% translate 'App Name' %}</th>
+    <th>{% translate 'User' %}</th>
+    <th>{% translate 'Last Run' %}</th>
+    <th>{% translate 'Last 10 Runs' %}</th>
+    <th></th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for workflow in workflows %}
+  <tr>
+    <td><a href="{% url "app_execution:edit_workflow" request.domain workflow.id %}">{{ workflow.name }}</a></td>
+    <td>{{ workflow.app_name }}</td>
+    <td>{{ workflow.django_user.username }}</td>
+    <td>{{ workflow.last_run|default:""|date:"DATETIME_FORMAT" }}</td>
+    <td>
+      <div class="row g-0 column-gap-1">
+        {% for status in workflow.last_n %}
+          {% if not status %}
+          <div class="col col-sm-1 bg-secondary-subtle" style="width: 10px">&nbsp;</div>
+          {% else %}
+           <div class="col col-sm-1 {% if status.success %}bg-success{% else %}bg-danger{% endif %}" style="width: 10px">
+             <a href="{% url "app_execution:workflow_log" request.domain status.id %}" class="w-100 h-100 d-block">&nbsp;</a>
+           </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </td>
+    <td>
+      <div class="btn-group" role="group" aria-label="{% trans "Actions" %}">
+        <a class="btn btn-outline-primary" href="{% url "app_execution:run_workflow" request.domain workflow.id %}">{% translate 'Run' %}</a>
+        <a class="btn btn-outline-primary" href="{% url "app_execution:workflow_logs" request.domain workflow.id %}">{% translate 'Logs' %}</a>
+        <a class="btn btn-outline-primary" href="{% url "app_execution:delete_workflow" request.domain workflow.id %}">{% translate 'Delete' %}</a>
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{{ chart_data|json_script:"chart_data" }}
+<script id="timingSeries" type="application/json">
+  [{"label": "", "key": "avg_duration"}]
+</script>
+{% endblock %}

@@ -27,7 +27,7 @@ from .dispatcher import EditDataInterfaceDispatcher, BulkEditDataInterfaceDispat
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
     section_name = gettext_noop("Data")
-    base_template = "reports/standard/base_template.html"
+    base_template = "reports/standard/bootstrap3/base_template.html"
     asynchronous = True
     dispatcher = EditDataInterfaceDispatcher
     exportable = False
@@ -45,7 +45,8 @@ class BulkDataInterface(DataInterface):
 class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     name = gettext_noop("Reassign Cases")
     slug = "reassign_cases"
-    report_template_path = 'data_interfaces/interfaces/case_management.html'
+    report_template_path = 'data_interfaces/interfaces/bootstrap3/case_management.html'
+    icon = 'fas fa-people-arrows'
     action = "reassign"
     action_text = gettext_lazy("Reassign")
 
@@ -114,6 +115,10 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
 
     @property
     def bulk_response(self):
+        # This is way more than a simple property that returns a
+        # response value. Accessing it saves case ids to a file and
+        # fires off an async task to act on those cases. It is invoked
+        # by ReportDispatcher.dispatch(..., render_as='bulk')
         if self.request.method != 'POST':
             return HttpResponseBadRequest()
         owner_id = self.request_params.get('new_owner_id', None)
@@ -169,7 +174,8 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
 class CaseCopyInterface(CaseReassignmentInterface):
     name = gettext_noop("Copy Cases")
     slug = "copy_cases"
-    report_template_path = 'data_interfaces/interfaces/case_management.html'
+    report_template_path = 'data_interfaces/interfaces/bootstrap3/case_management.html'
+    icon = 'fas fa-copy'
     action = "copy"
     action_text = gettext_lazy("Copy")
 
@@ -184,18 +190,9 @@ class CaseCopyInterface(CaseReassignmentInterface):
         return query.run().raw
 
     @property
-    def template_context(self):
-        context = super(CaseCopyInterface, self).template_context
-        context.update({
-            "action": self.action,
-            "action_text": self.action_text,
-        })
-        return context
-
-    @property
     def fields(self):
         return [
-            'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
+            'corehq.apps.reports.filters.case_list.CaseListFilter',
             'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
             'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
             'corehq.apps.reports.standard.cases.filters.SensitiveCaseProperties',
@@ -292,7 +289,8 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = gettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
-    report_template_path = 'data_interfaces/interfaces/archive_forms.html'
+    report_template_path = 'data_interfaces/interfaces/bootstrap3/archive_forms.html'
+    icon = 'far fa-file-alt'
 
     def __init__(self, request, **kwargs):
         super(BulkFormManagementInterface, self).__init__(request, **kwargs)

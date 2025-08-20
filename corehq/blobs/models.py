@@ -67,7 +67,8 @@ class BlobMeta(PartitionedModel, Model):
         unique_together = [
             # HACK work around unique=True implies db_index=True
             # https://code.djangoproject.com/ticket/24082
-            # Avoid extra varchar_pattern_ops index
+            # Avoid extra varchar_pattern_ops index while still maintaining
+            # an index for exact matches. We don't need varchar_pattern_ops
             # since we do not do LIKE queries on these
             # https://stackoverflow.com/a/50926644/10840
             ("key",),
@@ -119,7 +120,7 @@ class BlobMeta(PartitionedModel, Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.key
+        return self.parent_id, self.key
 
 
 class DeletedBlobMeta(PartitionedModel, Model):

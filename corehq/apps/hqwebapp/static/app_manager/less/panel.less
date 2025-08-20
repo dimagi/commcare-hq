@@ -1,11 +1,12 @@
-
 .panel-appmanager {
   border: none;
   background-color: lighten(@cc-bg, 3);
 
   .panel-heading {
     padding: 0;
-    a:hover, a:link, a:focus {
+    a:hover,
+    a:link,
+    a:focus {
       text-decoration: none;
     }
     a {
@@ -65,7 +66,6 @@
 }
 
 .panel-appmanager-form-danger {
-
   .form-actions {
     border-top: 0;
     background-color: lighten(desaturate(@cc-att-neg-hi, 20), 5);
@@ -83,20 +83,6 @@
 
   &.build-latest-release {
     .box-shadow(0 0 10px fade(@cc-brand-mid, 40));
-  }
-
-  .bootstrap-switch-handle-on.bootstrap-switch-primary {
-    background-color: @cc-brand-mid;
-  }
-  .bootstrap-switch-primary:focus {
-    border-color: @cc-brand-mid;
-  }
-  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-on,
-  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-off,
-  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    font-weight: 800;
   }
 }
 
@@ -152,7 +138,14 @@
     min-width: 250px;
   }
   .ko-inline-edit {
-    margin-left: 20px;
+    .read-only {
+      margin-left: 20px;
+    }
+    .read-write textarea {
+      margin-top: 1px;
+      margin-bottom: 1px;
+      width: 100%;
+    }
   }
 }
 .panel-case-actions {
@@ -163,8 +156,8 @@
   right: 10px;
   top: 8px;
   > .btn {
-      .transition(background-color 1s);
-      border: none;
+    .transition(background-color 1s);
+    border: none;
   }
 }
 

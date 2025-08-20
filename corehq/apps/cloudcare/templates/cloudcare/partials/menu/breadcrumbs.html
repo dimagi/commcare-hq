@@ -1,0 +1,17 @@
+{% load i18n %}
+
+<script type="text/template" id="breadcrumb-item-template">
+  <a href="#" <% if (isCurrentPage) { %> aria-current="page" <% } %>>
+    <%- data %>
+  </a>
+</script>
+
+<script type="text/template" id="breadcrumb-list-template">
+  <nav style="--bsbreadcrumb-divider: '\f054';" class="breadcrumb-nav border-bottom" aria-label="Breadcrumb">
+    <ol class="breadcrumb">
+      <li class="js-home breadcrumb-item">
+        <a href="#">{% trans 'Home' %}</a>
+      </li>
+    </ol>
+  </nav>
+</script>

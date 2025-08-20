@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/two_column.html' %}
+{% extends 'hqwebapp/bootstrap5/two_column.html' %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
@@ -6,36 +6,28 @@
 
 {% block title %}{% trans "Edit Configuration" %}{% endblock %}
 
-{% requirejs_main 'dhis2/js/dhis2_entity_config' %}
+{% js_entry 'dhis2/js/dhis2_entity_config' %}
 
 {% block page_content %}
 {% initial_page_data 'case_configs' case_configs %}
 
 <script type="text/html" id="case-config-template">
-    <fieldset>
-        <div class="col-sm-8">&nbsp;</div>
-        <div class="col-sm-4">
-            <button type="button"
-                    class="btn btn-danger"
-                    data-bind="click: $root.removeCaseConfig">{% trans "Remove" %}</button>
-        </div>
-        <div class="form-group">
-            <label class="control-label col-sm-3 col-md-2 requiredField">
-                {% trans "Case config" %}<span class="asteriskField">*</span>
-            </label>
-            <div class="controls col-sm-9 col-md-8 col-lg-6">
-                <textarea name="oCaseConfig"
-                          class="jsonwidget form-control"
-                          required=""
-                          data-bind="value: oCaseConfig"></textarea>
-            </div>
-        </div>
+    <fieldset class="col-md-8">
+        <button type="button"
+                class="btn btn-outline-danger float-end mx-3"
+                data-bind="click: $root.removeCaseConfig"><i class="fa fa-trash"></i> {% trans "Remove" %}</button>
+        <label class="form-label col-md-3 col-lg-2 requiredField">
+            {% trans "Case config" %}<span class="asteriskField">*</span>
+        </label>
+        <textarea name="oCaseConfig"
+                  class="jsonwidget form-control"
+                  required=""
+                  data-bind="value: oCaseConfig"></textarea>
     </fieldset>
-    <div class="spacer"></div>
 </script>
 
 <form id="dhis2-entity-config"
-      class="form-horizontal ko-template"
+      class="ko-template"
       method="post"
       data-bind="submit: submit">
     <div data-bind="template: {
@@ -44,22 +36,16 @@
                         as: 'caseConfig',
                         afterRender: initCaseConfigTemplate
                     }"></div>
-    <p>
-        <div data-bind="visible: isError()">
-            <pre data-bind="text: errorMessage()" class="alert message-alert alert-danger"></pre>
-        </div>
-        <button type="button"
-                class="btn btn-primary"
-                data-bind="click: addCaseConfig">
-            <i class="fa fa-plus"></i>
-            {% trans "Add case config" %}
-        </button>
-    </p>
 
-    <div class="form-actions">
-        <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary">{% trans "Update DHIS2 Tracked Entity configuration" %}</button>
-        </div>
-    </div>
+    <div class="alert message-alert alert-danger" data-bind="visible: isError(), text: errorMessage()"></div>
+
+    <button type="button"
+            class="btn btn-outline-primary d-block mb-3"
+            data-bind="click: addCaseConfig">
+        <i class="fa fa-plus"></i>
+        {% trans "Add case config" %}
+    </button>
+
+    <button type="submit" class="btn btn-primary">{% trans "Update DHIS2 Tracked Entity configuration" %}</button>
 </form>
 {% endblock %}
