@@ -40,46 +40,35 @@ class PaymentCaseListFilter(CaseListFilter):
     default_selections = [("all_data", _("[All Data]"))]
 
 
-class CampaignFilter(BaseSingleOptionFilter):
+class BaseCasePropertyFilter(BaseSingleOptionFilter):
+    default_text = _("Show all")
+    case_property = None
+
+    @property
+    def options(self):
+        if not self.case_property:
+            raise NotImplementedError("Subclasses must define 'case_property'")
+        values = get_case_property_unique_values(
+            self.domain,
+            MOMO_PAYMENT_CASE_TYPE,
+            self.case_property,
+        )
+        return [(value, value) for value in sorted(values)]
+
+
+class CampaignFilter(BaseCasePropertyFilter):
     slug = 'campaign'
     label = _('Campaign')
-    default_text = _('Show all')
-
-    @property
-    def options(self):
-        values = get_case_property_unique_values(
-            self.domain,
-            MOMO_PAYMENT_CASE_TYPE,
-            PaymentProperties.CAMPAIGN,
-        )
-        return [(value, value) for value in sorted(values)]
+    case_property = PaymentProperties.CAMPAIGN
 
 
-class ActivityFilter(BaseSingleOptionFilter):
+class ActivityFilter(BaseCasePropertyFilter):
     slug = 'activity'
     label = _('Activity')
-    default_text = _('Show all')
-
-    @property
-    def options(self):
-        values = get_case_property_unique_values(
-            self.domain,
-            MOMO_PAYMENT_CASE_TYPE,
-            PaymentProperties.ACTIVITY,
-        )
-        return [(value, value) for value in sorted(values)]
+    case_property = PaymentProperties.ACTIVITY
 
 
-class FunderFilter(BaseSingleOptionFilter):
+class FunderFilter(BaseCasePropertyFilter):
     slug = 'funder'
     label = _('Funder')
-    default_text = _('Show all')
-
-    @property
-    def options(self):
-        values = get_case_property_unique_values(
-            self.domain,
-            MOMO_PAYMENT_CASE_TYPE,
-            PaymentProperties.FUNDER,
-        )
-        return [(value, value) for value in sorted(values)]
+    case_property = PaymentProperties.FUNDER
