@@ -29,6 +29,7 @@
 {% block page_content %}
   {% registerurl 'edit_toggle' toggle.slug %}
   {% registerurl 'domain_internal_settings' '---' %}
+  {% registerurl 'get_dimagi_users' '---' %}
   {% initial_page_data 'items' toggle.enabled_users %}
   {% initial_page_data 'namespaces' namespaces %}
   {% initial_page_data 'last_used' last_used %}

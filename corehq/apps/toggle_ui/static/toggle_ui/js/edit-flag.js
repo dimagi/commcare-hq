@@ -110,7 +110,18 @@ function toggleItem(namespace, value, last_used, service_type) {
 
     self.dimagiUsers = ko.observableArray();
     self.showDimagiUsers = () => {
-        self.dimagiUsers.push('esoergel@dimagi.com');
+        if (_.isEmpty(self.dimagiUsers())) {
+            $.ajax({
+                url: initialPageData.reverse('get_dimagi_users', self.value()),
+            }).done((res) => {
+                let emails = _.isEmpty(res.emails) ? ['<None>'] : res.emails;
+                _.each(emails, (email) => {
+                    self.dimagiUsers.push(email);
+                });
+            });
+        } else {
+            self.dimagiUsers.removeAll();
+        }
     };
 
     self.domainUrl = ko.computed(() => {
