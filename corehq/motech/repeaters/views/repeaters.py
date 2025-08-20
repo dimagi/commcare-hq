@@ -286,6 +286,15 @@ class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
         return reverse(AddFormRepeaterView.urlname, args=[self.domain])
 
 
+class AddConnectFormRepeaterView(AddFormRepeaterView):
+    urlname = "add_connect_form_repeater"
+
+    def initialize_repeater(self):
+        repeater = super().initialize_repeater()
+        repeater.add_backoff_code(404)
+        return repeater
+
+
 class EditConnectFormRepeaterView(EditFormRepeaterView):
     urlname = "edit_connect_form_repeater"
 
