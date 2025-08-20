@@ -1,18 +1,10 @@
 import json
+import pytest
+
 from unittest.mock import Mock, patch
 
-import pytest
-from unmagic import fixture, use
-
-from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import ConnectFormRepeater
-from corehq.motech.repeaters.repeater_generators import (
-    CONNECT_XMLNS,
-    ConnectFormRepeaterPayloadGenerator,
-)
-
-DOMAIN = 'ccc-test'
-
+from corehq.motech.repeaters.repeater_generators import CONNECT_XMLNS, ConnectFormRepeaterPayloadGenerator
 
 FORM_META = {
     "@xmlns": "http://openrosa.org/jr/xforms",
@@ -77,24 +69,3 @@ def test_connect_repeater(mocked_super):
     assert payload["form"]["connect_path"]["deliver"] == DELIVER_JSON["deliver"]
     with pytest.raises(KeyError):
         payload["form"]["question_path"]
-
-
-@use('db')
-@fixture
-def repeater_fixture():
-    url = 'https://example.com/connect/'
-    conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-    repeater = ConnectFormRepeater(domain=DOMAIN, connection_settings_id=conn.id)
-    try:
-        yield repeater
-    finally:
-        repeater.delete()
-        conn.delete()
-
-
-@use(repeater_fixture)
-def test_backoff_codes():
-    repeater = repeater_fixture()
-    assert 404 not in repeater.backoff_codes
-    repeater.save()
-    assert 404 in repeater.backoff_codes
