@@ -53,3 +53,18 @@ class CampaignFilter(BaseSingleOptionFilter):
             PaymentProperties.CAMPAIGN,
         )
         return [(value, value) for value in sorted(values)]
+
+
+class ActivityFilter(BaseSingleOptionFilter):
+    slug = 'activity'
+    label = _('Activity')
+    default_text = _('Show all')
+
+    @property
+    def options(self):
+        values = get_case_property_unique_values(
+            self.domain,
+            MOMO_PAYMENT_CASE_TYPE,
+            PaymentProperties.ACTIVITY,
+        )
+        return [(value, value) for value in sorted(values)]
