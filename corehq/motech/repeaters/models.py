@@ -742,6 +742,10 @@ class ConnectFormRepeater(FormRepeater):
         """
         return toggles.COMMCARE_CONNECT.enabled(domain)
 
+    def save(self, *args, **kwargs):
+        self.add_backoff_code(404)
+        super().save(*args, **kwargs)
+
 
 class CaseRepeater(Repeater):
     """
