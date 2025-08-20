@@ -55,8 +55,8 @@ msgstr "Jina la Akaunti"
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/enterprise/filters.py corehq/apps/enterprise/interface.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/filters.py
+#: corehq/apps/enterprise/interface.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/smsbillables/filters.py
 msgid "Project Space"
@@ -1082,6 +1082,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -4273,6 +4274,7 @@ msgstr "Watumiaji Walioungizwa:"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -4381,8 +4383,7 @@ msgstr "Barua pepe ya kitaaluma"
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
-#: corehq/apps/dashboard/views.py corehq/apps/domain/forms.py
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Organization"
 msgstr "Shirika"
 
@@ -6226,8 +6227,8 @@ msgstr "Nembo ya Onyesho"
 msgid "Disable"
 msgstr "Zima"
 
-#: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/app_manager/static_strings.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/sms/forms.py corehq/messaging/scheduling/forms.py
 msgid "Disabled"
 msgstr "Imezimwa"
 
@@ -6258,8 +6259,8 @@ msgstr "Washa Mipangilio ya Onyesho la Menyu kwa Kila Moduli"
 msgid "Enable"
 msgstr "Washa"
 
-#: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/app_manager/static_strings.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/sms/forms.py corehq/messaging/scheduling/forms.py
 msgid "Enabled"
 msgstr "Imewashwa"
 
@@ -12448,6 +12449,7 @@ msgid "Time"
 msgstr "Muda"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid "Info"
 msgstr "Taarifa"
 
@@ -14226,6 +14228,7 @@ msgstr "Una uhakika unataka kufuta kijisehemu hiki?"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/bootstrap5/notification_unsubscribe.html
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -20852,47 +20855,6 @@ msgid "Renew Plan"
 msgstr "Sasisha Mpango"
 
 #: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Email To"
-msgstr "Barua Pepe Kwa"
-
-#: corehq/apps/domain/forms.py
-msgid "Estimated annual expenditures on airtime:"
-msgstr "Makadirio ya matumizi ya kila mwaka kwenye muda wa maongezi:"
-
-#: corehq/apps/domain/forms.py
-msgid "Estimated annual expenditures on devices:"
-msgstr "Makadirio ya matumizi ya kila mwaka kwenye vifaa:"
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"We grant pro-bono subscriptions to match the duration of your project, up to"
-" a maximum of 12 months at a time (at which point you need to reapply)."
-msgstr ""
-"Tunatoa usajili wa bure kulingana na muda wa mradi wako, hadi miezi 12 kwa "
-"wakati mmoja (baada ya hapo utahitaji kuomba tena)."
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"If you have already been in touch with someone from Dimagi, please list "
-"their name."
-msgstr ""
-"Ikiwa tayari umezungumza na mtu kutoka Dimagi, tafadhali orodhesha jina lao."
-
-#: corehq/apps/domain/forms.py
-msgid "Number of expected users"
-msgstr "Idadi ya watumiaji unaotarajia"
-
-#: corehq/apps/domain/forms.py corehq/apps/domain/views/pro_bono.py
-msgid "Pro-Bono Application"
-msgstr "Maombi ya Pro-Bono"
-
-#: corehq/apps/domain/forms.py
-msgid "Submit Pro-Bono Application"
-msgstr "Tuma Maombi ya Pro-Bono"
-
-#: corehq/apps/domain/forms.py
 msgid "Test or Demo Project"
 msgstr "Mradi wa Majaribio au Onyesho"
 
@@ -22355,7 +22317,7 @@ msgstr "Muhtasari wa Matumizi"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/reports/filters/select.py
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/select.py
 msgid "Feature"
 msgstr "Kipengele"
 
@@ -23441,6 +23403,11 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Email To"
+msgstr "Barua Pepe Kwa"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 #: corehq/apps/reports/forms.py
 msgid "Additional Recipients"
 msgstr "Wapokeaji wa Ziada"
@@ -23749,14 +23716,6 @@ msgstr "Hii haitanakili sehemu za mtumiaji."
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
 msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "Hii haitanakili jedwali za lookup (pia zinajulikana kama fixtures)."
-
-#: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
-#: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
-msgid ""
-"Thank you for your submission.  A representative will be in contact with you"
-" shortly."
-msgstr ""
-"Asante kwa mawasilisho yako. Mwakilishi atawasiliana nawe hivi karibuni."
 
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
@@ -30814,7 +30773,7 @@ msgstr "Ripoti ya Data ya Domain za UCR"
 #: corehq/apps/hqadmin/reports.py
 #, fuzzy
 #| msgid "Feature Previews"
-msgid "Feature Preview Stats Report"
+msgid "Feature Preview Status Report"
 msgstr "Muonekano wa Vipengele"
 
 #: corehq/apps/hqadmin/reports.py
@@ -30834,6 +30793,30 @@ msgstr "Imewashwa"
 #| msgid "Not Checked"
 msgid "Not recorded"
 msgstr "Haijakaguliwa"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Audit Report"
+msgstr "Muonekano wa Vipengele"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Shared By"
+msgid "Changed By"
+msgstr "Imeshirikiwa Na"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Changes to"
+msgid "Changed At"
+msgstr "Mabadiliko kwa"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Update Information"
+msgid "Update Randomness"
+msgstr "Sasisha Taarifa"
 
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
@@ -30929,6 +30912,12 @@ msgstr "Mtumiaji Mkuu"
 #: corehq/reports.py
 msgid "Accounting Admin"
 msgstr "Msimamizi wa Uhasibu"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#, fuzzy
+#| msgid "Contact"
+msgid "Is Contractor"
+msgstr "Mawasiliano"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
@@ -32487,6 +32476,7 @@ msgstr "Mipangilio ya Akaunti Yangu"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 msgid "Sign Out"
 msgstr "Toka"
 
@@ -33954,6 +33944,12 @@ msgid "Payment request failed"
 msgstr "Ombi la malipo limekosa kufanikiwa"
 
 #: corehq/apps/integration/payments/services.py
+msgid "Only payments in '{}' or '{}' state are eligible for verification."
+msgstr ""
+"Malipo tu yaliyo katika hali ya '{}' au '{}' ndiyo yanayostahili "
+"kuthibitishwa."
+
+#: corehq/apps/integration/payments/services.py
 msgid "Invalid payee details"
 msgstr "Maelezo ya mpokeaji si sahihi"
 
@@ -33964,6 +33960,13 @@ msgstr "Malipo hayajathibitishwa"
 #: corehq/apps/integration/payments/services.py
 msgid "Payment has already been requested"
 msgstr "Malipo tayari yameombwa"
+
+#: corehq/apps/integration/payments/services.py
+msgid ""
+"Only payments in the '{}' state are eligible for verification reversal."
+msgstr ""
+"Malipo tu yaliyo katika hali ya '{}' ndiyo yanayostahili kubatilishwa "
+"uthibitisho wake."
 
 #: corehq/apps/integration/payments/tables.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -34020,6 +34023,41 @@ msgstr "Haipatikani"
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
 msgid "Payments Verification Report"
 msgstr "Ripoti ya Uthibitisho wa Malipo"
+
+#: corehq/apps/integration/payments/views.py
+msgid "One or more case IDs are required for verification."
+msgstr "ID moja au zaidi za kesi zinahitajika kwa uthibitisho."
+
+#: corehq/apps/integration/payments/views.py
+#, fuzzy
+#| msgid "You can only have 3 alerts activated at any one time"
+msgid "You can only verify for up to {} cases at a time."
+msgstr "Unaweza kuwa na arifa 3 pekee zimewashwa kwa wakati mmoja"
+
+#: corehq/apps/integration/payments/views.py
+msgid ""
+"Revert verification request is in progress for your project. Please try "
+"again after some time."
+msgstr ""
+"Ombi la kubatilisha uthibitisho linaendelea kwa mradi wako. Tafadhali jaribu"
+" tena baada ya muda."
+
+#: corehq/apps/integration/payments/views.py
+msgid ""
+"Payment submissions are currently active for your project and should be "
+"completed shortly. Please try again later."
+msgstr ""
+"Uwasilishaji wa malipo kwa sasa unaendelea kwa mradi wako na unapaswa "
+"kukamilika hivi karibuni. Tafadhali jaribu tena baadaye."
+
+#: corehq/apps/integration/payments/views.py
+msgid "One or more case IDs are required to revert verification."
+msgstr "ID moja au zaidi za kesi zinahitajika kubatilisha uthibitisho."
+
+#: corehq/apps/integration/payments/views.py
+msgid "You can only revert verification for up to {} cases at a time."
+msgstr ""
+"Unaweza kubatilisha uthibitisho kwa kesi hadi {} kwa wakati mmoja pekee."
 
 #: corehq/apps/integration/payments/views.py
 msgid "Payments Configuration"
@@ -34224,8 +34262,23 @@ msgid "Confirm Payments"
 msgstr "Thibitisha Malipo"
 
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 msgid "Are you sure you want to proceed with the selected payments?"
 msgstr "Je, una uhakika unataka kuendelea na malipo uliyochagua?"
+
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_alert.html
+msgid ""
+"Successfully reverted verification for selected record(s). Updated status "
+"will reflect shortly."
+msgstr ""
+"Umefanikiwa kubatilisha uthibitisho kwa rekodi zilizochaguliwa. Hali "
+"iliyosasishwa itaonekana hivi karibuni."
+
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
+#, fuzzy
+#| msgid "Verification Pending"
+msgid "Revert Verification of Pending Payments"
+msgstr "Uthibitisho Unasubiri"
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, fuzzy, python-format
@@ -34236,8 +34289,8 @@ msgstr "Je, una uhakika unataka kuendelea na malipo uliyochagua?"
 #| "    "
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s records for payments!\n"
-"      Verification status for these will be refreshed in a few seconds.\n"
+"      Successfully verified %(success_count)s records for payments! Updated\n"
+"      status will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
@@ -34274,6 +34327,12 @@ msgstr ""
 "        <a href=\"%(config_url)s\">Ukurasa wa Mipangilio ya Malipo</a>\n"
 "        .\n"
 "      "
+
+#: corehq/apps/integration/templates/payments/payments_verify_report.html
+#, fuzzy
+#| msgid "Phone Verification"
+msgid "Revert Verification"
+msgstr "Uthibitisho wa Simu"
 
 #: corehq/apps/integration/views.py
 msgid "Biometric Integration"
@@ -38945,6 +39004,30 @@ msgstr "Chagua Mfanyakazi wa Simu"
 #, python-format
 msgid "%s & Others"
 msgstr "%s na Wengine"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Active Web User"
+msgstr "# Watumiaji Hai"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Deactivated Web User"
+msgstr "Onyesha Wafanyakazi wa Simu Waliokatishwa"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Active Mobile Workers"
+msgid "Active Mobile Worker"
+msgstr "Wafanyakazi Wanaotumia Simu Waliopo"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Deactivated Mobile Workers"
+msgid "Deactivated Mobile Worker"
+msgstr "Wafanyakazi Waliotumia Simu Waliopunguzwa"
 
 #: corehq/apps/reports/filters/users.py
 #, fuzzy
@@ -49918,10 +50001,14 @@ msgid "You are already signed in."
 msgstr "Umeingia tayari."
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  To accept this invitation, you must first <a href=\"%(sign_out_url)s\">sign out</a>.\n"
+#| "                "
 msgid ""
 "\n"
-"                  To accept this invitation, you must first <a href=\"%(sign_out_url)s\">sign out</a>.\n"
+"                  To accept this invitation, you must first sign out.\n"
 "                "
 msgstr ""
 "\n"
@@ -58118,6 +58205,40 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid "Estimated annual expenditures on airtime:"
+#~ msgstr "Makadirio ya matumizi ya kila mwaka kwenye muda wa maongezi:"
+
+#~ msgid "Estimated annual expenditures on devices:"
+#~ msgstr "Makadirio ya matumizi ya kila mwaka kwenye vifaa:"
+
+#~ msgid ""
+#~ "We grant pro-bono subscriptions to match the duration of your project, up to"
+#~ " a maximum of 12 months at a time (at which point you need to reapply)."
+#~ msgstr ""
+#~ "Tunatoa usajili wa bure kulingana na muda wa mradi wako, hadi miezi 12 kwa "
+#~ "wakati mmoja (baada ya hapo utahitaji kuomba tena)."
+
+#~ msgid ""
+#~ "If you have already been in touch with someone from Dimagi, please list "
+#~ "their name."
+#~ msgstr ""
+#~ "Ikiwa tayari umezungumza na mtu kutoka Dimagi, tafadhali orodhesha jina lao."
+
+#~ msgid "Number of expected users"
+#~ msgstr "Idadi ya watumiaji unaotarajia"
+
+#~ msgid "Pro-Bono Application"
+#~ msgstr "Maombi ya Pro-Bono"
+
+#~ msgid "Submit Pro-Bono Application"
+#~ msgstr "Tuma Maombi ya Pro-Bono"
+
+#~ msgid ""
+#~ "Thank you for your submission.  A representative will be in contact with you"
+#~ " shortly."
+#~ msgstr ""
+#~ "Asante kwa mawasilisho yako. Mwakilishi atawasiliana nawe hivi karibuni."
 
 #~ msgid "Printing"
 #~ msgstr "Uchapishaji"

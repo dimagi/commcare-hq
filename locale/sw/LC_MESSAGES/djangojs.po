@@ -159,7 +159,6 @@ msgid "Billed Monthly"
 msgstr "Inalipiwa kila mwezi"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "Tafadhali ingiza barua pepe halali."
 
