@@ -22,29 +22,28 @@ from corehq.motech.openmrs.views import (
     config_openmrs_repeater,
 )
 from corehq.motech.repeaters.expression.views import (
-    AddCaseExpressionRepeaterView,
-    EditCaseExpressionRepeaterView,
-    AddFormExpressionRepeaterView,
-    EditFormExpressionRepeaterView,
     AddArcGISFormExpressionRepeaterView,
+    AddCaseExpressionRepeaterView,
+    AddFormExpressionRepeaterView,
     EditArcGISFormExpressionRepeaterView,
+    EditCaseExpressionRepeaterView,
+    EditFormExpressionRepeaterView,
 )
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
+    AddConnectFormRepeaterView,
     AddFormRepeaterView,
     AddRepeaterView,
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
+    EditConnectFormRepeaterView,
+    EditDataRegistryCaseUpdateRepeater,
     EditFormRepeaterView,
+    EditReferCaseRepeaterView,
     EditRepeaterView,
     drop_repeater,
     pause_repeater,
     resume_repeater,
-)
-from corehq.motech.repeaters.views.repeaters import (
-    EditConnectFormRepeaterView,
-    EditDataRegistryCaseUpdateRepeater,
-    EditReferCaseRepeaterView
 )
 from corehq.motech.views import (
     ConnectionSettingsDetailView,
@@ -68,8 +67,8 @@ urlpatterns = [
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(),
         {'repeater_type': 'FormRepeater'}, name=AddFormRepeaterView.urlname),
-    url(r'^forwarding/new/ConnectFormRepeater/$', AddFormRepeaterView.as_view(),
-        {'repeater_type': 'ConnectFormRepeater'}, name=AddFormRepeaterView.urlname),
+    url(r'^forwarding/new/ConnectFormRepeater/$', AddConnectFormRepeaterView.as_view(),
+        {'repeater_type': 'ConnectFormRepeater'}, name=AddConnectFormRepeaterView.urlname),
     url(r'^forwarding/new/CaseRepeater/$', AddCaseRepeaterView.as_view(),
         {'repeater_type': 'CaseRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/OpenmrsRepeater/$', AddOpenmrsRepeaterView.as_view(),
