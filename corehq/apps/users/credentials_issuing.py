@@ -1,12 +1,12 @@
 from collections import defaultdict
 from django.conf import settings
 from dateutil.relativedelta import relativedelta
-import re
 import requests
 from datetime import datetime, timezone, date
 
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.app_manager.models import CredentialApplication
 from corehq.apps.data_analytics.models import MALTRow
 
 
@@ -14,7 +14,7 @@ CREDENTIAL_TYPE = 'APP_ACTIVITY'
 
 
 def get_credentials_for_timeframe(activity_level, app_ids):
-    months = int(re.search(r'^\d+', activity_level).group())
+    months = CredentialApplication.months_for_activity_level(activity_level)
     now = datetime.now(timezone.utc)
     start_date = date(now.year, now.month, now.day) - relativedelta(months=months)
     user_months_activity = (
