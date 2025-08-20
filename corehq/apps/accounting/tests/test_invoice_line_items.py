@@ -52,7 +52,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
         - quantity is 1
         - subtotal = monthly fee
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
         self.create_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
@@ -83,8 +83,8 @@ class TestProductLineItem(BaseInvoiceTestCase):
         - quantity > 1
         - subtotal = unit_cost * quantity
         """
-        first_invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        last_invoice_date = utils.months_from_date(self.subscription.date_end, 1)
+        first_invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 1)
+        last_invoice_date = utils.get_first_day_x_months_later(self.subscription.date_end, 1)
         self.create_invoices(first_invoice_date, calculate_users=False)
         self.create_invoices(last_invoice_date, calculate_users=False)
 
@@ -140,7 +140,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         - unit_description is None
         - total and subtotals are 0.0
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
         def num_users():
@@ -174,7 +174,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         - quantity is equal to number of commcare users in that domain minus the monthly_limit on the user rate
         - total and subtotals are equal to number of extra users * per_excess_fee
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
         def num_users():
@@ -271,7 +271,7 @@ class TestFormSubmittingMobileWorkerLineItem(BaseInvoiceTestCase):
     def setup_invoice(self, num_form_submitting_workers):
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_form_submitting_workers)
 
-        invoice_date = utils.months_from_date(self.subscription.date_start, 2)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 2)
         record_date = invoice_date - datetime.timedelta(days=1)
         self._create_worker_history(DomainUserHistory, record_date)
         self._create_worker_history(FormSubmittingMobileWorkerHistory,
@@ -345,7 +345,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         - unit_description is None
         - total and subtotals are 0.0
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(0, self.web_user_rate.monthly_limit)
@@ -373,7 +373,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         - quantity is equal to number of web users in that account minus the monthly_limit on the web user rate
         - total and subtotals are equal to number of extra users * per_excess_fee
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
@@ -402,7 +402,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         self.subscription.account.bill_web_user = False
         self.subscription.account.save()
 
-        invoice_date = utils.months_from_date(self.subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
@@ -419,10 +419,10 @@ class TestSmsLineItem(BaseInvoiceTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestSmsLineItem, cls).setUpClass()
-        cls.invoice_date = utils.months_from_date(
+        cls.invoice_date = utils.get_first_day_x_months_later(
             cls.subscription_start_date, random.randint(2, cls.subscription_length)
         )
-        cls.sms_date = utils.months_from_date(cls.invoice_date, -1)
+        cls.sms_date = utils.get_first_day_x_months_later(cls.invoice_date, -1)
 
     def setUp(self):
         super().setUp()
