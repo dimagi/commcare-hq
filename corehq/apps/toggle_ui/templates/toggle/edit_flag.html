@@ -214,6 +214,7 @@
               {% endif %}
             </th>
             <th>Namespace</th>
+            <th>Dimagi Users</th>
             <th>Latest Form Submission</th>
             <th>Subscription Plan</th>
           </tr>
@@ -243,7 +244,7 @@
                 </span>
               </div>
             </td>
-            <td class="col-sm-2">
+            <td class="col-sm-1">
               <a style="display: none" data-bind="
                 visible: namespace() === 'domain',
                 attr: { href: domainUrl }
@@ -256,12 +257,30 @@
               </span>
             </td>
             <td
+              class="col-sm-1"
+            >
+              <button
+                class="btn btn-secondary"
+                data-bind="
+                  visible: namespace() === 'domain',
+                  click: showDimagiUsers
+              ">
+                Dimagi Users
+              </button>
+            </td>
+            <td
               class="col-sm-2"
               data-bind="text: last_used"
             ></td>
             <td
               class="col-sm-4"
               data-bind="text: service_type"
+            ></td>
+          </tr>
+          <tr data-bind="if: !!dimagiUsers().length">
+            <td
+              colspan="5"
+              data-bind="text: dimagiUsers().join(', ')"
             ></td>
           </tr>
         </tbody>
