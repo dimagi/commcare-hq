@@ -7,16 +7,23 @@
 {% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
 
 {% block stylesheets %}
-  <style>
-    .margin-vertical-sm {
-      margin-top: 5px;
-      margin-bottom: 5px;
-    }
+<style>
+  .margin-vertical-sm {
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
 
-    .label-release {
-      background-color: #c22eff !important;
-    }
-  </style>
+  .label-release {
+    background-color: #c22eff !important;
+  }
+
+  /* B5: replace with table-borderless and align-middle */
+  #feature-flag-items tbody td {
+    border: 0;
+    vertical-align: middle;
+  }
+</style>
+
 {% endblock %}
 
 {% block page_content %}
@@ -196,7 +203,7 @@
           </p>
         </div>
       {% endif %}
-      <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
+      <table class="table table-condensed" id="feature-flag-items">
         <thead>
           <tr>
             <th>
@@ -213,7 +220,7 @@
         </thead>
         <tbody data-bind="foreach: items">
           <tr>
-            <td class="col-sm-4" style="border: 0">
+            <td class="col-sm-4">
               <div class="input-group">
                 <span class="input-group-btn">
                   {% if can_edit_toggle %}
@@ -236,11 +243,7 @@
                 </span>
               </div>
             </td>
-            <!-- B5: replace inline styles with vertical alignment class: https://getbootstrap.com/docs/5.3/utilities/vertical-align/#css -->
-            <td
-              class="col-sm-2"
-              style="border: 0; vertical-align: middle"
-            >
+            <td class="col-sm-2">
               <a style="display: none" data-bind="
                 visible: namespace() === 'domain',
                 attr: { href: domainUrl }
@@ -254,12 +257,10 @@
             </td>
             <td
               class="col-sm-2"
-              style="border: 0; vertical-align: middle"
               data-bind="text: last_used"
             ></td>
             <td
               class="col-sm-4"
-              style="border: 0; vertical-align: middle"
               data-bind="text: service_type"
             ></td>
           </tr>
