@@ -108,18 +108,8 @@ function toggleItem(namespace, value, last_used, service_type) {
     self.last_used = ko.observable(last_used);
     self.service_type = ko.observable(service_type);
 
-
-    self.namespaceHtml = ko.computed(function () {
-        value = self.value();
-        if (value && value[0] === '!') {
-            value = value.replace(/^!/, '');
-        }
-        if (self.namespace() === 'domain') {
-            const url = initialPageData.reverse('domain_internal_settings', value);
-            return '<a href="' + url + '">domain <i class="fa fa-external-link"></i></a>';
-        } else {
-            return "<i class='fa fa-user'></i> " + self.namespace();
-        }
+    self.domainUrl = ko.computed(() => {
+        return initialPageData.reverse('domain_internal_settings', self.value());
     });
 
     return self;

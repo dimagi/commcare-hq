@@ -240,8 +240,18 @@
             <td
               class="col-sm-2"
               style="border: 0; vertical-align: middle"
-              data-bind="html: namespaceHtml"
-            ></td>
+            >
+              <a style="display: none" data-bind="
+                visible: namespace() === 'domain',
+                attr: { href: domainUrl }
+              ">
+                domain <i class="fa fa-external-link"></i>
+              </a>
+              <span style="display: none"
+                data-bind="visible: namespace() != 'domain'">
+                <i class='fa fa-user'></i> user
+              </span>
+            </td>
             <td
               class="col-sm-2"
               style="border: 0; vertical-align: middle"
