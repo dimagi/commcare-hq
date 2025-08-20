@@ -21,6 +21,7 @@ class PaymentProperties(str, Enum):
     BATCH_NUMBER = 'batch_number'
     CAMPAIGN = 'campaign'
     ACTIVITY = 'activity'
+    FUNDER = 'funder'
     PAYMENT_ERROR = 'payment_error'
 
 

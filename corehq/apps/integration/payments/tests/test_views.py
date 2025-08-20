@@ -459,6 +459,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
                     PaymentProperties.CAMPAIGN: 'Campaign A',
                     PaymentProperties.ACTIVITY: 'Activity A',
+                    PaymentProperties.FUNDER: 'Funder A',
                 }),
             _create_case(
                 cls.factory,
@@ -469,6 +470,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
                     PaymentProperties.CAMPAIGN: 'Campaign A',
                     PaymentProperties.ACTIVITY: 'Activity A',
+                    PaymentProperties.FUNDER: 'Funder A',
                 }),
             _create_case(
                 cls.factory,
@@ -477,6 +479,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.CAMPAIGN: 'Campaign B',
                     PaymentProperties.ACTIVITY: 'Activity B',
+                    PaymentProperties.FUNDER: 'Funder B',
                 }),
             _create_case(
                 cls.factory,
@@ -545,6 +548,12 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_activity_filter(self):
         response = self._make_request(querystring='activity=Activity A')
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_funder_filter(self):
+        response = self._make_request(querystring='funder=Funder A')
         queryset = response.context['table'].data
         assert len(queryset) == 2
 

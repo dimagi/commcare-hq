@@ -68,3 +68,18 @@ class ActivityFilter(BaseSingleOptionFilter):
             PaymentProperties.ACTIVITY,
         )
         return [(value, value) for value in sorted(values)]
+
+
+class FunderFilter(BaseSingleOptionFilter):
+    slug = 'funder'
+    label = _('Funder')
+    default_text = _('Show all')
+
+    @property
+    def options(self):
+        values = get_case_property_unique_values(
+            self.domain,
+            MOMO_PAYMENT_CASE_TYPE,
+            PaymentProperties.FUNDER,
+        )
+        return [(value, value) for value in sorted(values)]
