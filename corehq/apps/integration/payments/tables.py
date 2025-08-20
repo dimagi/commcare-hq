@@ -21,6 +21,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'payment_status',
         'payment_timestamp',
         'kyc_status',
+        'campaign',
+        'activity',
+        'funder',
     ]
 
     record_class = CaseSearchElasticRecord
