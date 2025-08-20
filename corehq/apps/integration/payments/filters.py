@@ -1,6 +1,8 @@
 from django.utils.translation import gettext as _
 
-from corehq.apps.integration.payments.const import PaymentStatus
+from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
+from corehq.apps.es.case_search import get_case_property_unique_values
+from corehq.apps.integration.payments.const import PaymentStatus, PaymentProperties
 from corehq.apps.integration.payments.services import (
     get_payment_batch_numbers_for_domain,
 )
@@ -36,3 +38,18 @@ class PaymentStatusFilter(BaseSingleOptionFilter):
 
 class PaymentCaseListFilter(CaseListFilter):
     default_selections = [("all_data", _("[All Data]"))]
+
+
+class CampaignFilter(BaseSingleOptionFilter):
+    slug = 'campaign'
+    label = _('Campaign')
+    default_text = _('Show all')
+
+    @property
+    def options(self):
+        values = get_case_property_unique_values(
+            self.domain,
+            MOMO_PAYMENT_CASE_TYPE,
+            PaymentProperties.CAMPAIGN,
+        )
+        return [(value, value) for value in sorted(values)]

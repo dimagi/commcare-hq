@@ -55,6 +55,7 @@ class PaymentsFiltersMixin:
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
         'corehq.apps.integration.payments.filters.PaymentStatusFilter',
+        'corehq.apps.integration.payments.filters.CampaignFilter',
     ]
 
     def filters_context(self):
@@ -199,6 +200,10 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
                 ))
             else:
                 query_filters.append(case_property_query(PaymentProperties.PAYMENT_STATUS, payment_status))
+
+        if campaign := self.request.GET.get('campaign'):
+            query_filters.append(case_property_query(PaymentProperties.CAMPAIGN, campaign))
+
         if query_filters:
             query = query.filter(filters.AND(*query_filters))
 

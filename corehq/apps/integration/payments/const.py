@@ -19,6 +19,7 @@ class PaymentProperties(str, Enum):
     EMAIL = 'email'
     PHONE_NUMBER = 'phone_number'
     BATCH_NUMBER = 'batch_number'
+    CAMPAIGN = 'campaign'
     PAYMENT_ERROR = 'payment_error'
 
 
