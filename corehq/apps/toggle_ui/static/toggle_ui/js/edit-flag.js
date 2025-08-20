@@ -8,6 +8,7 @@ import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // save button
 
 var PAD_CHAR = '&nbsp;';
 function toggleViewModel() {
+    // Represents the entire page
     var self = {};
     self.items = ko.observableArray();
     self.randomness = ko.observable();
@@ -32,12 +33,12 @@ function toggleViewModel() {
                 var fields = item.split(':'),
                     namespace = fields.length > 1 ? fields[0] : 'user',
                     value = fields.length > 1 ? fields[1] : fields[0];
-                return {
-                    namespace: ko.observable(self.padded_ns[namespace]),
-                    value: ko.observable(value),
-                    last_used: ko.observable(lastUsed[value]),
-                    service_type: ko.observable(serviceType[value]),
-                };
+                return toggleItem(
+                    self.padded_ns[namespace],
+                    value,
+                    lastUsed[value],
+                    serviceType[value],
+                );
             });
         self.items(_.sortBy(items, function (item) {
             return [item.last_used(), item.value()];
@@ -45,12 +46,7 @@ function toggleViewModel() {
     };
 
     self.addItem = function (namespace) {
-        self.items.push({
-            namespace: ko.observable(self.padded_ns[namespace]),
-            value: ko.observable(),
-            last_used: ko.observable(),
-            service_type: ko.observable(),
-        });
+        self.items.push(toggleItem(self.padded_ns[namespace]));
         self.change();
     };
 
@@ -99,16 +95,32 @@ function toggleViewModel() {
     self.saveButtonTop = self.createSaveButton();
     self.saveButtonBottom = self.createSaveButton();
 
-    self.getNamespaceHtml = function (namespace, value) {
+    return self;
+}
+
+
+// eslint-disable-next-line camelcase
+function toggleItem(namespace, value, last_used, service_type) {
+    // Represents an individual item; a domain or user
+    var self = {};
+    self.namespace = ko.observable(namespace);
+    self.value = ko.observable(value);
+    self.last_used = ko.observable(last_used);
+    self.service_type = ko.observable(service_type);
+
+
+    self.namespaceHtml = ko.computed(function () {
+        value = self.value();
         if (value && value[0] === '!') {
             value = value.replace(/^!/, '');
         }
-        if (namespace === 'domain') {
-            return '<a href="' + initialPageData.reverse('domain_internal_settings', value) + '">domain <i class="fa fa-external-link"></i></a>';
+        if (self.namespace() === 'domain') {
+            const url = initialPageData.reverse('domain_internal_settings', value);
+            return '<a href="' + url + '">domain <i class="fa fa-external-link"></i></a>';
         } else {
-            return "<i class='fa fa-user'></i> " + namespace;
+            return "<i class='fa fa-user'></i> " + self.namespace();
         }
-    };
+    });
 
     return self;
 }
