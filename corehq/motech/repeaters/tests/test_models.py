@@ -14,12 +14,14 @@ from django.utils import timezone
 import pytest
 from dateutil.parser import isoparse
 from time_machine import travel
+from unmagic import fixture, use
 
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.util.test_utils import _create_case, flag_enabled
 
 from ..const import (
+    COMMCARE_CONNECT_URL,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     RECORD_QUEUED_STATES,
@@ -32,6 +34,7 @@ from ..models import (
     Repeater,
     RepeatRecord,
     format_response,
+    forwards_to_commcare_connect,
     get_all_repeater_types,
     is_response,
     is_success_response,
@@ -1064,3 +1067,39 @@ class TestDataSourceUpdateManager(TestCase):
     def test_get_oldest_date_none(self):
         oldest_date = DataSourceUpdate.objects.get_oldest_date()
         assert oldest_date is None
+
+
+@use('db')
+@fixture
+def connect_conn_fixture():
+    url = COMMCARE_CONNECT_URL
+    conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+    try:
+        yield conn
+    finally:
+        conn.delete()
+
+
+@use(connect_conn_fixture)
+def test_forwards_to_connect():
+    conn = connect_conn_fixture()
+    repeater = FormRepeater(domain=DOMAIN, connection_settings_id=conn.id)
+    assert forwards_to_commcare_connect(repeater)
+
+
+@use('db')
+@fixture
+def other_conn_fixture():
+    url = 'https://example.com/api/'
+    conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+    try:
+        yield conn
+    finally:
+        conn.delete()
+
+
+@use(other_conn_fixture)
+def test_doesnt_forward_to_connect():
+    conn = other_conn_fixture()
+    repeater = FormRepeater(domain=DOMAIN, connection_settings_id=conn.id)
+    assert not forwards_to_commcare_connect(repeater)
