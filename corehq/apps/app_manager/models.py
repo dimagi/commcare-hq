@@ -6329,6 +6329,15 @@ class CredentialApplication(models.Model):
         NINE_MONTHS = '9MON_ACTIVE', _('9 Months')
         TWELVE_MONTHS = '12MON_ACTIVE', _('12 Months')
 
+    ACTIVITY_LEVEL_TO_MONTHS = {
+        ActivityLevelChoices.ONE_MONTH: 1,
+        ActivityLevelChoices.TWO_MONTHS: 2,
+        ActivityLevelChoices.THREE_MONTHS: 3,
+        ActivityLevelChoices.SIX_MONTHS: 6,
+        ActivityLevelChoices.NINE_MONTHS: 9,
+        ActivityLevelChoices.TWELVE_MONTHS: 12,
+    }
+
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
     activity_level = models.CharField(
@@ -6337,6 +6346,10 @@ class CredentialApplication(models.Model):
         null=True,
         blank=True,
     )
+
+    @classmethod
+    def months_for_activity_level(cls, activity_level):
+        return cls.ACTIVITY_LEVEL_TO_MONTHS.get(activity_level)
 
     class Meta:
         unique_together = ('domain', 'app_id')
