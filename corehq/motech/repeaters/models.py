@@ -127,6 +127,7 @@ from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 from .const import (
+    COMMCARE_CONNECT_URL,
     ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
@@ -1670,3 +1671,10 @@ def domain_can_forward_now(domain):
         domain_can_forward(domain)
         and not toggles.PAUSE_DATA_FORWARDING.enabled(domain)
     )
+
+
+def forwards_to_commcare_connect(repeater):
+    return ConnectionSettings.objects.filter(
+        id=repeater.connection_settings_id,
+        url=COMMCARE_CONNECT_URL,
+    ).exists()
