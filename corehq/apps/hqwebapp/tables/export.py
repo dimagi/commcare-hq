@@ -116,15 +116,6 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
 
     def trigger_export(self, recipient_list=None, subject=None):
         self._validate_export_dependencies()
-        return self._trigger_async_export(recipient_list, subject)
-
-    def _validate_export_dependencies(self):
-        if not getattr(self, 'request', None):
-            raise ImproperlyConfigured("TableExportMixin requires `self.request`.")
-        if not getattr(self, 'table_class', None):
-            raise ImproperlyConfigured("TableExportMixin requires `self.table_class`.")
-
-    def _trigger_async_export(self, recipient_list, subject):
         export_all_rows_task.delay(
             class_path=f"{self.__class__.__module__}.{self.__class__.__name__}",
             export_context=self._get_export_context(),
@@ -132,6 +123,12 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
             subject=subject,
         )
         return HttpResponse(_("Export is being generated. You will receive an email when it is ready."))
+
+    def _validate_export_dependencies(self):
+        if not getattr(self, 'request', None):
+            raise ImproperlyConfigured("TableExportMixin requires `self.request`.")
+        if not getattr(self, 'table_class', None):
+            raise ImproperlyConfigured("TableExportMixin requires `self.table_class`.")
 
     def _get_export_context(self):
         """Returns context needed to reconstruct the view for async export"""
