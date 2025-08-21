@@ -159,7 +159,6 @@ msgid "Billed Monthly"
 msgstr "Inalipiwa kila mwezi"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "Tafadhali ingiza barua pepe halali."
 
@@ -3614,6 +3613,16 @@ msgstr " na <%- group_count %> makundi"
 #: corehq/apps/users/static/users/js/filtered_download.js
 msgid "Error determining number of matching users"
 msgstr "Hitilafu katika kubaini idadi ya watumiaji wanaolingana"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Unavailable"
+msgstr "Haipatikani"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#, fuzzy
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "Siku <%- days %> zimebaki"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."

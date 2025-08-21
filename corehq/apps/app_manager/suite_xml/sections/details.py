@@ -126,7 +126,6 @@ class DetailContributor(SectionContributor):
                             title,
                             tabs=list(detail.get_tabs()),
                             id=detail_id,
-                            print_template=detail.print_template['path'] if detail.print_template else None,
                         )
                         if d:
                             elements.append(d)
@@ -152,13 +151,13 @@ class DetailContributor(SectionContributor):
         return elements
 
     def build_detail(self, module, detail_type, detail, detail_column_infos, title, tabs=None, id=None,
-                     nodeset=None, print_template=None, start=0, end=None, relevant=None):
+                     nodeset=None, start=0, end=None, relevant=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template, relevant=relevant)
+        d = Detail(id=id, title=title, nodeset=nodeset, relevant=relevant)
         if (detail_type == 'case_short' or detail_type == 'search_short') \
                 and hasattr(module, 'lazy_load_case_list_fields') and module.lazy_load_case_list_fields:
             d.lazy_loading = module.lazy_load_case_list_fields

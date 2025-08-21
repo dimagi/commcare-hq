@@ -36,8 +36,6 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 
-from corehq.util.test_utils import flag_enabled
-
 
 @es_test(requires=[user_adapter], setup_class=True)
 class AllCommCareUsersTest(TestCase):
@@ -154,7 +152,7 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='inactive_user_email@example.com',
         )
-        cls.ccuser_inactive.is_active = False
+        cls.ccuser_inactive.set_is_active(cls.ccdomain.name, False)
         cls.ccuser_inactive.save()
         cls.ccuser_inactive.set_location(cls.loc2)
 
@@ -387,38 +385,6 @@ class AllCommCareUsersTest(TestCase):
             self.assertTrue(id in all_ids)
 
     def test_get_all_user_rows_no_inactive(self):
-        all_rows = get_all_user_rows(self.ccdomain.name, include_inactive=False)
-        all_ids = [row['id'] for row in all_rows]
-        self.assertEqual(5, len(all_ids))
-        user_ids = [
-            self.ccuser_1._id,
-            self.ccuser_2._id,
-            self.web_user._id,
-            self.location_restricted_web_user._id,
-            self.web_user_inactive_domain._id
-        ]
-        for id in user_ids:
-            self.assertTrue(id in all_ids)
-
-    @flag_enabled('DEACTIVATE_WEB_USERS')
-    def test_get_all_user_rows_FF(self):
-        all_rows = get_all_user_rows(self.ccdomain.name)
-        all_ids = [row['id'] for row in all_rows]
-        self.assertEqual(7, len(all_ids))
-        user_ids = [
-            self.ccuser_1._id,
-            self.ccuser_2._id,
-            self.web_user._id,
-            self.ccuser_inactive._id,
-            self.location_restricted_web_user._id,
-            self.web_user_inactive_sso._id,
-            self.web_user_inactive_domain._id
-        ]
-        for id in user_ids:
-            self.assertTrue(id in all_ids)
-
-    @flag_enabled('DEACTIVATE_WEB_USERS')
-    def test_get_all_user_rows_no_inactive_FF(self):
         all_rows = get_all_user_rows(self.ccdomain.name, include_inactive=False)
         all_ids = [row['id'] for row in all_rows]
         self.assertEqual(4, len(all_ids))

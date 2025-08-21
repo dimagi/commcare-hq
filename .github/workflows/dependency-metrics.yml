@@ -2,6 +2,7 @@ name: commcare-hq dependency metrics
 on:
   schedule:
   - cron: "0 0 * * *"
+  workflow_dispatch:
 
 jobs:
   collect-metrics:
@@ -11,7 +12,7 @@ jobs:
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
@@ -19,8 +20,6 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: '0.7.2'
-      - name: install libxml
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxmlsec1-dev
       - name: install dev-requirements
         run: uv sync --all-groups --locked --compile-bytecode --no-progress
       - name: run metrics for pip

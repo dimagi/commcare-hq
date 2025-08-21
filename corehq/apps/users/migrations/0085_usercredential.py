@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0083_reset_ccu_dm_is_active'),
+        ('users', '0084_remove_hqapikey_key'),
     ]
 
     operations = [

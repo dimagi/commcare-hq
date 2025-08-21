@@ -56,8 +56,8 @@ msgstr "Назва облікового запису"
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/enterprise/filters.py corehq/apps/enterprise/interface.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/filters.py
+#: corehq/apps/enterprise/interface.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/smsbillables/filters.py
 msgid "Project Space"
@@ -1084,6 +1084,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -4612,6 +4613,7 @@ msgstr "Додані користувачі:"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -4720,8 +4722,7 @@ msgstr "Професійна електронна пошта"
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
-#: corehq/apps/dashboard/views.py corehq/apps/domain/forms.py
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Organization"
 msgstr "Організація"
 
@@ -5092,6 +5093,7 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/edit_commcare_user.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
 #: corehq/motech/generic_inbound/views.py
@@ -6221,6 +6223,10 @@ msgid "1.5"
 msgstr "1.5"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "10 Meters"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "10"
 msgstr "10"
 
@@ -6250,6 +6256,10 @@ msgid "2.x"
 msgstr "2.x"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "20 Meters"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "20"
 msgstr "20"
 
@@ -6266,12 +6276,20 @@ msgid "4 hours"
 msgstr "4 години"
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "40 Meters"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "40"
 msgstr "40"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "5 Days"
 msgstr "5 днів"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid "5 Meters"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "5"
@@ -6284,6 +6302,10 @@ msgstr "6 годин"
 #: corehq/apps/app_manager/static_strings.py
 msgid "8 hours"
 msgstr "8 годин"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid "80 Meters"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "80"
@@ -6369,6 +6391,12 @@ msgstr "Версія додатка"
 #: corehq/apps/app_manager/static_strings.py corehq/apps/hqmedia/models.py
 msgid "Audio"
 msgstr "Аудіо"
+
+#: corehq/apps/app_manager/static_strings.py
+#, fuzzy
+#| msgid "Auto Capture Location"
+msgid "Auto-Capture Location Accuracy"
+msgstr "Автоматичне визначення місцезнаходження"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Auto Capture Location<br />(all forms)"
@@ -6528,8 +6556,8 @@ msgstr "Демонстраційний логотип"
 msgid "Disable"
 msgstr "Вимкнути"
 
-#: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/app_manager/static_strings.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/sms/forms.py corehq/messaging/scheduling/forms.py
 msgid "Disabled"
 msgstr "Вимкнено"
 
@@ -6559,8 +6587,8 @@ msgstr "Увімкнути налаштування відображення м�
 msgid "Enable"
 msgstr "Увімкнути"
 
-#: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/app_manager/static_strings.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/sms/forms.py corehq/messaging/scheduling/forms.py
 msgid "Enabled"
 msgstr "Увімкнено"
 
@@ -7026,6 +7054,12 @@ msgstr "Текстове поле"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Text"
 msgstr "Текст"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"The target accuracy of auto-captured GPS in meters. Once a reading meets "
+"this accuracy, it will be captured and the form will stop polling the GPS"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
@@ -11532,36 +11566,6 @@ msgstr ""
 "commcarepublic/Tabs+on+Case+Detail+Screen' target='_blank'>довідковому "
 "сайті</a>."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing"
-msgstr "Друк"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Document Template"
-msgstr "Шаблон документа"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Opens file in new tab."
-msgstr "Відкриває файл у новій вкладці."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "Open HTML"
-msgstr "Відкрити HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Upload HTML"
-msgstr "Завантажити HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Replace HTML"
-msgstr "Замінити HTML"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-msgid "Printing the case detail is not supported on this version of CommCare"
-msgstr "Друк деталей справи не підтримується у цій версії CommCare"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Custom Case List XML"
 msgstr "Користувацький XML списку справ"
@@ -12073,10 +12077,6 @@ msgstr "Користувацький XML списку справ"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Case tile configuration"
 msgstr "Конфігурація плитки справи"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
-msgid "Print template"
-msgstr "Шаблон для друку"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 msgid "Search properties"
@@ -13228,6 +13228,7 @@ msgid "Time"
 msgstr "Час"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid "Info"
 msgstr "Інформація"
 
@@ -15078,6 +15079,7 @@ msgstr "Ви впевнені, що хочете видалити цей від�
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/bootstrap5/notification_unsubscribe.html
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -16561,10 +16563,6 @@ msgid "List is empty."
 msgstr "Список порожній."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
-msgid "Hide Map"
-msgstr "Сховати карту"
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
 msgid "Refine search"
 msgstr "Уточнити пошук"
 
@@ -16577,6 +16575,16 @@ msgstr "Вибрати все"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 msgid "Sort By"
 msgstr "Сортувати за"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+msgid "Hide Map"
+msgstr "Сховати карту"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
+#, fuzzy
+#| msgid "Show all"
+msgid "Show Map"
+msgstr "Показати всі"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
 msgid "Expand Data Preview Section."
@@ -17854,7 +17862,9 @@ msgstr ""
 "'відсутній'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-msgid "Data type '{}' cannot have match type '{}'."
+#, fuzzy
+#| msgid "Data type '{}' cannot have match type '{}'."
+msgid "The selected data type cannot have the selected match type."
 msgstr "Тип даних '{}' не може мати тип співпадіння '{}'."
 
 #: corehq/apps/data_cleaning/forms/start_session.py
@@ -21965,48 +21975,6 @@ msgid "Renew Plan"
 msgstr "Поновити тарифний план"
 
 #: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Email To"
-msgstr "Email для"
-
-#: corehq/apps/domain/forms.py
-msgid "Estimated annual expenditures on airtime:"
-msgstr "Орієнтовні річні витрати на ефірний час:"
-
-#: corehq/apps/domain/forms.py
-msgid "Estimated annual expenditures on devices:"
-msgstr "Орієнтовні річні витрати на пристрої:"
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"We grant pro-bono subscriptions to match the duration of your project, up to "
-"a maximum of 12 months at a time (at which point you need to reapply)."
-msgstr ""
-"Ми надаємо про-боно підписки на період, що відповідає тривалості вашого "
-"проєкту, максимум до 12 місяців за один раз (після чого потрібно подати нову "
-"заявку)."
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"If you have already been in touch with someone from Dimagi, please list "
-"their name."
-msgstr ""
-"Якщо ви вже спілкувалися з кимось із Dimagi, будь ласка, вкажіть їхнє ім'я."
-
-#: corehq/apps/domain/forms.py
-msgid "Number of expected users"
-msgstr "Очікувана кількість користувачів"
-
-#: corehq/apps/domain/forms.py corehq/apps/domain/views/pro_bono.py
-msgid "Pro-Bono Application"
-msgstr "Заявка на про-боно"
-
-#: corehq/apps/domain/forms.py
-msgid "Submit Pro-Bono Application"
-msgstr "Подати заявку на про-боно"
-
-#: corehq/apps/domain/forms.py
 msgid "Test or Demo Project"
 msgstr "Тестовий або демонстраційний проєкт"
 
@@ -22659,6 +22627,34 @@ msgstr "Назва функції"
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "More information"
 msgstr "Детальніше"
+
+#: corehq/apps/domain/templates/domain/admin/flags_and_privileges.html
+#, fuzzy
+#| msgid "No Permission."
+msgid "No Permission!"
+msgstr "Немає дозволу."
+
+#: corehq/apps/domain/templates/domain/admin/flags_and_privileges.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-"
+#| "On.\n"
+#| "                If this is in error, please contact your project's "
+#| "administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"                      You do not have permission to modify this flag. "
+"Please\n"
+"                      contact support if any changes are needed.\n"
+"                    "
+msgstr ""
+"\n"
+"                У вас немає дозволу на вхід через єдиний вхід (SSO).\n"
+"                Якщо це помилка, будь ласка, зверніться до адміністратора "
+"вашого проєкту.\n"
+"              "
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
 msgid "SMS Pricing"
@@ -23551,6 +23547,7 @@ msgstr "Зведення використання"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/select.py
 msgid "Feature"
 msgstr "Функція"
 
@@ -24744,6 +24741,11 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Email To"
+msgstr "Email для"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 #: corehq/apps/reports/forms.py
 msgid "Additional Recipients"
 msgstr "Додаткові одержувачі"
@@ -25038,13 +25040,6 @@ msgstr ""
 msgid "This will not copy lookup tables (aka fixtures)."
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
-#: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
-msgid ""
-"Thank you for your submission.  A representative will be in contact with you "
-"shortly."
-msgstr "Дякуємо за вашу заявку. Незабаром з вами зв'яжеться представник."
-
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
 msgstr "Деталі помилки"
@@ -25083,10 +25078,17 @@ msgstr "Скидання пароля не вдалося"
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        The password reset link was invalid, possibly because\n"
+#| "        it has already been used.\n"
+#| "      "
 msgid ""
 "\n"
-"        The password reset link was invalid, possibly because\n"
-"        it has already been used.\n"
+"        The password reset link was invalid, possibly because it has "
+"already\n"
+"        been used.\n"
 "      "
 msgstr ""
 "\n"
@@ -25300,19 +25302,12 @@ msgstr "Згенерувати токени"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "        %(entity_string)s Property\n"
-#| "      "
+#, python-format
 msgid ""
 "\n"
 "        %(server_location)s Server\n"
 "      "
 msgstr ""
-"\n"
-"        Властивість %(entity_string)s\n"
-"      "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
@@ -29505,6 +29500,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
 msgid "View"
 msgstr "Переглянути"
@@ -32413,6 +32409,54 @@ msgstr "Обмеження на перебудову не потрібне"
 msgid "UCR Domains Data Report"
 msgstr "Звіт даних доменів UCR"
 
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Status Report"
+msgstr "Попередній перегляд функцій"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled By"
+msgstr "Увімкнено"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Enabled At"
+msgstr "Увімкнено"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Not Checked"
+msgid "Not recorded"
+msgstr "Не перевірено"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Audit Report"
+msgstr "Попередній перегляд функцій"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Shared By"
+msgid "Changed By"
+msgstr "Поділився"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Changes to"
+msgid "Changed At"
+msgstr "Зміни в"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Update Information"
+msgid "Update Randomness"
+msgstr "Оновити інформацію"
+
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "Доменне ім'я"
@@ -32513,6 +32557,12 @@ msgid "Accounting Admin"
 msgstr "Адміністратор бухгалтерії"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#, fuzzy
+#| msgid "Contact"
+msgid "Is Contractor"
+msgstr "Контакт"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid "Two Factor Enabled"
 msgstr "Двофакторна автентифікація увімкнена"
@@ -32558,6 +32608,12 @@ msgstr "Всі суперкористувачі та користувачі пе
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid "Can assign Superuser"
 msgstr "Може призначати суперкористувача"
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#, fuzzy
+#| msgid "Feature Flags and Privileges"
+msgid "Feature Flag Edit Permissions"
+msgstr "Функціональні прапорці та привілеї"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -32762,10 +32818,6 @@ msgstr "аудіо"
 #: corehq/apps/hqmedia/controller.py
 msgid "video"
 msgstr "відео"
-
-#: corehq/apps/hqmedia/controller.py
-msgid "text"
-msgstr "текст"
 
 #: corehq/apps/hqmedia/models.py
 msgid "Generic Multimedia"
@@ -33225,10 +33277,6 @@ msgstr "Знайдено помилки"
 msgid "New Audio Uploaded Successfully"
 msgstr "Нове аудіо успішно завантажено"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_html_single.html
-msgid "New Template Uploaded Successfully"
-msgstr "Новий шаблон успішно завантажено"
-
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
 msgid "View Full Size"
 msgstr "Переглянути у повному розмірі"
@@ -33606,45 +33654,162 @@ msgid "Submit Report"
 msgstr "Надіслати звіт"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-msgid "Cookies Required for CSRF"
-msgstr "Для CSRF потрібні cookies"
+#, fuzzy
+#| msgid "Can be disabled"
+msgid "Cookies are disabled!"
+msgstr "Може бути вимкнено"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-msgid "Cookies must be enabled to use CommCare"
-msgstr "Для використання CommCare необхідно увімкнути cookies"
+msgid "Someone ate the cookies."
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
 msgid ""
 "\n"
-"    <p>\n"
-"      Please try refreshing your browser or clicking the blue \"flower\" "
-"icon in the top left hand corner.\n"
-"    </p>\n"
-"    <p>\n"
-"      No luck? Please clear your browser’s cache, close your browser, and "
-"reopen your browser.\n"
-"    </p>\n"
-"    <p>\n"
-"      If you believe you received this error as a mistake, please contact <a "
-"href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
-"    </p>\n"
-"  "
+"          Oops! Looks like Cookies are disabled!\n"
+"        "
 msgstr ""
 "\n"
-"    <p>\n"
-"      Будь ласка, спробуйте оновити браузер або натисніть на синю іконку "
-"\"квітки\" у верхньому лівому куті.\n"
-"    </p>\n"
-"    <p>\n"
-"      Не допомогло? Будь ласка, очистіть кеш браузера, закрийте браузер і "
-"відкрийте його знову.\n"
-"    </p>\n"
-"    <p>\n"
-"      Якщо ви вважаєте, що отримали цю помилку помилково, зверніться до <a "
-"href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
-"    </p>\n"
-"  "
+"          Завантажити таблиці підстановки\n"
+"        "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          If you would like to undelete it you can do so below.\n"
+#| "        "
+msgid ""
+"\n"
+"          No worries! Here's how you can fix it:\n"
+"        "
+msgstr ""
+"\n"
+"          Якщо ви хочете відновити її, ви можете зробити це нижче.\n"
+"        "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid ""
+"\n"
+"            Try\n"
+"            <a\n"
+"              href=\"#\"\n"
+"              x-data=\"\"\n"
+"              @click.prevent=\"window.location.reload()\"\n"
+"              class=\"fw-bold\"\n"
+"            >refreshing</a> the page.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This is a <i class=\"fcc fcc-app-createform\"></i> Registration "
+#| "Form.\n"
+#| "      "
+msgid ""
+"\n"
+"            Click on the CommCare icon <i class=\"fcc fcc-flower\"></i> in "
+"the top left corner.\n"
+"          "
+msgstr ""
+"\n"
+"        Це <i class=\"fcc fcc-app-createform\"></i> реєстраційна форма.\n"
+"      "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid ""
+"\n"
+"            If that doesn't work, clear your browser's cache, then close and "
+"reopen your browser.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid "Need help?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"            Check out our step-by-step\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143950826/Troubleshooting+Support\"\n"
+"              class=\"fw-bold\"\n"
+"              target=\"_blank\"\n"
+"            >troubleshooting guide</a> with screenshots and quick tips.\n"
+"          "
+msgstr ""
+"\n"
+"                Дізнайтеся більше про експорти на нашому <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">Довідковому сайті</a>.\n"
+"            "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+msgid "Still having trouble?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            What happens after you pause?\n"
+#| "          "
+msgid ""
+"\n"
+"            We are happy to assist!\n"
+"          "
+msgstr ""
+"\n"
+"            Що відбувається після призупинення?\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/csrf_failure.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              If this problem persists, we encourage you to\n"
+#| "              <a\n"
+#| "                href=\"#modalReportIssue\"\n"
+#| "                data-bs-target=\"#modalReportIssue\"\n"
+#| "                data-bs-toggle=\"modal\"\n"
+#| "              >Report an Issue</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"            Email us at\n"
+"            <a\n"
+"              href=\"mailto:%(support_email)s\"\n"
+"              class=\"fw-bold\"\n"
+"              target=\"_blank\"\n"
+"            >%(support_email)s</a>.\n"
+"          "
+msgstr ""
+"\n"
+"              Якщо ця проблема зберігається, радимо вам\n"
+"              <a\n"
+"                href=\\\"#modalReportIssue\\\"\n"
+"                data-bs-target=\\\"#modalReportIssue\\\"\n"
+"                data-bs-toggle=\\\"modal\\\"\n"
+"              >Повідомити про проблему</a>.\n"
+"            "
 
 #: corehq/apps/hqwebapp/templates/error_base.html
 msgid ""
@@ -33998,6 +34163,7 @@ msgstr "Мої налаштування облікового запису"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 msgid "Sign Out"
 msgstr "Вийти"
 
@@ -35569,6 +35735,10 @@ msgid "Payment request failed"
 msgstr "Запит на платіж не виконано"
 
 #: corehq/apps/integration/payments/services.py
+msgid "Only payments in '{}' or '{}' state are eligible for verification."
+msgstr ""
+
+#: corehq/apps/integration/payments/services.py
 msgid "Invalid payee details"
 msgstr "Недійсні дані отримувача"
 
@@ -35579,6 +35749,10 @@ msgstr "Платіж не було перевірено"
 #: corehq/apps/integration/payments/services.py
 msgid "Payment has already been requested"
 msgstr "Платіж вже було запрошено"
+
+#: corehq/apps/integration/payments/services.py
+msgid "Only payments in the '{}' state are eligible for verification reversal."
+msgstr ""
 
 #: corehq/apps/integration/payments/tables.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -35635,6 +35809,36 @@ msgstr "Недоступно"
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
 msgid "Payments Verification Report"
 msgstr "Звіт про перевірку платежів"
+
+#: corehq/apps/integration/payments/views.py
+msgid "One or more case IDs are required for verification."
+msgstr ""
+
+#: corehq/apps/integration/payments/views.py
+#, fuzzy
+#| msgid "You can only have 3 alerts activated at any one time"
+msgid "You can only verify for up to {} cases at a time."
+msgstr "Одночасно можна активувати лише 3 сповіщення"
+
+#: corehq/apps/integration/payments/views.py
+msgid ""
+"Revert verification request is in progress for your project. Please try "
+"again after some time."
+msgstr ""
+
+#: corehq/apps/integration/payments/views.py
+msgid ""
+"Payment submissions are currently active for your project and should be "
+"completed shortly. Please try again later."
+msgstr ""
+
+#: corehq/apps/integration/payments/views.py
+msgid "One or more case IDs are required to revert verification."
+msgstr ""
+
+#: corehq/apps/integration/payments/views.py
+msgid "You can only revert verification for up to {} cases at a time."
+msgstr ""
 
 #: corehq/apps/integration/payments/views.py
 msgid "Payments Configuration"
@@ -35840,8 +36044,21 @@ msgid "Confirm Payments"
 msgstr "Підтвердити платежі"
 
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 msgid "Are you sure you want to proceed with the selected payments?"
 msgstr "Ви впевнені, що хочете продовжити з вибраними платежами?"
+
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_alert.html
+msgid ""
+"Successfully reverted verification for selected record(s). Updated status "
+"will reflect shortly."
+msgstr ""
+
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
+#, fuzzy
+#| msgid "Verification Pending"
+msgid "Revert Verification of Pending Payments"
+msgstr "Очікує на підтвердження"
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, fuzzy, python-format
@@ -35852,8 +36069,8 @@ msgstr "Ви впевнені, що хочете продовжити з виб�
 #| "    "
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s records for payments!\n"
-"      Verification status for these will be refreshed in a few seconds.\n"
+"      Successfully verified %(success_count)s records for payments! Updated\n"
+"      status will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
@@ -35890,6 +36107,12 @@ msgstr ""
 "сторінці\n"
 "        <a href=\"%(config_url)s\">Конфігурація платежів</a>.\n"
 "      "
+
+#: corehq/apps/integration/templates/payments/payments_verify_report.html
+#, fuzzy
+#| msgid "Phone Verification"
+msgid "Revert Verification"
+msgstr "Підтвердження телефону"
 
 #: corehq/apps/integration/views.py
 msgid "Biometric Integration"
@@ -40757,6 +40980,12 @@ msgstr "Статус запису"
 msgid "Rebuild restriction feature flag status"
 msgstr "Статус функції обмеження перебудови"
 
+#: corehq/apps/reports/filters/select.py
+#, fuzzy
+#| msgid "Select Status"
+msgid "Select Feature"
+msgstr "Оберіть статус"
+
 #: corehq/apps/reports/filters/simple.py
 #: corehq/motech/repeaters/views/repeat_records.py
 #: corehq/motech/templates/motech/log_detail.html corehq/motech/views.py
@@ -40791,6 +41020,30 @@ msgstr "Виберіть мобільного працівника"
 #, python-format
 msgid "%s & Others"
 msgstr "%s та інші"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "# Active Users"
+msgid "Active Web User"
+msgstr "# Активних користувачів"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Deactivated Web User"
+msgstr "Показати деактивованих мобільних працівників"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Active Mobile Workers"
+msgid "Active Mobile Worker"
+msgstr "Активні мобільні працівники"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Deactivated Mobile Workers"
+msgid "Deactivated Mobile Worker"
+msgstr "Деактивовані мобільні працівники"
 
 #: corehq/apps/reports/filters/users.py
 #, fuzzy
@@ -41066,6 +41319,12 @@ msgstr "Показати деактивованих мобільних прац�
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
 msgstr "Звіти про проєкт"
+
+#: corehq/apps/reports/standard/cases/basic.py
+msgid ""
+"Cannot filter by that many case owners. Choose a more specific group or "
+"location."
+msgstr ""
 
 #: corehq/apps/reports/standard/cases/basic.py
 #, fuzzy
@@ -43936,6 +44195,10 @@ msgstr "Жовтень"
 msgid "December"
 msgstr "Грудень"
 
+#: corehq/apps/saved_reports/models.py corehq/apps/users/models.py
+msgid "Unknown User"
+msgstr "Невідомий користувач"
+
 #: corehq/apps/saved_reports/models.py
 msgid "Deleted Report"
 msgstr "Видалений звіт"
@@ -44255,6 +44518,7 @@ msgid "Copy Full Key"
 msgstr "Скопіювати повний ключ"
 
 #: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Expired"
 msgstr "Термін дії минув"
@@ -46768,6 +47032,7 @@ msgstr "Запит єдиного входу не виконано"
 
 #: corehq/apps/sso/templates/sso/acs_errors.html
 #: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -47506,6 +47771,33 @@ msgstr ""
 "доступу.\n"
 "    "
 
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid "Single Sign-On"
+msgid "Single Sign-On Error"
+msgstr "Єдиний вхід (Single Sign-On)"
+
+#: corehq/apps/sso/templates/sso/sso_error.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Invitation link has expired.\n"
+#| "                  Contact your project administrator to send new invite.\n"
+#| "                "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your "
+"project's\n"
+"                SSO settings. Please contact your project administrator to "
+"resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                  Термін дії запрошення минув.\n"
+"                  Зверніться до адміністратора проєкту, щоб отримати нове "
+"запрошення.\n"
+"                "
+
 #: corehq/apps/sso/templates/sso/sso_request_denied.html
 msgid "Single Sign-On Request Denied"
 msgstr "Запит на єдиний вхід відхилено"
@@ -48181,10 +48473,17 @@ msgid "Please confirm with %(owner)s before using it."
 msgstr "Будь ласка, підтвердьте з %(owner)s перед використанням."
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          <strong>Please Note:</strong> This feature flag is available on "
+#| "this server environment, but not on others.\n"
+#| "        "
 msgid ""
 "\n"
 "          <strong>Please Note:</strong> This feature flag is available on "
-"this server environment, but not on others.\n"
+"this\n"
+"          server environment, but not on others.\n"
 "        "
 msgstr ""
 "\n"
@@ -48193,10 +48492,17 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          <strong>CAUTION:</strong> This feature flag is not available on "
+#| "the current server environment.\n"
+#| "        "
 msgid ""
 "\n"
 "          <strong>CAUTION:</strong> This feature flag is not available on "
-"the current server environment.\n"
+"the\n"
+"          current server environment.\n"
 "        "
 msgstr ""
 "\n"
@@ -48205,10 +48511,17 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag is <strong>always enabled</strong> for the "
+#| "following domains:\n"
+#| "      "
 msgid ""
 "\n"
 "        This feature flag is <strong>always enabled</strong> for the "
-"following domains:\n"
+"following\n"
+"        domains:\n"
 "      "
 msgstr ""
 "\n"
@@ -48217,10 +48530,17 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag is <strong>always disabled</strong> for the "
+#| "following domains:\n"
+#| "      "
 msgid ""
 "\n"
 "        This feature flag is <strong>always disabled</strong> for the "
-"following domains:\n"
+"following\n"
+"        domains:\n"
 "      "
 msgstr ""
 "\n"
@@ -48229,10 +48549,17 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        This feature flag also requires the following flags to be "
+#| "enabled:\n"
+#| "      "
 msgid ""
 "\n"
-"        This feature flag also requires the following flags to be enabled:\n"
-"      "
+"          This feature flag also requires the following flags to be "
+"enabled:\n"
+"        "
 msgstr ""
 "\n"
 "        Для цього прапорця функції також потрібно увімкнути наступні "
@@ -48240,11 +48567,18 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Enabling this feature flag will automatically enable the flags "
+#| "listed above.\n"
+#| "      "
 msgid ""
 "\n"
-"        Enabling this feature flag will automatically enable the flags "
-"listed above.\n"
-"      "
+"          Enabling this feature flag will automatically enable the flags "
+"listed\n"
+"          above.\n"
+"        "
 msgstr ""
 "\n"
 "        Увімкнення цього прапорця функції автоматично увімкне перелічені "
@@ -48256,6 +48590,34 @@ msgid "Randomness ranges from 0-1.<br/>0=disabled for all<br/>1=enable for all"
 msgstr ""
 "Випадковість варіюється від 0 до 1.<br/>0=вимкнено для всіх<br/>1=увімкнено "
 "для всіх"
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid "Why can't I see any data?"
+msgid "Why can't I edit?"
+msgstr "Чому я не бачу жодних даних?"
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-"
+#| "On.\n"
+#| "                If this is in error, please contact your project's "
+#| "administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"              You do not have permission to modify this flag. Please "
+"contact\n"
+"              support if any changes are needed.\n"
+"            "
+msgstr ""
+"\n"
+"                У вас немає дозволу на вхід через єдиний вхід (SSO).\n"
+"                Якщо це помилка, будь ласка, зверніться до адміністратора "
+"вашого проєкту.\n"
+"              "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "Enabled toggle items"
@@ -51400,9 +51762,14 @@ msgid "Require Account Confirmation?"
 msgstr "Потрібне підтвердження облікового запису?"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid ""
+#| "The user's account will not be active until they have confirmed their "
+#| "email and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
-"and set a password."
+"and set a password. This requires that the mobile worker has access to an "
+"email address."
 msgstr ""
 "Обліковий запис користувача не буде активним, доки не буде підтверджено "
 "електронну пошту та встановлено пароль."
@@ -51610,10 +51977,6 @@ msgstr "Сторінку приземлення з ID '{}' не знайдено
 #, python-brace-format
 msgid "No landing page found with id {page_id}"
 msgstr "Сторінку приземлення з id {page_id} не знайдено"
-
-#: corehq/apps/users/models.py
-msgid "Unknown User"
-msgstr "Невідомий користувач"
 
 #: corehq/apps/users/models.py
 msgid "Dimagi User"
@@ -51937,6 +52300,36 @@ msgstr ""
 "\n"
 "  "
 
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy
+#| msgid "Account Credit"
+msgid "Account Confirmed"
+msgstr "Кредит акаунта"
+
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy
+#| msgid "You can now login"
+msgid "You can now log into the mobile app."
+msgstr "Тепер ви можете увійти"
+
+#: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Case List has blank filter in\n"
+#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "                "
+msgid ""
+"\n"
+"                To log into CommCare HQ on the web, click\n"
+"                <a href=\"%(login_url)s\">here</a>.\n"
+"              "
+msgstr ""
+"\n"
+"                  Список випадків має порожній фільтр у\n"
+"                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                "
+
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #, python-format
 msgid "Confirm your account to join the %(domain_name)s project"
@@ -51948,11 +52341,15 @@ msgid "You are already signed in."
 msgstr "Ви вже увійшли в систему."
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  To accept this invitation, you must first <a "
+#| "href=\"%(sign_out_url)s\">sign out</a>.\n"
+#| "                "
 msgid ""
 "\n"
-"                  To accept this invitation, you must first <a "
-"href=\"%(sign_out_url)s\">sign out</a>.\n"
+"                  To accept this invitation, you must first sign out.\n"
 "                "
 msgstr ""
 "\n"
@@ -52980,14 +53377,6 @@ msgid "Reactivate"
 msgstr "Реактивувати"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Confirmation Email"
-msgstr "Надіслати лист-підтвердження"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Confirmation SMS"
-msgstr "Надіслати SMS-підтвердження"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Unlink PersonalID"
 msgstr ""
 
@@ -53087,99 +53476,6 @@ msgstr ""
 "                          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account "
-#| "confirmation\n"
-#| "                              email to this account?\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  Would you like to send the account\n"
-"                                  confirmation email to this account?\n"
-"                                "
-msgstr ""
-"\n"
-"                              Бажаєте надіслати лист-підтвердження на цю "
-"адресу?\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account "
-#| "confirmation\n"
-#| "                              SMS to this account?\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  Would you like to send the account\n"
-"                                  confirmation SMS to this account?\n"
-"                                "
-msgstr ""
-"\n"
-"                              Бажаєте надіслати SMS-підтвердження на цей "
-"номер?\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent an email with "
-#| "instructions to\n"
-#| "                              set a password and be able to login to this "
-#| "project.\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  The user will be sent an email with\n"
-"                                  instructions to set a password and be able "
-"to\n"
-"                                  login to this project.\n"
-"                                "
-msgstr ""
-"\n"
-"                              Користувач отримає лист з інструкціями щодо\n"
-"                              встановлення пароля та зможе увійти до цього "
-"проєкту.\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent a SMS with "
-#| "instructions to\n"
-#| "                              set a password and be able to login to this "
-#| "project.\n"
-#| "                            "
-msgid ""
-"\n"
-"                                  The user will be sent a SMS with "
-"instructions\n"
-"                                  to set a password and be able to login to "
-"this\n"
-"                                  project.\n"
-"                                "
-msgstr ""
-"\n"
-"                              Користувач отримає SMS з інструкціями щодо\n"
-"                              встановлення пароля та зможе увійти до цього "
-"проєкту.\n"
-"                            "
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Account Confirmaton Email"
-msgstr "Надіслати лист-підтвердження облікового запису"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Send Account Confirmaton SMS"
-msgstr "Надіслати SMS-підтвердження облікового запису"
-
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Loading Workers..."
 msgstr "Завантаження працівників..."
 
@@ -53209,6 +53505,212 @@ msgstr ""
 "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">повідомте "
 "про проблему</a>.\n"
 "          "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Pending Confirmation"
+msgid "Pending Account Confirmations"
+msgstr "Очікує підтвердження"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            No Mobile Workers were found that matched your query.\n"
+#| "          "
+msgid ""
+"\n"
+"            No pending account confirmations were found that matched your "
+"query.\n"
+"          "
+msgstr ""
+"\n"
+"            Мобільних працівників, що відповідають вашому запиту, не "
+"знайдено.\n"
+"          "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              <strong>There are no mobile workers visible to you at this "
+#| "time.</strong>\n"
+#| "              Please contact your project's administrator if this is "
+#| "incorrect.\n"
+#| "            "
+msgid ""
+"\n"
+"              <strong\n"
+"                >There are no pending account confirmations visible to you "
+"at\n"
+"                this time.</strong\n"
+"              >\n"
+"              Please contact your project's administrator if this is "
+"incorrect.\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>На даний момент вам не видно жодного мобільного "
+"працівника.</strong>\n"
+"              Якщо це помилка, зверніться до адміністратора вашого проєкту.\n"
+"            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  <strong>There are currently no mobile workers in this "
+#| "project.</strong>\n"
+#| "              "
+msgid ""
+"\n"
+"                <strong\n"
+"                  >There are currently no pending account confirmations in "
+"this\n"
+"                  project.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+"\n"
+"                  <strong>У цьому проєкті наразі немає мобільних працівників."
+"</strong>\n"
+"              "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>No mobile users are assigned to your user's "
+#| "location.</strong>\n"
+#| "              "
+msgid ""
+"\n"
+"                <strong\n"
+"                  >No users with pending account confirmations are assigned "
+"to\n"
+"                  your user's location.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+"\n"
+"                <strong>Жоден мобільний користувач не призначений для "
+"розташування вашого користувача.</strong>\n"
+"              "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "ending balance"
+msgid "Pending Since"
+msgstr "кінцевий баланс"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation SMS"
+msgstr "Надіслати SMS-підтвердження"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation Email"
+msgstr "Надіслати лист-підтвердження"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account "
+#| "confirmation\n"
+#| "                              SMS to this account?\n"
+#| "                            "
+msgid ""
+"\n"
+"                              Would you like to send the account "
+"confirmation\n"
+"                              SMS to this account?\n"
+"                            "
+msgstr ""
+"\n"
+"                              Бажаєте надіслати SMS-підтвердження на цей "
+"номер?\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              Would you like to send the account "
+#| "confirmation\n"
+#| "                              email to this account?\n"
+#| "                            "
+msgid ""
+"\n"
+"                              Would you like to send the account "
+"confirmation\n"
+"                              email to this account?\n"
+"                            "
+msgstr ""
+"\n"
+"                              Бажаєте надіслати лист-підтвердження на цю "
+"адресу?\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with "
+#| "instructions to\n"
+#| "                              set a password and be able to login to this "
+#| "project.\n"
+#| "                            "
+msgid ""
+"\n"
+"                              The user will be sent a SMS with instructions "
+"to\n"
+"                              set a password and be able to login to this\n"
+"                              project.\n"
+"                            "
+msgstr ""
+"\n"
+"                              Користувач отримає SMS з інструкціями щодо\n"
+"                              встановлення пароля та зможе увійти до цього "
+"проєкту.\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent a SMS with "
+#| "instructions to\n"
+#| "                              set a password and be able to login to this "
+#| "project.\n"
+#| "                            "
+msgid ""
+"\n"
+"                              The user will be sent an email with "
+"instructions\n"
+"                              to set a password and be able to login to "
+"this\n"
+"                              project.\n"
+"                            "
+msgstr ""
+"\n"
+"                              Користувач отримає SMS з інструкціями щодо\n"
+"                              встановлення пароля та зможе увійти до цього "
+"проєкту.\n"
+"                            "
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton SMS"
+msgstr "Надіслати SMS-підтвердження облікового запису"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton Email"
+msgstr "Надіслати лист-підтвердження облікового запису"
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid "Send Account Confirmaton SMS"
+msgid "Loading Pending Account Confirmations..."
+msgstr "Надіслати SMS-підтвердження облікового запису"
 
 #: corehq/apps/users/templates/users/partials/basic_info_form.html
 msgid "CommCare Supply Settings"
@@ -59397,6 +59899,12 @@ msgstr "Банери для власних доменів"
 msgid "App Dependencies"
 msgstr "Залежності додатків"
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Two-stage Mobile Worker Account Creation"
+msgstr "Вимкнути блокування мобільного працівника"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Звіти Конструктора Звітів"
@@ -60421,6 +60929,133 @@ msgstr "Обов'язкові колонки: {column_names}"
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
 
+#~ msgid "Estimated annual expenditures on airtime:"
+#~ msgstr "Орієнтовні річні витрати на ефірний час:"
+
+#~ msgid "Estimated annual expenditures on devices:"
+#~ msgstr "Орієнтовні річні витрати на пристрої:"
+
+#~ msgid ""
+#~ "We grant pro-bono subscriptions to match the duration of your project, up "
+#~ "to a maximum of 12 months at a time (at which point you need to reapply)."
+#~ msgstr ""
+#~ "Ми надаємо про-боно підписки на період, що відповідає тривалості вашого "
+#~ "проєкту, максимум до 12 місяців за один раз (після чого потрібно подати "
+#~ "нову заявку)."
+
+#~ msgid ""
+#~ "If you have already been in touch with someone from Dimagi, please list "
+#~ "their name."
+#~ msgstr ""
+#~ "Якщо ви вже спілкувалися з кимось із Dimagi, будь ласка, вкажіть їхнє "
+#~ "ім'я."
+
+#~ msgid "Number of expected users"
+#~ msgstr "Очікувана кількість користувачів"
+
+#~ msgid "Pro-Bono Application"
+#~ msgstr "Заявка на про-боно"
+
+#~ msgid "Submit Pro-Bono Application"
+#~ msgstr "Подати заявку на про-боно"
+
+#~ msgid ""
+#~ "Thank you for your submission.  A representative will be in contact with "
+#~ "you shortly."
+#~ msgstr "Дякуємо за вашу заявку. Незабаром з вами зв'яжеться представник."
+
+#~ msgid "Printing"
+#~ msgstr "Друк"
+
+#~ msgid "Document Template"
+#~ msgstr "Шаблон документа"
+
+#~ msgid "Opens file in new tab."
+#~ msgstr "Відкриває файл у новій вкладці."
+
+#~ msgid "Open HTML"
+#~ msgstr "Відкрити HTML"
+
+#~ msgid "Upload HTML"
+#~ msgstr "Завантажити HTML"
+
+#~ msgid "Replace HTML"
+#~ msgstr "Замінити HTML"
+
+#~ msgid ""
+#~ "Printing the case detail is not supported on this version of CommCare"
+#~ msgstr "Друк деталей справи не підтримується у цій версії CommCare"
+
+#~ msgid "Print template"
+#~ msgstr "Шаблон для друку"
+
+#~ msgid "text"
+#~ msgstr "текст"
+
+#~ msgid "New Template Uploaded Successfully"
+#~ msgstr "Новий шаблон успішно завантажено"
+
+#~ msgid "Cookies Required for CSRF"
+#~ msgstr "Для CSRF потрібні cookies"
+
+#~ msgid "Cookies must be enabled to use CommCare"
+#~ msgstr "Для використання CommCare необхідно увімкнути cookies"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <p>\n"
+#~ "      Please try refreshing your browser or clicking the blue \"flower\" "
+#~ "icon in the top left hand corner.\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      No luck? Please clear your browser’s cache, close your browser, and "
+#~ "reopen your browser.\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      If you believe you received this error as a mistake, please contact "
+#~ "<a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
+#~ "    </p>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <p>\n"
+#~ "      Будь ласка, спробуйте оновити браузер або натисніть на синю іконку "
+#~ "\"квітки\" у верхньому лівому куті.\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      Не допомогло? Будь ласка, очистіть кеш браузера, закрийте браузер і "
+#~ "відкрийте його знову.\n"
+#~ "    </p>\n"
+#~ "    <p>\n"
+#~ "      Якщо ви вважаєте, що отримали цю помилку помилково, зверніться до "
+#~ "<a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
+#~ "    </p>\n"
+#~ "  "
+
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "                              The user will be sent an email with "
+#~| "instructions to\n"
+#~| "                              set a password and be able to login to "
+#~| "this project.\n"
+#~| "                            "
+#~ msgid ""
+#~ "\n"
+#~ "                                  The user will be sent an email with\n"
+#~ "                                  instructions to set a password and be "
+#~ "able to\n"
+#~ "                                  login to this project.\n"
+#~ "                                "
+#~ msgstr ""
+#~ "\n"
+#~ "                              Користувач отримає лист з інструкціями "
+#~ "щодо\n"
+#~ "                              встановлення пароля та зможе увійти до "
+#~ "цього проєкту.\n"
+#~ "                            "
+
 #~ msgid "Explore Case Data (Preview)"
 #~ msgstr "Дослідження даних справ (Попередній перегляд)"
 
@@ -60915,9 +61550,6 @@ msgstr "Введіть коректний JSON"
 
 #~ msgid "...Collapse"
 #~ msgstr "...Згорнути"
-
-#~ msgid "You can now login"
-#~ msgstr "Тепер ви можете увійти"
 
 #, fuzzy
 #~| msgid "Please select the applicable day(s) of the week."

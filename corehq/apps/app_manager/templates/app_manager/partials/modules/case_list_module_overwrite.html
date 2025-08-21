@@ -52,12 +52,6 @@
                     {% trans "Case tile configuration" %}
                   </label><br>
                 {% endif %}
-                {% if request|toggle_enabled:'CASE_DETAIL_PRINT' %}
-                  <label for="print_template">
-                    <input type="checkbox" name="print_template" id="print_template"/>
-                    {% trans "Print template" %}
-                  </label><br>
-                {% endif %}
                 {% if request|toggle_enabled:'SYNC_SEARCH_CASE_CLAIM' %}
                   {# prefix these with 'search_' to make it easier to filter on the backend #}
                   <label for="search_properties">

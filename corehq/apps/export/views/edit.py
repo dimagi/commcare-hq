@@ -56,6 +56,9 @@ class BaseEditNewCustomExportView(BaseExportView):
         except ResourceNotFound:
             raise Http404()
 
+        if export_instance.domain != self.domain:
+            raise Http404()
+
         schema = None
         if (
             isinstance(export_instance, CaseExportInstance)

@@ -833,50 +833,6 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
         return ['text']
 
 
-class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
-    urlname = "hqmedia_uploader_detail_print_template"
-
-    @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
-    def post(self, request, *args, **kwargs):
-        return super(ProcessDetailPrintTemplateUploadView, self).post(request, *args, **kwargs)
-
-    @property
-    def form_path(self):
-        return ("jr://file/commcare/text/module_%s_detail_print%s"
-                % (self.module_unique_id, self.file_ext))
-
-    @property
-    def module_unique_id(self):
-        return self.kwargs.get('module_unique_id')
-
-    def validate_file(self, replace_diff_ext=True):
-        return super(ProcessDetailPrintTemplateUploadView, self).validate_file(replace_diff_ext)
-
-    def process_upload(self):
-        ref = super(
-            ProcessDetailPrintTemplateUploadView, self
-        ).process_upload()
-        self.app.get_module_by_unique_id(self.module_unique_id).case_details.long.print_template = ref['ref']
-        self.app.save()
-        return ref
-
-
-class RemoveDetailPrintTemplateView(BaseMultimediaView):
-    urlname = "hqmedia_remove_detail_print_template"
-
-    @property
-    def module_unique_id(self):
-        if self.request.method == 'POST':
-            return self.request.POST.get('module_unique_id')
-        return None
-
-    @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
-    def post(self, *args, **kwargs):
-        del self.app.get_module_by_unique_id(self.module_unique_id).case_details.long.print_template
-        self.app.save()
-        return HttpResponse()
-
-
 class RemoveLogoView(BaseMultimediaView):
     urlname = "hqmedia_remove_logo"
 

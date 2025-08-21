@@ -18,6 +18,9 @@ class SimpleUsername(BaseSimpleFilter):
 class SimpleDomain(BaseSimpleFilter):
     slug = 'domain_name'
     label = gettext_lazy('Domain')
+
+
+class SimpleOptionalDomain(SimpleDomain):
     help_inline = gettext_lazy('Optional')
 
 

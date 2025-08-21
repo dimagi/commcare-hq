@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('domain', models.CharField(max_length=255)),
                 ('app_id', models.CharField(max_length=255)),
-                ('activity_level', models.CharField(blank=True, choices=[('1MON_ACTIVE', '1 Month'), ('2MON_ACTIVE', '2 Months'), ('3MON_ACTIVE', '3 Months'), ('6MON_ACTIVE', '6 Months'), ('9MON_ACTIVE', '9 Months'), ('12MON_ACTIVE', '12 Months')], max_length=32, null=True)),
+                ('activity_level', models.CharField(choices=[('1MON_ACTIVE', '1 Month'), ('2MON_ACTIVE', '2 Months'), ('3MON_ACTIVE', '3 Months'), ('6MON_ACTIVE', '6 Months'), ('9MON_ACTIVE', '9 Months'), ('12MON_ACTIVE', '12 Months')], default='3MON_ACTIVE', max_length=32)),
             ],
             options={
                 'unique_together': {('domain', 'app_id')},

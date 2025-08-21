@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# This Dockerfile is built as the `dimagi/commcarehq_base` image, which
-# is used for running tests.
+# This Dockerfile is built as the `dimagi/commcarehq-pyX.Y` image, where X.Y
+# is the version in .python-version, and which is used for running tests.
 
 FROM ghcr.io/astral-sh/uv:0.7.17-python3.13-bookworm-slim
 LABEL org.opencontainers.image.authors="Dimagi <devops@dimagi.com>"
@@ -36,9 +36,7 @@ RUN apt-get update \
      libmagic1 \
      libpq5 \
      # for xmlsec on Python 3.13
-     libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config \
-     # for `no-binary-package lxml` in pyproject.toml
-     libz-dev \
+     libxml2 libxmlsec1 libxmlsec1-openssl \
      make \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
 

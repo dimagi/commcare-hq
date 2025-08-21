@@ -160,7 +160,6 @@ msgid "Billed Monthly"
 msgstr "मासिक बिलिंग"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "कृपया एक मान्य ईमेल दर्ज करें।"
 
@@ -3600,6 +3599,16 @@ msgstr " और <%- group_count %> समूह"
 #: corehq/apps/users/static/users/js/filtered_download.js
 msgid "Error determining number of matching users"
 msgstr "मिलते-जुलते उपयोगकर्ताओं की संख्या निर्धारित करने में त्रुटि"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Unavailable"
+msgstr "उपलब्ध नहीं"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#, fuzzy
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "<%- days %> दिन शेष"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."

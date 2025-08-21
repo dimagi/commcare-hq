@@ -284,7 +284,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(e.message)
         try:
             email = bundle.data.get('email', '').lower()
-            if (toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain'])
+            if (domain_has_privilege(kwargs['domain'], privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
                     and (require_account_confirmation or send_confirmation_email)):
                 self.validate_new_user_input(require_account_confirmation, send_confirmation_email,
                                              email, password)
@@ -355,7 +355,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
 
-        if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']) and send_confirmation_email:
+        if (domain_has_privilege(kwargs['domain'], privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                and send_confirmation_email):
             if bundle.obj.is_account_confirmed:
                 raise BadRequest(_("The confirmation email can not be sent "
                                    "because this user's account is already confirmed."))
@@ -430,11 +431,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         except ModifyUserStatusException as e:
             raise BadRequest(_(str(e)))
 
-        user.is_active = active
+        user.set_is_active(user.domain, active)
         user.save(spawn_task=True)
         log_user_change(by_domain=request.domain, for_domain=user.domain,
                         couch_user=user, changed_by_user=request.couch_user,
-                        changed_via=USER_CHANGE_VIA_API, fields_changed={'is_active': user.is_active})
+                        changed_via=USER_CHANGE_VIA_API, fields_changed={'is_active': active})
 
         self.log_throttled_access(request)
         return self.create_response(request, {}, response_class=http.HttpAccepted)
@@ -569,8 +570,9 @@ class WebUserResource(v0_1.WebUserResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<pk>\w[\w/-]*)/enable/$", self.wrap_view('enable_user'), name="api_enable_web_user"),
-            url(r"^(?P<pk>\w[\w/-]*)/disable/$", self.wrap_view('disable_user'), name="api_disable_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('enable_user'), name="api_activate_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$",
+                self.wrap_view('disable_user'), name="api_deactivate_web_user"),
         ]
 
     def enable_user(self, request, **kwargs):
@@ -611,7 +613,7 @@ class AdminWebUserResource(v0_1.UserResource):
     def obj_get_list(self, bundle, **kwargs):
         if 'username' in bundle.request.GET:
             web_user = WebUser.get_by_username(bundle.request.GET['username'])
-            return [web_user] if web_user.is_active else []
+            return [web_user] if web_user.is_active_in_any_domain() else []
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
     class Meta(AdminResourceMeta):
