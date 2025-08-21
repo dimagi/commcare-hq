@@ -70,7 +70,7 @@ def get_app_ids_by_activity_level():
 
 
 def submit_new_credentials():
-    credentials_to_submit, credential_ids_to_update = get_credentials_to_submit()
+    credentials_to_submit, credential_id_groups_to_update = get_credentials_to_submit()
 
     response = requests.post(
         settings.CONNECTID_CREDENTIALS_URL,
@@ -81,17 +81,15 @@ def submit_new_credentials():
     )
     response.raise_for_status()
 
-    mark_credentials_as_issued(response, credential_ids_to_update)
+    mark_credentials_as_issued(response, credential_id_groups_to_update)
 
 
 def get_credentials_to_submit():
     from corehq.apps.users.models import ConnectIDUserLink, UserCredential
 
-    credentials_to_submit = []
-    credential_ids_to_update = []
     user_credentials = UserCredential.objects.filter(issued_on=None)
     if not user_credentials:
-        return credentials_to_submit, credential_ids_to_update
+        return [], []
 
     app_ids = []
     usernames = []
@@ -107,36 +105,42 @@ def get_credentials_to_submit():
     }
 
     app_names_by_id = get_app_names_by_id(app_ids)
+    credentials_to_submit = {}
+    credential_id_groups_to_update = defaultdict(list)
     for user_cred in user_credentials:
         connectid_username = connectid_username_by_commcare_username.get(user_cred.username)
         if not connectid_username:
             continue  # Skip these users as they still need to set up their PersonalID account
 
-        credential_ids_to_update.append(user_cred.id)
-        credentials_to_submit.append({
-            'usernames': [connectid_username],
-            'title': app_names_by_id[user_cred.app_id],
-            'type': CREDENTIAL_TYPE,
-            'level': user_cred.type,
-            'slug': user_cred.app_id,
-            'app_id': user_cred.app_id,
-        })
+        key = f'{user_cred.app_id}:{user_cred.type}'
+        if key not in credentials_to_submit:
+            credentials_to_submit[key] = {
+                'usernames': [],
+                'title': app_names_by_id[user_cred.app_id],
+                'type': CREDENTIAL_TYPE,
+                'level': user_cred.type,
+                'slug': user_cred.app_id,
+                'app_id': user_cred.app_id,
+            }
 
-    return credentials_to_submit, credential_ids_to_update
+        credentials_to_submit[key]['usernames'].append(connectid_username)
+        credential_id_groups_to_update[key].append(user_cred.id)
+
+    return list(credentials_to_submit.values()), list(credential_id_groups_to_update.values())
 
 
-def mark_credentials_as_issued(response, credential_ids):
+def mark_credentials_as_issued(response, credential_id_groups):
     from corehq.apps.users.models import UserCredential
 
     success_indices = set(response.json().get('success', []))
     failed_indices = set(response.json().get('failed', []))
     success_credential_ids = []
     failed_credential_ids = []
-    for i, id in enumerate(credential_ids):
+    for i, id_group in enumerate(credential_id_groups):
         if i in success_indices:
-            success_credential_ids.append(id)
+            success_credential_ids += id_group
         elif i in failed_indices:
-            failed_credential_ids.append(id)
+            failed_credential_ids += id_group
 
     issued_date = datetime.now(timezone.utc)
     UserCredential.objects.filter(id__in=success_credential_ids).update(issued_on=issued_date)
