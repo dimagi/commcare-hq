@@ -70,7 +70,9 @@ class LoginAuthentication(HQAuthenticationMixin, Authentication):
     """
     def __init__(self, allow_session_auth=False):
         super().__init__()
-        self.decorator_map = get_auth_decorator_map(require_domain=False, allow_sessions=allow_session_auth)
+        self.decorator_map = get_auth_decorator_map(
+            require_domain=False, allow_sessions=allow_session_auth, allow_api_key_in_basic=True,
+        )
 
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
