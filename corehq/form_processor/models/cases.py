@@ -822,13 +822,11 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         ).format(c=self)
 
     class Meta(object):
-        index_together = [
-            ["owner_id", "server_modified_on"],
-            ["domain", "owner_id", "closed"],
-            ["domain", "external_id", "type"],
-            ["domain", "type", "id"],
-        ]
         indexes = [
+            models.Index(fields=["owner_id", "server_modified_on"]),
+            models.Index(fields=["domain", "owner_id", "closed"]),
+            models.Index(fields=["domain", "external_id", "type"]),
+            models.Index(fields=["domain", "type", "id"]),
             models.Index(fields=['deleted_on'],
                          name=create_unique_index_name('form_processor',
                                                        'commcarecase',
@@ -974,8 +972,8 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     class Meta(object):
         app_label = "form_processor"
         db_table = "form_processor_caseattachmentsql"
-        index_together = [
-            ["case", "name"],
+        indexes = [
+            models.Index(fields=["case", "name"]),
         ]
 
 
@@ -1180,9 +1178,9 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
         )
 
     class Meta(object):
-        index_together = [
-            ["domain", "case"],
-            ["domain", "referenced_id"],
+        indexes = [
+            models.Index(fields=["domain", "case"]),
+            models.Index(fields=["domain", "referenced_id"]),
         ]
         unique_together = ('case', 'identifier')
         db_table = 'form_processor_commcarecaseindexsql'
@@ -1535,10 +1533,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         ordering = ['server_date']
         db_table = 'form_processor_casetransaction'
         app_label = "form_processor"
-        index_together = [
-            ('case', 'server_date', 'sync_log_id'),
+        indexes = [
+            models.Index(fields=['case', 'server_date', 'sync_log_id']),
+            models.Index(fields=['form_id']),
         ]
-        indexes = [models.Index(fields=['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):
