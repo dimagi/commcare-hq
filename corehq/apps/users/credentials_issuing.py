@@ -10,6 +10,7 @@ from corehq.apps.data_analytics.models import MALTRow
 
 
 CREDENTIAL_TYPE = 'APP_ACTIVITY'
+MAX_CREDENTIALS_PER_REQUEST = 200
 
 
 def get_credentials_for_timeframe(activity_level, app_ids):
@@ -71,17 +72,24 @@ def get_app_ids_by_activity_level():
 
 def submit_new_credentials():
     credentials_to_submit, credential_id_groups_to_update = get_credentials_to_submit()
+    if not credentials_to_submit:
+        return
 
-    response = requests.post(
-        settings.CONNECTID_CREDENTIALS_URL,
-        json={
-            "credentials": credentials_to_submit
-        },
-        auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
-    )
-    response.raise_for_status()
+    total = len(credentials_to_submit)
+    for start in range(0, total, MAX_CREDENTIALS_PER_REQUEST):
+        end = min(total, start + MAX_CREDENTIALS_PER_REQUEST)
+        credentials_to_submit_batch = credentials_to_submit[start:end]
+        credential_id_groups_to_update_batch = credential_id_groups_to_update[start:end]
 
-    mark_credentials_as_issued(response, credential_id_groups_to_update)
+        response = requests.post(
+            settings.CONNECTID_CREDENTIALS_URL,
+            json={
+                "credentials": credentials_to_submit_batch
+            },
+            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
+        )
+        response.raise_for_status()
+        mark_credentials_as_issued(response, credential_id_groups_to_update_batch)
 
 
 def get_credentials_to_submit():
