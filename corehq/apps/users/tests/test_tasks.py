@@ -18,6 +18,7 @@ from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.reports.util import domain_copied_cases_by_owner
+from corehq.apps.users.credentials_issuing import get_credentials_to_submit
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
@@ -349,6 +350,7 @@ class TestProcessMobileWorkerCredentials(TestCase):
         cls.three_month_app.delete()
         ConnectIDUserLink.objects.all().delete()
         CredentialApplication.objects.all().delete()
+        UserCredential.objects.all().delete()
         super().tearDownClass()
 
     def _create_malt_rows(self, months, user, app, offset=0):
@@ -398,3 +400,42 @@ class TestProcessMobileWorkerCredentials(TestCase):
         self._create_malt_rows(1, self.user1, self.one_month_app)
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 1
+
+    @patch('corehq.apps.users.credentials_issuing.MAX_USERNAMES_PER_CREDENTIAL', new=1)
+    def test_get_credentials_to_submit(self, mock_post, mock_status_raise):
+        cred1 = UserCredential.objects.create(
+            domain=self.domain,
+            user_id=self.user1.id,
+            username=self.user1.username,
+            app_id=self.one_month_app.id,
+            type=CredentialApplication.ActivityLevelChoices.ONE_MONTH
+        )
+        cred2 = UserCredential.objects.create(
+            domain=self.domain,
+            user_id=self.user2.id,
+            username=self.user2.username,
+            app_id=self.one_month_app.id,
+            type=CredentialApplication.ActivityLevelChoices.ONE_MONTH
+        )
+        credentials_to_submit, credential_id_groups_to_update = get_credentials_to_submit()
+        assert credentials_to_submit == [
+            {
+                'usernames': [self.user1.username],
+                'title': 'One Month Test App',
+                'type': 'APP_ACTIVITY',
+                'level': '1MON_ACTIVE',
+                'slug': self.one_month_app.id,
+                'app_id': self.one_month_app.id,
+            },
+            {
+                'usernames': [self.user2.username],
+                'title': 'One Month Test App',
+                'type': 'APP_ACTIVITY',
+                'level': '1MON_ACTIVE',
+                'slug': self.one_month_app.id,
+                'app_id': self.one_month_app.id,
+            }
+        ]
+        assert credential_id_groups_to_update == [
+            [cred1.id], [cred2.id]
+        ]

@@ -11,6 +11,7 @@ from corehq.apps.data_analytics.models import MALTRow
 
 CREDENTIAL_TYPE = 'APP_ACTIVITY'
 MAX_CREDENTIALS_PER_REQUEST = 200
+MAX_USERNAMES_PER_CREDENTIAL = 200
 
 
 def get_credentials_for_timeframe(activity_level, app_ids):
@@ -115,12 +116,16 @@ def get_credentials_to_submit():
     app_names_by_id = get_app_names_by_id(app_ids)
     credentials_to_submit = {}
     credential_id_groups_to_update = defaultdict(list)
+    chunk_index_by_base = {}  # Track the current chunk index per (app_id, level)
     for user_cred in user_credentials:
         connectid_username = connectid_username_by_commcare_username.get(user_cred.username)
         if not connectid_username:
             continue  # Skip these users as they still need to set up their PersonalID account
 
-        key = f'{user_cred.app_id}:{user_cred.type}'
+        base_key = f'{user_cred.app_id}:{user_cred.type}'
+        chunk_idx = chunk_index_by_base.get(base_key, 0)
+        key = f'{base_key}#{chunk_idx}'
+
         if key not in credentials_to_submit:
             credentials_to_submit[key] = {
                 'usernames': [],
@@ -130,6 +135,20 @@ def get_credentials_to_submit():
                 'slug': user_cred.app_id,
                 'app_id': user_cred.app_id,
             }
+        # If current chunk is full, create a new chunk/key
+        elif len(credentials_to_submit[key]['usernames']) >= MAX_USERNAMES_PER_CREDENTIAL:
+            chunk_idx += 1
+            chunk_index_by_base[base_key] = chunk_idx
+            key = f'{base_key}#{chunk_idx}'
+            if key not in credentials_to_submit:
+                credentials_to_submit[key] = {
+                    'usernames': [],
+                    'title': app_names_by_id.get(user_cred.app_id, user_cred.app_id),
+                    'type': CREDENTIAL_TYPE,
+                    'level': user_cred.type,
+                    'slug': user_cred.app_id,
+                    'app_id': user_cred.app_id,
+                }
 
         credentials_to_submit[key]['usernames'].append(connectid_username)
         credential_id_groups_to_update[key].append(user_cred.id)
