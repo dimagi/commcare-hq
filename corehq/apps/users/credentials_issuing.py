@@ -128,8 +128,8 @@ def get_credentials_to_submit():
 def mark_credentials_as_issued(response, credential_ids):
     from corehq.apps.users.models import UserCredential
 
-    success_indices = response.json().get('success', [])
-    failed_indices = response.json().get('failed', [])
+    success_indices = set(response.json().get('success', []))
+    failed_indices = set(response.json().get('failed', []))
     success_credential_ids = []
     failed_credential_ids = []
     for i, id in enumerate(credential_ids):
