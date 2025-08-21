@@ -26,14 +26,12 @@ class TableExportConfig:
     Configuration for export functionality.
     Attributes:
         export_format (str): Override to set the export format from backend. Defaults to XLS_2007.
-        export_file_name (str): Name for the exported file (without extension). Defaults to the class name.
-        export_sheet_name (str): Name for the worksheet. Defaults to export_file_name
+        export_sheet_name (str): Name for the worksheet. Defaults to the class name.
     """
     export_format = None
-    export_file_name = None
     export_sheet_name = None
 
-    EXPORT_CONFIG_KEYS = {"export_file_name", "export_format", "export_sheet_name"}
+    EXPORT_CONFIG_KEYS = {"export_format", "export_sheet_name"}
 
     _SUPPORTED_FORMATS = [
         Format.CSV,
@@ -45,13 +43,8 @@ class TableExportConfig:
         Format.JSON
     ]
 
-    @memoized
     def get_export_sheet_name(self):
-        return self.export_sheet_name or self.get_export_file_name()
-
-    @memoized
-    def get_export_file_name(self):
-        return self.export_file_name or self.__class__.__name__
+        return self.export_sheet_name or self.__class__.__name__
 
     @memoized
     def get_export_format(self):
@@ -75,7 +68,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
     """
     Mixin to add export functionality to django-tables2 based views.
     Attributes:
-        report_title (str): Title of the report to be used in the export. Defaults to class name.
+        report_title (str): Title of the report, used in the export file name. Defaults to the class name.
         exclude_columns_in_export (tuple): Columns to exclude from the export. Defaults to empty tuple.
     Usage:
         - Inherit this mixin in a view that uses django-tables2.
