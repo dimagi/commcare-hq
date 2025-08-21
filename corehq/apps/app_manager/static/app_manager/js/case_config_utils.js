@@ -87,6 +87,21 @@ export default {
         });
         return _(suggestedProperties).difference(usedProperties);
     },
+    propertyMultiDictToArray: function (required, propertyMultiDict, caseConfig) {
+        let propertyArray = Object.entries(propertyMultiDict).flatMap(([caseName, updateList]) => {
+            return updateList.map(conditionalCaseUpdate => ({
+                path: conditionalCaseUpdate.question_path,
+                key: caseName,
+                required: false,
+                save_only_if_edited: conditionalCaseUpdate.update_mode === 'edit',
+            }));
+        });
+
+        propertyArray = _(propertyArray).sortBy(function (property) {
+            return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
+        });
+        return required.concat(propertyArray);
+    },
     propertyDictToArray: function (required, propertyDict, caseConfig) {
         var propertyArray = _(propertyDict).map(function (conditionalCaseUpdate, caseName) {
             return {
@@ -100,6 +115,25 @@ export default {
             return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
         });
         return required.concat(propertyArray);
+    },
+    propertyArrayToMultiDict: function (required, propertyArray) {
+        const propertyDict = {},
+            extraDict = {};
+        _(propertyArray).each(function (caseProperty) {
+            const key = caseProperty.key;
+            const path = caseProperty.path;
+            const updateMode = caseProperty.save_only_if_edited ? 'edit' : 'always';
+            if (key || path) {
+                if (_(required).contains(key) && caseProperty.isOpenCase) {
+                    extraDict[key] = extraDict[key] || [];
+                    extraDict[key].push({question_path: path, update_mode: updateMode});
+                } else {
+                    propertyDict[key] = propertyDict[key] || [];
+                    propertyDict[key].push({question_path: path, update_mode: updateMode});
+                }
+            }
+        });
+        return [propertyDict, extraDict];
     },
     propertyArrayToDict: function (required, propertyArray) {
         var propertyDict = {},
