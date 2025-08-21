@@ -53,7 +53,6 @@ from corehq.apps.domain.views.internal import (
     calculated_properties,
     toggle_diff,
 )
-from corehq.apps.domain.views.pro_bono import ProBonoView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
     ManageReleasesByLocation,
@@ -163,7 +162,6 @@ domain_settings = [
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),
-    url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
     url(r'^subscription/credits/make_wire_payment/$', CreditsWireInvoiceView.as_view(),

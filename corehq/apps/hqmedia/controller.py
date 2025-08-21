@@ -61,16 +61,3 @@ class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("video")
 
     existing_file_template = "hqmedia/uploader/preview_video_single.html"
-
-
-class MultimediaHTMLUploadController(BaseMultimediaFileUploadController):
-    media_type = gettext_noop("text")
-
-    existing_file_template = "hqmedia/uploader/preview_html_single.html"
-
-    @property
-    def upload_params(self):
-        return {
-            'path': 'jr://file/commcare/text/%s.html' % self.slug,
-            'replace_attachment': True,
-        }

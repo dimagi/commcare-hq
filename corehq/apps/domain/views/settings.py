@@ -66,6 +66,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
@@ -543,6 +544,12 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
+            ToggleAudit.objects.log_toggle_action(
+                feature.slug,
+                self.request.couch_user.username,
+                [f"{NAMESPACE_DOMAIN}:{self.domain}"],
+                ToggleAudit.ACTION_ADD if new_state else ToggleAudit.ACTION_REMOVE,
+            )
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
 
@@ -681,48 +688,58 @@ class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
             messages.error(request, _("There was an error saving your settings. Please try again!"))
             return self.get(request, *args, **kwargs)
 
-        is_new_credential_app = self.update_credential_app(form.cleaned_data)
+        is_new_credential_app = self.set_credential_app(form.cleaned_data)
 
         success_message = _("Settings saved!")
         if is_new_credential_app:
             success_message = _(
-                "Settings saved! Please remember to configure the credential criteria in the app manager settings."
+                "Settings saved! Please remember to configure the credential criteria for the issuing"
+                " app in the app manager settings."
             )
 
         messages.success(request, success_message)
         return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
-    def update_credential_app(self, form_data):
+    def set_credential_app(self, form_data):
         domain_issuing_app_record = CredentialApplication.objects.filter(domain=self.domain).first()
-        app_id = form_data['app_id']
+        new_issuing_app_id = form_data['app_id']
 
-        default_activity_level = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+        if not new_issuing_app_id:
+            self.remove_issuing_app(domain_issuing_app_record)
+            return False
+        elif not domain_issuing_app_record:
+            self.create_issuing_app(new_issuing_app_id)
+            return True
+        elif new_issuing_app_id != domain_issuing_app_record.app_id:
+            self.update_issuing_app(new_issuing_app_id, domain_issuing_app_record)
+            return True
+        return False
 
-        is_new_credential_app = True
-        if not domain_issuing_app_record:
-            domain_issuing_app_record = CredentialApplication.objects.create(
-                domain=self.domain,
-                app_id=app_id,
-                activity_level=default_activity_level,
-            )
-            application = get_app(self.domain, app_id)
-            self.add_credential_to_app_features(application, domain_issuing_app_record)
+    def create_issuing_app(self, new_app_id):
+        domain_issuing_app_record = CredentialApplication.objects.create(
+            domain=self.domain,
+            app_id=new_app_id,
+        )
+        application = get_app(self.domain, new_app_id)
+        self.add_credential_to_app_features(application, domain_issuing_app_record)
 
-        elif app_id != domain_issuing_app_record.app_id:
-            old_app = get_app(self.domain, domain_issuing_app_record.app_id)
-            new_app = get_app(self.domain, app_id)
+    def update_issuing_app(self, new_app_id, current_credential_app_record):
+        old_app = get_app(self.domain, current_credential_app_record.app_id)
+        new_app = get_app(self.domain, new_app_id)
 
-            domain_issuing_app_record.app_id = app_id
-            domain_issuing_app_record.activity_level = default_activity_level
-            domain_issuing_app_record.save()
+        current_credential_app_record.app_id = new_app_id
+        current_credential_app_record.save()
 
-            self.remove_credential_from_app_features(old_app, domain_issuing_app_record)
-            self.add_credential_to_app_features(new_app, domain_issuing_app_record)
-        else:
-            is_new_credential_app = False
-        return is_new_credential_app
+        self.remove_credential_from_app_features(old_app)
+        self.add_credential_to_app_features(new_app, current_credential_app_record)
 
-    def remove_credential_from_app_features(self, app, domain_issuing_app):
+    def remove_issuing_app(self, domain_issuing_app_record):
+        if domain_issuing_app_record:
+            issuing_app = get_app(self.domain, domain_issuing_app_record.app_id)
+            self.remove_credential_from_app_features(issuing_app)
+            domain_issuing_app_record.delete()
+
+    def remove_credential_from_app_features(self, app):
         app.profile.get('features', {}).pop('credentials', None)
         app.save()
 

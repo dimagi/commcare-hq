@@ -53,6 +53,8 @@ from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
+    FeaturePreviewStatusReport,
+    FeaturePreviewAuditReport,
     UserAuditReport,
     UserListReport,
     UCRDataLoadReport,
@@ -2709,7 +2711,12 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [UserAuditReport, UCRDataLoadReport]
+            } for report in [
+                UserAuditReport,
+                FeaturePreviewStatusReport,
+                FeaturePreviewAuditReport,
+                UCRDataLoadReport,
+            ]
         ]))
         return sections
 

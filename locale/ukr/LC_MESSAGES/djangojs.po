@@ -157,7 +157,6 @@ msgid "Billed Monthly"
 msgstr "Оплата щомісяця"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "Будь ласка, введіть дійсну електронну адресу."
 
@@ -3612,6 +3611,16 @@ msgstr " та <%- group_count %> груп"
 #: corehq/apps/users/static/users/js/filtered_download.js
 msgid "Error determining number of matching users"
 msgstr "Помилка при визначенні кількості відповідних користувачів"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Unavailable"
+msgstr "Недоступно"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#, fuzzy
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "Залишилося <%- days %> днів"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."

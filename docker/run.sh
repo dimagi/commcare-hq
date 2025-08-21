@@ -145,6 +145,7 @@ function run_tests {
             su cchq -c scripts/test-prod-entrypoints.sh
             scripts/test-serializer-pickle-files.sh
             su cchq -c scripts/test-django-migrations.sh
+            uv lock --check
         fi
         delta=$(($(date +%s) - $now))
 

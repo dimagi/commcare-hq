@@ -1,6 +1,6 @@
 from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
-from freezegun import freeze_time
+from time_machine import travel
 import datetime
 
 from ..exceptions import ReportNotFound
@@ -12,7 +12,7 @@ from .. import tasks
 CURRENT_DATE = datetime.date(2020, 1, 2)
 
 
-@freeze_time(CURRENT_DATE)
+@travel(CURRENT_DATE, tick=False)
 class PurgeOldScheduledReportLogsTests(TestCase):
     def test_purges_entries_older_than_three_months(self):
         self._create_log_at_date(CURRENT_DATE - datetime.timedelta(weeks=12, days=1))

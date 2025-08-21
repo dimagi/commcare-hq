@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -455,7 +455,7 @@ class TestV0_6LocationsList(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        with freeze_time(datetime(2025, 1, 1)):
+        with travel(datetime(2025, 1, 1), tick=False):
             cls.location_types, cls.locations = setup_locations_and_types(
                 cls.domain.name,
                 cls.location_type_names,
@@ -465,7 +465,7 @@ class TestV0_6LocationsList(APIResourceTest):
             cls.locations['Middlesex'].location_id = 'middlesex_uuid'
             cls.locations['Middlesex'].save()
 
-        with freeze_time(datetime(2025, 4, 1)):
+        with travel(datetime(2025, 4, 1), tick=False):
             cls.locations['Boston'].save()
             cls.locations['Cambridge'].save()
 

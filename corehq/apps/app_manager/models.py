@@ -2169,8 +2169,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     pull_down_tile = BooleanProperty()
     case_tile_group = SchemaProperty(CaseTileGroupConfig)
 
-    print_template = DictProperty()
-
     #Only applies to 'short' details
     no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
@@ -6343,8 +6341,7 @@ class CredentialApplication(models.Model):
     activity_level = models.CharField(
         max_length=32,
         choices=ActivityLevelChoices.choices,
-        null=True,
-        blank=True,
+        default=ActivityLevelChoices.THREE_MONTHS,
     )
 
     @classmethod

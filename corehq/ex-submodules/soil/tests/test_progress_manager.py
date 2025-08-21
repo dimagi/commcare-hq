@@ -1,6 +1,7 @@
+from datetime import UTC, datetime, timedelta
 from unittest import mock
 from django.test import SimpleTestCase
-from freezegun import freeze_time
+from time_machine import travel
 
 import soil.progress
 from soil.progress import TaskProgressManager
@@ -11,18 +12,18 @@ class ProgressManagerTest(SimpleTestCase):
 
     def test_basic(self, set_task_progress):
         total = 100000
-        delta = .1  # seconds
+        delta = timedelta(seconds=.1)  # seconds
         task = object()
         flushes = []
         set_task_progress.side_effect = lambda task, current, total, src: flushes.append(
-            [(frozen_time() - start_time).total_seconds(), task, current, total, src])
+            [(datetime.now(UTC) - start_time).total_seconds(), task, current, total, src])
 
-        with freeze_time("2020-04-20", as_arg=True) as frozen_time:
-            start_time = frozen_time()
+        with travel("2020-04-20", tick=False) as frozen_time:
+            start_time = datetime.now(UTC)
             with TaskProgressManager(task) as progress_manager:
                 for i in range(1, total + 1):
                     progress_manager.set_progress(i, total)
-                    frozen_time.tick(delta=delta)
+                    frozen_time.shift(delta)
 
         # Uncomment the following code to generate the expected value
         #     for time_passed, _, current, total, src in flushes:

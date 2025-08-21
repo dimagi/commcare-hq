@@ -152,7 +152,6 @@ msgid "Billed Monthly"
 msgstr "يتم الفوترة شهريًا"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "يرجى إدخال بريد إلكتروني صالح."
 
@@ -3545,6 +3544,16 @@ msgstr " و <%- group_count %> مجموعات"
 #: corehq/apps/users/static/users/js/filtered_download.js
 msgid "Error determining number of matching users"
 msgstr "حدث خطأ أثناء تحديد عدد المستخدمين المطابقين"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Unavailable"
+msgstr "غير متوفر"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#, fuzzy
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "متبقي <%- days %> يوم"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
