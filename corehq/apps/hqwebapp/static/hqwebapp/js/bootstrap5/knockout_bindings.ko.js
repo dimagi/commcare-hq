@@ -1,7 +1,7 @@
 import $ from "jquery";
 import _ from "underscore";
 import ko from "knockout";
-import bootstrap from "bootstrap5";
+import * as bootstrap from "bootstrap5";
 import "jquery-ui/ui/widgets/sortable";
 import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
 import "langcodes/js/langcodes";  // $.langcodes
@@ -716,5 +716,3 @@ ko.bindingHandlers.onEnterKey = {
         });
     },
 };
-
-export default 1;
