@@ -146,6 +146,10 @@ class ElasticTableData(TableData):
         else:
             return 0
 
+    def get_all_records(self):
+        for record in self.query.scroll():
+            yield self.table.record_class(record, self.table.request, **self.record_kwargs)
+
     @staticmethod
     def get_es_results(query):
         try:
