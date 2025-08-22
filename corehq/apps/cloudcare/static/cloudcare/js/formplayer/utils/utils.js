@@ -454,7 +454,7 @@ Utils.setSyncInterval = function (appId, restartInterval) {
     const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
     import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
         if (restartInterval) {
-            FormplayerFrontend.trigger("stopSyncInterval");
+            FormplayerFrontend.default.trigger("stopSyncInterval");
             FormplayerFrontend.trigger("startSyncInterval", FIVE_MINUTES_IN_MILLISECONDS);
         } else {
             FormplayerFrontend.trigger("startSyncInterval", FIVE_MINUTES_IN_MILLISECONDS);

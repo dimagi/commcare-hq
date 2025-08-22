@@ -615,7 +615,7 @@ function changeLang(lang) {
     import("cloudcare/js/formplayer/menus/controller").then(function (menusController) {
         var urlObject = utils.currentUrlToObject();
         urlObject.changeLang = lang;
-        menusController.selectMenu(urlObject);
+        menusController.default.selectMenu(urlObject);
         updateDisplayOptionLang(lang);
     });
 }

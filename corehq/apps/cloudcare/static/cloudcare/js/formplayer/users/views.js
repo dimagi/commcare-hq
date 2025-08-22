@@ -86,7 +86,7 @@ var UserRowView = Marionette.View.extend({
                 if (loginAsNextOptions) {
                     FormplayerFrontend.trigger("clearLoginAsNextOptions");
                     import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
-                        MenusController.selectMenu(loginAsNextOptions);
+                        MenusController.default.selectMenu(loginAsNextOptions);
                     });
                 } else {
                     FormplayerFrontend.trigger('navigateHome');
@@ -227,4 +227,3 @@ export default {
         return new RestoreAsView(options);
     },
 };
-

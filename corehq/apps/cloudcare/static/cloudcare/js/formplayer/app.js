@@ -335,7 +335,7 @@ FormplayerFrontend.on("start", function (model, options) {
         import("cloudcare/js/formplayer/hq_events").then(function (HQEvents) {
             window.addEventListener(
                 "message",
-                HQEvents.Receiver(options.allowedHost),
+                HQEvents.default.Receiver(options.allowedHost),
                 false,
             );
         });

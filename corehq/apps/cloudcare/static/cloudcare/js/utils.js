@@ -141,7 +141,7 @@ var showProminentLoading = function () {
                     progressMessage: gettext("Loading..."),
                 });
                 $('#breadcrumb-region').css('z-index', '0');
-                const loadingElement = FormplayerFrontend.getRegion('loadingProgress');
+                const loadingElement = FormplayerFrontend.default.getRegion('loadingProgress');
                 loadingElement.show(progressView);
                 let currentProgress = 10;
                 progressView.progressEl.find('.progress').css("height", "12px");
@@ -229,7 +229,7 @@ var hideLoading = function () {
         $('#breadcrumb-region').css('z-index', '');
         clearInterval(sessionStorage.progressIncrementInterval);
         import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
-            const progressView = FormplayerFrontend.getRegion('loadingProgress').currentView;
+            const progressView = FormplayerFrontend.default.getRegion('loadingProgress').currentView;
             if (progressView) {
                 progressView.setProgress(100, 100, 200);
                 setTimeout(function () {
