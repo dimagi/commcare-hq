@@ -122,7 +122,7 @@ def get_credentials_to_submit():
         if not connectid_username:
             continue  # Skip these users as they still need to set up their PersonalID account
 
-        base_key = f'{user_cred.app_id}:{user_cred.type}'
+        base_key = f'{user_cred.app_id}:{user_cred.activity_level}'
         chunk_idx = chunk_index_by_base.get(base_key, 0)
         key = f'{base_key}#{chunk_idx}'
 
@@ -131,7 +131,7 @@ def get_credentials_to_submit():
                 'usernames': [],
                 'title': app_names_by_id[user_cred.app_id],
                 'type': CREDENTIAL_TYPE,
-                'level': user_cred.type,
+                'level': user_cred.activity_level,
                 'slug': user_cred.app_id,
                 'app_id': user_cred.app_id,
             }
@@ -145,7 +145,7 @@ def get_credentials_to_submit():
                     'usernames': [],
                     'title': app_names_by_id.get(user_cred.app_id, user_cred.app_id),
                     'type': CREDENTIAL_TYPE,
-                    'level': user_cred.type,
+                    'level': user_cred.activity_level,
                     'slug': user_cred.app_id,
                     'app_id': user_cred.app_id,
                 }
