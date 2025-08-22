@@ -83,12 +83,7 @@ def mobile_auth_or_formplayer(view_func):
     This decorator is used only for anonymous web apps and SMS forms.
     Endpoints with this decorator will not enforce two factor authentication.
     """
-    return get_multi_auth_decorator(
-        default=BASIC,
-        allow_formplayer=True,
-        allow_api_key_in_basic=True,
-        oauth_scopes=['sync']
-    )(
+    return get_multi_auth_decorator(default=BASIC, allow_formplayer=True, oauth_scopes=['sync'])(
         two_factor_exempt(
             require_mobile_access(view_func)
         )
