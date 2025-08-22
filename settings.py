@@ -204,7 +204,7 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    'corehq.util.auth.SHA1PasswordHasher',
     'django.contrib.auth.hashers.MD5PasswordHasher',
 )
 PASSWORD_RESET_TIMEOUT = 3600
