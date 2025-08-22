@@ -6,6 +6,7 @@ from collections import namedtuple
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
+from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
@@ -270,13 +271,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
-        require_account_confirmation = bundle.data.pop('require_account_confirmation', False)
-        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
+        require_account_confirmation = string_to_boolean(bundle.data.pop('require_account_confirmation', False))
+        send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         password = bundle.data.get('password')
-        if not (password or bundle.data.get('connect_username')) and not require_account_confirmation:
-            raise BadRequest(_('Password or connect username required'))
+        connect_username = bundle.data.get('connect_username')
 
-        if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
+        if connect_username and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
         try:
             validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
@@ -284,7 +284,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(e.message)
         try:
             email = bundle.data.get('email', '').lower()
-            if (toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain'])
+            if (domain_has_privilege(kwargs['domain'], privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
                     and (require_account_confirmation or send_confirmation_email)):
                 self.validate_new_user_input(require_account_confirmation, send_confirmation_email,
                                              email, password)
@@ -300,6 +300,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 if require_account_confirmation and send_confirmation_email:
                     send_account_confirmation_if_necessary(bundle.obj)
             else:
+                if not (password or connect_username):
+                    raise BadRequest(_('Password or connect username required'))
                 bundle.obj = CommCareUser.create(
                     domain=kwargs['domain'],
                     username=username,
@@ -325,10 +327,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             else:
                 django_user.delete()
             raise
-        if bundle.data.get('connect_username'):
+        if connect_username:
             ConnectIDUserLink.objects.create(
                 domain=bundle.request.domain,
-                connectid_username=bundle.data['connect_username'],
+                connectid_username=connect_username,
                 commcare_user=bundle.obj.get_django_user()
             )
         return bundle
@@ -345,7 +347,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
-        send_confirmation_email = bundle.data.pop('send_confirmation_email_now', False)
+        send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
@@ -353,7 +355,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
 
-        if toggles.TWO_STAGE_USER_PROVISIONING.enabled(kwargs['domain']) and send_confirmation_email:
+        if (domain_has_privilege(kwargs['domain'], privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                and send_confirmation_email):
             if bundle.obj.is_account_confirmed:
                 raise BadRequest(_("The confirmation email can not be sent "
                                    "because this user's account is already confirmed."))
@@ -428,11 +431,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         except ModifyUserStatusException as e:
             raise BadRequest(_(str(e)))
 
-        user.is_active = active
+        user.set_is_active(user.domain, active)
         user.save(spawn_task=True)
         log_user_change(by_domain=request.domain, for_domain=user.domain,
                         couch_user=user, changed_by_user=request.couch_user,
-                        changed_via=USER_CHANGE_VIA_API, fields_changed={'is_active': user.is_active})
+                        changed_via=USER_CHANGE_VIA_API, fields_changed={'is_active': active})
 
         self.log_throttled_access(request)
         return self.create_response(request, {}, response_class=http.HttpAccepted)
@@ -567,8 +570,9 @@ class WebUserResource(v0_1.WebUserResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<pk>\w[\w/-]*)/enable/$", self.wrap_view('enable_user'), name="api_enable_web_user"),
-            url(r"^(?P<pk>\w[\w/-]*)/disable/$", self.wrap_view('disable_user'), name="api_disable_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('enable_user'), name="api_activate_web_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$",
+                self.wrap_view('disable_user'), name="api_deactivate_web_user"),
         ]
 
     def enable_user(self, request, **kwargs):
@@ -609,7 +613,7 @@ class AdminWebUserResource(v0_1.UserResource):
     def obj_get_list(self, bundle, **kwargs):
         if 'username' in bundle.request.GET:
             web_user = WebUser.get_by_username(bundle.request.GET['username'])
-            return [web_user] if web_user.is_active else []
+            return [web_user] if web_user.is_active_in_any_domain() else []
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
     class Meta(AdminResourceMeta):

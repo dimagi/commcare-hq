@@ -820,13 +820,6 @@ BIOMETRIC_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-CASE_DETAIL_PRINT = StaticToggle(
-    'case_detail_print',
-    'MLabour: Allowing printing of the case detail, based on an HTML template',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 COPY_FORM_TO_APP = StaticToggle(
     'copy_form_to_app',
     'Allow copying a form from one app to another',
@@ -1263,7 +1256,7 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description='Allows printing from CommCare on the device',
     help_link='https://confluence.dimagi.com/display/saas/Printing+from+a+form+in+CommCare+Android',
@@ -1319,7 +1312,7 @@ MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
      'through the app builder'),
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
@@ -1838,18 +1831,6 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
-    'filter_on_groups_and_locations',
-    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
-    'ONSE domain with group and location filters',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='For reports filtered by groups and locations, change the OR logic to an AND, so that '
-                '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
-                'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
-                'have group and location filters, such as the Submissions by Form report.',
-)
-
 DONT_INDEX_SAME_CASETYPE = StaticToggle(
     'dont_index_same_casetype',
     "Don't create a parent index if the child case has the same case type as the parent case",
@@ -2082,7 +2063,8 @@ ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TWO_STAGE_USER_PROVISIONING = StaticToggle(
+TWO_STAGE_USER_PROVISIONING = FrozenPrivilegeToggle(
+    privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
     TAG_SOLUTIONS_LIMITED,
@@ -2785,14 +2767,6 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
                'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
-DEACTIVATE_WEB_USERS = StaticToggle(
-    slug='deactivate_web_users',
-    label='USH: Deactivate Web Users',
-    tag=TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Allow domains to deactivate web users just for that domain',
-)
-
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
@@ -2955,4 +2929,12 @@ CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
     label='Convert the group separator to a symbol XML can support',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+CHATBOT = StaticToggle(
+    slug='show_ocs_chatbot',
+    label='Show OCS Chatbot',
+    tag=TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Show OCS Chatbot',
 )

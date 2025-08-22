@@ -160,7 +160,6 @@ msgid "Billed Monthly"
 msgstr "मासिक बिलिंग"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "कृपया एक मान्य ईमेल दर्ज करें।"
 
@@ -3602,9 +3601,14 @@ msgid "Error determining number of matching users"
 msgstr "मिलते-जुलते उपयोगकर्ताओं की संख्या निर्धारित करने में त्रुटि"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"जब उपयोगकर्ता अपने खाते की पुष्टि स्वयं करते हैं, तो ईमेल पता आवश्यक है।"
+msgid "Unavailable"
+msgstr "उपलब्ध नहीं"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#, fuzzy
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "<%- days %> दिन शेष"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
@@ -4240,6 +4244,10 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "जब उपयोगकर्ता अपने खाते की पुष्टि स्वयं करते हैं, तो ईमेल पता आवश्यक है।"
 
 #~ msgid "Out of range of filter. Will not appear on page refresh."
 #~ msgstr "फ़िल्टर की सीमा से बाहर। पृष्ठ रीफ़्रेश पर दिखाई नहीं देगा।"

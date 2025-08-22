@@ -2,16 +2,30 @@ import uuid
 from decimal import Decimal
 from unittest.mock import patch
 
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 
 from couchdbkit import ResourceNotFound
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.toggle_ui.models import ToggleAudit
-from corehq.apps.toggle_ui.views import clear_toggle_cache_by_namespace
-from corehq.toggles import NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_OTHER, NAMESPACE_EMAIL_DOMAIN
-from corehq.toggles.models import Toggle
+from corehq.apps.toggle_ui.views import (
+    ToggleEditView,
+    ToggleListView,
+    clear_toggle_cache_by_namespace,
+)
+from corehq.apps.users.models import WebUser
+from corehq.toggles import (
+    NAMESPACE_DOMAIN,
+    NAMESPACE_EMAIL_DOMAIN,
+    NAMESPACE_OTHER,
+    NAMESPACE_USER,
+    StaticToggle,
+    Tag,
+)
 
 from corehq.apps.toggle_ui.migration_helpers import move_toggles
+from corehq.toggles.models import Toggle
 
 
 class MigrationHelperTest(TestCase):
@@ -131,3 +145,170 @@ class TestClearCacheForToggle(SimpleTestCase):
     def test_clear_cache_raises_exception_for_colon_in_non_domain_namespaces(self):
         with self.assertRaises(AssertionError):
             clear_toggle_cache_by_namespace(NAMESPACE_USER, 'testuser:test')
+
+
+class BaseTestToggleView(TestCase):
+    domain = 'example-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.superuser = WebUser.create(
+            domain=cls.domain,
+            username="superuser",
+            password="password",
+            created_by=None,
+            created_via=None,
+            is_superuser=True,
+        )
+        cls.addClassCleanup(cls.superuser.delete, None, None)
+
+        cls.regular_user = WebUser.create(
+            domain=cls.domain,
+            username="regular_user",
+            password="password",
+            created_by=None,
+            created_via=None,
+            is_superuser=False,
+        )
+        cls.addClassCleanup(cls.regular_user.delete, None, None)
+
+        cls.tag = Tag(slug='tag1', name='Tag 1', css_class='success', description='test')
+        cls.static_toggle = StaticToggle('toggle1', 'Toggle 1', cls.tag)
+        cls.toggle = Toggle(slug='toggle1')
+        cls.toggle.save()
+        cls.addClassCleanup(cls.toggle.delete)
+
+    @property
+    def endpoint(self):
+        return reverse(self.url_name)
+
+
+class TestToggleListViewAccess(BaseTestToggleView):
+    url_name = ToggleListView.urlname
+
+    def test_superuser_access(self):
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_superuser_access(self):
+        self.client.login(username=self.regular_user.username, password='password')
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 302)
+
+    @patch('corehq.apps.toggle_ui.views.get_editable_toggle_tags_for_user')
+    def test_editable_toggles_access(self, mocked_get_editable_toggle_tags_for_user):
+        mocked_get_editable_toggle_tags_for_user.return_value = [
+            Tag(slug='editable_tag_1', name='Editable Tag 1', css_class='success', description='test'),
+            Tag(slug='editable_tag_2', name='Editable Tag 2', css_class='success', description='test'),
+        ]
+
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.get(self.endpoint)
+
+        self.assertEqual(response.status_code, 200)
+        expected_editable_tags_slug = ['editable_tag_1', 'editable_tag_2']
+        self.assertEqual(response.context['editable_tags_slugs'], expected_editable_tags_slug)
+
+
+class TestToggleEditViewAccess(BaseTestToggleView):
+    url_name = ToggleEditView.urlname
+
+    @property
+    def endpoint(self):
+        return reverse(self.url_name, args=[self.toggle.slug])
+
+    @patch('corehq.apps.toggle_ui.views.find_static_toggle')
+    def test_superuser_access(self, mocked_find_static_toggle):
+        mocked_find_static_toggle.return_value = self.static_toggle
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_superuser_access(self):
+        self.client.login(username=self.regular_user.username, password='password')
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 302)
+
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=True)
+    @patch('corehq.apps.toggle_ui.views.find_static_toggle')
+    def test_view_toggle_with_access(self, mocked_find_static_toggle, *args):
+        mocked_find_static_toggle.return_value = self.static_toggle
+
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.get(self.endpoint)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['can_edit_toggle'])
+
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=False)
+    @patch('corehq.apps.toggle_ui.views.find_static_toggle')
+    def test_view_toggle_with_no_access(self, mocked_find_static_toggle, *args):
+        mocked_find_static_toggle.return_value = self.static_toggle
+
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.get(self.endpoint)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['can_edit_toggle'])
+
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=True)
+    @patch('corehq.apps.toggle_ui.views.find_static_toggle')
+    def test_edit_toggle_with_access(self, mocked_find_static_toggle, *args):
+        mocked_find_static_toggle.return_value = self.static_toggle
+
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.post(self.endpoint)
+
+        self.assertEqual(response.status_code, 200)
+
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=False)
+    @patch('corehq.apps.toggle_ui.views.find_static_toggle')
+    def test_edit_toggle_with_no_access(self, mocked_find_static_toggle, *args):
+        mocked_find_static_toggle.return_value = self.static_toggle
+
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.post(self.endpoint)
+
+        self.assertEqual(response.status_code, 403)
+
+
+class TestSetToggleViewAccess(BaseTestToggleView):
+    url_name = 'set_toggle'
+
+    @property
+    def endpoint(self):
+        return reverse(self.url_name, args=[self.toggle.slug])
+
+    @staticmethod
+    def _sample_request_data():
+        return {'item': 'basic_ff', 'namespace': NAMESPACE_DOMAIN, 'enabled': True}
+
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=True)
+    @patch('corehq.apps.toggle_ui.views.find_static_toggle')
+    def test_set_toggle_with_access(self, mocked_find_static_toggle, *args):
+        mocked_find_static_toggle.return_value = self.static_toggle
+
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.post(self.endpoint, data=self._sample_request_data())
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_superuser_access(self):
+        self.client.login(username=self.regular_user.username, password='password')
+        response = self.client.post(self.endpoint, data=self._sample_request_data())
+        self.assertEqual(response.status_code, 302)
+
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=False)
+    @patch('corehq.apps.toggle_ui.views.find_static_toggle')
+    def test_set_toggle_with_no_access(self, mocked_find_static_toggle, *args):
+        mocked_find_static_toggle.return_value = self.static_toggle
+
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.post(self.endpoint, data=self._sample_request_data())
+
+        self.assertEqual(response.status_code, 403)

@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.core.validators import validate_email
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
@@ -77,7 +78,7 @@ class RegisterWebUserForm(forms.Form):
     company_name = forms.CharField(
         required=False,
         label=_("Organization or Company"),
-        max_length=50,
+        max_length=100,
     )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
@@ -345,17 +346,17 @@ class DomainRegistrationForm(forms.Form):
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     hr_name = forms.CharField(
-        label=_('Project Name'),
+        label=_('Name Your Project'),
         max_length=max_name_length,
         widget=forms.TextInput(
             attrs={
                 'class': 'form-control',
-                'placeholder': _('My CommCare Project'),
+                'placeholder': _('e.g. — My CommCare Project'),
             }
         ),
         help_text=_(
-            "Important: This will be used to create a project URL, and you "
-            "will not be able to change it in the future."
+            '<i class="fa-solid fa-triangle-exclamation"></i> '
+            'Your project name sets the URL. This cannot be changed later.'
         ),
     )
 
@@ -373,7 +374,12 @@ class DomainRegistrationForm(forms.Form):
                     _("Create Project"),
                     type="submit",
                     css_class="btn btn-primary disable-on-submit",
-                )
+                ),
+                hqcrispy.LinkButton(
+                    _("Cancel"),
+                    reverse('homepage'),
+                    css_class="btn btn-default",
+                ),
             )
         )
 

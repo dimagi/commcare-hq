@@ -1,5 +1,5 @@
 from datetime import datetime
-from freezegun import freeze_time
+from time_machine import travel
 from django.test import SimpleTestCase, override_settings
 from corehq.apps.domain.models import Domain
 
@@ -14,7 +14,7 @@ class DomainTests(SimpleTestCase):
         domain = Domain()
         self.assertEqual(domain.get_odata_feed_limit(), 10)
 
-    @freeze_time('2023-06-05')
+    @travel('2023-06-05', tick=False)
     def test_date_created_defaults_to_utcnow_when_not_specified(self):
         domain = Domain()
         self.assertEqual(domain.date_created, datetime(year=2023, month=6, day=5))

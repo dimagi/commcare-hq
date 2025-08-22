@@ -53,6 +53,8 @@ from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
+    FeaturePreviewStatusReport,
+    FeaturePreviewAuditReport,
     UserAuditReport,
     UserListReport,
     UCRDataLoadReport,
@@ -2182,6 +2184,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         ManageDomainMobileWorkersView,
+        CredentialsApplicationSettingsView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -2219,6 +2222,10 @@ def _get_administration_section(domain):
             'title': _(ManageDomainMobileWorkersView.page_title),
             'url': reverse(ManageDomainMobileWorkersView.urlname, args=[domain]),
         }))
+    administration.append({
+        'title': _(CredentialsApplicationSettingsView.page_title),
+        'url': reverse(CredentialsApplicationSettingsView.urlname, args=[domain]),
+    })
 
     return administration
 
@@ -2704,7 +2711,12 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [UserAuditReport, UCRDataLoadReport]
+            } for report in [
+                UserAuditReport,
+                FeaturePreviewStatusReport,
+                FeaturePreviewAuditReport,
+                UCRDataLoadReport,
+            ]
         ]))
         return sections
 

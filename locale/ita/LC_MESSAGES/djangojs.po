@@ -156,7 +156,6 @@ msgid "Billed Monthly"
 msgstr "Fatturato mensilmente"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "Inserisci un'email valida."
 
@@ -3623,9 +3622,14 @@ msgid "Error determining number of matching users"
 msgstr "Errore nel determinare il numero di utenti corrispondenti"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"L'indirizzo email è richiesto quando gli utenti confermano i propri account."
+msgid "Unavailable"
+msgstr "Non disponibile"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#, fuzzy
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "Restano <%- days %> giorni"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
@@ -4265,6 +4269,10 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "L'indirizzo email è richiesto quando gli utenti confermano i propri account."
 
 #~ msgid "Out of range of filter. Will not appear on page refresh."
 #~ msgstr ""

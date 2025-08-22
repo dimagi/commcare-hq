@@ -21,8 +21,10 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
+from corehq import privileges
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -57,11 +59,7 @@ from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
-from corehq.toggles import (
-    DEACTIVATE_WEB_USERS,
-    TWO_STAGE_USER_PROVISIONING,
-    TWO_STAGE_USER_PROVISIONING_BY_SMS,
-)
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.util.global_request import get_request_domain
 
 from ..hqwebapp.signals import clear_login_attempts
@@ -676,7 +674,8 @@ class NewMobileWorkerForm(forms.Form):
         label=gettext_noop("Require Account Confirmation?"),
         help_text=gettext_noop(
             "The user's account will not be active until "
-            "they have confirmed their email and set a password."
+            "they have confirmed their email and set a password. "
+            "This requires that the mobile worker has access to an email address."
         ),
         required=False,
     )
@@ -782,9 +781,7 @@ class NewMobileWorkerForm(forms.Form):
                 '',
                 data_bind='value: location_id',
             )
-
-        self.two_stage_provisioning_enabled = TWO_STAGE_USER_PROVISIONING.enabled(self.domain)
-        if self.two_stage_provisioning_enabled:
+        if domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION):
             confirm_account_field = crispy.Field(
                 'force_account_confirmation',
                 data_bind='checked: force_account_confirmation',
@@ -1660,9 +1657,8 @@ class UserFilterForm(forms.Form):
                 ),
                 data_bind="slideVisible: !isCrossDomain() && location_id",
             ),
+            "user_active_status",
         ]
-        if self.user_type == MOBILE_USER_TYPE or DEACTIVATE_WEB_USERS.enabled(self.domain):
-            fields.append("user_active_status")
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:

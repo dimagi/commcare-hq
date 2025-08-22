@@ -3,7 +3,7 @@ import uuid
 
 from django.test import TestCase
 
-from freezegun import freeze_time
+from time_machine import travel
 
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
@@ -219,7 +219,7 @@ class CouchformsESAnalyticsTest(TestCase):
         self.assertTrue(domain_has_submission_in_last_30_days(self.domain))
 
     def test_not_domain_has_submission_in_last_30_days(self):
-        with freeze_time(self.now + self._60_days):
+        with travel(self.now + self._60_days, tick=False):
             self.assertFalse(domain_has_submission_in_last_30_days(self.domain))
 
     def test_get_first_form_submission_received(self):

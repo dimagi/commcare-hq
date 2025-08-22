@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 from django.test import SimpleTestCase, override_settings
 
-from freezegun import freeze_time
+from time_machine import travel
 from two_factor.forms import totp
 
 from ..forms import HQApiKeyForm, HQTOTPDeviceForm, HQTwoFactorMethodForm
@@ -39,7 +39,7 @@ class TestHQTwoFactorMethodForm(SimpleTestCase):
         return {choice[0] for choice in choices}
 
 
-@freeze_time(datetime(2025, 3, 6))
+@travel(datetime(2025, 3, 6), tick=False)
 class TestHQTOTPDeviceForm(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
@@ -69,7 +69,8 @@ class HQApiKeyTests(SimpleTestCase):
     def test_form_domain_list(self):
         form = HQApiKeyForm(user_domains=['domain1', 'domain2'])
         domain_choices = form.fields['domain'].choices
-        self.assertEqual(domain_choices, [('', 'All Projects'), ('domain1', 'domain1'), ('domain2', 'domain2')])
+        self.assertEqual(domain_choices, [('', ''), ('domain1', 'domain1'), ('domain2', 'domain2'),
+                                          (HQApiKeyForm.ALL_DOMAINS_UI, 'All Projects')])
 
     def test_expiration_date_is_not_required_by_default(self):
         form = HQApiKeyForm()
@@ -81,7 +82,7 @@ class HQApiKeyTests(SimpleTestCase):
 
     def test_when_expiration_is_specified_expiration_is_autopopulated_to_max_expiration(self):
         current_time = datetime(year=2023, month=1, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             form = HQApiKeyForm(max_allowed_expiration_days=30)
             self.assertEqual(form.fields['expiration_date'].initial, '2023-01-31')
 
@@ -94,7 +95,7 @@ class HQApiKeyTests(SimpleTestCase):
 
     def test_when_expiration_is_specified_help_text_includes_max_expiration(self):
         current_time = datetime(year=2023, month=1, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             form = HQApiKeyForm(max_allowed_expiration_days=30)
             self.assertEqual(
                 form.fields['expiration_date'].help_text,
@@ -104,7 +105,7 @@ class HQApiKeyTests(SimpleTestCase):
 
     def test_expiration_supports_year_values(self):
         current_time = datetime(year=2023, month=1, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             form = HQApiKeyForm(max_allowed_expiration_days=365)
             self.assertEqual(
                 form.fields['expiration_date'].help_text,
@@ -114,7 +115,7 @@ class HQApiKeyTests(SimpleTestCase):
 
     def test_expiration_supports_unofficial_expiration_windows(self):
         current_time = datetime(year=2023, month=1, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             form = HQApiKeyForm(max_allowed_expiration_days=22)
             self.assertEqual(
                 form.fields['expiration_date'].help_text,
@@ -128,20 +129,20 @@ class HQApiKeyTests(SimpleTestCase):
 
     def test_valid_expiration_date_with_maximum_expiration_window(self):
         current_time = datetime(year=2023, month=1, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             form = HQApiKeyForm(self._form_data(expiration_date='2023-01-31'), max_allowed_expiration_days=30)
             self.assertTrue(form.is_valid())
 
     def test_expired_key_is_not_valid(self):
         current_time = datetime(year=2023, month=1, day=2)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             form = HQApiKeyForm(self._form_data(expiration_date='2023-01-01'))
             self.assertFalse(form.is_valid())
             self.assertEqual(form.errors['expiration_date'], ['Expiration Date must be in the future'])
 
     def test_expiration_dates_greater_than_maximum_are_invalid(self):
         current_time = datetime(year=2023, month=1, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             form = HQApiKeyForm(self._form_data(expiration_date='2023-02-01'), max_allowed_expiration_days=30)
             self.assertFalse(form.is_valid())
             self.assertEqual(
@@ -152,15 +153,21 @@ class HQApiKeyTests(SimpleTestCase):
     def test_expiration_date_is_localized(self):
         tz = ZoneInfo('US/Eastern')
         current_time = datetime(year=2023, month=1, day=2, hour=23, tzinfo=tz)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             form = HQApiKeyForm(max_allowed_expiration_days=30, timezone=tz)
             # 11 PM Eastern time will wrap over to the next day in UTC
             # So if we aren't localizing the date, this would be '2023-02-02'
             self.assertEqual(form.fields['expiration_date'].initial, '2023-02-01')
 
-    def _form_data(self, expiration_date='2023-01-01'):
+    def test_all_domains_ui_will_be_cleaned_to_empty_string(self):
+        form = HQApiKeyForm(self._form_data(expiration_date=None, domain=HQApiKeyForm.ALL_DOMAINS_UI))
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['domain'], '')
+
+    def _form_data(self, expiration_date='2023-01-01', domain=HQApiKeyForm.ALL_DOMAINS_UI):
         data = {
             'name': 'TestKey',
+            'domain': domain,
         }
 
         if expiration_date:

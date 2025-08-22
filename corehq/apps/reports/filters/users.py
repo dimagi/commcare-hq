@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
-from corehq import toggles
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import EnterprisePermissions
@@ -77,9 +76,9 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         users = util.user_list(self.domain)
-        return [(user.user_id,
-                 "%s%s" % (user.username_in_report, "" if user.is_active else " (Inactive)"))
-                for user in users]
+        return [(user.user_id, "%s%s" % (
+            user.username_in_report, "" if user.is_active_in_domain(self.domain) else " (Inactive)"
+        )) for user in users]
 
     @classmethod
     def get_default_text(cls, user_filter):
@@ -118,17 +117,16 @@ class EmwfUtils(object):
     def user_tuple(self, u):
         user = util._report_user(u)
         uid = "u__%s" % user.user_id
-        is_active = False
-        if u['doc_type'] == 'WebUser':
-            if WebUser.get_by_user_id(user.user_id).is_active_in_domain(self.domain):
-                name = "%s [Active Web User]" % user.username_in_report
-            else:
-                name = "%s [Deactivated Web User]" % user.username_in_report
-        elif user.is_active:
-            is_active = True
-            name = "%s [Active Mobile Worker]" % user.username_in_report
+        is_active = user.is_active_in_domain(self.domain)
+        if u['doc_type'] == 'WebUser' and is_active:
+            user_type = _("Active Web User")
+        elif u['doc_type'] == 'WebUser':
+            user_type = _("Deactivated Web User")
+        elif is_active:
+            user_type = _("Active Mobile Worker")
         else:
-            name = "%s [Deactivated Mobile Worker]" % user.username_in_report
+            user_type = _("Deactivated Mobile Worker")
+        name = f"{user.username_in_report} [{user_type}]"
         return uid, name, is_active
 
     def reporting_group_tuple(self, g):
@@ -406,28 +404,20 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             location_query = location_query.accessible_to_user(domain, request_user)
         location_ids = list(location_query.location_ids())
 
-        group_id_filter = filters.term("__group_ids", group_ids)
-
-        if toggles.FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
-            group_and_location_filter = filters.AND(
-                group_id_filter,
-                user_es.location(location_ids),
-            )
-        else:
-            group_and_location_filter = filters.OR(
-                group_id_filter,
-                user_es.location(location_ids),
-            )
-
         id_filter = filters.OR(
             filters.term("_id", user_ids),
-            group_and_location_filter,
+            filters.AND(
+                user_es.is_active(domain),
+                filters.OR(
+                    filters.term("__group_ids", group_ids),
+                    user_es.location(location_ids),
+                )
+            ),
         )
 
         if user_type_filters:
             return q.OR(
                 id_filter,
-                group_and_location_filter,
                 filters.OR(*user_type_filters),
             )
         return q.filter(id_filter)
@@ -485,7 +475,7 @@ class EnterpriseUsersUtils(EmwfUtils):
                 name = f"{report_username} [Active Web User]"
             else:
                 name = f"{report_username} [Deactivated Web User]"
-        elif user_obj.is_active:
+        elif user_obj.is_active_in_domain(user['domain']):
             is_active = True
             name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
         else:

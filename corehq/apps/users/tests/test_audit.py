@@ -437,3 +437,33 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             },
             "Deactivation After date has been deleted"
         )
+
+    def test_add_toggle_edit_permissions(self):
+        toggle_tags = ["tag1", "tag2"]
+        self._test_change_messages(
+            UserChangeMessage.toggle_edit_permissions_added,
+            [toggle_tags],
+            {
+                "toggle_edit_permissions": {
+                    "add_toggle_edit_permissions": {
+                        "toggle_tags": toggle_tags
+                    }
+                }
+            },
+            "Added toggle edit permissions(s) for tag1, tag2"
+        )
+
+    def test_remove_toggle_edit_permissions(self):
+        toggle_tags = ["tag1", "tag2"]
+        self._test_change_messages(
+            UserChangeMessage.toggle_edit_permissions_removed,
+            [toggle_tags],
+            {
+                "toggle_edit_permissions": {
+                    "remove_toggle_edit_permissions": {
+                        "toggle_tags": toggle_tags
+                    }
+                }
+            },
+            "Removed toggle edit permissions(s) for tag1, tag2"
+        )

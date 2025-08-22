@@ -5,7 +5,7 @@ from operator import attrgetter
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -69,7 +69,10 @@ def data_dictionary_json_case_types(request, domain):
     if toggles.FHIR_INTEGRATION.enabled(domain):
         fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
 
-    queryset = CaseType.objects.filter(domain=domain).annotate(properties_count=Count('property'))
+    queryset = CaseType.objects.filter(domain=domain).annotate(
+        property_count=Count('property'),
+        deprecated_property_count=Count('property', filter=Q(property__deprecated=True))
+    )
     if not request.GET.get('load_deprecated_case_types', False) == 'true':
         queryset = queryset.filter(is_deprecated=False)
 
@@ -83,7 +86,8 @@ def data_dictionary_json_case_types(request, domain):
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
-            "properties_count": case_type.properties_count,
+            "property_count": case_type.property_count,
+            "deprecated_property_count": case_type.deprecated_property_count,
             "is_safe_to_delete": is_case_type_unused(domain, case_type.name)
         })
     return JsonResponse({
@@ -108,18 +112,22 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
         fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
 
     case_type = get_object_or_404(
-        CaseType.objects.annotate(properties_count=Count('property')),
+        CaseType.objects.annotate(
+            property_count=Count('property'),
+            deprecated_property_count=Count('property', filter=Q(property__deprecated=True)),
+        ),
         domain=domain,
-        name=case_type_name
+        name=case_type_name,
     )
     case_type_data = {
         "name": case_type.name,
-        "properties_count": case_type.properties_count,
+        "property_count": case_type.property_count,
+        "deprecated_property_count": case_type.deprecated_property_count,
         "groups": []
     }
 
     current_url = request.build_absolute_uri()
-    case_type_data["_links"] = _get_pagination_links(current_url, case_type_data["properties_count"], skip, limit)
+    case_type_data["_links"] = _get_pagination_links(current_url, case_type_data["property_count"], skip, limit)
 
     properties_queryset = (
         CaseProperty.objects
@@ -186,9 +194,9 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
     # properties_queryset skips groups with no properties. Add them here
     empty_groups = (
         CasePropertyGroup.objects
-        .annotate(properties_count=Count('property'))
+        .annotate(property_count=Count('property'))
         .filter(case_type=case_type)
-        .filter(properties_count=0)
+        .filter(property_count=0)
     )
     for group in empty_groups:
         case_type_data["groups"].append({

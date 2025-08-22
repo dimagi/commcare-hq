@@ -53,7 +53,6 @@ from corehq.apps.domain.views.internal import (
     calculated_properties,
     toggle_diff,
 )
-from corehq.apps.domain.views.pro_bono import ProBonoView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
     ManageReleasesByLocation,
@@ -77,6 +76,7 @@ from corehq.apps.domain.views.settings import (
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
     ImportAppFromAnotherServerView,
+    CredentialsApplicationSettingsView,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -162,7 +162,6 @@ domain_settings = [
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),
-    url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
     url(r'^subscription/credits/make_wire_payment/$', CreditsWireInvoiceView.as_view(),
@@ -205,6 +204,8 @@ domain_settings = [
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
     url(r'^alerts/edit/(?P<alert_id>[\w\-]+)/$', EditDomainAlertView.as_view(), name=EditDomainAlertView.urlname),
     url(r'^alerts/$', ManageDomainAlertsView.as_view(), name=ManageDomainAlertsView.urlname),
+    url(r'^credentials_application/$', CredentialsApplicationSettingsView.as_view(),
+        name=CredentialsApplicationSettingsView.urlname),
     url(r'^alerts/delete/$', delete_domain_alert, name='delete_domain_alert'),
     url(r'^alerts/update_status/$', update_domain_alert_status, name='update_domain_alert_status'),
     url(r'^manage_mobile_workers/$', ManageDomainMobileWorkersView.as_view(),

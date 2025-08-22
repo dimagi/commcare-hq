@@ -64,7 +64,7 @@ describe('Entries', function () {
     it('Should return the IntEntry', function () {
         var entry = formUI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof entries.IntEntry);
-        assert.equal(entry.templateType, 'str');
+        assert.equal(entry.templateType, 'numeric');
 
         entry.rawAnswer('1234');
         assert.isTrue(entry.isValid('1234'));
@@ -152,7 +152,7 @@ describe('Entries', function () {
         questionJSON.datatype = constants.FLOAT;
         var entry = formUI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof entries.FloatEntry);
-        assert.equal(entry.templateType, 'str');
+        assert.equal(entry.templateType, 'numeric');
 
         entry.rawAnswer('2.3');
         assert.isTrue(entry.isValid('2.3'));
@@ -507,7 +507,7 @@ describe('Entries', function () {
         var entry = formUI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof entries.PhoneEntry);
         assert.equal(entry.answer(), null);
-        assert.equal(entry.templateType, 'str');
+        assert.equal(entry.templateType, 'numeric');
 
         entry.rawAnswer('1234');
         this.clock.tick(1000);

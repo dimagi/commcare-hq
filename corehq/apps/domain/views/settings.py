@@ -28,7 +28,7 @@ from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from dimagi.utils.web import json_response, get_ip
 
 from corehq import feature_previews, privileges, toggles
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
@@ -53,6 +53,7 @@ from corehq.apps.domain.forms import (
     PrivacySecurityForm,
     ProjectSettingsForm,
     IPAccessConfigForm,
+    DomainCredentialIssuingAppForm,
     clean_password
 )
 from corehq.apps.domain.models import Domain
@@ -65,6 +66,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
@@ -73,6 +75,7 @@ from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.apps.app_manager.models import CredentialApplication
 
 MAX_ACTIVE_ALERTS = 3
 
@@ -541,6 +544,12 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
+            ToggleAudit.objects.log_toggle_action(
+                feature.slug,
+                self.request.couch_user.username,
+                [f"{NAMESPACE_DOMAIN}:{self.domain}"],
+                ToggleAudit.ACTION_ADD if new_state else ToggleAudit.ACTION_REMOVE,
+            )
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
 
@@ -567,10 +576,17 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                     )
                 )
                 return '{}?username={}'.format(
-                    reverse('domain_login', args=[couch_user.domain]),
+                    reverse('commcare_user_account_confirmed', args=[couch_user.domain]),
                     couch_user.raw_username,
                 )
         return super().get_success_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {"username": self.user.username}
+        )
+        return context
 
     def get(self, request, *args, **kwargs):
 
@@ -643,6 +659,95 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'
     urlname = 'domain_manage_mobile_workers'
+
+
+@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
+class CredentialsApplicationSettingsView(BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Credentials Application")
+    template_name = 'domain/admin/application_credentials.html'
+    urlname = 'domain_manage_application_credentials'
+
+    @property
+    def form(self):
+        if self.request.method == 'POST':
+            return DomainCredentialIssuingAppForm(self.domain, self.request.POST)
+        return DomainCredentialIssuingAppForm(self.domain)
+
+    @property
+    def main_context(self):
+        context = super().main_context
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form
+        if not form.is_valid():
+            messages.error(request, _("There was an error saving your settings. Please try again!"))
+            return self.get(request, *args, **kwargs)
+
+        is_new_credential_app = self.set_credential_app(form.cleaned_data)
+
+        success_message = _("Settings saved!")
+        if is_new_credential_app:
+            success_message = _(
+                "Settings saved! Please remember to configure the credential criteria for the issuing"
+                " app in the app manager settings."
+            )
+
+        messages.success(request, success_message)
+        return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+    def set_credential_app(self, form_data):
+        domain_issuing_app_record = CredentialApplication.objects.filter(domain=self.domain).first()
+        new_issuing_app_id = form_data['app_id']
+
+        if not new_issuing_app_id:
+            self.remove_issuing_app(domain_issuing_app_record)
+            return False
+        elif not domain_issuing_app_record:
+            self.create_issuing_app(new_issuing_app_id)
+            return True
+        elif new_issuing_app_id != domain_issuing_app_record.app_id:
+            self.update_issuing_app(new_issuing_app_id, domain_issuing_app_record)
+            return True
+        return False
+
+    def create_issuing_app(self, new_app_id):
+        domain_issuing_app_record = CredentialApplication.objects.create(
+            domain=self.domain,
+            app_id=new_app_id,
+        )
+        application = get_app(self.domain, new_app_id)
+        self.add_credential_to_app_features(application, domain_issuing_app_record)
+
+    def update_issuing_app(self, new_app_id, current_credential_app_record):
+        old_app = get_app(self.domain, current_credential_app_record.app_id)
+        new_app = get_app(self.domain, new_app_id)
+
+        current_credential_app_record.app_id = new_app_id
+        current_credential_app_record.save()
+
+        self.remove_credential_from_app_features(old_app)
+        self.add_credential_to_app_features(new_app, current_credential_app_record)
+
+    def remove_issuing_app(self, domain_issuing_app_record):
+        if domain_issuing_app_record:
+            issuing_app = get_app(self.domain, domain_issuing_app_record.app_id)
+            self.remove_credential_from_app_features(issuing_app)
+            domain_issuing_app_record.delete()
+
+    def remove_credential_from_app_features(self, app):
+        app.profile.get('features', {}).pop('credentials', None)
+        app.save()
+
+    def add_credential_to_app_features(self, app, domain_issuing_app):
+        app_features = app.profile.get('features', {})
+        app_features['credentials'] = domain_issuing_app.activity_level
+        app.profile['features'] = app_features
+        app.save()
 
 
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),

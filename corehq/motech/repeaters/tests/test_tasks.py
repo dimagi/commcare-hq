@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from django.test import SimpleTestCase, TestCase
 
 import pytest
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.util.test_utils import flag_enabled
@@ -411,7 +411,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_lock.release.assert_called_once()
 
 
-@freeze_time('2025-01-01')
+@travel('2025-01-01', tick=False)
 class TestGetWaitDurationSeconds(TestCase):
 
     @classmethod

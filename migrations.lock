@@ -125,6 +125,8 @@ accounting
  0103_bulk_data_cleaning_priv
  0104_fix_priv_community_rename
  0105_alter_billingcontactinfo_city_and_more
+ 0106_alter_billingcontactinfo_company_name
+ 0107_two_stage_mobile_worker_creation_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -179,6 +181,7 @@ app_manager
  0027_add_case_tile_template_field
  0028_case_list_custom_variable_xml_to_dict
  0029_delete_case_list_custom_variable_xml
+ 0030_credentialapplication
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -349,6 +352,7 @@ data_dictionary
  0014_auto_20230705_2007
  0015_casetype_is_deprecated
  0016_remove_case_property_group_and_rename_group_obj_caseproperty_group
+ 0017_refresh_data_dictionary
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -795,6 +799,7 @@ ota
  0009_devicelogrequest
  0010_alter_devicelogrequest
  0011_remove_devicelogrequest_deviceid
+ 0012_integritysamplepercentage
 otp_static
  0001_initial
  0002_throttling
@@ -847,10 +852,12 @@ pillowtop
  0006_add_geopoint_to_case_search_index
  0007_copy_xforms_checkpoint
  0008_sync_es_with_couch_webusers
+ 0009_sync_es_with_couch_commcareusers
 preindex
  0001_initial
  0002_initial
  0003_initial
+ 0004_initial
 products
  0001_initial
 project_limits
@@ -858,6 +865,7 @@ project_limits
  0002_ratelimitedtwofactorlog
  0003_pillowlaggaugedefinition
  0004_systemlimit
+ 0005_systemlimit_owneriddefault
 registration
  0001_initial
  0002_alter_request_ip
@@ -896,6 +904,7 @@ repeaters
  0017_add_indexes
  0018_datasourceupdate
  0019_connectformrepeater
+ 0020_repeater_extra_backoff_codes
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1210,6 +1219,7 @@ toggle_ui
  0002_toggleaudit
 toggles
  0001_toggle_edit_permission
+ 0002_assign_permissions_superusers
 translations
  0001_initial
  0002_transifexblacklist
@@ -1335,6 +1345,7 @@ users
  0081_rm_orphaned_user_data
  0082_connectidmessagingkey_unique_active_messaging_key_per_user_and_domain
  0083_reset_ccu_dm_is_active
+ 0084_remove_hqapikey_key
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

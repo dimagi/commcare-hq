@@ -109,6 +109,7 @@ from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.mobile_auth.utils import generate_aes_key
+from corehq.util.soft_assert.api import soft_assert
 
 
 WEB_USER = 'web'
@@ -744,20 +745,21 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
-    def is_active_in_domain(self, domain):
-        return self.is_active
+    def set_is_active(self, domain, is_active):
+        if domain != self.domain:
+            raise AssertionError(f"User is not a member of {domain}")
+        self.is_active = is_active
 
 
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
 
-    @memoized
-    def is_active_in_domain(self, domain):
+    def set_is_active(self, domain, is_active):
         domain_membership = self.get_domain_membership(domain)
-        if domain_membership:
-            return domain_membership.is_active
-        return False
+        if not domain_membership:
+            raise AssertionError(f"User is not a member of {domain}")
+        domain_membership.is_active = is_active
 
 
 class LowercaseStringProperty(StringProperty):
@@ -784,7 +786,7 @@ class DjangoUserMixin(DocumentSchema):
     email = LowercaseStringProperty()
     password = StringProperty()
     is_staff = BooleanProperty()
-    is_active = BooleanProperty()
+    is_active = BooleanProperty()  # Use is_active_in_domain and set_is_active instead
     is_superuser = BooleanProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
@@ -1069,6 +1071,27 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def should_be_locked_out(self):
         max_attempts = MAX_WEB_USER_LOGIN_ATTEMPTS if self.is_web_user() else MAX_COMMCARE_USER_LOGIN_ATTEMPTS
         return self.login_attempts >= max_attempts
+
+    def is_active_in_domain(self, domain):
+        # user.is_active concerns authentication - can a user log in?
+        # domain_membership.is_active controls whether a user can access a domain
+        # CommCareUsers are only in a single domain, so there's no distinction
+        if not domain_restricts_superusers(domain) and (
+            self.is_active and self.is_superuser
+        ):
+            return True
+
+        user = self.wrapped_correctly()
+        domain_membership = user.get_domain_membership(domain)
+        if domain_membership and user.is_active:
+            return domain_membership.is_active
+        return False
+
+    def is_active_in_any_domain(self):
+        user = self.wrapped_correctly()
+        return user.is_active and [
+            dm.is_active for dm in user.domain_memberships
+        ]
 
     def supports_lockout(self):
         return True
@@ -1443,6 +1466,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             'FakeUser': FakeUser,
         }[doc_type].wrap(source)
 
+    def wrapped_correctly(self):
+        if not isinstance(self, (CommCareUser, WebUser)):
+            return self.wrap_correctly(self.to_json())
+        return self
+
     @classmethod
     @quickcache(['username'], skip_arg="strict")
     def get_by_username(cls, username, strict=False):
@@ -1765,6 +1793,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # user creation
     is_account_confirmed = BooleanProperty(default=True)
     self_set_password = BooleanProperty(default=False)
+    confirmation_sent_at = DateTimeProperty()
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
@@ -1844,18 +1873,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                commit=True,
                is_account_confirmed=True,
                user_data=None,
+               is_active=None,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
         """
         # if the account is not confirmed, also set is_active false so they can't login
-        if 'is_active' not in kwargs:
-            kwargs['is_active'] = is_account_confirmed
-        elif not is_account_confirmed:
-            assert not kwargs['is_active'], \
-                "it's illegal to create a user with is_active=True and is_account_confirmed=False"
-        commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
-                                                        email, uuid, date, user_data, **kwargs)
+        if is_active is None:
+            is_active = is_account_confirmed
+        elif is_active and not is_account_confirmed:
+            raise AssertionError("it's illegal to create a user with is_active=True "
+                                 "and is_account_confirmed=False")
+        commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via, email,
+                                                        uuid, date, user_data, is_active=is_active, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -2004,6 +2034,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             raise IllegalAccountConfirmation('Account is already confirmed')
         assert not self.is_active, 'Active account should not be unconfirmed!'
         self.is_active = True
+        self.get_domain_membership(self.domain).is_active = True
         self.is_account_confirmed = True
         self.set_password(password)
         self.self_set_password = True
@@ -2410,11 +2441,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               user_data=None, by_domain_required_for_log=True, commit=True, **kwargs):
+               user_data=None, by_domain_required_for_log=True, commit=True, is_active=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, user_data, **kwargs)
         if domain:
-            web_user.add_domain_membership(domain, **kwargs)
+            web_user.add_domain_membership(domain, is_active=is_active, **kwargs)
         if commit:
             web_user.save()
             web_user.log_user_create(domain, created_by, created_via,
@@ -3141,7 +3172,6 @@ class ApiKeyManager(models.Manager):
 
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
-    key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     encrypted_key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
@@ -3174,22 +3204,26 @@ class HQApiKey(models.Model):
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
 
+    # Remove this after key fields are deleted and verified no errors occur
+    @property
+    def key(self):
+        _soft_assert_api_key = soft_assert(to='jtang@dimagi.com', send_to_ops=False)
+        _soft_assert_api_key(False,
+                             f"Attempted to access api key directly for user {self.user} and name {self.name}")
+        return self.plaintext_key
+
+    @key.setter
+    def key(self, value):
+        _soft_assert_api_key = soft_assert(to='jtang@dimagi.com', send_to_ops=False)
+        _soft_assert_api_key(False, f"Attempted to set api key directly for user {self.user} and name {self.name}")
+        self.plaintext_key = value
+
     @property
     def plaintext_key(self):
-        try:
-            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
-            if decrypted_key == self.key:
-                return decrypted_key
-            else:
-                logging.warning("Decrypted key does not match stored key for %s", self.name)
-                return self.key
-        except Exception as e:
-            logging.exception(f'Error getting decrypted key for {self.name}. {e}')
-            return self.key
+        return b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
 
     @plaintext_key.setter
     def plaintext_key(self, plaintext):
-        self.key = plaintext
         self.encrypted_key = b64_aes_cbc_encrypt(plaintext)
 
     @property
