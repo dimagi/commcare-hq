@@ -138,7 +138,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
             "user_id": self.request.couch_user.user_id,
             "request_params": dict(self.request.GET.lists()),
             "config": self.config_as_dict(),
-            "report_title": self.get_report_title(),
+            "report_title": self.report_title,
         }
 
     @memoized
@@ -164,6 +164,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
 
         view = cls()
         view.request = request
+        view.report_title = context['report_title']
         for config_key, config_value in context['config'].items():
             setattr(view, config_key, config_value)
 
