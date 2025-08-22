@@ -6,8 +6,8 @@ from corehq.apps.data_analytics.models import MALTRow
 
 
 def get_credentials_for_timeframe(activity_level, app_ids):
-    from corehq.apps.app_manager.models import CredentialApplication
-    months = CredentialApplication.months_for_activity_level(activity_level)
+    from corehq.apps.users.models import months_for_activity_level
+    months = months_for_activity_level(activity_level)
     now = datetime.now(timezone.utc)
     start_date = date(now.year, now.month, now.day) - relativedelta(months=months)
     user_months_activity = (

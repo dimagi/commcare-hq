@@ -3454,6 +3454,29 @@ class ConnectIDMessagingKey(models.Model):
         ]
 
 
+class ActivityLevel(models.TextChoices):
+    ONE_MONTH = '1MON_ACTIVE', _('1 Month')
+    TWO_MONTHS = '2MON_ACTIVE', _('2 Months')
+    THREE_MONTHS = '3MON_ACTIVE', _('3 Months')
+    SIX_MONTHS = '6MON_ACTIVE', _('6 Months')
+    NINE_MONTHS = '9MON_ACTIVE', _('9 Months')
+    TWELVE_MONTHS = '12MON_ACTIVE', _('12 Months')
+
+
+ACTIVITY_LEVEL_TO_MONTHS = {
+    ActivityLevel.ONE_MONTH: 1,
+    ActivityLevel.TWO_MONTHS: 2,
+    ActivityLevel.THREE_MONTHS: 3,
+    ActivityLevel.SIX_MONTHS: 6,
+    ActivityLevel.NINE_MONTHS: 9,
+    ActivityLevel.TWELVE_MONTHS: 12,
+}
+
+
+def months_for_activity_level(activity_level):
+    return ACTIVITY_LEVEL_TO_MONTHS.get(activity_level)
+
+
 class UserCredential(models.Model):
     domain = models.TextField()
     user_id = models.CharField(max_length=50)
@@ -3461,7 +3484,10 @@ class UserCredential(models.Model):
     app_id = models.CharField(max_length=50)
     created_on = models.DateTimeField(auto_now_add=True)
     issued_on = models.DateTimeField(null=True, blank=True)
-    type = models.CharField(max_length=32)
+    activity_level = models.CharField(
+        max_length=32,
+        choices=ActivityLevel.choices,
+    )
 
     class Meta:
         unique_together = ("user_id", "app_id")
