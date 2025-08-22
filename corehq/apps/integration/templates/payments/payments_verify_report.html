@@ -24,32 +24,42 @@
 
   <div id="verify-alert"></div>
   <div id="revert-verification-alert"></div>
-  <div class="col-5 mb-2 mt-4">
-    <div class="row">
-      <div class="col-3">
-        <button
-          id="verify-selected-btn"
-          class="btn btn-primary"
-          type="button"
-          disabled="true"
-          data-bs-toggle="modal"
-          data-bs-target="#verify-confirmation-modal"
-        >
-          <span> {% trans "Verify Selected" %} </span>
-        </button>
-      </div>
-      <div class="col-4">
-        <button
-          id="revert-verification-selected-btn"
-          class="btn btn-primary"
-          type="button"
-          disabled="true"
-          data-bs-toggle="modal"
-          data-bs-target="#revert-verification-confirmation-modal"
-        >
-          <span> {% trans "Revert Verification" %} </span>
-        </button>
-      </div>
+  <div id="export-alert"></div>
+  <div class="mb-2 mt-4">
+    <div class="d-flex flex-wrap gap-3">
+      <button
+        id="verify-selected-btn"
+        class="btn btn-primary"
+        type="button"
+        disabled
+        data-bs-toggle="modal"
+        data-bs-target="#verify-confirmation-modal"
+      >
+        Verify Selected
+      </button>
+
+      <button
+        id="revert-verification-selected-btn"
+        class="btn btn-primary"
+        type="button"
+        disabled
+        data-bs-toggle="modal"
+        data-bs-target="#revert-verification-confirmation-modal"
+      >
+        Revert Verification
+      </button>
+
+      <button
+        id="export-btn"
+        class="btn btn-primary"
+        type="button"
+        hx-get="{% url 'payments_verify_table' domain %}{% querystring %}"
+        hq-hx-action="export"
+        hx-target="#export-alert"
+      >
+        <i class="fa fa-share"></i>
+        <span> {% trans "Export to Excel" %} </span>
+      </button>
     </div>
   </div>
   <div
