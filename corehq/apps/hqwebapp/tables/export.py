@@ -136,7 +136,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
             "domain": self.request.domain,
             "can_access_all_locations": self.request.can_access_all_locations,
             "user_id": self.request.couch_user.user_id,
-            "request_params": dict(self.request.GET.lists()),
+            "request_params": self.request.GET.urlencode(),
             "config": self.config_as_dict(),
             "report_title": self.report_title,
         }
@@ -152,11 +152,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
 
         request = HttpRequest()
         request.method = 'GET'
-
-        query_dict = QueryDict(mutable=True)
-        for key, values in context['request_params'].items():
-            query_dict.setlist(key, values)
-        request.GET = query_dict
+        request.GET = QueryDict(context['request_params'])
 
         request.domain = context['domain']
         request.couch_user = CouchUser.get_by_user_id(context['user_id'])
