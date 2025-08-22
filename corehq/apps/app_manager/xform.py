@@ -2150,6 +2150,45 @@ class XForm(WrappedNode):
     def _add_scheduler_case_update(self, case_type, case_property):
         self._scheduler_case_updates[case_type].add(case_property)
 
+    def add_case_mappings(self, form):
+        mapping_element = self.create_case_mappings(form)
+        existing_mappings = self.xml.find('case_mappings')
+        if existing_mappings is None:
+            self.xml.append(mapping_element)
+        else:
+            self.xml.replace(existing_mappings, mapping_element)
+
+    @classmethod
+    def create_case_mappings(cls, form):
+        root = ET.Element('case_mappings')
+
+        # TODO: add non-mutating functionality to form actions to grab
+        # the multi version without mutating the base object
+        form.actions.open_case.make_multi()
+        name_mapping = ET.Element('mapping', property='name')
+        for question in form.actions.open_case.name_update_multi:
+            if question.question_path:
+                name_mapping.append(cls._get_update_xml(question))
+        if len(name_mapping):
+            root.append(name_mapping)
+
+        form.actions.update_case.make_multi()
+        for case_property, questions in form.actions.update_case.update_multi.items():
+            if case_property == 'name' and len(name_mapping):
+                # skip name mappings if already provided by open_case
+                continue
+            mapping = ET.SubElement(root, 'mapping', property=case_property)
+            for question in questions:
+                mapping.append(cls._get_update_xml(question))
+
+        return root
+
+    @classmethod
+    def _get_update_xml(cls, update):
+        EXCLUDED_PROPERTIES = ['doc_type']
+        properties = {k: v for (k, v) in update.items() if k not in EXCLUDED_PROPERTIES}
+        return ET.Element('question', **properties)
+
 
 VELLUM_TYPES = {
     "AndroidIntent": {
