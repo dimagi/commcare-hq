@@ -36,6 +36,7 @@ from looseversion import LooseVersion
 from lxml import etree
 from memoized import memoized
 
+from corehq.apps.users.models import ActivityLevel
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -6319,34 +6320,13 @@ class CredentialApplication(models.Model):
     Represents an application that issues credentials to users when
     they have been active for a certain activity_level.
     """
-    class ActivityLevelChoices(models.TextChoices):
-        ONE_MONTH = '1MON_ACTIVE', _('1 Month')
-        TWO_MONTHS = '2MON_ACTIVE', _('2 Months')
-        THREE_MONTHS = '3MON_ACTIVE', _('3 Months')
-        SIX_MONTHS = '6MON_ACTIVE', _('6 Months')
-        NINE_MONTHS = '9MON_ACTIVE', _('9 Months')
-        TWELVE_MONTHS = '12MON_ACTIVE', _('12 Months')
-
-    ACTIVITY_LEVEL_TO_MONTHS = {
-        ActivityLevelChoices.ONE_MONTH: 1,
-        ActivityLevelChoices.TWO_MONTHS: 2,
-        ActivityLevelChoices.THREE_MONTHS: 3,
-        ActivityLevelChoices.SIX_MONTHS: 6,
-        ActivityLevelChoices.NINE_MONTHS: 9,
-        ActivityLevelChoices.TWELVE_MONTHS: 12,
-    }
-
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
     activity_level = models.CharField(
         max_length=32,
-        choices=ActivityLevelChoices.choices,
-        default=ActivityLevelChoices.THREE_MONTHS,
+        choices=ActivityLevel.choices,
+        default=ActivityLevel.THREE_MONTHS,
     )
-
-    @classmethod
-    def months_for_activity_level(cls, activity_level):
-        return cls.ACTIVITY_LEVEL_TO_MONTHS.get(activity_level)
 
     class Meta:
         unique_together = ('domain', 'app_id')

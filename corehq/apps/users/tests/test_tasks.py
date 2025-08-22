@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from couchdbkit import ResourceConflict
 
-from corehq.apps.app_manager.models import Application, CredentialApplication
+from corehq.apps.app_manager.models import Application, ActivityLevel, CredentialApplication
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.test_malt_generator import create_malt_row_dict
 from corehq.apps.domain.shortcuts import create_domain
@@ -334,13 +334,13 @@ class TestProcessMobileWorkerCredentials(TestCase):
 
         CredentialApplication.objects.create(
             domain=cls.domain,
-            app_id=cls.one_month_app.id,
-            activity_level=CredentialApplication.ActivityLevelChoices.ONE_MONTH,
+            app_id=cls.one_month_app_id,
+            activity_level=ActivityLevel.ONE_MONTH,
         )
         CredentialApplication.objects.create(
             domain=cls.domain,
-            app_id=cls.three_month_app.id,
-            activity_level=CredentialApplication.ActivityLevelChoices.THREE_MONTHS,
+            app_id=cls.three_month_app_id,
+            activity_level=ActivityLevel.THREE_MONTHS,
         )
 
     @classmethod
