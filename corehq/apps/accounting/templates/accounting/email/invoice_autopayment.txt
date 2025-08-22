@@ -25,7 +25,7 @@
 {% endblocktrans %}
 {% blocktrans %}
     Best Regards,
-    The CommCare HQ Team
+    The CommCare Team
     www.commcarehq.org
 {% endblocktrans %}
 {% blocktrans %}

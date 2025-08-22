@@ -23,5 +23,5 @@ If you think you have received this by mistake, you can go ahead and ignore this
 {% blocktrans %}
 Thanks for using our site!
 {% endblocktrans %}
--The CommCare HQ team
+-The CommCare Team
 

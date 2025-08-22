@@ -24,7 +24,7 @@ Thank you for using CommCare. If you have any questions, please don't
 hesitate to contact {{ invoicing_contact_email }}.
 
 Best Regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org
 
 Email From:

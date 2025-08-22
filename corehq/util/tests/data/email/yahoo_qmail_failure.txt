@@ -42,7 +42,7 @@ HQ can only provide in HTML.  Please set your email client to view this email
 in HTML or read this email in a client that supports HTML email.
 
 Thanks,
-The CommCare HQ Team
+The CommCare Team
 --===============8853429737433652531==
 Content-Type: text/html; charset="utf-8"
 MIME-Version: 1.0

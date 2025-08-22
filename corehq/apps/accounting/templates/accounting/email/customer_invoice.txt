@@ -86,7 +86,7 @@ Total Balance: {{ total_balance }}
 Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
 
 Best regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org
 
 

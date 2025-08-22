@@ -17,4 +17,4 @@
 
 {% blocktrans %}Thanks for using our site!{% endblocktrans %}
 
-{% blocktrans %}-The CommCare HQ team{% endblocktrans %}
+{% blocktrans %}-The CommCare Team{% endblocktrans %}

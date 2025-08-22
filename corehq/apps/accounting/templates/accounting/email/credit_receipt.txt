@@ -14,7 +14,7 @@ hesitate to contact {{ invoicing_contact_email }}.
 
 {% blocktrans %}
 Best Regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org
 {% endblocktrans %}
 
