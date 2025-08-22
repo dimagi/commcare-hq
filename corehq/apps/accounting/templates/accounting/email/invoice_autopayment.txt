@@ -30,6 +30,6 @@
 {% endblocktrans %}
 {% blocktrans %}
     Statement From:
-    CommCare HQ and the corporation Dimagi, Inc.
+    CommCare and the corporation Dimagi, Inc.
     585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
 {% endblocktrans %}

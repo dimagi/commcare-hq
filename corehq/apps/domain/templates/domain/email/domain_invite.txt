@@ -2,17 +2,17 @@
 {% blocktrans %}Hey there,{% endblocktrans %}
 
 {% blocktrans %}
-    {{ inviter }} has invited you to join the {{ domain }} project at CommCare HQ.
+    {{ inviter }} has invited you to join the {{ domain }} project on CommCare.
     This invitation expires in {{ days }} day(s).
 {% endblocktrans %}
 
 {% blocktrans %}To accept this invitation click <a href="{{ url }}">this link</a>. If you are unable to click the link, copy and paste the following url into your browser. {{url}}{% endblocktrans %}
 
-{% blocktrans %}CommCare HQ is a data management tool used by over 500 organizations to help frontline workers around the world.{% endblocktrans %}
+{% blocktrans %}CommCare is a data management tool used by over 500 organizations to help frontline workers around the world.{% endblocktrans %}
 
 {% blocktrans %}
     If you think you have received this by mistake, you can go ahead and ignore this email.
-    To find out more about CommCare HQ visit http://www.commcarehq.org/.
+    To find out more about CommCare visit http://www.commcarehq.org/.
 {% endblocktrans %}
 
 {% blocktrans %}Thanks for using our site!{% endblocktrans %}
