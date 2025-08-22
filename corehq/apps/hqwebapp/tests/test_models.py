@@ -35,17 +35,17 @@ class TestAlerts(TestCase):
         alert = Alert.objects.create(**kwargs)
 
         active_alerts = Alert.get_active_alerts()
-        self.assertQuerysetEqual(active_alerts, [])
+        self.assertQuerySetEqual(active_alerts, [])
 
         alert.start_time = past_time
         alert.save()
         active_alerts = Alert.get_active_alerts()
-        self.assertQuerysetEqual(active_alerts, [alert])
+        self.assertQuerySetEqual(active_alerts, [alert])
 
         alert.end_time = past_time
         alert.save()
         active_alerts = Alert.get_active_alerts()
-        self.assertQuerysetEqual(active_alerts, [])
+        self.assertQuerySetEqual(active_alerts, [])
 
     def test_shows_alerts_without_schedule(self):
         kwargs = {
@@ -55,7 +55,7 @@ class TestAlerts(TestCase):
         alert = Alert.objects.create(**kwargs)
 
         active_alerts = Alert.get_active_alerts()
-        self.assertQuerysetEqual(active_alerts, [alert])
+        self.assertQuerySetEqual(active_alerts, [alert])
 
 
 class TestUserAccessLogManager(TestCase):
