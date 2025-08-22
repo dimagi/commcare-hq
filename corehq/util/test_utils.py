@@ -223,6 +223,7 @@ class privilege_enabled:
         'django_prbac.decorators.has_privilege',
         'corehq.apps.data_cleaning.utils.cases.domain_has_privilege',
         'corehq.apps.domain.auth.domain_has_privilege',
+        'corehq.motech.repeaters.models.domain_has_privilege',
     )
 
     def __init__(self, privilege_slug):
