@@ -25,7 +25,7 @@ WHITELIST = [
     ("eulxml", "pkg_resources is deprecated as an API"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
 
-    ("tastypie.fields", "The django.utils.datetime_safe module is deprecated.", RemovedInDjango50Warning),
+    ("tastypie.compat", "The django.utils.datetime_safe module is deprecated.", RemovedInDjango50Warning),
     ("django.db.models.options", "'index_together' is deprecated", RemovedInDjango51Warning),
 
     # warnings that can be resolved with HQ code changes
