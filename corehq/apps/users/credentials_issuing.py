@@ -54,7 +54,7 @@ def _filter_users_with_complete_months(data, months, activity_level):
                 app_id=record["app_id"],
                 username=record["username"],
                 domain=record["domain_name"],
-                type=activity_level,
+                activity_level=activity_level,
             ))
             combined_user_app_ids.add(combined_user_app_id)
 
