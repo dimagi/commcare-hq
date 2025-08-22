@@ -383,7 +383,7 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
 
 
 def get_multi_auth_decorator(
-    default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True, allow_api_key_in_basic=False
+    default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True, allow_api_key_in_basic=True
 ):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
@@ -438,7 +438,6 @@ def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
         default=DIGEST,
         oauth_scopes=oauth_scopes,
         allow_creds_in_data=allow_creds_in_data,
-        allow_api_key_in_basic=True,
     )
 
 
@@ -458,7 +457,7 @@ def get_auth_decorator_map(
         allow_sessions=True,
         oauth_scopes=None,
         allow_creds_in_data=True,
-        allow_api_key_in_basic=False,
+        allow_api_key_in_basic=True,
 ):
     # get a mapped set of decorators for different auth types with the specified parameters
     oauth_scopes = oauth_scopes or ['access_apis']
