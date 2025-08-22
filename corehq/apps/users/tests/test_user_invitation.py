@@ -185,6 +185,6 @@ class TestUserInvitation(TestCase):
         _, invite_uuid = self._setup_invitation_and_request()
         invitation = Invitation.objects.get(uuid=invite_uuid)
         invitation.delete(deleted_by="deleted_id")
-        InvitationHistory.objects.get(invitation=invitation, action=3)
+        InvitationHistory.objects.get(invitation_id=invitation.pk, action=3)
         with self.assertRaises(Invitation.DoesNotExist):
             Invitation.objects.get(uuid=invite_uuid)
