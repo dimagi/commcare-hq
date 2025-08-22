@@ -126,18 +126,21 @@ class ServerLocation:
     PRODUCTION = 'production'
     INDIA = 'india'
     EU = 'eu'
-    ENVS = (PRODUCTION, INDIA, EU)
+    STAGING = 'staging'
+    ENVS = (PRODUCTION, INDIA, EU, STAGING)
 
     SUBDOMAINS = {
         PRODUCTION: 'www',
         INDIA: 'india',
         EU: 'eu',
+        STAGING: 'staging',
     }
 
     CHOICES_DICT = {
         PRODUCTION: (SUBDOMAINS[PRODUCTION], _("United States")),
         INDIA: (SUBDOMAINS[INDIA], _("India")),
         EU: (SUBDOMAINS[EU], _("European Union")),
+        STAGING: (SUBDOMAINS[STAGING], _("[TESTING] Staging")),
     }
 
     @classmethod
