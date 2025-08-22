@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.query import QuerySet
+from django.http import QueryDict
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -39,7 +40,7 @@ class BaseTestView(TableExportMixin):
 
     def __init__(self, **kwargs):
         self.request = MagicMock()
-        self.request.GET = {}
+        self.request.GET = QueryDict()
         self.request.domain = "test-domain"
         self.request.can_access_all_locations = True
         self.request.couch_user = MagicMock(user_id="user-id")
