@@ -37,7 +37,6 @@ dependencies = [
     "crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165",
     "django-cte",
     "django-field-audit",
-    "django-formtools",
     "django-oauth-toolkit",
     "django-otp",
     "django-phonenumber-field",
