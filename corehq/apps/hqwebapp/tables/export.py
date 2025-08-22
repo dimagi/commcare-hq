@@ -1,6 +1,7 @@
 import io
 
 from django.core.exceptions import ImproperlyConfigured
+from django.http import QueryDict
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.utils.translation import gettext as _
@@ -12,7 +13,6 @@ from memoized import memoized
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from couchexport.export import export_from_tables
 from couchexport.models import Format
-from dimagi.utils.web import json_request
 
 from corehq.apps.hqwebapp.tasks import export_all_rows_task
 
@@ -136,9 +136,9 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
             "domain": self.request.domain,
             "can_access_all_locations": self.request.can_access_all_locations,
             "user_id": self.request.couch_user.user_id,
-            "request_params": json_request(self.request.GET),
+            "request_params": self.request.GET.urlencode(),
             "config": self.config_as_dict(),
-            "report_title": self.get_report_title(),
+            "report_title": self.report_title,
         }
 
     @memoized
@@ -152,13 +152,15 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
 
         request = HttpRequest()
         request.method = 'GET'
-        request.GET.update(context['request_params'])
+        request.GET = QueryDict(context['request_params'])
+
         request.domain = context['domain']
         request.couch_user = CouchUser.get_by_user_id(context['user_id'])
         request.can_access_all_locations = context['can_access_all_locations']
 
         view = cls()
         view.request = request
+        view.report_title = context['report_title']
         for config_key, config_value in context['config'].items():
             setattr(view, config_key, config_value)
 
