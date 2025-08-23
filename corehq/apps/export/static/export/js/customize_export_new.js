@@ -39,13 +39,13 @@ $(function () {
         $('#format-select').change(function () {
             const selectedValue = $(this).val();
             if (selectedValue === constants.EXPORT_FORMATS.GEOJSON) {
-                $("#select-geo-property").show();
+                $("#select-geo-property").removeClass("d-none");
                 // Hiding and unchecking this checkbox is a temporary measure
-                $("#split-multiselects-checkbox-div").hide();
+                $("#split-multiselects-checkbox-div").addClass("d-none");
                 $("#split-multiselects-checkbox").prop("checked", false);
             } else {
-                $("#select-geo-property").hide();
-                $("#split-multiselects-checkbox-div").show();
+                $("#select-geo-property").addClass("d-none");
+                $("#split-multiselects-checkbox-div").removeClass("d-none");
             }
         });
     }
