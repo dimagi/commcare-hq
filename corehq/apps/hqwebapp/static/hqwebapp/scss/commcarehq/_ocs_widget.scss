@@ -1,10 +1,19 @@
 open-chat-studio-widget {
   right: 30px;
-  bottom: 30px;
+  bottom: 50px;
   z-index: 1000;
 
-  //CSS custom properties
-  --button-background-color: white;
+  //Launch Button
   --button-text-color: #{$primary};
   --button-text-color-hover: #{$primary};
+
+
+  // Messages
+  --message-user-bg-color: #{$primary};
+  --message-user-text-color: white;
+  --message-assistant-text-color: black;
+
+  // Confirmation Dialog
+  --confirmation-button-confirm-bg-color: #{$primary};
+  --confirmation-button-confirm-bg-hover-color: darken(#{$primary},10);
 }
