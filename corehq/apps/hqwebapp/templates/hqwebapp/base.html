@@ -83,6 +83,7 @@
 
       {% block content %}{% endblock content %}
       {% if request|toggle_enabled:"CHATBOT" %}
+      <div class="ocs-widget-container">
         <open-chat-studio-widget
           visible="false"
           chatbot-id="3ffcc47c-f65c-4105-b9ff-6f19db703292"
@@ -98,6 +99,7 @@
           ]"
           >
         </open-chat-studio-widget>
+      </div>
       {% endif %}
     </div>
 
