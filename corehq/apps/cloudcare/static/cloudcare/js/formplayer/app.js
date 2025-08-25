@@ -348,7 +348,7 @@ FormplayerFrontend.on("start", function (model, options) {
         'offline',function () {
             offlineTime = new Date();
             _.delay(function () {
-                if (!this.navigator.onLine && (new Date() - offlineTime) > reconnectTimingWindow) {
+                if (!navigator.onLine && (new Date() - offlineTime) > reconnectTimingWindow) {
                     CloudcareUtils.showError(gettext("You are now offline. Web Apps is not optimized " +
                         "for offline use. Please reconnect to the Internet before " +
                         "continuing."), $("#cloudcare-notifications"));
