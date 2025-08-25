@@ -2,7 +2,7 @@ import $ from "jquery";
 import _ from "underscore";
 import Backbone from "backbone";
 import DOMPurify from "dompurify";
-import bootstrap from "bootstrap5";
+import {Modal} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import toggles from "hqwebapp/js/toggles";
 import constants from "cloudcare/js/formplayer/constants";
@@ -43,7 +43,7 @@ Utils.confirmationModal = function (options) {
     $confirmationButton.on('click.confirmationModal', function (e) {
         options.onConfirm(e);
     });
-    bootstrap.Modal.getOrCreateInstance($modal).show();
+    Modal.getOrCreateInstance($modal).show();
 };
 
 Utils.encodedUrlToObject = function (encodedUrl) {
