@@ -2,13 +2,14 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 from couchdbkit import ResourceConflict
 
-from corehq.apps.app_manager.models import ActivityLevel, CredentialApplication
+from corehq.apps.app_manager.models import Application, ActivityLevel, CredentialApplication
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.test_malt_generator import create_malt_row_dict
 from corehq.apps.domain.shortcuts import create_domain
@@ -17,9 +18,11 @@ from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.reports.util import domain_copied_cases_by_owner
+from corehq.apps.users.credentials_issuing import get_credentials_to_submit
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDUserLink,
     UserCredential,
     UserReportingMetadataStaging,
     WebUser,
@@ -291,6 +294,8 @@ class TestProcessReportingMetadataStagingTransaction(TestCase):
         cls.record_two.delete()
 
 
+@patch('corehq.apps.users.credentials_issuing.requests.models.Response.raise_for_status')
+@patch('corehq.apps.users.credentials_issuing.requests.post')
 class TestProcessMobileWorkerCredentials(TestCase):
     domain = 'test-domain'
 
@@ -298,8 +303,34 @@ class TestProcessMobileWorkerCredentials(TestCase):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.one_month_app_id = uuid.uuid4().hex
-        cls.three_month_app_id = uuid.uuid4().hex
+        cls.one_month_app = Application.new_app(
+            domain=cls.domain,
+            name="One Month Test App",
+        )
+        cls.one_month_app._id = uuid.uuid4().hex
+        cls.one_month_app.save()
+
+        cls.three_month_app = Application.new_app(
+            domain=cls.domain,
+            name="Three Month Test App",
+        )
+        cls.three_month_app._id = uuid.uuid4().hex
+        cls.three_month_app.save()
+
+        cls.user1 = User.objects.create(username='user1', password='password')
+        cls.user2 = User.objects.create(username='user2', password='password')
+        cls.user3 = User.objects.create(username='user3', password='password')
+
+        ConnectIDUserLink.objects.create(
+            connectid_username=cls.user1.username,
+            commcare_user=cls.user1,
+            domain=cls.domain,
+        )
+        ConnectIDUserLink.objects.create(
+            connectid_username=cls.user2.username,
+            commcare_user=cls.user2,
+            domain=cls.domain,
+        )
 
         CredentialApplication.objects.create(
             domain=cls.domain,
@@ -312,49 +343,99 @@ class TestProcessMobileWorkerCredentials(TestCase):
             activity_level=ActivityLevel.THREE_MONTHS,
         )
 
-    def _create_malt_rows(self, months, user_id, app_id, offset=0):
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        cls.one_month_app.delete()
+        cls.three_month_app.delete()
+        ConnectIDUserLink.objects.all().delete()
+        CredentialApplication.objects.all().delete()
+        UserCredential.objects.all().delete()
+        super().tearDownClass()
+
+    def _create_malt_rows(self, months, user, app, offset=0):
         for i in range(months):
             malt_row_dict = create_malt_row_dict({
                 'month': datetime.now(timezone.utc) - relativedelta(months=i + offset + 1),
                 'num_of_forms': 1,
                 'user_type': 'CommCareUser',
-                'user_id': user_id,
-                'app_id': app_id,
+                'user_id': user.id,
+                'app_id': app.id,
+                'username': user.username,
             })
             MALTRow.objects.create(**malt_row_dict)
 
-    def test_process_credentials(self):
-        user_id = uuid.uuid4().hex
-        self._create_malt_rows(3, user_id, self.three_month_app_id)
-        process_mobile_worker_credentials()
-        assert UserCredential.objects.get(user_id=user_id, app_id=self.three_month_app_id)
+    def test_process_credentials(self, mock_post, mock_status_raise):
+        mock_response = Mock()
+        mock_response.json.return_value = {'success': [0]}
+        mock_post.return_value = mock_response
 
-    def test_process_multiple_credentials(self):
-        user_id1 = uuid.uuid4().hex
-        user_id2 = uuid.uuid4().hex
-        self._create_malt_rows(3, user_id1, self.one_month_app_id)
-        self._create_malt_rows(3, user_id2, self.three_month_app_id)
+        self._create_malt_rows(3, self.user1, self.three_month_app)
+        process_mobile_worker_credentials()
+        cred = UserCredential.objects.get(user_id=self.user1.id, app_id=self.three_month_app.id)
+        assert cred.issued_on is not None
+
+    def test_process_multiple_credentials(self, mock_post, mock_status_raise):
+        self._create_malt_rows(3, self.user1, self.one_month_app)
+        self._create_malt_rows(3, self.user2, self.three_month_app)
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 2
 
-    def test_no_credentials(self):
-        self._create_malt_rows(1, uuid.uuid4().hex, self.three_month_app_id)
+    def test_no_credentials(self, mock_post, mock_status_raise):
+        self._create_malt_rows(1, self.user3, self.three_month_app)
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 0
 
-    def test_no_consecutive_activity(self):
-        user_id = uuid.uuid4().hex
-        self._create_malt_rows(1, user_id, self.three_month_app_id)
-        self._create_malt_rows(2, user_id, self.three_month_app_id, offset=2)
+    def test_no_consecutive_activity(self, mock_post, mock_status_raise):
+        self._create_malt_rows(1, self.user1, self.three_month_app)
+        self._create_malt_rows(2, self.user1, self.three_month_app, offset=2)
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 0
 
-    def test_credentials_already_exist(self):
-        user_id = uuid.uuid4().hex
+    def test_credentials_already_exist(self, mock_post, mock_status_raise):
         UserCredential.objects.create(
-            user_id=user_id,
-            app_id=self.one_month_app_id,
+            user_id=self.user1.id,
+            app_id=self.one_month_app.id,
         )
-        self._create_malt_rows(1, user_id, self.one_month_app_id)
+        self._create_malt_rows(1, self.user1, self.one_month_app)
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 1
+
+    @patch('corehq.apps.users.credentials_issuing.MAX_USERNAMES_PER_CREDENTIAL', new=1)
+    def test_get_credentials_to_submit(self, mock_post, mock_status_raise):
+        cred1 = UserCredential.objects.create(
+            domain=self.domain,
+            user_id=self.user1.id,
+            username=self.user1.username,
+            app_id=self.one_month_app.id,
+            type=CredentialApplication.ActivityLevelChoices.ONE_MONTH
+        )
+        cred2 = UserCredential.objects.create(
+            domain=self.domain,
+            user_id=self.user2.id,
+            username=self.user2.username,
+            app_id=self.one_month_app.id,
+            type=CredentialApplication.ActivityLevelChoices.ONE_MONTH
+        )
+        credentials_to_submit, credential_id_groups_to_update = get_credentials_to_submit()
+        assert credentials_to_submit == [
+            {
+                'usernames': [self.user1.username],
+                'title': 'One Month Test App',
+                'type': 'APP_ACTIVITY',
+                'level': '1MON_ACTIVE',
+                'slug': self.one_month_app.id,
+                'app_id': self.one_month_app.id,
+            },
+            {
+                'usernames': [self.user2.username],
+                'title': 'One Month Test App',
+                'type': 'APP_ACTIVITY',
+                'level': '1MON_ACTIVE',
+                'slug': self.one_month_app.id,
+                'app_id': self.one_month_app.id,
+            }
+        ]
+        assert credential_id_groups_to_update == [
+            [cred1.id], [cred2.id]
+        ]
