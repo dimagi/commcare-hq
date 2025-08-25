@@ -14,6 +14,6 @@ Thank you for your use and support of CommCare.
 
 Best regards,
 
-The CommCare HQ Team
+The CommCare Team
 {{ base_url }}
 {% endblocktrans %}

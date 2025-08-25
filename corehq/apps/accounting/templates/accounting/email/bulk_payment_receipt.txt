@@ -21,10 +21,10 @@ Remaining Balance: {{ balance }}{% endblocktrans %}
 hesitate to contact {{ invoicing_contact_email }}.
 
 Best Regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org
 
 Email From:
-CommCare HQ and the corporation Dimagi, Inc.
+CommCare and the corporation Dimagi, Inc.
 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA
 {% endblocktrans %}
