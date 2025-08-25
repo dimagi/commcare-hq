@@ -6,7 +6,7 @@ import csv
 from couchdbkit import ResourceNotFound
 from lxml import etree
 
-from corehq.apps.app_manager.dbaccessors import get_current_app_doc
+from corehq.apps.app_manager.dbaccessors import get_app_doc
 from corehq.apps.hqadmin.views.users import AdminRestoreView
 from corehq.apps.ota.views import get_restore_response
 from corehq.apps.users.models import CouchUser
@@ -33,7 +33,7 @@ class Command(BaseCommand):
                 return
         if app_id:
             try:
-                get_current_app_doc(domain, app_id)
+                get_app_doc(domain, app_id)
             except ResourceNotFound:
                 print("App '{}' not found".format(app_id))
                 return
