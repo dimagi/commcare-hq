@@ -212,12 +212,20 @@ class BulkEditPinnedFilterManager(models.Manager):
 
     def copy_to_session(self, source_session, dest_session):
         for pinned_filter in self.filter(session=source_session):
-            self.model.objects.create(
+            existing_filter = self.model.objects.filter(
                 session=dest_session,
-                index=pinned_filter.index,
                 filter_type=pinned_filter.filter_type,
-                value=pinned_filter.value,
-            )
+            ).first()
+            if existing_filter:
+                existing_filter.value = pinned_filter.value
+                existing_filter.save()
+            else:
+                self.model.objects.create(
+                    session=dest_session,
+                    index=pinned_filter.index,
+                    filter_type=pinned_filter.filter_type,
+                    value=pinned_filter.value,
+                )
 
 
 class BulkEditPinnedFilter(models.Model):
