@@ -82,6 +82,25 @@
       {% block messages %}{% endblock %}
 
       {% block content %}{% endblock content %}
+      {% if request|toggle_enabled:"CHATBOT" %}
+      <div class="ocs-widget-container">
+        <open-chat-studio-widget
+          visible="false"
+          chatbot-id="5a912293-eccc-4cf8-8eff-207d99d59aeb"
+          icon-url="{% static 'hqwebapp/images/chatbot_avatar.png' %}"
+          button-text="Let's Chat"
+          position="right"
+          welcome-messages='["Hi there! I&#39;m CommCare Companion, your personal guide to CommCare! What can I help you with today?"]'
+          starter-questions="[
+            'I need help with building my CommCare application.',
+            'I need help troubleshooting my mobile application.',
+            'I need help with exporting or understanding my data.',
+            'I have a different question.'
+          ]"
+          >
+        </open-chat-studio-widget>
+      </div>
+      {% endif %}
     </div>
 
     {% block footer %}{% endblock %}
