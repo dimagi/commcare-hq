@@ -1,9 +1,11 @@
 from collections import namedtuple
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 import architect
 from oauth2_provider.settings import APPLICATION_MODEL
@@ -118,3 +120,22 @@ def pkce_required(client_id):
         return application.pkce_required
     except HQOauthApplication.DoesNotExist:
         return False
+
+
+class ServerLocation(object):
+    PRODUCTION = 'production'
+    INDIA = 'india'
+    EU = 'eu'
+    ENVS = (PRODUCTION, INDIA, EU)
+
+    CHOICES_DICT = {
+        PRODUCTION: ("www", _("United States")),
+        INDIA: ("india", _("India")),
+        EU: ("eu", _("European Union")),
+    }
+
+    @classmethod
+    def choices(cls):
+        env = settings.SERVER_ENVIRONMENT
+        sorted_keys = sorted(cls.ENVS, key=lambda x: x != env)
+        return [cls.CHOICES_DICT[key] for key in sorted_keys]
