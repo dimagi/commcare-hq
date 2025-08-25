@@ -17,7 +17,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.app_manager.models import Application, CredentialApplication
+from corehq.apps.app_manager.models import ActivityLevel, Application, CredentialApplication
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -572,10 +572,10 @@ class TestCredentialsApplicationSettingsView(TestCase):
             }
         )
         credential_app = CredentialApplication.objects.get(app_id=app_id)
-        assert credential_app.activity_level == CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+        assert credential_app.activity_level == ActivityLevel.THREE_MONTHS
 
         app = get_app(self.domain.name, app_id)
-        assert app.profile['features']['credentials'] == CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+        assert app.profile['features']['credentials'] == ActivityLevel.THREE_MONTHS
 
     def test_specify_new_credential_app_with_existing_app(self):
         app_id = self._get_app().id
@@ -593,7 +593,7 @@ class TestCredentialsApplicationSettingsView(TestCase):
                 'app_id': another_app_id,
             }
         )
-        three_months = CredentialApplication.ActivityLevelChoices.THREE_MONTHS
+        three_months = ActivityLevel.THREE_MONTHS
 
         credential_app = CredentialApplication.objects.get(app_id=another_app_id)
         assert not CredentialApplication.objects.filter(app_id=app_id).exists()

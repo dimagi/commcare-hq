@@ -32,6 +32,10 @@ from corehq.form_processor.models import (
     UserArchivedRebuild,
     XFormInstance,
 )
+from corehq.apps.users.credentials_issuing import (
+    get_credentials_for_timeframe,
+    get_app_ids_by_activity_level,
+)
 from corehq.util.celery_utils import (
     deserialize_run_every_setting,
     run_periodic_task_again,
@@ -416,3 +420,24 @@ def remove_users_test_cases(domain, owner_ids):
 
     test_case_ids = domain_copied_cases_by_owner(domain, owner_ids)
     tag_cases_as_deleted_and_remove_indices(domain, test_case_ids, uuid4().hex)
+
+
+@periodic_task(
+    run_every=crontab(hour=1, minute=0),
+    queue='background_queue',
+)
+def process_mobile_worker_credentials():
+    """
+    Calculates which new applicable credentials are available for mobile workers,
+    and creates `UserCredential` instances for them.
+    """
+    from corehq.apps.users.models import UserCredential
+
+    app_ids_by_levels = get_app_ids_by_activity_level()
+    applicable_credentials = []
+    for activity_level, app_ids in app_ids_by_levels.items():
+        if not app_ids:
+            continue
+        applicable_credentials += get_credentials_for_timeframe(activity_level, app_ids)
+
+    UserCredential.objects.bulk_create(applicable_credentials, ignore_conflicts=True)
