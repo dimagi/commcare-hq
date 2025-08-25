@@ -1,27 +1,21 @@
-define("cloudcare/js/formplayer/sessions/collections", [
-    'backbone',
-    'cloudcare/js/formplayer/sessions/models',
-    'cloudcare/js/formplayer/utils/utils',
-], function (
-    Backbone,
-    Models,
-    utils,
-) {
-    var session = Backbone.Collection.extend({
-        model: Models,
+import Backbone from "backbone";
+import Models from "cloudcare/js/formplayer/sessions/models";
+import utils from "cloudcare/js/formplayer/utils/utils";
 
-        parse: function (response) {
-            this.totalSessions = response.total_records;
-            return response.sessions;
-        },
+var session = Backbone.Collection.extend({
+    model: Models,
 
-        fetch: function (options) {
-            utils.setCrossDomainAjaxOptions(options);
-            return Backbone.Collection.prototype.fetch.call(this, options);
-        },
-    });
+    parse: function (response) {
+        this.totalSessions = response.total_records;
+        return response.sessions;
+    },
 
-    return function (options) {
-        return new session(options);
-    };
+    fetch: function (options) {
+        utils.setCrossDomainAjaxOptions(options);
+        return Backbone.Collection.prototype.fetch.call(this, options);
+    },
 });
+
+export default function (options) {
+    return new session(options);
+};
