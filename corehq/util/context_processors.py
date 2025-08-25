@@ -190,6 +190,10 @@ def server_location_display(request):
             'country_code': 'eu',
             'hr_name': gettext_lazy("EU"),
         },
+        'staging': {
+            'country_code': 'un',
+            'hr_name': gettext_lazy("[TESTING] Staging"),
+        },
     }
     context = {}
     env = settings.SERVER_ENVIRONMENT
