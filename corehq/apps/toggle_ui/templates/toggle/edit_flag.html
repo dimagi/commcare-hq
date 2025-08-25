@@ -7,21 +7,29 @@
 {% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
 
 {% block stylesheets %}
-  <style>
-    .margin-vertical-sm {
-      margin-top: 5px;
-      margin-bottom: 5px;
-    }
+<style>
+  .margin-vertical-sm {
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
 
-    .label-release {
-      background-color: #c22eff !important;
-    }
-  </style>
+  .label-release {
+    background-color: #c22eff !important;
+  }
+
+  /* B5: replace with table-borderless and align-middle */
+  #feature-flag-items tbody td {
+    border: 0;
+    vertical-align: middle;
+  }
+</style>
+
 {% endblock %}
 
 {% block page_content %}
   {% registerurl 'edit_toggle' toggle.slug %}
   {% registerurl 'domain_internal_settings' '---' %}
+  {% registerurl 'get_dimagi_users' '---' %}
   {% initial_page_data 'items' toggle.enabled_users %}
   {% initial_page_data 'namespaces' namespaces %}
   {% initial_page_data 'last_used' last_used %}
@@ -196,7 +204,7 @@
           </p>
         </div>
       {% endif %}
-      <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
+      <table class="table table-condensed" id="feature-flag-items">
         <thead>
           <tr>
             <th>
@@ -207,13 +215,14 @@
               {% endif %}
             </th>
             <th>Namespace</th>
+            <th>Dimagi Users</th>
             <th>Latest Form Submission</th>
             <th>Subscription Plan</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: items">
           <tr>
-            <td class="col-sm-4" style="border: 0">
+            <td class="col-sm-4">
               <div class="input-group">
                 <span class="input-group-btn">
                   {% if can_edit_toggle %}
@@ -236,21 +245,43 @@
                 </span>
               </div>
             </td>
-            <!-- B5: replace inline styles with vertical alignment class: https://getbootstrap.com/docs/5.3/utilities/vertical-align/#css -->
+            <td class="col-sm-1">
+              <a style="display: none" data-bind="
+                visible: namespace() === 'domain',
+                attr: { href: domainUrl }
+              ">
+                domain <i class="fa fa-external-link"></i>
+              </a>
+              <span style="display: none"
+                data-bind="visible: namespace() != 'domain'">
+                <i class='fa fa-user'></i> user
+              </span>
+            </td>
+            <td
+              class="col-sm-1"
+            >
+              <button
+                class="btn btn-secondary"
+                data-bind="
+                  if: namespace() === 'domain',
+                  click: showDimagiUsers
+              ">
+                Dimagi Users
+              </button>
+            </td>
             <td
               class="col-sm-2"
-              style="border: 0; vertical-align: middle"
-              data-bind="html: $parent.getNamespaceHtml(namespace(), value())"
-            ></td>
-            <td
-              class="col-sm-2"
-              style="border: 0; vertical-align: middle"
               data-bind="text: last_used"
             ></td>
             <td
               class="col-sm-4"
-              style="border: 0; vertical-align: middle"
               data-bind="text: service_type"
+            ></td>
+          </tr>
+          <tr data-bind="if: !!dimagiUsers().length">
+            <td
+              colspan="5"
+              data-bind="text: dimagiUsers().join(', ')"
             ></td>
           </tr>
         </tbody>

@@ -23,7 +23,7 @@ from corehq.apps.toggle_ui.utils import (
     find_static_toggle,
     get_subscription_info,
 )
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import (
     ALL_NAMESPACES,
     ALL_TAG_GROUPS,
@@ -420,4 +420,11 @@ def export_toggles(request):
     return JsonResponse({
         "download_url": reverse("ajax_job_poll", kwargs={"download_id": download.download_id}),
         "download_id": download.download_id,
+    })
+
+
+@require_superuser_or_contractor
+def get_dimagi_users(request, domain):
+    return JsonResponse({
+        'emails': list(WebUser.get_dimagi_emails_by_domain(domain)),
     })
