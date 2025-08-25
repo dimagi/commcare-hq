@@ -54,10 +54,10 @@
       </div>
       <!-- /ko -->
 
-      {% if request|toggle_enabled:"SUPPORT_GEO_JSON_EXPORT" %}
-      <div id="select-geo-property" class="mb-3" hidden>
+      {% if has_geojson_export_access %}
+      <div id="select-geo-property" class="mb-3 d-none">
         <label class="form-label" for="geo-property-select">
-          {% trans 'Select geo property' %}
+          {% trans 'GPS case property' %}
         </label>
         <select
           id="geo-property-select"
