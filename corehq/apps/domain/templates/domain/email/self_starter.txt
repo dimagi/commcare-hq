@@ -6,4 +6,4 @@ form submissions:
 {% endfor %}
 
 Thanks
-CommCare HQ
+CommCare
