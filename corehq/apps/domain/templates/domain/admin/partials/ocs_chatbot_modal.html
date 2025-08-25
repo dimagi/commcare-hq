@@ -1,0 +1,44 @@
+{% load i18n %}
+
+<!-- OCS Chatbot Terms of Service Modal -->
+<div class="modal fade" id="ocsChatbotModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ocsChatbotModalLabel">{% trans "CommCare Companion (Beta)" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- <div class="alert alert-warning">
+          <strong>{% trans "Important:" %}</strong>
+          {% trans "Before enabling the CommCare Companion AI Support Bot, please read and acknowledge the following terms:" %}
+        </div> -->
+        <div>
+        <!-- <div class="terms-content" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin: 15px 0;"> -->
+          <p>{% trans "This feature is made available as a <b>Beta Service</b> under <a href='https://dimagi.com/terms-of-service/'>Dimagi's Terms of Service</a> and <a href='https://dimagi.com/terms-ba/'>Business Agreement</a>." %}</p>
+          {% blocktrans %}
+          <p><b>Beta Services</b> are services or features that may not be supported, fully reliable, or subject to service level commitments.</p>
+          <p><b>As per Dimagi’s Business Agreement</b>, despite anything to the contrary in this Agreement: (a) Customer may choose to use Beta Services in its sole discretion; (b) Beta Services may not be supported by Dimagi and may be changed at any time without notice; (c) Beta Services may not be as reliable or available as the Services; (d) Beta Services have not been subjected to the same security measures and auditing to which the Services have been subjected; and (e) DIMAGI WILL HAVE NO LIABILITY ARISING OUT OF OR IN CONNECTION WITH CUSTOMER’S USE OF BETA SERVICES – ANY SUCH USE WILL BE AT CUSTOMER’S OWN RISK.</p>
+          {% endblocktrans %}
+          <p>{% trans "Please note:" %}</p>
+          <ul>
+            <li>{% trans "This feature has <b>not been technically audited</b> and may not perform consistently." %}</li>
+            <li>{% trans "You should <b>not upload or enter any personally identifiable information (PII) or protected health information (PHI)</b> into the chatbot. If you choose to do so, you do so <b>at your own risk.</b>" %}</li>
+            <li>{% trans "By enabling this feature, you confirm that you are an <b>admin authorized to accept these risks on behalf of all current and future users in this project space.</b>" %}</li>
+          </ul>
+        </div>
+        
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="tosConfirmation" required>
+          <label class="form-check-label" for="tosConfirmation">
+            {% trans "I confirm that I have read and I accept the terms outlined above, including the risks associated with Beta Services." %}
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-primary" id="confirmTosBtn" disabled>{% trans "Enable" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
