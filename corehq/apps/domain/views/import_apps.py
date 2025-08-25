@@ -11,13 +11,8 @@ from corehq.apps.domain.forms import ExtractAppInfoForm, ImportAppForm
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.hqmedia.views import BulkUploadMultimediaView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-
-SERVER_SUBDOMAIN_MAPPING = {
-    'production': 'www',
-    'india': 'india',
-    'eu': 'eu',
-}
 
 
 @method_decorator(
@@ -106,7 +101,7 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
                                               new_app_id):
         from corehq.apps.app_manager.views.utils import back_to_main
         source_multimedia_url = (
-            f"https://{SERVER_SUBDOMAIN_MAPPING[source_server]}.commcarehq.org/a/"
+            f"https://{ServerLocation.SUBDOMAINS[source_server]}.commcarehq.org/a/"
             f"{source_domain}/apps/view/{source_app_id}/settings/#multimedia-tab"
         )
         current_multimedia_url = reverse(BulkUploadMultimediaView.urlname, args=[self.domain, new_app_id])
