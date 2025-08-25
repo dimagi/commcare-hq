@@ -11,7 +11,6 @@ open-chat-studio-widget {
   --button-text-color: #{$primary};
   --button-text-color-hover: #{$primary};
 
-
   // Messages
   --message-user-bg-color: #{$primary};
   --message-user-text-color: white;
@@ -19,5 +18,5 @@ open-chat-studio-widget {
 
   // Confirmation Dialog
   --confirmation-button-confirm-bg-color: #{$primary};
-  --confirmation-button-confirm-bg-hover-color: darken(#{$primary},10);
+  --confirmation-button-confirm-bg-hover-color: darken(#{$primary}, 10);
 }
