@@ -2,7 +2,7 @@ import $ from "jquery";
 import _ from "underscore";
 import Backbone from "backbone";
 import DOMPurify from "dompurify";
-import bootstrap from "bootstrap5";
+import {Modal} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import toggles from "hqwebapp/js/toggles";
 import markdown from "cloudcare/js/markdown";
@@ -273,7 +273,7 @@ var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
     $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
     $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
     $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
-    bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).show();
+    Modal.getOrCreateInstance($('#case-detail-modal')).show();
 };
 
 var getDetailList = function (detailObject) {
