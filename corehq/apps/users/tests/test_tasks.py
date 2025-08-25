@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from couchdbkit import ResourceConflict
 
-from corehq.apps.app_manager.models import Application, ActivityLevel, CredentialApplication
+from corehq.apps.app_manager.models import Application, CredentialApplication
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.test_malt_generator import create_malt_row_dict
 from corehq.apps.domain.shortcuts import create_domain
@@ -21,6 +21,7 @@ from corehq.apps.reports.util import domain_copied_cases_by_owner
 from corehq.apps.users.credentials_issuing import get_credentials_to_submit
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
+    ActivityLevel,
     CommCareUser,
     ConnectIDUserLink,
     UserCredential,
@@ -334,12 +335,12 @@ class TestProcessMobileWorkerCredentials(TestCase):
 
         CredentialApplication.objects.create(
             domain=cls.domain,
-            app_id=cls.one_month_app_id,
+            app_id=cls.one_month_app.id,
             activity_level=ActivityLevel.ONE_MONTH,
         )
         CredentialApplication.objects.create(
             domain=cls.domain,
-            app_id=cls.three_month_app_id,
+            app_id=cls.three_month_app.id,
             activity_level=ActivityLevel.THREE_MONTHS,
         )
 
@@ -408,14 +409,14 @@ class TestProcessMobileWorkerCredentials(TestCase):
             user_id=self.user1.id,
             username=self.user1.username,
             app_id=self.one_month_app.id,
-            type=CredentialApplication.ActivityLevelChoices.ONE_MONTH
+            activity_level=ActivityLevel.ONE_MONTH
         )
         cred2 = UserCredential.objects.create(
             domain=self.domain,
             user_id=self.user2.id,
             username=self.user2.username,
             app_id=self.one_month_app.id,
-            type=CredentialApplication.ActivityLevelChoices.ONE_MONTH
+            activity_level=ActivityLevel.ONE_MONTH
         )
         credentials_to_submit, credential_id_groups_to_update = get_credentials_to_submit()
         assert credentials_to_submit == [
