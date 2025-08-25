@@ -143,7 +143,7 @@ def get_credentials_to_submit():
             if key not in credentials_to_submit:
                 credentials_to_submit[key] = {
                     'usernames': [],
-                    'title': app_names_by_id.get(user_cred.app_id, user_cred.app_id),
+                    'title': app_names_by_id[user_cred.app_id],
                     'type': CREDENTIAL_TYPE,
                     'level': user_cred.activity_level,
                     'slug': user_cred.app_id,
@@ -184,6 +184,6 @@ def mark_credentials_as_issued(response, credential_id_groups):
 
 def get_app_names_by_id(app_ids):
     from corehq.apps.app_manager.dbaccessors import get_apps_by_id
-
+    app_ids_dict = {a: a for a in app_ids}
     apps = get_apps_by_id(domain=None, app_ids=app_ids)
-    return {app.id: app.name for app in apps}
+    return app_ids_dict | {app.id: app.name for app in apps}
