@@ -83,6 +83,7 @@
             class="form-check-input"
             type="checkbox"
             id="tosConfirmation"
+            data-bind="checked: isTosConfirmed"
             required
           />
           <label class="form-check-label" for="tosConfirmation">
@@ -101,7 +102,7 @@
           type="button"
           class="btn btn-primary"
           id="enableOcsChatbotBtn"
-          disabled
+          data-bind="click: enableChatbot, enable: isEnableButtonEnabled"
         >
           {% trans "Enable" %}
         </button>
