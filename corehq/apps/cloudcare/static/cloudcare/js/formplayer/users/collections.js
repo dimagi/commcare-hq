@@ -1,40 +1,35 @@
-define("cloudcare/js/formplayer/users/collections", [
-    'backbone',
-    'cloudcare/js/formplayer/users/models',
-], function (
-    Backbone,
-    Models,
-) {
-    /**
-     * This collection represents a mobile worker user
-     */
-    var self = Backbone.Collection.extend({
-        url: function () {
-            if (!this.domain) {
-                throw new Error('Cannot instantiate collection without domain');
-            }
-            return '/a/' + this.domain + '/cloudcare/api/login_as/users/';
-        },
-        model: Models.User,
+import Backbone from "backbone";
+import Models from "cloudcare/js/formplayer/users/models";
 
-        initialize: function (models, options) {
-            options = options || {};
-            this.domain = options.domain;
-        },
+/**
+ * This collection represents a mobile worker user
+ */
+var self = Backbone.Collection.extend({
+    url: function () {
+        if (!this.domain) {
+            throw new Error('Cannot instantiate collection without domain');
+        }
+        return '/a/' + this.domain + '/cloudcare/api/login_as/users/';
+    },
+    model: Models.User,
 
-        parse: function (responseObject) {
-            this.total = responseObject.response.total;
-            return responseObject.response.itemList;
-        },
+    initialize: function (models, options) {
+        options = options || {};
+        this.domain = options.domain;
+    },
 
-        sync: function (method, model, options) {
-            options.xhrFields = {withCredentials: true};
-            options.contentType = "application/json";
-            return Backbone.Collection.prototype.sync.call(this, 'read', model, options);
-        },
-    });
+    parse: function (responseObject) {
+        this.total = responseObject.response.total;
+        return responseObject.response.itemList;
+    },
 
-    return function (users, options) {
-        return new self(users, options);
-    };
+    sync: function (method, model, options) {
+        options.xhrFields = {withCredentials: true};
+        options.contentType = "application/json";
+        return Backbone.Collection.prototype.sync.call(this, 'read', model, options);
+    },
 });
+
+export default function (users, options) {
+    return new self(users, options);
+};
