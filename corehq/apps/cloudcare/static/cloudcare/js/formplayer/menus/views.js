@@ -792,7 +792,9 @@ const CaseListView = Marionette.CollectionView.extend({
 
                         // Replace the map element with the initial map element
                         const newMapEl = self.$('#module-case-list-map')[0];
-                        newMapEl.parentNode.replaceChild(initialixedMapEl, newMapEl);
+                        if (newMapEl && newMapEl.parentNode) {
+                            newMapEl.parentNode.replaceChild(initialixedMapEl, newMapEl);
+                        }
                     });
 
                     return container;
