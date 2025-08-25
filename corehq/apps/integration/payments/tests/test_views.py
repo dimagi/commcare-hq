@@ -22,6 +22,7 @@ from corehq.apps.integration.payments.const import (
 )
 from corehq.apps.integration.payments.filters import (
     BatchNumberFilter,
+    CampaignFilter,
     PaymentVerifiedByFilter,
 )
 from corehq.apps.integration.payments.models import MoMoConfig
@@ -106,6 +107,7 @@ class BaseTestPaymentsView(TestCase):
         return self.client.get(url)
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestPaymentsVerificationReportView(BaseTestPaymentsView):
     urlname = PaymentsVerificationReportView.urlname
 
@@ -455,6 +457,9 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.PAYMENT_VERIFIED: True,
                     PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+                    PaymentProperties.CAMPAIGN: 'Campaign A',
+                    PaymentProperties.ACTIVITY: 'Activity A',
+                    PaymentProperties.FUNDER: 'Funder A',
                 }),
             _create_case(
                 cls.factory,
@@ -463,12 +468,18 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.PAYMENT_VERIFIED: True,
                     PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
+                    PaymentProperties.CAMPAIGN: 'Campaign A',
+                    PaymentProperties.ACTIVITY: 'Activity A',
+                    PaymentProperties.FUNDER: 'Funder A',
                 }),
             _create_case(
                 cls.factory,
                 name='baz',
                 data={
                     PaymentProperties.BATCH_NUMBER: 'B001',
+                    PaymentProperties.CAMPAIGN: 'Campaign B',
+                    PaymentProperties.ACTIVITY: 'Activity B',
+                    PaymentProperties.FUNDER: 'Funder B',
                 }),
             _create_case(
                 cls.factory,
@@ -527,6 +538,24 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         response = self._make_request(querystring=f'{EMWF.slug}=u__{self.user_with_access.user_id}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_campaign_filter(self):
+        response = self._make_request(querystring=f'{CampaignFilter.slug}=Campaign A')
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_activity_filter(self):
+        response = self._make_request(querystring='activity=Activity A')
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_funder_filter(self):
+        response = self._make_request(querystring='funder=Funder A')
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
 
 
 class TestPaymentsConfigurationView(BaseTestPaymentsView):
