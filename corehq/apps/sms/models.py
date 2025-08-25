@@ -1278,7 +1278,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
             recipient_id=recipient_id,
-            content_type=MessagingEvent.CONTENT_SMS,
+            content_type=(MessagingEvent.CONTENT_CONNECT
+                          if self.content_type == MessagingEvent.CONTENT_CONNECT
+                          else MessagingEvent.CONTENT_SMS),
             case_id=case.case_id if case else None,
             status=(MessagingEvent.STATUS_COMPLETED
                     if completed
