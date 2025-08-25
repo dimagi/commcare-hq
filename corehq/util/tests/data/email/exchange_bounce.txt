@@ -5,7 +5,7 @@ To: commcarehq-bounces+production@dimagi.com
 Date: Fri, 10 Jan 2020 08:00:50 +0000
 X-MS-Exchange-Message-Is-Ndr: 
 Content-Language: en-US
-Subject: Undeliverable: Scheduled report from CommCare HQ
+Subject: Undeliverable: Scheduled report from CommCare
 X-Failed-Recipients: bouncedemail@fakecompany.org
 
 --0ea704e2-8fae-4243-b81b-4a0e6fee0320
@@ -24,7 +24,7 @@ Unknown To address
 Content-Type: multipart/mixed; boundary=3D"=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D2048517711541900724=3D=3D"
 MIME-Version: 1.0
-Subject: Scheduled report from CommCare HQ
+Subject: Scheduled report from CommCare
 From: commcarehq-noreply@dimagi.com
 To: bouncedemail@fakecompany.org
 Date: Fri, 10 Jan 2020 08:00:30 +0000
@@ -41,7 +41,7 @@ Original message stripped
 Content-Type: multipart/mixed; boundary=3D"=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D2048517711541900724=3D=3D"
 MIME-Version: 1.0
-Subject: Scheduled report from CommCare HQ
+Subject: Scheduled report from CommCare
 From: commcarehq-noreply@dimagi.com
 To: bouncedemail@fakecompany.org
 Date: Fri, 10 Jan 2020 08:00:30 +0000
@@ -63,7 +63,7 @@ Content-Type: message/rfc822
 
 Content-Type: multipart/mixed; boundary="===============2048517711541900724=="
 MIME-Version: 1.0
-Subject: Scheduled report from CommCare HQ
+Subject: Scheduled report from CommCare
 From: commcarehq-noreply@dimagi.com
 To: bouncedemail@fakecompany.org
 Date: Fri, 10 Jan 2020 08:00:30 +0000
