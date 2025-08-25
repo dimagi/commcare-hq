@@ -142,8 +142,8 @@
                 <p>
                   {% if server_display %}
                     {% blocktrans with server_display.hr_name as server_location %}
-                      This project will be hosted on the <strong>{{ server_location }}
-                      cloud</strong>.
+                      This project will be hosted on the
+                      <strong>{{ server_location }} cloud</strong>.
                     {% endblocktrans %}
                   {% else %}
                     {% blocktrans %}
@@ -156,8 +156,24 @@
                       href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations"
                       target="_blank"
                       ><b>cloud location</b></a
-                    >, log into that location's site before creating your project.
-                    <br />
+                    >, log into that location's site before creating your
+                    project:
+                  {% endblocktrans %}
+                </p>
+                <ul>
+                  {% for server in server_locations %}
+                    {% if server.env != settings.SERVER_ENVIRONMENT %}
+                      <li>
+                        <a
+                          href="https://{{ server.subdomain }}.commcarehq.org{{ request.path }}"
+                          >{% trans server.name %}</a
+                        >
+                      </li>
+                    {% endif %}
+                  {% endfor %}
+                </ul>
+                <p>
+                  {% blocktrans %}
                     Please note: projects <strong>cannot</strong> be transferred
                     between cloud locations after creation.
                   {% endblocktrans %}
