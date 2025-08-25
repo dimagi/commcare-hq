@@ -1,7 +1,7 @@
 import $ from "jquery";
 import _ from "underscore";
 import ko from "knockout";
-import * as bootstrap from "bootstrap5";
+import { Modal, Popover } from "bootstrap5";
 import "jquery-ui/ui/widgets/sortable";
 import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
 import "langcodes/js/langcodes";  // $.langcodes
@@ -339,7 +339,7 @@ ko.bindingHandlers.multirow_sortable = {
 
 ko.bindingHandlers.modal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-        viewModel.binding_modal = new bootstrap.Modal(element);
+        viewModel.binding_modal = new Modal(element);
     },
     update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
@@ -392,7 +392,7 @@ ko.bindingHandlers.openModal = {
                         return templateId;
                     }, allBindingsAccessor, viewModel, bindingContext);
 
-                    let modal = new bootstrap.Modal(modalElement.get(0));
+                    let modal = new Modal(modalElement.get(0));
                     modal.show();
                 };
                 return clickAction;
@@ -407,7 +407,7 @@ ko.bindingHandlers.openRemoteModal = {
             newValueAccessor = function () {
                 var clickAction = function () {
                     modalElement.load($(element).data('ajaxSource'), function () {
-                        let modal = new bootstrap.Modal(modalElement.get(0));
+                        let modal = new Modal(modalElement.get(0));
                         modal.show();
                     });
                 };
@@ -644,7 +644,7 @@ ko.bindingHandlers.popover = {
             options.sanitize = false;
         }
         if (options.title || options.content) { // don't show empty popovers
-            new bootstrap.Popover(element, options);
+            new Popover(element, options);
         }
     },
 };

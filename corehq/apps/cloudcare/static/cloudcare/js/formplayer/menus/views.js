@@ -3,7 +3,7 @@ import _ from "underscore";
 import Backbone from "backbone";
 import Marionette from "backbone.marionette";
 import DOMPurify from "dompurify";
-import bootstrap from "bootstrap5";
+import {Popover} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import toggles from "hqwebapp/js/toggles";
 import noopMetrics from "analytix/js/noopMetrics";
@@ -772,7 +772,7 @@ const CaseListView = Marionette.CollectionView.extend({
         const self = this;
         const configButton = this.$('#case-list-config-button');
         if (configButton.length) {
-            const caseListConfigViewPopover = new bootstrap.Popover(configButton[0], {
+            const caseListConfigViewPopover = new Popover(configButton[0], {
                 html: true,
                 sanitize: false,
                 content: function () {
@@ -1044,7 +1044,7 @@ const CaseListView = Marionette.CollectionView.extend({
             let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                 "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
             import("hqwebapp/js/bootstrap5/alert_user").then(function (alertUser) {
-                alertUser.alert_user(errorMessage, 'danger');
+                alertUser.default.alert_user(errorMessage, 'danger');
             });
         }
     },

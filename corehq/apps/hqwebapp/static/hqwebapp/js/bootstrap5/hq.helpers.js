@@ -2,7 +2,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import googleAnalytics from "analytix/js/google";
-import bootstrap from "bootstrap5";
+import {Popover} from "bootstrap5";
 import "jquery.cookie/jquery.cookie";  // $.cookie
 
 // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
@@ -66,7 +66,7 @@ $.fn.hqHelp = function (opts) {
         if (opts) {
             options = _.extend(options, opts);
         }
-        new bootstrap.Popover($link, options);
+        new Popover($link, options);
 
         // Prevent jumping to the top of the page when link is clicked
         $link.click(function (event) {
