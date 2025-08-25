@@ -3831,6 +3831,11 @@ fined@^1.2.0:
     object.pick "^1.2.0"
     parse-filepath "^1.0.1"
 
+flag-icons@^7.5.0:
+  version "7.5.0"
+  resolved "https://registry.yarnpkg.com/flag-icons/-/flag-icons-7.5.0.tgz#66462df3e8bc5ef3a283322a46bb9dde1b290505"
+  integrity sha512-kd+MNXviFIg5hijH766tt+3x76ele1AXlo4zDdCxIvqWZhKt4T83bOtxUOOMlTx/EcFdUMH5yvQgYlFh1EqqFg==
+
 flagged-respawn@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/flagged-respawn/-/flagged-respawn-1.0.1.tgz#e7de6f1279ddd9ca9aac8a5971d618606b3aab41"
