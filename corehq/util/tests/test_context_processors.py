@@ -65,7 +65,7 @@ class TestServerLocationDisplay(SimpleTestCase):
         context = server_location_display(request)
         expected_context = {
             'server_display': {
-                'flag': "🇺🇸",
+                'country_code': 'us',
                 'hr_name': "US",
             },
         }
