@@ -106,6 +106,9 @@
     </div>
   </div>
 
+  <!-- Include OCS Chatbot Modal -->
+  {% include "domain/admin/partials/ocs_chatbot_modal.html" %}
+
   <div class="row">
     <div class="col-md-10">
       <form action="" method="post">
@@ -128,7 +131,16 @@
                 {% endif %}
               </td>
               <td>
-                <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>
+                {% if feature.slug == 'ocs_chatbot' %}
+                  <input type="checkbox"
+                         name="{{ feature.slug }}"
+                         {% if enabled %}checked{% endif %}
+                         class="ocs-chatbot-checkbox"
+                         data-feature-slug="{{ feature.slug }}"
+                         id="ocs_chatbot_checkbox"/>
+                {% else %}
+                  <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>
+                {% endif %}
               </td>
             </tr>
           {% endfor %}
@@ -137,4 +149,170 @@
       </form>
     </div>
   </div>
+{% endblock %}
+
+{% block js %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if we can find the OCS Chatbot checkbox
+      var ocsCheckboxes = document.querySelectorAll('.ocs-chatbot-checkbox');
+
+      // Check if modal exists
+      var modalElement = document.getElementById('ocsChatbotModal');
+
+      // Handle OCS Chatbot checkbox click
+      ocsCheckboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('mousedown', function(e) {
+          // Show modal when trying to check the checkbox (when it's currently unchecked)
+          if (!this.checked) {
+            // Prevent the default checkbox behavior
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Try Bootstrap 5 first, then fall back to manual
+            var modalElement = document.getElementById('ocsChatbotModal');
+
+            if (modalElement) {
+              // Store reference to the checkbox by ID instead of DOM element
+              modalElement.dataset.checkboxId = this.id || this.name;
+
+              try {
+                // Bootstrap 5
+                var modal = new bootstrap.Modal(modalElement);
+                modal.show();
+              } catch (e) {
+                // Manual modal show
+                modalElement.style.display = 'block';
+                modalElement.classList.add('show');
+                document.body.classList.add('modal-open');
+                
+                // Add backdrop for manual modal
+                var backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = 'manualModalBackdrop';
+                document.body.appendChild(backdrop);
+                
+                // Add click outside to close functionality
+                modalElement.addEventListener('click', function(e) {
+                  if (e.target === modalElement) {
+                    closeModal();
+                  }
+                });
+              }
+            }
+          }
+          // If it's checked, allow unchecking normally
+        });
+      });
+      
+      // Handle TOS confirmation checkbox
+      var tosConfirmation = document.getElementById('tosConfirmation');
+      if (tosConfirmation) {
+        tosConfirmation.addEventListener('change', function() {
+          var confirmBtn = document.getElementById('confirmTosBtn');
+          if (confirmBtn) {
+            confirmBtn.disabled = !this.checked;
+          }
+        });
+      }
+      
+      // Handle confirm button click
+      var confirmBtn = document.getElementById('confirmTosBtn');
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+          var tosCheckbox = document.getElementById('tosConfirmation');
+          if (tosCheckbox && tosCheckbox.checked) {
+            // Get the checkbox reference and check it
+            var modalElement = document.getElementById('ocsChatbotModal');
+            var checkboxId = modalElement ? modalElement.dataset.checkboxId : null;
+            
+            if (checkboxId) {
+              // Find the checkbox by its ID and check it
+              var checkboxElement = document.getElementById(checkboxId);
+              if (checkboxElement) {
+                checkboxElement.checked = true;
+              }
+            }
+            
+            // Hide the modal
+            closeModal();
+          }
+        });
+      }
+      
+      // Handle modal close events
+      var modalElement = document.getElementById('ocsChatbotModal');
+      if (modalElement) {
+        // Bootstrap 5 events
+        modalElement.addEventListener('hidden.bs.modal', function() {
+          resetModalForm();
+        });
+        
+        // Manual close button
+        var closeButtons = modalElement.querySelectorAll('[data-bs-dismiss="modal"], .btn-close');
+        closeButtons.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            closeModal();
+          });
+        });
+        
+        // Click outside modal to close
+        modalElement.addEventListener('click', function(e) {
+          if (e.target === modalElement) {
+            closeModal();
+          }
+        });
+      }
+      
+      function closeModal() {
+        var modalElement = document.getElementById('ocsChatbotModal');
+        if (modalElement) {
+          try {
+            // Try Bootstrap 5 first
+            var modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+              modal.hide();
+            } else {
+              // Manual hide
+              modalElement.style.display = 'none';
+              modalElement.classList.remove('show');
+              document.body.classList.remove('modal-open');
+              
+              // Remove manual backdrop if it exists
+              var backdrop = document.getElementById('manualModalBackdrop');
+              if (backdrop) {
+                backdrop.remove();
+              }
+            }
+          } catch (e) {
+            // Manual hide
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Remove manual backdrop if it exists
+            var backdrop = document.getElementById('manualModalBackdrop');
+            if (backdrop) {
+              backdrop.remove();
+            }
+          }
+        }
+        
+        // Reset the form
+        resetModalForm();
+      }
+      
+      function resetModalForm() {
+        var tosCheckbox = document.getElementById('tosConfirmation');
+        var confirmBtn = document.getElementById('confirmTosBtn');
+        if (tosCheckbox) {
+          tosCheckbox.checked = false;
+        }
+        if (confirmBtn) {
+          confirmBtn.disabled = true;
+        }
+      }
+    });
+  </script>
 {% endblock %}
