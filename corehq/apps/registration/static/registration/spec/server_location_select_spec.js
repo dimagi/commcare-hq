@@ -21,20 +21,20 @@ describe('serverLocationSelect', function () {
     it('should update url subdomain when serverLocation changes', function () {
         const url = 'https://test.commcarehq.org/some/path';
         const model = serverLocationSelect({ url });
-        const setWindowHref = sinon.stub(model, 'setWindowHref');
+        const navigateTo = sinon.stub(model, 'navigateTo');
 
         model.serverLocation('newsubdomain');
-        sinon.assert.calledOnce(setWindowHref);
-        sinon.assert.calledWith(setWindowHref, 'https://newsubdomain.commcarehq.org/some/path');
+        sinon.assert.calledOnce(navigateTo);
+        sinon.assert.calledWith(navigateTo, 'https://newsubdomain.commcarehq.org/some/path');
     });
 
     it('should not update url if same value is selected', function () {
         const url = 'https://test.commcarehq.org';
         const model = serverLocationSelect({ url });
-        const setWindowHref = sinon.stub(model, 'setWindowHref');
+        const navigateTo = sinon.stub(model, 'navigateTo');
 
         model.serverLocation('test');
-        sinon.assert.notCalled(setWindowHref);
+        sinon.assert.notCalled(navigateTo);
     });
 
 });
