@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '4'",
@@ -409,7 +409,6 @@ dependencies = [
     { name = "django-crispy-forms" },
     { name = "django-cte" },
     { name = "django-field-audit" },
-    { name = "django-formtools" },
     { name = "django-oauth-toolkit" },
     { name = "django-otp" },
     { name = "django-phonenumber-field" },
@@ -583,7 +582,6 @@ requires-dist = [
     { name = "django-crispy-forms" },
     { name = "django-cte" },
     { name = "django-field-audit" },
-    { name = "django-formtools" },
     { name = "django-oauth-toolkit" },
     { name = "django-otp" },
     { name = "django-phonenumber-field" },
@@ -1051,14 +1049,14 @@ wheels = [
 
 [[package]]
 name = "django-formtools"
-version = "2.3"
+version = "2.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/b0/41ca0a8b7f2ce073f4cfca6adcc7b502a4a894fad9b80505b2ad13dc7aac/django-formtools-2.3.tar.gz", hash = "sha256:9663b6eca64777b68d6d4142efad8597fe9a685924673b25aa8a1dcff4db00c3", size = 83706, upload-time = "2021-04-19T03:58:47.452Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/73/f8/bb9b228fc33230186f3612a6fc96274a81bab3509817498f2632d7aa6367/django-formtools-2.5.1.tar.gz", hash = "sha256:47cb34552c6efca088863d693284d04fc36eaaf350eb21e1a1d935e0df523c93", size = 88637, upload-time = "2023-12-19T10:30:59.78Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8e/dd/0bce8b9cc6dfa80a4c510e625f54be4348e799d9c594f98c1cd83e63cd2a/django_formtools-2.3-py3-none-any.whl", hash = "sha256:4699937e19ee041d803943714fe0c1c7ad4cab802600eb64bbf4cdd0a1bfe7d9", size = 148867, upload-time = "2021-04-19T03:58:32.131Z" },
+    { url = "https://files.pythonhosted.org/packages/12/63/91a107e3aaaf3987bad036494dfd8cc2675f4a66d22e65ffd6711f84ba70/django_formtools-2.5.1-py3-none-any.whl", hash = "sha256:bce9b64eda52cc1eef6961cc649cf75aacd1a707c2fff08d6c3efcbc8e7e761a", size = 170651, upload-time = "2023-12-19T10:30:02.816Z" },
 ]
 
 [[package]]
@@ -1178,13 +1176,13 @@ wheels = [
 
 [[package]]
 name = "django-tastypie"
-version = "0.14.6"
+version = "0.15.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
     { name = "python-mimeparse" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/92/33d0b11bc6d8b5bf8675fd9f73492788c363007c61864186a425ff136041/django-tastypie-0.14.6.tar.gz", hash = "sha256:7f16928ffa5b1b390edd81fa0c15a239cca7fc1134d440ecaa2040b5edc549b8", size = 154751, upload-time = "2023-09-02T17:41:30.142Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/96/2e27e872d34f360ac6d02077b0027f4851b6cf049b36ee3add68e1740c27/django_tastypie-0.15.1.tar.gz", hash = "sha256:1eb41318b08c0ebc9b8a386871b45401a623e6a5566bf32ae3e17be2c59318b7", size = 156617, upload-time = "2025-02-23T19:19:45.489Z" }
 
 [[package]]
 name = "django-transfer"

@@ -36,7 +36,7 @@ class Command(BaseCommand):
         is_html = options['html']
 
         if not subject:
-            subject = f"[{settings.SERVER_ENVIRONMENT}] Mail from CommCare HQ"
+            subject = f"[{settings.SERVER_ENVIRONMENT}] Mail from CommCare"
 
         if not admins and not recipients:
             raise CommandError("One of '--admins' or '--recipients' must be provided")

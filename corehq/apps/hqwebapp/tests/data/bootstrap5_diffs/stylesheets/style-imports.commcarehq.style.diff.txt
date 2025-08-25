@@ -45,6 +45,7 @@
 -@import "_hq/svg.less";
 -@import "_hq/utils.less";
 -@import "_hq/bootstrap5-temp.less";
+-@import "_hq/ocs_widget.less";
 +// Configuration
 +@import "functions";
 +@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults
@@ -132,6 +133,7 @@
 +@import "commcarehq/list";
 +@import "commcarehq/mapbox";
 +@import "commcarehq/notifications";
++@import "commcarehq/ocs_widget";
 +@import "commcarehq/pagination";
 +@import "commcarehq/card";
 +@import "commcarehq/plan_notice";
