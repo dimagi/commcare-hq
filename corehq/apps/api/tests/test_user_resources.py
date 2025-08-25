@@ -573,6 +573,23 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(location_response.status_code, 400)
         self.assertTrue(updated_location_user.is_active_in_domain(self.domain.name))
 
+    @patch('corehq.apps.api.resources.v0_5.send_password_reset_email')
+    def test_email_password_reset(self, mock_send_password_reset_email):
+        user = CommCareUser.create(domain=self.domain.name, username='reset_user', password='*****',
+                                created_by=None, created_via=None, email='reset_user@example.com',
+                                is_active=True)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        url = self.single_endpoint(user.get_id) + 'email_password_reset/'
+        response = self._assert_auth_post_resource(url, json.dumps({}), content_type='application/json',
+                                                method='POST')
+
+        self.assertEqual(response.status_code, 202)
+        dj_user = user.get_django_user()
+        mock_send_password_reset_email.assert_called_once()
+        args, kwargs = mock_send_password_reset_email.call_args
+        self.assertEqual(args[0], [dj_user])
+
 
 @es_test(requires=[user_adapter])
 class TestWebUserResource(APIResourceTest):

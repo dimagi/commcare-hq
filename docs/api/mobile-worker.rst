@@ -278,3 +278,36 @@ Endpoint Specifications
 
 **Authentication**
     For more information, please review  `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+Send Password Reset Email (Mobile Worker)
+=========================================
+
+Overview
+--------
+
+**Purpose**
+    Send a password reset email to a CommCare (mobile-worker) user.
+
+**Permissions Required**
+    Edit Mobile Workers & Edit Access API's
+
+Endpoint Specifications
+-----------------------
+
+**URL**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/user/v1/[id]/email_password_reset/
+
+**Method**
+
+.. code-block:: text
+
+    POST
+
+Request & Response Details
+---------------------------
+
+- **Request Body**: Empty
+- **Success**: Returns HTTP 202 Accepted with an empty body.
