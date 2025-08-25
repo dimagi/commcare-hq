@@ -233,7 +233,7 @@ var hideLoading = function () {
             if (progressView) {
                 progressView.setProgress(100, 100, 200);
                 setTimeout(function () {
-                    FormplayerFrontend.getRegion('loadingProgress').empty();
+                    FormplayerFrontend.default.getRegion('loadingProgress').empty();
                 }, 250);
             }
         });
