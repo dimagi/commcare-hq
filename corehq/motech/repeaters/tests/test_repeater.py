@@ -42,7 +42,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.models import ConnectionSettings
 from corehq.pillows.case import get_case_pillow
 from corehq.util.json import CommCareJSONEncoder
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_disabled, flag_enabled
 
 from ..const import (
     MAX_BACKOFF_ATTEMPTS,
@@ -706,7 +706,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
                 date_modified='2006-08-24',
             ).as_text(),
         ])
-        repeat_records = self.repeater.repeat_records_ready.all()
+        repeat_records = self.repeater.repeat_records.all()
         assert [r.payload_id for r in repeat_records] == [
             '(134340) Pluto',
             '(134340) Pluto I',
@@ -1362,7 +1362,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_payload_format(self):
         doc_id, expected_indicators = self._create_payload()
-        repeat_record = self.repeater.repeat_records_ready.first()
+        repeat_record = self.repeater.repeat_records.first()
         payload_str = repeat_record.get_payload()
         payload = json.loads(payload_str)
 
@@ -1463,12 +1463,143 @@ class TestSetBackoff(TestCase):
         assert repeater.next_attempt_at is None
 
 
+class TestRepeatRecordsReady(TestCase):
+    domain = 'test-repeat-records-ready'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        connx = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            url="form-repeater-url",
+        )
+        cls.repeater = FormRepeater.objects.create(
+            domain=cls.domain,
+            connection_settings_id=connx.id,
+            format='form_xml',
+        )
+
+    def _create_repeat_records_just_now(self):
+        south_african_just_now = datetime.utcnow() + timedelta(minutes=1)
+        american_just_now = datetime.utcnow() - timedelta(minutes=1)
+        scottish_the_noo = datetime.utcnow()
+        RepeatRecord.objects.bulk_create((
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=datetime.utcnow() - timedelta(hours=1),
+                next_check=None,
+                payload_id='x',
+            ),
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=datetime.utcnow() - timedelta(hours=2),
+                next_check=south_african_just_now,
+                payload_id='🌭',
+            ),
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=datetime.utcnow() - timedelta(hours=3),
+                next_check=american_just_now,
+                payload_id='🦅',
+            ),
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=datetime.utcnow() - timedelta(hours=4),
+                next_check=scottish_the_noo,
+                payload_id='🥃',
+            ),
+        ))
+
+    def test_returns_only_overdue_records_ordered_by_next_check(self):
+        self._create_repeat_records_just_now()
+        payload_ids = [rr.payload_id for rr in self.repeater.repeat_records_ready.all()]
+        # Ordered by next_check
+        assert payload_ids == ['🦅', '🥃']
+
+    @flag_enabled('BACKOFF_REPEATERS')
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_returns_all_queued_records_ordered_by_registered_at(self):
+        self._create_repeat_records_just_now()
+        payload_ids = [rr.payload_id for rr in self.repeater.repeat_records_ready.all()]
+        # Ordered by registered_at
+        assert payload_ids == ['🥃', '🦅', '🌭', 'x']
+
+    @flag_enabled('BACKOFF_REPEATERS')
+    @flag_disabled('PROCESS_REPEATERS')
+    def test_returns_only_overdue_records_if_process_repeaters_disabled(self):
+        self._create_repeat_records_just_now()
+        payload_ids = [rr.payload_id for rr in self.repeater.repeat_records_ready.all()]
+        # Ordered by next_check
+        assert payload_ids == ['🦅', '🥃']
+
+    def test_states(self):
+        now = datetime.utcnow()
+        RepeatRecord.objects.bulk_create((
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=now,
+                next_check=now,
+                state=State.Pending,
+                payload_id='pending',
+            ),
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=now,
+                next_check=now,
+                state=State.Fail,
+                payload_id='fail',
+            ),
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=now,
+                next_check=None,
+                state=State.Success,
+                payload_id='success',
+            ),
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=now,
+                next_check=None,
+                state=State.Cancelled,
+                payload_id='cancelled',
+            ),
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=now,
+                next_check=None,
+                state=State.Empty,
+                payload_id='empty',
+            ),
+            RepeatRecord(
+                domain=self.domain,
+                repeater=self.repeater,
+                registered_at=now,
+                next_check=None,
+                state=State.InvalidPayload,
+                payload_id='invalid payload',
+            ),
+        ))
+        payload_ids = {rr.payload_id for rr in self.repeater.repeat_records_ready.all()}
+        assert payload_ids == {'pending', 'fail'}
+
+
 class TestBackoffCodes(TestCase):
     domain = 'test-backoff-codes'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
         cls.connx = ConnectionSettings.objects.create(
             domain=cls.domain,
             url='https://example.com/api/',
