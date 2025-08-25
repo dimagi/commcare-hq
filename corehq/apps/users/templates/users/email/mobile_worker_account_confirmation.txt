@@ -3,4 +3,4 @@ You have successfully confirmed the account {{ new_mobile_worker }} for the proj
 If you think you have received this by mistake, you can go ahead and ignore this email.
 
 Thank you,
-The CommCare HQ Team
+The CommCare Team

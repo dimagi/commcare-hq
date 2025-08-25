@@ -11,5 +11,5 @@ the '{{ registry_name }}' CommCare data registry.
 
 {% blocktrans %}Thank you for using CommCare.
 Best regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org{% endblocktrans %}

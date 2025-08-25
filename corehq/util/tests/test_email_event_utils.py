@@ -217,7 +217,7 @@ class TestBouncedEmailManager(TestSnsEmailBase):
                         'date': 'Fri, 31 Jul 2020 06:01:50 -0000',
                         'to': ['transientEmail@company.org'],
                         'messageId': '<redacted>',
-                        'subject': 'Scheduled report from CommCare HQ'
+                        'subject': 'Scheduled report from CommCare'
                     },
                     timestamp=datetime.datetime(2020, 7, 31, 21, 8, 57, 723000,
                                                 tzinfo=datetime.timezone.utc),
