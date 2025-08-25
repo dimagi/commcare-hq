@@ -162,7 +162,7 @@
 -            </li>
 -            {% if server_display %}
 -                <li class="nav-divider divider"></li>
--                <li class="dropdown-header nav-header">{% trans 'Server Location' %}</li>
+-                <li class="dropdown-header nav-header">{% trans 'Cloud Location' %}</li>
 -                <li class="server-location">
 -                    <span class="fi fi-{{ server_display.country_code }}"></span>
 -                    {% trans server_display.hr_name %}
@@ -196,7 +196,7 @@
 +        </li>
 +        {% if server_display %}
 +          <li><hr class="dropdown-divider"></li>
-+          <li class="dropdown-header nav-header">{% trans 'Server Location' %}</li>
++          <li class="dropdown-header nav-header">{% trans 'Cloud Location' %}</li>
 +          <li class="dropdown-item-text">
 +            <span class="fi fi-{{ server_display.country_code }}"></span>
 +            {% trans server_display.hr_name %}
