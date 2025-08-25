@@ -361,7 +361,7 @@ class DataSourceConfigurationTests(TestCase):
 
     def test_all(self):
         results = list(DataSourceConfiguration.all())
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 3, results)
         self.assertEqual({r.table_id for r in results},
                          {'foo1', 'foo2', 'bar1'})
 

@@ -11,7 +11,10 @@ class PillowProcessor(metaclass=ABCMeta):
     def checkpoint_updated(self):
         pass
 
-    def bootstrap_if_needed(self):
+    def configure_dedicated_migration_process(self):
+        pass
+
+    def run_migrations(self):
         pass
 
 

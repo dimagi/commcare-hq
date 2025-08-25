@@ -169,10 +169,8 @@ class KafkaChangeFeed(ChangeFeed):
         process_num = self.process_num
         if self.dedicated_migration_process:
             if self.process_num == 0:
-                # process 0 is the migration process. It calls
-                # processor.bootstrap_if_needed() on each of its
-                # processors periodically. Returning None disables
-                # the Kafka consumer.
+                # Process 0 is the migration process.
+                # Returning None disables the Kafka consumer.
                 return None
             num_processes -= 1
             process_num -= 1

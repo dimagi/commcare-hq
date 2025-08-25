@@ -117,13 +117,16 @@ def get_all_data_sources():
     return data_sources
 
 
-def get_registry_data_sources_by_domain(domain):
+def get_registry_data_sources_by_domain(domain, slug=None):
     from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    key = [domain]
+    if slug:
+        key.append(slug)
     return sorted(
         RegistryDataSourceConfiguration.view(
             'registry_data_sources/view',
-            startkey=[domain],
-            endkey=[domain, {}],
+            startkey=key,
+            endkey=key + [{}],
             reduce=False,
             include_docs=True,
         ),
@@ -191,7 +194,7 @@ def get_orphaned_ucrs(engine_id, domain=None, ignore_active_domains=True):
     """
     deleted_domains_cache = DeletedDomains()
     if domain and not deleted_domains_cache.is_domain_deleted(domain):
-        assert not ignore_active_domains,\
+        assert not ignore_active_domains, \
             f"{domain} is active but ignore_active_domains is True"
 
     ucrs_with_datasources = _get_ucrs_with_datasources(engine_id,
