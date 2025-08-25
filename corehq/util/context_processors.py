@@ -179,15 +179,15 @@ def commcare_hq_names(request=None):
 def server_location_display(request):
     SERVER_LOCATION_DISPLAY = {
         'production': {
-            'flag': "🇺🇸",
+            'country_code': 'us',
             'hr_name': gettext_lazy("US"),
         },
         'india': {
-            'flag': "🇮🇳",
+            'country_code': 'in',
             'hr_name': gettext_lazy("India"),
         },
         'eu': {
-            'flag': "🇪🇺",
+            'country_code': 'eu',
             'hr_name': gettext_lazy("EU"),
         },
     }
