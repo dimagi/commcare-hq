@@ -356,7 +356,7 @@ var initDatePicker = function ($el, selectedDate) {
         useCurrent: false,
     };
     if (selectedDate) {
-        options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
+        options.viewDate = new hqTempusDominus.DateTime(selectedDate);
     }
     let picker = hqTempusDominus.createDatePicker($el[0].parentNode, options);
 
@@ -387,7 +387,7 @@ var initTimePicker = function ($el, selectedTime, timeFormat) {
         useCurrent: true,
     };
     if (date.isValid()) {
-        options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date);
+        options.viewDate = new hqTempusDominus.DateTime(date);
     }
     return hqTempusDominus.createTimePicker($el[0].parentNode, options);
 };

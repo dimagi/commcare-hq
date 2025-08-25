@@ -5,14 +5,13 @@
   * It does not yet support predefined date ranges, which are not natively supported in tempus dominus.
   * It also does not yet support a default date range.
   */
-import tempusDominus from "underscore";
-import initialPageData from "popper";
-import "tempusDominus";
-import "hqwebapp/js/initial_page_data";
+import _ from "underscore";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import { DateTime, TempusDominus } from "tempusDominus"
 import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
 
 let createDatePicker = function (el, options) {
-    let picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
+    let picker = new TempusDominus(el, _addDefaultOptions(options, {
         display: {
             theme: 'light',
             components: {
@@ -49,7 +48,7 @@ let createDefaultDateRangePicker = function (el, start, end) {
 
 // This replaces createDateRangePicker in hqwebapp/js/daterangepicker.config
 let createDateRangePicker = function (el, separator, start, end) {
-    let picker = new tempusDominus.TempusDominus(
+    let picker = new TempusDominus(
         el, {
             dateRange: true,
             useCurrent: false,
@@ -73,8 +72,8 @@ let createDateRangePicker = function (el, separator, start, end) {
     );
 
     if (start && end) {
-        picker.dates.setValue(new tempusDominus.DateTime(start), 0);
-        picker.dates.setValue(new tempusDominus.DateTime(end), 1);
+        picker.dates.setValue(new DateTime(start), 0);
+        picker.dates.setValue(new DateTime(end), 1);
     }
 
     picker.subscribe("change.td", function () {
@@ -96,7 +95,7 @@ let createDateRangePicker = function (el, separator, start, end) {
 };
 
 let createTimePicker = function (el, options) {
-    var picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
+    var picker = new TempusDominus(el, _addDefaultOptions(options, {
         display: {
             theme: 'light',
             components: {
@@ -184,5 +183,5 @@ export default {
     createDefaultDateRangePicker: createDefaultDateRangePicker,
     createTimePicker: createTimePicker,
     getDateRangeSeparator: getDateRangeSeparator,
-    tempusDominus: tempusDominus,
+    DateTime: DateTime
 };
