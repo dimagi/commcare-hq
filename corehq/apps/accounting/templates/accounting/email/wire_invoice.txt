@@ -30,10 +30,10 @@ If paying by wire, please follow these instructions to ensure timely processing 
 Thank you for using CommCare. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
 
 Best Regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org
 
 Statement From:
-CommCare HQ and the corporation Dimagi, Inc.
+CommCare and the corporation Dimagi, Inc.
 585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
 {% endblocktrans %}

@@ -36,13 +36,13 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 
 
-This is an email from CommCare HQ. You're seeing this message because your
+This is an email from CommCare. You're seeing this message because your
 email client chose to display the plaintext version of an email that CommCare
-HQ can only provide in HTML.  Please set your email client to view this email
+can only provide in HTML.  Please set your email client to view this email
 in HTML or read this email in a client that supports HTML email.
 
 Thanks,
-The CommCare HQ Team
+The CommCare Team
 --===============8853429737433652531==
 Content-Type: text/html; charset="utf-8"
 MIME-Version: 1.0
@@ -70,7 +70,7 @@ Content-Transfer-Encoding: 8bit
 
   <p>
 
-      This is a scheduled report from <a href="https://www.commcarehq.org">CommCare HQ</a> for the project 'fake-project'.
+      This is a scheduled report from <a href="https://www.commcarehq.org">CommCare</a> for the project 'fake-project'.
 
   </p>
 
