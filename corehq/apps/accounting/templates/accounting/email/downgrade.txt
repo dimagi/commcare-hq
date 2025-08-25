@@ -11,6 +11,6 @@ After you have paid the unpaid invoices you can re-subscribe to your plan here: 
 If you have any questions, please don’t hesitate to contact {{ contact_email }}. Thank you for using CommCare.
 
 Best regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org
 {% endblocktrans %}

@@ -1695,7 +1695,7 @@ HQ can only provide in HTML.  Please set your email client to view this email
 in HTML or read this email in a client that supports HTML email.
 
 Thanks,
-The CommCare HQ Team"""
+The CommCare Team"""
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',

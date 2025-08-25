@@ -152,7 +152,7 @@ class TestBouncedEmailManager(SimpleTestCase, TestFileMixin):
                         'date': 'Tue, 28 Jan 2020 13:00:27 -0000',
                         'to': ['fakemail@nd.edu'],
                         'messageId': '<redacted>',
-                        'subject': 'Scheduled report from CommCare HQ'
+                        'subject': 'Scheduled report from CommCare'
                     },
                     timestamp=datetime.datetime(
                         2020, 1, 28, 13, 0, 35,

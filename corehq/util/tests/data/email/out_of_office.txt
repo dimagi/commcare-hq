@@ -2,7 +2,7 @@ Delivered-To: commcarehq-bounces+production@dimagi.com
 To: commcarehq-bounces+production@dimagi.com
 From: MAILER-DAEMON@amazonses.com
 Date: Tue, 28 Jan 2020 13:00:37 +0000
-Subject: Out of Office Re: Scheduled report from CommCare HQ
+Subject: Out of Office Re: Scheduled report from CommCare
 MIME-Version: 1.0
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: base64

@@ -10,5 +10,5 @@ the '{{ owning_domain }}' project space.
 
 {% blocktrans %}Thank you for using CommCare.
 Best regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org{% endblocktrans %}
