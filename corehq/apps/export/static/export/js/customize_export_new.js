@@ -3,7 +3,6 @@ import $ from "jquery";
 import { Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import models from "export/js/models";
-import toggles from "hqwebapp/js/toggles";
 import constants from "export/js/const";
 
 $(function () {
