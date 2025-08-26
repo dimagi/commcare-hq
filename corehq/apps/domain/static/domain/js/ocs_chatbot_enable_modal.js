@@ -68,7 +68,7 @@ function trackChanges() {
             });
 
             if (hasChanges) {
-                return;
+                return true;
             }
         }
     });
