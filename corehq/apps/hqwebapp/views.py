@@ -548,6 +548,11 @@ class HQLoginView(LoginView):
         )
         domain = context.get('domain')
         context['can_select_server'] = self.can_select_server()
+        if self.can_select_server():
+            context['server_choices'] = [
+                server for env, server in ServerLocation.DATA.items()
+                if env != settings.SERVER_ENVIRONMENT
+            ]
         if domain and not is_domain_using_sso(domain):
             # ensure that domain login pages not associated with SSO do not
             # enforce SSO on the login screen
