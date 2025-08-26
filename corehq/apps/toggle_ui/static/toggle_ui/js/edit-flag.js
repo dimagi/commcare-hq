@@ -29,6 +29,7 @@ function toggleViewModel() {
     self.init_items = function (config) {
         const lastUsed = config.last_used || {},
             serviceType = config.service_type || {},
+            dimagiUsers = config.dimagi_users || {},
             items = _.map(config.items, function (item) {
                 var fields = item.split(':'),
                     namespace = fields.length > 1 ? fields[0] : 'user',
@@ -38,6 +39,7 @@ function toggleViewModel() {
                     value,
                     lastUsed[value],
                     serviceType[value],
+                    dimagiUsers[value],
                 );
             });
         self.items(_.sortBy(items, function (item) {
@@ -100,17 +102,18 @@ function toggleViewModel() {
 
 
 // eslint-disable-next-line camelcase
-function toggleItem(namespace, value, last_used, service_type) {
+function toggleItem(namespace, value, last_used, service_type, dimagi_users) {
     // Represents an individual item; a domain or user
     var self = {};
     self.namespace = ko.observable(namespace);
     self.value = ko.observable(value);
     self.last_used = ko.observable(last_used);
     self.service_type = ko.observable(service_type);
+    self.dimagi_users = ko.observable(dimagi_users);
 
     self.domainUrl = ko.computed(() => {
         const val = self.value(),
-              domain = val.startsWith('!') ? val.slice(1) : val;
+            domain = val.startsWith('!') ? val.slice(1) : val;
         return initialPageData.reverse('domain_internal_settings', domain);
     });
 
@@ -127,6 +130,7 @@ $(function () {
         is_random_editable: initialPageData.get('is_random_editable'),
         randomness: initialPageData.get('randomness'),
         service_type: initialPageData.get('service_type'),
+        dimagi_users: initialPageData.get('dimagi_users'),
     });
     $home.koApplyBindings(view);
     $home.on('change', 'input', view.change);

@@ -16,6 +16,7 @@ from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
 
 from corehq.apps.domain.decorators import require_superuser_or_contractor
+from corehq.apps.es import UserES
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
@@ -188,6 +189,7 @@ class ToggleEditView(BasePageView):
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
             context['service_type'], context['by_service'] = _get_service_type(toggle)
+            context['dimagi_users'] = _get_dimagi_users(toggle)
 
         return context
 
@@ -352,6 +354,27 @@ def _get_service_type(toggle):
         by_service[_type].append(domain)
 
     return service_type, dict(by_service)
+
+
+def _get_dimagi_users(toggle):
+    """Returns Dimagi users for each toggle"""
+    users_by_domain = {}
+    for enabled in toggle.enabled_users:
+        if _namespace_domain(enabled):
+            domain = _enabled_item_name(enabled)
+            res = (
+                UserES()
+                .web_users()
+                .domain(domain)
+                .term('username', 'dimagi.com')
+                .size(10)
+                .source('username')
+                .run()
+            )
+            users_by_domain[domain] = ', '.join(r['username'] for r in res.hits)
+            if res.total > 10:
+                users_by_domain[domain] += ', ...'
+    return users_by_domain
 
 
 def _namespace_domain(enabled_item):

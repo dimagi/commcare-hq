@@ -33,6 +33,7 @@
   {% initial_page_data 'namespaces' namespaces %}
   {% initial_page_data 'last_used' last_used %}
   {% initial_page_data 'service_type' service_type %}
+  {% initial_page_data 'dimagi_users' dimagi_users %}
   {% initial_page_data 'is_random_editable' is_random_editable %}
   {% initial_page_data 'randomness' static_toggle.randomness %}
   {% if not usage_info %}
@@ -216,6 +217,7 @@
             <th>Namespace</th>
             <th>Latest Form Submission</th>
             <th>Subscription Plan</th>
+            <th>Dimagi Users</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: items">
@@ -262,6 +264,10 @@
             <td
               class="col-sm-4"
               data-bind="text: service_type"
+            ></td>
+            <td
+              class="col-sm-4"
+              data-bind="text: dimagi_users"
             ></td>
           </tr>
         </tbody>
