@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% js_entry 'domain/js/feature_previews' %}
+
 {% block page_content %}
   <p class="lead">
     {% trans "Feature Previews" %}
@@ -106,9 +108,11 @@
     </div>
   </div>
 
+  {% include "domain/admin/partials/ocs_chatbot_enable_modal.html" %}
+
   <div class="row">
     <div class="col-md-10">
-      <form action="" method="post">
+      <form action="" method="post" id="feature-previews-form">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary">{% trans "Update previews" %}</button>
         <table class="table table-striped">
@@ -128,7 +132,14 @@
                 {% endif %}
               </td>
               <td>
-                <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>
+                {% if feature.slug == 'ocs_chatbot' %}
+                  <input type="checkbox"
+                         name="{{ feature.slug }}"
+                         {% if enabled %}checked{% endif %}
+                         id="ocs_chatbot_checkbox"/>
+                {% else %}
+                  <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>
+                {% endif %}
               </td>
             </tr>
           {% endfor %}
