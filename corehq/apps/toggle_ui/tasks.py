@@ -14,10 +14,11 @@ from dimagi.utils.django.email import send_HTML_email
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.celery import task
 from corehq.apps.domain.calculations import last_form_submission
 from corehq.apps.domain.models import Domain
-from corehq.apps.toggle_ui.utils import get_dimagi_users, get_subscription_info
+from corehq.apps.toggle_ui.utils import get_dimagi_users
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs import CODES, get_blob_db
@@ -112,10 +113,9 @@ def _write_toggle_data(filepath, toggles, increment_progress=None):
         # user columns
         "user_is_active", "user_is_dimagi", "user_is_mobile", "user_is_superuser", "user_last_login",
         # domain columns
-        "domain_is_active", "domain_is_test", "domain_is_snapshot",
-        "domain_dimagi_users",
+        "domain_is_active", "domain_is_test", "domain_is_snapshot", "domain_dimagi_users",
         "domain_last_form_submission", "domain_has_submission_in_last_30_days",
-        "domain_subscription_service_type", "domain_subscription_plan"
+        "domain_subscription_service_type", "domain_subscription_plan", "domain_billing_contacts",
     ]
     with open(filepath, 'w', encoding='utf8') as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -204,17 +204,21 @@ class _UsageInfo:
         if not domain_obj:
             return {"error": "Domain not found"}
 
-        service_type, plan = get_subscription_info(domain)
-        return {
+        info = {
             "domain_is_active": domain_obj.is_active,
             "domain_is_test": {"true": "True", "false": "False", "none": "unknown"}[domain_obj.is_test],
             "domain_is_snapshot": domain_obj.is_snapshot,
             "domain_dimagi_users": get_dimagi_users(domain),
             "domain_last_form_submission": last_form_submission(domain),
             "domain_has_submission_in_last_30_days": domain_has_submission_in_last_30_days(domain),
-            "domain_subscription_service_type": service_type,
-            "domain_subscription_plan": plan,
         }
+        if subscription := Subscription.get_active_subscription_by_domain(domain):
+            info.update({
+                "domain_subscription_service_type": subscription.service_type,
+                "domain_subscription_plan": subscription.plan_version.plan.name,
+                "domain_billing_contacts": ','.join(subscription.account.billingcontactinfo.email_list),
+            })
+        return info
 
     @memoized
     def for_user(self, username):
