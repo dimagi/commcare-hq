@@ -33,8 +33,11 @@ class Command(BaseCommand):
     def handle(self, username, **options):
         if not settings.ALLOW_MAKE_SUPERUSER_COMMAND:
             from dimagi.utils.web import get_site_domain
-            raise CommandError(f"""You cannot run this command in SaaS Enviornments.
-            Use https://{get_site_domain()}/hq/admin/superuser_management/ for granting superuser permissions""")
+            raise CommandError(
+                "You cannot run this command in SaaS environments. "
+                f"Use https://{get_site_domain()}/hq/admin/superuser_management/ "
+                "for granting superuser permissions."
+            )
         from corehq.apps.users.models import WebUser
         try:
             validate_email(username)
