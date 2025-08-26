@@ -149,6 +149,14 @@ USE_LOCATION_DISPLAY_NAME = FeaturePreview(
     )
 )
 
+OCS_CHATBOT = FeaturePreview(
+    slug='ocs_chatbot',
+    label=_('CommCare Companion AI Support Bot'),
+    description=_(
+        "This setting allows users to chat with a chatbot to get help with CommCare."
+    )
+)
+
 
 def enable_callcenter(domain_name, checked):
     from corehq.apps.domain.models import Domain
