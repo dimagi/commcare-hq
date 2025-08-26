@@ -126,7 +126,8 @@ class ServerLocation:
     EU = 'eu'
     INDIA = 'india'
     PRODUCTION = 'production'
-    ENVS = (EU, INDIA, PRODUCTION)
+    STAGING = 'staging'
+    ENVS = (EU, INDIA, PRODUCTION, STAGING)
 
     DATA = {
         EU: {
@@ -146,6 +147,12 @@ class ServerLocation:
             'long_name': _("United States"),
             'short_name': _("US"),
             'subdomain': 'www',
+        },
+        STAGING: {
+            'country_code': 'xx',
+            'long_name': _("Staging"),
+            'short_name': _("Staging"),
+            'subdomain': 'staging',
         },
     }
     SUBDOMAINS = {env: server['subdomain'] for env, server in DATA.items()}
