@@ -25,7 +25,7 @@ function ToSModalViewModel() {
     };
 }
 
-$(function () {
+function initModalBindings() {
     const viewModel = new ToSModalViewModel();
 
     ko.applyBindings(viewModel, document.getElementById('ocsChatbotModal'));
@@ -42,4 +42,8 @@ $(function () {
             $('#ocsChatbotModal').modal('show');
         }
     });
+}
+
+$(function () {
+    initModalBindings();
 });
