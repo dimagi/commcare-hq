@@ -109,7 +109,9 @@ function toggleItem(namespace, value, last_used, service_type) {
     self.service_type = ko.observable(service_type);
 
     self.domainUrl = ko.computed(() => {
-        return initialPageData.reverse('domain_internal_settings', self.value());
+        const val = self.value(),
+              domain = val.startsWith('!') ? val.slice(1) : val;
+        return initialPageData.reverse('domain_internal_settings', domain);
     });
 
     return self;
