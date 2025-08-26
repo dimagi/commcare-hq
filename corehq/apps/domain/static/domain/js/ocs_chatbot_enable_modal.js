@@ -16,7 +16,7 @@ function ToSModalViewModel() {
     self.enableChatbot = function () {
         if (self.isTosConfirmed()) {
             self.isChatbotEnabled(true);
-            $('#ocs_chatbot_checkbox').prop('checked', true);
+            $('#ocs_chatbot_checkbox').prop('checked', true).trigger('change');
             $('#ocsChatbotModal').modal('hide');
         }
     };
@@ -45,6 +45,40 @@ function initModalBindings() {
     });
 }
 
+function trackChanges() {
+    var unsavedChanges = false;
+    var initialStates = {};
+
+    // Store initial checkbox states
+    $("#feature-previews-form input[type='checkbox']").each(function () {
+        initialStates[$(this).attr('name')] = $(this).is(':checked');
+    });
+
+    $("#feature-previews-form input[type='checkbox']").on('change', function () {
+        unsavedChanges = true;
+    });
+
+    $(window).on('beforeunload', function () {
+        if (unsavedChanges) {
+            var hasChanges = false;
+            $("#feature-previews-form input[type='checkbox']").each(function () {
+                if ($(this).is(':checked') !== initialStates[$(this).attr('name')]) {
+                    hasChanges = true;
+                }
+            });
+
+            if (hasChanges) {
+                return true;
+            }
+        }
+    });
+
+    $("#feature-previews-form").on('submit', function () {
+        $(window).off("beforeunload");
+    });
+}
+
 $(function () {
     initModalBindings();
+    trackChanges();
 });
