@@ -20,7 +20,6 @@ from corehq.apps.domain.calculations import last_form_submission
 from corehq.apps.domain.models import Domain
 from corehq.apps.toggle_ui.utils import get_dimagi_users
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import (
@@ -227,8 +226,8 @@ class _UsageInfo:
             return {"error": "User not found"}
 
         return {
-            "user_is_dimagi": is_dimagi_email(username),
-            "user_is_mobile": "commcarehq.org" in username,
+            "user_is_dimagi": user.is_dimagi,
+            "user_is_mobile": user.is_commcare_user(),
             "user_is_active": user.is_active_in_any_domain(),
             "user_last_login": user.last_login,
             "user_is_superuser": user.is_superuser,
