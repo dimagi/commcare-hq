@@ -725,7 +725,7 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.3.tgz#282046f03e886e352b2d5f5da5eb755e01457f3f"
   integrity sha512-DE427ROAphMQzU4ENbliGYrBSYPXF+TtLg9S8vzeA+OF4ZKzoDdzfL8sxuMUGS/lgRhM6j1URSk9ghf7Xo1tyA==
 
-"@stencil/core@^4.26.0":
+"@stencil/core@^4.27.0":
   version "4.36.3"
   resolved "https://registry.yarnpkg.com/@stencil/core/-/core-4.36.3.tgz#8e448bef08682037d0a6a733b83855b5c5db781a"
   integrity sha512-C9DOaAjm+hSYRuVoUuYWG/lrYT8+4DG0AL0m1Ea9+G5v2Y6ApVpNJLbXvFlRZIdDMGecH86s6v0Gp39uockLxg==
@@ -6343,12 +6343,12 @@ once@^1.3.0, once@^1.3.1, once@^1.4.0:
   dependencies:
     wrappy "1"
 
-open-chat-studio-widget@0.4.7:
-  version "0.4.7"
-  resolved "https://registry.yarnpkg.com/open-chat-studio-widget/-/open-chat-studio-widget-0.4.7.tgz#2217c79eee8238639331808693298949218e4cd4"
-  integrity sha512-9sB8bx5fcMYjutbzEGXnah97rGgexwcheL0G2knle3v615+wc0xwtyK6vYIhuqbkocoIbmjlWREV3oJPRrqb1g==
+open-chat-studio-widget@0.4.8:
+  version "0.4.8"
+  resolved "https://registry.yarnpkg.com/open-chat-studio-widget/-/open-chat-studio-widget-0.4.8.tgz#43b116ecda3d8fd864dbeb08ce42f4e50bed0dab"
+  integrity sha512-osBiF/tW1bxbVgzHUr/jL4bTJhLHXWiBkIMi2XDe1uQ/iXGX8yCIPZECYZzAuaAvr8hSBUu3Tvlf7tJ5GxYZvw==
   dependencies:
-    "@stencil/core" "^4.26.0"
+    "@stencil/core" "^4.27.0"
     dompurify "^3.0.5"
     js-cookie "^3.0.5"
     marked "^4.3.0"
