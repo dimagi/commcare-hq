@@ -7,6 +7,9 @@ from django.core.validators import ValidationError, validate_email
 
 from corehq.apps.hqadmin.views.users import send_email_notif
 from corehq.util.signals import signalcommand
+from corehq.toggles import ALL_TAGS
+from corehq.toggles.sql_models import ToggleEditPermission
+
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +58,8 @@ class Command(BaseCommand):
         couch_user.is_staff = True
         couch_user.can_assign_superuser = True
 
+        toggle_permission_changes = self.grant_all_tags_edit_permissions(couch_user.username)
+
         if is_superuser_changed or is_staff_changed or can_assign_superuser_changed:
             couch_user.save()
 
@@ -81,4 +86,22 @@ class Command(BaseCommand):
             logger.info("✓ User {} can assign superuser privilege".format(couch_user.username))
             fields_changed['same_management_privilege'] = couch_user.can_assign_superuser
 
+        if toggle_permission_changes['added']:
+            logger.info("→ User {} can now edit all feature flags".format(couch_user.username))
+            fields_changed['toggle_edit_permissions'] = toggle_permission_changes
+        else:
+            logger.info("✓ User {} can edit all feature flags".format(couch_user.username))
+
         send_email_notif([fields_changed], changed_by_user='The make_superuser command')
+
+    @staticmethod
+    def grant_all_tags_edit_permissions(username):
+        toggle_permission_changes = {'added': [], 'removed': []}
+        for tag in ALL_TAGS:
+            toggle_permission = ToggleEditPermission.objects.get_by_tag_slug(tag.slug)
+            if not toggle_permission:
+                toggle_permission = ToggleEditPermission(tag_slug=tag.slug)
+            if username not in toggle_permission.enabled_users:
+                toggle_permission.add_users([username])
+                toggle_permission_changes['added'].append(tag.name)
+        return toggle_permission_changes
