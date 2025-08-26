@@ -11,6 +11,9 @@
         {{ server_location }} Cloud
       {% endblocktrans %}
     </p>
+    {% if can_select_server %}
+      {% comment %} TODO: Server selection widget {% endcomment %}
+    {% endif %}
   {% endif %}
 
   {% if messages %}
