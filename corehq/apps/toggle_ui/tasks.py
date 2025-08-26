@@ -17,7 +17,7 @@ from soil.util import expose_blob_download
 from corehq.apps.celery import task
 from corehq.apps.domain.calculations import last_form_submission
 from corehq.apps.domain.models import Domain
-from corehq.apps.toggle_ui.utils import get_subscription_info, has_dimagi_user
+from corehq.apps.toggle_ui.utils import get_dimagi_users, get_subscription_info
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs import CODES, get_blob_db
@@ -113,7 +113,8 @@ def _write_toggle_data(filepath, toggles, increment_progress=None):
         "user_is_active", "user_is_dimagi", "user_is_mobile", "user_is_superuser", "user_last_login",
         # domain columns
         "domain_is_active", "domain_is_test", "domain_is_snapshot",
-        "domain_has_dimagi_user", "domain_last_form_submission", "domain_has_submission_in_last_30_days",
+        "domain_dimagi_users",
+        "domain_last_form_submission", "domain_has_submission_in_last_30_days",
         "domain_subscription_service_type", "domain_subscription_plan"
     ]
     with open(filepath, 'w', encoding='utf8') as file:
@@ -208,7 +209,7 @@ class _UsageInfo:
             "domain_is_active": domain_obj.is_active,
             "domain_is_test": {"true": "True", "false": "False", "none": "unknown"}[domain_obj.is_test],
             "domain_is_snapshot": domain_obj.is_snapshot,
-            "domain_has_dimagi_user": has_dimagi_user(domain),
+            "domain_dimagi_users": get_dimagi_users(domain),
             "domain_last_form_submission": last_form_submission(domain),
             "domain_has_submission_in_last_30_days": domain_has_submission_in_last_30_days(domain),
             "domain_subscription_service_type": service_type,

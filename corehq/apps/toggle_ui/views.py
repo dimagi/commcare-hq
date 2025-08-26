@@ -16,12 +16,12 @@ from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
 
 from corehq.apps.domain.decorators import require_superuser_or_contractor
-from corehq.apps.es import UserES
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
 from corehq.apps.toggle_ui.utils import (
     find_static_toggle,
+    get_dimagi_users,
     get_subscription_info,
 )
 from corehq.apps.users.models import CouchUser
@@ -362,18 +362,7 @@ def _get_dimagi_users(toggle):
     for enabled in toggle.enabled_users:
         if _namespace_domain(enabled):
             domain = _enabled_item_name(enabled)
-            res = (
-                UserES()
-                .web_users()
-                .domain(domain)
-                .term('username', 'dimagi.com')
-                .size(10)
-                .source('username')
-                .run()
-            )
-            users_by_domain[domain] = ', '.join(r['username'] for r in res.hits)
-            if res.total > 10:
-                users_by_domain[domain] += ', ...'
+            users_by_domain[domain] = get_dimagi_users(domain)
     return users_by_domain
 
 

@@ -17,6 +17,17 @@ def get_subscription_info(domain):
     return None, None
 
 
-def has_dimagi_user(domain):
-    search_fields = ["base_username", "username"]
-    return UserES().web_users().domain(domain).search_string_query('@dimagi.com', search_fields).count()
+def get_dimagi_users(domain):
+    res = (
+        UserES()
+        .web_users()
+        .domain(domain)
+        .term('username', 'dimagi.com')
+        .size(10)
+        .source('username')
+        .run()
+    )
+    usernames = [r['username'] for r in res.hits]
+    if res.total > 10:
+        usernames.append('...')
+    return ', '.join(usernames)
