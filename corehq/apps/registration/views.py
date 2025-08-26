@@ -38,6 +38,7 @@ from corehq.apps.domain.exceptions import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
     DomainRegistrationForm,
@@ -408,12 +409,19 @@ class RegisterDomainView(TemplateView):
             'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
         } for i in invitations]
 
+        server_locations = [{
+            'env': env,
+            'subdomain': server_info[0],
+            'name': server_info[1],
+        } for env, server_info in ServerLocation.CHOICES_DICT.items() if env != settings.SERVER_ENVIRONMENT]
+
         context.update({
             'form': kwargs.get('form') or DomainRegistrationForm(),
             'invitation_links': invitation_links,
             'is_new_user': self.is_new_user,
             'name': self.request.user.first_name or self.request.user.username,
             'pricing_page_url': settings.PRICING_PAGE_URL,
+            'server_locations': server_locations,
             'show_multiple_invites': len(invitations) > 1,
         })
         return context
