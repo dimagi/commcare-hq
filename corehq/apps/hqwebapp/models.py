@@ -123,25 +123,35 @@ def pkce_required(client_id):
 
 
 class ServerLocation:
-    PRODUCTION = 'production'
-    INDIA = 'india'
     EU = 'eu'
-    ENVS = (PRODUCTION, INDIA, EU)
+    INDIA = 'india'
+    PRODUCTION = 'production'
+    ENVS = (EU, INDIA, PRODUCTION)
 
-    SUBDOMAINS = {
-        PRODUCTION: 'www',
-        INDIA: 'india',
-        EU: 'eu',
+    DATA = {
+        EU: {
+            'country_code': 'eu',
+            'long_name': _("European Union"),
+            'short_name': _("EU"),
+            'subdomain': 'eu',
+        },
+        INDIA: {
+            'country_code': 'in',
+            'long_name': _("India"),
+            'short_name': _("India"),
+            'subdomain': 'india',
+        },
+        PRODUCTION: {
+            'country_code': 'us',
+            'long_name': _("United States"),
+            'short_name': _("US"),
+            'subdomain': 'www',
+        },
     }
-
-    CHOICES_DICT = {
-        PRODUCTION: (SUBDOMAINS[PRODUCTION], _("United States")),
-        INDIA: (SUBDOMAINS[INDIA], _("India")),
-        EU: (SUBDOMAINS[EU], _("European Union")),
-    }
+    SUBDOMAINS = {env: server['subdomain'] for env, server in DATA.items()}
 
     @classmethod
-    def choices(cls):
+    def sorted_form_choices(cls):
         env = settings.SERVER_ENVIRONMENT
         sorted_keys = sorted(cls.ENVS, key=lambda x: x != env)
-        return [cls.CHOICES_DICT[key] for key in sorted_keys]
+        return [(cls.DATA[key]['subdomain'], cls.DATA[key]['long_name']) for key in sorted_keys]

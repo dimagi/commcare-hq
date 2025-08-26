@@ -38,7 +38,7 @@ class RegisterWebUserForm(forms.Form):
             label=_("Server Location"),
             required=False,
             widget=forms.RadioSelect,
-            choices=ServerLocation.choices(),
+            choices=ServerLocation.sorted_form_choices(),
             help_text=_(
                 "*Once created, a project space cannot be transferred from one server to another. "
                 "For more information, visit <a href='{help_link}' target='_blank'>this help page</a>."
