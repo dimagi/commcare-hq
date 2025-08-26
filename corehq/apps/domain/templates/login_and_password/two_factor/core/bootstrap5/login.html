@@ -5,12 +5,21 @@
     {{ current_page.page_name }}
   </h2>
   {% if server_display %}
-    <p class="lead text-center">
+    <h3 class="text-center">
       <span class="fi fi-{{ server_display.country_code }}"></span>
       {% blocktrans with server_display.hr_name as server_location %}
         {{ server_location }} Cloud
       {% endblocktrans %}
-    </p>
+    </h3>
+    {% if can_select_server %}
+      <p class="text-center">
+        <a>
+          {% blocktrans %}
+            Looking to sign into a different cloud environment?
+          {% endblocktrans %}
+        </a>
+      </p>
+    {% endif %}
   {% endif %}
 
   {% if messages %}
