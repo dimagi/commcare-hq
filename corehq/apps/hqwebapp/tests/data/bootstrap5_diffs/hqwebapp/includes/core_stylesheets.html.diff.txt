@@ -20,7 +20,7 @@
 -          rel="stylesheet"
 -          media="all"
 -          href="{% static 'hqwebapp/less/style.less' %}" />
--    <link type="text/less"
+-    <link type="text/css"
 -          rel="stylesheet"
 -          media="all"
 -          href="{% static 'flag-icons/css/flag-icons.min.css' %}" />
@@ -36,7 +36,7 @@
 +        rel="stylesheet"
 +        media="all"
 +        href="{% static 'hqwebapp/scss/commcarehq.scss' %}" />
-+  <link type="text/less"
++  <link type="text/css"
 +        rel="stylesheet"
 +        media="all"
 +        href="{% static 'flag-icons/css/flag-icons.min.css' %}" />
