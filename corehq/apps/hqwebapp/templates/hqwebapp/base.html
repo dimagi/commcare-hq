@@ -97,6 +97,8 @@
             'I need help with exporting or understanding my data.'
           ]"
           typing-indicator-text="Finding the best answer"
+          user-id="{{ request.couch_user.user_id }}"
+          user-name="{{ request.couch_user.username }}"
           >
         </open-chat-studio-widget>
       </div>
