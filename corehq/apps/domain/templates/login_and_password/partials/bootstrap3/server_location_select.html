@@ -1,0 +1,19 @@
+{% load i18n %}
+
+<div class="collapse" id="server-location-select">
+  <div class="server-location-buttons">
+    {% for server in server_choices %}
+      <a
+        class="btn btn-lg btn-default"
+        href="https://{{ server.subdomain }}.commcarehq.org{{ request.path }}"
+      >
+        <span class="fi fi-{{ server.country_code }}"></span>
+        {% blocktrans with server.short_name as server_name %}
+          {{ server_name }}
+          Cloud
+        {% endblocktrans %}
+      </a>
+    {% endfor %}
+  </div>
+  <hr />
+</div>
