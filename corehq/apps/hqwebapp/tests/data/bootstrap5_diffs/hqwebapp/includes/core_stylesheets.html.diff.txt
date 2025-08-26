@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,20 +2,16 @@
+@@ -2,24 +2,20 @@
  {% load hq_shared_tags %}
  
  {% compress css %}
@@ -20,6 +20,10 @@
 -          rel="stylesheet"
 -          media="all"
 -          href="{% static 'hqwebapp/less/style.less' %}" />
+-    <link type="text/less"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'flag-icons/css/flag-icons.min.css' %}" />
 +  <link type="text/css"
 +        rel="stylesheet"
 +        media="all"
@@ -32,4 +36,8 @@
 +        rel="stylesheet"
 +        media="all"
 +        href="{% static 'hqwebapp/scss/commcarehq.scss' %}" />
++  <link type="text/less"
++        rel="stylesheet"
++        media="all"
++        href="{% static 'flag-icons/css/flag-icons.min.css' %}" />
  {% endcompress %}
