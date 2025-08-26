@@ -120,6 +120,10 @@
               </div>
               <div class="col-xs-11">
                 <h5><b>{% trans "Subscription" %}</b></h5>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-xs-11 col-xs-push-1">
                 <p>
                   {% blocktrans %}
                     All new projects start on CommCare's free edition. Once you
@@ -138,28 +142,46 @@
                 {% include 'registration/partials/icon_stack.html' with icon_class='fcc fcc-globe' %}
               </div>
               <div class="col-xs-11">
-                <h5><b>{% trans "Server Location" %}</b></h5>
+                <h5><b>{% trans "Cloud Location" %}</b></h5>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-xs-11 col-xs-push-1">
                 <p>
                   {% if server_display %}
                     {% blocktrans with server_display.hr_name as server_location %}
-                      This project will be hosted on the {{ server_location }}
-                      server.
+                      This project will be hosted on the
+                      <strong>{{ server_location }} cloud</strong>.
                     {% endblocktrans %}
                   {% else %}
                     {% blocktrans %}
-                      This project will be hosted on the current server.
+                      This project will be hosted on a private cloud.
                     {% endblocktrans %}
                   {% endif %}
                   {% blocktrans %}
-                    To select a
+                    To select a different
                     <a
                       href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations"
                       target="_blank"
-                      ><b>different server</b></a
-                    >, log into that server's site before creating your project.
-                    <br />
+                      ><b>cloud location</b></a
+                    >, log into that location's site before creating your
+                    project:
+                  {% endblocktrans %}
+                </p>
+                <ul>
+                  {% for server in server_locations %}
+                    <li>
+                      <a
+                        href="https://{{ server.subdomain }}.commcarehq.org{{ request.path }}"
+                        >{% trans server.name %}</a
+                      >
+                    </li>
+                  {% endfor %}
+                </ul>
+                <p>
+                  {% blocktrans %}
                     Please note: projects <strong>cannot</strong> be transferred
-                    between servers after creation.
+                    between cloud locations after creation.
                   {% endblocktrans %}
                 </p>
               </div>
