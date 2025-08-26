@@ -5,6 +5,7 @@ import requests
 from datetime import datetime, timezone, date
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.data_analytics.models import MALTRow
 
@@ -72,88 +73,80 @@ def get_app_ids_by_activity_level():
 
 
 def submit_new_credentials():
-    credentials_to_submit, credential_id_groups_to_update = get_credentials_to_submit()
-    if not credentials_to_submit:
-        return
-
-    total = len(credentials_to_submit)
-    for start in range(0, total, MAX_CREDENTIALS_PER_REQUEST):
-        end = min(total, start + MAX_CREDENTIALS_PER_REQUEST)
-        credentials_to_submit_batch = credentials_to_submit[start:end]
-        credential_id_groups_to_update_batch = credential_id_groups_to_update[start:end]
-
-        response = requests.post(
-            settings.CONNECTID_CREDENTIALS_URL,
-            json={
-                "credentials": credentials_to_submit_batch
-            },
-            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
-        )
-        response.raise_for_status()
-        mark_credentials_as_issued(response, credential_id_groups_to_update_batch)
-
-
-def get_credentials_to_submit():
-    from corehq.apps.users.models import ConnectIDUserLink, UserCredential
+    from corehq.apps.users.models import UserCredential
 
     user_credentials = UserCredential.objects.filter(issued_on=None)
-    if not user_credentials:
-        return [], []
 
-    app_ids = []
-    usernames = []
+    app_ids = [c.app_id for c in user_credentials]
+    app_names_by_id = get_app_names_by_id(app_ids)
+    username_cred_id_dict = get_username_cred_id_dict(user_credentials)
+
+    cred_id_groups = []
+    creds_to_submit = []
+    for app_id_level, username_cred_id_list in username_cred_id_dict.items():
+        app_id, activity_level = app_id_level
+        for username_cred_id_chunk in chunked(username_cred_id_list, MAX_USERNAMES_PER_CREDENTIAL):
+            usernames, cred_ids = zip(*username_cred_id_chunk)
+            creds_to_submit.append({
+                'credentials': {
+                    'usernames': usernames,
+                    'title': app_names_by_id[app_id],
+                    'type': CREDENTIAL_TYPE,
+                    'level': activity_level,
+                    'slug': app_id,
+                    'app_id': app_id,
+                }
+            })
+            cred_id_groups.append(cred_ids)
+            if len(creds_to_submit) >= MAX_CREDENTIALS_PER_REQUEST:
+                submit_credentials(creds_to_submit, cred_id_groups)
+                creds_to_submit = []
+                cred_id_groups = []
+    if creds_to_submit:
+        submit_credentials(creds_to_submit, cred_id_groups)
+
+
+def submit_credentials(credentials_to_submit, cred_id_groups):
+    response = requests.post(
+        settings.CONNECTID_CREDENTIALS_URL,
+        json={
+            'credentials': credentials_to_submit
+        },
+        auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
+    )
+    response.raise_for_status()
+    mark_credentials_as_issued(response, cred_id_groups)
+
+
+def get_username_cred_id_dict(user_credentials):
+    """
+    Returns a dict in the following format:
+    {
+        (app_id, activity_level): [(connectid_username, user_cred.id), ...]
+    }
+    """
+    username_map = get_connectid_username_by_commcare_username(user_credentials)
+    username_cred_id_dict = defaultdict(list)
     for user_cred in user_credentials:
-        app_ids.append(user_cred.app_id)
-        usernames.append(user_cred.username)
+        if user_cred.username not in username_map:
+            # Skip users who still need to set up their PersonalID account
+            continue
+        app_id_level = (user_cred.app_id, user_cred.activity_level)
+        cid_username = username_map[user_cred.username]
+        username_cred_id = (cid_username, user_cred.id)
+        username_cred_id_dict[app_id_level].append(username_cred_id)
+    return username_cred_id_dict
 
+
+def get_connectid_username_by_commcare_username(user_credentials):
+    from corehq.apps.users.models import ConnectIDUserLink
+    usernames = [c.username for c in user_credentials]
     connectid_links = ConnectIDUserLink.objects.filter(
         commcare_user__username__in=usernames
     )
-    connectid_username_by_commcare_username = {
+    return {
         link.commcare_user.username: link.connectid_username for link in connectid_links
     }
-
-    app_names_by_id = get_app_names_by_id(app_ids)
-    credentials_to_submit = {}
-    credential_id_groups_to_update = defaultdict(list)
-    chunk_index_by_base = {}  # Track the current chunk index per (app_id, level)
-    for user_cred in user_credentials:
-        connectid_username = connectid_username_by_commcare_username.get(user_cred.username)
-        if not connectid_username:
-            continue  # Skip these users as they still need to set up their PersonalID account
-
-        base_key = f'{user_cred.app_id}:{user_cred.activity_level}'
-        chunk_idx = chunk_index_by_base.get(base_key, 0)
-        key = f'{base_key}#{chunk_idx}'
-
-        if key not in credentials_to_submit:
-            credentials_to_submit[key] = {
-                'usernames': [],
-                'title': app_names_by_id[user_cred.app_id],
-                'type': CREDENTIAL_TYPE,
-                'level': user_cred.activity_level,
-                'slug': user_cred.app_id,
-                'app_id': user_cred.app_id,
-            }
-        # If current chunk is full, create a new chunk/key
-        elif len(credentials_to_submit[key]['usernames']) >= MAX_USERNAMES_PER_CREDENTIAL:
-            chunk_idx += 1
-            chunk_index_by_base[base_key] = chunk_idx
-            key = f'{base_key}#{chunk_idx}'
-            if key not in credentials_to_submit:
-                credentials_to_submit[key] = {
-                    'usernames': [],
-                    'title': app_names_by_id[user_cred.app_id],
-                    'type': CREDENTIAL_TYPE,
-                    'level': user_cred.activity_level,
-                    'slug': user_cred.app_id,
-                    'app_id': user_cred.app_id,
-                }
-
-        credentials_to_submit[key]['usernames'].append(connectid_username)
-        credential_id_groups_to_update[key].append(user_cred.id)
-
-    return list(credentials_to_submit.values()), list(credential_id_groups_to_update.values())
 
 
 def mark_credentials_as_issued(response, credential_id_groups):
