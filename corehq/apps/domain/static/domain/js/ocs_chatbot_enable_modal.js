@@ -1,3 +1,4 @@
+import "commcarehq";
 import $ from "jquery";
 import ko from 'knockout';
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";
