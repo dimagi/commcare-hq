@@ -58,6 +58,7 @@ class PaymentsFiltersMixin:
         'corehq.apps.integration.payments.filters.CampaignFilter',
         'corehq.apps.integration.payments.filters.ActivityFilter',
         'corehq.apps.integration.payments.filters.FunderFilter',
+        'corehq.apps.integration.payments.filters.PhoneNumberFilter',
     ]
 
     def filters_context(self):
@@ -211,6 +212,9 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
         if funder := self.request.GET.get('funder'):
             query_filters.append(case_property_query(PaymentProperties.FUNDER, funder))
+
+        if phone_number := self.request.GET.get('phone_number'):
+            query_filters.append(case_property_query(PaymentProperties.PHONE_NUMBER, phone_number))
 
         if query_filters:
             query = query.filter(filters.AND(*query_filters))

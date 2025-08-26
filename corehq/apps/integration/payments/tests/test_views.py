@@ -460,6 +460,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.CAMPAIGN: 'Campaign A',
                     PaymentProperties.ACTIVITY: 'Activity A',
                     PaymentProperties.FUNDER: 'Funder A',
+                    PaymentProperties.PHONE_NUMBER: '987654321',
                 }),
             _create_case(
                 cls.factory,
@@ -471,6 +472,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.CAMPAIGN: 'Campaign A',
                     PaymentProperties.ACTIVITY: 'Activity A',
                     PaymentProperties.FUNDER: 'Funder A',
+                    PaymentProperties.PHONE_NUMBER: '123456789'
                 }),
             _create_case(
                 cls.factory,
@@ -556,6 +558,12 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         response = self._make_request(querystring='funder=Funder A')
         queryset = response.context['table'].data
         assert len(queryset) == 2
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_phone_number_filter(self):
+        response = self._make_request(querystring='phone_number=987654321')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
 
 
 class TestPaymentsConfigurationView(BaseTestPaymentsView):

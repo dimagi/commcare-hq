@@ -1,9 +1,9 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.es.case_search import get_case_property_unique_values
 from corehq.apps.integration.payments.const import PaymentStatus, PaymentProperties
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseSimpleFilter
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import WebUserFilter
 
@@ -62,3 +62,8 @@ class FunderFilter(BaseCasePropertyFilter):
     slug = 'funder'
     label = _('Funder')
     case_property = PaymentProperties.FUNDER
+
+
+class PhoneNumberFilter(BaseSimpleFilter):
+    slug = 'phone_number'
+    label = gettext_lazy('Phone number')
