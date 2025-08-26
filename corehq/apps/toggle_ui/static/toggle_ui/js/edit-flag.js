@@ -108,11 +108,18 @@ function toggleItem(namespace, value, last_used, service_type) {
     self.last_used = ko.observable(last_used);
     self.service_type = ko.observable(service_type);
 
+    self.domainName = ko.computed(() => {
+        const val = self.value();
+        if (self.namespace() === 'domain' && val) {
+            return val.startsWith('!') ? val.slice(1) : val;
+        }
+    });
+
     self.dimagiUsers = ko.observableArray();
     self.showDimagiUsers = () => {
         if (_.isEmpty(self.dimagiUsers())) {
             $.ajax({
-                url: initialPageData.reverse('get_dimagi_users', self.value()),
+                url: initialPageData.reverse('get_dimagi_users', self.domainName()),
             }).done((res) => {
                 let emails = _.isEmpty(res.emails) ? ['<None>'] : res.emails;
                 _.each(emails, (email) => {
@@ -125,7 +132,7 @@ function toggleItem(namespace, value, last_used, service_type) {
     };
 
     self.domainUrl = ko.computed(() => {
-        return initialPageData.reverse('domain_internal_settings', self.value());
+        return initialPageData.reverse('domain_internal_settings', self.domainName());
     });
 
     return self;
