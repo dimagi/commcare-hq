@@ -1141,6 +1141,7 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py
@@ -1249,7 +1250,33 @@ msgid "Autopay"
 msgstr "Pagamento Automático"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Hello %(old_user_name)s,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Your card is no longer being used for autopayment on the account %(billing_account_name)s.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    A card belonging to <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> is being used instead. If this is expected, you do not have to take any further action, and this card will be used to pay monthly invoices and will be charged on the invoice due date. If this change is unexpected, you can view and alter the credit card information at any time by navigating to your <a href=\"%(billing_info_url)s\">Billing Information</a> page.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Thank you for using CommCare. If you have any questions, please don't hesitate to contact\n"
+#| "    <a href=\"mailto:%(invoicing_contact_email)s\">%(invoicing_contact_email)s</a>.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Best Regards,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    The CommCare HQ Team<br/>\n"
+#| "    www.commcarehq.org\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  </p>\n"
+#| "\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -1269,11 +1296,11 @@ msgid ""
 "    Best Regards,\n"
 "  </p>\n"
 "  <p>\n"
-"    The CommCare HQ Team<br/>\n"
+"    The CommCare Team<br/>\n"
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 "  </p>\n"
 "\n"
 msgstr ""
@@ -1384,10 +1411,17 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best Regards,<br />\n"
+#| "    The CommCare HQ Team<br />\n"
+#| "    <a href=\"http://www.commcarehq.org/\">www.commcarehq.org</a>\n"
+#| "  "
 msgid ""
 "\n"
 "    Best Regards,<br />\n"
-"    The CommCare HQ Team<br />\n"
+"    The CommCare Team<br />\n"
 "    <a href=\"http://www.commcarehq.org/\">www.commcarehq.org</a>\n"
 "  "
 msgstr ""
@@ -1398,10 +1432,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Email From:<br />\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+#| "    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
-"    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+"    CommCare and the corporation Dimagi, Inc.<br />\n"
 "    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
@@ -1459,17 +1500,28 @@ msgstr ""
 "Saldo Restante: %(balance)s"
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 msgid ""
 "Thank you for using CommCare. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "Email From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 msgstr ""
 "Obrigado por usar o CommCare. Se você tiver alguma dúvida, não\n"
@@ -1497,10 +1549,17 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Email From:<br />\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
-"    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+"    CommCare and the corporation Dimagi, Inc.<br />\n"
 "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
@@ -1536,10 +1595,16 @@ msgstr ""
 "hesite em entrar em contato com %(invoicing_contact_email)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -1548,10 +1613,16 @@ msgstr ""
 "www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "Email From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Email From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -1870,10 +1941,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best regards,<br />\n"
+#| "    The CommCare HQ Team<br />\n"
+#| "    www.commcarehq.org\n"
+#| "  "
 msgid ""
 "\n"
 "    Best regards,<br />\n"
-"    The CommCare HQ Team<br />\n"
+"    The CommCare Team<br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -1885,9 +1963,15 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
+#| "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
-"    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 585\n"
 "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
@@ -2060,18 +2144,30 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "\n"
 "Statement From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -2161,11 +2257,31 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
-msgid "The CommCare HQ Team"
+#, fuzzy
+#| msgid "The CommCare HQ Team"
+msgid "The CommCare Team"
 msgstr "Equipe CommCare HQ"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(account)s administrator,\n"
+#| "\n"
+#| "Your %(plan_name)s subscription ends soon! If you do not renew your\n"
+#| "subscription before then, your subscription will be paused on %(ending_on)s\n"
+#| "and you will lose access to all features until you re-subscribe to a new\n"
+#| "paid plan.\n"
+#| "\n"
+#| "To change or renew your subscription, please reach out to %(sales_email)s.\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(invoicing_contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(account)s administrator,\n"
@@ -2182,7 +2298,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -2293,10 +2409,17 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best regards, <br />\n"
+#| "    The CommCare HQ Team <br />\n"
+#| "    www.commcarehq.org\n"
+#| "  "
 msgid ""
 "\n"
 "    Best regards, <br />\n"
-"    The CommCare HQ Team <br />\n"
+"    The CommCare Team <br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -2307,7 +2430,22 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain)s administrator,\n"
+#| "\n"
+#| "Your subscription has been paused for the CommCare project space %(domain)s. You can regain access to your data and project space by re-subscribing to a plan.\n"
+#| "\n"
+#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
+#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
+#| "After you have paid the unpaid invoices you can re-subscribe to your plan here: %(subscription_url)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -2321,7 +2459,7 @@ msgid ""
 "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
 "\n"
 "Best regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -2396,7 +2534,23 @@ msgstr ""
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain_or_account)s administrator,\n"
+#| "\n"
+#| "Your CommCare %(subscriptions_to_downgrade)s will be paused after tomorrow because your CommCare Billing Statements are more than %(days_overdue)s days overdue.\n"
+#| "If you do not make a payment before tomorrow, your subscription will automatically be paused and you will lose access to your project space and data until you re-subscribe to a paid plan.\n"
+#| "\n"
+#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
+#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
+#| "You can also pre-pay for several months at any time by following the steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain_or_account)s administrator,\n"
@@ -2411,7 +2565,7 @@ msgid ""
 "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
 "\n"
 "Best regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -2446,10 +2600,17 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best Regards,<br />\n"
+#| "    The CommCare HQ Team<br />\n"
+#| "    www.commcarehq.org\n"
+#| "  "
 msgid ""
 "\n"
 "    Best Regards,<br />\n"
-"    The CommCare HQ Team<br />\n"
+"    The CommCare Team<br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -2487,18 +2648,30 @@ msgstr ""
 "Saldo Total: %(total_balance)s\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "\n"
 "Statement From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -2625,10 +2798,17 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Statement From:\n"
-"    CommCare HQ and the corporation Dimagi, Inc.\n"
+"    CommCare and the corporation Dimagi, Inc.\n"
 "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
@@ -2676,10 +2856,16 @@ msgstr ""
 "    hesite em entrar em contato com %(invoicing_contact_email)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best Regards,\n"
+#| "    The CommCare HQ Team\n"
+#| "    www.commcarehq.org\n"
 msgid ""
 "\n"
 "    Best Regards,\n"
-"    The CommCare HQ Team\n"
+"    The CommCare Team\n"
 "    www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -2688,10 +2874,16 @@ msgstr ""
 "    www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "    Statement From:\n"
-"    CommCare HQ and the corporation Dimagi, Inc.\n"
+"    CommCare and the corporation Dimagi, Inc.\n"
 "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -2771,18 +2963,30 @@ msgstr ""
 "Data de Vencimento: %(date_due)s"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using CommCare. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "Email From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -2964,14 +3168,22 @@ msgstr ""
 "    e o nome do espaço do projeto.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -3054,10 +3266,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Thanks, <br />\n"
+#| "    The CommCare HQ Team <br />\n"
+#| "    www.commcarehq.org\n"
+#| "  "
 msgid ""
 "\n"
 "    Thanks, <br />\n"
-"    The CommCare HQ Team <br />\n"
+"    The CommCare Team <br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -3068,7 +3287,26 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain_or_account)s administrator,\n"
+#| "\n"
+#| "Your billing account has unpaid CommCare Billing Statements which are more than %(days_overdue)s days overdue. The balance currently owed is: $%(total)s.\n"
+#| "\n"
+#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
+#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
+#| "You can also pre-pay for several months at any time by following the steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
+#| "\n"
+#| "Please make a payment as soon as possible for the amount due.\n"
+#| "If you are not able to make a payment, your subscription will be paused on %(date_to_pause)s.\n"
+#| "As of this date, you will lose access to your project space until you re-subscribe to a paid plan.\n"
+#| "\n"
+#| "If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don’t hesitate to contact %(contact_email)s.\n"
+#| "\n"
+#| "Thanks,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain_or_account)s administrator,\n"
@@ -3086,7 +3324,7 @@ msgid ""
 "If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don’t hesitate to contact %(contact_email)s.\n"
 "\n"
 "Thanks,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -3143,7 +3381,27 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain)s administrator,\n"
+#| "\n"
+#| "Your %(plan_name)s subscription for %(domain)s ends soon! If you do not\n"
+#| "renew your subscription before then, your subscription will be paused on\n"
+#| "%(ending_on)s and you will lose access to all features until you\n"
+#| "re-subscribe to a new paid plan.\n"
+#| "\n"
+#| "To change or renew your subscription, please log into your project on\n"
+#| "CommCare HQ and and navigate to the subscription page in your project\n"
+#| "settings: %(subscription_url)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(invoicing_contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -3162,7 +3420,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -3241,7 +3499,29 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain)s administrator,\n"
+#| "\n"
+#| "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
+#| "change your subscription before then, your subscription will be paused on\n"
+#| "%(ending_on)s and you will lose access to all features until you\n"
+#| "re-subscribe to a new paid plan.\n"
+#| "\n"
+#| "To change your subscription, please log into your project on\n"
+#| "CommCare HQ and and navigate to the subscription page in your project\n"
+#| "settings: %(subscription_url)s\n"
+#| "\n"
+#| "If you have questions about our pricing plans, you can review them here:\n"
+#| "https://www.commcarehq.org/pricing/\n"
+#| "\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -3262,7 +3542,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -3383,7 +3663,31 @@ msgstr ""
 "Em anexo, segue a fatura de pagamento antecipado para sua assinatura do CommCare.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
+#| "based on actual usage in the following month. If you prefer, you may also prepay for\n"
+#| "expected on-demand usage. Please contact us if you would like to explore this option.\n"
+#| "\n"
+#| "Instructions for Payment\n"
+#| "\n"
+#| "Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.\n"
+#| "If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:\n"
+#| "\n"
+#| "1. Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.\n"
+#| "\n"
+#| "2. Send an email to %(accounts_email)s after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.\n"
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
@@ -3402,11 +3706,11 @@ msgid ""
 "Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "Statement From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -3871,6 +4175,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/tabs/tabclasses.py
 msgid "Subscription"
 msgstr "Subscrição"
@@ -3903,6 +4208,7 @@ msgstr "Ir para a página de Todas as Faturas deste Espaço de Projeto"
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/integration/templates/payments/payments_verify_report.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Export to Excel"
 msgstr "Exportar para Excel"
@@ -4611,6 +4917,32 @@ msgid ""
 msgstr ""
 "Este usuário não possui e-mail. Você deve fornecer o e-mail do usuário para "
 "enviar um e-mail de confirmação."
+
+#: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Recipient has no email address."
+msgid "This user does not have an email address set."
+msgstr "Destinatário sem endereço de e-mail."
+
+#: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user account cannot reset the password."
+msgstr ""
+"A conta de usuário associada a este endereço de e-mail não pode redefinir a "
+"senha."
+
+#: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user is inactive and cannot reset their password."
+msgstr ""
+"A conta de usuário associada a este endereço de e-mail não pode redefinir a "
+"senha."
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
@@ -6113,6 +6445,11 @@ msgid "Android app dependencies"
 msgstr "Dependências do aplicativo Android"
 
 #: corehq/apps/app_manager/static_strings.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Worker Activity"
+msgstr "Atividade do Trabalhador"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Android Settings"
 msgstr "Configurações do Android"
 
@@ -6682,6 +7019,14 @@ msgid ""
 msgstr ""
 "Impede que trabalhadores móveis usem um app CommCare até que os apps Android"
 " necessários estejam instalados no dispositivo.\n"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Issues credentials to mobile workers who have been active users of this app "
+"for the specified period of time.\n"
+msgstr ""
+"Emite credenciais para trabalhadores móveis que foram usuários ativos deste "
+"aplicativo pelo período de tempo especificado.\n"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Profile URL"
@@ -21247,6 +21592,32 @@ msgstr "Importar Aplicativo"
 msgid "The file uploaded is an invalid JSON file."
 msgstr "O arquivo enviado é um arquivo JSON inválido"
 
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Enable Call Center Application"
+msgid "Enable credentials for application"
+msgstr "Ativar Aplicativo de Central de Atendimento"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "Select the location you would like to see recommendations for."
+msgid ""
+"Select the application that will be used to issue credentials to workers."
+msgstr "Selecione o local para o qual gostaria de ver recomendações."
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Select an Application"
+msgid "Credential Issuing Application"
+msgstr "Selecione um Aplicativo"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "To Application"
+msgid "No application"
+msgstr "Para o Aplicativo"
+
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
 msgstr "Solicitação de transferência de domínio não está mais ativa"
@@ -23007,10 +23378,14 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ!\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ!\n"
+"    %(inviter)s has invited you to join the %(domain)s project on CommCare!\n"
 "  "
 msgstr ""
 "\n"
@@ -23042,10 +23417,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has invited you to join the %(domain)s project on CommCare HQ.\n"
+#| "    This invitation expires in %(days)s day(s).\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s has invited you to join the %(domain)s project on CommCare HQ.\n"
+"    %(inviter)s has invited you to join the %(domain)s project on CommCare.\n"
 "    This invitation expires in %(days)s day(s).\n"
 "  "
 msgstr ""
@@ -23055,9 +23435,16 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    CommCare HQ is a data management tool used by over 500 organizations\n"
+#| "    to help frontline workers around the world.\n"
+#| "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.\n"
+#| "  "
 msgid ""
 "\n"
-"    CommCare HQ is a data management tool used by over 500 organizations\n"
+"    CommCare is a data management tool used by over 500 organizations\n"
 "    to help frontline workers around the world.\n"
 "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.\n"
 "  "
@@ -23083,9 +23470,16 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    CommCare HQ is a data management tool used by over 500 organizations\n"
+#| "    to help frontline workers around the world.\n"
+#| "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.  \n"
+#| "  "
 msgid ""
 "\n"
-"    CommCare HQ is a data management tool used by over 500 organizations\n"
+"    CommCare is a data management tool used by over 500 organizations\n"
 "    to help frontline workers around the world.\n"
 "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.  \n"
 "  "
@@ -23102,15 +23496,21 @@ msgid "Hey there,"
 msgstr "Olá,"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has invited you to join the %(domain)s project on CommCare HQ.\n"
+#| "    This invitation expires in %(days)s day(s).\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ.\n"
+"    %(inviter)s has invited you to join the %(domain)s project on CommCare.\n"
 "    This invitation expires in %(days)s day(s).\n"
 msgstr ""
 "\n"
 "    %(inviter)s convidou você para participar do projeto %(domain)s no CommCare HQ.\n"
 "    Este convite expira em %(days)s dia(s).\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #, python-format
@@ -23124,18 +23524,27 @@ msgstr ""
 "%(url)s"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
+#, fuzzy
+#| msgid ""
+#| "CommCare HQ is a data management tool used by over 500 organizations to help"
+#| " frontline workers around the world."
 msgid ""
-"CommCare HQ is a data management tool used by over 500 organizations to help"
-" frontline workers around the world."
+"CommCare is a data management tool used by over 500 organizations to help "
+"frontline workers around the world."
 msgstr ""
 "O CommCare HQ é uma ferramenta de gestão de dados utilizada por mais de 500 "
 "organizações para ajudar trabalhadores de linha de frente em todo o mundo."
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    If you think you have received this by mistake, you can go ahead and ignore this email.\n"
+#| "    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
 "    If you think you have received this by mistake, you can go ahead and ignore this email.\n"
-"    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
+"    To find out more about CommCare visit http://www.commcarehq.org/.\n"
 msgstr ""
 "\n"
 "    Se você acha que recebeu isto por engano, pode simplesmente ignorar este e-mail.\n"
@@ -23148,14 +23557,20 @@ msgstr "Obrigado por usar nosso site!"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
-msgid "-The CommCare HQ team"
-msgstr "-Equipe do CommCare HQ"
+#, fuzzy
+#| msgid "--The CommCare HQ Team"
+msgid "-The CommCare Team"
+msgstr "--Equipe CommCare HQ"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s approved your request to join %(domain)s on CommCare HQ!\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s approved your request to join %(domain)s on CommCare HQ!\n"
+"    %(inviter)s approved your request to join %(domain)s on CommCare!\n"
 "  "
 msgstr ""
 "\n"
@@ -23184,10 +23599,15 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has approved your request to join the \"%(domain)s\" project at CommCare HQ.\n"
+#| "    This approval expires in %(days)s day(s).\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s has approved your request to join the \"%(domain)s\" project at CommCare HQ.\n"
+"    %(inviter)s has approved your request to join the \"%(domain)s\" project on CommCare.\n"
 "    This approval expires in %(days)s day(s).\n"
 "  "
 msgstr ""
@@ -23197,9 +23617,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    CommCare HQ is a tool that helps manage frontline workers around the world.\n"
+#| "  "
 msgid ""
 "\n"
-"    CommCare HQ is a tool that helps manage frontline workers around the world.\n"
+"    CommCare is a tool that helps manage frontline workers around the world.\n"
 "  "
 msgstr ""
 "\n"
@@ -23224,10 +23649,14 @@ msgid "Hi!"
 msgstr "Olá!"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has approved your request to join the %(domain)s project space on CommCare HQ.\n"
+#| "    This approval expires in %(days)s day(s).\n"
 msgid ""
 "\n"
-"    %(inviter)s has approved your request to join the %(domain)s project space on CommCare HQ.\n"
+"    %(inviter)s has approved your request to join the %(domain)s project space on CommCare.\n"
 "    This approval expires in %(days)s day(s).\n"
 msgstr ""
 "\n"
@@ -23235,8 +23664,11 @@ msgstr ""
 "    Esta aprovação expira em %(days)s dia(s).\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
+#, fuzzy
+#| msgid ""
+#| "CommCare HQ is a tool that helps manage frontline workers around the world."
 msgid ""
-"CommCare HQ is a tool that helps manage frontline workers around the world."
+"CommCare is a tool that helps manage frontline workers around the world."
 msgstr ""
 "O CommCare HQ é uma ferramenta que ajuda a gerenciar trabalhadores de linha "
 "de frente em todo o mundo."
@@ -23247,10 +23679,15 @@ msgid "To confirm this approval go to: %(url)s"
 msgstr "Para confirmar esta aprovação, acesse: %(url)s"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    If you think this is a mistake, you can go ahead and ignore this email.\n"
+#| "    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
 "    If you think this is a mistake, you can go ahead and ignore this email.\n"
-"    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
+"    To find out more about CommCare visit http://www.commcarehq.org/.\n"
 msgstr ""
 "\n"
 "    Se você acha que isso é um engano, pode simplesmente ignorar este e-mail.\n"
@@ -23321,10 +23758,15 @@ msgstr ""
 "Obrigado por usar nosso site!\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept\n"
+#| "    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
+#| "  "
 msgid ""
 "\n"
-"    %(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept\n"
+"    %(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept\n"
 "    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
 "  "
 msgstr ""
@@ -23354,9 +23796,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
+#| "  "
 msgid ""
 "\n"
-"    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
+"    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
 "  "
 msgstr ""
 "\n"
@@ -23364,10 +23811,13 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "%(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
 msgid ""
 "\n"
-"%(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
+"%(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
 msgstr ""
 "\n"
 "%(from_username)s iniciou uma transferência de propriedade de um espaço de projeto do CommCare HQ. Para aceitar a propriedade deste espaço de projeto, siga este link: %(activate_url)s. Se você ainda não tem uma conta de usuário do CommCare, será necessário criar uma para aceitar a propriedade deste espaço de projeto.\n"
@@ -23389,9 +23839,13 @@ msgstr ""
 "Todas as configurações do projeto, contas de usuário e permissões permanecerão como estão após a transferência de propriedade. Se desejar alterar alguma dessas configurações, faça isso após aceitar a propriedade do espaço de projeto no menu de configurações do espaço de projeto.\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
-"If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
+"If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit http://www.commcarehq.org/.\n"
 msgstr ""
 "\n"
 "Se você acha que recebeu isto por engano, pode simplesmente ignorar este e-mail. Para saber mais sobre o CommCare HQ, visite http://www.commcarehq.org/.\n"
@@ -23419,7 +23873,7 @@ msgid ""
 "  </p>\n"
 "  <p>\n"
 "    Thank you,<br />\n"
-"    The CommCare HQ Team\n"
+"    The CommCare Team\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -23977,9 +24431,12 @@ msgstr "Saiba mais"
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
+#, fuzzy
+#| msgid ""
+#| "about how CommCare HQ can be your mobile solution for your frontline "
+#| "workforce."
 msgid ""
-"about how CommCare HQ can be your mobile solution for your frontline "
-"workforce."
+"about how CommCare can be your mobile solution for your frontline workforce."
 msgstr ""
 "sobre como o CommCare HQ pode ser sua solução móvel para sua equipe de "
 "campo."
@@ -24069,11 +24526,16 @@ msgid "Your project spaces:"
 msgstr "Seus espaços de projeto:"
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_email.html
-msgid "Thank you for using CommCare HQ."
-msgstr "Obrigado por usar o CommCare HQ."
+#: corehq/apps/registry/templates/registry/email/access_granted.html
+#: corehq/apps/registry/templates/registry/email/invitation.html
+#: corehq/apps/registry/templates/registry/email/invitation_response.html
+msgid "Thank you for using CommCare."
+msgstr "Obrigado por usar o CommCare."
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_email.html
-msgid "--The CommCare HQ Team"
+#, fuzzy
+#| msgid "--The CommCare HQ Team"
+msgid "--The CommCare Team"
 msgstr "--Equipe CommCare HQ"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_forms.html
@@ -24134,10 +24596,14 @@ msgstr "Gerar Tokens"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        %(server_location)s Server\n"
+#| "      "
 msgid ""
 "\n"
-"        %(server_location)s Server\n"
+"        %(server_location)s Cloud\n"
 "      "
 msgstr ""
 "\n"
@@ -25020,6 +25486,26 @@ msgid "Manage Mobile Workers"
 msgstr "Gerenciar Trabalhadores Móveis"
 
 #: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Untitled Application"
+msgid "Credentials Application"
+msgstr "Aplicativo sem Nome"
+
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Settings updated!"
+msgid "Settings saved!"
+msgstr "Configurações atualizadas!"
+
+#: corehq/apps/domain/views/settings.py
+msgid ""
+"Settings saved! Please remember to configure the credential criteria for the"
+" issuing app in the app manager settings."
+msgstr ""
+"Configurações salvas! Lembre-se de configurar os critérios de credencial "
+"para o aplicativo emissor nas configurações do gerenciador de aplicativos."
+
+#: corehq/apps/domain/views/settings.py
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Project Alerts"
 msgstr "Gerenciar Alertas do Projeto"
@@ -25085,10 +25571,16 @@ msgstr ""
 
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_error.html
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_success.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Thanks, <br />\n"
+#| "    CommCare HQ Team\n"
+#| "  "
 msgid ""
 "\n"
 "    Thanks, <br />\n"
-"    CommCare HQ Team\n"
+"    CommCare Team\n"
 "  "
 msgstr ""
 "\n"
@@ -25107,10 +25599,15 @@ msgstr ""
 
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_error.txt
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_success.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "Thanks,\n"
+#| "CommCare HQ Team\n"
 msgid ""
 "\n"
 "Thanks,\n"
-"CommCare HQ Team\n"
+"CommCare Team\n"
 msgstr ""
 "\n"
 "Obrigado,\n"
@@ -31986,8 +32483,9 @@ msgstr ""
 "faça o upload diretamente pelo Form Builder."
 
 #: corehq/apps/hqwebapp/crispy.py
-msgid "Step {} of {}"
-msgstr "Etapa {} de {}"
+#, python-brace-format
+msgid "Step {step_num} of {total_steps}"
+msgstr "Etapa {step_num} de {total_steps}"
 
 #: corehq/apps/hqwebapp/doc_info.py
 msgid "Application Build"
@@ -32026,6 +32524,37 @@ msgstr "Por favor, insira uma senha."
 #: corehq/apps/hqwebapp/forms.py
 msgid "Please enter valid CAPTCHA"
 msgstr "Por favor, insira um CAPTCHA válido"
+
+#: corehq/apps/hqwebapp/models.py
+#, fuzzy
+#| msgid "Invalid Date"
+msgid "United States"
+msgstr "Data inválida"
+
+#: corehq/apps/hqwebapp/models.py corehq/util/context_processors.py
+#, fuzzy
+#| msgid "Indices"
+msgid "India"
+msgstr "Manejo de Casos"
+
+#: corehq/apps/hqwebapp/models.py
+msgid "European Union"
+msgstr "União Europeia"
+
+#: corehq/apps/hqwebapp/tables/export.py
+msgid "Unsupported export format: {}. Supported formats are: {}"
+msgstr ""
+"Formato de exportação não suportado: {}. Os formatos suportados são: {}"
+
+#: corehq/apps/hqwebapp/tables/export.py
+#, fuzzy
+#| msgid ""
+#| "A request is pending for this email. You will receive an email when the "
+#| "request is approved."
+msgid "Export is being generated. You will receive an email when it is ready."
+msgstr ""
+"Uma solicitação está pendente para este e-mail. Você receberá um e-mail "
+"quando a solicitação for aprovada."
 
 #: corehq/apps/hqwebapp/tasks.py
 msgid "Sending will be retried."
@@ -32669,10 +33198,11 @@ msgstr "Sair"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
-#| msgid "User Location"
-msgid "Server Location"
-msgstr "Localização do Usuário"
+#| msgid "Child Locations"
+msgid "Cloud Location"
+msgstr "Localizações Filhas"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 msgid "Help &amp; Resources"
@@ -33356,7 +33886,9 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
-msgid "Learn more about CommCare HQ"
+#, fuzzy
+#| msgid "Learn more about CommCare HQ"
+msgid "Learn more about CommCare"
 msgstr "Saiba mais sobre o CommCare HQ"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
@@ -34160,7 +34692,6 @@ msgstr ""
 
 #: corehq/apps/integration/payments/tables.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
-#: corehq/apps/integration/templates/payments/payments_verify_report.html
 msgid "Verify Selected"
 msgstr "Verificar selecionado"
 
@@ -34517,12 +35048,6 @@ msgstr ""
 "        <a href=\"%(config_url)s\">Configuração de Pagamentos</a>\n"
 "        página.\n"
 "      "
-
-#: corehq/apps/integration/templates/payments/payments_verify_report.html
-#, fuzzy
-#| msgid "Phone Verification"
-msgid "Revert Verification"
-msgstr "Verificação de telefone"
 
 #: corehq/apps/integration/views.py
 msgid "Biometric Integration"
@@ -36880,16 +37405,24 @@ msgstr ""
 "ajudar da melhor forma."
 
 #: corehq/apps/registration/forms.py
-msgid "My CommCare Project"
+#, fuzzy
+#| msgid "Name Your First Project"
+msgid "Name Your Project"
+msgstr "Dê um Nome ao Seu Primeiro Projeto"
+
+#: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid "My CommCare Project"
+msgid "e.g. — My CommCare Project"
 msgstr "Meu Projeto CommCare"
 
 #: corehq/apps/registration/forms.py
 msgid ""
-"Important: This will be used to create a project URL, and you will not be "
-"able to change it in the future."
+"<i class=\"fa-solid fa-triangle-exclamation\"></i> Your project name sets "
+"the URL. This cannot be changed later."
 msgstr ""
-"Importante: Isso será usado para criar uma URL do projeto e você não poderá "
-"alterá-la futuramente."
+"<i class=\"fa-solid fa-triangle-exclamation\"></i> O nome do seu projeto "
+"define a URL. Isso não pode ser alterado depois."
 
 #: corehq/apps/registration/forms.py
 msgid "Create Project"
@@ -37016,10 +37549,16 @@ msgstr ""
 "    "
 
 #: corehq/apps/registration/templates/registration/confirmation_sent.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Please visit the link provided in the email to activate your account,\n"
+#| "      so you can start using your new CommCare HQ project!\n"
+#| "    "
 msgid ""
 "\n"
 "      Please visit the link provided in the email to activate your account,\n"
-"      so you can start using your new CommCare HQ project!\n"
+"      so you can start using your new CommCare project!\n"
 "    "
 msgstr ""
 "\n"
@@ -37032,10 +37571,15 @@ msgid "Waiting for Confirmation"
 msgstr "Aguardando Confirmação"
 
 #: corehq/apps/registration/templates/registration/confirmation_waiting.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      Thank you for requesting a new CommCare HQ project:\n"
+#| "      <strong>%(requested_domain)s</strong>.\n"
+#| "    "
 msgid ""
 "\n"
-"      Thank you for requesting a new CommCare HQ project:\n"
+"      Thank you for requesting a new CommCare project:\n"
 "      <strong>%(requested_domain)s</strong>.\n"
 "    "
 msgstr ""
@@ -37055,10 +37599,14 @@ msgstr ""
 "    "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Welcome to CommCare HQ, %(first_name)s!\n"
+#| "          "
 msgid ""
 "\n"
-"            Welcome to CommCare HQ, %(first_name)s!\n"
+"            Welcome to CommCare HQ, %(name)s!\n"
 "          "
 msgstr ""
 "\n"
@@ -37088,10 +37636,14 @@ msgstr ""
 "            "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Let's add a new project, %(first_name)s.\n"
+#| "          "
 msgid ""
 "\n"
-"            Let's add a new project, %(first_name)s.\n"
+"            Let's add a new project, %(name)s!\n"
 "          "
 msgstr ""
 "\n"
@@ -37111,18 +37663,6 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
-"              Create a project space below as a separate sandbox for new\n"
-"              applications, users, and form submissions.\n"
-"            "
-msgstr ""
-"\n"
-"              Crie um espaço de projeto abaixo como um ambiente separado para novos\n"
-"              aplicativos, usuários e envios de formulários.\n"
-"            "
-
-#: corehq/apps/registration/templates/registration/domain_request.html
-msgid ""
-"\n"
 "                You have been invited to the following project spaces:\n"
 "              "
 msgstr ""
@@ -37131,44 +37671,141 @@ msgstr ""
 "              "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-msgid "Create a New Project Space"
+#, fuzzy
+#| msgid "Create a New Project Space"
+msgid "Your New Project Space"
 msgstr "Criar um Novo Espaço de Projeto"
 
 #: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
 msgid ""
 "\n"
-"            Your project space contains all form submissions from your CommCare\n"
-"            mobile applications and tools to help you easily create, deploy, and monitor\n"
-"            your applications and workers.\n"
+"            A\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2932637701/Project+Space+Overview\"\n"
+"              target=\"_blank\"\n"
+"              ><b>project space</b></a\n"
+"            >\n"
+"            is your top-level environment in CommCare. It's where you build\n"
+"            applications, manage users, track data, and configure settings.\n"
 "          "
 msgstr ""
 "\n"
-"            Seu espaço de projeto contém todos os envios de formulários dos seus aplicativos\n"
-"            móveis CommCare e ferramentas para ajudar você a criar, implantar e monitorar\n"
-"            facilmente seus aplicativos e trabalhadores.\n"
-"          "
+"                Saiba mais sobre exportações em nosso <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">Site de Ajuda</a>.\n"
+"            "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    Deprecating this case property may result in unintended behaviour, and so\n"
+#| "                    it is advised to first change the selected custom case property in\n"
+#| "                    <a href=\"%(geospatial_settings_url)s\">\n"
+#| "                        geospatial settings\n"
+#| "                    </a>\n"
+#| "                    before deprecating this case property.\n"
+#| "                    "
 msgid ""
 "\n"
-"                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.\n"
-"              "
+"                    All new projects start on CommCare's free edition. Once you\n"
+"                    create a new project, you can\n"
+"                    <a href=\"%(pricing_page_url)s\" target=\"_blank\"\n"
+"                      ><b>upgrade</b></a\n"
+"                    >\n"
+"                    your subscription.\n"
+"                  "
 msgstr ""
 "\n"
-"                <strong>Atenção:</strong> Este espaço de projeto não fará parte imediatamente das assinaturas existentes.\n"
-"              "
+"                    Descontinuar esta propriedade de caso pode resultar em comportamentos inesperados, portanto\n"
+"                    recomenda-se primeiro alterar a propriedade de caso personalizada selecionada em\n"
+"                    <a href=\"%(geospatial_settings_url)s\">\n"
+"                        configurações geoespaciais\n"
+"                    </a>\n"
+"                    antes de descontinuar esta propriedade de caso.\n"
+"                    "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to permanently delete\n"
+#| "                  <strong>%(friendly_name)s</strong>?\n"
+#| "                "
 msgid ""
 "\n"
-"                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Learn more about CommCare Enterprise</a>\n"
-"                if you would like to link project spaces together under one account.\n"
-"              "
+"                      This project will be hosted on the\n"
+"                      <strong>%(server_location)s cloud</strong>.\n"
+"                    "
 msgstr ""
 "\n"
-"                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Saiba mais sobre o CommCare Enterprise</a>\n"
-"                se você quiser vincular espaços de projeto sob uma única conta.\n"
-"              "
+"                  Tem certeza de que deseja excluir permanentemente\n"
+"                  <strong>%(friendly_name)s</strong>?\n"
+"                "
+
+#: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    This subscription will be paused on %(next_date)s.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      This project will be hosted on a private cloud.\n"
+"                    "
+msgstr ""
+"\n"
+"                    Esta assinatura será pausada em %(next_date)s.\n"
+"                  "
+
+#: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                  <p>Checking this will add a button to download a configuration file\n"
+#| "                                     for the <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
+#| "                                     CommCare Data Export Tool</a> for the export.</p>\n"
+#| "                                 "
+msgid ""
+"\n"
+"                    To select a different\n"
+"                    <a\n"
+"                      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+"                      target=\"_blank\"\n"
+"                      ><b>cloud location</b></a\n"
+"                    >, log into that location's site before creating your\n"
+"                    project:\n"
+"                  "
+msgstr ""
+"\n"
+"                                  <p>Marcar esta opção adicionará um botão para baixar um arquivo de configuração\n"
+"                                     para a <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
+"                                     Ferramenta de Exportação de Dados do CommCare</a> para a exportação.</p>\n"
+"                                 "
+
+#: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Will delete <strong>all</strong> of %(friendly_name)s's\n"
+#| "                    form submissions.\n"
+#| "                  "
+msgid ""
+"\n"
+"                    Please note: Projects <strong>cannot</strong> be transferred\n"
+"                    between cloud locations after creation.\n"
+"                  "
+msgstr ""
+"\n"
+"                    Irá excluir <strong>todas</strong> as submissões de formulários de %(friendly_name)s.\n"
+"                  "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/_base.html
 msgid ""
@@ -37183,10 +37820,14 @@ msgstr ""
 "          "
 
 #: corehq/apps/registration/templates/registration/email/confirm_account.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Almost there, %(full_name)s--please activate your CommCare HQ Account!\n"
+#| "  "
 msgid ""
 "\n"
-"    Almost there, %(full_name)s--please activate your CommCare HQ Account!\n"
+"    Almost there, %(full_name)s--please activate your CommCare Account!\n"
 "  "
 msgstr ""
 "\n"
@@ -37286,10 +37927,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Dear %(full_name)s, please visit your CommCare HQ Account on a desktop!\n"
+#| "  "
 msgid ""
 "\n"
-"    Dear %(full_name)s, please visit your CommCare HQ Account on a desktop!\n"
+"    Dear %(full_name)s, please visit your CommCare Account on a desktop!\n"
 "  "
 msgstr ""
 "\n"
@@ -37307,9 +37952,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Visit CommCare HQ\n"
+#| "  "
 msgid ""
 "\n"
-"    Visit CommCare HQ\n"
+"    Visit CommCare\n"
 "  "
 msgstr ""
 "\n"
@@ -37317,10 +37967,16 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    This email has been sent as a reminder for you to visit your\n"
+#| "    CommCare HQ project space on a laptop or desktop computer.\n"
+#| "  "
 msgid ""
 "\n"
 "    This email has been sent as a reminder for you to visit your\n"
-"    CommCare HQ project space on a laptop or desktop computer.\n"
+"    CommCare project space on a laptop or desktop computer.\n"
 "  "
 msgstr ""
 "\n"
@@ -37443,9 +38099,14 @@ msgid "-The %(hq_name)s team"
 msgstr "-A equipe %(hq_name)s"
 
 #: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Reset your password on CommCare HQ!\n"
+#| "  "
 msgid ""
 "\n"
-"    Reset your password on CommCare HQ!\n"
+"    Reset your password on CommCare!\n"
 "  "
 msgstr ""
 "\n"
@@ -37473,9 +38134,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Someone requested a password reset for your email on CommCare HQ.\n"
+#| "  "
 msgid ""
 "\n"
-"    Someone requested a password reset for your email on CommCare HQ.\n"
+"    Someone requested a password reset for your email on CommCare.\n"
 "  "
 msgstr ""
 "\n"
@@ -37503,7 +38169,9 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
-msgid "Reset Password on CommCare HQ"
+#, fuzzy
+#| msgid "Reset Password on CommCare HQ"
+msgid "Reset Password on CommCare"
 msgstr "Redefinir Senha no CommCare HQ"
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
@@ -37666,10 +38334,16 @@ msgid "An email was just sent to"
 msgstr "Um e-mail acaba de ser enviado para"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/success.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please visit the link provided <strong>from your desktop computer</strong> to activate your account,\n"
+#| "        so you can start using your new CommCare HQ project!\n"
+#| "      "
 msgid ""
 "\n"
 "        Please visit the link provided <strong>from your desktop computer</strong> to activate your account,\n"
-"        so you can start using your new CommCare HQ project!\n"
+"        so you can start using your new CommCare project!\n"
 "      "
 msgstr ""
 "\n"
@@ -37678,10 +38352,16 @@ msgstr ""
 "      "
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/success.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        <strong>Please visit the link provided in the email to activate your account,</strong>\n"
+#| "        so you can start using your new CommCare HQ project!\n"
+#| "      "
 msgid ""
 "\n"
 "        <strong>Please visit the link provided in the email to activate your account,</strong>\n"
-"        so you can start using your new CommCare HQ project!\n"
+"        so you can start using your new CommCare project!\n"
 "      "
 msgstr ""
 "\n"
@@ -37947,23 +38627,26 @@ msgstr "Você pode visualizar o registro de dados no seguinte link: "
 #: corehq/apps/registry/templates/registry/email/access_granted.html
 #: corehq/apps/registry/templates/registry/email/invitation.html
 #: corehq/apps/registry/templates/registry/email/invitation_response.html
-msgid "Thank you for using CommCare."
-msgstr "Obrigado por usar o CommCare."
-
-#: corehq/apps/registry/templates/registry/email/access_granted.html
-#: corehq/apps/registry/templates/registry/email/invitation.html
-#: corehq/apps/registry/templates/registry/email/invitation_response.html
-msgid "Best regards, <br /> The CommCare HQ Team  <br /> www.commcarehq.org"
+#, fuzzy
+#| msgid ""
+#| "Best regards, <br /> The CommCare HQ Team  <br /> www.commcarehq.org"
+msgid "Best regards, <br /> The CommCare Team  <br /> www.commcarehq.org"
 msgstr ""
 "Atenciosamente, <br /> A Equipe CommCare HQ  <br /> www.commcarehq.org"
 
 #: corehq/apps/registry/templates/registry/email/access_granted.txt
 #: corehq/apps/registry/templates/registry/email/invitation.txt
 #: corehq/apps/registry/templates/registry/email/invitation_response.txt
+#, fuzzy
+#| msgid ""
+#| "Thank you for using CommCare.\n"
+#| "Best regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org"
 msgid ""
 "Thank you for using CommCare.\n"
 "Best regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org"
 msgstr ""
 "Obrigado por usar o CommCare.\n"
@@ -40259,10 +40942,6 @@ msgid "same"
 msgstr "igual"
 
 #: corehq/apps/reports/standard/monitoring.py
-msgid "Worker Activity"
-msgstr "Atividade do Trabalhador"
-
-#: corehq/apps/reports/standard/monitoring.py
 msgid "Summary of form and case activity by user or group."
 msgstr "Resumo de formulário e atividade do caso por usuário ou grupo."
 
@@ -41884,10 +42563,14 @@ msgid "Unsubscribe from this report"
 msgstr "Cancelar inscrição deste relatório"
 
 #: corehq/apps/reports/templates/reports/report_email_content.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      This is a %(report_type)s from <a href=\"%(DNS_name)s\">CommCare HQ</a> for the project '%(domain)s'.\n"
+#| "    "
 msgid ""
 "\n"
-"      This is a %(report_type)s from <a href=\"%(DNS_name)s\">CommCare HQ</a> for the project '%(domain)s'.\n"
+"      This is a %(report_type)s from <a href=\"%(DNS_name)s\">CommCare</a> for the project '%(domain)s'.\n"
 "    "
 msgstr ""
 "\n"
@@ -41915,10 +42598,15 @@ msgstr ""
 "            "
 
 #: corehq/apps/reports/templates/reports/report_email_content.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      You are receiving this automated email from <a href=\"%(DNS_name)s\">CommCare HQ</a>\n"
+#| "      because the user %(owner_name)s added you as a recipient of their report.\n"
+#| "    "
 msgid ""
 "\n"
-"      You are receiving this automated email from <a href=\"%(DNS_name)s\">CommCare HQ</a>\n"
+"      You are receiving this automated email from <a href=\"%(DNS_name)s\">CommCare</a>\n"
 "      because the user %(owner_name)s added you as a recipient of their report.\n"
 "    "
 msgstr ""
@@ -42555,7 +43243,18 @@ msgid "Phone Numbers"
 msgstr "Números de Telefone"
 
 #: corehq/apps/settings/templates/settings/email/about_to_expire_api_key.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s. Go to %(url)s to generate\n"
+#| "    a new key if needed.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -42565,7 +43264,7 @@ msgid ""
 "\n"
 "  <p>\n"
 "    Thanks,<br />\n"
-"    CommCare HQ\n"
+"    CommCare\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -42580,14 +43279,21 @@ msgstr ""
 "  </p>\n"
 
 #: corehq/apps/settings/templates/settings/email/about_to_expire_api_key.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s.\n"
+#| "Go to %(url)s to generate a new key if needed.\n"
+#| "\n"
+#| "Thanks,\n"
+#| "CommCare HQ\n"
 msgid ""
 "\n"
 "Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s.\n"
 "Go to %(url)s to generate a new key if needed.\n"
 "\n"
 "Thanks,\n"
-"CommCare HQ\n"
+"CommCare\n"
 msgstr ""
 "\n"
 "Sua chave de API \"%(key_name)s\" (último uso: %(last_used)s) irá expirar em %(expiration_date)s.\n"
@@ -43954,7 +44660,21 @@ msgid "Request Messaging Consent"
 msgstr "Solicitar Consentimento para Mensagens"
 
 #: corehq/apps/sms/templates/sms/email/new_sms_user.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    A new user %(username)s registered for project %(domain)s through SMS.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    To modify, update or remove this user click <a href=\"%(url)s\">here</a>\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -43967,7 +44687,7 @@ msgid ""
 "\n"
 "  <p>\n"
 "    Thanks,<br />\n"
-"    CommCare HQ\n"
+"    CommCare\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -45460,7 +46180,21 @@ msgstr ""
 "  "
 
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear enterprise administrator,\n"
+#| "\n"
+#| "The API Secret for your Identity Provider \"%(idp_name)s\" expires soon!\n"
+#| "If a new API Secret is not created, the Remote User Management functionality for your Identity Provider will stop working on: %(expires_on)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -45473,7 +46207,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -45506,7 +46240,22 @@ msgstr ""
 "  "
 
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear enterprise administrator,\n"
+#| "\n"
+#| "The certificate for your Identity Provider %(idp_name)s expires soon!\n"
+#| "If the certificate is not renewed, any single sign-on authentication using this\n"
+#| "IdP will stop working %(expires_on)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -45520,7 +46269,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -45575,7 +46324,23 @@ msgstr ""
 "  "
 
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear enterprise administrator,\n"
+#| "\n"
+#| "We have temporarily skipped automatic deactivation of SSO-managed Web Users for the following reason:\n"
+#| "%(failure_reason)s\n"
+#| "\n"
+#| "Please check the configuration for Remote User Management in your Identity Provider settings.\n"
+#| "\n"
+#| "If you have any questions, or if this issue persists, please don’t hesitate to contact %(contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -45590,7 +46355,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -49986,6 +50751,42 @@ msgstr "O número de usuários atingiu o limite do Plano para {}"
 msgid "User count has reached 90% of the Plan limit for {}"
 msgstr "O número de usuários atingiu 90% do limite do Plano para {}"
 
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "1 Month"
+msgstr "Mês"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "2 Months"
+msgstr "Mês"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "3 Months"
+msgstr "Mês"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "6 Months"
+msgstr "Mês"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "9 Months"
+msgstr "Mês"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "12 Months"
+msgstr "Mês"
+
 #: corehq/apps/users/permissions.py
 msgid "Export De-Identified Data"
 msgstr "Exportar Dados Desidentificados"
@@ -50782,7 +51583,21 @@ msgid "Update Tableau Configuration"
 msgstr "Atualizar Configuração do Tableau"
 
 #: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    You have successfully confirmed the account %(new_mobile_worker)s for the\n"
+#| "    project space %(domain)s.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    If you think you have received this by mistake, you can go ahead and ignore\n"
+#| "    this email.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Thank you,<br />\n"
+#| "    The CommCare HQ Team\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -50795,7 +51610,7 @@ msgid ""
 "  </p>\n"
 "  <p>\n"
 "    Thank you,<br />\n"
-"    The CommCare HQ Team\n"
+"    The CommCare Team\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -50812,7 +51627,21 @@ msgstr ""
 "  </p>\n"
 
 #: corehq/apps/users/templates/users/email/new_domain_request.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your request to join %(domain_name)s has been approved.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    You may now visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -50825,7 +51654,7 @@ msgid ""
 "\n"
 "  <p>\n"
 "    Thanks,<br />\n"
-"    CommCare HQ\n"
+"    CommCare\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -50843,7 +51672,15 @@ msgstr ""
 "  </p>\n"
 
 #: corehq/apps/users/templates/users/email/new_domain_request.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Your request to join %(domain_name)s has been approved.\n"
+#| "\n"
+#| "You may now visit %(url)s.\n"
+#| "\n"
+#| "Thanks,\n"
+#| "CommCare HQ\n"
 msgid ""
 "\n"
 "Your request to join %(domain_name)s has been approved.\n"
@@ -50851,7 +51688,7 @@ msgid ""
 "You may now visit %(url)s.\n"
 "\n"
 "Thanks,\n"
-"CommCare HQ\n"
+"CommCare\n"
 msgstr ""
 "\n"
 "Seu pedido para ingressar em %(domain_name)s foi aprovado.\n"
@@ -50862,7 +51699,21 @@ msgstr ""
 "CommCare HQ\n"
 
 #: corehq/apps/users/templates/users/email/request_domain_access.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    %(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    To approve or delete this request, visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -50875,7 +51726,7 @@ msgid ""
 "\n"
 "  <p>\n"
 "    Thanks,<br />\n"
-"    CommCare HQ\n"
+"    CommCare\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -50893,7 +51744,15 @@ msgstr ""
 "  </p>\n"
 
 #: corehq/apps/users/templates/users/email/request_domain_access.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "%(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
+#| "\n"
+#| "To approve or delete this request, visit %(url)s.\n"
+#| "\n"
+#| "Thanks,\n"
+#| "CommCare HQ\n"
 msgid ""
 "\n"
 "%(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
@@ -50901,7 +51760,7 @@ msgid ""
 "To approve or delete this request, visit %(url)s.\n"
 "\n"
 "Thanks,\n"
-"CommCare HQ\n"
+"CommCare\n"
 msgstr ""
 "\n"
 "%(full_name)s (%(email)s) solicitou acesso a %(domain_name)s como usuário web.\n"
@@ -52963,32 +53822,6 @@ msgstr ""
 #| msgid "Send Account Confirmaton SMS"
 msgid "Successful account confirmation for {}"
 msgstr "Enviar SMS de confirmação de conta"
-
-#: corehq/apps/users/views/mobile/users.py
-#, fuzzy
-#| msgid ""
-#| "The user account associated with this email address cannot reset the "
-#| "password."
-msgid "This user is inactive and cannot reset their password."
-msgstr ""
-"A conta de usuário associada a este endereço de e-mail não pode redefinir a "
-"senha."
-
-#: corehq/apps/users/views/mobile/users.py
-#, fuzzy
-#| msgid ""
-#| "The user account associated with this email address cannot reset the "
-#| "password."
-msgid "This user account cannot reset the password."
-msgstr ""
-"A conta de usuário associada a este endereço de e-mail não pode redefinir a "
-"senha."
-
-#: corehq/apps/users/views/mobile/users.py
-#, fuzzy
-#| msgid "Recipient has no email address."
-msgid "This user does not have an email address set."
-msgstr "Destinatário sem endereço de e-mail."
 
 #: corehq/apps/users/views/mobile/users.py
 #, fuzzy
@@ -57834,15 +58667,23 @@ msgstr "Visualizar Todos os Eventos"
 msgid "Manage Attendance Tracking Events"
 msgstr "Gerenciar Eventos de Rastreamento de Presença"
 
+#: corehq/util/auth.py
+#, fuzzy
+#| msgid "Algorithms"
+msgid "algorithm"
+msgstr "Algoritmos"
+
+#: corehq/util/auth.py
+msgid "salt"
+msgstr "sal"
+
+#: corehq/util/auth.py
+msgid "hash"
+msgstr "hash"
+
 #: corehq/util/context_processors.py
 msgid "US"
 msgstr "EUA"
-
-#: corehq/util/context_processors.py
-#, fuzzy
-#| msgid "Indices"
-msgid "India"
-msgstr "Manejo de Casos"
 
 #: corehq/util/context_processors.py
 msgid "EU"
@@ -58532,6 +59373,84 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ.\n"
+#~ "    This invitation expires in %(days)s day(s).\n"
+#~ msgstr ""
+#~ "\n"
+#~ "    %(inviter)s convidou você para participar do projeto %(domain)s no CommCare HQ.\n"
+#~ "    Este convite expira em %(days)s dia(s).\n"
+
+#~ msgid "-The CommCare HQ team"
+#~ msgstr "-Equipe do CommCare HQ"
+
+#~ msgid "Thank you for using CommCare HQ."
+#~ msgstr "Obrigado por usar o CommCare HQ."
+
+#~ msgid "Step {} of {}"
+#~ msgstr "Etapa {} de {}"
+
+#, fuzzy
+#~ msgid "Server Location"
+#~ msgstr "Localização do Usuário"
+
+#, fuzzy
+#~ msgid "Revert Verification"
+#~ msgstr "Verificação de telefone"
+
+#~ msgid ""
+#~ "Important: This will be used to create a project URL, and you will not be "
+#~ "able to change it in the future."
+#~ msgstr ""
+#~ "Importante: Isso será usado para criar uma URL do projeto e você não poderá "
+#~ "alterá-la futuramente."
+
+#~ msgid ""
+#~ "\n"
+#~ "              Create a project space below as a separate sandbox for new\n"
+#~ "              applications, users, and form submissions.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Crie um espaço de projeto abaixo como um ambiente separado para novos\n"
+#~ "              aplicativos, usuários e envios de formulários.\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "            Your project space contains all form submissions from your CommCare\n"
+#~ "            mobile applications and tools to help you easily create, deploy, and monitor\n"
+#~ "            your applications and workers.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Seu espaço de projeto contém todos os envios de formulários dos seus aplicativos\n"
+#~ "            móveis CommCare e ferramentas para ajudar você a criar, implantar e monitorar\n"
+#~ "            facilmente seus aplicativos e trabalhadores.\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                <strong>Atenção:</strong> Este espaço de projeto não fará parte imediatamente das assinaturas existentes.\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Learn more about CommCare Enterprise</a>\n"
+#~ "                if you would like to link project spaces together under one account.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Saiba mais sobre o CommCare Enterprise</a>\n"
+#~ "                se você quiser vincular espaços de projeto sob uma única conta.\n"
+#~ "              "
 
 #~ msgid "Estimated annual expenditures on airtime:"
 #~ msgstr "Estimativa anual de gastos com créditos:"
