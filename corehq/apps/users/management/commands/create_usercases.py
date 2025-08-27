@@ -12,9 +12,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain', nargs='?')
+        parser.add_argument('--dry-run', action='store_true', default=False)
 
-    def handle(self, domain, **kwargs):
+    def handle(self, domain, dry_run, **kwargs):
         all_domains = set([domain]) if domain else set(Domain.get_all_names())
+
+        domains_both_created = 0
+        domains_only_web_created = 0
 
         for d in with_progress_bar(all_domains, length=len(all_domains)):
             if not domain_has_privilege(d, privileges.USERCASE):
@@ -26,7 +30,14 @@ class Command(BaseCommand):
                 continue
 
             if dom.usercase_enabled:
-                create_usercases_for_user_type.delay(d, include_web_users=True)
+                if not dry_run:
+                    create_usercases_for_user_type.delay(d, include_web_users=True)
+                domains_only_web_created += 1
             else:
-                create_usercases_for_user_type.delay(d, include_commcare_users=True,
-                                                include_web_users=False)
+                if not dry_run:
+                    create_usercases_for_user_type.delay(d, include_commcare_users=True,
+                                                include_web_users=True)
+                domains_both_created += 1
+
+        print(f"Domains with both CommCare and Web users usercases created/synced: {domains_both_created}")
+        print(f"Domains with only Web users usercases created/synced: {domains_only_web_created}")
