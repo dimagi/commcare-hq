@@ -102,30 +102,43 @@ def submit_new_credentials():
 
     cred_id_groups = []
     creds_to_submit = []
-    for app_id_level, username_cred_id_list in username_cred_id_dict.items():
-        app_id, activity_level = app_id_level
-        for username_cred_id_chunk in chunked(username_cred_id_list, MAX_USERNAMES_PER_CREDENTIAL):
-            usernames, cred_ids = zip(*username_cred_id_chunk)
-            creds_to_submit.append({
-                'credentials': {
-                    'usernames': usernames,
-                    'title': app_names_by_id[app_id],
-                    'type': CREDENTIAL_TYPE,
-                    'level': activity_level,
-                    'slug': app_id,
-                    'app_id': app_id,
-                }
-            })
-            cred_id_groups.append(cred_ids)
-            if len(creds_to_submit) >= MAX_CREDENTIALS_PER_REQUEST:
-                submit_credentials(creds_to_submit, cred_id_groups)
-                creds_to_submit = []
-                cred_id_groups = []
-    if creds_to_submit:
-        submit_credentials(creds_to_submit, cred_id_groups)
+    try:
+        for app_id_level, username_cred_id_list in username_cred_id_dict.items():
+            app_id, activity_level = app_id_level
+            for username_cred_id_chunk in chunked(username_cred_id_list, MAX_USERNAMES_PER_CREDENTIAL):
+                usernames, cred_ids = zip(*username_cred_id_chunk)
+                creds_to_submit.append({
+                    'credentials': {
+                        'usernames': usernames,
+                        'title': app_names_by_id[app_id],
+                        'type': CREDENTIAL_TYPE,
+                        'level': activity_level,
+                        'slug': app_id,
+                        'app_id': app_id,
+                    }
+                })
+                cred_id_groups.append(cred_ids)
+                if len(creds_to_submit) >= MAX_CREDENTIALS_PER_REQUEST:
+                    submit_credentials(creds_to_submit, cred_id_groups)
+                    creds_to_submit = []
+                    cred_id_groups = []
+        if creds_to_submit:
+            submit_credentials(creds_to_submit, cred_id_groups)
+    except (requests.ConnectionError, requests.HTTPError, requests.Timeout, requests.RequestException) as e:
+        notify_exception(
+            None,
+            "Failed to submit credentials to PersonalID",
+            details={
+                'error': str(e),
+            }
+        )
 
 
 def submit_credentials(credentials_to_submit, cred_id_groups):
+    """
+    If the request fails a `ConnectionError` or `ResponseError` will be raised.
+    This function can also raise `HttpError` if the response status code is not 2xx.
+    """
     response = requests.post(
         settings.CONNECTID_CREDENTIALS_URL,
         json={
