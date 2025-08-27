@@ -107,3 +107,37 @@ class CaseSearchElasticRecord(BaseElasticRecord):
             except KeyError:
                 query = query.sort_by_case_property(accessor.bare, desc=accessor.is_descending)
         return query
+
+
+class UserElasticRecord(BaseElasticRecord):
+    verbose_name = gettext_lazy("user")
+    verbose_name_plural = gettext_lazy("users")
+
+    def __init__(self, record, request, **kwargs):
+        record = record.get("_source", record)
+        super().__init__(record, request, **kwargs)
+
+    def __getitem__(self, item):
+        # TODO Add support for user properties if needed.
+        return self.record.get(item)
+
+    @property
+    def name(self):
+        """
+        Used to populate the name attribute of an input (checkbox) in the table.
+        Used by the built-in CheckBoxColumn from django_tables2.
+        """
+        return "selected_user"
+
+    @property
+    def record_id(self):
+        """
+        Return the primary id of the record
+
+        :return: string
+        """
+        return self.record.get('_id')
+
+    @staticmethod
+    def get_sorted_query(query, accessors):
+       raise NotImplementedError("User ES does not support sorting.")

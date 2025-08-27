@@ -10,11 +10,11 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus, KycVerificationFailureCause
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus, KycVerificationFailureCause, UserDataStore
 from corehq.apps.integration.kyc.services import (
     verify_users,
 )
-from corehq.apps.integration.kyc.tables import KycVerifyTable
+from corehq.apps.integration.kyc.tables import KycVerifyTable, KycUserElasticRecord, KycCaseElasticRecord
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
@@ -85,13 +85,23 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return KycConfig.objects.get(domain=self.request.domain)
 
     def get_table_kwargs(self):
+
+        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            record_class = KycUserElasticRecord
+            self.table_class.Meta.orderable = False
+        else:
+            record_class = KycCaseElasticRecord
+
+        # Set the record class on the table class
+        self.table_class.record_class = record_class
+
         return {
             'extra_columns': KycVerifyTable.get_extra_columns(self.kyc_config),
+            'record_kwargs': {'kyc_config': self.kyc_config},
         }
 
     def get_queryset(self):
-        kyc_users = self.kyc_config.get_kyc_users()
-        return [self._parse_row(kyc_user) for kyc_user in kyc_users]
+        return self.kyc_config.get_kyc_users_query()
 
     def _parse_row(self, kyc_user):
         row_data = {

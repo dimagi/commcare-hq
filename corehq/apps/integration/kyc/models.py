@@ -7,9 +7,11 @@ from django.utils.translation import gettext as _
 
 import jsonfield
 
+
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import USERCASE_TYPE, CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
@@ -80,6 +82,7 @@ class KycConfig(models.Model):
         else:
             raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
 
+    # TODO Can be removed if not needed
     def get_kyc_users(self):
         """
         Returns all CommCareUser or CommCareCase instances based on the
@@ -107,17 +110,37 @@ class KycConfig(models.Model):
                 for user_obj in CommCareCase.objects.get_cases(case_ids, self.domain)
             ]
 
+    def get_kyc_users_query(self):
+        # TODO Decide the best place for this
+        if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            from corehq.apps.es.users import UserES
+            return UserES().domain(self.domain).mobile_users()
+        else:
+            if self.user_data_store == UserDataStore.USER_CASE:
+                case_type = USERCASE_TYPE
+            else:
+                case_type = self.other_case_type
+            return (
+                CaseSearchES()
+                .domain(self.domain)
+                .case_type(case_type)
+            )
+
+    def get_kyc_users_count(self):
+        # TODO Decide the best place for this
+        return self.get_kyc_users_query().count()
+
     def get_kyc_users_by_ids(self, obj_ids):
         """
         Returns all CommCareUser or CommCareCase instances based on the
         user data store and user IDs.
         """
-        if self.user_data_store in (
-            UserDataStore.CUSTOM_USER_DATA,
-            UserDataStore.USER_CASE,
-        ):
+        if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_objs = [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
             return [KycUser(self, user_obj) for user_obj in user_objs if user_obj]
+        elif self.user_data_store == UserDataStore.USER_CASE:
+            case_objs = CommCareCase.objects.get_cases(obj_ids, self.domain)
+            return [KycUser(self, case_obj) for case_obj in case_objs]
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
             return [
@@ -178,7 +201,10 @@ class KycUser:
         if isinstance(self._user_or_case_obj, CommCareUser):
             self.user_id = self._user_or_case_obj.user_id
         else:
-            self.user_id = self._user_or_case_obj.case_id
+            if self.kyc_config.user_data_store == UserDataStore.USER_CASE:
+                self.user_id = self._user_or_case_obj.get_case_property('hq_user_id')
+            else:
+                self.user_id = self._user_or_case_obj.case_id
         self._user_data = None
 
     def __getitem__(self, item):
@@ -208,12 +234,7 @@ class KycUser:
         if self._user_data is None:
             if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
                 self._user_data = self._user_or_case_obj.get_user_data(self.kyc_config.domain).to_dict()
-            elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
-                custom_user_case = self._user_or_case_obj.get_usercase()
-                if not custom_user_case:
-                    raise UserCaseNotFound("User case not found for the user.")
-                self._user_data = custom_user_case.case_json
-            else:  # UserDataStore.OTHER_CASE_TYPE
+            else:  # User Case or UserDataStore.OTHER_CASE_TYPE
                 self._user_data = self._user_or_case_obj.case_json
         return self._user_data
 
