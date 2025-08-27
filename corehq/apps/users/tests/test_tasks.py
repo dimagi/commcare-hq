@@ -18,7 +18,6 @@ from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.reports.util import domain_copied_cases_by_owner
-from corehq.apps.users.credentials_issuing import get_username_cred_id_dict
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     ActivityLevel,
@@ -366,6 +365,15 @@ class TestProcessMobileWorkerCredentials(TestCase):
             })
             MALTRow.objects.create(**malt_row_dict)
 
+    def _create_user_credential(self, user, app, activity_level):
+        return UserCredential(
+            domain=self.domain,
+            user_id=user.id,
+            username=user.username,
+            app_id=app.id,
+            activity_level=activity_level,
+        )
+
     def test_process_credentials(self, mock_post, mock_status_raise):
         mock_response = Mock()
         mock_response.json.return_value = {'success': [0]}
@@ -401,36 +409,3 @@ class TestProcessMobileWorkerCredentials(TestCase):
         self._create_malt_rows(1, self.user1, self.one_month_app)
         process_mobile_worker_credentials()
         assert UserCredential.objects.all().count() == 1
-
-    def test_get_username_cred_id_dict(self, mock_post, mock_status_raise):
-        cred1 = UserCredential(
-            domain=self.domain,
-            user_id=self.user1.id,
-            username=self.user1.username,
-            app_id=self.one_month_app.id,
-            activity_level=ActivityLevel.ONE_MONTH
-        )
-        cred2 = UserCredential(
-            domain=self.domain,
-            user_id=self.user2.id,
-            username=self.user2.username,
-            app_id=self.one_month_app.id,
-            activity_level=ActivityLevel.ONE_MONTH
-        )
-        cred3 = UserCredential(
-            domain=self.domain,
-            user_id=self.user1.id,
-            username=self.user1.username,
-            app_id=self.three_month_app.id,
-            activity_level=ActivityLevel.THREE_MONTHS
-        )
-        res = get_username_cred_id_dict([cred1, cred2, cred3])
-        assert res == {
-            (self.one_month_app.id, ActivityLevel.ONE_MONTH): [
-                (self.user1.username, cred1.id),
-                (self.user2.username, cred2.id)
-            ],
-            (self.three_month_app.id, ActivityLevel.THREE_MONTHS): [
-                (self.user1.username, cred3.id)
-            ]
-        }
