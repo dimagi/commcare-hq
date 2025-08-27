@@ -125,19 +125,16 @@ def pkce_required(client_id):
 class ServerLocation:
     PRODUCTION = 'production'
     INDIA = 'india'
-    EU = 'eu'
-    ENVS = (PRODUCTION, INDIA, EU)
+    ENVS = (PRODUCTION, INDIA)
 
     SUBDOMAINS = {
         PRODUCTION: 'www',
         INDIA: 'india',
-        EU: 'eu',
     }
 
     CHOICES_DICT = {
         PRODUCTION: (SUBDOMAINS[PRODUCTION], _("United States")),
         INDIA: (SUBDOMAINS[INDIA], _("India")),
-        EU: (SUBDOMAINS[EU], _("European Union")),
     }
 
     @classmethod
