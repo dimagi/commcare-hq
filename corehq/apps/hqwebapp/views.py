@@ -89,7 +89,7 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
-from corehq.apps.hqwebapp.models import HQOauthApplication
+from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
@@ -525,6 +525,14 @@ class HQLoginView(LoginView):
                 return HttpResponseRedirect(idp.get_login_url(username=username))
         return super().post(*args, **kwargs)
 
+    def can_select_server(self):
+        env = settings.SERVER_ENVIRONMENT
+        is_domain_login = self.extra_context.get('domain')
+        has_next_url = self.request.GET.get('next')
+        return (env in ServerLocation.ENVS
+                and not is_domain_login
+                and not has_next_url)
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
@@ -539,6 +547,12 @@ class HQLoginView(LoginView):
             and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
+        context['can_select_server'] = self.can_select_server()
+        if self.can_select_server():
+            context['server_choices'] = [
+                server for env, server in ServerLocation.DATA.items()
+                if env != settings.SERVER_ENVIRONMENT
+            ]
         if domain and not is_domain_using_sso(domain):
             # ensure that domain login pages not associated with SSO do not
             # enforce SSO on the login screen
