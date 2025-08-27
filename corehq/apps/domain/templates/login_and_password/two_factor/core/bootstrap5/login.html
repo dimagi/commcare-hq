@@ -6,9 +6,9 @@
   </h2>
   {% if server_display %}
     <p class="lead text-center">
-      {{ server_display.flag }}
+      <span class="fi fi-{{ server_display.country_code }}"></span>
       {% blocktrans with server_display.hr_name as server_location %}
-        {{ server_location }} Server
+        {{ server_location }} Cloud
       {% endblocktrans %}
     </p>
   {% endif %}

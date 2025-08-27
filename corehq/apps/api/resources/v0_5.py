@@ -10,6 +10,7 @@ from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
@@ -134,6 +135,7 @@ from corehq.apps.users.util import (
     verify_modify_user_conditions,
 )
 from corehq.apps.users.validation import validate_profile_required
+from corehq.apps.domain.forms import send_password_reset_email
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -407,6 +409,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return [
             url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('activate_user'), name="api_activate_user"),
             url(r"^(?P<pk>\w[\w/-]*)/deactivate/$", self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/email_password_reset/$", self.wrap_view('email_password_reset'),
+                name="api_email_password_reset"),
         ]
 
     @location_safe
@@ -416,6 +420,36 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     @location_safe
     def deactivate_user(self, request, **kwargs):
         return self._modify_user_status(request, **kwargs, active=False)
+
+    def email_password_reset(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+        self.throttle_check(request)
+
+        user = CommCareUser.get_by_user_id(kwargs['pk'], kwargs["domain"])
+        if not user:
+            raise NotFound()
+
+        dj_user = user.get_django_user()
+        if not user.get_email():
+            raise BadRequest(_("This user does not have an email address set."))
+        if not dj_user.has_usable_password():
+            raise BadRequest(_("This user account cannot reset the password."))
+        if not dj_user.is_active:
+            raise BadRequest(_("This user is inactive and cannot reset their password."))
+
+        send_password_reset_email(
+            [dj_user],
+            domain_override=None,
+            subject_template_name='registration/password_reset_subject.txt',
+            email_template_name='registration/password_reset_email.html',
+            use_https=request.is_secure(),
+            token_generator=default_token_generator,
+            request=request,
+        )
+
+        self.log_throttled_access(request)
+        return self.create_response(request, {}, response_class=http.HttpAccepted)
 
     def _modify_user_status(self, request, active, **kwargs):
         self.method_check(request, allowed=['post'])

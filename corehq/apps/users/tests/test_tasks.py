@@ -1,12 +1,17 @@
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timedelta
-from unittest.mock import patch
+from datetime import datetime, timedelta, timezone
+from dateutil.relativedelta import relativedelta
+from unittest.mock import patch, Mock
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 from couchdbkit import ResourceConflict
 
+from corehq.apps.app_manager.models import Application, CredentialApplication
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.tests.test_malt_generator import create_malt_row_dict
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.es import case_search_adapter
@@ -15,13 +20,17 @@ from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.reports.util import domain_copied_cases_by_owner
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
+    ActivityLevel,
     CommCareUser,
+    ConnectIDUserLink,
+    UserCredential,
     UserReportingMetadataStaging,
     WebUser,
 )
 from corehq.apps.users.tasks import (
     _process_reporting_metadata_staging,
     apply_correct_demo_mode_to_loadtest_user,
+    process_mobile_worker_credentials,
     remove_users_test_cases,
     update_domain_date,
 )
@@ -283,3 +292,120 @@ class TestProcessReportingMetadataStagingTransaction(TestCase):
         cls.user.delete('test-domain', deleted_by=None)
         cls.record.delete()
         cls.record_two.delete()
+
+
+@patch('corehq.apps.users.credentials_issuing.requests.models.Response.raise_for_status')
+@patch('corehq.apps.users.credentials_issuing.requests.post')
+class TestProcessMobileWorkerCredentials(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.one_month_app = Application.new_app(
+            domain=cls.domain,
+            name="One Month Test App",
+        )
+        cls.one_month_app._id = uuid.uuid4().hex
+        cls.one_month_app.save()
+
+        cls.three_month_app = Application.new_app(
+            domain=cls.domain,
+            name="Three Month Test App",
+        )
+        cls.three_month_app._id = uuid.uuid4().hex
+        cls.three_month_app.save()
+
+        cls.user1 = User.objects.create(username='user1', password='password')
+        cls.user2 = User.objects.create(username='user2', password='password')
+        cls.user3 = User.objects.create(username='user3', password='password')
+
+        ConnectIDUserLink.objects.create(
+            connectid_username=cls.user1.username,
+            commcare_user=cls.user1,
+            domain=cls.domain,
+        )
+        ConnectIDUserLink.objects.create(
+            connectid_username=cls.user2.username,
+            commcare_user=cls.user2,
+            domain=cls.domain,
+        )
+
+        CredentialApplication.objects.create(
+            domain=cls.domain,
+            app_id=cls.one_month_app.id,
+            activity_level=ActivityLevel.ONE_MONTH,
+        )
+        CredentialApplication.objects.create(
+            domain=cls.domain,
+            app_id=cls.three_month_app.id,
+            activity_level=ActivityLevel.THREE_MONTHS,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        cls.one_month_app.delete()
+        cls.three_month_app.delete()
+        ConnectIDUserLink.objects.all().delete()
+        CredentialApplication.objects.all().delete()
+        UserCredential.objects.all().delete()
+        super().tearDownClass()
+
+    def _create_malt_rows(self, months, user, app, offset=0):
+        for i in range(months):
+            malt_row_dict = create_malt_row_dict({
+                'month': datetime.now(timezone.utc) - relativedelta(months=i + offset + 1),
+                'num_of_forms': 1,
+                'user_type': 'CommCareUser',
+                'user_id': user.id,
+                'app_id': app.id,
+                'username': user.username,
+            })
+            MALTRow.objects.create(**malt_row_dict)
+
+    def _create_user_credential(self, user, app, activity_level):
+        return UserCredential(
+            domain=self.domain,
+            user_id=user.id,
+            username=user.username,
+            app_id=app.id,
+            activity_level=activity_level,
+        )
+
+    def test_process_credentials(self, mock_post, mock_status_raise):
+        mock_response = Mock()
+        mock_response.json.return_value = {'success': [0]}
+        mock_post.return_value = mock_response
+
+        self._create_malt_rows(3, self.user1, self.three_month_app)
+        process_mobile_worker_credentials()
+        cred = UserCredential.objects.get(user_id=self.user1.id, app_id=self.three_month_app.id)
+        assert cred.issued_on is not None
+
+    def test_process_multiple_credentials(self, mock_post, mock_status_raise):
+        self._create_malt_rows(3, self.user1, self.one_month_app)
+        self._create_malt_rows(3, self.user2, self.three_month_app)
+        process_mobile_worker_credentials()
+        assert UserCredential.objects.all().count() == 2
+
+    def test_no_credentials(self, mock_post, mock_status_raise):
+        self._create_malt_rows(1, self.user3, self.three_month_app)
+        process_mobile_worker_credentials()
+        assert UserCredential.objects.all().count() == 0
+
+    def test_no_consecutive_activity(self, mock_post, mock_status_raise):
+        self._create_malt_rows(1, self.user1, self.three_month_app)
+        self._create_malt_rows(2, self.user1, self.three_month_app, offset=2)
+        process_mobile_worker_credentials()
+        assert UserCredential.objects.all().count() == 0
+
+    def test_credentials_already_exist(self, mock_post, mock_status_raise):
+        UserCredential.objects.create(
+            user_id=self.user1.id,
+            app_id=self.one_month_app.id,
+        )
+        self._create_malt_rows(1, self.user1, self.one_month_app)
+        process_mobile_worker_credentials()
+        assert UserCredential.objects.all().count() == 1

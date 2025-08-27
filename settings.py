@@ -204,7 +204,7 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    'corehq.util.auth.SHA1PasswordHasher',
     'django.contrib.auth.hashers.MD5PasswordHasher',
 )
 PASSWORD_RESET_TIMEOUT = 3600
@@ -1164,6 +1164,7 @@ CONNECTID_CLIENT_ID = ''
 CONNECTID_SECRET_KEY = ''
 CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
+CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
@@ -1303,6 +1304,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
                 'corehq.util.context_processors.server_location_display',
+                'corehq.util.context_processors.chat_widget_config',
             ],
             'debug': DEBUG,
             'loaders': [
