@@ -40,7 +40,8 @@ class RegisterWebUserForm(forms.Form):
             widget=forms.RadioSelect,
             choices=ServerLocation.sorted_form_choices(),
             help_text=_(
-                "*Once created, a project space cannot be transferred from one server to another. "
+                "*You're creating an account and project space on the chosen server. "
+                "A project space cannot be transferred from one cloud location to another. "
                 "For more information, visit <a href='{help_link}' target='_blank'>this help page</a>."
             ).format(
                 help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/"
