@@ -22,6 +22,7 @@ DEVICE_LOG_XMLNS = 'http://code.javarosa.org/devicereport'
 
 # Should be in sync with file extensions supported by CommCare
 # https://github.com/dimagi/commcare-android/blob/ef45074bbb8647339387e179a2baca89fb394a23/app/src/org/commcare/utils/FormUploadUtil.java#LL63C1-L63C1
+# And in question types extending FileEntry in corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 VALID_ATTACHMENT_FILE_EXTENSION_MAP = {
     "image/*": ["jpg", "jpeg", "png"],
     "image/*,.pdf": ["jpg", "jpeg", "png", "pdf"],
