@@ -44,7 +44,9 @@ def chat_widget_config(request):
                 _("I need help troubleshooting my mobile application."),
                 _("I need help with exporting or understanding my data.")
             ],
-            'typing_indicator_text': _("Finding the best answer")
+            'typing_indicator_text': _("Finding the best answer"),
+            'new_chat_confirmation_message': _("Starting a new chat will clear your current conversation."
+                                               "Continue?"),
         }
     }
 
