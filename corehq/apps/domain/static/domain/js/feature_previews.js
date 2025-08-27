@@ -39,6 +39,7 @@ function initModalBindings() {
     });
 
     $('#ocs_chatbot-checkbox').on('mousedown keydown', function (event) {
+        // The only keyboard can toggle the checkbox is space and enter
         if (!this.checked && (event.type === 'mousedown' || event.key === ' ' || event.key === 'Enter')) {
             event.preventDefault();
             $('#ocs-chatbot-modal').modal('show');
