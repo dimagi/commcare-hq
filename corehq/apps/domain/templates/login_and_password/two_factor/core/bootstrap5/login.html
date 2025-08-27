@@ -12,13 +12,6 @@
       {% endblocktrans %}
     </h3>
     {% if can_select_server %}
-      <p class="text-center">
-        <a data-bs-toggle="collapse" data-target="#server-location-select">
-          {% blocktrans %}
-            Looking to sign into a different cloud environment?
-          {% endblocktrans %}
-        </a>
-      </p>
       {% include 'login_and_password/partials/bootstrap5/server_location_select.html' %}
     {% endif %}
   {% endif %}
