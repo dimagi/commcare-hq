@@ -82,7 +82,7 @@
       {% block messages %}{% endblock %}
 
       {% block content %}{% endblock content %}
-      {% if request|toggle_enabled:"CHATBOT" %}
+      {% if request|feature_preview_enabled:"OCS_CHATBOT" %}
         <div class="ocs-widget-container">
           <open-chat-studio-widget
             visible="false"

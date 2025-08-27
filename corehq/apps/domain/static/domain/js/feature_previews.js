@@ -1,0 +1,86 @@
+import "commcarehq";
+import $ from "jquery";
+import ko from 'knockout';
+import "hqwebapp/js/bootstrap5/knockout_bindings.ko";
+
+function ToSModalViewModel() {
+    const self = this;
+
+    self.isTosConfirmed = ko.observable(false);
+    self.isChatbotEnabled = ko.observable(false);
+
+    self.isEnableButtonEnabled = ko.computed(() => {
+        return self.isTosConfirmed();
+    });
+
+    self.enableChatbot = function () {
+        if (self.isTosConfirmed()) {
+            self.isChatbotEnabled(true);
+            $('#ocs_chatbot-checkbox').prop('checked', true).trigger('change');
+            $('#ocs-chatbot-modal').modal('hide');
+        }
+    };
+
+    self.resetModal = function () {
+        self.isTosConfirmed(false);
+    };
+}
+
+function initModalBindings() {
+    const viewModel = new ToSModalViewModel();
+
+    ko.applyBindings(viewModel, document.getElementById('ocs-chatbot-modal'));
+
+    const checkbox = $('#ocs_chatbot-checkbox');
+    viewModel.isChatbotEnabled(checkbox.prop('checked'));
+
+    $('#ocs-chatbot-modal').on('hidden.bs.modal', function () {
+        viewModel.resetModal();
+    });
+
+    $('#ocs_chatbot-checkbox').on('mousedown keydown', function (event) {
+        // The only keyboard can toggle the checkbox is space and enter
+        if (!this.checked && (event.type === 'mousedown' || event.key === ' ' || event.key === 'Enter')) {
+            event.preventDefault();
+            $('#ocs-chatbot-modal').modal('show');
+        }
+    });
+}
+
+function trackChanges() {
+    let unsavedChanges = false;
+    let initialStates = {};
+
+    // Store initial checkbox states
+    $("#feature-previews-form input[type='checkbox']").each(function () {
+        initialStates[$(this).attr('name')] = $(this).is(':checked');
+    });
+
+    $("#feature-previews-form input[type='checkbox']").on('change', function () {
+        unsavedChanges = true;
+    });
+
+    $(window).on('beforeunload', function () {
+        if (unsavedChanges) {
+            let hasChanges = false;
+            $("#feature-previews-form input[type='checkbox']").each(function () {
+                if ($(this).is(':checked') !== initialStates[$(this).attr('name')]) {
+                    hasChanges = true;
+                }
+            });
+
+            if (hasChanges) {
+                return true;
+            }
+        }
+    });
+
+    $("#feature-previews-form").on('submit', function () {
+        $(window).off("beforeunload");
+    });
+}
+
+$(function () {
+    initModalBindings();
+    trackChanges();
+});
