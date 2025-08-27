@@ -1,8 +1,18 @@
 from collections import defaultdict
+from django.conf import settings
 from dateutil.relativedelta import relativedelta
+import requests
 from datetime import datetime, timezone, date
 
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.data_analytics.models import MALTRow
+
+
+CREDENTIAL_TYPE = 'APP_ACTIVITY'
+MAX_CREDENTIALS_PER_REQUEST = 200
+MAX_USERNAMES_PER_CREDENTIAL = 200
 
 
 def get_credentials_for_timeframe(activity_level, app_ids):
@@ -80,3 +90,133 @@ def get_app_ids_by_activity_level():
     for app in credential_apps:
         app_ids_by_level[app.activity_level].append(app.app_id)
     return app_ids_by_level
+
+
+def submit_new_credentials():
+    from corehq.apps.users.models import UserCredential
+
+    user_credentials = UserCredential.objects.filter(issued_on=None)
+
+    app_names_by_id = get_app_names_by_id(user_credentials)
+    username_cred_id_dict = get_username_cred_id_dict(user_credentials)
+
+    cred_id_groups = []
+    creds_to_submit = []
+    try:
+        for app_id_level, username_cred_id_list in username_cred_id_dict.items():
+            app_id, activity_level = app_id_level
+            for username_cred_id_chunk in chunked(username_cred_id_list, MAX_USERNAMES_PER_CREDENTIAL):
+                usernames, cred_ids = zip(*username_cred_id_chunk)
+                creds_to_submit.append({
+                    'credentials': {
+                        'usernames': usernames,
+                        'title': app_names_by_id[app_id],
+                        'type': CREDENTIAL_TYPE,
+                        'level': activity_level,
+                        'slug': app_id,
+                        'app_id': app_id,
+                    }
+                })
+                cred_id_groups.append(cred_ids)
+                if len(creds_to_submit) >= MAX_CREDENTIALS_PER_REQUEST:
+                    submit_credentials(creds_to_submit, cred_id_groups)
+                    creds_to_submit = []
+                    cred_id_groups = []
+        if creds_to_submit:
+            submit_credentials(creds_to_submit, cred_id_groups)
+    except (requests.ConnectionError, requests.HTTPError, requests.Timeout, requests.RequestException) as e:
+        notify_exception(
+            None,
+            "Failed to submit credentials to PersonalID",
+            details={
+                'error': str(e),
+            }
+        )
+
+
+def submit_credentials(credentials_to_submit, cred_id_groups):
+    """
+    If the request fails a `ConnectionError` or `ResponseError` will be raised.
+    This function can also raise `HttpError` if the response status code is not 2xx.
+    """
+    response = requests.post(
+        settings.CONNECTID_CREDENTIALS_URL,
+        json={
+            'credentials': credentials_to_submit
+        },
+        auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
+    )
+    response.raise_for_status()
+    mark_credentials_as_issued(response, cred_id_groups)
+
+
+def get_username_cred_id_dict(user_credentials):
+    """
+    Returns a dict in the following format:
+    {
+        (app_id, activity_level): [(connectid_username, user_cred.id), ...]
+    }
+    """
+    username_map = get_connectid_username_by_commcare_username(user_credentials)
+    username_cred_id_dict = defaultdict(list)
+    for user_cred in user_credentials:
+        if user_cred.username not in username_map:
+            # Skip users who still need to set up their PersonalID account
+            continue
+        app_id_level = (user_cred.app_id, user_cred.activity_level)
+        cid_username = username_map[user_cred.username]
+        username_cred_id = (cid_username, user_cred.id)
+        username_cred_id_dict[app_id_level].append(username_cred_id)
+    return username_cred_id_dict
+
+
+def get_connectid_username_by_commcare_username(user_credentials):
+    from corehq.apps.users.models import ConnectIDUserLink
+    usernames = [c.username for c in user_credentials]
+    connectid_links = ConnectIDUserLink.objects.filter(
+        commcare_user__username__in=usernames
+    )
+    return {
+        link.commcare_user.username: link.connectid_username for link in connectid_links
+    }
+
+
+def mark_credentials_as_issued(response, credential_id_groups):
+    from corehq.apps.users.models import UserCredential
+
+    success_indices = set(response.json().get('success', []))
+    failed_indices = set(response.json().get('failed', []))
+    success_credential_ids = []
+    failed_credential_ids = []
+    for i, id_group in enumerate(credential_id_groups):
+        if i in success_indices:
+            success_credential_ids += id_group
+        elif i in failed_indices:
+            failed_credential_ids += id_group
+
+    issued_date = datetime.now(timezone.utc)
+    UserCredential.objects.filter(id__in=success_credential_ids).update(issued_on=issued_date)
+
+    if failed_credential_ids:
+        notify_exception(
+            None,
+            f"Failed to submit {len(failed_credential_ids)} credentials to PersonalID",
+            details={
+                'failed_credential_ids': failed_credential_ids,
+            }
+        )
+
+
+def get_app_names_by_id(user_credentials):
+    from corehq.apps.app_manager.models import Application
+    app_ids_dict = {}
+    keys = []
+    for user_cred in user_credentials:
+        app_ids_dict[user_cred.app_id] = user_cred.app_id
+        keys.append([user_cred.domain, user_cred.app_id])
+
+    result = Application.get_db().view(
+        'app_manager/applications_brief',
+        keys=keys).all()
+    app_names_by_id = {r['value']['_id']: r['value']['name'] for r in result}
+    return app_ids_dict | app_names_by_id
