@@ -31,6 +31,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         if settings.ENFORCE_SSO_LOGIN:
             self.fields['username'].widget = forms.TextInput(attrs={
                 'class': 'form-control',
