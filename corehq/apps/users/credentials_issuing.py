@@ -97,8 +97,7 @@ def submit_new_credentials():
 
     user_credentials = UserCredential.objects.filter(issued_on=None)
 
-    app_ids = [c.app_id for c in user_credentials]
-    app_names_by_id = get_app_names_by_id(app_ids)
+    app_names_by_id = get_app_names_by_id(user_credentials)
     username_cred_id_dict = get_username_cred_id_dict(user_credentials)
 
     cred_id_groups = []
@@ -195,8 +194,16 @@ def mark_credentials_as_issued(response, credential_id_groups):
         )
 
 
-def get_app_names_by_id(app_ids):
-    from corehq.apps.app_manager.dbaccessors import get_apps_by_id
-    app_ids_dict = {a: a for a in app_ids}
-    apps = get_apps_by_id(domain=None, app_ids=app_ids)
-    return app_ids_dict | {app.id: app.name for app in apps}
+def get_app_names_by_id(user_credentials):
+    from corehq.apps.app_manager.models import Application
+    app_ids_dict = {}
+    keys = []
+    for user_cred in user_credentials:
+        app_ids_dict[user_cred.app_id] = user_cred.app_id
+        keys.append([user_cred.domain, user_cred.app_id])
+
+    result = Application.get_db().view(
+        'app_manager/applications_brief',
+        keys=keys).all()
+    app_names_by_id = {r['value']['_id']: r['value']['name'] for r in result}
+    return app_ids_dict | app_names_by_id
