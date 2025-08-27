@@ -17,7 +17,7 @@ function ToSModalViewModel() {
         if (self.isTosConfirmed()) {
             self.isChatbotEnabled(true);
             $('#ocs_chatbot_checkbox').prop('checked', true).trigger('change');
-            $('#ocsChatbotModal').modal('hide');
+            $('#ocs-chatbot-modal').modal('hide');
         }
     };
 
@@ -29,18 +29,18 @@ function ToSModalViewModel() {
 function initModalBindings() {
     const viewModel = new ToSModalViewModel();
 
-    ko.applyBindings(viewModel, document.getElementById('ocsChatbotModal'));
+    ko.applyBindings(viewModel, document.getElementById('ocs-chatbot-modal'));
 
     const checkbox = $('#ocs_chatbot_checkbox');
     viewModel.isChatbotEnabled(checkbox.prop('checked'));
 
-    $('#ocsChatbotModal').on('hidden.bs.modal', function () {
+    $('#ocs-chatbot-modal').on('hidden.bs.modal', function () {
         viewModel.resetModal();
     });
 
     $('#ocs_chatbot_checkbox').on('mousedown', function () {
         if (!this.checked) {
-            $('#ocsChatbotModal').modal('show');
+            $('#ocs-chatbot-modal').modal('show');
         }
     });
 }
