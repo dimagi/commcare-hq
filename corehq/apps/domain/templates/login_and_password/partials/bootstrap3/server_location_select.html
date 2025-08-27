@@ -1,5 +1,14 @@
 {% load i18n %}
 
+<p class="text-center">
+  <a data-toggle="collapse" data-target="#server-location-select">
+    {% blocktrans %}
+      Looking to sign into a different cloud environment?
+    {% endblocktrans %}
+    <span class="caret"></span>
+  </a>
+</p>
+
 <div class="collapse" id="server-location-select">
   <div class="server-location-buttons">
     {% for server in server_choices %}
