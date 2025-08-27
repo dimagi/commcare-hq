@@ -243,6 +243,10 @@ class Command(BaseCommand):
              name='Two Stage Mobile Worker Account Creation',
              description='Allows two-stage user provisioning '
                          '(users confirm and set their own passwords via email)'),
+        Role(slug=privileges.GEOJSON_EXPORT,
+             name='Case Export supports the GeoJSON data format',
+             description='Case Export supports exporting geolocated data in '
+                         'GeoJSON format.'),
     ]
 
     BOOTSTRAP_PLANS = [
