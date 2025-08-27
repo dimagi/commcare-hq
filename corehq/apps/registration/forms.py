@@ -35,13 +35,14 @@ class RegisterWebUserForm(forms.Form):
     # Not inheriting from other forms to de-obfuscate the role of this form.
     if settings.SERVER_ENVIRONMENT in ServerLocation.ENVS:
         server_location = forms.ChoiceField(
-            label=_("Server Location"),
+            label=_("Cloud Location"),
             required=False,
             widget=forms.RadioSelect,
             choices=ServerLocation.sorted_form_choices(),
             help_text=_(
-                "*Once created, a project space cannot be transferred from one server to another. "
-                "For more information, visit <a href='{help_link}' target='_blank'>this help page</a>."
+                "*You're creating an account and project space on the chosen server. "
+                "An account or project space cannot be transferred between cloud locations. "
+                "<a href='{help_link}' target='_blank'>Learn more</a>."
             ).format(
                 help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/"
                            "CommCare+Cloud+Server+Locations")
