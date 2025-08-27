@@ -125,7 +125,8 @@ def pkce_required(client_id):
 class ServerLocation:
     INDIA = 'india'
     PRODUCTION = 'production'
-    ENVS = (INDIA, PRODUCTION)
+    STAGING = 'staging'
+    ENVS = (INDIA, PRODUCTION, STAGING)
 
     DATA = {
         INDIA: {
@@ -139,6 +140,12 @@ class ServerLocation:
             'long_name': _("United States"),
             'short_name': _("US"),
             'subdomain': 'www',
+        },
+        STAGING: {
+            'country_code': 'un',
+            'long_name': _("[Test] Staging"),
+            'short_name': _("Staging"),
+            'subdomain': 'staging',
         },
     }
     SUBDOMAINS = {env: server['subdomain'] for env, server in DATA.items()}
