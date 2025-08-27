@@ -38,8 +38,9 @@ function initModalBindings() {
         viewModel.resetModal();
     });
 
-    $('#ocs_chatbot-checkbox').on('mousedown', function () {
-        if (!this.checked) {
+    $('#ocs_chatbot-checkbox').on('mousedown keydown', function (event) {
+        if (!this.checked && (event.type === 'mousedown' || event.key === ' ' || event.key === 'Enter')) {
+            event.preventDefault();
             $('#ocs-chatbot-modal').modal('show');
         }
     });
