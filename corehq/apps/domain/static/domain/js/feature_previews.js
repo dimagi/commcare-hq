@@ -46,8 +46,8 @@ function initModalBindings() {
 }
 
 function trackChanges() {
-    var unsavedChanges = false;
-    var initialStates = {};
+    let unsavedChanges = false;
+    let initialStates = {};
 
     // Store initial checkbox states
     $("#feature-previews-form input[type='checkbox']").each(function () {
@@ -60,7 +60,7 @@ function trackChanges() {
 
     $(window).on('beforeunload', function () {
         if (unsavedChanges) {
-            var hasChanges = false;
+            let hasChanges = false;
             $("#feature-previews-form input[type='checkbox']").each(function () {
                 if ($(this).is(':checked') !== initialStates[$(this).attr('name')]) {
                     hasChanges = true;
