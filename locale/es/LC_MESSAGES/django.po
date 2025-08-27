@@ -58012,6 +58012,10 @@ msgid "US"
 msgstr "EE. UU."
 
 #: corehq/util/context_processors.py
+msgid "Need Help?"
+msgstr "Ned Hep?"
+
+#: corehq/util/context_processors.py
 #, fuzzy
 #| msgid "Indices"
 msgid "India"
