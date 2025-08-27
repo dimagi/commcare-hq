@@ -204,7 +204,7 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    'corehq.util.auth.SHA1PasswordHasher',
     'django.contrib.auth.hashers.MD5PasswordHasher',
 )
 PASSWORD_RESET_TIMEOUT = 3600
@@ -1696,7 +1696,7 @@ HQ can only provide in HTML.  Please set your email client to view this email
 in HTML or read this email in a client that supports HTML email.
 
 Thanks,
-The CommCare HQ Team"""
+The CommCare Team"""
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',

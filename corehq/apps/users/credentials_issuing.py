@@ -19,7 +19,9 @@ def get_credentials_for_timeframe(activity_level, app_ids):
     from corehq.apps.users.models import months_for_activity_level
     months = months_for_activity_level(activity_level)
     now = datetime.now(timezone.utc)
-    start_date = date(now.year, now.month, now.day) - relativedelta(months=months)
+    # Add 1 to calculate for previous month as well. This is to prevent scenarios like late submissions causing
+    # potential credentials to be missed.
+    start_date = date(now.year, now.month, now.day) - relativedelta(months=months + 1)
     user_months_activity = (
         MALTRow.objects
         .filter(
@@ -48,7 +50,7 @@ def _filter_users_with_complete_months(data, months, activity_level):
         combined_user_app_id = record["user_id"] + record["app_id"]
         user_months[combined_user_app_id].add(record["month"])
 
-        has_required_months = len(user_months[combined_user_app_id]) >= months
+        has_required_months = has_consecutive_months(user_months[combined_user_app_id], months)
         if has_required_months and combined_user_app_id not in combined_user_app_ids:
             user_credentials.append(UserCredential(
                 user_id=record["user_id"],
@@ -60,6 +62,24 @@ def _filter_users_with_complete_months(data, months, activity_level):
             combined_user_app_ids.add(combined_user_app_id)
 
     return user_credentials
+
+
+def has_consecutive_months(month_dates, required_months):
+    if len(month_dates) < required_months:
+        return False
+
+    # Dates are converted into a single linear month index so that consecutive
+    # calendar months always differ by 1
+    nums = sorted({d.year * 12 + d.month for d in month_dates})
+    streak = 1
+    for i in range(1, len(nums)):
+        if nums[i] == nums[i - 1] + 1:
+            streak += 1
+        else:
+            streak = 1
+        if streak >= required_months:
+            return True
+    return False
 
 
 def get_app_ids_by_activity_level():

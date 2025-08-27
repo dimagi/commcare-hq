@@ -113,7 +113,9 @@ class FormStepNumber(LayoutObject):
     template = 'hqwebapp/crispy/form_step_number.html'
 
     def __init__(self, step_num, total_steps):
-        self.step_label = gettext("Step {} of {}".format(step_num, total_steps))
+        self.step_label = gettext(
+            "Step {step_num} of {total_steps}"
+        ).format(step_num=step_num, total_steps=total_steps)
 
     def render(self, form, context, template_pack=None, **kwargs):
         context.update({
