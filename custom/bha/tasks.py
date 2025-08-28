@@ -28,4 +28,5 @@ def bha_prime_formplayer_dbs():
     for domain in domains:
         users = get_users_for_priming(domain, date_window)
         for row in users:
-            prime_formplayer_db_for_user.delay(domain, row[0], row[1], task_cutoff_hour=TASK_WINDOW_CUTOFF_HOUR)
+            prime_formplayer_db_for_user.delay(domain, row[0], row[1], task_cutoff_hour=TASK_WINDOW_CUTOFF_HOUR,
+                                               clear_data=True)
