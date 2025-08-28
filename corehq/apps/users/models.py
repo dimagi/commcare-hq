@@ -1588,7 +1588,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     bulk_save = save_docs
 
-    def save(self, fire_signals=True, update_django_user=True, fail_hard=False, **params):
+    def save(self, fire_signals=True, update_django_user=True, fail_hard=False, spawn_task=False, **params):
         # fail_hard determines whether the save should fail if it cannot obtain the critical section
         # historically, the critical section hasn't been enforced, but enforcing it is a dramatic change
         # for our system. The goal here is to allow the programmer to specify fail_hard on a workflow-by-workflow
@@ -1618,6 +1618,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
         if fire_signals:
             self.fire_signals()
+            if not self.to_be_deleted():
+                from corehq.apps.callcenter.tasks import sync_usercases_if_applicable
+                # We need to sync to all domains, even those the user is leaving
+                for domain in self.get_domains() + getattr(self, '_leaving_domains', []):
+                    sync_usercases_if_applicable(domain, self, spawn_task)
+        self._leaving_domains = []
 
     def fire_signals(self):
         from .signals import couch_user_post_save
@@ -1830,18 +1836,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, fire_signals=True, spawn_task=False, **params):
+    def save(self, fire_signals=True, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
-            from corehq.apps.callcenter.tasks import sync_usercases_if_applicable
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            if not self.to_be_deleted():
-                sync_usercases_if_applicable(self, spawn_task)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -2564,15 +2567,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             log_user_change(by_domain=domain, for_domain=domain, couch_user=self,
                             changed_by_user=changed_by, changed_via=USER_CHANGE_VIA_WEB,
                             fields_changed={'is_active_in_domain': True})
-
-    def save(self, fire_signals=True, **params):
-        super().save(fire_signals=fire_signals, **params)
-        if fire_signals and not self.to_be_deleted():
-            from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
-            # We need to sync to all domains, even those the user is leaving
-            for domain in self.get_domains() + getattr(self, '_leaving_domains', []):
-                sync_web_user_usercases_if_applicable(self, domain)
-        self._leaving_domains = []
 
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)
