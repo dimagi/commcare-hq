@@ -32,11 +32,14 @@ class Command(BaseCommand):
             if dom.usercase_enabled:
                 if not dry_run:
                     create_usercases_for_user_type.delay(d, include_web_users=True)
+
                 domains_only_web_created += 1
             else:
                 if not dry_run:
                     create_usercases_for_user_type.delay(d, include_commcare_users=True,
                                                 include_web_users=True)
+                    dom.usercase_enabled = True
+                    dom.save()
                 domains_both_created += 1
 
         print(f"Domains with both CommCare and Web users usercases created/synced: {domains_both_created}")
