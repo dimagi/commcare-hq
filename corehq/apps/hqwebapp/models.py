@@ -123,22 +123,28 @@ def pkce_required(client_id):
 
 
 class ServerLocation:
-    PRODUCTION = 'production'
     INDIA = 'india'
-    ENVS = (PRODUCTION, INDIA)
+    PRODUCTION = 'production'
 
-    SUBDOMAINS = {
-        PRODUCTION: 'www',
-        INDIA: 'india',
+    ENVS = {
+        INDIA: {
+            'country_code': 'in',
+            'long_name': _("India"),
+            'short_name': _("India"),
+            'subdomain': 'india',
+        },
+        PRODUCTION: {
+            'country_code': 'us',
+            'long_name': _("United States"),
+            'short_name': _("US"),
+            'subdomain': 'www',
+        },
     }
 
-    CHOICES_DICT = {
-        PRODUCTION: (SUBDOMAINS[PRODUCTION], _("United States")),
-        INDIA: (SUBDOMAINS[INDIA], _("India")),
-    }
+    SUBDOMAINS = {env: server['subdomain'] for env, server in ENVS.items()}
 
     @classmethod
-    def choices(cls):
-        env = settings.SERVER_ENVIRONMENT
-        sorted_keys = sorted(cls.ENVS, key=lambda x: x != env)
-        return [cls.CHOICES_DICT[key] for key in sorted_keys]
+    def sorted_form_choices(cls):
+        current_env = settings.SERVER_ENVIRONMENT
+        sorted_keys = sorted(cls.ENVS.keys(), key=lambda x: x != current_env)
+        return [(cls.ENVS[key]['subdomain'], cls.ENVS[key]['long_name']) for key in sorted_keys]

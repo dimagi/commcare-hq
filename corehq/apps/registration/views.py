@@ -411,9 +411,9 @@ class RegisterDomainView(TemplateView):
 
         server_locations = [{
             'env': env,
-            'subdomain': server_info[0],
-            'name': server_info[1],
-        } for env, server_info in ServerLocation.CHOICES_DICT.items() if env != settings.SERVER_ENVIRONMENT]
+            'subdomain': server['subdomain'],
+            'name': server['long_name'],
+        } for env, server in ServerLocation.ENVS.items() if env != settings.SERVER_ENVIRONMENT]
 
         context.update({
             'form': kwargs.get('form') or DomainRegistrationForm(),
