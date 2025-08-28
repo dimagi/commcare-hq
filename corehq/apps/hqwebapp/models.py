@@ -126,7 +126,7 @@ class ServerLocation:
     INDIA = 'india'
     PRODUCTION = 'production'
 
-    DATA = {
+    ENVS = {
         INDIA: {
             'country_code': 'in',
             'long_name': _("India"),
@@ -141,11 +141,10 @@ class ServerLocation:
         },
     }
 
-    ENVS = DATA.keys()
-    SUBDOMAINS = {env: server['subdomain'] for env, server in DATA.items()}
+    SUBDOMAINS = {env: server['subdomain'] for env, server in ENVS.items()}
 
     @classmethod
     def sorted_form_choices(cls):
-        env = settings.SERVER_ENVIRONMENT
-        sorted_keys = sorted(cls.ENVS, key=lambda x: x != env)
-        return [(cls.DATA[key]['subdomain'], cls.DATA[key]['long_name']) for key in sorted_keys]
+        current_env = settings.SERVER_ENVIRONMENT
+        sorted_keys = sorted(cls.ENVS.keys(), key=lambda x: x != current_env)
+        return [(cls.ENVS[key]['subdomain'], cls.ENVS[key]['long_name']) for key in sorted_keys]
