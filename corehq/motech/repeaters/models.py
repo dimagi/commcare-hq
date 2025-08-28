@@ -127,6 +127,7 @@ from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 from .const import (
+    COMMCARE_CONNECT_URL,
     ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
@@ -411,14 +412,21 @@ class Repeater(RepeaterSuperProxy):
     @property
     def repeat_records_ready(self):
         """
-        A QuerySet of repeat records in the Pending or Fail state in the
-        order in which they were registered
+        A QuerySet of repeat records in the Pending or Fail state
+        If BACKOFF_REPEATERS is enabled, this will return in the order they
+        were registered, otherwise it will order by the next check date
         """
-        return (
-            self.repeat_records
-            .filter(state__in=RECORD_QUEUED_STATES)
-            .order_by('registered_at')
-        )
+        query = self.repeat_records.filter(state__in=RECORD_QUEUED_STATES)
+        if toggles.PROCESS_REPEATERS.enabled(
+            self.domain, namespace=toggles.NAMESPACE_DOMAIN
+        ) and toggles.BACKOFF_REPEATERS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN):
+            return query.order_by('registered_at')
+        else:
+            return (
+                query
+                .filter(next_check__lte=datetime.utcnow())
+                .order_by('next_check', 'registered_at')
+            )
 
     @property
     def num_workers(self):
@@ -760,11 +768,10 @@ class CaseRepeater(Repeater):
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
     def register(self, payload, fire_synchronously=False):
-        if (
-            self.repeat_records_ready
-            .filter(payload_id=payload.get_id)
-            .exists()
-        ):
+        if self.repeat_records.filter(
+            state__in=RECORD_QUEUED_STATES,
+            payload_id=payload.get_id
+        ).exists():
             # There is already a repeat record for this payload waiting
             # to be sent. We pull the case from the database just before
             # forwarding it. This means that any updates made to that
@@ -1670,3 +1677,10 @@ def domain_can_forward_now(domain):
         domain_can_forward(domain)
         and not toggles.PAUSE_DATA_FORWARDING.enabled(domain)
     )
+
+
+def forwards_to_commcare_connect(repeater):
+    return ConnectionSettings.objects.filter(
+        id=repeater.connection_settings_id,
+        url=COMMCARE_CONNECT_URL,
+    ).exists()

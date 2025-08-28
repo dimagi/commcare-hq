@@ -3,7 +3,7 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext as _
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
@@ -27,6 +27,27 @@ def base_template(request):
         'secure_cookies': settings.SECURE_COOKIES,
         'MINIMUM_ZXCVBN_SCORE': settings.MINIMUM_ZXCVBN_SCORE,
         'MINIMUM_PASSWORD_LENGTH': settings.MINIMUM_PASSWORD_LENGTH,
+    }
+
+
+def chat_widget_config(request):
+    """Global chat widget configuration with translated strings"""
+    return {
+        'chat_widget_config': {
+            'button_text': _("Need Help?"),
+            'welcome_message': _(
+                "Hi there! I'm CommCare Companion, your personal guide to CommCare! "
+                "What can I help you with today?"
+            ),
+            'starter_questions': [
+                _("I need help with building my CommCare application."),
+                _("I need help troubleshooting my mobile application."),
+                _("I need help with exporting or understanding my data.")
+            ],
+            'typing_indicator_text': _("Finding the best answer"),
+            'new_chat_confirmation_message': _("Starting a new chat will clear your current conversation. "
+                                               "Continue?"),
+        }
     }
 
 
@@ -105,7 +126,7 @@ def js_api_keys(request):
         'ANALYTICS_IDS': settings.ANALYTICS_IDS.copy(),
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
-        'IS_ANALYTICS_ENVIRONMENT': settings.SERVER_ENVIRONMENT in ('production', 'staging', 'india'),
+        'IS_ANALYTICS_ENVIRONMENT': settings.SERVER_ENVIRONMENT in ('production', 'staging', 'india', 'eu'),
     }
     if (
         getattr(request, 'project', None)
@@ -179,15 +200,15 @@ def commcare_hq_names(request=None):
 def server_location_display(request):
     SERVER_LOCATION_DISPLAY = {
         'production': {
-            'flag': "🇺🇸",
+            'country_code': 'us',
             'hr_name': gettext_lazy("US"),
         },
         'india': {
-            'flag': "🇮🇳",
+            'country_code': 'in',
             'hr_name': gettext_lazy("India"),
         },
         'eu': {
-            'flag': "🇪🇺",
+            'country_code': 'eu',
             'hr_name': gettext_lazy("EU"),
         },
     }

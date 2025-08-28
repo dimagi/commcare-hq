@@ -156,7 +156,6 @@ msgid "Billed Monthly"
 msgstr "Fatturato mensilmente"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "Inserisci un'email valida."
 

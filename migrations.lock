@@ -181,6 +181,7 @@ app_manager
  0027_add_case_tile_template_field
  0028_case_list_custom_variable_xml_to_dict
  0029_delete_case_list_custom_variable_xml
+ 0030_credentialapplication
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -1345,6 +1346,7 @@ users
  0082_connectidmessagingkey_unique_active_messaging_key_per_user_and_domain
  0083_reset_ccu_dm_is_active
  0084_remove_hqapikey_key
+ 0085_usercredential
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

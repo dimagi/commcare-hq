@@ -159,7 +159,6 @@ msgid "Billed Monthly"
 msgstr "Оплата щомісяця"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "Будь ласка, введіть дійсну електронну адресу."
 

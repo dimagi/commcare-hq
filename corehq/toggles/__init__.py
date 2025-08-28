@@ -1921,6 +1921,19 @@ PROCESS_REPEATERS = FeatureRelease(
     [NAMESPACE_DOMAIN],
     owner='Norman Hooper',
     description="""
+    Limits the number of repeat records that can be queued in celery for a
+    single repeater, effectively processing repeaters instead of inidividual records.
+    """
+)
+
+BACKOFF_REPEATERS = FeatureRelease(
+    'backoff_repeaters',
+    'Backoff an entire repeater instead of individual repeat records',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    owner='Norman Hooper',
+    description="""
+    This feature flag is only relevant if PROCESS_REPEATERS is also enabled.
     Manages repeat records through their repeater in order to make
     smarter decisions about remote endpoints.
     """
@@ -2767,14 +2780,6 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
                'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
-DEACTIVATE_WEB_USERS = StaticToggle(
-    slug='deactivate_web_users',
-    label='USH: Deactivate Web Users',
-    tag=TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Allow domains to deactivate web users just for that domain',
-)
-
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
@@ -2937,12 +2942,4 @@ CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
     label='Convert the group separator to a symbol XML can support',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-CHATBOT = StaticToggle(
-    slug='show_ocs_chatbot',
-    label='Show OCS Chatbot',
-    tag=TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    description='Show OCS Chatbot',
 )

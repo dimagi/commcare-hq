@@ -36,6 +36,7 @@ from looseversion import LooseVersion
 from lxml import etree
 from memoized import memoized
 
+from corehq.apps.users.models import ActivityLevel
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -5078,6 +5079,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             const.TARGET_COMMCARE: 'org.commcare.dalvik',
             const.TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(commcare_flavor)
+
         return render_to_string('app_manager/profile.xml', {
             'is_odk': is_odk,
             'app': self,
@@ -6311,6 +6313,23 @@ class ApplicationReleaseLog(models.Model):
             "version": self.version,
             "user_id": self.user_id,
         }
+
+
+class CredentialApplication(models.Model):
+    """
+    Represents an application that issues credentials to users when
+    they have been active for a certain activity_level.
+    """
+    domain = models.CharField(max_length=255)
+    app_id = models.CharField(max_length=255)
+    activity_level = models.CharField(
+        max_length=32,
+        choices=ActivityLevel.choices,
+        default=ActivityLevel.THREE_MONTHS,
+    )
+
+    class Meta:
+        unique_together = ('domain', 'app_id')
 
 
 # backwards compatibility with suite-1.0.xml

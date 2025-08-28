@@ -55,8 +55,8 @@ msgstr "Jina la Akaunti"
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/enterprise/enterprise.py
-#: corehq/apps/enterprise/filters.py corehq/apps/enterprise/interface.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/filters.py
+#: corehq/apps/enterprise/interface.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/smsbillables/filters.py
 msgid "Project Space"
@@ -1082,6 +1082,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -1090,6 +1091,7 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py
@@ -1198,7 +1200,33 @@ msgid "Autopay"
 msgstr "Malipo ya Moja kwa Moja"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Hello %(old_user_name)s,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Your card is no longer being used for autopayment on the account %(billing_account_name)s.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    A card belonging to <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> is being used instead. If this is expected, you do not have to take any further action, and this card will be used to pay monthly invoices and will be charged on the invoice due date. If this change is unexpected, you can view and alter the credit card information at any time by navigating to your <a href=\"%(billing_info_url)s\">Billing Information</a> page.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Thank you for using CommCare. If you have any questions, please don't hesitate to contact\n"
+#| "    <a href=\"mailto:%(invoicing_contact_email)s\">%(invoicing_contact_email)s</a>.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Best Regards,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    The CommCare HQ Team<br/>\n"
+#| "    www.commcarehq.org\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  </p>\n"
+#| "\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -1218,11 +1246,11 @@ msgid ""
 "    Best Regards,\n"
 "  </p>\n"
 "  <p>\n"
-"    The CommCare HQ Team<br/>\n"
+"    The CommCare Team<br/>\n"
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 "  </p>\n"
 "\n"
 msgstr ""
@@ -1333,10 +1361,17 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best Regards,<br />\n"
+#| "    The CommCare HQ Team<br />\n"
+#| "    <a href=\"http://www.commcarehq.org/\">www.commcarehq.org</a>\n"
+#| "  "
 msgid ""
 "\n"
 "    Best Regards,<br />\n"
-"    The CommCare HQ Team<br />\n"
+"    The CommCare Team<br />\n"
 "    <a href=\"http://www.commcarehq.org/\">www.commcarehq.org</a>\n"
 "  "
 msgstr ""
@@ -1347,10 +1382,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Email From:<br />\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+#| "    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
-"    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+"    CommCare and the corporation Dimagi, Inc.<br />\n"
 "    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
@@ -1408,17 +1450,28 @@ msgstr ""
 "Salio Lililobaki: %(balance)s"
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 msgid ""
 "Thank you for using CommCare. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "Email From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 msgstr ""
 "Asante kwa kutumia CommCare. Ikiwa una maswali yoyote, tafadhali usisite\n"
@@ -1446,10 +1499,17 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Email From:<br />\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
-"    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+"    CommCare and the corporation Dimagi, Inc.<br />\n"
 "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
@@ -1485,10 +1545,16 @@ msgstr ""
 "kuwasiliana na %(invoicing_contact_email)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -1497,10 +1563,16 @@ msgstr ""
 "www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "Email From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Email From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -1817,10 +1889,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best regards,<br />\n"
+#| "    The CommCare HQ Team<br />\n"
+#| "    www.commcarehq.org\n"
+#| "  "
 msgid ""
 "\n"
 "    Best regards,<br />\n"
-"    The CommCare HQ Team<br />\n"
+"    The CommCare Team<br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -1832,9 +1911,15 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
+#| "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
-"    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 585\n"
 "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
@@ -2007,18 +2092,30 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "\n"
 "Statement From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -2108,11 +2205,31 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
-msgid "The CommCare HQ Team"
+#, fuzzy
+#| msgid "The CommCare HQ Team"
+msgid "The CommCare Team"
 msgstr "Timu ya CommCare HQ"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(account)s administrator,\n"
+#| "\n"
+#| "Your %(plan_name)s subscription ends soon! If you do not renew your\n"
+#| "subscription before then, your subscription will be paused on %(ending_on)s\n"
+#| "and you will lose access to all features until you re-subscribe to a new\n"
+#| "paid plan.\n"
+#| "\n"
+#| "To change or renew your subscription, please reach out to %(sales_email)s.\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(invoicing_contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(account)s administrator,\n"
@@ -2129,7 +2246,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -2239,10 +2356,17 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best regards, <br />\n"
+#| "    The CommCare HQ Team <br />\n"
+#| "    www.commcarehq.org\n"
+#| "  "
 msgid ""
 "\n"
 "    Best regards, <br />\n"
-"    The CommCare HQ Team <br />\n"
+"    The CommCare Team <br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -2253,7 +2377,22 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain)s administrator,\n"
+#| "\n"
+#| "Your subscription has been paused for the CommCare project space %(domain)s. You can regain access to your data and project space by re-subscribing to a plan.\n"
+#| "\n"
+#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
+#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
+#| "After you have paid the unpaid invoices you can re-subscribe to your plan here: %(subscription_url)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -2267,7 +2406,7 @@ msgid ""
 "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
 "\n"
 "Best regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -2340,7 +2479,23 @@ msgstr ""
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain_or_account)s administrator,\n"
+#| "\n"
+#| "Your CommCare %(subscriptions_to_downgrade)s will be paused after tomorrow because your CommCare Billing Statements are more than %(days_overdue)s days overdue.\n"
+#| "If you do not make a payment before tomorrow, your subscription will automatically be paused and you will lose access to your project space and data until you re-subscribe to a paid plan.\n"
+#| "\n"
+#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
+#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
+#| "You can also pre-pay for several months at any time by following the steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain_or_account)s administrator,\n"
@@ -2355,7 +2510,7 @@ msgid ""
 "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
 "\n"
 "Best regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -2390,10 +2545,17 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best Regards,<br />\n"
+#| "    The CommCare HQ Team<br />\n"
+#| "    www.commcarehq.org\n"
+#| "  "
 msgid ""
 "\n"
 "    Best Regards,<br />\n"
-"    The CommCare HQ Team<br />\n"
+"    The CommCare Team<br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -2431,18 +2593,30 @@ msgstr ""
 "Jumla ya Salio: %(total_balance)s\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "\n"
 "Statement From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -2569,10 +2743,17 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Statement From:\n"
-"    CommCare HQ and the corporation Dimagi, Inc.\n"
+"    CommCare and the corporation Dimagi, Inc.\n"
 "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
@@ -2620,10 +2801,16 @@ msgstr ""
 "    kuwasiliana na %(invoicing_contact_email)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Best Regards,\n"
+#| "    The CommCare HQ Team\n"
+#| "    www.commcarehq.org\n"
 msgid ""
 "\n"
 "    Best Regards,\n"
-"    The CommCare HQ Team\n"
+"    The CommCare Team\n"
 "    www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -2632,10 +2819,16 @@ msgstr ""
 "    www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "    Statement From:\n"
-"    CommCare HQ and the corporation Dimagi, Inc.\n"
+"    CommCare and the corporation Dimagi, Inc.\n"
 "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -2715,18 +2908,30 @@ msgstr ""
 "Tarehe ya Malipo: %(date_due)s"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using CommCare. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "Email From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -2906,14 +3111,22 @@ msgstr ""
 "    ukitaja tarehe ya malipo, kiasi, nambari ya ankara, na eneo la mradi.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -2994,10 +3207,17 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Thanks, <br />\n"
+#| "    The CommCare HQ Team <br />\n"
+#| "    www.commcarehq.org\n"
+#| "  "
 msgid ""
 "\n"
 "    Thanks, <br />\n"
-"    The CommCare HQ Team <br />\n"
+"    The CommCare Team <br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -3008,7 +3228,26 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain_or_account)s administrator,\n"
+#| "\n"
+#| "Your billing account has unpaid CommCare Billing Statements which are more than %(days_overdue)s days overdue. The balance currently owed is: $%(total)s.\n"
+#| "\n"
+#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
+#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
+#| "You can also pre-pay for several months at any time by following the steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
+#| "\n"
+#| "Please make a payment as soon as possible for the amount due.\n"
+#| "If you are not able to make a payment, your subscription will be paused on %(date_to_pause)s.\n"
+#| "As of this date, you will lose access to your project space until you re-subscribe to a paid plan.\n"
+#| "\n"
+#| "If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don’t hesitate to contact %(contact_email)s.\n"
+#| "\n"
+#| "Thanks,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain_or_account)s administrator,\n"
@@ -3026,7 +3265,7 @@ msgid ""
 "If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don’t hesitate to contact %(contact_email)s.\n"
 "\n"
 "Thanks,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 msgstr ""
 "\n"
@@ -3081,7 +3320,27 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain)s administrator,\n"
+#| "\n"
+#| "Your %(plan_name)s subscription for %(domain)s ends soon! If you do not\n"
+#| "renew your subscription before then, your subscription will be paused on\n"
+#| "%(ending_on)s and you will lose access to all features until you\n"
+#| "re-subscribe to a new paid plan.\n"
+#| "\n"
+#| "To change or renew your subscription, please log into your project on\n"
+#| "CommCare HQ and and navigate to the subscription page in your project\n"
+#| "settings: %(subscription_url)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(invoicing_contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -3100,7 +3359,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -3177,7 +3436,29 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain)s administrator,\n"
+#| "\n"
+#| "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
+#| "change your subscription before then, your subscription will be paused on\n"
+#| "%(ending_on)s and you will lose access to all features until you\n"
+#| "re-subscribe to a new paid plan.\n"
+#| "\n"
+#| "To change your subscription, please log into your project on\n"
+#| "CommCare HQ and and navigate to the subscription page in your project\n"
+#| "settings: %(subscription_url)s\n"
+#| "\n"
+#| "If you have questions about our pricing plans, you can review them here:\n"
+#| "https://www.commcarehq.org/pricing/\n"
+#| "\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -3198,7 +3479,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -3319,7 +3600,31 @@ msgstr ""
 "Tafadhali angalia ankara ya malipo ya awali iliyounganishwa kwa ajili ya usajili wako wa CommCare.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
+#| "based on actual usage in the following month. If you prefer, you may also prepay for\n"
+#| "expected on-demand usage. Please contact us if you would like to explore this option.\n"
+#| "\n"
+#| "Instructions for Payment\n"
+#| "\n"
+#| "Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.\n"
+#| "If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:\n"
+#| "\n"
+#| "1. Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.\n"
+#| "\n"
+#| "2. Send an email to %(accounts_email)s after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.\n"
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
@@ -3338,11 +3643,11 @@ msgid ""
 "Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
 "Best Regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org\n"
 "\n"
 "Statement From:\n"
-"CommCare HQ and the corporation Dimagi, Inc.\n"
+"CommCare and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgstr ""
 "\n"
@@ -3807,6 +4112,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/tabs/tabclasses.py
 msgid "Subscription"
 msgstr "Usajili"
@@ -3839,6 +4145,7 @@ msgstr "Nenda kwenye ukurasa wa Ankara Zote kwa Nafasi hii ya Mradi"
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/integration/templates/payments/payments_verify_report.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Export to Excel"
 msgstr "Hamisha hadi Excel"
@@ -4273,6 +4580,7 @@ msgstr "Watumiaji Walioungizwa:"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -4381,8 +4689,7 @@ msgstr "Barua pepe ya kitaaluma"
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
-#: corehq/apps/dashboard/views.py corehq/apps/domain/forms.py
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Organization"
 msgstr "Shirika"
 
@@ -4542,6 +4849,32 @@ msgid ""
 msgstr ""
 "Mtumiaji huyu hana barua pepe. Lazima utoe barua pepe ya mtumiaji ili kutuma"
 " barua pepe ya uthibitisho."
+
+#: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid "Recipient has no email address."
+msgid "This user does not have an email address set."
+msgstr "Mpokeaji hana anwani ya barua pepe."
+
+#: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user account cannot reset the password."
+msgstr ""
+"Akaunti ya mtumiaji inayohusishwa na anwani hii ya barua pepe haiwezi kuweka"
+" upya nenosiri."
+
+#: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
+#, fuzzy
+#| msgid ""
+#| "The user account associated with this email address cannot reset the "
+#| "password."
+msgid "This user is inactive and cannot reset their password."
+msgstr ""
+"Akaunti ya mtumiaji inayohusishwa na anwani hii ya barua pepe haiwezi kuweka"
+" upya nenosiri."
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
@@ -6035,6 +6368,11 @@ msgid "Android app dependencies"
 msgstr "Mahitaji ya programu ya Android"
 
 #: corehq/apps/app_manager/static_strings.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Worker Activity"
+msgstr "Shughuli za Mfanyakazi"
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Android Settings"
 msgstr "Mipangilio ya Android"
 
@@ -6226,8 +6564,8 @@ msgstr "Nembo ya Onyesho"
 msgid "Disable"
 msgstr "Zima"
 
-#: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/app_manager/static_strings.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/sms/forms.py corehq/messaging/scheduling/forms.py
 msgid "Disabled"
 msgstr "Imezimwa"
 
@@ -6258,8 +6596,8 @@ msgstr "Washa Mipangilio ya Onyesho la Menyu kwa Kila Moduli"
 msgid "Enable"
 msgstr "Washa"
 
-#: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/app_manager/static_strings.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/sms/forms.py corehq/messaging/scheduling/forms.py
 msgid "Enabled"
 msgstr "Imewashwa"
 
@@ -6605,6 +6943,14 @@ msgid ""
 msgstr ""
 "Inazuia wafanyakazi wa simu kutumia programu ya CommCare hadi programu za "
 "Android zinazohitajika ziwe zimewekwa kwenye kifaa.\n"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Issues credentials to mobile workers who have been active users of this app "
+"for the specified period of time.\n"
+msgstr ""
+"Inatoa hati kwa wafanyakazi wa simu ambao wamekuwa watumiaji hai wa programu"
+" hii kwa kipindi kilichobainishwa.\n"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Profile URL"
@@ -12448,6 +12794,7 @@ msgid "Time"
 msgstr "Muda"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid "Info"
 msgstr "Taarifa"
 
@@ -14226,6 +14573,7 @@ msgstr "Una uhakika unataka kufuta kijisehemu hiki?"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/bootstrap5/notification_unsubscribe.html
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -20852,47 +21200,6 @@ msgid "Renew Plan"
 msgstr "Sasisha Mpango"
 
 #: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Email To"
-msgstr "Barua Pepe Kwa"
-
-#: corehq/apps/domain/forms.py
-msgid "Estimated annual expenditures on airtime:"
-msgstr "Makadirio ya matumizi ya kila mwaka kwenye muda wa maongezi:"
-
-#: corehq/apps/domain/forms.py
-msgid "Estimated annual expenditures on devices:"
-msgstr "Makadirio ya matumizi ya kila mwaka kwenye vifaa:"
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"We grant pro-bono subscriptions to match the duration of your project, up to"
-" a maximum of 12 months at a time (at which point you need to reapply)."
-msgstr ""
-"Tunatoa usajili wa bure kulingana na muda wa mradi wako, hadi miezi 12 kwa "
-"wakati mmoja (baada ya hapo utahitaji kuomba tena)."
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"If you have already been in touch with someone from Dimagi, please list "
-"their name."
-msgstr ""
-"Ikiwa tayari umezungumza na mtu kutoka Dimagi, tafadhali orodhesha jina lao."
-
-#: corehq/apps/domain/forms.py
-msgid "Number of expected users"
-msgstr "Idadi ya watumiaji unaotarajia"
-
-#: corehq/apps/domain/forms.py corehq/apps/domain/views/pro_bono.py
-msgid "Pro-Bono Application"
-msgstr "Maombi ya Pro-Bono"
-
-#: corehq/apps/domain/forms.py
-msgid "Submit Pro-Bono Application"
-msgstr "Tuma Maombi ya Pro-Bono"
-
-#: corehq/apps/domain/forms.py
 msgid "Test or Demo Project"
 msgstr "Mradi wa Majaribio au Onyesho"
 
@@ -21136,6 +21443,32 @@ msgstr "Ingiza Programu"
 #| msgid "The file uploaded is an invalid JSON file"
 msgid "The file uploaded is an invalid JSON file."
 msgstr "Faili uliyopakia si faili halali ya JSON"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Enable Call Center Application"
+msgid "Enable credentials for application"
+msgstr "Wezesha Programu ya Kituo cha Simu"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "Select the location you would like to see recommendations for."
+msgid ""
+"Select the application that will be used to issue credentials to workers."
+msgstr "Chagua eneo unalotaka kuona mapendekezo yake."
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Select an Application"
+msgid "Credential Issuing Application"
+msgstr "Chagua Programu"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "To Application"
+msgid "No application"
+msgstr "Kwenda Programu"
 
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
@@ -22355,7 +22688,7 @@ msgstr "Muhtasari wa Matumizi"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/reports/filters/select.py
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/select.py
 msgid "Feature"
 msgstr "Kipengele"
 
@@ -22885,10 +23218,14 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ!\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ!\n"
+"    %(inviter)s has invited you to join the %(domain)s project on CommCare!\n"
 "  "
 msgstr ""
 "\n"
@@ -22920,10 +23257,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has invited you to join the %(domain)s project on CommCare HQ.\n"
+#| "    This invitation expires in %(days)s day(s).\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s has invited you to join the %(domain)s project on CommCare HQ.\n"
+"    %(inviter)s has invited you to join the %(domain)s project on CommCare.\n"
 "    This invitation expires in %(days)s day(s).\n"
 "  "
 msgstr ""
@@ -22933,9 +23275,16 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    CommCare HQ is a data management tool used by over 500 organizations\n"
+#| "    to help frontline workers around the world.\n"
+#| "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.\n"
+#| "  "
 msgid ""
 "\n"
-"    CommCare HQ is a data management tool used by over 500 organizations\n"
+"    CommCare is a data management tool used by over 500 organizations\n"
 "    to help frontline workers around the world.\n"
 "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.\n"
 "  "
@@ -22961,9 +23310,16 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    CommCare HQ is a data management tool used by over 500 organizations\n"
+#| "    to help frontline workers around the world.\n"
+#| "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.  \n"
+#| "  "
 msgid ""
 "\n"
-"    CommCare HQ is a data management tool used by over 500 organizations\n"
+"    CommCare is a data management tool used by over 500 organizations\n"
 "    to help frontline workers around the world.\n"
 "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.  \n"
 "  "
@@ -22980,15 +23336,21 @@ msgid "Hey there,"
 msgstr "Habari,"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has invited you to join the %(domain)s project on CommCare HQ.\n"
+#| "    This invitation expires in %(days)s day(s).\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ.\n"
+"    %(inviter)s has invited you to join the %(domain)s project on CommCare.\n"
 "    This invitation expires in %(days)s day(s).\n"
 msgstr ""
 "\n"
 "    %(inviter)s amekualika kujiunga na mradi wa %(domain)s kwenye CommCare HQ.\n"
 "    Mwaliko huu unaisha baada ya siku %(days)s.\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #, python-format
@@ -23002,18 +23364,27 @@ msgstr ""
 "chako. %(url)s"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
+#, fuzzy
+#| msgid ""
+#| "CommCare HQ is a data management tool used by over 500 organizations to help"
+#| " frontline workers around the world."
 msgid ""
-"CommCare HQ is a data management tool used by over 500 organizations to help"
-" frontline workers around the world."
+"CommCare is a data management tool used by over 500 organizations to help "
+"frontline workers around the world."
 msgstr ""
 "CommCare HQ ni zana ya usimamizi wa data inayotumiwa na mashirika zaidi ya "
 "500 kusaidia wafanyakazi wa mstari wa mbele duniani kote."
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    If you think you have received this by mistake, you can go ahead and ignore this email.\n"
+#| "    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
 "    If you think you have received this by mistake, you can go ahead and ignore this email.\n"
-"    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
+"    To find out more about CommCare visit http://www.commcarehq.org/.\n"
 msgstr ""
 "\n"
 "    Ikiwa unadhani umepokea hii kimakosa, unaweza kupuuza barua pepe hii.\n"
@@ -23026,14 +23397,20 @@ msgstr "Asante kwa kutumia tovuti yetu!"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
-msgid "-The CommCare HQ team"
-msgstr "-Timu ya CommCare HQ"
+#, fuzzy
+#| msgid "--The CommCare HQ Team"
+msgid "-The CommCare Team"
+msgstr "--Timu ya CommCare HQ"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s approved your request to join %(domain)s on CommCare HQ!\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s approved your request to join %(domain)s on CommCare HQ!\n"
+"    %(inviter)s approved your request to join %(domain)s on CommCare!\n"
 "  "
 msgstr ""
 "\n"
@@ -23062,10 +23439,15 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has approved your request to join the \"%(domain)s\" project at CommCare HQ.\n"
+#| "    This approval expires in %(days)s day(s).\n"
+#| "  "
 msgid ""
 "\n"
-"    %(inviter)s has approved your request to join the \"%(domain)s\" project at CommCare HQ.\n"
+"    %(inviter)s has approved your request to join the \"%(domain)s\" project on CommCare.\n"
 "    This approval expires in %(days)s day(s).\n"
 "  "
 msgstr ""
@@ -23075,9 +23457,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    CommCare HQ is a tool that helps manage frontline workers around the world.\n"
+#| "  "
 msgid ""
 "\n"
-"    CommCare HQ is a tool that helps manage frontline workers around the world.\n"
+"    CommCare is a tool that helps manage frontline workers around the world.\n"
 "  "
 msgstr ""
 "\n"
@@ -23102,10 +23489,14 @@ msgid "Hi!"
 msgstr "Habari!"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(inviter)s has approved your request to join the %(domain)s project space on CommCare HQ.\n"
+#| "    This approval expires in %(days)s day(s).\n"
 msgid ""
 "\n"
-"    %(inviter)s has approved your request to join the %(domain)s project space on CommCare HQ.\n"
+"    %(inviter)s has approved your request to join the %(domain)s project space on CommCare.\n"
 "    This approval expires in %(days)s day(s).\n"
 msgstr ""
 "\n"
@@ -23113,8 +23504,11 @@ msgstr ""
 "    Uidhinishaji huu unaisha baada ya siku %(days)s.\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
+#, fuzzy
+#| msgid ""
+#| "CommCare HQ is a tool that helps manage frontline workers around the world."
 msgid ""
-"CommCare HQ is a tool that helps manage frontline workers around the world."
+"CommCare is a tool that helps manage frontline workers around the world."
 msgstr ""
 "CommCare HQ ni zana inayosaidia kusimamia wafanyakazi wa mstari wa mbele "
 "duniani kote."
@@ -23125,10 +23519,15 @@ msgid "To confirm this approval go to: %(url)s"
 msgstr "Ili kuthibitisha uidhinishaji huu nenda: %(url)s"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    If you think this is a mistake, you can go ahead and ignore this email.\n"
+#| "    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
 "    If you think this is a mistake, you can go ahead and ignore this email.\n"
-"    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
+"    To find out more about CommCare visit http://www.commcarehq.org/.\n"
 msgstr ""
 "\n"
 "    Ikiwa unadhani hii ni makosa, unaweza kupuuza barua pepe hii.\n"
@@ -23199,10 +23598,15 @@ msgstr ""
 "Asante kwa kutumia tovuti yetu!\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    %(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept\n"
+#| "    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
+#| "  "
 msgid ""
 "\n"
-"    %(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept\n"
+"    %(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept\n"
 "    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
 "  "
 msgstr ""
@@ -23232,9 +23636,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
+#| "  "
 msgid ""
 "\n"
-"    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
+"    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
 "  "
 msgstr ""
 "\n"
@@ -23242,10 +23651,13 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "%(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
 msgid ""
 "\n"
-"%(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
+"%(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
 msgstr ""
 "\n"
 "%(from_username)s ameanzisha uhamisho wa umiliki wa nafasi ya mradi wa CommCare HQ. Ili kukubali umiliki wa nafasi hii ya mradi, tafadhali fuata kiungo hiki: %(activate_url)s. Ikiwa bado huna akaunti ya mtumiaji ya CommCare, utatakiwa kuunda moja ili kukubali umiliki wa nafasi hii ya mradi.\n"
@@ -23267,9 +23679,13 @@ msgstr ""
 "Mipangilio yote ya mradi, akaunti za watumiaji, na ruhusa zitaendelea kubaki kama zilivyo baada ya uhamisho wa umiliki. Ikiwa ungependa kubadilisha yoyote kati ya mipangilio hii, tafadhali fanya hivyo baada ya kukubali umiliki wa nafasi ya mradi kupitia menyu ya mipangilio ya nafasi ya mradi.\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
-"If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
+"If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit http://www.commcarehq.org/.\n"
 msgstr ""
 "\n"
 "Ikiwa unadhani umepokea barua pepe hii kimakosa, unaweza kupuuza barua pepe hii. Kujua zaidi kuhusu CommCare HQ tembelea http://www.commcarehq.org/.\n"
@@ -23297,7 +23713,7 @@ msgid ""
 "  </p>\n"
 "  <p>\n"
 "    Thank you,<br />\n"
-"    The CommCare HQ Team\n"
+"    The CommCare Team\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -23438,6 +23854,11 @@ msgstr ""
 "                  >Maelezo zaidi...</a\n"
 "                >\n"
 "              "
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Email To"
+msgstr "Barua Pepe Kwa"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -23750,14 +24171,6 @@ msgstr "Hii haitanakili sehemu za mtumiaji."
 msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "Hii haitanakili jedwali za lookup (pia zinajulikana kama fixtures)."
 
-#: corehq/apps/domain/templates/domain/pro_bono/bootstrap3/page_content.html
-#: corehq/apps/domain/templates/domain/pro_bono/bootstrap5/page_content.html
-msgid ""
-"Thank you for your submission.  A representative will be in contact with you"
-" shortly."
-msgstr ""
-"Asante kwa mawasilisho yako. Mwakilishi atawasiliana nawe hivi karibuni."
-
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
 msgstr "Maelezo ya Hitilafu"
@@ -23858,9 +24271,12 @@ msgstr "Jifunze zaidi"
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
+#, fuzzy
+#| msgid ""
+#| "about how CommCare HQ can be your mobile solution for your frontline "
+#| "workforce."
 msgid ""
-"about how CommCare HQ can be your mobile solution for your frontline "
-"workforce."
+"about how CommCare can be your mobile solution for your frontline workforce."
 msgstr ""
 "kuhusu jinsi CommCare HQ inaweza kuwa suluhisho lako la simu kwa wafanyakazi"
 " wako wa mstari wa mbele."
@@ -23949,11 +24365,16 @@ msgid "Your project spaces:"
 msgstr "Eneo lako la miradi:"
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_email.html
-msgid "Thank you for using CommCare HQ."
-msgstr "Asante kwa kutumia CommCare HQ."
+#: corehq/apps/registry/templates/registry/email/access_granted.html
+#: corehq/apps/registry/templates/registry/email/invitation.html
+#: corehq/apps/registry/templates/registry/email/invitation_response.html
+msgid "Thank you for using CommCare."
+msgstr "Asante kwa kutumia CommCare."
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_email.html
-msgid "--The CommCare HQ Team"
+#, fuzzy
+#| msgid "--The CommCare HQ Team"
+msgid "--The CommCare Team"
 msgstr "--Timu ya CommCare HQ"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_forms.html
@@ -24014,10 +24435,14 @@ msgstr "Tengeneza Tokeni"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        %(server_location)s Server\n"
+#| "      "
 msgid ""
 "\n"
-"        %(server_location)s Server\n"
+"        %(server_location)s Cloud\n"
 "      "
 msgstr ""
 "\n"
@@ -24888,6 +25313,26 @@ msgid "Manage Mobile Workers"
 msgstr "Simamia Wafanyakazi wa Simu"
 
 #: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Untitled Application"
+msgid "Credentials Application"
+msgstr "Programu Bila Kichwa"
+
+#: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Settings updated!"
+msgid "Settings saved!"
+msgstr "Mipangilio imesasishwa!"
+
+#: corehq/apps/domain/views/settings.py
+msgid ""
+"Settings saved! Please remember to configure the credential criteria for the"
+" issuing app in the app manager settings."
+msgstr ""
+"Mipangilio imehifadhiwa! Tafadhali kumbuka kuweka vigezo vya hati kwa "
+"programu inayotoa katika mipangilio ya msimamizi wa programu."
+
+#: corehq/apps/domain/views/settings.py
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Project Alerts"
 msgstr "Simamia Arifa za Mradi"
@@ -24956,10 +25401,16 @@ msgstr ""
 
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_error.html
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_success.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Thanks, <br />\n"
+#| "    CommCare HQ Team\n"
+#| "  "
 msgid ""
 "\n"
 "    Thanks, <br />\n"
-"    CommCare HQ Team\n"
+"    CommCare Team\n"
 "  "
 msgstr ""
 "\n"
@@ -24978,10 +25429,15 @@ msgstr ""
 
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_error.txt
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_success.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "Thanks,\n"
+#| "CommCare HQ Team\n"
 msgid ""
 "\n"
 "Thanks,\n"
-"CommCare HQ Team\n"
+"CommCare Team\n"
 msgstr ""
 "\n"
 "Asante,\n"
@@ -30814,7 +31270,7 @@ msgstr "Ripoti ya Data ya Domain za UCR"
 #: corehq/apps/hqadmin/reports.py
 #, fuzzy
 #| msgid "Feature Previews"
-msgid "Feature Preview Stats Report"
+msgid "Feature Preview Status Report"
 msgstr "Muonekano wa Vipengele"
 
 #: corehq/apps/hqadmin/reports.py
@@ -30834,6 +31290,30 @@ msgstr "Imewashwa"
 #| msgid "Not Checked"
 msgid "Not recorded"
 msgstr "Haijakaguliwa"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Feature Previews"
+msgid "Feature Preview Audit Report"
+msgstr "Muonekano wa Vipengele"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Shared By"
+msgid "Changed By"
+msgstr "Imeshirikiwa Na"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Changes to"
+msgid "Changed At"
+msgstr "Mabadiliko kwa"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Update Information"
+msgid "Update Randomness"
+msgstr "Sasisha Taarifa"
 
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
@@ -30929,6 +31409,12 @@ msgstr "Mtumiaji Mkuu"
 #: corehq/reports.py
 msgid "Accounting Admin"
 msgstr "Msimamizi wa Uhasibu"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#, fuzzy
+#| msgid "Contact"
+msgid "Is Contractor"
+msgstr "Mawasiliano"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
@@ -31813,8 +32299,9 @@ msgstr ""
 "kutoka kwa Form Builder."
 
 #: corehq/apps/hqwebapp/crispy.py
-msgid "Step {} of {}"
-msgstr "Hatua {} ya {}"
+#, python-brace-format
+msgid "Step {step_num} of {total_steps}"
+msgstr "Hatua ya {step_num} kati ya {total_steps}"
 
 #: corehq/apps/hqwebapp/doc_info.py
 msgid "Application Build"
@@ -31853,6 +32340,37 @@ msgstr "Tafadhali weka nywila."
 #: corehq/apps/hqwebapp/forms.py
 msgid "Please enter valid CAPTCHA"
 msgstr "Tafadhali weka CAPTCHA sahihi"
+
+#: corehq/apps/hqwebapp/models.py
+#, fuzzy
+#| msgid "Invalid Date"
+msgid "United States"
+msgstr "Tarehe Batili"
+
+#: corehq/apps/hqwebapp/models.py corehq/util/context_processors.py
+#, fuzzy
+#| msgid "Indices"
+msgid "India"
+msgstr "Manejo de Casos"
+
+#: corehq/apps/hqwebapp/models.py
+msgid "European Union"
+msgstr "Umoja wa Ulaya"
+
+#: corehq/apps/hqwebapp/tables/export.py
+msgid "Unsupported export format: {}. Supported formats are: {}"
+msgstr ""
+"Muundo wa usafirishaji hauungwa mkono: {}. Miundo inayoungwa mkono ni: {}"
+
+#: corehq/apps/hqwebapp/tables/export.py
+#, fuzzy
+#| msgid ""
+#| "A request is pending for this email. You will receive an email when the "
+#| "request is approved."
+msgid "Export is being generated. You will receive an email when it is ready."
+msgstr ""
+"Ombi linasubiri kwa barua pepe hii. Utapokea barua pepe ombi "
+"litakapothibitishwa."
 
 #: corehq/apps/hqwebapp/tasks.py
 msgid "Sending will be retried."
@@ -32487,15 +33005,17 @@ msgstr "Mipangilio ya Akaunti Yangu"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 msgid "Sign Out"
 msgstr "Toka"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
-#| msgid "User Location"
-msgid "Server Location"
-msgstr "Eneo la Mtumiaji"
+#| msgid "Child Locations"
+msgid "Cloud Location"
+msgstr "Maeneo Tanzu"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 msgid "Help &amp; Resources"
@@ -33175,7 +33695,9 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
-msgid "Learn more about CommCare HQ"
+#, fuzzy
+#| msgid "Learn more about CommCare HQ"
+msgid "Learn more about CommCare"
 msgstr "Jifunze zaidi kuhusu CommCare HQ"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
@@ -33954,6 +34476,12 @@ msgid "Payment request failed"
 msgstr "Ombi la malipo limekosa kufanikiwa"
 
 #: corehq/apps/integration/payments/services.py
+msgid "Only payments in '{}' or '{}' state are eligible for verification."
+msgstr ""
+"Malipo tu yaliyo katika hali ya '{}' au '{}' ndiyo yanayostahili "
+"kuthibitishwa."
+
+#: corehq/apps/integration/payments/services.py
 msgid "Invalid payee details"
 msgstr "Maelezo ya mpokeaji si sahihi"
 
@@ -33965,9 +34493,15 @@ msgstr "Malipo hayajathibitishwa"
 msgid "Payment has already been requested"
 msgstr "Malipo tayari yameombwa"
 
+#: corehq/apps/integration/payments/services.py
+msgid ""
+"Only payments in the '{}' state are eligible for verification reversal."
+msgstr ""
+"Malipo tu yaliyo katika hali ya '{}' ndiyo yanayostahili kubatilishwa "
+"uthibitisho wake."
+
 #: corehq/apps/integration/payments/tables.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
-#: corehq/apps/integration/templates/payments/payments_verify_report.html
 msgid "Verify Selected"
 msgstr "Thibitisha Ulioteuliwa"
 
@@ -34020,6 +34554,41 @@ msgstr "Haipatikani"
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
 msgid "Payments Verification Report"
 msgstr "Ripoti ya Uthibitisho wa Malipo"
+
+#: corehq/apps/integration/payments/views.py
+msgid "One or more case IDs are required for verification."
+msgstr "ID moja au zaidi za kesi zinahitajika kwa uthibitisho."
+
+#: corehq/apps/integration/payments/views.py
+#, fuzzy
+#| msgid "You can only have 3 alerts activated at any one time"
+msgid "You can only verify for up to {} cases at a time."
+msgstr "Unaweza kuwa na arifa 3 pekee zimewashwa kwa wakati mmoja"
+
+#: corehq/apps/integration/payments/views.py
+msgid ""
+"Revert verification request is in progress for your project. Please try "
+"again after some time."
+msgstr ""
+"Ombi la kubatilisha uthibitisho linaendelea kwa mradi wako. Tafadhali jaribu"
+" tena baada ya muda."
+
+#: corehq/apps/integration/payments/views.py
+msgid ""
+"Payment submissions are currently active for your project and should be "
+"completed shortly. Please try again later."
+msgstr ""
+"Uwasilishaji wa malipo kwa sasa unaendelea kwa mradi wako na unapaswa "
+"kukamilika hivi karibuni. Tafadhali jaribu tena baadaye."
+
+#: corehq/apps/integration/payments/views.py
+msgid "One or more case IDs are required to revert verification."
+msgstr "ID moja au zaidi za kesi zinahitajika kubatilisha uthibitisho."
+
+#: corehq/apps/integration/payments/views.py
+msgid "You can only revert verification for up to {} cases at a time."
+msgstr ""
+"Unaweza kubatilisha uthibitisho kwa kesi hadi {} kwa wakati mmoja pekee."
 
 #: corehq/apps/integration/payments/views.py
 msgid "Payments Configuration"
@@ -34224,8 +34793,23 @@ msgid "Confirm Payments"
 msgstr "Thibitisha Malipo"
 
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 msgid "Are you sure you want to proceed with the selected payments?"
 msgstr "Je, una uhakika unataka kuendelea na malipo uliyochagua?"
+
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_alert.html
+msgid ""
+"Successfully reverted verification for selected record(s). Updated status "
+"will reflect shortly."
+msgstr ""
+"Umefanikiwa kubatilisha uthibitisho kwa rekodi zilizochaguliwa. Hali "
+"iliyosasishwa itaonekana hivi karibuni."
+
+#: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
+#, fuzzy
+#| msgid "Verification Pending"
+msgid "Revert Verification of Pending Payments"
+msgstr "Uthibitisho Unasubiri"
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, fuzzy, python-format
@@ -34236,8 +34820,8 @@ msgstr "Je, una uhakika unataka kuendelea na malipo uliyochagua?"
 #| "    "
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s records for payments!\n"
-"      Verification status for these will be refreshed in a few seconds.\n"
+"      Successfully verified %(success_count)s records for payments! Updated\n"
+"      status will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
@@ -36619,15 +37203,24 @@ msgstr ""
 "ya kukusaidia."
 
 #: corehq/apps/registration/forms.py
-msgid "My CommCare Project"
+#, fuzzy
+#| msgid "Name Your First Project"
+msgid "Name Your Project"
+msgstr "Taja Mradi Wako wa Kwanza"
+
+#: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid "My CommCare Project"
+msgid "e.g. — My CommCare Project"
 msgstr "Mradi Wangu wa CommCare"
 
 #: corehq/apps/registration/forms.py
 msgid ""
-"Important: This will be used to create a project URL, and you will not be "
-"able to change it in the future."
+"<i class=\"fa-solid fa-triangle-exclamation\"></i> Your project name sets "
+"the URL. This cannot be changed later."
 msgstr ""
-"Muhimu: Hii itatumika kuunda URL ya mradi, na hutoweza kubadilisha baadaye."
+"<i class=\\\"fa-solid fa-triangle-exclamation\\\"></i> Jina la mradi wako "
+"linaweka URL. Hili haliwezi kubadilishwa baadaye."
 
 #: corehq/apps/registration/forms.py
 msgid "Create Project"
@@ -36754,10 +37347,16 @@ msgstr ""
 "    "
 
 #: corehq/apps/registration/templates/registration/confirmation_sent.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Please visit the link provided in the email to activate your account,\n"
+#| "      so you can start using your new CommCare HQ project!\n"
+#| "    "
 msgid ""
 "\n"
 "      Please visit the link provided in the email to activate your account,\n"
-"      so you can start using your new CommCare HQ project!\n"
+"      so you can start using your new CommCare project!\n"
 "    "
 msgstr ""
 "\n"
@@ -36770,10 +37369,15 @@ msgid "Waiting for Confirmation"
 msgstr "Inasubiri Uthibitisho"
 
 #: corehq/apps/registration/templates/registration/confirmation_waiting.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      Thank you for requesting a new CommCare HQ project:\n"
+#| "      <strong>%(requested_domain)s</strong>.\n"
+#| "    "
 msgid ""
 "\n"
-"      Thank you for requesting a new CommCare HQ project:\n"
+"      Thank you for requesting a new CommCare project:\n"
 "      <strong>%(requested_domain)s</strong>.\n"
 "    "
 msgstr ""
@@ -36793,10 +37397,14 @@ msgstr ""
 "    "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Welcome to CommCare HQ, %(first_name)s!\n"
+#| "          "
 msgid ""
 "\n"
-"            Welcome to CommCare HQ, %(first_name)s!\n"
+"            Welcome to CommCare HQ, %(name)s!\n"
 "          "
 msgstr ""
 "\n"
@@ -36826,10 +37434,14 @@ msgstr ""
 "            "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Let's add a new project, %(first_name)s.\n"
+#| "          "
 msgid ""
 "\n"
-"            Let's add a new project, %(first_name)s.\n"
+"            Let's add a new project, %(name)s!\n"
 "          "
 msgstr ""
 "\n"
@@ -36849,18 +37461,6 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
-"              Create a project space below as a separate sandbox for new\n"
-"              applications, users, and form submissions.\n"
-"            "
-msgstr ""
-"\n"
-"              Unda nafasi ya mradi hapa chini kama sehemu tofauti ya majaribio kwa\n"
-"              programu mpya, watumiaji, na uwasilishaji wa fomu.\n"
-"            "
-
-#: corehq/apps/registration/templates/registration/domain_request.html
-msgid ""
-"\n"
 "                You have been invited to the following project spaces:\n"
 "              "
 msgstr ""
@@ -36869,44 +37469,141 @@ msgstr ""
 "              "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-msgid "Create a New Project Space"
+#, fuzzy
+#| msgid "Create a New Project Space"
+msgid "Your New Project Space"
 msgstr "Unda Nafasi Mpya ya Mradi"
 
 #: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
 msgid ""
 "\n"
-"            Your project space contains all form submissions from your CommCare\n"
-"            mobile applications and tools to help you easily create, deploy, and monitor\n"
-"            your applications and workers.\n"
+"            A\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2932637701/Project+Space+Overview\"\n"
+"              target=\"_blank\"\n"
+"              ><b>project space</b></a\n"
+"            >\n"
+"            is your top-level environment in CommCare. It's where you build\n"
+"            applications, manage users, track data, and configure settings.\n"
 "          "
 msgstr ""
 "\n"
-"            Nafasi yako ya mradi inajumuisha mawasilisho yote ya fomu kutoka kwa programu zako za simu za CommCare\n"
-"            na zana za kukusaidia kuunda, kuweka, na kufuatilia\n"
-"            programu na wafanyakazi wako kwa urahisi.\n"
-"          "
+"                Jifunze zaidi kuhusu uhamishaji kwenye <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">Tovuti ya Msaada</a> yetu.\n"
+"            "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    Deprecating this case property may result in unintended behaviour, and so\n"
+#| "                    it is advised to first change the selected custom case property in\n"
+#| "                    <a href=\"%(geospatial_settings_url)s\">\n"
+#| "                        geospatial settings\n"
+#| "                    </a>\n"
+#| "                    before deprecating this case property.\n"
+#| "                    "
 msgid ""
 "\n"
-"                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.\n"
-"              "
+"                    All new projects start on CommCare's free edition. Once you\n"
+"                    create a new project, you can\n"
+"                    <a href=\"%(pricing_page_url)s\" target=\"_blank\"\n"
+"                      ><b>upgrade</b></a\n"
+"                    >\n"
+"                    your subscription.\n"
+"                  "
 msgstr ""
 "\n"
-"                <strong>Tafadhali kumbuka:</strong> Nafasi hii ya mradi haitakuwa sehemu ya usajili uliopo mara moja.\n"
-"              "
+"                    Kusitisha matumizi ya sifa hii ya kesi kunaweza kusababisha tabia isiyotarajiwa, hivyo\n"
+"                    inapendekezwa kwanza kubadilisha sifa maalum ya kesi iliyochaguliwa katika\n"
+"                    <a href=\"%(geospatial_settings_url)s\">\n"
+"                        mipangilio ya kijiografia\n"
+"                    </a>\n"
+"                    kabla ya kusitisha matumizi ya sifa hii ya kesi.\n"
+"                    "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to permanently delete\n"
+#| "                  <strong>%(friendly_name)s</strong>?\n"
+#| "                "
 msgid ""
 "\n"
-"                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Learn more about CommCare Enterprise</a>\n"
-"                if you would like to link project spaces together under one account.\n"
-"              "
+"                      This project will be hosted on the\n"
+"                      <strong>%(server_location)s cloud</strong>.\n"
+"                    "
 msgstr ""
 "\n"
-"                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Jifunze zaidi kuhusu CommCare Enterprise</a>\n"
-"                ikiwa ungependa kuunganisha nafasi za miradi chini ya akaunti moja.\n"
-"              "
+"                  Una uhakika unataka kufuta kabisa\n"
+"                  <strong>%(friendly_name)s</strong>?\n"
+"                "
+
+#: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    This subscription will be paused on %(next_date)s.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      This project will be hosted on a private cloud.\n"
+"                    "
+msgstr ""
+"\n"
+"                    Usajili huu utasitishwa tarehe %(next_date)s.\n"
+"                  "
+
+#: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                  <p>Checking this will add a button to download a configuration file\n"
+#| "                                     for the <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
+#| "                                     CommCare Data Export Tool</a> for the export.</p>\n"
+#| "                                 "
+msgid ""
+"\n"
+"                    To select a different\n"
+"                    <a\n"
+"                      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+"                      target=\"_blank\"\n"
+"                      ><b>cloud location</b></a\n"
+"                    >, log into that location's site before creating your\n"
+"                    project:\n"
+"                  "
+msgstr ""
+"\n"
+"                                  <p>Ukichagua hii utaongeza kitufe cha kupakua faili ya usanidi\n"
+"                                     kwa <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
+"                                     Zana ya Usafirishaji Data ya CommCare</a> kwa ajili ya usafirishaji huu.</p>\n"
+"                                 "
+
+#: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Will delete <strong>all</strong> of %(friendly_name)s's\n"
+#| "                    form submissions.\n"
+#| "                  "
+msgid ""
+"\n"
+"                    Please note: Projects <strong>cannot</strong> be transferred\n"
+"                    between cloud locations after creation.\n"
+"                  "
+msgstr ""
+"\n"
+"                    Itafuta <strong>fomu zote</strong> zilizowasilishwa na %(friendly_name)s.\n"
+"                  "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/_base.html
 msgid ""
@@ -36921,10 +37618,14 @@ msgstr ""
 "          "
 
 #: corehq/apps/registration/templates/registration/email/confirm_account.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Almost there, %(full_name)s--please activate your CommCare HQ Account!\n"
+#| "  "
 msgid ""
 "\n"
-"    Almost there, %(full_name)s--please activate your CommCare HQ Account!\n"
+"    Almost there, %(full_name)s--please activate your CommCare Account!\n"
 "  "
 msgstr ""
 "\n"
@@ -37024,10 +37725,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Dear %(full_name)s, please visit your CommCare HQ Account on a desktop!\n"
+#| "  "
 msgid ""
 "\n"
-"    Dear %(full_name)s, please visit your CommCare HQ Account on a desktop!\n"
+"    Dear %(full_name)s, please visit your CommCare Account on a desktop!\n"
 "  "
 msgstr ""
 "\n"
@@ -37045,9 +37750,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Visit CommCare HQ\n"
+#| "  "
 msgid ""
 "\n"
-"    Visit CommCare HQ\n"
+"    Visit CommCare\n"
 "  "
 msgstr ""
 "\n"
@@ -37055,10 +37765,16 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    This email has been sent as a reminder for you to visit your\n"
+#| "    CommCare HQ project space on a laptop or desktop computer.\n"
+#| "  "
 msgid ""
 "\n"
 "    This email has been sent as a reminder for you to visit your\n"
-"    CommCare HQ project space on a laptop or desktop computer.\n"
+"    CommCare project space on a laptop or desktop computer.\n"
 "  "
 msgstr ""
 "\n"
@@ -37181,9 +37897,14 @@ msgid "-The %(hq_name)s team"
 msgstr "-Timu ya %(hq_name)s"
 
 #: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Reset your password on CommCare HQ!\n"
+#| "  "
 msgid ""
 "\n"
-"    Reset your password on CommCare HQ!\n"
+"    Reset your password on CommCare!\n"
 "  "
 msgstr ""
 "\n"
@@ -37211,9 +37932,14 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Someone requested a password reset for your email on CommCare HQ.\n"
+#| "  "
 msgid ""
 "\n"
-"    Someone requested a password reset for your email on CommCare HQ.\n"
+"    Someone requested a password reset for your email on CommCare.\n"
 "  "
 msgstr ""
 "\n"
@@ -37241,7 +37967,9 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
-msgid "Reset Password on CommCare HQ"
+#, fuzzy
+#| msgid "Reset Password on CommCare HQ"
+msgid "Reset Password on CommCare"
 msgstr "Weka Nenosiri Upya kwenye CommCare HQ"
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
@@ -37404,10 +38132,16 @@ msgid "An email was just sent to"
 msgstr "Barua pepe imetumwa kwa"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/success.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please visit the link provided <strong>from your desktop computer</strong> to activate your account,\n"
+#| "        so you can start using your new CommCare HQ project!\n"
+#| "      "
 msgid ""
 "\n"
 "        Please visit the link provided <strong>from your desktop computer</strong> to activate your account,\n"
-"        so you can start using your new CommCare HQ project!\n"
+"        so you can start using your new CommCare project!\n"
 "      "
 msgstr ""
 "\n"
@@ -37416,10 +38150,16 @@ msgstr ""
 "      "
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/success.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        <strong>Please visit the link provided in the email to activate your account,</strong>\n"
+#| "        so you can start using your new CommCare HQ project!\n"
+#| "      "
 msgid ""
 "\n"
 "        <strong>Please visit the link provided in the email to activate your account,</strong>\n"
-"        so you can start using your new CommCare HQ project!\n"
+"        so you can start using your new CommCare project!\n"
 "      "
 msgstr ""
 "\n"
@@ -37684,22 +38424,25 @@ msgstr "Unaweza kuona sajili ya data kupitia kiungo hiki: "
 #: corehq/apps/registry/templates/registry/email/access_granted.html
 #: corehq/apps/registry/templates/registry/email/invitation.html
 #: corehq/apps/registry/templates/registry/email/invitation_response.html
-msgid "Thank you for using CommCare."
-msgstr "Asante kwa kutumia CommCare."
-
-#: corehq/apps/registry/templates/registry/email/access_granted.html
-#: corehq/apps/registry/templates/registry/email/invitation.html
-#: corehq/apps/registry/templates/registry/email/invitation_response.html
-msgid "Best regards, <br /> The CommCare HQ Team  <br /> www.commcarehq.org"
+#, fuzzy
+#| msgid ""
+#| "Best regards, <br /> The CommCare HQ Team  <br /> www.commcarehq.org"
+msgid "Best regards, <br /> The CommCare Team  <br /> www.commcarehq.org"
 msgstr "Wako mwaminifu, <br /> Timu ya CommCare HQ  <br /> www.commcarehq.org"
 
 #: corehq/apps/registry/templates/registry/email/access_granted.txt
 #: corehq/apps/registry/templates/registry/email/invitation.txt
 #: corehq/apps/registry/templates/registry/email/invitation_response.txt
+#, fuzzy
+#| msgid ""
+#| "Thank you for using CommCare.\n"
+#| "Best regards,\n"
+#| "The CommCare HQ Team\n"
+#| "www.commcarehq.org"
 msgid ""
 "Thank you for using CommCare.\n"
 "Best regards,\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "www.commcarehq.org"
 msgstr ""
 "Asante kwa kutumia CommCare.\n"
@@ -38948,6 +39691,30 @@ msgstr "%s na Wengine"
 
 #: corehq/apps/reports/filters/users.py
 #, fuzzy
+#| msgid "# Active Users"
+msgid "Active Web User"
+msgstr "# Watumiaji Hai"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Show Deactivated Mobile Workers"
+msgid "Deactivated Web User"
+msgstr "Onyesha Wafanyakazi wa Simu Waliokatishwa"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Active Mobile Workers"
+msgid "Active Mobile Worker"
+msgstr "Wafanyakazi Wanaotumia Simu Waliopo"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
+#| msgid "Deactivated Mobile Workers"
+msgid "Deactivated Mobile Worker"
+msgstr "Wafanyakazi Waliotumia Simu Waliopunguzwa"
+
+#: corehq/apps/reports/filters/users.py
+#, fuzzy
 #| msgid ""
 #| "When searching by location, put your location name in quotes to show only "
 #| "exact matches. To more easily find a location, you may specify multiple "
@@ -39943,10 +40710,6 @@ msgstr "imetumwa kabla ya kukamilika [ajabu]"
 #: corehq/apps/reports/standard/monitoring.py
 msgid "same"
 msgstr "sawa"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Worker Activity"
-msgstr "Shughuli za Mfanyakazi"
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Summary of form and case activity by user or group."
@@ -41562,10 +42325,14 @@ msgid "Unsubscribe from this report"
 msgstr "Jiondoe kwenye ripoti hii"
 
 #: corehq/apps/reports/templates/reports/report_email_content.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      This is a %(report_type)s from <a href=\"%(DNS_name)s\">CommCare HQ</a> for the project '%(domain)s'.\n"
+#| "    "
 msgid ""
 "\n"
-"      This is a %(report_type)s from <a href=\"%(DNS_name)s\">CommCare HQ</a> for the project '%(domain)s'.\n"
+"      This is a %(report_type)s from <a href=\"%(DNS_name)s\">CommCare</a> for the project '%(domain)s'.\n"
 "    "
 msgstr ""
 "\n"
@@ -41593,10 +42360,15 @@ msgstr ""
 "            "
 
 #: corehq/apps/reports/templates/reports/report_email_content.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      You are receiving this automated email from <a href=\"%(DNS_name)s\">CommCare HQ</a>\n"
+#| "      because the user %(owner_name)s added you as a recipient of their report.\n"
+#| "    "
 msgid ""
 "\n"
-"      You are receiving this automated email from <a href=\"%(DNS_name)s\">CommCare HQ</a>\n"
+"      You are receiving this automated email from <a href=\"%(DNS_name)s\">CommCare</a>\n"
 "      because the user %(owner_name)s added you as a recipient of their report.\n"
 "    "
 msgstr ""
@@ -42228,7 +43000,18 @@ msgid "Phone Numbers"
 msgstr "Nambari za Simu"
 
 #: corehq/apps/settings/templates/settings/email/about_to_expire_api_key.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s. Go to %(url)s to generate\n"
+#| "    a new key if needed.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -42238,7 +43021,7 @@ msgid ""
 "\n"
 "  <p>\n"
 "    Thanks,<br />\n"
-"    CommCare HQ\n"
+"    CommCare\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -42253,14 +43036,21 @@ msgstr ""
 "  </p>\n"
 
 #: corehq/apps/settings/templates/settings/email/about_to_expire_api_key.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s.\n"
+#| "Go to %(url)s to generate a new key if needed.\n"
+#| "\n"
+#| "Thanks,\n"
+#| "CommCare HQ\n"
 msgid ""
 "\n"
 "Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s.\n"
 "Go to %(url)s to generate a new key if needed.\n"
 "\n"
 "Thanks,\n"
-"CommCare HQ\n"
+"CommCare\n"
 msgstr ""
 "\n"
 "Ufunguo wako wa api \"%(key_name)s\" (ulitumiwa mwisho: %(last_used)s) utaisha tarehe %(expiration_date)s.\n"
@@ -43613,7 +44403,21 @@ msgid "Request Messaging Consent"
 msgstr "Omba Idhini ya Ujumbe"
 
 #: corehq/apps/sms/templates/sms/email/new_sms_user.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    A new user %(username)s registered for project %(domain)s through SMS.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    To modify, update or remove this user click <a href=\"%(url)s\">here</a>\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -43626,7 +44430,7 @@ msgid ""
 "\n"
 "  <p>\n"
 "    Thanks,<br />\n"
-"    CommCare HQ\n"
+"    CommCare\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -45119,7 +45923,21 @@ msgstr ""
 "  "
 
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear enterprise administrator,\n"
+#| "\n"
+#| "The API Secret for your Identity Provider \"%(idp_name)s\" expires soon!\n"
+#| "If a new API Secret is not created, the Remote User Management functionality for your Identity Provider will stop working on: %(expires_on)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -45132,7 +45950,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -45165,7 +45983,22 @@ msgstr ""
 "  "
 
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear enterprise administrator,\n"
+#| "\n"
+#| "The certificate for your Identity Provider %(idp_name)s expires soon!\n"
+#| "If the certificate is not renewed, any single sign-on authentication using this\n"
+#| "IdP will stop working %(expires_on)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -45179,7 +46012,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -45234,7 +46067,23 @@ msgstr ""
 "  "
 
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Dear enterprise administrator,\n"
+#| "\n"
+#| "We have temporarily skipped automatic deactivation of SSO-managed Web Users for the following reason:\n"
+#| "%(failure_reason)s\n"
+#| "\n"
+#| "Please check the configuration for Remote User Management in your Identity Provider settings.\n"
+#| "\n"
+#| "If you have any questions, or if this issue persists, please don’t hesitate to contact %(contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare HQ Team\n"
+#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -45249,7 +46098,7 @@ msgid ""
 "\n"
 "Best regards,\n"
 "\n"
-"The CommCare HQ Team\n"
+"The CommCare Team\n"
 "%(base_url)s\n"
 msgstr ""
 "\n"
@@ -49619,6 +50468,42 @@ msgstr "Idadi ya watumiaji imefikia kikomo cha Mpango kwa {}"
 msgid "User count has reached 90% of the Plan limit for {}"
 msgstr ""
 
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "1 Month"
+msgstr "Mwezi"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "2 Months"
+msgstr "Mwezi"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "3 Months"
+msgstr "Mwezi"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "6 Months"
+msgstr "Mwezi"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "9 Months"
+msgstr "Mwezi"
+
+#: corehq/apps/users/models.py
+#, fuzzy
+#| msgid "Month"
+msgid "12 Months"
+msgstr "Mwezi"
+
 #: corehq/apps/users/permissions.py
 msgid "Export De-Identified Data"
 msgstr "Hamisha Data Isiyoweza Kutambulika"
@@ -49918,10 +50803,14 @@ msgid "You are already signed in."
 msgstr "Umeingia tayari."
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  To accept this invitation, you must first <a href=\"%(sign_out_url)s\">sign out</a>.\n"
+#| "                "
 msgid ""
 "\n"
-"                  To accept this invitation, you must first <a href=\"%(sign_out_url)s\">sign out</a>.\n"
+"                  To accept this invitation, you must first sign out.\n"
 "                "
 msgstr ""
 "\n"
@@ -50411,7 +51300,21 @@ msgid "Update Tableau Configuration"
 msgstr "Sasisha Mpangilio wa Tableau"
 
 #: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    You have successfully confirmed the account %(new_mobile_worker)s for the\n"
+#| "    project space %(domain)s.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    If you think you have received this by mistake, you can go ahead and ignore\n"
+#| "    this email.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Thank you,<br />\n"
+#| "    The CommCare HQ Team\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -50424,7 +51327,7 @@ msgid ""
 "  </p>\n"
 "  <p>\n"
 "    Thank you,<br />\n"
-"    The CommCare HQ Team\n"
+"    The CommCare Team\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -50442,7 +51345,21 @@ msgstr ""
 "  </p>\n"
 
 #: corehq/apps/users/templates/users/email/new_domain_request.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Your request to join %(domain_name)s has been approved.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    You may now visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -50455,7 +51372,7 @@ msgid ""
 "\n"
 "  <p>\n"
 "    Thanks,<br />\n"
-"    CommCare HQ\n"
+"    CommCare\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -50473,7 +51390,15 @@ msgstr ""
 "  </p>\n"
 
 #: corehq/apps/users/templates/users/email/new_domain_request.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Your request to join %(domain_name)s has been approved.\n"
+#| "\n"
+#| "You may now visit %(url)s.\n"
+#| "\n"
+#| "Thanks,\n"
+#| "CommCare HQ\n"
 msgid ""
 "\n"
 "Your request to join %(domain_name)s has been approved.\n"
@@ -50481,7 +51406,7 @@ msgid ""
 "You may now visit %(url)s.\n"
 "\n"
 "Thanks,\n"
-"CommCare HQ\n"
+"CommCare\n"
 msgstr ""
 "\n"
 "Ombi lako la kujiunga na %(domain_name)s limeidhinishwa.\n"
@@ -50492,7 +51417,21 @@ msgstr ""
 "CommCare HQ\n"
 
 #: corehq/apps/users/templates/users/email/request_domain_access.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    %(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    To approve or delete this request, visit %(url)s.\n"
+#| "  </p>\n"
+#| "\n"
+#| "  <p>\n"
+#| "    Thanks,<br />\n"
+#| "    CommCare HQ\n"
+#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -50505,7 +51444,7 @@ msgid ""
 "\n"
 "  <p>\n"
 "    Thanks,<br />\n"
-"    CommCare HQ\n"
+"    CommCare\n"
 "  </p>\n"
 msgstr ""
 "\n"
@@ -50523,7 +51462,15 @@ msgstr ""
 "  </p>\n"
 
 #: corehq/apps/users/templates/users/email/request_domain_access.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "%(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
+#| "\n"
+#| "To approve or delete this request, visit %(url)s.\n"
+#| "\n"
+#| "Thanks,\n"
+#| "CommCare HQ\n"
 msgid ""
 "\n"
 "%(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
@@ -50531,7 +51478,7 @@ msgid ""
 "To approve or delete this request, visit %(url)s.\n"
 "\n"
 "Thanks,\n"
-"CommCare HQ\n"
+"CommCare\n"
 msgstr ""
 "\n"
 "%(full_name)s (%(email)s) ameomba kufikia %(domain_name)s kama mtumiaji wa tovuti.\n"
@@ -52584,32 +53531,6 @@ msgstr "Nenosiri la {} limewekwa upya kwa mafanikio. Sasa unaweza kuingia."
 #| msgid "Send Account Confirmaton SMS"
 msgid "Successful account confirmation for {}"
 msgstr "Tuma SMS ya Uthibitisho wa Akaunti"
-
-#: corehq/apps/users/views/mobile/users.py
-#, fuzzy
-#| msgid ""
-#| "The user account associated with this email address cannot reset the "
-#| "password."
-msgid "This user is inactive and cannot reset their password."
-msgstr ""
-"Akaunti ya mtumiaji inayohusishwa na anwani hii ya barua pepe haiwezi kuweka"
-" upya nenosiri."
-
-#: corehq/apps/users/views/mobile/users.py
-#, fuzzy
-#| msgid ""
-#| "The user account associated with this email address cannot reset the "
-#| "password."
-msgid "This user account cannot reset the password."
-msgstr ""
-"Akaunti ya mtumiaji inayohusishwa na anwani hii ya barua pepe haiwezi kuweka"
-" upya nenosiri."
-
-#: corehq/apps/users/views/mobile/users.py
-#, fuzzy
-#| msgid "Recipient has no email address."
-msgid "This user does not have an email address set."
-msgstr "Mpokeaji hana anwani ya barua pepe."
 
 #: corehq/apps/users/views/mobile/users.py
 #, fuzzy
@@ -57429,15 +58350,23 @@ msgstr "Tazama Matukio Yote"
 msgid "Manage Attendance Tracking Events"
 msgstr "Simamia Matukio ya Ufuatiliaji wa Mahudhurio"
 
+#: corehq/util/auth.py
+#, fuzzy
+#| msgid "Algorithms"
+msgid "algorithm"
+msgstr "Algoriti"
+
+#: corehq/util/auth.py
+msgid "salt"
+msgstr "chumvi"
+
+#: corehq/util/auth.py
+msgid "hash"
+msgstr "hashi"
+
 #: corehq/util/context_processors.py
 msgid "US"
 msgstr "US"
-
-#: corehq/util/context_processors.py
-#, fuzzy
-#| msgid "Indices"
-msgid "India"
-msgstr "Manejo de Casos"
 
 #: corehq/util/context_processors.py
 msgid "EU"
@@ -58118,6 +59047,117 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ.\n"
+#~ "    This invitation expires in %(days)s day(s).\n"
+#~ msgstr ""
+#~ "\n"
+#~ "    %(inviter)s amekualika kujiunga na mradi wa %(domain)s kwenye CommCare HQ.\n"
+#~ "    Mwaliko huu unaisha baada ya siku %(days)s.\n"
+
+#~ msgid "-The CommCare HQ team"
+#~ msgstr "-Timu ya CommCare HQ"
+
+#~ msgid "Thank you for using CommCare HQ."
+#~ msgstr "Asante kwa kutumia CommCare HQ."
+
+#~ msgid "Step {} of {}"
+#~ msgstr "Hatua {} ya {}"
+
+#, fuzzy
+#~ msgid "Server Location"
+#~ msgstr "Eneo la Mtumiaji"
+
+#, fuzzy
+#~ msgid "Revert Verification"
+#~ msgstr "Uthibitisho wa Simu"
+
+#~ msgid ""
+#~ "Important: This will be used to create a project URL, and you will not be "
+#~ "able to change it in the future."
+#~ msgstr ""
+#~ "Muhimu: Hii itatumika kuunda URL ya mradi, na hutoweza kubadilisha baadaye."
+
+#~ msgid ""
+#~ "\n"
+#~ "              Create a project space below as a separate sandbox for new\n"
+#~ "              applications, users, and form submissions.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Unda nafasi ya mradi hapa chini kama sehemu tofauti ya majaribio kwa\n"
+#~ "              programu mpya, watumiaji, na uwasilishaji wa fomu.\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "            Your project space contains all form submissions from your CommCare\n"
+#~ "            mobile applications and tools to help you easily create, deploy, and monitor\n"
+#~ "            your applications and workers.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Nafasi yako ya mradi inajumuisha mawasilisho yote ya fomu kutoka kwa programu zako za simu za CommCare\n"
+#~ "            na zana za kukusaidia kuunda, kuweka, na kufuatilia\n"
+#~ "            programu na wafanyakazi wako kwa urahisi.\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                <strong>Tafadhali kumbuka:</strong> Nafasi hii ya mradi haitakuwa sehemu ya usajili uliopo mara moja.\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Learn more about CommCare Enterprise</a>\n"
+#~ "                if you would like to link project spaces together under one account.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Jifunze zaidi kuhusu CommCare Enterprise</a>\n"
+#~ "                ikiwa ungependa kuunganisha nafasi za miradi chini ya akaunti moja.\n"
+#~ "              "
+
+#~ msgid "Estimated annual expenditures on airtime:"
+#~ msgstr "Makadirio ya matumizi ya kila mwaka kwenye muda wa maongezi:"
+
+#~ msgid "Estimated annual expenditures on devices:"
+#~ msgstr "Makadirio ya matumizi ya kila mwaka kwenye vifaa:"
+
+#~ msgid ""
+#~ "We grant pro-bono subscriptions to match the duration of your project, up to"
+#~ " a maximum of 12 months at a time (at which point you need to reapply)."
+#~ msgstr ""
+#~ "Tunatoa usajili wa bure kulingana na muda wa mradi wako, hadi miezi 12 kwa "
+#~ "wakati mmoja (baada ya hapo utahitaji kuomba tena)."
+
+#~ msgid ""
+#~ "If you have already been in touch with someone from Dimagi, please list "
+#~ "their name."
+#~ msgstr ""
+#~ "Ikiwa tayari umezungumza na mtu kutoka Dimagi, tafadhali orodhesha jina lao."
+
+#~ msgid "Number of expected users"
+#~ msgstr "Idadi ya watumiaji unaotarajia"
+
+#~ msgid "Pro-Bono Application"
+#~ msgstr "Maombi ya Pro-Bono"
+
+#~ msgid "Submit Pro-Bono Application"
+#~ msgstr "Tuma Maombi ya Pro-Bono"
+
+#~ msgid ""
+#~ "Thank you for your submission.  A representative will be in contact with you"
+#~ " shortly."
+#~ msgstr ""
+#~ "Asante kwa mawasilisho yako. Mwakilishi atawasiliana nawe hivi karibuni."
 
 #~ msgid "Printing"
 #~ msgstr "Uchapishaji"

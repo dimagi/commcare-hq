@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,9 +1,9 @@
+@@ -1,10 +1,10 @@
 -// Core requirements for Bootstrap 3 Webpack Entry Modules
 +// Core requirements for Bootstrap 5 Webpack Entry Modules
  import ko from 'knockout';
@@ -14,3 +14,4 @@
 -import 'hqwebapp/js/bootstrap3/base_main';
 +import 'hqwebapp/js/bootstrap5/common';
 +import 'hqwebapp/js/bootstrap5/base_main';
+ import 'open-chat-studio-widget';

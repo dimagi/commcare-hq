@@ -24,6 +24,8 @@ MAX_ATTEMPTS = 3
 #       being conflated with MAX_ATTEMPTS.
 MAX_BACKOFF_ATTEMPTS = 6
 
+COMMCARE_CONNECT_URL = 'https://connect.dimagi.com/api/receiver/'
+
 
 class State(IntegerChoices):
     # powers of two to allow multiple simultaneous states (not currently used)
