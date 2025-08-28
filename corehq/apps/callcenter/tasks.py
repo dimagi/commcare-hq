@@ -13,7 +13,6 @@ from corehq.apps.callcenter.utils import (
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 
 logger = get_task_logger(__name__)
 
@@ -46,8 +45,6 @@ def calculate_indicators():
 
 
 def sync_web_user_usercases_if_applicable(user, domain):
-    if not USH_USERCASES_FOR_WEB_USERS.enabled(domain):
-        return
     domain_obj = Domain.get_by_name(domain)
     if domain_obj.usercase_enabled:
         sync_usercases_task.delay(user._id, domain)
