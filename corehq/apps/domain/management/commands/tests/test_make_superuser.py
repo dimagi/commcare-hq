@@ -7,21 +7,22 @@ from django.test import SimpleTestCase
 from corehq.apps.users.models import FakeUser
 
 
+@patch("corehq.apps.domain.management.commands.make_superuser.Command.grant_all_tags_edit_permissions")
 class TestEmailValidation(SimpleTestCase):
     """Tests the expected behavior of the management command's use of the
     `email_validator` library.
     """
 
-    def test_make_superuser(self):
+    def test_make_superuser(self, *args):
         with patch_fake_webuser():
             call_command("make_superuser", "test@dimagi.com")  # does not raise
 
-    def test_make_superuser_allows_special_domains(self):
+    def test_make_superuser_allows_special_domains(self, *args):
         # as-built with email_validator version 1.1.3
         with patch_fake_webuser():
             call_command("make_superuser", "test@example.com")  # does not raise
 
-    def test_make_superuser_rejects_invalid_email_syntax(self):
+    def test_make_superuser_rejects_invalid_email_syntax(self, *args):
         with patch_fake_webuser(), self.assertRaises(CommandError) as test:
             call_command("make_superuser", "somebody_at_dimagi.com")
         self.assertIsInstance(test.exception.__cause__, ValidationError)
