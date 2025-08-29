@@ -125,6 +125,7 @@ def pkce_required(client_id):
 class ServerLocation:
     INDIA = 'india'
     PRODUCTION = 'production'
+    STAGING = 'staging'
 
     ENVS = {
         INDIA: {
@@ -138,6 +139,12 @@ class ServerLocation:
             'long_name': _("United States"),
             'short_name': _("US"),
             'subdomain': 'www',
+        },
+        STAGING: {
+            'country_code': 'un',
+            'long_name': _("[Test] Staging"),
+            'short_name': _("Staging"),
+            'subdomain': 'staging',
         },
     }
 
