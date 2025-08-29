@@ -64,6 +64,13 @@
           class="control form-control"
           data-bind="options: $parent.geoProperties, value: table.selected_geo_property">
         </select>
+        <div class="text-danger" data-bind="if: $parent.geoPropertyError()">
+          {% blocktrans %}
+            No case properties have the data type "GPS". To select a GPS case
+            property here, use the Data Dictionary to set the data type of one
+            or more case properties to "GPS".
+          {% endblocktrans %}
+        </div>
       </div>
       {% endif %}
 
