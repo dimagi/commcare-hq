@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.utils.decorators import method_decorator
 
 from memoized import memoized
 
@@ -6,12 +7,17 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.views.base import DomainViewMixin
+from corehq.apps.app_manager.decorators import require_can_edit_or_view_apps
 
 
 class ApplicationViewMixin(DomainViewMixin):
     """
     Helper for class-based views in app manager
     """
+
+    @method_decorator(require_can_edit_or_view_apps)
+    def dispatch(self, *args, **kwargs):
+        return super(ApplicationViewMixin, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
