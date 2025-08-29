@@ -107,7 +107,7 @@ class BulkEditRecord(models.Model):
         )
 
     @property
-    def should_reset_changes(self):
+    def should_reset_calculated_change_id(self):
         return self.changes.count() == 0 and self.calculated_change_id is not None
 
     def reset_changes(self, prop_id):
@@ -121,7 +121,7 @@ class BulkEditRecord(models.Model):
         if case.case_id != self.doc_id:
             raise ValueError("case.case_id doesn't match record.doc_id")
 
-        if self.should_reset_changes:
+        if self.should_reset_calculated_change_id:
             self.calculated_properties = None
             self.calculated_change_id = None
             self.save()
