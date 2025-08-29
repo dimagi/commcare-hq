@@ -212,7 +212,7 @@ class privilege_enabled:
     If you find that the import you need to be patched is not yet
     supported, add it to ``self.imports``.
     """
-    imports = (
+    imports = (  # (Alphabetical to reduce conflicts)
         'corehq.apps.app_manager.app_strings.domain_has_privilege',
         'corehq.apps.data_cleaning.decorators.domain_has_privilege',
         'corehq.apps.data_cleaning.utils.cases.domain_has_privilege',
