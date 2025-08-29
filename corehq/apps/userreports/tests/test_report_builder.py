@@ -179,6 +179,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             'user_id',
             'computed/owner_name',
             'computed/user_name',
+            'case_id',
         ]
         assert expected_property_names == list(builder.data_source_properties.keys())
         owner_name_prop = builder.data_source_properties['computed/owner_name']
@@ -245,6 +246,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             'registry_property',
             'computed/owner_name',
             'computed/user_name',
+            'case_id',
             'commcare_project',
         ]
         assert expected_property_names == list(builder.data_source_properties.keys())
@@ -343,18 +345,6 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
         first_name_prop = reference.data_source_properties['first_name']
         assert 'first_name' == first_name_prop.get_id()
         assert 'first_name' == first_name_prop.get_text()
-
-    @flag_enabled('SHOW_IDS_IN_REPORT_BUILDER')
-    def test_show_case_id(self):
-        case_data_source = get_case_data_source(self.app, self.case_type)
-        case_data_source.save()
-        builder = ApplicationCaseDataSourceHelper(
-            self.domain,
-            self.app,
-            DATA_SOURCE_TYPE_CASE,
-            self.case_type,
-        )
-        assert 'case_id' in builder.data_source_properties
 
 
 class ReportBuilderTest(ReportBuilderDBTest):

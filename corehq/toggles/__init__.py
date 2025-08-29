@@ -1555,13 +1555,6 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
-    'show_ids_in_report_builder',
-    'Allow adding Case IDs to report builder reports.',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-)
-
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
