@@ -14,6 +14,7 @@ from dimagi.utils.parsing import json_format_date
 import corehq.apps.events.tasks as attendance_tracking_tasks
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
+from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.exceptions import DomainDoesNotExist
@@ -369,6 +370,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ATTENDANCE_TRACKING: cls.response_add_attendance_coordinator_role,
+            privileges.USERCASE: cls.response_enable_usercase,
         }
         privs_to_respones.update({
             p: cls.response_report_builder
@@ -422,6 +424,11 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                     )
             except DataSourceConfigurationNotFoundError:
                 pass
+        return True
+
+    @staticmethod
+    def response_enable_usercase(project, new_plan_version):
+        enable_usercase(project.name)
         return True
 
 
