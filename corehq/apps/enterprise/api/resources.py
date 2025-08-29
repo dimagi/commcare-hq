@@ -14,7 +14,7 @@ from corehq.apps.accounting.utils.account import (
     get_account_or_404,
     request_has_permissions_for_enterprise_admin,
 )
-from corehq.apps.analytics.tasks import record_event
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.api.odata.utils import FieldMetadata
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
@@ -192,7 +192,7 @@ class ODataEnterpriseReportResource(ODataResource):
             return data
         elif status == ReportTaskProgress.STATUS_NEW:
             progress.start_task(self.get_report_task(request))
-            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+            record_google_analytics_event(ENTERPRISE_API_ACCESS, request.couch_user, {
                 'api_type': self.REPORT_SLUG
             })
 
@@ -432,7 +432,7 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
         converter = EnterpriseFormReportConverter()
         query_kwargs = converter.get_kwargs_from_map(request.GET)
         if converter.is_initial_query(request.GET):
-            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+            record_google_analytics_event(ENTERPRISE_API_ACCESS, request.couch_user, {
                 'api_type': self.REPORT_SLUG
             })
 

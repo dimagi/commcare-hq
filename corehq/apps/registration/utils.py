@@ -75,7 +75,7 @@ def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None, is_domain_admin=False,
     domain=None, ip=None, atypical_user=False, language=None, commit=True
 ):
-    from corehq.apps.analytics.tasks import record_event
+    from corehq.apps.analytics.tasks import record_google_analytics_event
     now = datetime.utcnow()
 
     new_user = WebUser.create(
@@ -113,7 +113,7 @@ def activate_new_user(
     # Engagement time appears necessary for this event to show up within GA debug view
     # (when 'debug_mode': '1' is also supplied)
     # Leaving engagement time in as there doesn't seem a good reason to remove it
-    record_event('backend_new_user', new_user, {'engagement_time_msec': 1000})
+    record_google_analytics_event('backend_new_user', new_user, {'engagement_time_msec': 1000})
 
     return new_user
 
