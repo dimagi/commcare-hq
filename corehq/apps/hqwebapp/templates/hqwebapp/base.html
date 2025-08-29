@@ -82,6 +82,24 @@
       {% block messages %}{% endblock %}
 
       {% block content %}{% endblock content %}
+      {% if request|feature_preview_enabled:"OCS_CHATBOT" %}
+        <div class="ocs-widget-container">
+          <open-chat-studio-widget
+            visible="false"
+            chatbot-id="5a912293-eccc-4cf8-8eff-207d99d59aeb"
+            icon-url="{% static 'hqwebapp/images/chatbot_avatar.png' %}"
+            button-text="{{ chat_widget_config.button_text }}"
+            position="right"
+            welcome-messages='["{{ chat_widget_config.welcome_message }}"]'
+            starter-questions="{{ chat_widget_config.starter_questions }}"
+            typing-indicator-text="{{ chat_widget_config.typing_indicator_text }}"
+            new-chat-confirmation-message="{{ chat_widget_config.new_chat_confirmation_message }}"
+            user-id="{{ request.couch_user.user_id }}"
+            user-name="{{ request.couch_user.username }}"
+            >
+          </open-chat-studio-widget>
+        </div>
+      {% endif %}
     </div>
 
     {% block footer %}{% endblock %}

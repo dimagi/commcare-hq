@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,43 +1,96 @@
+@@ -1,45 +1,98 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
@@ -16,6 +16,7 @@
 -@import "_hq/datetimepicker.less";
 -@import "_hq/facet.less";
 -@import "_hq/feedback.less";
+-@import "_hq/flag_icons.less";
 -@import "_hq/form_steps.less";
 -@import "_hq/forms.less";
 -@import "_hq/helpbubble.less";
@@ -44,6 +45,7 @@
 -@import "_hq/svg.less";
 -@import "_hq/utils.less";
 -@import "_hq/bootstrap5-temp.less";
+-@import "_hq/ocs_widget.less";
 +// Configuration
 +@import "functions";
 +@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults
@@ -119,6 +121,7 @@
 +@import "commcarehq/datetimepicker";
 +@import "commcarehq/facet";
 +@import "commcarehq/feedback";
++@import "commcarehq/flag_icons";
 +@import "commcarehq/form_steps";
 +@import "commcarehq/helpbubble";
 +@import "commcarehq/hubspot";
@@ -130,6 +133,7 @@
 +@import "commcarehq/list";
 +@import "commcarehq/mapbox";
 +@import "commcarehq/notifications";
++@import "commcarehq/ocs_widget";
 +@import "commcarehq/pagination";
 +@import "commcarehq/card";
 +@import "commcarehq/plan_notice";

@@ -317,15 +317,6 @@ def get_app_ids_in_domain(domain):
     )]
 
 
-def get_apps_by_id(domain, app_ids):
-    from .models import Application
-    from corehq.apps.app_manager.util import get_correct_app_class
-    if isinstance(app_ids, str):
-        app_ids = [app_ids]
-    docs = iter_docs(Application.get_db(), app_ids)
-    return [get_correct_app_class(doc).wrap(doc) for doc in docs]
-
-
 def get_build_ids_after_version(domain, app_id, version):
     """
     Returns ids of all an app's builds that are more recent than the given version.

@@ -1054,6 +1054,7 @@ define("cloudcare/js/form_entry/entries", [
     function ImageEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
         self.accept = "image/*";
     }
     ImageEntry.prototype = Object.create(FileEntry.prototype);
@@ -1066,6 +1067,7 @@ define("cloudcare/js/form_entry/entries", [
         var self = this;
         FileEntry.call(this, question, options);
         self.accept = ".pdf,.xlsx,.docx,.html,.txt,.rtf,.msg";
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
         self.acceptedMimeTypes = "application/*,text/*";
     }
     DocumentEntry.prototype = Object.create(FileEntry.prototype);
@@ -1077,6 +1079,7 @@ define("cloudcare/js/form_entry/entries", [
     function AudioEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
         self.accept = "audio/*";
     }
     AudioEntry.prototype = Object.create(FileEntry.prototype);
@@ -1088,6 +1091,7 @@ define("cloudcare/js/form_entry/entries", [
     function VideoEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
         self.accept = "video/*";
     }
     VideoEntry.prototype = Object.create(FileEntry.prototype);
@@ -1100,6 +1104,7 @@ define("cloudcare/js/form_entry/entries", [
         var self = this;
         FileEntry.call(this, question, options);
         self.templateType = 'signature';
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
         self.accept = 'image/*,.pdf';
 
         self.afterRender = function () {

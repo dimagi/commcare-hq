@@ -15,14 +15,12 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
-from corehq.apps.toggle_ui.utils import (
-    find_static_toggle,
-    get_subscription_info,
-)
+from corehq.apps.toggle_ui.utils import find_static_toggle, get_dimagi_users
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
@@ -188,6 +186,7 @@ class ToggleEditView(BasePageView):
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
             context['service_type'], context['by_service'] = _get_service_type(toggle)
+            context['dimagi_users'] = _get_dimagi_users(toggle)
 
         return context
 
@@ -342,16 +341,28 @@ def _get_service_type(toggle):
     """
     service_type = {}
     for enabled in toggle.enabled_users:
-        name = _enabled_item_name(enabled)
         if _namespace_domain(enabled):
-            plan_type, plan = get_subscription_info(name)
-            service_type[name] = f"{plan_type} : {plan}"
+            domain = _enabled_item_name(enabled)
+            if subscription := Subscription.get_active_subscription_by_domain(domain):
+                service_type[domain] = f"{subscription.service_type} : {subscription.plan_version.plan.name}"
+            else:
+                service_type[domain] = "<None>"
 
     by_service = defaultdict(list)
     for domain, _type in sorted(service_type.items()):
         by_service[_type].append(domain)
 
     return service_type, dict(by_service)
+
+
+def _get_dimagi_users(toggle):
+    """Returns Dimagi users for each toggle"""
+    users_by_domain = {}
+    for enabled in toggle.enabled_users:
+        if _namespace_domain(enabled):
+            domain = _enabled_item_name(enabled)
+            users_by_domain[domain] = get_dimagi_users(domain)
+    return users_by_domain
 
 
 def _namespace_domain(enabled_item):

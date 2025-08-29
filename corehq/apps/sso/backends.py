@@ -119,7 +119,7 @@ class SsoBackend(ModelBackend):
 
         new_web_user = activate_new_user(
             username=username,
-            password=User.objects.make_random_password(),
+            password=None,  # disable password auth
             created_by=created_by,
             created_via=created_via,
             first_name=get_sso_user_first_name_from_session(request),

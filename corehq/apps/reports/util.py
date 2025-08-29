@@ -2,6 +2,7 @@ import dataclasses
 import json
 import logging
 import math
+import uuid
 from typing import List
 import warnings
 from collections import defaultdict, namedtuple
@@ -31,12 +32,15 @@ from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
+from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.toggles import TABLEAU_USER_SYNCING
+from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
+
 
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
@@ -1085,3 +1089,22 @@ def report_date_to_json(date, timezone, date_format, is_phonetime=True):
         return user_time.ui_string(date_format)
     else:
         return ''
+
+
+def store_excel_in_blobdb(report_class, file, domain, report_slug):
+    key = uuid.uuid4().hex
+    expired = 60 * 24 * 7  # 7 days
+    db = get_blob_db()
+
+    kw = {
+        "domain": domain,
+        "name": f"{report_slug}-{get_timestamp_for_filename()}",
+        "parent_id": key,
+        "type_code": CODES.tempfile,
+        "key": key,
+        "timeout": expired,
+        "properties": {"report_class": report_class}
+    }
+    file.seek(0)
+    db.put(file, **kw)
+    return key
