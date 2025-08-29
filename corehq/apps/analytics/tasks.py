@@ -788,6 +788,11 @@ def record_event(event_name, couch_user, event_properties=None):
         'client_id': couch_user.userID,
         'user_id': couch_user.userID,
         'timestamp_micros': timestamp,
+        'user_properties': {
+            'hq_environment': {
+                'value': settings.ANALYTICS_CONFIG.get('HQ_INSTANCE')
+            }
+        },
         'events': [{
             'name': event_name,
             'params': event_properties,
