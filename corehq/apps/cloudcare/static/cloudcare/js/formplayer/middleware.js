@@ -1,72 +1,65 @@
-define("cloudcare/js/formplayer/middleware", [
-    'jquery',
-    'underscore',
-    'cloudcare/js/formplayer/app',
-    'cloudcare/js/formplayer/users/models',
-], function (
-    $,
-    _,
-    FormplayerFrontend,
-    UsersModels,
-) {
-    var clearFormMiddleware = function () {
-        FormplayerFrontend.trigger("clearForm");
-    };
-    var navigationMiddleware = function () {
-        FormplayerFrontend.trigger("navigation");
-        $(window).scrollTop(0);
-    };
-    var clearVersionInfo = function () {
-        FormplayerFrontend.trigger('setVersionInfo', '');
-    };
-    var clearBreadcrumbMiddleware = function () {
-        FormplayerFrontend.trigger('clearBreadcrumbs');
-    };
-    var setScrollableMaxHeight = function () {
-        var maxHeight,
-            user = UsersModels.getCurrentUser(),
-            restoreAsBannerHeight = 0;
+import $ from "jquery";
+import _ from "underscore";
+import FormplayerFrontend from "cloudcare/js/formplayer/app";
+import UsersModels from "cloudcare/js/formplayer/users/models";
 
-        if (user.restoreAs) {
-            restoreAsBannerHeight = FormplayerFrontend.regions.getRegion('restoreAsBanner').$el.height();
-        }
-        maxHeight = ($(window).height() -
-            FormplayerFrontend.regions.getRegion('breadcrumb').$el.height() -
-            restoreAsBannerHeight);
+var clearFormMiddleware = function () {
+    FormplayerFrontend.trigger("clearForm");
+};
+var navigationMiddleware = function () {
+    FormplayerFrontend.trigger("navigation");
+    $(window).scrollTop(0);
+};
+var clearVersionInfo = function () {
+    FormplayerFrontend.trigger('setVersionInfo', '');
+};
+var clearBreadcrumbMiddleware = function () {
+    FormplayerFrontend.trigger('clearBreadcrumbs');
+};
+var setScrollableMaxHeight = function () {
+    var maxHeight,
+        user = UsersModels.getCurrentUser(),
+        restoreAsBannerHeight = 0;
 
-        $('.scrollable-container').css('max-height', maxHeight + 'px');
-        $('.form-scrollable-container').css({
-            'min-height': maxHeight + 'px',
-            'max-height': maxHeight + 'px',
-        });
-    };
-    var setLastUserActiviyTime = function () {
-        sessionStorage.setItem("lastUserActivityTime",  Date.now());
-    };
+    if (user.restoreAs) {
+        restoreAsBannerHeight = FormplayerFrontend.regions.getRegion('restoreAsBanner').$el.height();
+    }
+    maxHeight = ($(window).height() -
+        FormplayerFrontend.regions.getRegion('breadcrumb').$el.height() -
+        restoreAsBannerHeight);
 
-    var self = {};
+    $('.scrollable-container').css('max-height', maxHeight + 'px');
+    $('.form-scrollable-container').css({
+        'min-height': maxHeight + 'px',
+        'max-height': maxHeight + 'px',
+    });
+};
+var setLastUserActiviyTime = function () {
+    sessionStorage.setItem("lastUserActivityTime",  Date.now());
+};
 
-    self.middlewares = [
-        clearFormMiddleware,
-        navigationMiddleware,
-        clearVersionInfo,
-        setScrollableMaxHeight,
-        clearBreadcrumbMiddleware,
-        setLastUserActiviyTime,
-    ];
+var self = {};
 
-    self.apply = function (api) {
-        var wrappedApi = {};
-        _.each(api, function (value, key) {
-            wrappedApi[key] = function () {
-                _.each(self.middlewares, function (fn) {
-                    fn.call(null, key);
-                });
-                return value.apply(null, arguments);
-            };
-        });
-        return wrappedApi;
-    };
+self.middlewares = [
+    clearFormMiddleware,
+    navigationMiddleware,
+    clearVersionInfo,
+    setScrollableMaxHeight,
+    clearBreadcrumbMiddleware,
+    setLastUserActiviyTime,
+];
 
-    return self;
-});
+self.apply = function (api) {
+    var wrappedApi = {};
+    _.each(api, function (value, key) {
+        wrappedApi[key] = function () {
+            _.each(self.middlewares, function (fn) {
+                fn.call(null, key);
+            });
+            return value.apply(null, arguments);
+        };
+    });
+    return wrappedApi;
+};
+
+export default self;
