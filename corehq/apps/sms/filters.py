@@ -81,6 +81,7 @@ class EventContentFilter(BaseMultipleOptionFilter):
             (MessagingEvent.CONTENT_SMS, gettext_noop('Other SMS')),
             (MessagingEvent.CONTENT_EMAIL, gettext_noop('Email')),
             (MessagingEvent.CONTENT_CONNECT, gettext_noop('Connect Message')),
+            (MessagingEvent.CONTENT_CONNECT_SURVEY, gettext_noop('Connect Message Survey')),
         ]
 
 
