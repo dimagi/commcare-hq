@@ -1,7 +1,7 @@
 import io
 from collections import namedtuple
 from django.conf import settings
-from django.http import Http404
+from django.http import HttpResponseForbidden, Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -38,6 +38,10 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     @property
     def main_context(self):
         context = super(AppSummaryView, self).main_context
+
+        if not self.couch_user.can_view_apps():
+            raise HttpResponseForbidden()
+
         context.update({
             'domain': self.domain,
         })
