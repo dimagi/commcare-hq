@@ -16,7 +16,7 @@ from corehq.apps.app_manager.exceptions import (
     AppValidationError,
     SavedAppBuildException,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS, VELLUM_SAVE_TO_CASE
 from corehq.util.decorators import serial_task
@@ -34,6 +34,22 @@ def create_usercases(domain_name):
         users = CommCareUser.by_domain(domain_name)
     for user in users:
         sync_usercases(user, domain_name, sync_call_center=False)
+
+
+# This is temporarily created to support the usercase backfill
+# and can be deleted after the backfill is done
+@task(queue='background_queue', ignore_result=True)
+def create_usercases_for_user_type(domain_name,
+                                   include_commcare_users=False,
+                                   include_web_users=False):
+    from corehq.apps.callcenter.sync_usercase import sync_usercases_ignore_web_flag
+    users = []
+    if include_web_users:
+        users.extend(WebUser.by_domain(domain_name))
+    if include_commcare_users:
+        users.extend(CommCareUser.by_domain(domain_name))
+    for user in users:
+        sync_usercases_ignore_web_flag(user, domain_name)
 
 
 def autogenerate_build(app, username):
