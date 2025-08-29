@@ -1,13 +1,11 @@
 import io
 from collections import namedtuple
-from django.conf import settings
 from django.http import Http404
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
-from django.contrib import messages
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -462,7 +460,6 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     def _get_form_sheet_name(self, form, language):
         return _get_translated_form_name(self.app, form.get_unique_id(), language)
-
 
     def get_all_forms_row(self, module, form, language):
         return ((
