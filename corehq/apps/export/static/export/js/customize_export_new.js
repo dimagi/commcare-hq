@@ -30,8 +30,8 @@ $(function () {
     if (initialPageData.get('has_geojson_export_access')) {
         const exportFormat = initialPageData.get('export_instance').export_format;
         if (exportFormat === constants.EXPORT_FORMATS.GEOJSON) {
-            $("#select-geo-property").show();
-            $("#split-multiselects-checkbox-div").hide();
+            $("#select-geo-property").removeClass("d-none");
+            $("#split-multiselects-checkbox-div").addClass("d-none");
             $("#split-multiselects-checkbox").prop("checked", false);
         }
 
