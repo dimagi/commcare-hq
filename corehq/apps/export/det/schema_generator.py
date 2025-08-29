@@ -7,7 +7,6 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
     CaseIndexExportColumn,
-    DataSourceExportInstance,
 )
 from corehq.apps.userreports import datatypes
 
@@ -125,8 +124,6 @@ def generate_from_export_instance(export_instance, output_file):
         return generate_from_case_export_instance(export_instance, output_file)
     elif isinstance(export_instance, FormExportInstance):
         return generate_from_form_export_instance(export_instance, output_file)
-    elif isinstance(export_instance, DataSourceExportInstance):
-        return generate_from_datasource_export_instance(export_instance, output_file)
     else:
         raise DETConfigError(_('Export instance type {name} not supported!').format(
             name=type(export_instance).__name__
@@ -153,24 +150,6 @@ def generate_from_case_export_instance(export_instance, output_file):
     _add_rows_for_table(main_input_table, main_output_table, helper=helper)
     _add_id_row_if_necessary(main_output_table, CASE_ID_SOURCE)
     # todo: add rows for other tables
-    output.export_to_file(output_file)
-
-
-def generate_from_datasource_export_instance(export_instance, output_file):
-    assert isinstance(export_instance, DataSourceExportInstance)
-
-    input_table = export_instance.tables[0]
-    output_table = DETTable(
-        name=input_table.label,
-        source=UCR_SOURCE,
-        filter_name='data_source_id',
-        filter_value=export_instance.data_source_id,
-        rows=[],
-    )
-    _add_rows_for_table(input_table, output_table, helper=DatasourceDETSchemaHelper())
-    _add_id_row_if_necessary(output_table, DATASOURCE_ID_SOURCE)
-
-    output = DETConfig(name=export_instance.name, tables=[output_table])
     output.export_to_file(output_file)
 
 

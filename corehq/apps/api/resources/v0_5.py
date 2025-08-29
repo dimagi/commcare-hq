@@ -17,9 +17,7 @@ from django.db.models.functions import TruncDate
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseForbidden,
     HttpResponseNotFound,
-    HttpResponseBadRequest,
     JsonResponse,
     QueryDict,
 )
@@ -27,7 +25,6 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
-from django.views.decorators.csrf import csrf_exempt
 
 import pytz
 from memoized import memoized_property
@@ -41,10 +38,8 @@ from tastypie.resources import ModelResource, Resource
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.cors import add_cors_headers_to_response
-from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
     ODataFormSerializer,
@@ -59,7 +54,6 @@ from corehq.apps.api.resources.auth import (
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
-from corehq.apps.api.resources.messaging_event.utils import get_request_params
 from corehq.apps.api.resources.meta import (
     AdminResourceMeta,
     CustomResourceMeta,
@@ -70,14 +64,11 @@ from corehq.apps.api.util import (
     get_obj,
     make_date_filter,
     parse_str_to_date,
-    cursor_based_query_for_datasource
 )
 from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
-from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
-from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
@@ -99,7 +90,6 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
-    get_datasource_config,
     report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.data_source import (
@@ -111,7 +101,6 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.util import (
     get_configurable_and_static_reports,
-    get_indicator_adapter,
     get_report_config_or_not_found,
 )
 from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
@@ -152,7 +141,7 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+from .pagination import DoesNothingPaginator, NoCountingPaginator
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -1594,36 +1583,3 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
                 filter_obj = cls.COMPOUND_FILTERS[param_field_name](qualifier, val)
                 compound_filter &= Q(**filter_obj)
         return compound_filter
-
-
-@csrf_exempt
-@allow_cors(['GET'])
-@api_auth()
-@require_can_edit_data
-@requires_privilege_with_fallback(privileges.API_ACCESS)
-@api_throttle
-def get_ucr_data(request, domain, api_version):
-    if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
-        return HttpResponseForbidden()
-    try:
-        if request.method == 'GET':
-            config_id = request.GET.get("data_source_id")
-            if not config_id:
-                return HttpResponseBadRequest("Missing data_source_id parameter")
-            return get_datasource_data(request, config_id, domain)
-        return JsonResponse({'error': "Request method not allowed"}, status=405)
-    except BadRequest as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
-
-def get_datasource_data(request, config_id, domain):
-    """Fetch data of the datasource specified by `config_id` in a paginated manner"""
-    config, _ = get_datasource_config(config_id, domain)
-    datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
-    request_params = get_request_params(request).params
-    request_params["limit"] = request.GET.dict().get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
-    if int(request_params["limit"]) > EXPORT_DATASOURCE_MAX_PAGINATION_LIMIT:
-        request_params["limit"] = EXPORT_DATASOURCE_MAX_PAGINATION_LIMIT
-    query = cursor_based_query_for_datasource(request_params, datasource_adapter)
-    data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
-    return JsonResponse(data)

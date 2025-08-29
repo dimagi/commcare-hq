@@ -52,10 +52,9 @@ from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
     FilterSmsESExportDownloadForm,
-    DatasourceExportDownloadForm,
 )
 from corehq.apps.export.models import FormExportInstance
-from corehq.apps.export.models.new import EmailExportWhenDoneRequest, datasource_export_instance
+from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
@@ -75,8 +74,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import is_ajax
-from corehq.toggles import EXPORT_DATA_SOURCE_DATA
-from corehq.apps.userreports.models import DataSourceConfiguration
 
 
 class DownloadExportViewHelper(object):
@@ -531,43 +528,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
             'title': CaseExportListView.page_title,
             'url': reverse(CaseExportListView.urlname, args=(self.domain,)),
         }]
-
-
-@location_safe
-class DownloadNewDatasourceExportView(BaseProjectDataView):
-    urlname = "data_export_page"
-    page_title = gettext_noop("Export Data Source Data")
-    template_name = 'export/datasource_export_view.html'
-
-    @use_bootstrap5
-    def dispatch(self, *args, **kwargs):
-        if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
-            raise Http404()
-        return super(DownloadNewDatasourceExportView, self).dispatch(*args, **kwargs)
-
-    @property
-    def page_context(self):
-        context = super(DownloadNewDatasourceExportView, self).page_context
-        context["form"] = self.form
-        return context
-
-    def post(self, request, *args, **kwargs):
-        form = self.form
-        if not form.is_valid():
-            return HttpResponseBadRequest("Please check your query")
-
-        data_source_id = form.cleaned_data.get('data_source')
-        config = DataSourceConfiguration.get(data_source_id)
-        return _render_det_download(
-            filename=config.display_name,
-            export_instance=datasource_export_instance(config),
-        )
-
-    @property
-    def form(self):
-        if self.request.method == 'POST':
-            return DatasourceExportDownloadForm(self.domain, self.request.POST)
-        return DatasourceExportDownloadForm(self.domain)
 
 
 class DownloadNewSmsExportView(BaseDownloadExportView):
