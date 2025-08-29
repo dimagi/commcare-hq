@@ -1621,7 +1621,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if not self.to_be_deleted():
                 from corehq.apps.callcenter.tasks import sync_usercases_if_applicable
                 # We need to sync to all domains, even those the user is leaving
-                for domain in self.get_domains() + getattr(self, '_leaving_domains', []):
+                for domain in getattr(self, 'domains', []) + getattr(self, '_leaving_domains', []):
                     sync_usercases_if_applicable(domain, self, spawn_task)
         self._leaving_domains = []
 
