@@ -5,7 +5,6 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.web import json_response
-from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -38,10 +37,6 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     @property
     def main_context(self):
         context = super(AppSummaryView, self).main_context
-
-        if not self.request.couch_user.can_view_apps():
-            raise PermissionDenied()
-
         context.update({
             'domain': self.domain,
         })
