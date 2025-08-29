@@ -32,7 +32,7 @@ from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 
 
-class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
+class AppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, BasePageView):
 
     @property
     def main_context(self):
@@ -170,7 +170,7 @@ class FormSummaryDiffView(AppSummaryView):
         pass
 
 
-class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
+class AppDataView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     urlname = 'app_data_json'
 
