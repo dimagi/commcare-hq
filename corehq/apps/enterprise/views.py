@@ -24,7 +24,7 @@ import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.analytics.tasks import record_event
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.enterprise.metric_events import ENTERPRISE_REPORT_REQUEST
@@ -215,7 +215,7 @@ def enterprise_dashboard_email(request, domain, slug):
         'email': request.couch_user.username,
     })
 
-    record_event(ENTERPRISE_REPORT_REQUEST, request.couch_user, {
+    record_google_analytics_event(ENTERPRISE_REPORT_REQUEST, request.couch_user, {
         'report_type': slug
     })
 
