@@ -4,11 +4,12 @@ from itertools import chain
 from django.core.management.base import BaseCommand
 
 from corehq import privileges
+from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.callcenter.sync_usercase import sync_usercases_ignore_web_flag
 from corehq.apps.domain.models import Domain
-from corehq.util.log import with_progress_bar
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -44,15 +45,20 @@ class Command(BaseCommand):
                 print(f"Domain {domain} does not exist")
                 continue
 
+            if domain_obj.usercase_enabled and USH_USERCASES_FOR_WEB_USERS.enabled(domain):
+                continue
+
             if domain_obj.usercase_enabled:
                 if not dry_run:
                     users = WebUser.by_domain(domain)
                     _sync_usercases_with_throttle(users, domain)
+                    USH_USERCASES_FOR_WEB_USERS.set(domain, True)
                 domains_only_web_created += 1
             else:
                 if not dry_run:
                     users = chain(WebUser.by_domain(domain), CommCareUser.by_domain(domain))
                     _sync_usercases_with_throttle(users, domain)
+                    USH_USERCASES_FOR_WEB_USERS.set(domain, True)
                     domain_obj.usercase_enabled = True
                     domain_obj.save()
                 domains_both_created += 1
