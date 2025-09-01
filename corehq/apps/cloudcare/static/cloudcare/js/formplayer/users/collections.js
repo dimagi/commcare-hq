@@ -32,4 +32,4 @@ var self = Backbone.Collection.extend({
 
 export default function (users, options) {
     return new self(users, options);
-};
+}

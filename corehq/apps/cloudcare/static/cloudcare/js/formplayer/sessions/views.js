@@ -143,4 +143,4 @@ var SessionListView = Marionette.CollectionView.extend({
 
 export default function (options) {
     return new SessionListView(options);
-};
+}

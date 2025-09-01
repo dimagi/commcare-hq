@@ -1053,9 +1053,9 @@ function DocumentEntry(question, options) {
 DocumentEntry.prototype = Object.create(FileEntry.prototype);
 DocumentEntry.prototype.constructor = FileEntry;
 
-    /**
-     * Represents an audio upload.
-     */
+/**
+ * Represents an audio upload.
+ */
 function AudioEntry(question, options) {
     var self = this;
     FileEntry.call(this, question, options);

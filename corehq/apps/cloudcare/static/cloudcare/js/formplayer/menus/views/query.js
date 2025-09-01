@@ -3,7 +3,6 @@ import _ from "underscore";
 import Backbone from "backbone";
 import DOMPurify from "dompurify";
 import Marionette from "backbone.marionette";
-import moment from "moment";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hqTempusDominus from "hqwebapp/js/tempus_dominus";
 import toggles from "hqwebapp/js/toggles";

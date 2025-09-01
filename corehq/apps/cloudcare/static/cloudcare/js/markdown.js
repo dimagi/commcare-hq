@@ -1,4 +1,3 @@
-import $ from "jquery";
 import DOMPurify from "dompurify";
 import markdowner from "markdown-it/dist/markdown-it";
 import initialPageData from "hqwebapp/js/initial_page_data";

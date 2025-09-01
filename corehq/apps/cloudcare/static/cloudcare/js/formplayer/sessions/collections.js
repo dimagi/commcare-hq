@@ -18,4 +18,4 @@ var session = Backbone.Collection.extend({
 
 export default function (options) {
     return new session(options);
-};
+}

@@ -7,7 +7,7 @@
   */
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import { DateTime, TempusDominus } from "tempusDominus"
+import { DateTime, TempusDominus } from "tempusDominus";
 import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
 
 let createDatePicker = function (el, options) {
@@ -183,5 +183,5 @@ export default {
     createDefaultDateRangePicker: createDefaultDateRangePicker,
     createTimePicker: createTimePicker,
     getDateRangeSeparator: getDateRangeSeparator,
-    DateTime: DateTime
+    DateTime: DateTime,
 };

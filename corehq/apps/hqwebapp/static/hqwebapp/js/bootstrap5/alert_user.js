@@ -17,7 +17,7 @@
 
 import $ from "jquery";
 import ko from "knockout";
-import "hqwebapp/js/bootstrap5/hq.helpers"
+import "hqwebapp/js/bootstrap5/hq.helpers";
 
 var MessageAlert = function (message, tags, fadeOut) {
     var self = {

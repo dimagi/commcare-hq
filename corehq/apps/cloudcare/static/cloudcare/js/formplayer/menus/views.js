@@ -2,7 +2,6 @@ import $ from "jquery";
 import _ from "underscore";
 import Backbone from "backbone";
 import Marionette from "backbone.marionette";
-import DOMPurify from "dompurify";
 import {Popover} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import toggles from "hqwebapp/js/toggles";

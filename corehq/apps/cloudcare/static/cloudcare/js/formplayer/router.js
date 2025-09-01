@@ -1,6 +1,5 @@
 import _ from "underscore";
 import Backbone from "backbone";
-import Marionette from "backbone.marionette";
 import utils from "cloudcare/js/formplayer/utils/utils";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import formplayerConstants from "cloudcare/js/formplayer/constants";

@@ -39,6 +39,7 @@
         "detectrtc": "1.4.0",
         "dompurify": "3.2.4",
         "eonasdan-bootstrap-datetimepicker": "4.17.49",
+        "eslint-plugin-eslint-dimagi": "^1.0.2",
         "exports-loader": "5.0.0",
         "fast-levenshtein": "3.0.0",
         "flag-icons": "^7.5.0",
@@ -92,7 +93,7 @@
     "devDependencies": {
         "chai": "4.3.6",
         "colors": "1.4.0",
-        "eslint": "8.15.0",
+        "eslint": "^9.34.0",
         "grunt": "1.5.3",
         "grunt-cli": "1.4.3",
         "grunt-contrib-watch": "1.1.0",
