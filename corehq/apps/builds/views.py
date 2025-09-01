@@ -17,7 +17,11 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.util.view_utils import json_error
 
-from .models import CommCareBuild, CommCareBuildConfig, SemanticVersionProperty
+from .models import (
+    CommCareBuild,
+    CommCareBuildConfig,
+    StrictSemanticVersionProperty,
+)
 from .utils import get_all_versions
 
 
@@ -100,7 +104,7 @@ def import_build(request):
     version = request.POST.get('version')
 
     try:
-        SemanticVersionProperty(required=True).validate(version)
+        StrictSemanticVersionProperty(required=True).validate(version)
     except BadValueError as e:
         return json_response({
             'reason': 'Badly formatted version',
