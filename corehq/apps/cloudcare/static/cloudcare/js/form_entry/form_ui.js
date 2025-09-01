@@ -3,7 +3,7 @@ import ko from "knockout";
 import _ from "underscore";
 import DOMPurify from "dompurify";
 import toggles from "hqwebapp/js/toggles";
-import bootstrap from "bootstrap5";
+import {Modal} from "bootstrap5";
 import markdown from "cloudcare/js/markdown";
 import cloudcareUtils from "cloudcare/js/utils";
 import constants from "cloudcare/js/form_entry/const";
@@ -639,12 +639,12 @@ function Form(json) {
         $(document).on("click", ".help-text-trigger", function (event) {
             event.preventDefault();
             var container = $(event.currentTarget).closest(".caption");
-            bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
+            Modal.getOrCreateInstance(container.find(".modal")).show();
         });
 
         $(document).on("click", ".unsupported-question-type-trigger", function (event) {
             var container = $(event.currentTarget).closest(".widget");
-            bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
+            Modal.getOrCreateInstance(container.find(".modal")).show();
         });
     };
 
