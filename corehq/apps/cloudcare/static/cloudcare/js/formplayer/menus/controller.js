@@ -1,10 +1,8 @@
 import $ from "jquery";
 import _ from "underscore";
 import Backbone from "backbone";
-import DOMPurify from "dompurify";
 import {Modal} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import toggles from "hqwebapp/js/toggles";
 import markdown from "cloudcare/js/markdown";
 import constants from "cloudcare/js/formplayer/constants";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
@@ -14,7 +12,6 @@ import Collection from "cloudcare/js/formplayer/menus/collections";
 import menusUtils from "cloudcare/js/formplayer/menus/utils";
 import queryView from "cloudcare/js/formplayer/menus/views/query";
 import views from "cloudcare/js/formplayer/menus/views";
-import api from "cloudcare/js/formplayer/menus/api";  // app:select:menus and entity:get:details
 import gtx from "cloudcare/js/gtx";
 
 

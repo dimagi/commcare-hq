@@ -8,7 +8,6 @@ import Backbone from "backbone";
 import Sentry from "sentry_browser";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import Utils from "cloudcare/js/formplayer/utils/utils";
-import UsersModels from "cloudcare/js/formplayer/users/models";
 import webFormSession from "cloudcare/js/form_entry/web_form_session";
 
 function addBreadcrumb(collection, type, data) {
@@ -148,4 +147,4 @@ var MenuSelect = Backbone.Collection.extend({
 
 export default function (response, options) {
     return new MenuSelect(response, options);
-};
+}

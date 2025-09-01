@@ -9,4 +9,4 @@ var self = Backbone.Collection.extend({
 
 export default function (apps) {
     return new self(apps);
-};
+}

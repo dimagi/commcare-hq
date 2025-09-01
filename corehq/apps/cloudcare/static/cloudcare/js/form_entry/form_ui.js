@@ -5,10 +5,8 @@ import DOMPurify from "dompurify";
 import toggles from "hqwebapp/js/toggles";
 import {Modal} from "bootstrap5";
 import markdown from "cloudcare/js/markdown";
-import cloudcareUtils from "cloudcare/js/utils";
 import constants from "cloudcare/js/form_entry/const";
 import entries from "cloudcare/js/form_entry/entries";
-import UsersModels from "cloudcare/js/formplayer/users/models";
 import formEntryUtils from "cloudcare/js/form_entry/utils";
 import "jquery-tiny-pubsub/dist/ba-tiny-pubsub";  // $.pubsub
 

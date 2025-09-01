@@ -44,5 +44,4 @@ var ProgressView = Marionette.View.extend({
 
 export default function (options) {
     return new ProgressView(options);
-};
-
+}

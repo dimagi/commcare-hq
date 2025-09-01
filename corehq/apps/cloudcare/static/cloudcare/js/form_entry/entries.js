@@ -5,7 +5,6 @@ import DOMPurify from "dompurify";
 import moment from "moment";
 import Levenshtein from "fast-levenshtein/levenshtein";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import toggles from "hqwebapp/js/toggles";
 import noopMetrics from "analytix/js/noopMetrics";
 import cloudcareUtils from "cloudcare/js/utils";
 import constants from "cloudcare/js/form_entry/const";
@@ -1036,7 +1035,6 @@ FileEntry.prototype.onClear = function () {
  * Represents an image upload.
  */
 function ImageEntry(question, options) {
-    var self = this;
     FileEntry.call(this, question, options);
     // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.pyself.accept = "image/*";
 }
@@ -1071,7 +1069,6 @@ AudioEntry.prototype.constructor = FileEntry;
  * Represents a video upload.
  */
 function VideoEntry(question, options) {
-    var self = this;
     FileEntry.call(this, question, options);
     // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.pyself.accept = "video/*";
 }
@@ -1086,7 +1083,7 @@ function SignatureEntry(question, options) {
     FileEntry.call(this, question, options);
     self.templateType = 'signature';
     // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
-        self.accept = 'image/*,.pdf';
+    self.accept = 'image/*,.pdf';
 
     self.afterRender = function () {
         self.$input = $('#' + self.entryId);
