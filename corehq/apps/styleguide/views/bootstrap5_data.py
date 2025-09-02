@@ -5,8 +5,11 @@ from gettext import gettext
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 from corehq.apps.styleguide.utils import get_fake_tabular_data
+from corehq.apps.api.decorators import allow_cors
+
 
 FakeUser = namedtuple('FakeUser', 'id username')
 
@@ -94,13 +97,19 @@ def validate_ko_demo(request):
     return JsonResponse(response)
 
 
+# TODO Better to add csrf token to the request if possible
+@csrf_exempt
+@allow_cors(['OPTIONS', 'GET', 'POST'])
 def datatables_data(request):
     return JsonResponse({
         "data": get_fake_tabular_data(50),
     })
 
 
+@csrf_exempt
+@allow_cors(['OPTIONS', 'GET', 'POST'])
 def paginated_table_data(request):
+    print("inside paginated_table_data", request.POST)
     page = int(request.POST.get('page'))
     limit = int(request.POST.get('limit'))
     start = (page - 1) * limit

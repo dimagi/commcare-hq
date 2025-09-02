@@ -158,6 +158,9 @@ docs = [
     "sphinx-rtd-theme",
     "pyOpenSSL", # CI builds fail without OpenSSL
     "urllib3<=1.26.20", # fix doc tests AssertionError: Current app already created
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.18",
+    "mkdocs-django-assets @ file:///${PROJECT_ROOT}/mkdocs_django_assets"
 ]
 prod = [
     "flower",

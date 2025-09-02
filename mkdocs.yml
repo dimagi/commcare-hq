@@ -1,0 +1,21 @@
+site_name: "CommCare Styleguide POC"
+docs_dir: docs/styleguide
+
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocs_django_assets:
+      module: mkdocs_django_assets
+
+nav:
+  - Home: index.md
+  - Styleguide:
+      - Selections: selections.md
+      - Tables: tables.md
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true

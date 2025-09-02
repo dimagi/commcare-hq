@@ -1,0 +1,7 @@
+[project]
+name = "mkdocs_django_assets"
+version = "0.1.0"
+dependencies = ["mkdocs", "requests"]
+
+[project.entry-points."mkdocs.plugins"]
+mkdocs_django_assets = "mkdocs_django_assets.plugin:DjangoAssetsPlugin"

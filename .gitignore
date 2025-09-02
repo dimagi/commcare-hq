@@ -90,3 +90,9 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 
 # ruff
 ruff.toml
+
+# mkdocs
+docs/styleguide/static/*
+docs/styleguide/_includes
+mkdocs_django_assets/*.egg-info
+mkdocs_django_assets/build
