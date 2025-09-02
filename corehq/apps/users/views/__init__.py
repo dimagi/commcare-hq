@@ -526,7 +526,11 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
-def get_domain_languages(domain):
+def get_domain_languages(domain, default_to_all_langs=False):
+    """
+    :param default_to_all_langs: returns all languages if no translations have
+    been setup for this domain yet
+    """
     app_languages = get_app_languages(domain)
     translations = SMSTranslations.objects.filter(domain=domain).first()
     sms_languages = translations.langs if translations else []
@@ -537,7 +541,10 @@ def get_domain_languages(domain):
         label = "{} ({})".format(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
 
-    return sorted(domain_languages) or langcodes.get_all_langs_for_select()
+    if not domain_languages and default_to_all_langs:
+        return langcodes.get_all_langs_for_select()
+
+    return sorted(domain_languages)
 
 
 class BaseRoleAccessView(BaseUserSettingsView):
