@@ -16,7 +16,6 @@ from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Custo
 from corehq.apps.programs.models import Program
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
-from corehq.apps.settings.languages import format_language_for_display
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.toggles import TABLEAU_USER_SYNCING
@@ -532,6 +531,8 @@ def get_domain_languages(domain, default_to_all_langs=False):
     :param default_to_all_langs: returns all languages if no translations have
     been setup for this domain yet
     """
+    from corehq.apps.settings.languages import format_language_for_display
+
     app_languages = get_app_languages(domain)
     translations = SMSTranslations.objects.filter(domain=domain).first()
     sms_languages = translations.langs if translations else []
