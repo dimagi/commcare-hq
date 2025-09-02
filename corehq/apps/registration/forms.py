@@ -38,7 +38,10 @@ class RegisterWebUserForm(forms.Form):
             label=_("Cloud Location"),
             required=False,
             widget=forms.RadioSelect,
-            choices=ServerLocation.sorted_form_choices(),
+            choices=[
+                (server['subdomain'], _("{location_name} Cloud").format(location_name=server['long_name']))
+                for __, server in ServerLocation.ENVS.items()
+            ],
             help_text=_(
                 "*You're creating an account and project space in the chosen cloud location.<br/>"
                 "These cannot be transferred between cloud locations. "
@@ -107,6 +110,8 @@ class RegisterWebUserForm(forms.Form):
 
         server_location_field = []
         if self.fields.get('server_location'):
+            # safe to access because we only render the field if the current environment is in ServerLocation.ENVS
+            self.fields['server_location'].initial = ServerLocation.ENVS[settings.SERVER_ENVIRONMENT]['subdomain']
             server_location_field = [
                 hqcrispy.RadioSelect(
                     'server_location',
