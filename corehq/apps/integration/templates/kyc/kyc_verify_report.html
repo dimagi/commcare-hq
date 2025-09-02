@@ -7,6 +7,11 @@
 {% block page_content %}
   <div>
     <h1 class="py-3 m-0">{% trans "KYC Report" %}</h1>
+
+    <div class="mb-3">
+      {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
+    </div>
+
     <div id="verify-alert"></div>
     {% if not domain_has_config %}
       <div class="alert alert-warning">

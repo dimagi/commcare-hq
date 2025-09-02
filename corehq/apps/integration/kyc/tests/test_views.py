@@ -331,6 +331,92 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'post_code': '54321',
                 }
 
+    @flag_enabled('KYC_VERIFICATION')
+    def test_response_data_user_cases(self):
+        # Enable usercase for the domain
+        self.domain_obj.usercase_enabled = True
+        self.domain_obj.save()
+        
+        self.kyc_config.user_data_store = UserDataStore.USER_CASE
+        self.kyc_config.api_field_to_user_data_map.update({
+            'first_name': {
+                'data_field': 'first_name',
+            },
+            'last_name': {
+                'data_field': 'last_name',
+            },
+            'email': {
+                'data_field': 'email',
+                'is_sensitive': False
+            },
+            'phone_number': {
+                'data_field': 'phone_number',
+                'is_sensitive': True
+            },
+        })
+        self.kyc_config.save()
+
+        # Create user cases for our users by calling get_usercase() which creates them
+        user1_case = self.user1.get_usercase()
+        user2_case = self.user2.get_usercase()
+        
+        # Update user cases with test data
+        from corehq.apps.hqcase.utils import update_case
+        update_case(
+            self.domain,
+            user1_case.case_id,
+            case_properties={
+                'first_name': 'Johnny',
+                'last_name': 'Doe', 
+                'email': 'jdoe@example.org',
+                'phone_number': '1234567890',
+            },
+            device_id='test_device'
+        )
+        
+        update_case(
+            self.domain,
+            user2_case.case_id,
+            case_properties={
+                'first_name': 'Jane',
+                'last_name': 'Doe',
+            },
+            device_id='test_device'
+        )
+        
+        case_search_adapter.bulk_index([user1_case, user2_case], refresh=True)
+
+        response = self._make_request()
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+        for row in queryset:
+            if row['has_invalid_data']:
+                assert row == {
+                    'id': user2_case.case_id,
+                    'has_invalid_data': True,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
+                    'kyc_last_verified_at': None,
+                    'first_name': 'Jane',
+                    'last_name': 'Doe',
+                }
+            else:
+                assert row == {
+                    'id': user1_case.case_id,
+                    'has_invalid_data': False,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
+                    'kyc_last_verified_at': None,
+                    'first_name': 'Johnny',
+                    'last_name': 'Doe',
+                    'email': 'jdoe@example.org',
+                    'phone_number': PASSWORD_PLACEHOLDER,
+                }
+
 
 def _create_case(factory, name, data):
     return factory.create_case(
