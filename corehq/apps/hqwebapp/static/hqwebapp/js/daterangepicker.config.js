@@ -40,8 +40,18 @@ $.fn.createDateRangePicker = function (
         // Parse dates as local dates to avoid timezone conversion
         var startParts = startdate.split('-');
         var endParts = enddate.split('-');
-        config.startDate = new Date(startParts[0], startParts[1] - 1, startParts[2]);
-        config.endDate = new Date(endParts[0], endParts[1] - 1, endParts[2]);
+
+        config.startDate = new Date(
+            parseInt(startParts[0], 10),
+            parseInt(startParts[1], 10) - 1,
+            parseInt(startParts[2], 10),
+        );
+
+        config.endDate = new Date(
+            parseInt(endParts[0], 10),
+            parseInt(endParts[1], 10) - 1,
+            parseInt(endParts[2], 10),
+        );
     }
 
     $(this).daterangepicker(config);
