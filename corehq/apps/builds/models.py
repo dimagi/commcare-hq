@@ -29,28 +29,26 @@ class SemanticVersionProperty(StringProperty):
         if not self.required and not value:
             return value
         try:
-            major, minor, __ = value.split('.')
-            int(major)
-            int(minor)
+            self._unpack_value(value)
         except Exception:
             raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
         return value
+
+    @staticmethod
+    def _unpack_value(value):
+        major, minor, __ = value.split('.')
+        int(major)
+        int(minor)
 
 
 class StrictSemanticVersionProperty(SemanticVersionProperty):
 
-    def validate(self, value, required=True):
-        super().validate(value, required)
-        if not self.required and not value:
-            return value
-        try:
-            major, minor, point = value.split('.')
-            int(major)
-            int(minor)
-            int(point)  # Rejects old (<2018) versions like '1.2.dev' (commit eece6202)
-        except Exception:
-            raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
-        return value
+    @staticmethod
+    def _unpack_value(value):
+        major, minor, point = value.split('.')
+        int(major)
+        int(minor)
+        int(point)  # Rejects old (<2018) versions like '1.2.dev' (commit eece6202)
 
 
 class CommCareBuild(BlobMixin, Document):

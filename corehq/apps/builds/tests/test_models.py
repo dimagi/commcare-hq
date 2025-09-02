@@ -1,4 +1,46 @@
+from django.test import SimpleTestCase
+
+import pytest
+from couchdbkit.exceptions import BadValueError
+
 from corehq.apps.app_manager.dbaccessors import wrap_app
+from corehq.apps.builds.models import (
+    SemanticVersionProperty,
+    StrictSemanticVersionProperty,
+)
+
+
+class ValidateTestBase(SimpleTestCase):
+
+    def check_value(self, class_, value, expected):
+        with self.subTest(value):
+            if type(expected) is type and issubclass(expected, Exception):
+                with pytest.raises(expected):
+                    class_(required=True).validate(value)
+            else:
+                assert class_(required=True).validate(value) == expected
+
+
+class TestSemanticVersionProperty(ValidateTestBase):
+
+    def test_values(self):
+        for value, expected in [
+            ('1.2.3', '1.2.3'),
+            ('1.2.foo', '1.2.foo'),
+            ('1.2', BadValueError),
+        ]:
+            self.check_value(SemanticVersionProperty, value, expected)
+
+
+class TestStrictSemanticVersionProperty(ValidateTestBase):
+
+    def test_values(self):
+        for value, expected in [
+            ('1.2.3', '1.2.3'),
+            ('1.2.foo', BadValueError),
+            ('1.2', BadValueError),
+        ]:
+            self.check_value(StrictSemanticVersionProperty, value, expected)
 
 
 def test_commcare_build_version():
