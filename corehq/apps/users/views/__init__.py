@@ -16,6 +16,7 @@ from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Custo
 from corehq.apps.programs.models import Program
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
+from corehq.apps.settings.languages import format_language_for_display
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.toggles import TABLEAU_USER_SYNCING
@@ -538,7 +539,7 @@ def get_domain_languages(domain, default_to_all_langs=False):
     domain_languages = []
     for lang_code in app_languages.union(sms_languages):
         name = langcodes.get_name(lang_code)
-        label = "{} ({})".format(lang_code, name) if name else lang_code
+        label = format_language_for_display(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
 
     if not domain_languages and default_to_all_langs:
