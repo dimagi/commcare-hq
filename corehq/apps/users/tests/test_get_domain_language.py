@@ -1,3 +1,4 @@
+import langcodes
 from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application
@@ -11,26 +12,29 @@ class TestDomainLanguages(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestDomainLanguages, cls).setUpClass()
+        super().setUpClass()
         cls.domain = 'test-languages'
 
         cls.app1 = Application.new_app(cls.domain, 'My Application 1')
         cls.app1.langs = ['en', 'es']
         cls.app1.save()
+        cls.addClassCleanup(cls.app1.delete)
 
         cls.app2 = Application.new_app(cls.domain, 'My Application 2')
         cls.app2.langs = ['fr']
         cls.app2.save()
+        cls.addClassCleanup(cls.app2.delete)
         app_adapter.bulk_index([cls.app2, cls.app1], refresh=True)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.app1.delete()
-        cls.app2.delete()
-        super(TestDomainLanguages, cls).tearDownClass()
+    def test_returns_translated_languages_for_domain(self):
+        langs = get_domain_languages(self.domain)
+        assert langs == [('en', 'en (English)'), ('es', 'es (Spanish)'), ('fr', 'fr')]
 
-    def test_get_domain_languages(self):
-        self.assertEqual(
-            [('en', 'en (English)'), ('es', 'es (Spanish)'), ('fr', 'fr')],
-            get_domain_languages(self.domain)
-        )
+    def test_default_to_all_langs(self):
+        assert get_domain_languages('random-domain') == []
+
+        langs = get_domain_languages('random-domain', default_to_all_langs=True)
+        assert langs == langcodes.get_all_langs_for_select()
+
+        langs = get_domain_languages(self.domain, default_to_all_langs=True)
+        assert langs == [('en', 'en (English)'), ('es', 'es (Spanish)'), ('fr', 'fr')]
