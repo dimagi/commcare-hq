@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from django.conf import settings
 from django.test import Client, TestCase
@@ -96,7 +97,8 @@ class TestTimeout(TestCase):
         self.assertTrue(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(self.secure_domain2.secure_sessions_timeout, self.client.session)
 
-    def test_multiple_secure(self):
+    @patch('corehq.apps.settings.views.get_languages_for_user', return_value=[])
+    def test_multiple_secure(self, mock_langs):
         # Session should apply minimum value of all relevant timeouts
         self.user = WebUser.get_by_username(self.user.username)
         self.user.add_as_web_user(self.secure_domain1.name, 'admin')
