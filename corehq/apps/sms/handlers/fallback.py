@@ -23,6 +23,7 @@ def fallback_handler(verified_number, text, msg):
     inbound_meta = MessageMetadata(workflow=WORKFLOW_DEFAULT,
         messaging_subevent_id=inbound_subevent.pk)
     add_msg_tags(msg, inbound_meta)
+    msg.save()
 
     if domain_obj.use_default_sms_response and domain_obj.default_sms_response:
         outbound_subevent = logged_event.create_subevent_for_single_sms(
