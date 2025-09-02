@@ -33,6 +33,10 @@ class TestTimeout(TestCase):
         cls.secure_domain2.secure_sessions_timeout = 15
         cls.secure_domain2.save()
 
+        lang_patcher = patch('corehq.apps.settings.views.get_languages_for_user', return_value=[])
+        lang_patcher.start()
+        cls.addClassCleanup(lang_patcher.stop)
+
     def setUp(self):
         # Re-login for each test to create new session
         self.client = Client()
@@ -97,8 +101,7 @@ class TestTimeout(TestCase):
         self.assertTrue(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(self.secure_domain2.secure_sessions_timeout, self.client.session)
 
-    @patch('corehq.apps.settings.views.get_languages_for_user', return_value=[])
-    def test_multiple_secure(self, mock_langs):
+    def test_multiple_secure(self):
         # Session should apply minimum value of all relevant timeouts
         self.user = WebUser.get_by_username(self.user.username)
         self.user.add_as_web_user(self.secure_domain1.name, 'admin')
