@@ -135,12 +135,37 @@ class LoginAuthenticationTest(AuthenticationTestBase):
         def reactivate_user():
             self.user.is_active = True
             self.user.save()
+        self.user = WebUser.get_by_username(self.username)
         self.user.is_active = False
         self.user.save()
         self.addCleanup(reactivate_user)
         self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())
         self.api_key.refresh_from_db()
         self.assertIsNone(self.api_key.last_used)
+
+    def test_basic_auth_with_domain_key(self):
+        self.assertAuthenticationSuccess(
+            LoginAuthentication(),
+            self._get_request(
+                self.domain,
+                HTTP_AUTHORIZATION=self._construct_basic_auth_header(
+                    self.username,
+                    self.domain_api_key.plaintext_key
+                )
+            )
+        )
+
+    def test_basic_auth_with_domain_key_wrong(self):
+        self.assertAuthenticationFail(
+            LoginAuthentication(),
+            self._get_request(
+                self.domain,
+                HTTP_AUTHORIZATION=self._construct_basic_auth_header(
+                    self.username,
+                    'not-an-api-key'
+                )
+            )
+        )
 
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
@@ -194,6 +219,30 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
             )
         )
 
+    def test_basic_auth_with_domain_key(self):
+        self.assertAuthenticationSuccess(
+            LoginAndDomainAuthentication(),
+            self._get_request(
+                self.domain,
+                HTTP_AUTHORIZATION=self._construct_basic_auth_header(
+                    self.username,
+                    self.domain_api_key.plaintext_key
+                )
+            )
+        )
+
+    def test_basic_auth_with_domain_key_wrong(self):
+        self.assertAuthenticationFail(
+            LoginAndDomainAuthentication(),
+            self._get_request(
+                self.domain2,
+                HTTP_AUTHORIZATION=self._construct_basic_auth_header(
+                    self.username,
+                    self.domain_api_key.plaintext_key
+                )
+            )
+        )
+
     def test_login_with_wrong_domain(self):
         project = Domain.get_or_create_with_name('api-test-fail', is_active=True)
         self.addCleanup(project.delete)
@@ -204,6 +253,7 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
         def reactivate_user():
             self.user.set_is_active(self.domain, True)
             self.user.save()
+        self.user = WebUser.get_by_username(self.username)
         self.user.set_is_active(self.domain, False)
         self.user.save()
         self.addCleanup(reactivate_user)
