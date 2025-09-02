@@ -15,10 +15,8 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
-from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.es import UserES
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es.aggregations import (
@@ -73,7 +71,6 @@ from corehq.apps.reports.util import format_datatables_data, friendly_timedelta,
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
@@ -1375,7 +1372,7 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
 
 
 def _worker_activity_is_location_safe(view, request, *args, **kwargs):
-    return toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(kwargs.get("domain", None))
+    return True
 
 
 @conditionally_location_safe(_worker_activity_is_location_safe)
@@ -1395,15 +1392,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def fields(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            return [
-                'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-                'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
-                'corehq.apps.reports.filters.dates.DatespanFilter',
-            ]
         return [
-            'corehq.apps.reports.filters.select.MultiGroupFilter',
-            'corehq.apps.reports.filters.users.UserOrGroupFilter',
+            'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
             'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
             'corehq.apps.reports.filters.dates.DatespanFilter',
         ]
@@ -1419,14 +1409,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @property
     @memoized
     def view_by_groups(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            track_workflow_noop(self.request.couch_user.username,
-                           "Worker Activity Report: view_by_groups disabled by EMWF_WORKER_ACTIVITY_REPORT")
-            return False
-        view_by_groups = self.get_request_param('view_by', None) == 'groups'
         track_workflow_noop(self.request.couch_user.username,
-                       "Worker Activity Report: view_by_groups == {}".format(view_by_groups))
-        return view_by_groups
+                        "Worker Activity Report: view_by_groups disabled by EMWF_WORKER_ACTIVITY_REPORT")
+        return False
 
     @property
     def headers(self):
@@ -1506,21 +1491,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @property
     @memoized
     def users_to_iterate(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            user_query = EMWF.user_es_query(
-                self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user
-            )
-            return util.get_simplified_users(user_query)
-        elif not self.group_ids:
-            user_query = UserES().domain(self.domain)
-            if not toggles.WEB_USERS_IN_REPORTS.enabled(self.domain):
-                user_query = user_query.mobile_users()
-            return util.get_simplified_users(user_query)
-        else:
-            all_users = flatten_list(list(self.users_by_group.values()))
-            all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
-            all_users.extend([user for user in self.get_admins_and_demo_users()])
-            return list(dict([(user['user_id'], user) for user in all_users]).values())
+        user_query = EMWF.user_es_query(
+            self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user
+        )
+        return util.get_simplified_users(user_query)
 
     @property
     def user_ids(self):
@@ -1862,10 +1836,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def get_all_rows(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            return self.user_rows()
-        else:
-            return self.rows
+        return self.user_rows()
 
     def user_rows(self):
         user_es_query = EMWF.user_es_query(
