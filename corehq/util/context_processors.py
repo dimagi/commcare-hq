@@ -219,6 +219,7 @@ def emails(request=None):
     a page-specific context variable.
     """
     return {
+        'ACCOUNTS_EMAIL': settings.ACCOUNTS_EMAIL,
         'SALES_EMAIL': settings.SALES_EMAIL,
         'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
         'PRIVACY_EMAIL': settings.PRIVACY_EMAIL,
