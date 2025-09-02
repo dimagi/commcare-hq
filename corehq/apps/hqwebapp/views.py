@@ -527,7 +527,9 @@ class HQLoginView(LoginView):
 
     def can_select_server(self):
         env = settings.SERVER_ENVIRONMENT
+        # domain is server-specific, so we won't give the option to switch servers on domain logins
         is_domain_login = self.extra_context.get('domain')
+        # also check the next param, because domain or other server-specific ids can exist there
         has_next_url = self.request.GET.get('next')
         return (env in ServerLocation.ENVS
                 and not is_domain_login
