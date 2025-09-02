@@ -144,16 +144,15 @@ def _parse_apps(restore_state, restore_user):
         apps = get_apps_in_domain(restore_user.domain, include_remote=False)
 
     needed_versions = {app.mobile_ucr_restore_version for app in apps}
-    return needed_versions, _get_mobile_ucr_configs(apps)
+    return needed_versions, list(_get_mobile_ucr_configs(apps))
 
 
 def _get_mobile_ucr_configs(apps):
-    return [
-        report_config
-        for app_ in apps
-        for module in app_.get_report_modules()
-        for report_config in module.report_configs
-    ]
+    for app_ in apps:
+        for module in app_.get_report_modules():
+            for report_config in module.report_configs:
+                _add_app_info_to_report_config(report_config, app)
+                yield report_config
 
 
 @quickcache(['domain', 'build_id'], timeout=24 * 60 * 60)
@@ -164,8 +163,18 @@ def _get_mobile_ucr_configs_cached(domain, build_id):
         for module in app['modules']:
             if module['doc_type'] == 'ReportModule':
                 for report_config in module['report_configs']:
+                    _add_app_info_to_report_config(report_config, app)
                     configs.append(report_config)
     return configs
+
+
+def _add_app_info_to_report_config(report_config, app):
+    # This is useful for debugging - has no in-product purpose
+    report_config['__app'] = {
+        'build_id': app['copy_of'] or app['_id'],
+        'app_id': app['_id'],
+        'version': app['version'],
+    }
 
 
 report_fixture_generator = ReportFixturesProvider()
@@ -464,9 +473,15 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         for row in rows:
             rows_elem.append(row)
 
+        app_info = getattr(report_config, '__app', {})
         report_elem = E.fixture(
-            id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
-            report_id=report_config.report_id, indexed='true'
+            id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid),
+            user_id=restore_user.user_id,
+            report_id=report_config.report_id,
+            indexed='true',
+            app_id=app_info.get('app_id', ''),
+            build_id=app_info.get('build_id', ''),
+            version=str(app_info.get('version', '')),
         )
         report_elem.append(rows_elem)
         yield report_elem
