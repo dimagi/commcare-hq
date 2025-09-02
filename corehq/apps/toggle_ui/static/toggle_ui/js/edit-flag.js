@@ -113,7 +113,7 @@ function toggleItem(namespace, value, last_used, service_type, dimagi_users) {
 
     self.domainUrl = ko.computed(() => {
         const val = self.value(),
-            domain = val.startsWith('!') ? val.slice(1) : val;
+            domain = val && val.startsWith('!') ? val.slice(1) : val;
         return initialPageData.reverse('domain_internal_settings', domain);
     });
 
