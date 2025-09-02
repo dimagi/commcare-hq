@@ -1,6 +1,15 @@
 --- 
 +++ 
-@@ -76,5 +76,5 @@
+@@ -12,7 +12,7 @@
+       {% endblocktrans %}
+     </h3>
+     {% if can_select_server %}
+-      {% include 'login_and_password/partials/bootstrap3/server_location_select.html' %}
++      {% include 'login_and_password/partials/bootstrap5/server_location_select.html' %}
+     {% endif %}
+   {% endif %}
+ 
+@@ -79,5 +79,5 @@
        {{ global_error }}
      </div>
    {% endfor %}
