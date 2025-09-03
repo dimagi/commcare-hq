@@ -321,3 +321,16 @@ def missing_or_empty_user_data_property(property_name):
         _missing_user_data_property(property_name),
         _empty_user_data_property(property_name),
     )
+
+
+def iter_web_user_emails(domain_name):
+    return (
+        hit['email'] or hit['username']
+        for hit in (
+            UserES()
+            .domain(domain_name)
+            .web_users()
+            .fields(('email', 'username'))
+            .scroll()
+        )
+    )
