@@ -24,10 +24,7 @@ from corehq.apps.es.aggregations import (
     MissingAggregation,
     TermsAggregation,
 )
-from corehq.apps.locations.permissions import (
-    conditionally_location_safe,
-    location_safe,
-)
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
@@ -61,14 +58,12 @@ from corehq.apps.reports.filters.select import CaseTypeFilter
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import (
     DatespanMixin,
     ProjectReport,
     ProjectReportParametersMixin,
 )
 from corehq.apps.reports.util import format_datatables_data, friendly_timedelta, DatatablesServerSideParams
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.context_processors import commcare_hq_names
@@ -1371,11 +1366,7 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     report_template_path = "reports/async/bootstrap3/basic.html"
 
 
-def _worker_activity_is_location_safe(view, request, *args, **kwargs):
-    return True
-
-
-@conditionally_location_safe(_worker_activity_is_location_safe)
+@location_safe
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
     name = gettext_lazy("Worker Activity")
@@ -1472,21 +1463,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             )
 
         return user_dict
-
-    def get_users_by_mobile_workers(self):
-        user_dict = {}
-        for mw in self.mobile_worker_ids:
-            user_dict[mw] = util._report_user(CommCareUser.get_by_user_id(mw))
-
-        return user_dict
-
-    def get_admins_and_demo_users(self):
-        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.get_request_param('ufilter', as_list=True)]
-        return self.get_all_users_by_domain(
-            group=None,
-            user_filter=tuple(HQUserType.use_filter(ufilters)),
-            simplified=True
-        ) if ufilters else []
 
     @property
     @memoized
@@ -1886,18 +1862,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     new_row.append(original_row[index])
 
         return new_row
-
-    @property
-    def rows(self):
-        report_data = self._report_data(self.users_to_iterate)
-
-        if self.view_by_groups:
-            rows = self._rows_by_group(report_data)
-        else:
-            rows = self._rows_by_user(report_data, self.users_to_iterate)
-
-        self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
-        return rows
 
 
 def _get_raw_user_link(user, url, filter_class, additional_params=None):
