@@ -69,7 +69,7 @@ class TestUserDataFilters(TestCase):
                    .get_ids())
 
         expected_ids = [self.user_no_data.user_id, self.user_empty_data.user_id, self.user_other_data.user_id]
-        self.assertCountEqual(results, expected_ids)
+        assert Counter(results) == Counter(expected_ids)
 
     def test_missing_or_empty_user_data_multiple_properties(self):
         results = (UserES()
@@ -79,7 +79,7 @@ class TestUserDataFilters(TestCase):
                    .get_ids())
 
         expected_ids = [self.user_no_data.user_id, self.user_empty_data.user_id]
-        self.assertCountEqual(results, expected_ids)
+        assert Counter(results) == Counter(expected_ids)
 
     def test_missing_user_data_property(self):
         results = (UserES()
@@ -88,7 +88,7 @@ class TestUserDataFilters(TestCase):
                    .get_ids())
 
         expected_ids = [self.user_no_data.user_id, self.user_other_data.user_id]
-        self.assertCountEqual(results, expected_ids)
+        assert Counter(results) == Counter(expected_ids)
 
     def test_empty_user_data_property(self):
         results = (UserES()
@@ -97,7 +97,7 @@ class TestUserDataFilters(TestCase):
                    .get_ids())
 
         expected_ids = [self.user_empty_data.user_id]
-        self.assertCountEqual(results, expected_ids)
+        assert Counter(results) == Counter(expected_ids)
 
 
 @es_test(requires=[user_adapter], setup_class=True)
@@ -152,95 +152,92 @@ class TestIsActiveOnDomain(TestCase):
         return user
 
     def test_get_all(self):
-        self.assertItemsEqual(
-            UserES().values_list('username', flat=True),
-            [
-                'cc_user_active',
-                'cc_user_inactive',
-                'cc_user_active_other_domain',
-                'cc_user_inactive_other_domain',
-                'web_user_active',
-                'web_user_inactive',
-                'web_user_active_other_domain',
-                'web_user_inactive_other_domain',
-                'web_user_active_both_domains',
-                'web_user_inactive_both_domains',
-                'web_user_active_inactive_other',
-                'web_user_inactive_active_other',
-            ]
-        )
+        assert Counter(
+            UserES().values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_active',
+            'cc_user_inactive',
+            'cc_user_active_other_domain',
+            'cc_user_inactive_other_domain',
+            'web_user_active',
+            'web_user_inactive',
+            'web_user_active_other_domain',
+            'web_user_inactive_other_domain',
+            'web_user_active_both_domains',
+            'web_user_inactive_both_domains',
+            'web_user_active_inactive_other',
+            'web_user_inactive_active_other',
+        ])
 
     def test_get_active_in_domain(self):
-        self.assertItemsEqual(
+        assert Counter(
             UserES().domain(self.domain).values_list('username', flat=True),
-            [
-                'cc_user_active',
-                'web_user_active',
-                'web_user_active_both_domains',
-                'web_user_active_inactive_other',
-            ]
-        )
+        ) == Counter([
+            'cc_user_active',
+            'web_user_active',
+            'web_user_active_both_domains',
+            'web_user_active_inactive_other',
+        ])
 
     def test_get_inactive_in_domain(self):
-        self.assertItemsEqual(
-            UserES().domain(self.domain, include_inactive=True, include_active=False)
-            .values_list('username', flat=True),
-            [
-                'cc_user_inactive',
-                'web_user_inactive',
-                'web_user_inactive_both_domains',
-                'web_user_inactive_active_other',
-            ]
-        )
+        assert Counter(
+            UserES()
+            .domain(self.domain, include_inactive=True, include_active=False)
+            .values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_inactive',
+            'web_user_inactive',
+            'web_user_inactive_both_domains',
+            'web_user_inactive_active_other',
+        ])
 
     def test_get_all_in_domain(self):
-        self.assertItemsEqual(
-            UserES().domain(self.domain, include_inactive=True).values_list('username', flat=True),
-            [
-                'cc_user_active',
-                'cc_user_inactive',
-                'web_user_active',
-                'web_user_inactive',
-                'web_user_active_both_domains',
-                'web_user_inactive_both_domains',
-                'web_user_active_inactive_other',
-                'web_user_inactive_active_other',
-            ]
-        )
+        assert Counter(
+            UserES()
+            .domain(self.domain, include_inactive=True)
+            .values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_active',
+            'cc_user_inactive',
+            'web_user_active',
+            'web_user_inactive',
+            'web_user_active_both_domains',
+            'web_user_inactive_both_domains',
+            'web_user_active_inactive_other',
+            'web_user_inactive_active_other',
+        ])
 
     def test_get_active_in_domains(self):
         domains = [self.domain, self.other_domain]
-        self.assertItemsEqual(
+        assert Counter(
             UserES()
             .domain(domains)
-            .values_list('username', flat=True),
-            [
-                'cc_user_active',
-                'cc_user_active_other_domain',
-                'web_user_active',
-                'web_user_active_other_domain',
-                'web_user_active_both_domains',
-                'web_user_active_inactive_other',
-                'web_user_inactive_active_other',
-            ]
-        )
+            .values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_active',
+            'cc_user_active_other_domain',
+            'web_user_active',
+            'web_user_active_other_domain',
+            'web_user_active_both_domains',
+            'web_user_active_inactive_other',
+            'web_user_inactive_active_other',
+        ])
 
     def test_get_inactive_in_domains(self):
         domains = [self.domain, self.other_domain]
-        self.assertItemsEqual(
+        assert Counter(
             UserES()
             .domain(domains, include_active=False, include_inactive=True)
-            .values_list('username', flat=True),
-            [
-                'cc_user_inactive',
-                'cc_user_inactive_other_domain',
-                'web_user_inactive',
-                'web_user_inactive_other_domain',
-                'web_user_inactive_both_domains',
-                'web_user_active_inactive_other',
-                'web_user_inactive_active_other',
-            ]
-        )
+            .values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_inactive',
+            'cc_user_inactive_other_domain',
+            'web_user_inactive',
+            'web_user_inactive_other_domain',
+            'web_user_inactive_both_domains',
+            'web_user_active_inactive_other',
+            'web_user_inactive_active_other',
+        ])
 
     def test_iter_web_user_emails(self):
         web_user_emails = iter_web_user_emails(self.domain)
