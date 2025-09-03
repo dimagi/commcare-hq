@@ -485,6 +485,9 @@ class DownloadCaseSummaryView(ApplicationViewMixin, View):
     http_method_names = ['get']
 
     @method_decorator(login_or_api_key)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get(self, request, domain, app_id):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
