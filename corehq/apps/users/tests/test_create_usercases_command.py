@@ -21,15 +21,15 @@ class CreateUsercasesCommandCombinationsTests(SimpleTestCase):
     ])
     @patch('corehq.apps.users.management.commands.create_usercases.sync_usercases_ignore_web_flag')
     @patch('corehq.apps.users.management.commands.create_usercases.USH_USERCASES_FOR_WEB_USERS')
-    @patch('corehq.apps.users.management.commands.create_usercases.CommCareUser.by_domain')
-    @patch('corehq.apps.users.management.commands.create_usercases.WebUser.by_domain')
+    @patch('corehq.apps.users.management.commands.create_usercases.CouchUser.wrap_correctly')
+    @patch('corehq.apps.users.management.commands.create_usercases.get_all_user_rows')
     @patch('corehq.apps.users.management.commands.create_usercases.domain_has_privilege')
     @patch('corehq.apps.users.management.commands.create_usercases.Domain.get_by_name')
     @patch('corehq.apps.users.management.commands.create_usercases.Domain.get_all_names')
     def test_domain_combinations_sync_counts(
         self, domain, has_priv, usercase_enabled, toggle_enabled, expected_sync_calls,
         mock_all_names, mock_get_by_name, mock_has_priv,
-        mock_web_by_domain, mock_cc_by_domain, mock_toggle, mock_sync,
+        mock_get_all_user_rows, _mock_wrap, mock_toggle, mock_sync,
     ):
         mock_all_names.return_value = [domain]
 
@@ -39,20 +39,25 @@ class CreateUsercasesCommandCombinationsTests(SimpleTestCase):
         mock_has_priv.side_effect = lambda _domain, _privilege: has_priv
         mock_toggle.enabled.side_effect = lambda _domain: toggle_enabled
 
-        def _web_users(domain):
+        def _rows_side_effect(domain, include_web_users=True, include_mobile_users=True,
+                      include_inactive=True, include_docs=False):
+            assert not include_inactive and include_docs
+            docs = []
             if domain.startswith('priv_enabled'):
-                return [SimpleNamespace(), SimpleNamespace()]
-            if domain.startswith('priv_disabled'):
-                return [SimpleNamespace()]
-            return []
+                if include_web_users:
+                    docs.extend([{'_id': 'w1'}, {'_id': 'w2'}])
+                if include_mobile_users:
+                    docs.extend([{'_id': 'm1'}])
+            elif domain.startswith('priv_disabled'):
+                if include_web_users:
+                    docs.extend([{'_id': 'w1'}])
+                if include_mobile_users:
+                    docs.extend([{'_id': 'm1'}, {'_id': 'm2'}])
 
-        def _cc_users(domain):
-            if domain.startswith('priv_disabled'):
-                return [SimpleNamespace(), SimpleNamespace()]
-            return []
+            for d in docs:
+                yield {'doc': d}
 
-        mock_web_by_domain.side_effect = _web_users
-        mock_cc_by_domain.side_effect = _cc_users
+        mock_get_all_user_rows.side_effect = _rows_side_effect
 
         call_command('create_usercases')
 
