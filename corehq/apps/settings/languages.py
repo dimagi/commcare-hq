@@ -16,7 +16,7 @@ def get_languages_for_user(user):
 
     # ensure only one language for each code is returned, giving precedent to translated_languages
     deduped_languages = {code: name for code, name in (domain_languages + translated_languages)}
-    return sorted(list(deduped_languages.items()))
+    return sorted(deduped_languages.items())
 
 
 def get_translated_languages():
