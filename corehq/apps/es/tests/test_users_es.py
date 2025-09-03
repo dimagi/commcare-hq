@@ -1,3 +1,6 @@
+import types
+from collections import Counter
+
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -6,6 +9,7 @@ from corehq.apps.es.users import (
     UserES,
     _empty_user_data_property,
     _missing_user_data_property,
+    iter_web_user_emails,
     missing_or_empty_user_data_property,
     user_adapter,
 )
@@ -237,3 +241,12 @@ class TestIsActiveOnDomain(TestCase):
                 'web_user_inactive_active_other',
             ]
         )
+
+    def test_iter_web_user_emails(self):
+        web_user_emails = iter_web_user_emails(self.domain)
+        assert isinstance(web_user_emails, types.GeneratorType)
+        assert Counter(list(web_user_emails)) == Counter([
+            'web_user_active',
+            'web_user_active_both_domains',
+            'web_user_active_inactive_other',
+        ])

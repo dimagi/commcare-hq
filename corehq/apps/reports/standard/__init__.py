@@ -10,7 +10,7 @@ import dateutil
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.users.dbaccessors import get_all_user_rows
+from corehq.apps.es.users import iter_web_user_emails
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 
@@ -52,17 +52,7 @@ class ProjectReport(GenericReportView):
         context = super().template_context
 
         email_form = EmailReportForm()
-        web_user_emails = (
-            row['doc'].get('email') or row['doc'].get('username')
-            for row in get_all_user_rows(
-                self.domain,
-                include_web_users=True,
-                include_inactive=False,
-                include_mobile_users=False,
-                include_docs=True,
-            )
-        )
-        choices = [(e, e) for e in web_user_emails]
+        choices = [(e, e) for e in iter_web_user_emails(self.domain)]
         if len(choices) <= MAX_WEB_USER_EMAILS:
             email_form.fields['recipient_emails'].choices = choices
         context.update({
