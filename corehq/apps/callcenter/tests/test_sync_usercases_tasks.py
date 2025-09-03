@@ -78,6 +78,14 @@ class TestWebUserSyncUsercase(TestCase):
             ' '.join(self.user.get_location_ids(self.domain_name))
         )
 
+        self.user.unset_location(self.domain_name)
+        self.user.reset_locations(self.domain_name, [])
+        # usercase synced by save called during location updates
+        usercase_case_properties = self._get_usercase_properties(self.user._id)
+        self.assertEqual(usercase_case_properties['commcare_location_id'], '')
+        self.assertEqual(usercase_case_properties['commcare_primary_case_sharing_id'], '')
+        self.assertEqual(usercase_case_properties['commcare_location_ids'], '')
+
     def test_location_data_for_commcare_user(self):
         self.commcare_user.set_location(self.location)
         self.commcare_user.add_to_assigned_locations(self.another_location)
@@ -89,6 +97,14 @@ class TestWebUserSyncUsercase(TestCase):
             usercase_case_properties['commcare_location_ids'],
             ' '.join(self.commcare_user.get_location_ids(self.domain_name))
         )
+
+        self.commcare_user.unset_location()
+        self.commcare_user.reset_locations([])
+        # usercase synced by save called during location updates
+        usercase_case_properties = self._get_usercase_properties(self.commcare_user._id)
+        self.assertEqual(usercase_case_properties['commcare_location_id'], '')
+        self.assertEqual(usercase_case_properties['commcare_primary_case_sharing_id'], '')
+        self.assertEqual(usercase_case_properties['commcare_location_ids'], '')
 
 
 class TestBulkSyncUsercases(TestCase):
