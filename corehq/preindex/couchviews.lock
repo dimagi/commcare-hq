@@ -91,6 +91,8 @@ eec7e2f18288404411e4 corehq/couchapps/exports_forms_by_app/README.md
 83d4baace1fa5a6ede96 corehq/couchapps/forms_by_app_info/views/view/reduce.js
 856876cde980284a1363 corehq/couchapps/last_modified/views/by_last_modified/map.js
 ae04d8c82218a9543491 corehq/couchapps/last_modified/views/by_last_modified/reduce.js
+fd9dc31754ec1c784088 corehq/couchapps/latest_apps/views/view/map.js
+fdd310f928106e175c30 corehq/couchapps/latest_apps/views/view/reduce.js
 237f5872f8f59e62bd05 corehq/couchapps/program_by_code/views/view/map.js
 4dc04ae8e9353ec8050b corehq/couchapps/registry_data_sources/views/view/map.js
 ae04d8c82218a9543491 corehq/couchapps/registry_data_sources/views/view/reduce.js
