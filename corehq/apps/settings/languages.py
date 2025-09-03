@@ -14,7 +14,9 @@ def get_languages_for_user(user):
     for domain_membership in user.domain_memberships:
         domain_languages.extend(get_domain_languages(domain_membership.domain))
 
-    return sorted(set(translated_languages + domain_languages))
+    # ensure only one language for each code is returned, giving precedent to translated_languages
+    deduped_languages = {code: name for code, name in (domain_languages + translated_languages)}
+    return sorted(list(deduped_languages.items()))
 
 
 def get_translated_languages():
