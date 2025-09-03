@@ -1,17 +1,17 @@
 import io
 from collections import namedtuple
-from django.conf import settings
+
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.web import json_response
 from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
-from django.contrib import messages
-from couchexport.export import export_raw
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-from dimagi.utils.web import json_response
 
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
@@ -30,10 +30,9 @@ from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq import privileges
 
 
-class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
+class AppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, BasePageView):
 
     @property
     def main_context(self):
@@ -458,7 +457,6 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def _get_form_sheet_name(self, form, language):
         return _get_translated_form_name(self.app, form.get_unique_id(), language)
 
-
     def get_all_forms_row(self, module, form, language):
         return ((
             _get_translated_module_name(self.app, module.unique_id, language),
@@ -487,6 +485,9 @@ class DownloadCaseSummaryView(ApplicationViewMixin, View):
     http_method_names = ['get']
 
     @method_decorator(login_or_api_key)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get(self, request, domain, app_id):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
