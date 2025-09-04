@@ -447,6 +447,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 }
                 self.fhirResourceType.subscribe(changeSaveButton);
                 self.removefhirResourceType.subscribe(changeSaveButton);
+                $('#dd-loading').addClass('hide');
                 callback();
             });
     };
