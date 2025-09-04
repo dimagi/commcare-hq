@@ -20,6 +20,7 @@ VERSION_SUBSTITUTIONS = {
 
 
 def subs_app_versions():
+    modified = []
     for hit in (
         AppES()
         .doc_type('Application')
@@ -30,8 +31,9 @@ def subs_app_versions():
         version = hit['built_with']['version']
         if not is_version_ok(version):
             print('.', end='')
+            modified.append((hit['domain'], hit['doc_id']))
             subs_bad_version(hit['doc_id'], version)
-    print()
+    print_table(modified)
 
 
 def is_version_ok(version):
@@ -48,6 +50,16 @@ def subs_bad_version(app_id, version):
     app_dict['built_with']['version'] = subs
     app = Application.wrap(app_dict)
     app.save()
+
+
+def print_table(domain_app_id_pairs):
+    if not domain_app_id_pairs:
+        return
+    print('\nModified apps:\n')
+    print('| Domain          | App ID                               |')
+    print('| --------------- | ------------------------------------ |')
+    for domain, app_id in domain_app_id_pairs:
+        print(f'| {domain:<15} | {app_id:<36} |')
 
 
 subs_app_versions()
