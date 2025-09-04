@@ -807,7 +807,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             ids_to_exclude = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
-                web=HQUserType.WEB in user_types,
+                web=HQUserType.WEB not in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
                 # this should be true since we are excluding
                 commtrack=True,
