@@ -1,7 +1,6 @@
 from collections import namedtuple
 from datetime import datetime
 
-from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
@@ -123,22 +122,29 @@ def pkce_required(client_id):
 
 
 class ServerLocation:
-    PRODUCTION = 'production'
+    EU = 'eu'
     INDIA = 'india'
-    ENVS = (PRODUCTION, INDIA)
+    PRODUCTION = 'production'
 
-    SUBDOMAINS = {
-        PRODUCTION: 'www',
-        INDIA: 'india',
+    ENVS = {
+        EU: {
+            'country_code': 'eu',
+            'long_name': _("European Union"),
+            'short_name': _("EU"),
+            'subdomain': 'eu',
+        },
+        INDIA: {
+            'country_code': 'in',
+            'long_name': _("India"),
+            'short_name': _("India"),
+            'subdomain': 'india',
+        },
+        PRODUCTION: {
+            'country_code': 'us',
+            'long_name': _("United States"),
+            'short_name': _("US"),
+            'subdomain': 'www',
+        },
     }
 
-    CHOICES_DICT = {
-        PRODUCTION: (SUBDOMAINS[PRODUCTION], _("United States")),
-        INDIA: (SUBDOMAINS[INDIA], _("India")),
-    }
-
-    @classmethod
-    def choices(cls):
-        env = settings.SERVER_ENVIRONMENT
-        sorted_keys = sorted(cls.ENVS, key=lambda x: x != env)
-        return [cls.CHOICES_DICT[key] for key in sorted_keys]
+    SUBDOMAINS = {env: server['subdomain'] for env, server in ENVS.items()}

@@ -10,6 +10,7 @@ import dateutil
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.es.users import iter_web_user_emails
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 
@@ -31,6 +32,9 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 
+# Do not prepopulate "recipient_emails" field if more than 1,500 web users
+MAX_WEB_USER_EMAILS = 1_500
+
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
@@ -46,9 +50,14 @@ class ProjectReport(GenericReportView):
     @property
     def template_context(self):
         context = super().template_context
+
+        email_form = EmailReportForm()
+        choices = [(e, e) for e in iter_web_user_emails(self.domain)]
+        if len(choices) <= MAX_WEB_USER_EMAILS:
+            email_form.fields['recipient_emails'].choices = choices
         context.update({
             'user_types': HQUserType.human_readable,
-            'email_form': EmailReportForm()
+            'email_form': email_form
         })
         return context
 

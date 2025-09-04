@@ -66,6 +66,7 @@
     id="payment-verify-table"
     hx-trigger="load"
     hx-get="{% url 'payments_verify_table' domain %}{% querystring %}"
+    class="table-responsive"
   >
     <div class="htmx-indicator">
       <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}

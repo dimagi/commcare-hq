@@ -190,14 +190,30 @@ class TestPoTranslationFormat:
 
     def test_untranslated_messages(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="Mundo")
+        mock_entry1 = MagicMock(msgid="Hello", msgstr="", fuzzy=False)
+        mock_entry2 = MagicMock(msgid="World", msgstr="Mundo", fuzzy=False)
         po_format.all_message_objects = [mock_entry1, mock_entry2]
 
         result = po_format.untranslated_messages
 
         assert len(result) == 1
         assert result[0] == mock_entry1
+
+    def test_untranslated_messages_includes_fuzzy(self):
+        po_format = PoTranslationFormat("test_file.po")
+
+        mock_empty = MagicMock(msgid="Empty message", msgstr="", fuzzy=False)
+        mock_translated = MagicMock(msgid="Translated message", msgstr="Mensaje traducido", fuzzy=False)
+        mock_fuzzy = MagicMock(msgid="Fuzzy message", msgstr="Mensaje difuso", fuzzy=True)
+
+        po_format.all_message_objects = [mock_empty, mock_translated, mock_fuzzy]
+
+        result = po_format.untranslated_messages
+
+        assert len(result) == 2
+        assert mock_empty in result
+        assert mock_fuzzy in result
+        assert mock_translated not in result
 
     def test_untranslated_messages_plural(self):
         po_format = PoTranslationFormat("test_file.po")
@@ -219,6 +235,24 @@ class TestPoTranslationFormat:
         po_format.load_input(translations)
 
         assert po_format.translation_obj_map == {"0": mock_entry1, "1": mock_entry2}
+
+    def test_fuzzy_flag_removed_after_translation(self):
+        po_format = PoTranslationFormat("test_file.po")
+
+        mock_fuzzy = MagicMock()
+        mock_fuzzy.msgid = "Fuzzy message"
+        mock_fuzzy.msgstr = "Old fuzzy translation"
+        mock_fuzzy.fuzzy = True
+        mock_fuzzy.flags = ['fuzzy', 'python-format']
+
+        po_format.translation_obj_map = {"0": mock_fuzzy}
+
+        llm_output = {"0": "New AI translation"}
+        po_format.fill_translations(llm_output)
+
+        assert mock_fuzzy.msgstr == "New AI translation"
+        assert 'fuzzy' not in mock_fuzzy.flags
+        assert 'python-format' in mock_fuzzy.flags
 
     def test_format_input(self):
         po_format = PoTranslationFormat("test_file.po")
@@ -436,3 +470,47 @@ def test_remove_errored_translations():
     assert updated_po[1].msgstr == ""
     assert updated_po[2].msgstr == ""
     os.remove(po_file_path)
+
+
+def test_fuzzy_handling_with_real_po_content():
+    po_content = '''# Test PO file
+msgid ""
+msgstr ""
+
+msgid "Hello"
+msgstr ""
+
+#, fuzzy
+msgid "World"
+msgstr "Mundo"
+
+msgid "Goodbye"
+msgstr "Adiós"
+
+#, fuzzy
+msgid "Thank you"
+msgstr ""
+'''
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.po', delete=False) as tmp:
+        tmp.write(po_content)
+        tmp_path = tmp.name
+
+    try:
+        po_format = PoTranslationFormat(tmp_path)
+
+        untranslated = po_format.untranslated_messages
+
+        assert len(untranslated) == 3
+
+        untranslated_msgids = [msg.msgid for msg in untranslated]
+        assert "Hello" in untranslated_msgids
+        assert "World" in untranslated_msgids
+        assert "Thank you" in untranslated_msgids
+        assert "Goodbye" not in untranslated_msgids
+
+        fuzzy_messages = [msg for msg in untranslated if msg.fuzzy]
+        assert len(fuzzy_messages) == 2
+
+    finally:
+        os.remove(tmp_path)
