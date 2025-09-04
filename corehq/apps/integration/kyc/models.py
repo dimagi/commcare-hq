@@ -8,10 +8,9 @@ from django.utils.translation import gettext as _
 import jsonfield
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.es.users import UserES
-from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
@@ -94,48 +93,30 @@ class KycConfig(models.Model):
 
     def get_kyc_users(self):
         """
-        Returns all CommCareUser or CommCareCase instances based on the
-        user data store.
+        Yields all kyc users in the domain based on the user data store.
         """
-        if self.user_data_store in (
-            UserDataStore.CUSTOM_USER_DATA,
-            UserDataStore.USER_CASE,
-        ):
-            return [
-                KycUser(self, user_obj)
-                for user_obj in CommCareUser.by_domain(self.domain)
-            ]
-        elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
-            assert self.other_case_type
-            case_ids = (
-                CaseSearchES()
-                .domain(self.domain)
-                .case_type(self.other_case_type)
-            ).get_ids()
-            if not case_ids:
-                return []
-            return [
-                KycUser(self, user_obj)
-                for user_obj in CommCareCase.objects.get_cases(case_ids, self.domain)
-            ]
+        hits = self.get_kyc_users_query().run().hits
+        return self._es_hits_to_kyc_users(hits)
 
     def get_kyc_users_by_ids(self, obj_ids):
         """
-        Returns all CommCareUser or CommCareCase instances based on the
-        user data store and user IDs.
+        Yields kyc users for object ids in the domain based on the user data store.
         """
-        if self.user_data_store in (
-            UserDataStore.CUSTOM_USER_DATA,
-            UserDataStore.USER_CASE,
-        ):
-            user_objs = [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
-            return [KycUser(self, user_obj) for user_obj in user_objs if user_obj]
-        elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
-            assert self.other_case_type
-            return [
-                KycUser(self, case_obj)
-                for case_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
-            ]
+        if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            hits = self.get_kyc_users_query().user_ids(obj_ids).run().hits
+        else:
+            hits = self.get_kyc_users_query().case_ids(obj_ids).run().hits
+        return self._es_hits_to_kyc_users(hits)
+
+    def _es_hits_to_kyc_users(self, hits):
+        for hit in hits:
+            if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+                wrapped_data = CouchUser.wrap_correctly(hit.get('_source', hit))
+            else:
+                # TODO Decide whether to use hq_user_id or case_id for storing User Case data.
+                wrapped_data = wrap_case_search_hit(hit)
+            if wrapped_data:
+                yield KycUser(self, wrapped_data)
 
     def get_api_field_to_user_data_map_values(self):
         """
@@ -220,12 +201,7 @@ class KycUser:
         if self._user_data is None:
             if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
                 self._user_data = self._user_or_case_obj.get_user_data(self.kyc_config.domain).to_dict()
-            elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
-                custom_user_case = self._user_or_case_obj.get_usercase()
-                if not custom_user_case:
-                    raise UserCaseNotFound("User case not found for the user.")
-                self._user_data = custom_user_case.case_json
-            else:  # UserDataStore.OTHER_CASE_TYPE
+            else:  # User Case or UserDataStore.OTHER_CASE_TYPE
                 self._user_data = self._user_or_case_obj.case_json
         return self._user_data
 

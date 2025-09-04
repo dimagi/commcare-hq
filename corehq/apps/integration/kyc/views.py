@@ -120,10 +120,10 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
         if request.POST.get('verify_all') == 'true':
-            kyc_users = self.kyc_config.get_kyc_users()
+            kyc_users = list(self.kyc_config.get_kyc_users())
         else:
             selected_ids = request.POST.getlist('selected_ids')
-            kyc_users = self.kyc_config.get_kyc_users_by_ids(selected_ids)
+            kyc_users = list(self.kyc_config.get_kyc_users_by_ids(selected_ids))
         kyc_users = self._filter_valid_users(kyc_users)
 
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
@@ -198,7 +198,7 @@ class KycVerificationReportView(BaseDomainView):
     def _report_users_count_metric(self):
         if self.domain_has_config:
             kyc_config = KycConfig.objects.get(domain=self.domain)
-            total_users = len(kyc_config.get_kyc_users())
+            total_users = len(list(kyc_config.get_kyc_users()))
             metrics_gauge(
                 'commcare.integration.kyc.total_users.count',
                 total_users,
