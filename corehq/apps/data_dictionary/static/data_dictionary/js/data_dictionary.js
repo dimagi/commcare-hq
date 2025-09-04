@@ -720,10 +720,14 @@ $(function () {
         }
     }
 
-    window.onhashchange = doHashNavigation;
+    function ready() {
+        doHashNavigation();
+        $('#hq-content').parent().koApplyBindings(viewModel);
+        $('#dd-loading').addClass('hide');
+    }
 
-    viewModel.init(doHashNavigation);
-    $('#hq-content').parent().koApplyBindings(viewModel);
+    window.onhashchange = doHashNavigation;
+    viewModel.init(ready);
     $('#download-dict').click(function () {
         googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
     });
