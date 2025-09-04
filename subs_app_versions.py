@@ -31,7 +31,6 @@ def subs_app_versions(*, dry_run=True):
     ):
         version = hit['built_with']['version']
         if not is_version_ok(version):
-            print('.', end='')
             modified.append((hit['domain'], hit['doc_id']))
             if not dry_run:
                 subs_bad_version(hit['doc_id'], version)
@@ -50,14 +49,18 @@ def subs_bad_version(app_id, version):
     subs = VERSION_SUBSTITUTIONS[version]  # Raise KeyError on unknown version
     app_dict = Application.get_db().get(app_id)
     app_dict['built_with']['version'] = subs
-    app = Application.wrap(app_dict)
+    try:
+        app = Application.wrap(app_dict)
+    except BadValueError as err:
+        print(f"Skipping {app_dict['domain']} | {app_id}:\n{err}\n")
+        return
     app.save()
 
 
 def print_table(domain_app_id_pairs):
     if not domain_app_id_pairs:
         return
-    print('\nAffected apps:\n')
+    print('Affected apps:\n')
     print('| Domain          | App ID                               |')
     print('| --------------- | ------------------------------------ |')
     for domain, app_id in domain_app_id_pairs:
