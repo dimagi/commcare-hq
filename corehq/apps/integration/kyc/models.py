@@ -7,7 +7,9 @@ from django.utils.translation import gettext as _
 
 import jsonfield
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.users import UserES
 from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
@@ -79,6 +81,16 @@ class KycConfig(models.Model):
         # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
         else:
             raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
+
+    def get_kyc_users_query(self):
+        if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            return UserES().domain(self.domain).mobile_users()
+        elif self.user_data_store == UserDataStore.USER_CASE:
+            case_type = USERCASE_TYPE
+        elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
+            assert self.other_case_type
+            case_type = self.other_case_type
+        return CaseSearchES().domain(self.domain).case_type(case_type)
 
     def get_kyc_users(self):
         """
