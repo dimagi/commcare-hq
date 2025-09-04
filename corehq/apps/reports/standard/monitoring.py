@@ -15,7 +15,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
-from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
@@ -1398,17 +1397,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return [_f for _f in self.get_request_param('case_type', as_list=True) if _f]
 
     @property
-    @memoized
-    def view_by_groups(self):
-        track_workflow_noop(self.request.couch_user.username,
-                        "Worker Activity Report: view_by_groups disabled by EMWF_WORKER_ACTIVITY_REPORT")
-        return False
-
-    @property
     def headers(self):
         CASE_TYPE_MSG = "The case type filter doesn't affect this column."
-        by_group = self.view_by_groups
-        columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
+        columns = [DataTablesColumn(_("User"))]
         columns.append(DataTablesColumnGroup(_("Form Data"),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of forms submitted in chosen date range. %s" % CASE_TYPE_MSG)),
@@ -1418,8 +1409,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             DataTablesColumn(_("Last Form Submission"),
                 help_text=_("Date of last form submission in time period.  "
                             "Total row displays proportion of users submitting forms in date range"))
-            if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Proportion of users in group who submitted forms in date range."))
         ))
         columns.append(DataTablesColumnGroup(
             _("Case Data"),
@@ -1445,24 +1434,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def group_ids(self):
         return [group_id for group_id in self.get_request_param('group', as_list=True)
                 if group_id and group_id != '_all']
-
-    @property
-    @memoized
-    def users_by_group(self):
-        if not self.group_ids or self.get_request_param('all_groups', 'off') == 'on':
-            groups = Group.get_reporting_groups(self.domain)
-        else:
-            groups = [Group.get(g) for g in self.group_ids]
-
-        user_dict = {}
-        for group in groups:
-            user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
-                group=group,
-                user_filter=tuple(self.default_user_filter),
-                simplified=True
-            )
-
-        return user_dict
 
     @property
     @memoized
@@ -1496,10 +1467,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         returns a cell that is linked to the submission history report
         """
         base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
-        if self.view_by_groups:
-            params = EMWF.for_reporting_group(owner_id)
-        else:
-            params = EMWF.for_user(owner_id)
+        params = EMWF.for_user(owner_id)
 
         start_date, end_date = self._dates_for_linked_reports(self.datespan)
         params.update({
@@ -1601,74 +1569,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             self._html_anchor_tag(url, group_name),
             group_name,
         )
-
-    def _rows_by_group(self, report_data):
-        rows = []
-        active_users_by_group = {
-            g: len([u for u in users if report_data.submissions_by_user.get(u['user_id'])])
-            for g, users in self.users_by_group.items()
-        }
-
-        for group, users in self.users_by_group.items():
-            group_name, group_id = tuple(group.split('|'))
-            if group_name == 'no_group':
-                continue
-
-            owner_ids = _get_owner_ids_from_users(users)
-
-            total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
-            active_cases = sum([
-                int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
-            ])
-            active_cases_cell = util.numcell(active_cases)
-            pct_active = util.numcell(
-                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
-            )
-
-            active_users = int(active_users_by_group.get(group, 0))
-            total_users = len(self.users_by_group.get(group, []))
-
-            rows.append([
-                # Group Name
-                self._group_cell(group_id, group_name),
-                # Forms Submitted
-                self._submit_history_link(
-                    group_id,
-                    sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]),
-                ),
-                # Avg forms submitted
-                util.numcell(
-                    sum(
-                        [int(report_data.avg_submissions_by_user.get(user["user_id"], 0))
-                        for user in users]
-                    ) // self.num_avg_intervals
-                ),
-                # Active users
-                util.numcell("%s / %s" % (active_users, total_users),
-                             value=int((float(active_users) / total_users) * 10000) if total_users else -1,
-                             raw="%s / %s" % (active_users, total_users)),
-                # Cases opened
-                util.numcell(
-                    sum(
-                        [int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
-                        for user in users]
-                    )
-                ),
-                # Cases closed
-                util.numcell(
-                    sum(
-                        [int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
-                        for user in users]
-                    )
-                ),
-                # Active cases
-                active_cases_cell,
-                # Total Cases
-                util.numcell(total_cases),
-                # Percent active cases
-                pct_active,
-            ])
-        return rows
 
     def _rows_by_user(self, report_data, users):
         rows = []
@@ -1797,17 +1697,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             [int(report_data.total_cases_by_owner.get(id, 0))
              for id in case_owners])
 
-        if self.view_by_groups:
-            active_users = set()
-            all_users = set()
-            for users in self.users_by_group.values():
-                for user in users:
-                    if report_data.submissions_by_user.get(user['user_id'], False):
-                        active_users.add(user['user_id'])
-                    all_users.add(user['user_id'])
-            total_row[3] = {'numerator': len(active_users), 'denominator': len(all_users)}
-        else:
-            total_row[3] = {'numerator': num, 'denominator': len(rows)}
+        total_row[3] = {'numerator': num, 'denominator': len(rows)}
         return total_row
 
     @property
@@ -1823,10 +1713,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         for user_chunk in chunked(user_iterator, chunk_size):
             users = [util._report_user(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)
-            if self.view_by_groups:
-                rows = self._rows_by_group(formatted_data)
-            else:
-                rows = self._rows_by_user(formatted_data, users)
+            rows = self._rows_by_user(formatted_data, users)
             partial_total_row = self._total_row(rows, formatted_data, users)
             self.total_row = self._sum_rows_together(self.total_row, partial_total_row)
             for row in rows:
@@ -1867,10 +1754,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def rows(self):
         report_data = self._report_data(self.users_to_iterate)
 
-        if self.view_by_groups:
-            rows = self._rows_by_group(report_data)
-        else:
-            rows = self._rows_by_user(report_data, self.users_to_iterate)
+        rows = self._rows_by_user(report_data, self.users_to_iterate)
 
         self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
         return rows
