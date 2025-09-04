@@ -1368,7 +1368,7 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
 @location_safe
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
-    name = gettext_lazy("Worker Activity")
+    name = gettext_lazy("User Activity")
     description = gettext_lazy("Summary of form and case activity by user or group.")
     section_name = gettext_lazy("Project Reports")
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
