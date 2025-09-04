@@ -7,18 +7,19 @@ from django.conf import settings
 
 import pytz
 from couchdbkit import ResourceNotFound
+from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.utils.django.email import send_HTML_email
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.celery import task
 from corehq.apps.domain.calculations import last_form_submission
 from corehq.apps.domain.models import Domain
-from corehq.apps.toggle_ui.utils import get_subscription_info, has_dimagi_user
+from corehq.apps.toggle_ui.utils import get_dimagi_users
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import (
@@ -111,21 +112,22 @@ def _write_toggle_data(filepath, toggles, increment_progress=None):
         # user columns
         "user_is_active", "user_is_dimagi", "user_is_mobile", "user_is_superuser", "user_last_login",
         # domain columns
-        "domain_is_active", "domain_is_test", "domain_is_snapshot",
-        "domain_has_dimagi_user", "domain_last_form_submission", "domain_has_submission_in_last_30_days",
-        "domain_subscription_service_type", "domain_subscription_plan"
+        "domain_is_active", "domain_is_test", "domain_is_snapshot", "domain_dimagi_users",
+        "domain_last_form_submission", "domain_has_submission_in_last_30_days",
+        "domain_subscription_service_type", "domain_subscription_plan", "domain_billing_contacts",
     ]
     with open(filepath, 'w', encoding='utf8') as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
 
+        usage_info = _UsageInfo()
         for toggle in toggles:
-            for row in _get_toggle_rows(toggle):
+            for row in _get_toggle_rows(toggle, usage_info):
                 writer.writerow(row)
                 increment_progress and increment_progress()
 
 
-def _get_toggle_rows(toggle):
+def _get_toggle_rows(toggle, usage_info):
     relevant_environments = toggle.relevant_environments
     relevant_to_env = bool(not relevant_environments or settings.SERVER_ENVIRONMENT in relevant_environments)
     toggle_data = {
@@ -187,40 +189,46 @@ def _get_toggle_rows(toggle):
             item_info = _item_info(item, ns)
             ns_info = {}
             if ns == NAMESPACE_DOMAIN:
-                ns_info = _get_domain_info(item)
+                ns_info = usage_info.for_domain(item)
             if ns == NAMESPACE_USER:
-                ns_info = _get_user_info(item)
+                ns_info = usage_info.for_user(item)
             rows.append({**toggle_data, **item_info, **ns_info})
     return rows
 
 
-def _get_domain_info(domain):
-    domain_obj = Domain.get_by_name(domain)
-    if not domain_obj:
-        return {"error": "Domain not found"}
+class _UsageInfo:
+    @memoized
+    def for_domain(self, domain):
+        domain_obj = Domain.get_by_name(domain)
+        if not domain_obj:
+            return {"error": "Domain not found"}
 
-    service_type, plan = get_subscription_info(domain)
-    return {
-        "domain_is_active": domain_obj.is_active,
-        "domain_is_test": {"true": "True", "false": "False", "none": "unknown"}[domain_obj.is_test],
-        "domain_is_snapshot": domain_obj.is_snapshot,
-        "domain_has_dimagi_user": has_dimagi_user(domain),
-        "domain_last_form_submission": last_form_submission(domain),
-        "domain_has_submission_in_last_30_days": domain_has_submission_in_last_30_days(domain),
-        "domain_subscription_service_type": service_type,
-        "domain_subscription_plan": plan,
-    }
+        info = {
+            "domain_is_active": domain_obj.is_active,
+            "domain_is_test": {"true": "True", "false": "False", "none": "unknown"}[domain_obj.is_test],
+            "domain_is_snapshot": domain_obj.is_snapshot,
+            "domain_dimagi_users": get_dimagi_users(domain),
+            "domain_last_form_submission": last_form_submission(domain),
+            "domain_has_submission_in_last_30_days": domain_has_submission_in_last_30_days(domain),
+        }
+        if subscription := Subscription.get_active_subscription_by_domain(domain):
+            info.update({
+                "domain_subscription_service_type": subscription.service_type,
+                "domain_subscription_plan": subscription.plan_version.plan.name,
+                "domain_billing_contacts": ','.join(subscription.account.billingcontactinfo.email_list),
+            })
+        return info
 
+    @memoized
+    def for_user(self, username):
+        user = CouchUser.get_by_username(username)
+        if not user:
+            return {"error": "User not found"}
 
-def _get_user_info(username):
-    user = CouchUser.get_by_username(username)
-    if not user:
-        return {"error": "User not found"}
-
-    return {
-        "user_is_dimagi": is_dimagi_email(username),
-        "user_is_mobile": "commcarehq.org" in username,
-        "user_is_active": user.is_active_in_any_domain(),
-        "user_last_login": user.last_login,
-        "user_is_superuser": user.is_superuser,
-    }
+        return {
+            "user_is_dimagi": user.is_dimagi,
+            "user_is_mobile": user.is_commcare_user(),
+            "user_is_active": user.is_active_in_any_domain(),
+            "user_last_login": user.last_login,
+            "user_is_superuser": user.is_superuser,
+        }
