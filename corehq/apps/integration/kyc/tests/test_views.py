@@ -8,6 +8,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
 from corehq.apps.integration.kyc.views import (
     KycConfigurationView,
@@ -76,6 +77,7 @@ class TestKycConfigurationView(BaseTestKycView):
         assert response.status_code == 200
 
 
+@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class TestKycVerificationReportView(BaseTestKycView):
     urlname = KycVerificationReportView.urlname
 
@@ -132,7 +134,7 @@ class TestKycVerificationReportView(BaseTestKycView):
         assert context['domain_has_config'] is True
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class TestKycVerificationTableView(BaseTestKycView):
     urlname = KycVerificationTableView.urlname
 
@@ -203,6 +205,7 @@ class TestKycVerificationTableView(BaseTestKycView):
             first_name='Jane',
             last_name='Doe',
         )
+        user_adapter.bulk_index([cls.user1, cls.user2], refresh=True)
 
         factory = CaseFactory(cls.domain)
         cls.case_list = [

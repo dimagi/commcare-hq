@@ -11,7 +11,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus, \
     KycVerificationFailureCause
-from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
 from corehq.apps.integration.kyc.services import (
     _validate_schema,
     get_user_data_for_api,
@@ -128,19 +127,14 @@ class TestGetUserDataForAPI(BaseKycUserSetup):
             case_type=USERCASE_TYPE,
             external_id=self.user.user_id,
             save=True,
-            case_json={'nationality': 'German'}
+            # For user case, except name, other user data is stored as case properties
+            case_json={'first_name': 'abc', 'nationality': 'German'}
         )
         self.addCleanup(case.delete)
+        kyc_user = KycUser(self.config, case)
 
-        result = get_user_data_for_api(self.kyc_user, self.config)
+        result = get_user_data_for_api(kyc_user, self.config)
         self.assertEqual(result, {'first_name': 'abc', 'nationality': 'German'})
-
-    def test_user_case_data_store_with_no_case(self):
-        self.config.user_data_store = UserDataStore.USER_CASE
-        self.config.save()
-
-        with self.assertRaises(UserCaseNotFound):
-            get_user_data_for_api(self.kyc_user, self.config)
 
     def test_custom_case_data_store(self):
         self.config.user_data_store = UserDataStore.OTHER_CASE_TYPE
