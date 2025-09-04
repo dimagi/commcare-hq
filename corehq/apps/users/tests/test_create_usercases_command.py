@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import SimpleTestCase
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.test_utils import generate_cases
 
 
@@ -64,6 +65,6 @@ class CreateUsercasesCommandCombinationsTests(SimpleTestCase):
         assert mock_sync.call_count == expected_sync_calls
 
         if expected_sync_calls > 0:
-            mock_toggle.set.assert_called_with(domain, True)
+            mock_toggle.set.assert_called_with(domain, True, NAMESPACE_DOMAIN)
         else:
             assert not mock_toggle.set.called
