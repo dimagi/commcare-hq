@@ -593,6 +593,19 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy("Name of the channel created in connect messaging.")
     )
 
+    opt_out_of_data_sharing = BooleanField(
+        label=gettext_lazy("Data Sharing"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(gettext_lazy(
+                "Opt Out of "
+                "<a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2386001966/"
+                "Data+Sharing+Opt-Outs+-+CommCare\" "
+                "target=\"_blank\"> Aggregate Data Usage</a>"
+            )),
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -630,6 +643,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
         self._handle_orphan_case_alerts_setting_value()
+        self._handle_opt_out_of_data_sharing_setting_value()
 
         if not EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             del self.fields['exports_use_elasticsearch']
@@ -646,6 +660,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 crispy.Div(*self.get_extra_fields()),
                 hqcrispy.CheckboxField('release_mode_visibility'),
                 hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+                hqcrispy.CheckboxField('opt_out_of_data_sharing'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -718,6 +733,9 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _handle_exports_use_elasticsearch_setting_value(self):
         self.fields['exports_use_elasticsearch'].initial = self.project.exports_use_elasticsearch
+
+    def _handle_opt_out_of_data_sharing_setting_value(self):
+        self.fields['opt_out_of_data_sharing'].initial = not self.project.internal.can_use_data
 
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
@@ -875,6 +893,9 @@ class DomainGlobalSettingsForm(forms.Form):
     def _save_orphan_case_alerts_setting(self, domain):
         domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
 
+    def _save_opt_out_of_data_sharing_setting(self, domain):
+        domain.update_internal(can_use_data=not self.cleaned_data.get("opt_out_of_data_sharing"))
+
     def _save_exports_use_elasticsearch(self, domain):
         domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", True)
 
@@ -899,6 +920,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
+        self._save_opt_out_of_data_sharing_setting(domain)
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             self._save_exports_use_elasticsearch(domain)
         domain.save()
