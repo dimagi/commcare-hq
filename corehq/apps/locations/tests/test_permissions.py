@@ -214,7 +214,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
                       args=[self.domain, user._id])
         with mock.patch(
             'corehq.apps.users.views.mobile.users.get_domain_languages',
-            new=lambda *args: None,
+            new=lambda *args, **kwargs: None,
         ):
             self._assert_url_returns_status(url, status_code)
 

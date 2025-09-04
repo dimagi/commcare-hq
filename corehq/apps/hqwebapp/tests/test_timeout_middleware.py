@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from django.conf import settings
 from django.test import Client, TestCase
@@ -31,6 +32,10 @@ class TestTimeout(TestCase):
         cls.secure_domain2.secure_sessions = True
         cls.secure_domain2.secure_sessions_timeout = 15
         cls.secure_domain2.save()
+
+        lang_patcher = patch('corehq.apps.settings.views.get_languages_for_user', return_value=[])
+        lang_patcher.start()
+        cls.addClassCleanup(lang_patcher.stop)
 
     def setUp(self):
         # Re-login for each test to create new session

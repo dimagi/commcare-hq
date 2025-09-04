@@ -372,7 +372,7 @@ class EditCommCareUserView(BaseEditUserView):
         form = CommCareUserFormSet(data=data, domain=self.domain,
             editable_user=self.editable_user, request_user=self.request.couch_user, request=self.request)
 
-        form.user_form.load_language(language_choices=get_domain_languages(self.domain))
+        form.user_form.load_language(language_choices=get_domain_languages(self.domain, default_to_all_langs=True))
 
         if self.can_change_user_roles or self.couch_user.can_view_roles():
             form.user_form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
