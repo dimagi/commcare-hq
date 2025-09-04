@@ -19,7 +19,8 @@ VERSION_SUBSTITUTIONS = {
 }
 
 
-def subs_app_versions():
+def subs_app_versions(*, dry_run=True):
+    print('Dry run' if dry_run else 'Live')
     modified = []
     for hit in (
         AppES()
@@ -32,7 +33,8 @@ def subs_app_versions():
         if not is_version_ok(version):
             print('.', end='')
             modified.append((hit['domain'], hit['doc_id']))
-            subs_bad_version(hit['doc_id'], version)
+            if not dry_run:
+                subs_bad_version(hit['doc_id'], version)
     print_table(modified)
 
 
@@ -55,7 +57,7 @@ def subs_bad_version(app_id, version):
 def print_table(domain_app_id_pairs):
     if not domain_app_id_pairs:
         return
-    print('\nModified apps:\n')
+    print('\nAffected apps:\n')
     print('| Domain          | App ID                               |')
     print('| --------------- | ------------------------------------ |')
     for domain, app_id in domain_app_id_pairs:
