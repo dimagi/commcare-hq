@@ -257,9 +257,9 @@ class TestKycVerificationTableView(BaseTestKycView):
         response = self._make_request()
         queryset = response.context['table'].data
         assert len(queryset) == 2
-        for row in queryset:
-            if row['has_invalid_data']:
-                assert row == {
+        for row in queryset.data:
+            if row.serialized_data['has_invalid_data']:
+                assert row.serialized_data == {
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
                     'kyc_verification_status': {
@@ -271,7 +271,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'last_name': 'Doe',
                 }
             else:
-                assert row == {
+                assert row.serialized_data == {
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
                     'kyc_verification_status': {
@@ -304,9 +304,9 @@ class TestKycVerificationTableView(BaseTestKycView):
         response = self._make_request()
         queryset = response.context['table'].data
         assert len(queryset) == 2
-        for row in queryset:
-            if row['has_invalid_data']:
-                assert row == {
+        for row in queryset.data:
+            if row.serialized_data['has_invalid_data']:
+                assert row.serialized_data == {
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
                     'kyc_verification_status': {
@@ -318,7 +318,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'last_name': 'Bar',
                 }
             else:
-                assert row == {
+                assert row.serialized_data == {
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
                     'kyc_verification_status': {
