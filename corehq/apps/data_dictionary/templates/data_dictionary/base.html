@@ -324,6 +324,12 @@
               <div class="row-item-small"></div>
             {% endif %}
             </div>
+            <h4
+              id="case-type-loading"
+              data-bind="visible: caseTypeIsLoading"
+            "><i class="fa fa-spin fa-spinner"></i>
+              {% trans "Loading properties..." %}
+            </h4>
             <div
               data-bind="
                 sortable: {

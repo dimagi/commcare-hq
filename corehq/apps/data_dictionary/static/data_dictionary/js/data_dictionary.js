@@ -44,12 +44,14 @@ var caseType = function (
 
     self.groups.subscribe(changeSaveButton);
 
-    self.loadCaseProperties = function () {
+    self.loadCaseProperties = function (isLoading) {
         if (self.groups().length === 0) {
+            isLoading(true);
             const caseTypeUrl = self.dataUrl + self.name + '/';
             fetchCaseProperties(caseTypeUrl).then(() => {
                 self.groups.sort(sortGroupsFn);
                 self.resetSaveButton();
+                isLoading(false);
             });
         }
     };
@@ -325,6 +327,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.showAll = ko.observable(false);
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+    self.caseTypeIsLoading = ko.observable();
 
     self.casePropertyWarningViewModel = new casePropertyWarningViewModel(casePropertyLimit);
 
@@ -541,7 +544,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 return;
             }
         }
-        caseType.loadCaseProperties();
+        caseType.loadCaseProperties(self.caseTypeIsLoading);
         self.activeCaseType(caseType.name);
         self.fhirResourceType(caseType.fhirResourceType());
         self.removefhirResourceType(false);
