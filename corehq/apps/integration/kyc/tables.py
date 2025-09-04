@@ -5,6 +5,7 @@ from django.utils.translation import gettext as _
 from django_tables2 import columns
 
 from corehq.apps.hqwebapp.tables.columns import DateTimeStringColumn
+from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 
@@ -22,7 +23,10 @@ class DisableableCheckBoxColumn(columns.CheckBoxColumn):
         return mark_safe('<input %s/>' % flatatt(default_attrs))
 
 
-class KycVerifyTable(BaseHtmxTable):
+class KycVerifyTable(BaseHtmxTable, ElasticTable):
+    # TODO Record class will be set dynamically based on user data configuration
+    record_class = None
+
     class Meta(BaseHtmxTable.Meta):
         pass
 

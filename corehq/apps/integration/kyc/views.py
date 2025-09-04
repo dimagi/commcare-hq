@@ -90,8 +90,8 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         }
 
     def get_queryset(self):
-        kyc_users = self.kyc_config.get_kyc_users()
-        return [self._parse_row(kyc_user) for kyc_user in kyc_users]
+        # TODO: Parsing to be done at the record class level
+        return self.kyc_config.get_kyc_users_query()
 
     def _parse_row(self, kyc_user):
         row_data = {
