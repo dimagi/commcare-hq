@@ -723,6 +723,7 @@ $(function () {
     function ready() {
         doHashNavigation();
         $('#hq-content').parent().koApplyBindings(viewModel);
+        $('#dd-loading').addClass('hide');
     }
 
     window.onhashchange = doHashNavigation;
