@@ -84,8 +84,10 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return KycConfig.objects.get(domain=self.request.domain)
 
     def get_table_kwargs(self):
+        orderable = True
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             record_class = KycUserElasticRecord
+            orderable = False
         else:
             record_class = KycCaseElasticRecord
         self.table_class.record_class = record_class
@@ -93,6 +95,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return {
             'extra_columns': KycVerifyTable.get_extra_columns(self.kyc_config),
             'record_kwargs': {'kyc_config': self.kyc_config},
+            'orderable': orderable,
         }
 
     def get_queryset(self):
