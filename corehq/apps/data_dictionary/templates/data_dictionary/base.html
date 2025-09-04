@@ -185,6 +185,12 @@
   {% initial_page_data 'casePropertyLimit' case_property_limit %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
   {% url 'geospatial_settings' domain as geospatial_settings_url %}
+  <h4 
+    id="dd-loading"
+    class="text-center"
+  "><i class="fa fa-spin fa-spinner"></i>
+    {% trans "Loading data dictionary..." %}
+  </h4>
   <div class="ko-template">
     <div id="case-type-error" class="alert alert-danger" hidden>
       <p>
