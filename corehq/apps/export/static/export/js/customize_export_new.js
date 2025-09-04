@@ -3,7 +3,6 @@ import $ from "jquery";
 import { Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import models from "export/js/models";
-import toggles from "hqwebapp/js/toggles";
 import constants from "export/js/const";
 
 $(function () {
@@ -28,24 +27,24 @@ $(function () {
         new Tooltip(trigger);
     });
 
-    if (toggles.toggleEnabled('SUPPORT_GEO_JSON_EXPORT')) {
+    if (initialPageData.get('has_geojson_export_access')) {
         const exportFormat = initialPageData.get('export_instance').export_format;
         if (exportFormat === constants.EXPORT_FORMATS.GEOJSON) {
-            $("#select-geo-property").show();
-            $("#split-multiselects-checkbox-div").hide();
+            $("#select-geo-property").removeClass("d-none");
+            $("#split-multiselects-checkbox-div").addClass("d-none");
             $("#split-multiselects-checkbox").prop("checked", false);
         }
 
         $('#format-select').change(function () {
             const selectedValue = $(this).val();
             if (selectedValue === constants.EXPORT_FORMATS.GEOJSON) {
-                $("#select-geo-property").show();
+                $("#select-geo-property").removeClass("d-none");
                 // Hiding and unchecking this checkbox is a temporary measure
-                $("#split-multiselects-checkbox-div").hide();
+                $("#split-multiselects-checkbox-div").addClass("d-none");
                 $("#split-multiselects-checkbox").prop("checked", false);
             } else {
-                $("#select-geo-property").hide();
-                $("#split-multiselects-checkbox-div").show();
+                $("#select-geo-property").addClass("d-none");
+                $("#split-multiselects-checkbox-div").removeClass("d-none");
             }
         });
     }
