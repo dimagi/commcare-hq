@@ -3007,7 +3007,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
         """
-        return any(form.uses_usercase() for form in self.get_forms())
+        return (self.case_type == const.USERCASE_TYPE
+                or any(form.uses_usercase() for form in self.get_forms()))
 
     def grid_display_style(self):
         return self.display_style == 'grid'
