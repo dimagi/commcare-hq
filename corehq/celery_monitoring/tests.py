@@ -2,7 +2,7 @@ import datetime
 
 from django.conf import settings
 
-from freezegun import freeze_time
+from time_machine import travel
 from testil import assert_raises, eq
 
 from corehq.apps.celery import task
@@ -30,12 +30,12 @@ def test_heartbeat():
 
     seen_time = datetime.datetime.utcnow()
 
-    with freeze_time(seen_time):
+    with travel(seen_time, tick=False):
         hb.mark_seen()
         eq(hb.get_last_seen(), seen_time)
         eq(hb.get_blockage_duration(), datetime.timedelta(seconds=0))
 
-    with freeze_time(seen_time + datetime.timedelta(minutes=10)):
+    with travel(seen_time + datetime.timedelta(minutes=10), tick=False):
         eq(hb.get_last_seen(), seen_time)
         eq(hb.get_blockage_duration(), datetime.timedelta(minutes=10) - HEARTBEAT_FREQUENCY)
 
@@ -57,10 +57,10 @@ def test_time_to_start_timer():
     with assert_raises(TimingNotAvailable):
         TimeToStartTimer(task_id).stop_and_pop_timing()
 
-    with freeze_time(start_time):
+    with travel(start_time, tick=False):
         TimeToStartTimer(task_id).start_timing(datetime.datetime.utcnow())
 
-    with freeze_time(start_time + delay):
+    with travel(start_time + delay, tick=False):
         time_to_start = TimeToStartTimer(task_id).stop_and_pop_timing()
 
     eq(time_to_start, delay)
@@ -77,10 +77,10 @@ def test_time_to_start_timer_with_eta():
     start_time = datetime.datetime.utcnow()
     eta = start_time + datetime.timedelta(minutes=5)
 
-    with freeze_time(start_time):
+    with travel(start_time, tick=False):
         TimeToStartTimer(task_id).start_timing(eta)
 
-    with freeze_time(eta + delay):
+    with travel(eta + delay, tick=False):
         time_to_start = TimeToStartTimer(task_id).stop_and_pop_timing()
 
     eq(time_to_start, delay)

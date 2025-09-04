@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# flake8: noqa: F405
+# flake8: noqa: E266, F405
 
 import inspect
 from collections import defaultdict
@@ -191,6 +191,7 @@ MINIMUM_ZXCVBN_SCORE = 2
 MINIMUM_PASSWORD_LENGTH = 8
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
+FORMS_URLFIELD_ASSUME_HTTPS = True
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -203,10 +204,8 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    'corehq.util.auth.SHA1PasswordHasher',
     'django.contrib.auth.hashers.MD5PasswordHasher',
-    'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
-    'django.contrib.auth.hashers.CryptPasswordHasher',
 )
 PASSWORD_RESET_TIMEOUT = 3600
 
@@ -483,7 +482,6 @@ SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "support@example.com"
 SAAS_OPS_EMAIL = "saas-ops@example.com"
-PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
 ACCOUNTS_EMAIL = 'accounts@example.com'
 DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
@@ -1166,6 +1164,7 @@ CONNECTID_CLIENT_ID = ''
 CONNECTID_SECRET_KEY = ''
 CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
+CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
@@ -1305,6 +1304,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
                 'corehq.util.context_processors.server_location_display',
+                'corehq.util.context_processors.chat_widget_config',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1697,7 +1697,7 @@ HQ can only provide in HTML.  Please set your email client to view this email
 in HTML or read this email in a client that supports HTML email.
 
 Thanks,
-The CommCare HQ Team"""
+The CommCare Team"""
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',

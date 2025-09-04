@@ -3,7 +3,7 @@ from datetime import datetime
 from django.db.models import BooleanField, DateTimeField, IntegerField
 from django.test import TestCase
 
-from freezegun import freeze_time
+from time_machine import travel
 
 from dimagi.utils.parsing import json_format_datetime
 
@@ -25,7 +25,7 @@ class TestGetDomainsToUpdate(TestCase):
         domains = get_domains_to_update()
         self.assertEqual(domains, {domain.name})
 
-    @freeze_time('2024-01-10')
+    @travel('2024-01-10', tick=False)
     def test_domain_metrics_updated_over_one_week_ago_is_included(self):
         domain = self.index_domain('cp-over-one-week')
         self.create_domain_metrics(domain.name, last_modified=datetime(2024, 1, 2, 23, 59))
@@ -33,7 +33,7 @@ class TestGetDomainsToUpdate(TestCase):
         domains = get_domains_to_update()
         self.assertEqual(domains, {domain.name})
 
-    @freeze_time('2024-01-10')
+    @travel('2024-01-10', tick=False)
     def test_domain_metrics_updated_exactly_one_week_ago_is_excluded(self):
         domain = self.index_domain('cp-one-week')
         self.create_domain_metrics(domain.name, last_modified=datetime(2024, 1, 3))
@@ -41,7 +41,7 @@ class TestGetDomainsToUpdate(TestCase):
         domains = get_domains_to_update()
         self.assertEqual(domains, set())
 
-    @freeze_time('2024-01-10')
+    @travel('2024-01-10', tick=False)
     def test_domain_metrics_updated_less_than_one_week_ago_is_excluded(self):
         domain = self.index_domain('cp-less-than-one-week')
         self.create_domain_metrics(domain.name, last_modified=datetime(2024, 1, 4))
@@ -49,7 +49,7 @@ class TestGetDomainsToUpdate(TestCase):
         domains = get_domains_to_update()
         self.assertEqual(domains, set())
 
-    @freeze_time('2024-01-10')
+    @travel('2024-01-10', tick=False)
     def test_form_submission_in_the_last_day_is_included(self):
         domain = self.index_domain('form-from-today')
         self.index_form(domain.name, received_on=datetime(2024, 1, 9, 0, 0))
@@ -58,7 +58,7 @@ class TestGetDomainsToUpdate(TestCase):
         domains = get_domains_to_update()
         self.assertEqual(domains, {domain.name})
 
-    @freeze_time('2024-01-10')
+    @travel('2024-01-10', tick=False)
     def test_form_submission_over_one_day_ago_is_excluded(self):
         domain = self.index_domain('form-from-yesterday')
         self.index_form(domain.name, received_on=datetime(2024, 1, 8, 23, 59))
@@ -67,7 +67,7 @@ class TestGetDomainsToUpdate(TestCase):
         domains = get_domains_to_update()
         self.assertEqual(domains, set())
 
-    @freeze_time('2024-01-10')
+    @travel('2024-01-10', tick=False)
     def test_inactive_domain_is_excluded(self):
         domain = self.index_domain('inactive-domain', active=False)
         self.create_domain_metrics(domain.name)

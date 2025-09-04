@@ -89,7 +89,7 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
-from corehq.apps.hqwebapp.models import HQOauthApplication
+from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
@@ -410,9 +410,9 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'default_password_reset_link': reverse('domain_password_reset_email', kwargs={'domain': domain_name}),
         })
     else:
-        commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
+        commcare_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_NAME"]
         context.update({
-            'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
+            'current_page': {'page_name': _('Welcome back to %s!') % commcare_name},
             'default_password_reset_link': reverse('password_reset_email'),
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
@@ -525,6 +525,16 @@ class HQLoginView(LoginView):
                 return HttpResponseRedirect(idp.get_login_url(username=username))
         return super().post(*args, **kwargs)
 
+    def can_select_server(self):
+        env = settings.SERVER_ENVIRONMENT
+        # domain is server-specific, so we won't give the option to switch servers on domain logins
+        is_domain_login = self.extra_context.get('domain')
+        # also check the next param, because domain or other server-specific ids can exist there
+        has_next_url = self.request.GET.get('next')
+        return (env in ServerLocation.ENVS
+                and not is_domain_login
+                and not has_next_url)
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
@@ -539,6 +549,12 @@ class HQLoginView(LoginView):
             and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
+        context['can_select_server'] = self.can_select_server()
+        if self.can_select_server():
+            context['server_choices'] = [
+                server for env, server in ServerLocation.ENVS.items()
+                if env != settings.SERVER_ENVIRONMENT
+            ]
         if domain and not is_domain_using_sso(domain):
             # ensure that domain login pages not associated with SSO do not
             # enforce SSO on the login screen

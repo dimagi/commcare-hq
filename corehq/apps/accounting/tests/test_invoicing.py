@@ -65,7 +65,7 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
     def test_subscription_invoice(self):
-        invoice_date = utils.months_from_date(self.subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
         self.create_invoices(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 1)
@@ -85,7 +85,7 @@ class TestInvoice(BaseInvoiceTestCase):
         """
         No invoices should be generated for the months after the end date of the subscription.
         """
-        invoice_date = utils.months_from_date(self.subscription.date_end, 2)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_end, 2)
         self.create_invoices(invoice_date, calculate_users=False)
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
@@ -147,7 +147,7 @@ class TestInvoice(BaseInvoiceTestCase):
         """Date Due doesn't get set if the invoice is very small"""
         self.subscription.plan_version = generator.custom_plan_version(monthly_fee=1.00)
         self.subscription.save()
-        invoice_date_small = utils.months_from_date(self.subscription.date_start, 1)
+        invoice_date_small = utils.get_first_day_x_months_later(self.subscription.date_start, 1)
         self.create_invoices(invoice_date_small)
         small_invoice = self.subscription.invoice_set.first()
 
@@ -158,7 +158,7 @@ class TestInvoice(BaseInvoiceTestCase):
         """Date Due only gets set for a 'large' invoice (> $1)"""
         self.subscription.plan_version = generator.subscribable_plan_version(SoftwarePlanEdition.ADVANCED)
         self.subscription.save()
-        invoice_date_large = utils.months_from_date(self.subscription.date_start, 3)
+        invoice_date_large = utils.get_first_day_x_months_later(self.subscription.date_start, 3)
         self.create_invoices(invoice_date_large)
         large_invoice = self.subscription.invoice_set.first()
 
@@ -170,7 +170,7 @@ class TestInvoice(BaseInvoiceTestCase):
         self.subscription.plan_version = generator.custom_plan_version(monthly_fee=1.00)
         self.subscription.save()
         self.subscription.account.update_autopay_user(self.billing_contact, self.domain)
-        invoice_date_autopay = utils.months_from_date(self.subscription.date_start, 1)
+        invoice_date_autopay = utils.get_first_day_x_months_later(self.subscription.date_start, 1)
         self.create_invoices(invoice_date_autopay)
 
         autopay_invoice = self.subscription.invoice_set.first()
@@ -185,7 +185,7 @@ class TestContractedInvoices(BaseInvoiceTestCase):
         self.subscription.service_type = SubscriptionType.IMPLEMENTATION
         self.subscription.save()
 
-        self.invoice_date = utils.months_from_date(
+        self.invoice_date = utils.get_first_day_x_months_later(
             self.subscription.date_start,
             random.randint(2, self.subscription_length)
         )
@@ -221,7 +221,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
     def test_implementation_subscription_with_dimagi_contact(self):
         self._setup_implementation_subscription_with_dimagi_contact()
 
-        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 1)
         self.create_invoices(invoice_date)
 
         self.assertEqual(len(mail.outbox), 1)
@@ -232,7 +232,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
     def test_implementation_subscription_without_dimagi_contact(self):
         self._setup_implementation_subscription_without_dimagi_contact()
 
-        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 1)
         self.create_invoices(invoice_date)
 
         self.assertEqual(len(mail.outbox), 1)
@@ -243,7 +243,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
     def test_product_subscription(self):
         self._setup_product_subscription()
 
-        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 1)
         self.create_invoices(invoice_date)
 
         self.assertEqual(len(mail.outbox), 2)
@@ -267,7 +267,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
     def test_unspecified_recipients_product(self):
         self._setup_product_subscription_with_admin_user()
 
-        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 1)
         self.create_invoices(invoice_date)
 
         self.assertEqual(len(mail.outbox), 1)
@@ -315,7 +315,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
             datetime.date(self.subscription.date_start.year, self.subscription.date_start.month + 1, 1))
         DomainInvoiceFactory(
             self.subscription.date_start,
-            utils.months_from_date(self.subscription.date_start, 1) - datetime.timedelta(days=1),
+            utils.get_first_day_x_months_later(self.subscription.date_start, 1) - datetime.timedelta(days=1),
             self.subscription.subscriber.domain,
             recipients=['recipient1@test.com', 'recipient2@test.com']
         ).create_invoices()
@@ -447,7 +447,7 @@ class TestFlaggedPayAnnuallyPrepayInvoice(BaseInvoiceTestCase):
         self.subscription.save()
 
     def create_invoices(self):
-        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, 1)
         super().create_invoices(invoice_date)
         return self.subscription.invoice_set.all()
 

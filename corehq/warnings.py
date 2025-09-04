@@ -24,8 +24,9 @@ WHITELIST = [
     ("ddtrace.internal.module", "pkg_resources is deprecated as an API"),
     ("eulxml", "pkg_resources is deprecated as an API"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
-    ("", "", RemovedInDjango50Warning),
-    ("", "", RemovedInDjango51Warning),
+
+    ("tastypie.compat", "The django.utils.datetime_safe module is deprecated.", RemovedInDjango50Warning),
+    ("django.db.models.options", "'index_together' is deprecated", RemovedInDjango51Warning),
 
     # warnings that can be resolved with HQ code changes
     ("", "datetime.datetime.utcnow() is deprecated"),

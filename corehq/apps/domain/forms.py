@@ -94,6 +94,7 @@ from corehq.apps.app_manager.models import (
     AppReleaseByLocation,
     LatestEnabledBuildProfiles,
     RemoteApp,
+    CredentialApplication,
 )
 from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
@@ -118,7 +119,7 @@ from corehq.apps.domain.models import (
 from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
-from corehq.apps.hqwebapp.fields import MultiCharField
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import (
     BootstrapCheckboxInput,
@@ -2239,84 +2240,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         invoice_factory.create_subscription_credits_invoice(self.renewed_version, date_start, date_end)
 
 
-class ProBonoForm(forms.Form):
-    contact_email = MultiCharField(label=gettext_lazy("Email To"), widget=forms.Select(choices=[]))
-    organization = forms.CharField(label=gettext_lazy("Organization"))
-    project_overview = forms.CharField(
-        widget=forms.Textarea(attrs={"class": "vertical-resize"}), label="Project overview"
-    )
-    airtime_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on airtime:"))
-    device_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on devices:"))
-    pay_only_features_needed = forms.CharField(
-        widget=forms.Textarea(attrs={"class": "vertical-resize"}), label="Pay only features needed"
-    )
-    duration_of_project = forms.CharField(help_text=gettext_lazy(
-        "We grant pro-bono subscriptions to match the duration of your "
-        "project, up to a maximum of 12 months at a time (at which point "
-        "you need to reapply)."
-    ))
-    domain = forms.CharField(label=gettext_lazy("Project Space"))
-    dimagi_contact = forms.CharField(
-        help_text=gettext_lazy("If you have already been in touch with someone from "
-                    "Dimagi, please list their name."),
-        required=False)
-    num_expected_users = forms.CharField(label=gettext_lazy("Number of expected users"))
-
-    def __init__(self, use_domain_field, *args, **kwargs):
-        super(ProBonoForm, self).__init__(*args, **kwargs)
-        if not use_domain_field:
-            self.fields['domain'].required = False
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Pro-Bono Application'),
-                'contact_email',
-                'organization',
-                crispy.Div(
-                    'domain',
-                    style=('' if use_domain_field else 'display:none'),
-                ),
-                'project_overview',
-                'airtime_expense',
-                'device_expense',
-                'pay_only_features_needed',
-                'duration_of_project',
-                'num_expected_users',
-                'dimagi_contact',
-            ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit('submit_pro_bono', _('Submit Pro-Bono Application'))
-                )
-            ),
-        )
-
-    def clean_contact_email(self):
-        if 'contact_email' in self.cleaned_data:
-            copy = self.data.copy()
-            self.data = copy
-            copy.update({'contact_email': ", ".join(self.data.getlist('contact_email'))})
-            return self.data.get('contact_email')
-
-    def process_submission(self, domain=None):
-        try:
-            params = {
-                'pro_bono_form': self,
-                'domain': domain,
-            }
-            html_content = render_to_string("domain/email/pro_bono_application.html", params)
-            text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = settings.PROBONO_SUPPORT_EMAIL
-            subject = "[Pro-Bono Application]"
-            if domain is not None:
-                subject = "%s %s" % (subject, domain)
-            send_html_email_async.delay(subject, recipient, html_content, text_content=text_content,
-                            email_from=settings.DEFAULT_FROM_EMAIL)
-        except Exception:
-            logging.error("Couldn't send pro-bono application email. "
-                          "Contact: %s" % self.cleaned_data['contact_email'])
-
-
 class InternalSubscriptionManagementForm(forms.Form):
     autocomplete_account_types = [
         BillingAccountType.CONTRACT,
@@ -3170,11 +3093,8 @@ class ExtractAppInfoForm(forms.Form):
         return cleaned_data
 
     def _get_source_server(self, parsed_url):
-        server_mapping = {
-            'www': 'production',
-            'india': 'india',
-            'eu': 'eu',
-        }
+        server_mapping = {subdomain: server for server, subdomain
+                          in ServerLocation.SUBDOMAINS.items()}
 
         netloc = parsed_url.netloc.split(".")
 
@@ -3258,6 +3178,47 @@ class ImportAppForm(forms.Form):
         return app_file
 
     def construct_download_url(self, source_server, source_domain, app_id):
-        from corehq.apps.domain.views.import_apps import SERVER_SUBDOMAIN_MAPPING
-        server_address = SERVER_SUBDOMAIN_MAPPING[source_server]
+        server_address = ServerLocation.SUBDOMAINS[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
+
+
+class DomainCredentialIssuingAppForm(forms.Form):
+    app_id = forms.CharField(
+        label=gettext_lazy("Enable credentials for application"),
+        required=False,
+        widget=forms.Select(choices=[]),
+        help_text=gettext_lazy("Select the application that will be used to issue credentials to workers."),
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        credential_app = CredentialApplication.objects.filter(domain=domain).first()
+        if credential_app:
+            initial = {
+                'app_id': credential_app.app_id,
+            }
+            kwargs.setdefault('initial', {}).update(initial)
+
+        super(DomainCredentialIssuingAppForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].widget.choices = self.get_domain_apps_choices(domain)
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                gettext_lazy("Credential Issuing Application"),
+                crispy.Field('app_id'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Save'),
+                    type='submit',
+                    css_class='btn-primary disable-on-submit'
+                )
+            )
+        )
+
+    def get_domain_apps_choices(self, domain):
+        choices = [('', gettext_lazy("No application"))]
+        choices.extend([
+            (app.id, app.name) for app in get_apps_in_domain(domain)
+        ])
+        return choices

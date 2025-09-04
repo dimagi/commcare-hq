@@ -27,7 +27,7 @@ from corehq.apps.users.dbaccessors import (
     get_web_users_by_filters,
 )
 from corehq.apps.users.models import DeactivateMobileWorkerTrigger, UserRole, CouchUser, HqPermissions
-from corehq.toggles import DEACTIVATE_WEB_USERS, TABLEAU_USER_SYNCING
+from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
@@ -198,9 +198,8 @@ def make_web_user_dict(user, location_cache, domain):
         'last_login (read only)': user.last_login,
         'remove': '',
         'domain': domain,
+        'is_active_in_domain': str(user.is_active_in_domain(domain) if user.is_active else ''),
     }
-    if DEACTIVATE_WEB_USERS.enabled(domain):
-        dict['is_active_in_domain'] = str(user.is_active_in_domain(domain) if user.is_active else '')
 
     return dict
 
@@ -329,10 +328,8 @@ def parse_web_users(domain, user_filters, owner, task=None, total_count=None):
 
     user_headers = [
         'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
-        'last_login (read only)', 'status', 'remove'
+        'last_login (read only)', 'status', 'remove', 'is_active_in_domain',
     ]
-    if DEACTIVATE_WEB_USERS.enabled(domain):
-        user_headers += ['is_active_in_domain']
     user_headers.extend(user_data_contributor.get_headers())
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.extend(json_to_headers(

@@ -270,7 +270,7 @@ class PoTranslationFormat(TranslationFormat):
 
     @property
     def untranslated_messages(self):
-        return [msg for msg in self.all_message_objects if msg.msgstr == ""]
+        return [msg for msg in self.all_message_objects if msg.msgstr == "" or msg.fuzzy]
 
     @property
     def untranslated_messages_plural(self):
@@ -414,7 +414,11 @@ class PoTranslationFormat(TranslationFormat):
 
     def fill_translations(self, llm_output):
         for index, msg_str in llm_output.items():
-            self.translation_obj_map[index].msgstr = msg_str
+            msg_obj = self.translation_obj_map[index]
+            msg_obj.msgstr = msg_str
+            if msg_obj.fuzzy:
+                # no longer fuzzy, translated by AI
+                msg_obj.flags.remove('fuzzy')
 
     def save_output(self):
         """

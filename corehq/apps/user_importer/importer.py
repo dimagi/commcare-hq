@@ -9,7 +9,7 @@ from corehq.util.soft_assert.api import soft_assert
 from memoized import memoized
 from django.db import DEFAULT_DB_ALIAS
 
-from corehq.apps.analytics.tasks import record_event
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
@@ -89,7 +89,7 @@ def check_headers(user_specs, domain, upload_couch_user, is_web_upload=False):
                 ))
             headers.discard(old_name)
 
-    if is_web_upload and toggles.DEACTIVATE_WEB_USERS.enabled(domain):
+    if is_web_upload:
         conditionally_allowed_headers.add('is_active_in_domain')
     if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         conditionally_allowed_headers.add('domain')
@@ -934,7 +934,7 @@ class WebImporter:
             if user_row.error:
                 ret["errors"].append(user_row.error)
         if self.enabled_count > 0 or self.disabled_count > 0:
-            record_event(self.STATUS_CHANGED, self.upload_user, {
+            record_google_analytics_event(self.STATUS_CHANGED, self.upload_user, {
                 'domain': self.upload_domain,
                 'enabled_count': self.enabled_count,
                 'disabled_count': self.disabled_count,

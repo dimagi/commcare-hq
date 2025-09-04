@@ -325,3 +325,38 @@ Request & Response Details
       "last_name": "User",
       "email": "demo@dimagi.com"
     }
+
+
+
+User Enable/Disable API
+=======================
+
+Overview
+---------
+**Purpose**
+    Enable or disable a user.
+
+Endpoint Specifications
+-----------------------
+**Base URL**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/web-user/v1/[id]/enable
+
+and
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/web-user/v1/[id]/disable
+
+**Method**
+
+.. code-block:: text
+
+    POST
+
+Request & Response Details
+---------------------------
+
+Success: 202

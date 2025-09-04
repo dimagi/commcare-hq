@@ -82,7 +82,7 @@ def force_password_reset(web_user):
     user.save()
     url = f"{get_url_base()}{reverse('password_reset_email')}"
     send_html_email_async.delay(
-        'Reset Password on CommCare HQ',
+        'Reset Password on CommCare',
         web_user.get_email(),
         (f'Your system administrator has forced a password reset. '
          f'Before you will be able to continue to use CommCare, '

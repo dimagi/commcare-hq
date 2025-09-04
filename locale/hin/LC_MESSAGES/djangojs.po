@@ -160,7 +160,6 @@ msgid "Billed Monthly"
 msgstr "मासिक बिलिंग"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "कृपया एक मान्य ईमेल दर्ज करें।"
 
@@ -736,10 +735,9 @@ msgid "You have unchanged user properties settings"
 msgstr "आपकी यूज़र प्रॉपर्टीज़ सेटिंग्स में कोई बदलाव नहीं हुआ है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#, fuzzy
 #| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
-msgstr "संपत्ति अपरिचित उपसर्ग का उपयोग करती है"
+msgstr "संपत्ति अपरिचित उपसर्ग <strong> का उपयोग करती है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -1102,16 +1100,14 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} मान्य डेटा पैरेंट नहीं है"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
 #| msgid "Create"
 msgid "createXML"
-msgstr "बनाएँ"
+msgstr "createXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
 #| msgid "User Data"
 msgid "getData"
-msgstr "यूज़र डेटा"
+msgstr "getData"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "getMugByPath"
@@ -1682,10 +1678,9 @@ msgstr "पुनः सौंपा गया"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
 #| msgid "Copied!"
 msgid "Copied"
-msgstr "कॉपी किया गया!"
+msgstr "कॉपी किया गया"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1699,17 +1694,15 @@ msgstr "आज"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
 #| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
-msgstr "<%- count %> स्थान डाउनलोड करें"
+msgstr "<%- count %> मामलों को पुनः सौंपा गया"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
 #| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
-msgstr "<%- count %> स्थान डाउनलोड करें"
+msgstr "<%- count %> मामलों को कॉपी किया गया"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3606,10 +3599,9 @@ msgid "Unavailable"
 msgstr "उपलब्ध नहीं"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#, fuzzy
 #| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
-msgstr "<%- days %> दिन शेष"
+msgstr "<%- minutes %> मिनट शेष"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
