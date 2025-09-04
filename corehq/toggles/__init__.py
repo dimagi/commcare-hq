@@ -2827,8 +2827,9 @@ VELLUM_CASE_MICRO_IMAGE = StaticToggle(
     description='Add a micro image to cases in the case list.'
 )
 
-SUPPORT_GEO_JSON_EXPORT = StaticToggle(
-    slug='support_geo_json_export',
+SUPPORT_GEO_JSON_EXPORT = FrozenPrivilegeToggle(
+    privileges.GEOJSON_EXPORT,
+    'support_geo_json_export',
     label='Support GeoJSON export in Case Exporter',
     tag=TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
