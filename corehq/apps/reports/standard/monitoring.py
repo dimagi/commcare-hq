@@ -1863,6 +1863,18 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return new_row
 
+    @property
+    def rows(self):
+        report_data = self._report_data(self.users_to_iterate)
+
+        if self.view_by_groups:
+            rows = self._rows_by_group(report_data)
+        else:
+            rows = self._rows_by_user(report_data, self.users_to_iterate)
+
+        self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
+        return rows
+
 
 def _get_raw_user_link(user, url, filter_class, additional_params=None):
     """
