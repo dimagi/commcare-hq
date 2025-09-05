@@ -338,30 +338,40 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
     """
     from corehq.apps.users.views import InviteWebUserView
 
-    primary_location = SQLLocation.by_location_id(primary_location_id)
     invite_fields = {
         'invited_by': upload_user.user_id,
         'invited_on': datetime.utcnow(),
         'tableau_role': tableau_role,
         'tableau_group_ids': tableau_group_ids,
-        'primary_location': primary_location,
         'role': role_qualified_id,
         'profile': profile,
     }
+
+    # It's not clear why only these two were chosen to be recorded as changed values
+    changed_values = {
+        'role_name': role_qualified_id,
+        'profile': profile
+    }
+
+    if primary_location_id is not None:
+        primary_location = SQLLocation.by_location_id(primary_location_id)
+        invite_fields['primary_location'] = primary_location
+        changed_values['primary_location'] = primary_location
+
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
         is_accepted=False,
         defaults=invite_fields,
     )
-    assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
-                          for assigned_location_id in assigned_location_ids]
-    invite.assigned_locations.set(assigned_locations)
-    changes = InviteWebUserView.format_changes(domain,
-                                               {'role_name': role_qualified_id,
-                                                'profile': profile,
-                                                'assigned_locations': assigned_locations,
-                                                'primary_location': primary_location})
+
+    if assigned_location_ids is not None:
+        assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
+                              for assigned_location_id in assigned_location_ids]
+        invite.assigned_locations.set(assigned_locations)
+        changed_values['assigned_locations'] = assigned_locations
+
+    changes = InviteWebUserView.format_changes(domain, changed_values=changed_values)
     if invite_created:
         if send_email:
             invite.send_activation_email()
@@ -369,9 +379,13 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
             user_change_logger.add_info(UserChangeMessage.invited_to_domain(domain))
         action = InviteModelAction.CREATE
         invite_fields.update({'domain': domain, 'email': email})
-        invite_fields.pop('primary_location')
+
+        # pop already formatted fields before update
+        if invite_fields.get('primary_location'):
+            invite_fields.pop('primary_location')
         invite_fields.pop('role')
         invite_fields.pop('profile')
+
         changes.update(invite_fields)
     else:
         action = InviteModelAction.UPDATE
