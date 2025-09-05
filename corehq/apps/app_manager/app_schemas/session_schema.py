@@ -3,7 +3,7 @@ from django.utils.text import slugify
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.suite_xml.xml_models import InstanceDatum
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import is_usercase_in_use
+from corehq.apps.app_manager.util import domain_has_usercase_access
 
 
 def get_session_schema(form):
@@ -58,7 +58,7 @@ def get_session_schema(form):
             "structure": data_structure,
         }
 
-    if is_usercase_in_use(app.domain):
+    if domain_has_usercase_access(app.domain):
         structure["context"] = {
             "merge": True,
             "structure": {

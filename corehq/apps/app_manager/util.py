@@ -242,7 +242,7 @@ def module_case_hierarchy_has_circular_reference(module):
         return True
 
 
-def is_usercase_in_use(domain):
+def domain_has_usercase_access(domain):
     return domain_has_privilege(domain, privileges.USERCASE) if domain else False
 
 

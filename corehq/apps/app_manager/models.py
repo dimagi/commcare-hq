@@ -139,7 +139,7 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
     is_remote_app,
-    is_usercase_in_use,
+    domain_has_usercase_access,
     module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
@@ -5510,7 +5510,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def get_case_types(self):
         extra_types = set()
-        if is_usercase_in_use(self.domain):
+        if domain_has_usercase_access(self.domain):
             extra_types.add(const.USERCASE_TYPE)
 
         return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
