@@ -875,7 +875,7 @@ class WebUserRow(BaseUserRow):
                 self.check_invitation_status(self.domain, cv['username'])
 
             user_invite_loc_id = None
-            user_invite_locs_ids = []
+            user_invite_locs_ids = None
             if self.domain_info.can_assign_locations and cv['location_codes'] is not None:
                 if len(cv['location_codes']) > 0:
                     user_invite_loc = get_location_from_site_code(
@@ -886,6 +886,9 @@ class WebUserRow(BaseUserRow):
                         for loc in cv['location_codes']
                     ]
                     user_invite_loc_id = user_invite_loc.location_id
+                else:
+                    user_invite_loc_id = ''
+                    user_invite_locs_ids = []
             profile = None
             if cv["profile_name"]:
                 profile = self.domain_info.profiles_by_name[cv["profile_name"]]
