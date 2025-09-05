@@ -18,7 +18,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
-import langcodes
 import qrcode
 from django_otp import devices_for_user
 from memoized import memoized
@@ -69,6 +68,7 @@ from corehq.apps.settings.forms import (
     HQPhoneNumberMethodForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.settings.languages import get_languages_for_user
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -160,7 +160,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     @property
     @memoized
     def settings_form(self):
-        language_choices = langcodes.get_all_langs_for_select()
+        language_choices = get_languages_for_user(self.request.couch_user)
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         try:
             domain = self.request.domain
