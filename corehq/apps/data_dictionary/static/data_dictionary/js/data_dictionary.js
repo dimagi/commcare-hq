@@ -450,6 +450,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 }
                 self.fhirResourceType.subscribe(changeSaveButton);
                 self.removefhirResourceType.subscribe(changeSaveButton);
+            })
+            .always(function () {
                 callback();
             });
     };
