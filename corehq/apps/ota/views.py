@@ -331,7 +331,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         return HttpResponse(
             {"error": DEVICE_RATE_LIMIT_ERROR_CODE, "default_response": DEVICE_RATE_LIMIT_MESSAGE},
             status=406,
-        )
+        ), None
 
     is_permitted, message = is_permitted_to_restore(
         domain,
@@ -405,7 +405,7 @@ def heartbeat(request, domain, app_build_id):
         return HttpResponse(
             {"error": DEVICE_RATE_LIMIT_ERROR_CODE, "default_response": DEVICE_RATE_LIMIT_MESSAGE},
             status=406,
-        ), None
+        )
 
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
