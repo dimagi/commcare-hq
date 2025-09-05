@@ -34,10 +34,6 @@ class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
     placeholder = gettext_lazy('Click to select a group')
 
 
-class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
-    placeholder = gettext_lazy('Click to select groups')
-
-
 class YearFilter(BaseSingleOptionFilter):
     slug = "year"
     label = gettext_lazy("Year")
