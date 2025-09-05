@@ -17,6 +17,10 @@ VERSION_SUBSTITUTIONS = {
     '1.3.0alpha': '1.3.999',
     '2.25.w': '2.25.999',
 }
+APP_IDS = [
+    # (domain, app_id)
+    # Output from previous runs
+]
 
 
 def get_by_path(dict_, path):
@@ -41,23 +45,25 @@ def get_by_path(dict_, path):
 def subs_app_versions(*, dry_run=True):
     print('Dry run' if dry_run else 'Live')
     modified = []
-    for hit in (
-        AppES()
-        .doc_type('Application')
-        .is_build(build=False)
-        .OR(
-            filters.NOT(filters.empty('build_spec.version')),
-            filters.NOT(filters.empty('built_with.version')),
-        )
-        .scroll()
-    ):
-        if (
-            not is_version_ok(get_by_path(hit, ('build_spec', 'version')))
-            or not is_version_ok(get_by_path(hit, ('built_with', 'version')))
+    for domain, app_id in APP_IDS:
+        for hit in (
+            AppES()
+            .doc_type('Application')
+            .domain(domain)
+            .app_id(app_id)  # copy_of
+            .OR(
+                filters.NOT(filters.empty('build_spec.version')),
+                filters.NOT(filters.empty('built_with.version')),
+            )
+            .scroll()
         ):
-            modified.append((hit['domain'], hit['doc_id']))
-            if not dry_run:
-                subs_bad_version(hit['doc_id'])
+            if (
+                not is_version_ok(get_by_path(hit, ('build_spec', 'version')))
+                or not is_version_ok(get_by_path(hit, ('built_with', 'version')))
+            ):
+                modified.append((hit['domain'], hit['doc_id'], hit['copy_of']))
+                if not dry_run:
+                    subs_bad_version(hit['doc_id'])
     print_table(modified)
 
 
@@ -87,14 +93,14 @@ def subs_bad_version(app_id):
     app.save()
 
 
-def print_table(domain_app_id_pairs):
-    if not domain_app_id_pairs:
+def print_table(app_id_tuples):
+    if not app_id_tuples:
         return
     print('Affected apps:\n')
-    print('| Domain          | App ID                               |')
-    print('| --------------- | ------------------------------------ |')
-    for domain, app_id in domain_app_id_pairs:
-        print(f'| {domain:<15} | {app_id:<36} |')
+    print('| Domain       | App ID                           | Copy of                          |')
+    print('| ------------ | -------------------------------- | -------------------------------- |')
+    for domain, app_id, copy_of in app_id_tuples:
+        print(f'| {domain:<12} | {app_id:<32} | {copy_of:<32} |')
 
 
 subs_app_versions()
