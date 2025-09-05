@@ -16,9 +16,10 @@ from corehq.apps.app_manager.exceptions import (
     AppValidationError,
     SavedAppBuildException,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.dbaccessors import get_all_user_rows
+from corehq.apps.users.models import CouchUser
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS, VELLUM_SAVE_TO_CASE
+from corehq.toggles import VELLUM_SAVE_TO_CASE
 from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter
 
@@ -27,12 +28,12 @@ logger = get_task_logger(__name__)
 
 @task(queue='background_queue', ignore_result=True)
 def create_usercases(domain_name):
+    rows = get_all_user_rows(domain_name, include_web_users=True,
+                             include_mobile_users=True, include_inactive=False,
+                             include_docs=True)
     from corehq.apps.callcenter.sync_usercase import sync_usercases
-    if USH_USERCASES_FOR_WEB_USERS.enabled(domain_name):
-        users = CouchUser.by_domain(domain_name)
-    else:
-        users = CommCareUser.by_domain(domain_name)
-    for user in users:
+    for row in rows:
+        user = CouchUser.wrap_correctly(row['doc'])
         sync_usercases(user, domain_name, sync_call_center=False)
 
 
