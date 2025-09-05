@@ -21,7 +21,6 @@ from dimagi.utils.couch import CriticalSection
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
-    AUTO_SELECT_USERCASE,
     CALCULATED_SORT_FIELD_RX,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
@@ -367,10 +366,6 @@ def get_commcare_builds(request_user):
 def actions_use_usercase(actions):
     return (('usercase_update' in actions and actions['usercase_update'].update)
             or ('usercase_preload' in actions and actions['usercase_preload'].preload))
-
-
-def advanced_actions_use_usercase(actions):
-    return any(c.auto_select and c.auto_select.mode == AUTO_SELECT_USERCASE for c in actions.load_update_cases)
 
 
 def enable_usercase(domain_name):
