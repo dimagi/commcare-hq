@@ -18,7 +18,8 @@ from couchdbkit.exceptions import DocTypeError
 
 from dimagi.utils.couch import CriticalSection
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
     CALCULATED_SORT_FIELD_RX,
@@ -242,9 +243,8 @@ def module_case_hierarchy_has_circular_reference(module):
         return True
 
 
-def is_usercase_in_use(domain_name):
-    domain_obj = Domain.get_by_name(domain_name) if domain_name else None
-    return domain_obj and domain_obj.usercase_enabled
+def is_usercase_in_use(domain):
+    return domain_has_privilege(domain, privileges.USERCASE) if domain else False
 
 
 def get_settings_values(app):
