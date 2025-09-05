@@ -369,7 +369,7 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
 @patch.object(CaseExportFilterBuilder, '_get_datespan_filter', lambda self, x: [])
 @patch.object(FilterCaseESExportDownloadForm, '_get_group_ids')
 @patch.object(Group, 'get_static_user_ids_for_groups')
-class TestFilterCaseESExportDownloadForm(TestCase):
+class TestFilterCaseESExportDownloadForm(SimpleTestCase):
     form = FilterCaseESExportDownloadForm
     filter_builder = CaseExportFilterBuilder
     filter = form.dynamic_filter_class
@@ -409,7 +409,28 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertTrue(self.export_filter.is_valid())
         case_filters = self.export_filter.get_model_filter(self.group_ids_slug, True, None)
 
+        # Assert that only Admin users are included
         fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
+                                                     web=True)
+        assert not filters_from_slugs_patch.called
+        self.assertIsInstance(case_filters[0], NOT)
+        self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
+        self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
+
+    @patch.object(filter, 'show_project_data', return_value=True)
+    @patch.object(filter, 'show_all_data', return_value=False)
+    @patch.object(filter, 'selected_user_types', return_value=[HQUserType.WEB])
+    @patch.object(filter_builder, '_get_filters_from_slugs')
+    @patch.object(filter_builder, 'get_user_ids_for_user_types', return_value=['123'])
+    def test_get_model_filter_for_project_data_and_web_users(self, fetch_user_ids_patch, filters_from_slugs_patch,
+                                                             *patches):
+        data = {'date_range': '1992-01-30 to 2016-11-28'}
+        self.export_filter = self.subject(self.domain, pytz.utc, data=data)
+        self.assertTrue(self.export_filter.is_valid())
+        case_filters = self.export_filter.get_model_filter(self.group_ids_slug, True, None)
+
+        # Assert that only Web users are included
+        fetch_user_ids_patch.assert_called_once_with(admin=True, commtrack=True, demo=True, unknown=True,
                                                      web=False)
         assert not filters_from_slugs_patch.called
         self.assertIsInstance(case_filters[0], NOT)
@@ -431,7 +452,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         case_filters = self.export_filter.get_model_filter(self.group_ids_slug, True, None)
 
         fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
-                                                     web=False)
+                                                     web=True)
         assert not filters_from_slugs_patch.called
         self.assertIsInstance(case_filters[0], NOT)
         self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)

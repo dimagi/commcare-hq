@@ -171,7 +171,7 @@ class FormSummaryDiffView(AppSummaryView):
         pass
 
 
-class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
+class AppDataView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     urlname = 'app_data_json'
 
