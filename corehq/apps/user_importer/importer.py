@@ -332,10 +332,12 @@ def get_location_from_site_code(site_code, location_cache):
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id=None,
                                     assigned_location_ids=None, profile=None, tableau_role=None,
                                     tableau_group_ids=None, user_change_logger=None, send_email=True):
+    """
+    :param primary_location_id: use None for value to not be set or updated
+    :param assigned_location_ids: use None for value to not be set or updated
+    """
     from corehq.apps.users.views import InviteWebUserView
 
-    if assigned_location_ids is None:
-        assigned_location_ids = []
     primary_location = SQLLocation.by_location_id(primary_location_id)
     invite_fields = {
         'invited_by': upload_user.user_id,
