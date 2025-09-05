@@ -375,13 +375,7 @@ def advanced_actions_use_usercase(actions):
 
 def enable_usercase(domain_name):
     with CriticalSection(['enable_usercase_' + domain_name]):
-        domain_obj = Domain.get_by_name(domain_name, strict=True)
-        if not domain_obj:  # copying domains passes in an id before name is saved
-            domain_obj = Domain.get(domain_name)
-        if not domain_obj.usercase_enabled:
-            domain_obj.usercase_enabled = True
-            domain_obj.save()
-            create_usercases.delay(domain_name)
+        create_usercases.delay(domain_name)
 
 
 def prefix_usercase_properties(properties):
