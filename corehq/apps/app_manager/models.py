@@ -5878,9 +5878,6 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
         messages.warning(request, _("Copying the application succeeded, but the application is missing "
                                     "multimedia file(s)."))
 
-    if not app.is_remote_app():
-        enable_usercase_if_necessary(app)
-
     return app
 
 
@@ -5930,12 +5927,6 @@ def _update_valid_domains_for_media(app, domain_to_add):
             if domain_to_add not in media.valid_domains:
                 media.valid_domains.append(domain_to_add)
                 media.save()
-
-
-def enable_usercase_if_necessary(app):
-    if any(module.uses_usercase() for module in app.get_modules()):
-        from corehq.apps.app_manager.util import enable_usercase
-        enable_usercase(app.domain)
 
 
 class DeleteApplicationRecord(DeleteRecord):
