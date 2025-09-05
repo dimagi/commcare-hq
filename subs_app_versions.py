@@ -19,6 +19,25 @@ VERSION_SUBSTITUTIONS = {
 }
 
 
+def get_by_path(dict_, path):
+    """
+    Get a value from a nested dictionary using an Iterable of keys as the path.
+
+    >>> some_dict = {'foo': {'bar': 1}}
+    >>> other_dict = {'foo': {'baz': 2}}
+    >>> get_by_path(some_dict, ('foo', 'bar'))
+    1
+    >>> get_by_path(other_dict, ('foo', 'bar'))
+    None
+    """
+    current = dict_
+    for key in path:
+        if not isinstance(current, dict) or key not in current:
+            return None
+        current = current[key]
+    return current
+
+
 def subs_app_versions(*, dry_run=True):
     print('Dry run' if dry_run else 'Live')
     modified = []
@@ -26,14 +45,19 @@ def subs_app_versions(*, dry_run=True):
         AppES()
         .doc_type('Application')
         .is_build(build=False)
-        .NOT(filters.empty('built_with.version'))
+        .OR(
+            filters.NOT(filters.empty('build_spec.version')),
+            filters.NOT(filters.empty('built_with.version')),
+        )
         .scroll()
     ):
-        version = hit['built_with']['version']
-        if not is_version_ok(version):
+        if (
+            not is_version_ok(get_by_path(hit, ('build_spec', 'version')))
+            or not is_version_ok(get_by_path(hit, ('built_with', 'version')))
+        ):
             modified.append((hit['domain'], hit['doc_id']))
             if not dry_run:
-                subs_bad_version(hit['doc_id'], version)
+                subs_bad_version(hit['doc_id'])
     print_table(modified)
 
 
@@ -45,10 +69,16 @@ def is_version_ok(version):
         return False
 
 
-def subs_bad_version(app_id, version):
-    subs = VERSION_SUBSTITUTIONS[version]  # Raise KeyError on unknown version
+def subs_bad_version(app_id):
     app_dict = Application.get_db().get(app_id)
-    app_dict['built_with']['version'] = subs
+    build_spec_ver = get_by_path(app_dict, ('build_spec', 'version'))
+    if not is_version_ok(build_spec_ver):
+        subs = VERSION_SUBSTITUTIONS[build_spec_ver]
+        app_dict['build_spec']['version'] = subs
+    built_with_ver = get_by_path(app_dict, ('built_with', 'version'))
+    if not is_version_ok(built_with_ver):
+        subs = VERSION_SUBSTITUTIONS[built_with_ver]
+        app_dict['built_with']['version'] = subs
     try:
         app = Application.wrap(app_dict)
     except BadValueError as err:
