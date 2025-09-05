@@ -860,7 +860,7 @@ class WebUserRow(BaseUserRow):
 
             user_invite_loc_id = None
             user_invite_locs_ids = []
-            if self.domain_info.can_assign_locations and cv['location_codes']:
+            if self.domain_info.can_assign_locations and cv['location_codes'] is not None:
                 if len(cv['location_codes']) > 0:
                     user_invite_loc = get_location_from_site_code(
                         cv['location_codes'][0], self.domain_info.location_cache
