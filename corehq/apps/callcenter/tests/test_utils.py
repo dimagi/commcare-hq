@@ -40,7 +40,6 @@ from corehq.apps.users.util import format_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import flag_enabled
 
 TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
@@ -403,7 +402,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_web_user_removed(self):
         self.user.save()
         web_user = self._make_web_user()
@@ -413,7 +411,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
         web_user.save()
         self.assertTrue(self._get_user_case(web_user._id).closed)
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_web_user_location_fields_sync(self):
         self.user.save()
         web_user = self._make_web_user()
