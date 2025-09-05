@@ -1047,6 +1047,11 @@ define("cloudcare/js/form_entry/form_ui", [
                     return options.data ? markdown.render(options.data) : null;
                 },
             },
+            hint: {
+                update: function (options) {
+                    return options.data ? markdown.render(options.data) : null;
+                },
+            },
         };
 
         ko.mapping.fromJS(json, mapping, self);
