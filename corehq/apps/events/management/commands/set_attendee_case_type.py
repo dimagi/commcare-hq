@@ -33,6 +33,6 @@ def valid_domain(domain_name):
 
 
 def valid_case_type(case_type):
-    if not is_valid_case_type(case_type, None):
+    if not is_valid_case_type(case_type):
         raise CommandError(f'Invalid case type {case_type!r}')
     return case_type
