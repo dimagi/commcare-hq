@@ -23,25 +23,6 @@ APP_IDS = [
 ]
 
 
-def get_by_path(dict_, path):
-    """
-    Get a value from a nested dictionary using an Iterable of keys as the path.
-
-    >>> some_dict = {'foo': {'bar': 1}}
-    >>> other_dict = {'foo': {'baz': 2}}
-    >>> get_by_path(some_dict, ('foo', 'bar'))
-    1
-    >>> get_by_path(other_dict, ('foo', 'bar'))
-    None
-    """
-    current = dict_
-    for key in path:
-        if not isinstance(current, dict) or key not in current:
-            return None
-        current = current[key]
-    return current
-
-
 def subs_app_versions(*, dry_run=True):
     print('Dry run' if dry_run else 'Live')
     modified = []
@@ -73,6 +54,25 @@ def is_version_ok(version):
         return True
     except BadValueError:
         return False
+
+
+def get_by_path(dict_, path):
+    """
+    Get a value from a nested dictionary using an Iterable of keys as the path.
+
+    >>> some_dict = {'foo': {'bar': 1}}
+    >>> other_dict = {'foo': {'baz': 2}}
+    >>> get_by_path(some_dict, ('foo', 'bar'))
+    1
+    >>> get_by_path(other_dict, ('foo', 'bar'))
+    None
+    """
+    current = dict_
+    for key in path:
+        if not isinstance(current, dict) or key not in current:
+            return None
+        current = current[key]
+    return current
 
 
 def subs_bad_version(app_id):
