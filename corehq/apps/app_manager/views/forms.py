@@ -80,7 +80,6 @@ from corehq.apps.app_manager.templatetags.xforms_extras import (
 from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
     USERCASE_XPATH_SUBSTRING_MATCHES,
-    is_usercase_in_use,
     module_loads_registry_case,
     module_uses_inline_search,
     save_xform,
@@ -789,7 +788,6 @@ def get_form_view_context(
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
         'allow_usercase': allow_usercase,
-        'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
         'is_training_module': module.is_training_module,
         'is_allowed_to_be_release_notes_form': form.is_allowed_to_be_release_notes_form,
