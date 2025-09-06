@@ -767,7 +767,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         kwargs = {'initial': initial}
         if self.request.method == "POST":
             args = (self.request.POST, )
-            selected_emails = self.request.POST.getlist('recipient_emails', {})
+            selected_emails = self.request.POST.getlist('recipient_emails', [])
         else:
             args = ()
             selected_emails = kwargs.get('initial', {}).get('recipient_emails', [])
