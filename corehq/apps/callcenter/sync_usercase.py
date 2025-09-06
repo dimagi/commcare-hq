@@ -9,9 +9,10 @@ from lxml import etree
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.couch import CriticalSection
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
@@ -233,11 +234,11 @@ def _call_center_location_owner(user, ancestor_level):
     return owner_id
 
 
-def _iter_sync_usercase_helpers(user, domain_obj):
-    if domain_obj.usercase_enabled:
+def _iter_sync_usercase_helpers(user, domain):
+    if domain_has_privilege(domain, privileges.USERCASE):
         yield _get_sync_usercase_helper(
             user,
-            domain_obj.name,
+            domain,
             USERCASE_TYPE,
             user.get_id
         )
@@ -252,9 +253,8 @@ def sync_usercases(user, domain, sync_call_center=True):
     first time.
     """
     with CriticalSection([f"sync_user_case_for_{user.user_id}_{domain}"]):
-        domain_obj = Domain.get_by_name(domain)
         helpers = list(chain(
-            _iter_sync_usercase_helpers(user, domain_obj),
+            _iter_sync_usercase_helpers(user, domain),
             _iter_call_center_case_helpers(user) if sync_call_center else [],
         ))
         _UserCaseHelper.commit(helpers)

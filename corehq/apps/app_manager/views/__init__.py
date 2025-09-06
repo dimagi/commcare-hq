@@ -20,7 +20,6 @@ from corehq.apps.app_manager.views.apps import (
     edit_app_attr,
     edit_app_langs,
     edit_app_ui_translations,
-    enable_usercase,
     get_app_ui_translations,
     new_app,
     pull_upstream_app,
