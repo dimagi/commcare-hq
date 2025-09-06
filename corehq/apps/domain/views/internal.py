@@ -129,7 +129,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if can_edit_eula:
             internal_attrs += [
                 'custom_eula',
-                'can_use_data',
             ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
@@ -179,23 +178,18 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             )
             eula_props_changed = (
                 bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula)
-                or bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data)
             )
 
             if eula_props_changed and settings.EULA_CHANGE_EMAIL:
                 message = '\n'.join([
-                    '{user} changed either the EULA or data sharing properties for domain {domain}.',
+                    '{user} changed the EULA properties for domain {domain}.',
                     '',
-                    'The properties changed were:',
                     '- Custom eula: {eula_old} --> {eula_new}',
-                    '- Can use data: {can_use_data_old} --> {can_use_data_new}'
                 ]).format(
                     user=self.request.couch_user.username,
                     domain=self.domain,
                     eula_old=old_attrs.custom_eula,
                     eula_new=self.domain_object.internal.custom_eula,
-                    can_use_data_old=old_attrs.can_use_data,
-                    can_use_data_new=self.domain_object.internal.can_use_data,
                 )
                 send_mail_async.delay(
                     'Custom EULA or data use flags changed for {}'.format(self.domain),

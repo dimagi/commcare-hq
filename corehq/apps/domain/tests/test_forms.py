@@ -198,6 +198,13 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.assertEqual(['Ensure this value is less than or equal to 1000.'],
                          form.errors.get("operator_call_limit"))
 
+    def test_opt_out_of_data_sharing_will_save_can_use_data_as_false(self):
+        form = self.create_form(domain=self.domain_obj, opt_out_of_data_sharing=True)
+        form.full_clean()
+        form.save(Mock(), self.domain_obj)
+        self.assertTrue('opt_out_of_data_sharing' in form.fields)
+        self.assertEqual(self.domain_obj.internal.can_use_data, False)
+
     def create_form(self, domain=None, **kwargs):
         data = {
             "hr_name": "foo",
