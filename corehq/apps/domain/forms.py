@@ -1389,18 +1389,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         self.can_edit_eula = can_edit_eula
         additional_fields = []
         if self.can_edit_eula:
-            additional_fields = ['custom_eula', 'can_use_data']
+            additional_fields = ['custom_eula']
             self.fields['custom_eula'] = ChoiceField(
                 label="Custom Eula?",
                 choices=tf_choices(_('Yes'), _('No')),
                 required=False,
                 help_text='Set to "yes" if this project has a customized EULA as per their contract.'
-            )
-            self.fields['can_use_data'] = ChoiceField(
-                label="Can use project data?",
-                choices=tf_choices('Yes', 'No'),
-                required=False,
-                help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
             )
 
         self.helper = hqcrispy.HQFormHelper()
@@ -1572,7 +1566,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         } if self.cleaned_data["workshop_region"] else {}
         if self.can_edit_eula:
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
-            kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
         domain.update_deployment(
             countries=self.cleaned_data['countries'],
