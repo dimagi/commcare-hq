@@ -2060,7 +2060,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
-            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1]])],
+            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
@@ -2069,7 +2069,21 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertEqual(self.user_invite.primary_location, self.loc1)
         self.assertListEqual(
             list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
-            [self.loc1._id]
+            [self.loc1._id, self.loc2._id]
+        )
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc2]])],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user_invite.primary_location, self.loc2)
+        self.assertListEqual(
+            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
+            [self.loc2._id]
         )
 
         import_users_and_groups(
