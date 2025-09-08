@@ -3,12 +3,16 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
+from corehq import privileges
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase
 
 
-class TestWebUserSyncUsercase(TestCase):
+class TestWebUserSyncUsercase(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -20,8 +24,9 @@ class TestWebUserSyncUsercase(TestCase):
         cls.user = WebUser.create(cls.domain_name, cls.username, '***', None, None)
         cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
         cls.user_id = cls.user._id
-        cls.domain_obj.usercase_enabled = True
-        cls.domain_obj.save()
+
+        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.PRO)
+        domain_has_privilege.clear(cls.domain_name, privileges.USERCASE)
 
     def test_sync_usercases(self):
         sync_usercases(self.user, self.domain_name)
@@ -44,19 +49,20 @@ class TestWebUserSyncUsercase(TestCase):
         self.assertFalse(open_usercase.closed)
 
 
-class TestBulkSyncUsercases(TestCase):
+class TestBulkSyncUsercases(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super(TestBulkSyncUsercases, cls).setUpClass()
         cls.domain_obj = create_domain("test")
         cls.addClassCleanup(cls.domain_obj.delete)
         cls.domain_name = cls.domain_obj.name
-        cls.domain_obj.usercase_enabled = True
-        cls.domain_obj.save()
 
         cls.users = []
         cls.user_ids = []
         cls.usernames = ['test1', 'test2', 'test3']
+
+        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.PRO)
+        domain_has_privilege.clear(cls.domain_name, privileges.USERCASE)
 
         # Create multiple users
         for username in cls.usernames:
