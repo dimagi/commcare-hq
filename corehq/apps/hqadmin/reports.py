@@ -29,7 +29,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.filters.select import FeatureFilter
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
-from corehq.apps.reports.standard import DatespanMixin
+from corehq.apps.reports.standard import DateTimespanMixin
 from corehq.apps.reports.standard.sms import PhoneNumberReport
 from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
@@ -106,14 +106,14 @@ class AdminPhoneNumberReport(PhoneNumberReport):
         return self._get_queryset().count()
 
 
-class UserAuditReport(AdminReport, DatespanMixin):
+class UserAuditReport(AdminReport, DateTimespanMixin):
     slug = 'user_audit_report'
     name = gettext_lazy("User Audit Events")
     MAX_RECORDS = 4000  # Tuned based on performance testing and user experience
     report_template_path = "hqadmin/user_audit_report.html"
 
     fields = [
-        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.dates.DateTimeSpanFilter',
         'corehq.apps.reports.filters.simple.SimpleUsername',
         'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
     ]
@@ -152,7 +152,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
         rows = []
         events = navigation_events_by_user(
-            self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate
+            self.selected_user, self.selected_domain, self.datetimespan.startdate, self.datetimespan.enddate
         )
         for event in events:
             rows.append([
@@ -170,8 +170,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
         where = filters_for_navigation_event_query(
             user=self.selected_user,
             domain=self.selected_domain,
-            start_date=self.datespan.startdate,
-            end_date=self.datespan.enddate
+            start_date=self.datetimespan.startdate,
+            end_date=self.datetimespan.enddate
         )
         return NavigationEventAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
 
