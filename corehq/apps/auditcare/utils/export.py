@@ -2,12 +2,10 @@ import csv
 from datetime import timedelta
 from itertools import chain
 
+import attr
+from dimagi.utils.parsing import string_to_datetime
 from django.contrib.auth.models import User
 from django.db.models import ForeignKey, Min
-
-import attr
-
-from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.util.models import ForeignValue
