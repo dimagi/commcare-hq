@@ -4,7 +4,6 @@ from django.test import SimpleTestCase
 
 from unittest.mock import MagicMock, patch
 
-from corehq.apps.app_manager import util as util
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema, get_registry_schema
 from corehq.apps.app_manager.app_schemas.session_schema import (
     get_session_schema,
@@ -586,7 +585,7 @@ class SessionSchemaTests(BaseSchemaTest):
                         "reference": {
                             "hashtag": "#user",
                             "source": "casedb",
-                            "subset": util.USERCASE_TYPE,
+                            "subset": USERCASE_TYPE,
                             "subset_key": "@case_type",
                             "subset_filter": True,
                             "key": "hq_user_id",
