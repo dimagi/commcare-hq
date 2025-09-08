@@ -53,7 +53,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_INVITATION_SENT_FORM,
     send_hubspot_form,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.domain.decorators import (
@@ -526,7 +526,13 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
-def get_domain_languages(domain):
+def get_domain_languages(domain, default_to_all_langs=False):
+    """
+    :param default_to_all_langs: returns all languages if no translations have
+    been setup for this domain yet
+    """
+    from corehq.apps.settings.languages import format_language_for_display
+
     app_languages = get_app_languages(domain)
     translations = SMSTranslations.objects.filter(domain=domain).first()
     sms_languages = translations.langs if translations else []
@@ -534,10 +540,13 @@ def get_domain_languages(domain):
     domain_languages = []
     for lang_code in app_languages.union(sms_languages):
         name = langcodes.get_name(lang_code)
-        label = "{} ({})".format(lang_code, name) if name else lang_code
+        label = format_language_for_display(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
 
-    return sorted(domain_languages) or langcodes.get_all_langs_for_select()
+    if not domain_languages and default_to_all_langs:
+        return langcodes.get_all_langs_for_select()
+
+    return sorted(domain_languages)
 
 
 class BaseRoleAccessView(BaseUserSettingsView):
@@ -604,7 +613,7 @@ class ListWebUsersView(BaseRoleAccessView):
 @require_can_edit_or_view_web_users
 @location_safe
 def download_web_users(request, domain):
-    track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
+    track_workflow_noop(request.couch_user.get_email(), 'Bulk download web users selected')
     from corehq.apps.users.views.mobile.users import download_users
     return download_users(request, domain, user_type=WEB_USER_TYPE)
 
@@ -808,7 +817,7 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
+        UserES().domain(domains, include_inactive=True).mobile_users().sort('username.exact')
         .login_as_user(web_user_usernames)
         .run()
     )
@@ -834,7 +843,7 @@ def paginate_enterprise_users(request, domain):
                 'profile': profile.name if profile else None,
                 'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
                 'loginAsUser': web_user.username,
-                'is_active': mobile_user.is_active,
+                'is_active': mobile_user.is_active_in_domain(mobile_user.domain),
             })
 
     return JsonResponse({
@@ -861,23 +870,44 @@ def _format_enterprise_user(domain, user):
 @location_safe
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain], filter_by_accessible_locations=True)
-    web_users_fmt = [{
-        'eulas': u.get_eulas(),
-        'email': u.get_email(),
-        'domain': domain,
-        'name': u.full_name,
-        'role': u.role_label(domain),
-        'phoneNumbers': u.phone_numbers,
-        'id': u.get_id,
-        'editUrl': reverse('user_account', args=[domain, u.get_id]),
-        'removeUrl': (
-            reverse('remove_web_user', args=[domain, u.user_id])
-            if request.user.username != u.username else None
-        ),
-        'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
-            domain, u.username
-        ),
-    } for u in web_users]
+    web_users_fmt = []
+    for u in web_users:
+        user = {
+            'eulas': u.get_eulas(),
+            'email': u.get_email(),
+            'domain': domain,
+            'name': u.full_name,
+            'role': u.role_label(domain),
+            'phoneNumbers': u.phone_numbers,
+            'id': u.get_id,
+            'editUrl': reverse('user_account', args=[domain, u.get_id]),
+            'removeUrl': (
+                reverse('remove_web_user', args=[domain, u.user_id])
+                if request.user.username != u.username else None
+            ),
+            'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
+                domain, u.username
+            ),
+            'deactivateUrl': '',
+            'reactivateUrl': '',
+        }
+        # Omit option to deactivate/reactivate for a domain if user access is controlled by an IdentityProvider
+        if IdentityProvider.get_required_identity_provider(u.username) is None:
+            if u.is_active_in_domain(domain):
+                user.update({
+                    'deactivateUrl': (
+                        reverse('deactivate_web_user', args=[domain, u.user_id])
+                        if request.user.username != u.username else None
+                    ),
+                })
+            else:
+                user.update({
+                    'reactivateUrl': (
+                        reverse('reactivate_web_user', args=[domain, u.user_id])
+                        if request.user.username != u.username else None
+                    ),
+                })
+        web_users_fmt.append(user)
 
     return JsonResponse({
         'users': web_users_fmt,
@@ -890,9 +920,18 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
     query = request.GET.get('query')
+    active_in_domain = json.loads(request.GET.get('showActiveUsers', None))
+
+    user_es = UserES()
+    if active_in_domain is None:
+        user_es = user_es.domain(domains)
+    else:
+        user_es = user_es.domain(domains, include_active=active_in_domain, include_inactive=not active_in_domain)
+        assert len(domains) == 1
 
     user_es = (
-        UserES().domains(domains).web_users().sort('username.exact')
+        user_es
+        .web_users().sort('username.exact')
         .search_string_query(query, ["username", "last_name", "first_name"])
         .start(skip).size(limit)
     )
@@ -955,6 +994,34 @@ def undo_remove_web_user(request, domain, record_id):
 
     return HttpResponseRedirect(
         reverse(ListWebUsersView.urlname, args=[domain]))
+
+
+@always_allow_project_access
+@require_can_edit_web_users
+@require_POST
+@location_safe
+def deactivate_web_user(request, domain, couch_user_id):
+    user = WebUser.get_by_user_id(couch_user_id, domain)
+    if user:
+        if not user_can_access_other_user(domain, request.couch_user, user):
+            return HttpResponse(status=401)
+        user.deactivate(domain, changed_by=request.couch_user)
+        messages.success(request, 'You have successfully deactivated {username}.'.format(username=user.username))
+    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
+
+
+@always_allow_project_access
+@require_can_edit_web_users
+@require_POST
+@location_safe
+def reactivate_web_user(request, domain, couch_user_id):
+    user = WebUser.get_by_user_id(couch_user_id, domain)
+    if user:
+        if not user_can_access_other_user(domain, request.couch_user, user):
+            return HttpResponse(status=401)
+        user.reactivate(domain, changed_by=request.couch_user)
+        messages.success(request, 'You have successfully reactivated {username}.'.format(username=user.username))
+    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
 
 
 # If any permission less than domain admin were allowed here, having that
@@ -1265,9 +1332,9 @@ class InviteWebUserView(BaseManageWebUserView):
                                          )
                 messages.success(request, "%s added." % data["email"])
             else:
-                track_workflow(request.couch_user.get_email(),
-                               "Sent a project invitation",
-                               {"Sent a project invitation": "yes"})
+                track_workflow_noop(request.couch_user.get_email(),
+                                    "Sent a project invitation",
+                                    {"Sent a project invitation": "yes"})
                 send_hubspot_form(HUBSPOT_INVITATION_SENT_FORM, request)
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
@@ -1495,7 +1562,7 @@ class UploadWebUsers(BaseUploadUser):
         return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
 
     def post(self, request, *args, **kwargs):
-        track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')
+        track_workflow_noop(request.couch_user.get_email(), 'Bulk upload web users selected')
         return super(UploadWebUsers, self).post(request, *args, **kwargs)
 
 
@@ -1661,7 +1728,9 @@ def change_password(request, domain, login_id):
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
     json_dump = {}
-    if not commcare_user or not user_can_access_other_user(domain, request.couch_user, commcare_user):
+    if (not commcare_user or not user_can_access_other_user(domain, request.couch_user, commcare_user)
+            or (domain_has_privilege(domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                and commcare_user.self_set_password)):
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":

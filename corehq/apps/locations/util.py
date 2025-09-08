@@ -435,4 +435,4 @@ def get_location_type(domain, location, parent, loc_type_string, exception, is_n
 # Checks if a location type has any users assigned to it's related locations
 def does_location_type_have_users(loc_type):
     location_ids = list(SQLLocation.objects.filter(location_type=loc_type).values_list('location_id', flat=True))
-    return bool(UserES().location(location_ids).count())
+    return bool(UserES().domain(loc_type.domain).location(location_ids).count())

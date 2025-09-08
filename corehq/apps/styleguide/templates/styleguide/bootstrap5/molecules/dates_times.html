@@ -46,10 +46,8 @@
     during the migration of a page from Bootstrap 3 to 5.
   </p>
   <div class="alert alert-primary">
-    <strong>Important Usage Note:</strong> To use Tempus Dominus on a page, you will need to apply the
-    <code>@use_tempusdominus</code> decorator to your view to ensure that the CSS is included.
-    Also make sure to import <code>TempusDominus</code> from <code>@eonasdan/tempus-dominus</code> in javascript,
-    as in the examples on this page.
+    <strong>Important Usage Note:</strong> Make sure to import <code>TempusDominus</code> from
+    <code>@eonasdan/tempus-dominus</code> in javascript, as in the examples on this page.
   </div>
 
   <h2 id="simple-date" class="pt-4">
@@ -59,8 +57,6 @@
     If you are in need of a simple date picker widget that returns a format in <code>YYYY-MM-DD</code>, then
     your best option is to add the <code>date-picker</code> CSS class to any text <code>input</code> and
     make sure that <code>hqwebapp/js/bootstrap5/widgets</code> is included as part of your javascript dependencies.
-    Additionally, you will want to use the <code>@use_tempusdominus</code> decorator on the view using the widget
-    to ensure the CSS is loaded to the page properly.
   </p>
   <p>
     The <code>hqwebapp/js/bootstrap5/widgets</code> module when loaded to a page will look for <code>input</code> fields

@@ -60,7 +60,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils import convert_xform_to_json
+from corehq.form_processor.utils.xform import convert_xform_to_json, sanitize_instance_xml
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
@@ -107,9 +107,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     try:
         instance, attachments = couchforms.get_instance_and_attachment(request)
+        instance = sanitize_instance_xml(instance, request)
     except MultimediaBug:
         try:
             instance = request.FILES[MAGIC_PROPERTY].read()
+            instance = sanitize_instance_xml(instance, request)
             xform = convert_xform_to_json(instance)
             meta = xform.get("meta", {})
         except Exception:
@@ -314,6 +316,7 @@ def _noauth_post(request, domain, app_id=None):
     except BadSubmissionRequest as e:
         return HttpResponseBadRequest(e.message)
 
+    instance = sanitize_instance_xml(instance, request)
     form_json = convert_xform_to_json(instance)
     case_updates = get_case_updates(form_json)
 

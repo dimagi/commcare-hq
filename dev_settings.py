@@ -67,9 +67,6 @@ DATABASES = {
         'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
         'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
     }
 }
 
@@ -87,7 +84,6 @@ redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/0',
     # match production settings
-    'PARSER_CLASS': 'redis.connection.HiredisParser',
     'REDIS_CLIENT_KWARGS': {
         'health_check_interval': 15,
     },
@@ -167,7 +163,6 @@ if settingshelper.is_testing():
         "config": {
             "connect_timeout": 3,
             "read_timeout": 5,
-            "signature_version": "s3"
         },
     }
 

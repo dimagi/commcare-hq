@@ -38,7 +38,7 @@ Specifying packages in ``package.json``
 
 To ensure a package gets installed for a project, you must specify it in
 the ``package.json`` file. This is equivalent to the
-``requirements.txt`` file for ``pip``. Similar to ``pip install`` for
+``pyproject.toml`` file for Python with ``uv``. Similar to ``uv sync`` for
 python, for yarn, use ``yarn upgrade`` When specifying a yarn package
 you can use many techniques. Here are a few examples:
 
@@ -100,14 +100,14 @@ In ESM modules:
 
 ::
 
-    import DOMPurify from "DOMPurify";
+    import DOMPurify from "dompurify";
 
-In modules using ``hqDefine``:
+In modules using AMD style:
 
 ::
 
-    hqDefine("my_app/js/my_module", [
-        "DOMPurify",
+    define("my_app/js/my_module", [
+        "dompurify",
     ], function (
         DOMPurify,
     ) {

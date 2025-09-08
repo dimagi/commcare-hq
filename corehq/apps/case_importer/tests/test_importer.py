@@ -9,11 +9,16 @@ from celery import states
 from celery.exceptions import Ignore
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
-from casexml.apps.case.mock import CaseFactory, CaseStructure
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.case_importer import exceptions
-from corehq.apps.case_importer.do_import import _CaseImportRow, do_import
+from corehq.apps.case_importer.do_import import (
+    _CaseImportRow,
+    RowAndCase,
+    SubmitCaseBlockHandler,
+    do_import,
+)
 from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import (
@@ -756,6 +761,30 @@ class ImporterTest(TestCase):
         self.assertEqual(2, res['failed_count'])
         self.assertIn(exceptions.CaseNameTooLong.title, res['errors'])
         self.assertIn(exceptions.ExternalIdTooLong.title, res['errors'])
+
+
+class SubmitCaseBlockHandlerTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.default_case_type = 'test-case-type'
+
+    def test_case_import_sets_form_name(self):
+        handler = SubmitCaseBlockHandler(
+            domain=self.domain,
+            user=WebUser(username='test-user'),
+            case_type=self.default_case_type,
+            form_name='Test Form Name',
+            import_results=None,
+        )
+        case_block = CaseBlock(
+            case_id='abc123',
+            case_type=self.default_case_type,
+        )
+        form, _ = handler.submit_case_blocks([RowAndCase(0, case_block)])
+        assert form.name == 'Test Form Name'
 
 
 def make_worksheet_wrapper(*rows):

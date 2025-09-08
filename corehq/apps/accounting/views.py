@@ -123,7 +123,6 @@ from corehq.apps.domain.views.accounting import (
     DomainBillingStatementsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
@@ -304,10 +303,6 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
-    @use_jquery_ui  # for datepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super(NewSubscriptionView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def account_id(self):
@@ -376,10 +371,6 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     async_handlers = [
         Select2BillingInfoHandler,
     ]
-
-    @use_jquery_ui  # for datepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditSubscriptionView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -588,10 +579,6 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         SoftwareProductRateAsyncHandler,
     ]
 
-    @use_multiselect
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditSoftwarePlanView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def plan(self):
@@ -668,10 +655,6 @@ class SoftwarePlanVersionView(AccountingSectionView):
     urlname = 'software_plan_version'
     page_title = 'Plan Version'
     template_name = 'accounting/plan_version.html'
-
-    @use_jquery_ui  # for datepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.upgrade_subscriptions_form.is_valid():

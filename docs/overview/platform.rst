@@ -230,7 +230,7 @@ in the system and enable highly-sophisticated integrations with CommCare.
 
 More details on CommCare's API can be found in the `API documentation`_.
 
-.. _API documentation: https://confluence.dimagi.com/display/commcarepublic/CommCare+HQ+APIs
+.. _API documentation: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958022/API+Access
 
 MOTECH Repeaters
 ~~~~~~~~~~~~~~~~

@@ -20,7 +20,7 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -184,16 +184,11 @@ class BaseExportView(BaseProjectDataView):
     @property
     def _possible_form_geo_properties(self):
         export_table = self.export_instance.tables[0]
-        geo_props = []
-
-        for column in export_table.columns:
-            if column.item.doc_type == 'GeopointItem':
-                # show the path to the geo properties, not the column headers, because the
-                # paths do not change.
-                path_str = '.'.join([f"{node.name}" for node in column.item.path])
-                geo_props.append(path_str)
-
-        return geo_props
+        return [
+            col.item.readable_path
+            for col in export_table.columns
+            if col.item.doc_type == 'GeopointItem'
+        ]
 
     @property
     def _possible_case_geo_properties(self):
@@ -237,7 +232,7 @@ class BaseExportView(BaseProjectDataView):
         if not export._rev:
             # This is a new export
 
-            track_workflow(
+            track_workflow_noop(
                 request.user.username,
                 f'{self.metric_name} - Created Export',
                 properties={'domain': self.domain}
@@ -279,7 +274,7 @@ class BaseExportView(BaseProjectDataView):
                 event_title = "[BI Integration] Clicked Save button for feed copy"
             else:
                 event_title = "[BI Integration] Clicked Save button for feed creation"
-            track_workflow(request.user.username, event_title, {
+            track_workflow_noop(request.user.username, event_title, {
                 "Feed Type": export.type,
                 "Number of additional nodes": num_nodes,
             })
@@ -364,7 +359,7 @@ class CreateNewCustomFormExportView(BaseExportView):
     def create_new_export_instance(self, schema, username, export_settings=None):
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
-        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+        track_workflow_noop(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
             'domain': self.domain
         })
 
@@ -406,7 +401,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
             load_deprecated=load_deprecated
         )
 
-        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+        track_workflow_noop(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
             'domain': self.domain
         })
 

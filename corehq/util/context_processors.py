@@ -3,12 +3,14 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
+from django.utils.translation import gettext as _
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege, get_privileges
 from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils import bootstrap
 
@@ -26,6 +28,27 @@ def base_template(request):
         'secure_cookies': settings.SECURE_COOKIES,
         'MINIMUM_ZXCVBN_SCORE': settings.MINIMUM_ZXCVBN_SCORE,
         'MINIMUM_PASSWORD_LENGTH': settings.MINIMUM_PASSWORD_LENGTH,
+    }
+
+
+def chat_widget_config(request):
+    """Global chat widget configuration with translated strings"""
+    return {
+        'chat_widget_config': {
+            'button_text': _("Need Help?"),
+            'welcome_message': _(
+                "Hi there! I'm CommCare Companion, your personal guide to CommCare! "
+                "What can I help you with today?"
+            ),
+            'starter_questions': [
+                _("I need help with building my CommCare application."),
+                _("I need help troubleshooting my mobile application."),
+                _("I need help with exporting or understanding my data.")
+            ],
+            'typing_indicator_text': _("Finding the best answer"),
+            'new_chat_confirmation_message': _("Starting a new chat will clear your current conversation. "
+                                               "Continue?"),
+        }
     }
 
 
@@ -104,7 +127,7 @@ def js_api_keys(request):
         'ANALYTICS_IDS': settings.ANALYTICS_IDS.copy(),
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
-        'IS_ANALYTICS_ENVIRONMENT': settings.SERVER_ENVIRONMENT in ('production', 'staging', 'india'),
+        'IS_ANALYTICS_ENVIRONMENT': settings.SERVER_ENVIRONMENT in ('production', 'staging', 'india', 'eu'),
     }
     if (
         getattr(request, 'project', None)
@@ -175,6 +198,20 @@ def commcare_hq_names(request=None):
     }
 
 
+def server_location_display(request):
+    context = {}
+    current_env = settings.SERVER_ENVIRONMENT
+    if current_env in ServerLocation.ENVS:
+        server = ServerLocation.ENVS.get(current_env)
+        context = {
+            'server_display': {
+                'country_code': server['country_code'],
+                'hr_name': server['short_name'],
+            }
+        }
+    return context
+
+
 def emails(request=None):
     """
     Emails commonly referenced in user-facing templates.
@@ -182,6 +219,7 @@ def emails(request=None):
     a page-specific context variable.
     """
     return {
+        'ACCOUNTS_EMAIL': settings.ACCOUNTS_EMAIL,
         'SALES_EMAIL': settings.SALES_EMAIL,
         'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
         'PRIVACY_EMAIL': settings.PRIVACY_EMAIL,
@@ -209,35 +247,6 @@ def _get_cc_name(request, var):
         host = 'default'
 
     return value.get(host) or value['default']
-
-
-def mobile_experience(request):
-    show_mobile_ux_warning = False
-    mobile_ux_cookie_name = ''
-    if (hasattr(request, 'couch_user')
-            and hasattr(request, 'user_agent')
-            and settings.SERVER_ENVIRONMENT in ['production', 'staging', settings.LOCAL_SERVER_ENVIRONMENT]):
-        mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
-        show_mobile_ux_warning = (
-            not request.COOKIES.get(mobile_ux_cookie_name)
-            and request.user_agent.is_mobile
-            and request.user.is_authenticated
-            and request.user.is_active
-            and not mobile_experience_hidden_by_toggle(request)
-        )
-    return {
-        'show_mobile_ux_warning': show_mobile_ux_warning,
-        'mobile_ux_cookie_name': mobile_ux_cookie_name,
-    }
-
-
-def mobile_experience_hidden_by_toggle(request):
-    from corehq import toggles
-    user = request.couch_user
-    for project in user.domains:
-        if toggles.HIDE_HQ_ON_MOBILE_EXPERIENCE.enabled(project, toggles.NAMESPACE_DOMAIN):
-            return True
-    return False
 
 
 def subscription_banners(request):
@@ -271,7 +280,7 @@ def get_demo(request):
     is_user_logged_in = getattr(request, 'user', None) and request.user.is_authenticated
     is_hubspot_enabled = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     context = {}
-    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and not is_user_logged_in:
+    if is_hubspot_enabled and not is_user_logged_in:
         context.update({
             'is_demo_visible': True,
         })

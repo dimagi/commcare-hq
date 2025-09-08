@@ -4,6 +4,9 @@ import 'datatables.net/js/jquery.dataTables';
 import 'datatables.net-fixedcolumns/js/dataTables.fixedColumns';
 import 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5';
 
+import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
+import 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css';
+
 import _ from 'underscore';
 import googleAnalytics from 'analytix/js/google';
 import {Tooltip} from 'bootstrap5';
@@ -145,7 +148,7 @@ var HQReportDataTables = function (options) {
                     return data;
                 };
 
-                params.footerCallback = function (row, data, start, end, display) {
+                params.footerCallback = function (row, data, start, end, display) {     // eslint-disable-line no-unused-vars
                     if ('total_row' in data) {
                         self.render_footer_row('ajax_total_row', data['total_row']);
                     }
@@ -170,7 +173,7 @@ var HQReportDataTables = function (options) {
                     if ('context' in data) {
                         let iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
                         import("reports/js/bootstrap5/maps_utils").then(function (mapsUtils) {
-                            mapsUtils.load(data['context'], iconPath);
+                            mapsUtils.default.load(data['context'], iconPath);
                         });
                     }
                     if (self.successCallbacks) {
@@ -323,45 +326,6 @@ var HQReportDataTables = function (options) {
 
     return self;
 };
-
-// For sorting rows
-
-function sortSpecial(a, b, asc, convert) {
-    var x = convert(a);
-    var y = convert(b);
-
-    // sort nulls at end regardless of current sort direction
-    if (x === null && y === null) {
-        return 0;
-    }
-    if (x === null) {
-        return 1;
-    }
-    if (y === null) {
-        return -1;
-    }
-
-    return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
-}
-
-function convertNum(k) {
-    var m = k.match(/title="*([-+.0-9eE]+)/);
-    if (m !== null) {
-        m = +m[1];
-        if (isNaN(m)) {
-            m = null;
-        }
-    }
-    return m;
-}
-
-function convertDate(k) {
-    var m = k.match(/title="*(.+)"/);
-    if (m[1] === "None") {
-        return null;
-    }
-    return new Date(m[1]);
-}
 
 export default {
     HQReportDataTables: function (options) {

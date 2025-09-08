@@ -1,7 +1,7 @@
 from django.http import HttpRequest
 from django.test import TestCase
 
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
@@ -614,7 +614,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
         )
 
 
-@freeze_time("2020-12-30")
+@travel("2020-12-30", tick=False)
 class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, TestCase):
     @classmethod
     def _create_data(cls):

@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models.expressions import Exists, F, Func, OuterRef, Value
 from django.db.models.query import Q, QuerySet
 
-from django_cte import With
+from django_cte import CTE, with_cte
 
 
 class str_array(Func):
@@ -68,10 +68,10 @@ class AdjListManager(models.Manager):
                 ),
             )
 
-        cte = With.recursive(make_cte_query)
-        return (
-            cte.queryset()
-            .with_cte(cte)
+        cte = CTE.recursive(make_cte_query)
+        return with_cte(
+            cte,
+            select=cte.queryset()
             .order_by(("" if ascending else "-") + "_depth")
         )
 
@@ -121,8 +121,8 @@ class AdjListManager(models.Manager):
                 ),
                 all=True,
             )
-        cte = With.recursive(make_cte_query)
-        query = cte.queryset().with_cte(cte)
+        cte = CTE.recursive(make_cte_query)
+        query = with_cte(cte, select=cte)
 
         if discard_dups:
             # Remove duplicates when the supplied Queryset or Q object
@@ -130,7 +130,7 @@ class AdjListManager(models.Manager):
             # id, retain the row with the longest path. TODO remove this
             # and ensure duplicates do not matter or the criteria never
             # matches both parents and children in all calling code.
-            xdups = With(
+            xdups = CTE(
                 cte.queryset().annotate(
                     max_len=array_length(
                         F("_cte_ordering"),
@@ -145,12 +145,12 @@ class AdjListManager(models.Manager):
                 ),
                 name="xdups"
             )
-            query = query.annotate(
+            query = with_cte(xdups, select=query).annotate(
                 _exclude_dups=Exists(SubQueryset(xdups.queryset().filter(
                     id=OuterRef("id"),
                     _cte_ordering=OuterRef("_cte_ordering"),
                 )))
-            ).filter(_exclude_dups=True).with_cte(xdups)
+            ).filter(_exclude_dups=True)
 
         return query.order_by(cte.col._cte_ordering)
 

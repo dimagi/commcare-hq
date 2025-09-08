@@ -11,7 +11,7 @@ def override_fixture(old_fixture):
         @wraps(new_fixture)
         def fixture(*a, **k):
             yield from new_fixture(*a, **k)
-        new_fixture.super = old_fixture.__pytest_wrapped__.obj
-        old_fixture.__pytest_wrapped__.obj = fixture
+        new_fixture.super = old_fixture._fixture_function
+        old_fixture._fixture_function = fixture
         return new_fixture
     return apply

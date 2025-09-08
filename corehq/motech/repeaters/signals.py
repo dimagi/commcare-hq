@@ -25,12 +25,13 @@ ucr_data_source_updated = dispatcher.Signal()
 
 
 def create_form_repeat_records(sender, xform, **kwargs):
-    from corehq.motech.repeaters.models import FormRepeater
+    from corehq.motech.repeaters.models import ConnectFormRepeater, FormRepeater
     from corehq.motech.repeaters.expression.repeaters import ArcGISFormExpressionRepeater, FormExpressionRepeater
     if not xform.is_duplicate:
         create_repeat_records(FormRepeater, xform)
         create_repeat_records(FormExpressionRepeater, xform)
         create_repeat_records(ArcGISFormExpressionRepeater, xform)
+        create_repeat_records(ConnectFormRepeater, xform)
 
 
 def create_case_repeat_records(sender, case, **kwargs):
@@ -106,9 +107,8 @@ def fire_synchronous_case_repeaters(sender, case, **kwargs):
     _create_repeat_records(DataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
 
 
-def create_data_source_updated_repeat_record(sender, **kwargs):
-    """Creates a transaction log for the datasource that changed"""
-    create_repeat_records(DataSourceRepeater, kwargs["update_log"])
+def create_data_source_updated_repeat_record(sender, datasource_update, **kwargs):
+    create_repeat_records(DataSourceRepeater, datasource_update)
 
 
 successful_form_received.connect(create_form_repeat_records)

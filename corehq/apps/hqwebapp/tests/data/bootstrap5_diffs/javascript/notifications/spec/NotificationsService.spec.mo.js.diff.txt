@@ -1,12 +1,10 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
--hqDefine("notifications/spec/bootstrap3/NotificationsService.spec.mo", [
-+hqDefine("notifications/spec/bootstrap5/NotificationsService.spec.mo", [
-     'jquery',
-     'sinon',
--    'notifications/js/bootstrap3/notifications_service',
-+    'notifications/js/bootstrap5/notifications_service',
- ], function (
-     $,
-     sinon,
+@@ -1,6 +1,6 @@
+ import $ from "jquery";
+ import sinon from "sinon";
+-import notifications from "notifications/js/bootstrap3/notifications_service";
++import notifications from "notifications/js/bootstrap5/notifications_service";
+ 
+ describe('NotificationsService Unit Tests', function () {
+     var fakeRMIUrl = '/fake/rmi',

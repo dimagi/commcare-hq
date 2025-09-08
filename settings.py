@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# flake8: noqa: F405
+# flake8: noqa: E266, F405
 
 import inspect
 from collections import defaultdict
@@ -11,13 +11,9 @@ import settingshelper as helper
 
 DEBUG = True
 
-# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
-# this to select various versions of Vellum source on the form designer page.
-# Acceptable values:
-# None - production mode
-# "dev" - use raw vellum source (submodules/formdesigner/src)
-# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
-VELLUM_DEBUG = None
+# Clone http://github.com/dimagi/Vellum into submodules/formdesigner and set
+# this to use raw Vellum source (submodules/formdesigner/src) on the form designer page.
+VELLUM_DEBUG = False
 
 
 # For Single Sign On (SSO) Implementations
@@ -66,12 +62,15 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
+    ('ara', 'Arabic'),
     ('en', 'English'),
     ('es', 'Spanish'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
-    ('sw', 'Swahili'),
+    ('ita', 'Italian'),
     ('por', 'Portuguese'),
+    ('sw', 'Swahili'),
+    ('ukr', 'Ukrainian'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
@@ -158,10 +157,12 @@ MIDDLEWARE = [
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'corehq.middleware.HqHtmxActionMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.SentryContextMiddleware',
+    'corehq.middleware.SyncUserLanguageMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.middleware.LogLongRequestMiddleware',
@@ -169,11 +170,13 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
+    'corehq.apps.hqwebapp.utils.bootstrap.middleware.ThreadLocalCleanupMiddleware',
     'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
+    'corehq.apps.sso.middleware.SingleSignOnErrorMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -188,6 +191,7 @@ MINIMUM_ZXCVBN_SCORE = 2
 MINIMUM_PASSWORD_LENGTH = 8
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
+FORMS_URLFIELD_ASSUME_HTTPS = True
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -197,15 +201,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 PASSWORD_HASHERS = (
-    # this is the default list with SHA1 moved to the front
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'corehq.util.auth.SHA1PasswordHasher',
     'django.contrib.auth.hashers.MD5PasswordHasher',
-    'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
-    'django.contrib.auth.hashers.CryptPasswordHasher',
 )
+PASSWORD_RESET_TIMEOUT = 3600
 
 ROOT_URLCONF = "urls"
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
@@ -408,6 +410,8 @@ HQ_APPS = (
 
     'custom.ccqa',
 
+    'custom.mgh_epic',
+
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
 
@@ -478,14 +482,13 @@ SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "support@example.com"
 SAAS_OPS_EMAIL = "saas-ops@example.com"
-PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
 ACCOUNTS_EMAIL = 'accounts@example.com'
 DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'accounts@example.com'
-GROWTH_EMAIL = 'growth@example.com'
+GROWTH_EMAIL = 'saas-revenue-team@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
@@ -792,13 +795,9 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'GOOGLE_ANALYTICS_SECRET': '',
     'GOOGLE_ANALYTICS_MEASUREMENT_ID': '',
-    'KISSMETRICS_KEY': '',
     'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
-    'DRIFT_ID': '',
-    'APPCUES_ID': '',
-    'APPCUES_KEY': '',
 }
 
 ANALYTICS_CONFIG = {
@@ -832,6 +831,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.ReferCaseRepeater',
     'corehq.motech.repeaters.models.DataRegistryCaseUpdateRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.ConnectFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
@@ -870,7 +870,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 5
+ELASTICSEARCH_MAJOR_VERSION = 6
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
@@ -1021,6 +1021,9 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+EPIC_PRIVATE_KEY = None
+EPIC_CLIENT_ID = None
+
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
@@ -1040,6 +1043,8 @@ ENTERPRISE_MODE = False
 RESTRICT_DOMAIN_CREATION = False
 
 CUSTOM_LANDING_PAGE = False
+
+ENABLE_BHA_CASE_SEARCH_ADAPTER = False
 
 SENTRY_DSN = None
 SENTRY_REPOSITORY = 'dimagi/commcare-hq'
@@ -1092,7 +1097,7 @@ ES_SETTINGS = None
 #         'multiplex_writes': True,
 #     }
 # }
-# See case_search_bha.py docstring for context
+# See case_search_sub.py docstring for context
 CASE_SEARCH_SUB_INDICES = {}
 
 PHI_API_KEY = None
@@ -1159,6 +1164,7 @@ CONNECTID_CLIENT_ID = ''
 CONNECTID_SECRET_KEY = ''
 CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
+CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
@@ -1252,7 +1258,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('eu', 'india', 'production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1287,7 +1293,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain',
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
-                'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
@@ -1298,6 +1303,8 @@ TEMPLATES = [
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
+                'corehq.util.context_processors.server_location_display',
+                'corehq.util.context_processors.chat_widget_config',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1690,7 +1697,7 @@ HQ can only provide in HTML.  Please set your email client to view this email
 in HTML or read this email in a client that supports HTML email.
 
 Thanks,
-The CommCare HQ Team"""
+The CommCare Team"""
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
@@ -2032,6 +2039,11 @@ DOMAIN_MODULE_MAP = {
     'co-carecoordination-uat': 'custom.bha',
 
     'ccqa': 'custom.ccqa',
+
+    'epic-integration-test': 'custom.mgh_epic',
+    'sudcare-dev': 'custom.mgh_epic',
+    # Temporarily disabled SUDCare integration (paused 2025-06-13)
+    #'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

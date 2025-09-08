@@ -12,7 +12,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h4 id="{{ modal_id }}-label" class="modal-title">
-          {% block modal_title %}{% trans "Confirm Action" %}{% endblock %}
+          {% block modal_title %}{% trans "Confirm Action" %}{% endblock modal_title %}
         </h4>
         <button
           class="btn-close"
@@ -22,7 +22,7 @@
         ></button>
       </div>
       <div class="modal-body">
-        {% block modal_body %}{% endblock %}
+        {% block modal_body %}{% endblock modal_body %}
       </div>
       <div class="modal-footer">
         <button
@@ -30,16 +30,16 @@
           type="button"
           data-bs-dismiss="modal"
         >
-          {% block modal_dismiss_text %}{% trans "Cancel" %}{% endblock %}
+          {% block modal_dismiss_text %}{% trans "Cancel" %}{% endblock modal_dismiss_text %}
         </button>
         {% block modal_continue_button %}
           <button
             class="btn {% if confirm_button_class %}{{ confirm_button_class }}{% else %}btn-primary{% endif %}"
             type="button"
             data-bs-dismiss="modal"
-            {% block modal_continue_attrs %}{% endblock %}
+            {% block modal_continue_attrs %}{% endblock modal_continue_attrs %}
           >
-            {% block modal_continue_text %}{% trans "Continue" %}{% endblock %}
+            {% block modal_continue_text %}{% trans "Continue" %}{% endblock modal_continue_text %}
           </button>
         {% endblock modal_continue_button %}
       </div>

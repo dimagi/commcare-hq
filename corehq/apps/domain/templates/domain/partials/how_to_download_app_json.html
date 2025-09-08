@@ -1,0 +1,25 @@
+{% load i18n %}
+
+<div class="alert alert-info">
+  <h4>{% trans "Download the Application Source File" %}</h4>
+  <ol class="mb-0">
+    <li>
+      {% blocktrans with download_url=download_url %}
+        Open
+        <a href="{{ download_url }}" target="_blank">{{ download_url }}</a> in a
+        new tab.
+      {% endblocktrans %}
+    </li>
+    <li>
+      {% blocktrans %}
+        Click on the browser’s File menu at the top (e.g. File → Save As…).
+      {% endblocktrans %}
+    </li>
+    <li>
+      {% blocktrans %}
+        In the dialog: Change the name to end with .json (e.g., my_app.json)
+      {% endblocktrans %}
+    </li>
+    <li>{% trans "Click Save." %}</li>
+  </ol>
+</div>

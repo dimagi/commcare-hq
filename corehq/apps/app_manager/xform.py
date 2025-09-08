@@ -2192,6 +2192,12 @@ VELLUM_TYPES = {
         'icon': 'fcc fcc-fd-decimal',
         'editable': True,
     },
+    "Document": {
+        'tag': 'upload',
+        'media': 'application/*,text/*',
+        'type': 'binary',
+        'icon': 'fa fa-file',
+    },
     "FieldList": {
         'tag': 'group',
         'appearance': 'field-list',

@@ -1,15 +1,13 @@
 from django.test import TestCase
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
 from corehq.apps.users.device_rate_limiter import DEVICE_LIMIT_PER_USER_KEY, REDIS_KEY_PREFIX, device_rate_limiter
 from corehq.apps.users.models import CommCareUser
 from corehq.project_limits.models import SystemLimit
-from corehq.util.test_utils import flag_disabled, flag_enabled
 
 
-@freeze_time("2024-12-10 12:05:43")
-@flag_enabled("DEVICE_RATE_LIMITER")
+@travel("2024-12-10 12:05:43", tick=False)
 class TestDeviceRateLimiter(TestCase):
 
     domain = 'device-rate-limit-test'
@@ -51,7 +49,7 @@ class TestDeviceRateLimiter(TestCase):
         self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, new_user, 'existing-device-id'))
 
     def test_allowed_after_waiting_one_minute(self):
-        with freeze_time("2024-12-10 12:05:43") as frozen_time:
+        with travel("2024-12-10 12:05:43", tick=False) as frozen_time:
             device_rate_limiter.rate_limit_device(self.domain, self.user, 'existing-device-id')
             self.assertTrue(device_rate_limiter.rate_limit_device(self.domain, self.user, 'new-device-id'))
             frozen_time.move_to("2024-12-10 12:06:15")
@@ -85,11 +83,6 @@ class TestDeviceRateLimiter(TestCase):
 
         device_rate_limiter.rate_limit_device(self.domain, self.user, 'existing-device-id')
         self.assertTrue(device_rate_limiter.rate_limit_device(self.domain, self.user, 'new-device-id'))
-
-    @flag_disabled("DEVICE_RATE_LIMITER")
-    def test_allowed_if_rate_limiter_is_disabled(self):
-        device_rate_limiter.rate_limit_device(self.domain, self.user, 'existing-device-id')
-        self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, self.user, 'new-device-id'))
 
     def test_allowed_if_user_or_device_id_is_none(self):
         device_rate_limiter.rate_limit_device(self.domain, self.user, 'existing-device-id')

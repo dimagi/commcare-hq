@@ -1,8 +1,8 @@
-hqDefine("cloudcare/js/form_entry/form_ui", [
+define("cloudcare/js/form_entry/form_ui", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify',
+    'dompurify',
     'hqwebapp/js/toggles',
     'bootstrap5',
     'cloudcare/js/markdown',
@@ -694,7 +694,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 }
 
                 const inputControl = [constants.CONTROL_IMAGE_CHOOSE, constants.CONTROL_LABEL,
-                    constants.CONTROL_AUDIO_CAPTURE, constants.CONTROL_VIDEO_CAPTURE];
+                    constants.CONTROL_AUDIO_CAPTURE, constants.CONTROL_VIDEO_CAPTURE,
+                    constants.CONTROL_DOCUMENT_UPLOAD];
 
                 let findChildAndSetFilename = function (children) {
                     for (let child of children) {
@@ -973,7 +974,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
         };
-        self.afterRender = function () { self.entry.afterRender(); };
+        self.afterRender = function (elements, entry) {
+            self.entry.afterRender(elements, entry);
+        };
 
         self.ixInfo = function (o) {
             var fullIx = getIx(o);

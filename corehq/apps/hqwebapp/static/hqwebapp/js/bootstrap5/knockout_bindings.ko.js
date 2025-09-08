@@ -1,9 +1,10 @@
-hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
+define("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     'jquery',
     'underscore',
     'knockout',
     "bootstrap5",
     'jquery-ui/ui/widgets/sortable',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
     'langcodes/js/langcodes',   // $.langcodes
 ], function (
     $,
@@ -711,7 +712,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
 
     ko.bindingHandlers.onEnterKey = {
         // calls a function when the enter key is pressed on an input
-        init: function (element, valueAccessor, allBindings, viewModel) {
+        init: function (element, valueAccessor) {
             $(element).keypress(function (event) {
                 if (event.key === "Enter" || event.keyCode === 13) {
                     valueAccessor()();

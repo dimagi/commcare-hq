@@ -3,13 +3,11 @@ Updating Module Syntax from AMD to ESM
 
 Most javascript files are eligible for this update.
 
-See the `Historical Background on Module Patterns
-<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/module-history.rst>`__
-for a more detailed discussion of module types. As a quick refresher, here are some definitions:
+Here are some definitions:
 
-Modified AMD (Asynchronous Module Definition)
-    The legacy module type used for older JavaScript modules on HQ, identified by having an ``hqDefine``
-    statement near the top of the file. AMD is still needed as a format for modules required by No-Bundler pages.
+AMD (Asynchronous Module Definition)
+    The legacy module type used for older JavaScript modules on HQ, identified by having a ``define``
+    statement near the top of the file.
 
 ESM (ES Modules)
     The newest module type with updated powerful import and export syntax. This is the module
@@ -37,7 +35,7 @@ The HQ AMD-style module will look something like:
 
 ::
 
-    hqDefine('hqwebapp/js/my_module', [
+    define('hqwebapp/js/my_module', [
         'jquery',
         'knockout',
         'underscore',
@@ -69,23 +67,6 @@ If this module is a webpack entry point, then it is eligible for an update. In t
 The entry point can also be specified with ``js_entry_b3`` if the module is part of the Bootstrap 3 build
 of Webpack.
 
-Dependency Modules
-~~~~~~~~~~~~~~~~~~
-
-If this module is referenced by any ``hqImport`` calls (for instance ``hqImport('hqwebapp/js/my_module')``),
-then this module is NOT yet eligible, and must continue using the older AMD-style syntax until
-the ``hqImport`` statements are no longer needed. See the
-`JS Bundler Migration Guide <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst>`__ for
-how to proceed in this case.
-
-Slightly Different Syntax
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If the AMD-style module looks a bit different than the syntax above--for instance, the list of dependencies are missing or
-``hqImport`` and/or global variables can be found in the main body of the module--then this module must be
-`migrated to use a JS Bundler <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst>`__.
-
-
 Step 2: Update the Module Syntax
 --------------------------------
 
@@ -100,8 +81,8 @@ Key Points
 Automation
 ~~~~~~~~~~
 
-As a first step, you can run the `hqdefine_to_esm <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/hqdefine_to_esm.py>`__
-management command, which will rewrite the file in place, replacing the ``hqDefine`` call with a series of
+As a first step, you can run the `amd_to_esm <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/amd_to_esm.py>`__
+management command, which will rewrite the file in place, replacing the ``define`` call with a series of
 ``import`` statements.
 
 
@@ -112,7 +93,7 @@ This is a rough example of what the changes will look like:
 
 ::
 
-    hqDefine('hqwebapp/js/my_module', [
+    define('hqwebapp/js/my_module', [
         'jquery',
         'knockout',
         'underscore',

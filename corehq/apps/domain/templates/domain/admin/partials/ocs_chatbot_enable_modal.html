@@ -1,0 +1,111 @@
+{% load i18n %}
+
+<div class="modal fade" id="ocs-chatbot-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "CommCare Companion (Beta)" %}</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <p>
+            {% blocktrans %}
+              This feature is made available as a <strong>Beta Service</strong> under
+              <a href="https://www.dimagi.com/terms/latest/tos/" target="_blank"
+                >Dimagi's Terms of Service</a
+              >
+              and
+              <a href="https://dimagi.com/terms/latest/ba" target="_blank"
+                >Business Agreement</a
+              >.
+            {% endblocktrans %}
+          </p>
+          <p>
+            {% blocktrans %}
+              <strong>Beta Services</strong> are services or features that may not be
+              supported, fully reliable, or subject to service level
+              commitments.
+            {% endblocktrans %}
+          </p>
+          <p>
+            {% blocktrans %}
+              <strong>As per Dimagi's Business Agreement</strong>, despite anything to the
+              contrary in this Agreement: (a) Customer may choose to use Beta
+              Services in its sole discretion; (b) Beta Services may not be
+              supported by Dimagi and may be changed at any time without notice;
+              (c) Beta Services may not be as reliable or available as the
+              Services; (d) Beta Services have not been subjected to the same
+              security measures and auditing to which the Services have been
+              subjected; and (e) DIMAGI WILL HAVE NO LIABILITY ARISING OUT OF OR
+              IN CONNECTION WITH CUSTOMER'S USE OF BETA SERVICES – ANY SUCH USE
+              WILL BE AT CUSTOMER'S OWN RISK.
+            {% endblocktrans %}
+          </p>
+          <p>{% trans "Please note:" %}</p>
+          <ul>
+            <li>
+              {% blocktrans %}
+                This feature has <strong>not been technically audited</strong> and may not
+                perform consistently.
+              {% endblocktrans %}
+            </li>
+            <li>
+              {% blocktrans %}
+                You should
+                <strong
+                  >not upload or enter any personally identifiable information
+                  (PII) or protected health information (PHI)</strong
+                >
+                into the chatbot. If you choose to do so, you do so
+                <strong>at your own risk.</strong>
+              {% endblocktrans %}
+            </li>
+            <li>
+              {% blocktrans %}
+                By enabling this feature, you confirm that you are an
+                <strong
+                  >admin authorized to accept these risks on behalf of all
+                  current and future users in this project space.</strong
+                >
+              {% endblocktrans %}
+            </li>
+          </ul>
+        </div>
+
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="tos-confirmation"
+            data-bind="checked: isTosConfirmed"
+            required
+          />
+          <label class="form-check-label" for="tos-confirmation">
+            {% blocktrans %}
+              I confirm that I have read and I accept the terms outlined above,
+              including the risks associated with Beta Services.
+            {% endblocktrans %}
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          {% trans "Cancel" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          data-bind="click: enableChatbot, enable: isEnableButtonEnabled"
+        >
+          {% trans "Enable" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

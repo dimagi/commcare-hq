@@ -1,13 +1,13 @@
-hqDefine("cloudcare/js/form_entry/entries", [
+define("cloudcare/js/form_entry/entries", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify',
+    'dompurify',
     'moment',
     'fast-levenshtein/levenshtein',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/utils',
@@ -26,7 +26,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     Levenshtein,
     initialPageData,
     toggles,
-    kissmetrics,
+    noopMetrics,
     cloudcareUtils,
     constants,
     formEntryUtils,
@@ -79,7 +79,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     Entry.prototype.getColStyle = function (numChoices) {
         // Account for number of choices plus column for clear button
         var colWidth = parseInt(12 / (numChoices + 1)) || 1;
-        return 'col-sm-' + colWidth;
+        return 'multi-choice col-sm-' + colWidth;
     };
 
     // This should set the answer value if the answer is valid. If the raw answer is valid, this
@@ -275,6 +275,19 @@ hqDefine("cloudcare/js/form_entry/entries", [
             return null;
         };
 
+        self.afterRender = function (elements) {
+            _.each(elements, function (el) {
+                if (el.nodeName === 'TEXTAREA') {
+                    const showFullText = () => {
+                        el.style.height = 'auto';
+                        el.style.height = el.scrollHeight + 3 + 'px';
+                    };
+                    showFullText();
+                    window.addEventListener('input', showFullText);
+                    window.addEventListener('resize', showFullText);
+                }
+            });
+        };
         self.enableReceiver(question, options);
     }
     FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -302,10 +315,10 @@ hqDefine("cloudcare/js/form_entry/entries", [
         $(function () {
             let entry = $(`#${self.entryId}`);
             entry.on("change", function () {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
+                noopMetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
             });
         });
-        kissmetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
+        noopMetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
             "Required": isRequired,
         });
         // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
@@ -361,7 +374,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
     function IntEntry(question, options) {
         var self = this;
         FreeTextEntry.call(self, question, options);
-        self.templateType = 'str';
+        self.templateType = 'numeric';
+        self.inputmode = 'numeric';
         self.lengthLimit = options.lengthLimit || constants.INT_LENGTH_LIMIT;
         var valueLimit = options.valueLimit || constants.INT_VALUE_LIMIT;
 
@@ -393,7 +407,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
 
     function PhoneEntry(question, options) {
         FreeTextEntry.call(this, question, options);
-        this.templateType = 'str';
+        this.templateType = 'numeric';
+        this.inputmode = 'tel';
         this.lengthLimit = options.lengthLimit;
 
         this.getErrorMessage = function (rawAnswer) {
@@ -414,7 +429,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
      */
     function FloatEntry(question, options) {
         IntEntry.call(this, question, options);
-        this.templateType = 'str';
+        this.templateType = 'numeric';
+        this.inputmode = 'decimal';
         this.lengthLimit = options.lengthLimit || constants.FLOAT_LENGTH_LIMIT;
         var valueLimit = options.valueLimit || constants.FLOAT_VALUE_LIMIT;
 
@@ -784,6 +800,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
      */
     function DateTimeEntryBase(question, options) {
         var self = this;
+        self.templateType = 'datetime';
+        self.datetimeIconClass = "fcc fcc-fd-datetime";
 
         EntrySingleAnswer.call(self, question, options);
 
@@ -818,7 +836,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     DateTimeEntryBase.prototype.serverFormat = undefined;
 
     function DateEntry(question, options) {
-        this.templateType = 'date';
+        this.datetimeIconClass = "fa-solid fa-calendar-days";
         DateTimeEntryBase.call(this, question, options);
     }
     DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
@@ -831,7 +849,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     };
 
     function TimeEntry(question, options) {
-        this.templateType = 'time';
+        this.datetimeIconClass = "fa-regular fa-clock";
         if (question.style) {
             if (question.stylesContains(constants.TIME_12_HOUR)) {
                 this.clientFormat = 'h:mm A';
@@ -977,11 +995,16 @@ hqDefine("cloudcare/js/form_entry/entries", [
             let badExtension = false;
             let badMime = true;
             const ext = newValue.slice(newValue.lastIndexOf(".") + 1);
-            const acceptedExts = self.extensionsMap[self.accept];
+            let acceptedExts = self.extensionsMap[self.accept];
+            let mimeTypes = self.accept;
+            if (self.acceptedMimeTypes) {
+                acceptedExts = self.extensionsMap[self.acceptedMimeTypes];
+                mimeTypes = self.acceptedMimeTypes;
+            }
             badExtension = !acceptedExts.includes(ext.toLowerCase());
 
-            for (const acc of self.accept.split(",")) {
-                if (self.file().type.match(acc)) {
+            for (const acc of mimeTypes.split(",")) {
+                if (self.file().type.match(acc) || ext.toLowerCase() === "msg") {
                     badMime = false;
                     break;
                 }
@@ -1031,10 +1054,24 @@ hqDefine("cloudcare/js/form_entry/entries", [
     function ImageEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
-        self.accept = "image/*,.pdf";
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
+        self.accept = "image/*";
     }
     ImageEntry.prototype = Object.create(FileEntry.prototype);
     ImageEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents an document upload.
+     */
+    function DocumentEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = ".pdf,.xlsx,.docx,.html,.txt,.rtf,.msg";
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
+        self.acceptedMimeTypes = "application/*,text/*";
+    }
+    DocumentEntry.prototype = Object.create(FileEntry.prototype);
+    DocumentEntry.prototype.constructor = FileEntry;
 
     /**
      * Represents an audio upload.
@@ -1042,6 +1079,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     function AudioEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
         self.accept = "audio/*";
     }
     AudioEntry.prototype = Object.create(FileEntry.prototype);
@@ -1053,6 +1091,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     function VideoEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
         self.accept = "video/*";
     }
     VideoEntry.prototype = Object.create(FileEntry.prototype);
@@ -1065,15 +1104,22 @@ hqDefine("cloudcare/js/form_entry/entries", [
         var self = this;
         FileEntry.call(this, question, options);
         self.templateType = 'signature';
+        // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
         self.accept = 'image/*,.pdf';
 
         self.afterRender = function () {
             self.$input = $('#' + self.entryId);
             self.$canvas = $('#' + self.entryId + '-canvas');
             self.$wrapper = $('#' + self.entryId + '-wrapper');
+            self.widthAtDataCapture = self.$canvas[0].width;
+            self.signatureData = null;
 
             self.signaturePad = new SignaturePad(self.$canvas[0]);
-            self.signaturePad.addEventListener('endStroke', () => { self.answerCanvasData(); });
+            self.signaturePad.addEventListener('endStroke', () => {
+                self.answerCanvasData();
+                self.widthAtDataCapture = self.$canvas[0].width;
+                self.signatureData = self.signaturePad.toData();
+            });
 
             new ResizeObserver(() => {
                 self.resizeCanvas();
@@ -1099,10 +1145,24 @@ hqDefine("cloudcare/js/form_entry/entries", [
         };
 
         self.resizeCanvas = function () {
-            var aspectRatio = 4,
-                width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            const aspectRatio = 4;
+            const width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            const scale = width / self.widthAtDataCapture;
             self.$canvas[0].width = width;
             self.$canvas[0].height = width / aspectRatio;
+
+            if (self.signatureData) {
+                const scaledData = JSON.parse(JSON.stringify(self.signatureData));
+                for (let i = 0; i < scaledData.length; i++) {
+                    const stroke = scaledData[i];
+                    for (let j = 0; j < stroke.points.length; j++) {
+                        const point = stroke.points[j];
+                        point.x = point.x * scale;
+                        point.y = point.y * scale;
+                    }
+                }
+                self.signaturePad.fromData(scaledData);
+            }
         };
     }
     SignatureEntry.prototype = Object.create(FileEntry.prototype);
@@ -1300,12 +1360,12 @@ hqDefine("cloudcare/js/form_entry/entries", [
                     });
                     if (!hideLabel) {
                         let isRequired = entry.question.required() ? "Yes" : "No";
-                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                        noopMetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
                             "Required": isRequired,
                         });
                         $(function () {
                             $(".q.form-group").on("change", function () {
-                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                                noopMetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
                             });
                         });
 
@@ -1329,12 +1389,12 @@ hqDefine("cloudcare/js/form_entry/entries", [
                     });
                     if (!hideLabel) {
                         let isRequired = entry.question.required() ? "Yes" : "No";
-                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                        noopMetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
                             "Required": isRequired,
                         });
                         $(function () {
                             $(".q.form-group").on("change", function () {
-                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                                noopMetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
                             });
                         });
                     }
@@ -1363,31 +1423,32 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 entry = new InfoEntry(question, {});
                 break;
             case constants.BINARY:
-                if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
-                    // do nothing, fall through to unsupported
-                } else {
-                    switch (question.control()) {
-                        case constants.CONTROL_IMAGE_CHOOSE:
-                            if (question.stylesContains(constants.SIGNATURE)) {
-                                entry = new SignatureEntry(question, {});
-                                break;
-                            }
-                            entry = new ImageEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
+                switch (question.control()) {
+                    case constants.CONTROL_IMAGE_CHOOSE:
+                        if (question.stylesContains(constants.SIGNATURE)) {
+                            entry = new SignatureEntry(question, {});
                             break;
-                        case constants.CONTROL_AUDIO_CAPTURE:
-                            entry = new AudioEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
-                            break;
-                        case constants.CONTROL_VIDEO_CAPTURE:
-                            entry = new VideoEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
-                            break;
-                        // any other control types are unsupported
-                    }
+                        }
+                        entry = new ImageEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    case constants.CONTROL_AUDIO_CAPTURE:
+                        entry = new AudioEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    case constants.CONTROL_VIDEO_CAPTURE:
+                        entry = new VideoEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    case constants.CONTROL_DOCUMENT_UPLOAD:
+                        entry = new DocumentEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    // any other control types are unsupported
                 }
         }
         if (!entry) {
@@ -1463,6 +1524,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         ButtonSelectEntry: ButtonSelectEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
+        DocumentEntry: DocumentEntry,
         DropdownEntry: DropdownEntry,
         EthiopianDateEntry: EthiopianDateEntry,
         FloatEntry: FloatEntry,

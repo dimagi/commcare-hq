@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from django.core import mail
-from django.test import TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 
 from corehq.apps.accounting.models import Subscription
@@ -9,10 +9,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
 from corehq.apps.hqwebapp.models import Alert
+from corehq.apps.hqwebapp.views import (
+    SolutionsFeatureRequestView,
+    set_language,
+)
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
-
-from corehq.apps.hqwebapp.views import SolutionsFeatureRequestView
 
 
 class TestEmailAuthenticationFormAutocomplete(BaseAutocompleteTest):
@@ -327,3 +329,41 @@ class TestSolutionsFeatureRequestView(TestCase):
             + "Improve CommCare!\n"
         )
         self.assertEqual(test_mail.body, expected_body)
+
+
+class TestSetLanguage(SimpleTestCase):
+
+    def test_sets_valid_lang_code(self):
+        request = RequestFactory().post(
+            reverse('set_language'),
+            data={'language': 'es'}
+        )
+        response = set_language(request)
+        assert 'django_language' in response.cookies
+        assert response.cookies['django_language'].value == 'es'
+
+    def test_does_not_set_invalid_lang_code(self):
+        request = RequestFactory().post(
+            reverse('set_language'),
+            data={'language': 'xxx'}
+        )
+        response = set_language(request)
+        assert 'django_language' not in response.cookies
+
+    def test_redirect_to_http_referer_if_allowed(self):
+        referer_url = RequestFactory().get(reverse('homepage')).build_absolute_uri()
+        request = RequestFactory().post(
+            reverse('set_language'),
+            HTTP_REFERER=referer_url
+        )
+        response = set_language(request)
+        assert response.status_code == 302
+        assert response['Location'] == referer_url
+
+    def test_no_redirect_if_referer_disallowed(self):
+        request = RequestFactory().post(
+            reverse('set_language'),
+            HTTP_REFERER='http://bad.url/'
+        )
+        response = set_language(request)
+        assert response.status_code == 204

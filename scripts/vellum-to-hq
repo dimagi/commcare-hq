@@ -10,47 +10,31 @@ instructions), before using this script to push changes to master.
 
 This script assumes that the vellum-staging branch is in staging.yml.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 import subprocess
 import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from os.path import abspath, dirname, exists, join
+from textwrap import dedent
 
 import sh
 
 VELLUM_TAR = "vellum.tar.gz"
 
 
-def get_git(path=None, foreground=False):
-    # see: https://amoffat.github.io/sh/sections/special_arguments.html#fg
-    kwargs = {"_fg" if foreground else "_tty_out": foreground}
-    return sh.git.bake(_cwd=path, **kwargs)
-
-
 def main():
     parser = ArgumentParser(description=__doc__, formatter_class=RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=["staging", "master"],
-        help="Update vellum-staging or master.")
+    parser.add_argument("mode", choices=["master", "staging", "fix-staging"],
+        help="Update vellum on master or staging, or fix conflicts between "
+             "vellum-staging and master. NOTE: fix-staging will discard "
+             "any unpushed commits on the local vellum-staging branch.")
     parser.add_argument("--branch", default="",
         help="Alternative Vellum branch from which to build.")
-    parser.add_argument("--fix-staging",
-        action="store_true", default=os.environ.get("VELLUM_STAGING_FIX"),
-        help="Rebase vellum-staging on master (only in 'master' mode). "
-             "If this option is not specified, the vellum-staging branch will "
-             "likely be left in a state that will make the next staging "
-             "deployment fail due to merge conflicts. NOTE: this will discard "
-             "any unpushed commits on the local vellum-staging branch.")
     parser.add_argument("--hq-base", metavar="BRANCH", default="master",
         help="Reset to BRANCH before updating HQ (default: master). "
              "This does nothing when mode is 'master'.")
     parser.add_argument("--no-make", action="store_true",
         help="Skip Vellum build (mutually exclusive with --no-test).")
-    parser.add_argument("--dev-mode", action="store_true",
-        help="Skip git checks and do not commit anything.")
     parser.add_argument("--no-test", action="store_true",
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
@@ -58,6 +42,8 @@ def main():
             "that it is not possible to push directly to master, so a "
             "pull request must be created to update Vellum. Instructions "
             "will be printed if this option is used on master.")
+    parser.add_argument("--dev-mode", action="store_true",
+        help="Skip git checks and do not commit anything.")
     parser.add_argument("--target", default='vellum',
         help="Directory within corehq/apps/app_manager/static/app_manager/js/ to place "
             "built Vellum. Defaults to 'vellum'.")
@@ -70,43 +56,50 @@ def main():
     vellum_dir = args.vellum_dir
     vellum_branch = args.branch or args.mode
     hq_dir = dirname(dirname(abspath(__file__)))
-    hq_branch = "vellum-staging" if args.mode == "staging" else args.mode
+    hq_branch = "vellum-staging" if args.mode == "staging" else 'master'
 
     # validation
     if not vellum_dir:
         sys.exit("Please use --vellum-dir=... or set VELLUM_DIR in your environment")
     if args.no_make and args.no_test:
         sys.exit("--no-make and --no-test options are mutually exclusive. Pick one.")
-    if args.mode != "master" and args.fix_staging:
-        print("WARNING --fix-staging has no effect in {} mode".format(args.mode))
+
+    if args.mode == "fix-staging":
+        if args.dev_mode:
+            sys.exit("'fix-staging' mode and --dev-mode are mutually exclusive. Pick one.")
+        fix_staging(hq_dir, args.push)
+        return
 
     try:
         if args.no_make:
             print("Skipping Vellum build")
-            vellum_tar = join(vellum_dir, VELLUM_TAR)
-            if not exists(vellum_tar):
-                sys.exit("{} not found".format(vellum_tar))
-            elif args.mode == "master":
-                print("Using {}".format(vellum_tar))
-                ok = input("Type 'ok' to continue: ")
-                if ok != "ok":
-                    sys.exit("Aborted.")
-            vellum_rev = get_version(vellum_tar)
-            head_rev = get_git(vellum_dir)("rev-parse", "HEAD").strip()
-            if vellum_rev != head_rev:
-                print("{} version ({})\ndiffers from HEAD ({})"
-                      .format(vellum_tar, vellum_rev, head_rev))
-                ok = input("Type 'ok' to continue: ")
-                if ok != "ok":
-                    sys.exit("Aborted.")
+            vellum_rev = get_vellum_build(vellum_dir, args.mode)
         else:
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test, args.dev_mode)
 
         update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target, args.dev_mode)
-        if args.mode == "master" and args.fix_staging and not args.dev_mode:
-            fix_staging(hq_dir, args.push)
     except sh.ErrorReturnCode as err:
         print("Aborted due to error: {}".format(err))
+
+
+def get_vellum_build(vellum_dir, mode):
+    vellum_tar = join(vellum_dir, VELLUM_TAR)
+    if not exists(vellum_tar):
+        sys.exit("{} not found".format(vellum_tar))
+    elif mode == "master":
+        print("Using {}".format(vellum_tar))
+        ok = input("Type 'ok' to continue: ")
+        if ok != "ok":
+            sys.exit("Aborted.")
+    vellum_rev = get_version(vellum_tar)
+    head_rev = get_git(vellum_dir)("rev-parse", "HEAD").strip()
+    if vellum_rev != head_rev:
+        print("{} version ({})\ndiffers from HEAD ({})"
+                .format(vellum_tar, vellum_rev, head_rev))
+        ok = input("Type 'ok' to continue: ")
+        if ok != "ok":
+            sys.exit("Aborted.")
+    return vellum_rev
 
 
 def build_vellum(path, branch, test=True, dev_mode=False):
@@ -150,6 +143,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
         git.checkout(branch)
         git.fetch()
 
+    hq_branch = f"vellum-{vellum_rev[:7]}" if branch == "master" else branch
     hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", target)
     if not dev_mode:
         if branch != "master":
@@ -157,7 +151,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
             git.reset("--hard", "origin/" + base_branch)
             assert hq_vellum.startswith(path), (path, hq_vellum)
         else:
-            require_branch_up_to_date(git, "master", context=path)
+            git.checkout("-B", hq_branch, "origin/master")
     old_vellum_rev = get_old_vellum_rev(hq_vellum)
 
     print("Overwriting HQ Vellum with new build")
@@ -172,16 +166,20 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
     git.add("--all", hq_vellum)
 
     message = "{}:{}".format(target, vellum_rev)
-    if branch == 'vellum-staging':
-        message += """
+    if branch == 'master':
+        message += dedent("""
 
-        Oops. Looks like the vellum team forgot to update this branch
-        when updating master. To get past this you can run:
+        Run `scripts/vellum-to-hq fix-staging --push` to update the
+        vellum-staging branch after this is merged into master.
+        """)
+    else:
+        message += dedent("""
 
-        git checkout vellum-staging
-        git rebase -X theirs -i origin/master # this will rebase one commit
-        git push -f
-        """
+        If you are running rebuildstaging and this commit conflicts with
+        master, run:
+
+            scripts/vellum-to-hq fix-staging --push
+        """)
 
     code = subprocess.call([
         "git", "commit", "--edit", "--no-verify", "--message={}".format(message)
@@ -189,35 +187,66 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
     if code != 0:
         sys.exit(code)
 
-    if branch == "master":
-        print("\nCannot push directly to master. A pull request is required.")
-        print("The steps will involve something like\n")
-        print("  git checkout -b update-vellum master")
-        print("  git branch -f master origin/master")
-        print("  git push origin update-vellum")
-        print("\nThen PR the new 'update-vellum' branch on Github.\n")
-    elif push:
-        assert branch != "master"
-        print("Pushing HQ origin/{}".format(branch))
-        get_git(path, foreground=True).push("origin", branch, "-f")
+    if push:
+        print(f"Pushing HQ origin/{hq_branch}")
+        maybe_force = "" if branch == "master" else "-f"
+        get_git(path, foreground=True).push("origin", hq_branch, maybe_force)
+        # push output will print instructions for creating a PR
+    elif branch == "master":
+        print(f"\nPush '{hq_branch}' to Github, then create a PR:\n")
+        print(f"  git push origin {hq_branch}\n")
 
     print_vellum_changes(old_vellum_rev, vellum_dir)
 
 
 def fix_staging(path, push):
     git = get_git(path)
+    require_clean_working_tree(git, path)
     git.checkout("-B", "vellum-staging", "origin/vellum-staging")
-    code = subprocess.call([
-        "git", "rebase", "-X", "theirs", "-i", ("origin/master" if push else "master")
-    ], cwd=path)
-    if code != 0:
-        sys.exit(code)
+
+    git.fetch("origin")
+    try:
+        # check for conflict
+        git.merge("--no-commit", "--no-ff", "origin/master")
+    except sh.ErrorReturnCode:
+        git.merge("--abort")  # expected, proceed to fix conflicts
+    else:
+        git.merge("--abort")
+        git.checkout("master")
+        sys.exit("No conflicts found between master and vellum-staging. "
+                 "Nothing to fix.")
+
+    answer = input(dedent("""
+    Fixing conflicts between vellum-staging and master. Choose an option:
+
+    1. Do not change the version of Vellum on staging.
+       (rebase vellum-staging on master)
+    2. Update Vellum on staging to match the version on master.
+       (reset vellum-staging to master)
+    3. Cancel.
+    """))
+    while answer not in ["1", "2", "3"]:
+        answer = input("Please choose 1, 2, or 3: ")
+
+    if answer == "3":
+        print("Conflict between vellum-staging and master not resolved.")
+        return
+    if answer == "1":
+        print("Rebasing vellum-staging on master...")
+        code = subprocess.call([
+            "git", "rebase", "-X", "theirs", "-i", ("origin/master" if push else "master")
+        ], cwd=path)
+        if code != 0:
+            sys.exit(code)
+    else:
+        print("Resetting vellum-staging to master...")
+        git.reset("--hard", "origin/master")
     if push:
         git.push("-f", "origin", "vellum-staging")
+        git.checkout("master")
     else:
         print("vellum-staging still needs to be pushed:")
-        print("  git checkout vellum-staging && git push -f origin vellum-staging")
-    git.checkout("master")
+        print("  git push -f origin vellum-staging")
 
 
 def require_branch_up_to_date(git, branch, remote="origin", context="Your local", abort=sys.exit):
@@ -245,6 +274,12 @@ def require_clean_working_tree(git, context="", abort=sys.exit):
         git("diff-index", "--cached", "--quiet", "HEAD", "--ignore-submodules", "--")
     except sh.ErrorReturnCode:
         abort("Aborting. You have uncommitted changes{}.".format(context))
+
+
+def get_git(path=None, foreground=False):
+    # see: https://amoffat.github.io/sh/sections/special_arguments.html#fg
+    kwargs = {"_fg" if foreground else "_tty_out": foreground}
+    return sh.git.bake(_cwd=path, **kwargs)
 
 
 def get_version(vellum_tar):

@@ -51,6 +51,42 @@ class KafkaChangeFeedTest(SimpleTestCase):
         # should not raise UnavailableKafkaOffset
         next(feed.iter_changes(since=first_available_offsets, forever=False), None)
 
+    def test_filter_partitions_without_migration_process(self):
+        feed = KafkaChangeFeed(
+            topics=[topics.CASE_SQL],
+            client_id='test-kafka-feed',
+            num_processes=3,
+            process_num=0,
+            dedicated_migration_process=False,
+        )
+        partitions = [0, 1, 2, 3, 4, 5]
+        result = feed._filter_partitions(partitions)
+        assert result == [0, 3], result
+
+    def test_filter_partitions_for_migration_process(self):
+        feed = KafkaChangeFeed(
+            topics=[topics.CASE_SQL],
+            client_id='test-kafka-feed',
+            num_processes=3,
+            process_num=0,
+            dedicated_migration_process=True,
+        )
+        partitions = [0, 1, 2, 3, 4, 5]
+        result = feed._filter_partitions(partitions)
+        assert result is None, result
+
+    def test_filter_partitions_for_non_migration_process(self):
+        feed = KafkaChangeFeed(
+            topics=[topics.CASE_SQL],
+            client_id='test-kafka-feed',
+            num_processes=3,
+            process_num=2,
+            dedicated_migration_process=True,
+        )
+        partitions = [0, 1, 2, 3, 4, 5]
+        result = feed._filter_partitions(partitions)
+        assert result == [1, 3, 5], result
+
 
 class KafkaCheckpointTest(TestCase):
 

@@ -1,7 +1,6 @@
 from django.test import TestCase, RequestFactory
 from django_tables2.utils import OrderBy
 
-from corehq.apps.case_search.utils import get_case_id_sort_block
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
@@ -47,7 +46,7 @@ class CaseSearchElasticRecordTests(TestCase):
         query = CaseSearchES().domain(self.domain)
         accessors = [OrderBy('@case_id')]
         query = CaseSearchElasticRecord.get_sorted_query(query, accessors)
-        expected = get_case_id_sort_block(is_descending=False)
+        expected = [{'doc_id': {'order': 'asc'}}]
         self.assertEqual(query.es_query['sort'], expected)
 
     def test_sorting_by_case_property(self):

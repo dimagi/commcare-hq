@@ -1,7 +1,7 @@
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
-hqDefine("cloudcare/js/formplayer/menus/api", [
+define("cloudcare/js/formplayer/menus/api", [
     'jquery',
     'underscore',
     'sentry_browser',

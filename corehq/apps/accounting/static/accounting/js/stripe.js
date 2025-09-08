@@ -4,11 +4,11 @@ self.stripePromise = undefined;
 self.cardElement = undefined;
 
 function getCardElementPromise(key) {
-    if (!key) {
-        throw new Error("Cannot load Stripe, key not provided");
-    }
-
     let promise = new Promise((resolve) => {
+        if (!key) {
+            console.warn("Cannot load Stripe, key not provided");
+            return;
+        }
         self.stripePromise = loadStripe(key);
         self.stripePromise.then(function (stripe) {
             self.cardElement = stripe.elements().create('card', {

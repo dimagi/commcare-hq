@@ -39,7 +39,9 @@ You can browse and test the Data APIs using the `CommCare API Explorer <https://
     bulk-user
     list-reports
     download-report-data
-    locations
+    locations-v1
+    locations-v2
+    location-types
     fixture
     ota-api-restore
 

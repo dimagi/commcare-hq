@@ -23,6 +23,7 @@ from corehq.apps.es.case_search import (
     case_property_starts_with,
     case_property_text_query,
     case_search_adapter,
+    get_case_property_unique_values,
     wrap_case_search_hit,
 )
 from corehq.apps.es.const import SIZE_LIMIT
@@ -594,6 +595,38 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             "starts-with(ssn, '100')",
             ['c5', 'c6', 'c2']
         )
+
+    def test_get_case_property_unique_values(self):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'status': 'active'},
+            {'_id': 'c2', 'status': 'inactive'},
+            {'_id': 'c3', 'status': 'active'},
+            {'_id': 'c5', 'status': ''},  # empty value
+            {'_id': 'c6'},  # missing property
+        ])
+
+        unique_values = get_case_property_unique_values(self.domain, self.case_type, 'status')
+        expected_values = ['active', 'inactive']
+        self.assertEqual(sorted(unique_values), expected_values)
+
+    def test_get_case_property_unique_values_with_empty(self):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'status': 'active'},
+            {'_id': 'c2', 'status': 'inactive'},
+            {'_id': 'c3', 'status': 'active'},
+            {'_id': 'c5', 'status': ''},  # empty value
+            {'_id': 'c6'},  # missing property
+        ])
+
+        unique_values_with_empty = get_case_property_unique_values(
+            self.domain, self.case_type, 'status', include_empty=True
+        )
+        expected_values_with_empty = ['', 'active', 'inactive']
+        self.assertEqual(sorted(unique_values_with_empty), expected_values_with_empty)
+
+    def test_get_case_property_unique_values_no_cases(self):
+        unique_values = get_case_property_unique_values(self.domain, self.case_type, 'nonexistent')
+        self.assertEqual(unique_values, [])
 
 
 class TestForwardTimezoneAdjustment(TestCase):

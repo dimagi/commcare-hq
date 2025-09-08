@@ -1,21 +1,16 @@
 --- 
 +++ 
-@@ -1,14 +1,14 @@
+@@ -2,10 +2,10 @@
+ import $ from "jquery";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import ko from "knockout";
+-import models from "geospatial/js/bootstrap3/models";
++import models from "geospatial/js/bootstrap5/models";
+ import utils from "geospatial/js/utils";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
+-import "reports/js/bootstrap3/base";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
++import "reports/js/bootstrap5/base";
+ import "hqwebapp/js/select2_knockout_bindings.ko";
  
- 
--hqDefine("geospatial/js/bootstrap3/case_management", [
-+hqDefine("geospatial/js/bootstrap5/case_management", [
-     "jquery",
-     "underscore",
-     "hqwebapp/js/initial_page_data",
-     "knockout",
--    'geospatial/js/bootstrap3/models',
-+    'geospatial/js/bootstrap5/models',
-     'geospatial/js/utils',
--    'hqwebapp/js/bootstrap3/alert_user',
--    'reports/js/bootstrap3/base',
-+    'hqwebapp/js/bootstrap5/alert_user',
-+    'reports/js/bootstrap5/base',
-     'hqwebapp/js/select2_knockout_bindings.ko',
-     'commcarehq',
- ], function (
+ const MAP_CONTAINER_ID = 'geospatial-map';

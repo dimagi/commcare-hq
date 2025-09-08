@@ -182,6 +182,7 @@ class ESQuery(object):
             filters.doc_id,
             filters.nested,
             filters.regexp,
+            filters.wildcard,
         ]
 
     def __getattr__(self, attr):
@@ -413,6 +414,11 @@ class ESQuery(object):
         }
         return self._sort(sort_field, reset_sort)
 
+    def search_after(self, *sort_values):
+        query = self.clone()
+        query.es_query['search_after'] = list(sort_values)
+        return query
+
     def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True, sort_missing=None):
         """Order results by the value of a nested field
         """
@@ -464,6 +470,15 @@ class ESQuery(object):
 
     def count(self):
         return self.adapter.count(self.raw_query)
+
+    def exists(self):
+        """Checks to see whether any documents match the query"""
+        query = self.size(0)
+        # The "terminate_after" param instructs ES to terminate the query after
+        # finding one matching document per shard
+        # In ES7 this can be switched to use the `count` endpoint
+        query.es_query['terminate_after'] = 1
+        return query.run().total > 0
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents

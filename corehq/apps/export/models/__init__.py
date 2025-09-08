@@ -45,6 +45,10 @@ from .new import (
     DataSourceExportInstance,
 )
 
+from .deid_export import (
+    DeIdHash,
+)
+
 from .export_settings import (
     DefaultExportSettings,
 )

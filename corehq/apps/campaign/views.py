@@ -6,7 +6,7 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext as _
 from django.views.decorators.http import require_GET
 
 from memoized import memoized
@@ -91,7 +91,11 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_report_widgets': self.dashboard.get_map_report_widgets_by_tab(),
             'gauge_widgets': self._dashboard_gauge_configs(),
-            'widget_types': WidgetType.choices,
+            # Report widgets are not supported yet
+            'widget_types': [
+                (widget_type, label)
+                for widget_type, label in WidgetType.choices if widget_type != WidgetType.REPORT
+            ]
         })
         context.update(self.dashboard_map_case_filters_context())
         return context
@@ -217,7 +221,7 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
 
     def _validate_request_widget_type(self):
         if not any(choice[0] == self.widget_type for choice in WidgetType.choices):
-            raise HtmxResponseException(gettext_lazy("Requested widget type is not supported"))
+            raise HtmxResponseException(_("Requested widget type is not supported"))
 
     @cached_property
     def widget_type(self):

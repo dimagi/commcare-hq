@@ -1,6 +1,6 @@
 import threading
 from unittest import TestCase
-from unittest.mock import call, patch
+from unittest.mock import patch
 from uuid import uuid1
 
 import attr
@@ -86,95 +86,6 @@ class TestMeteredLock(TestCase):
         assert not hasattr(fake, "timeout")
         lock = MeteredLock(fake, "test")
         lock.acquire()  # should not raise
-
-    def test_acquire_trace(self):
-        fake = FakeLock()
-        lock = MeteredLock(fake, "test")
-        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
-            lock.acquire()
-        self.assertListEqual(tracer.mock_calls, [
-            call.trace("commcare.lock.acquire", resource="key"),
-            call.trace().__enter__(),
-            call.trace().__enter__().set_tags({
-                "key": "key",
-                "name": "test",
-                "acquired": "true",
-            }),
-            call.trace().__exit__(None, None, None),
-            call.trace("commcare.lock.locked", resource="key"),
-            call.trace().set_tags({"key": "key", "name": "test"}),
-        ])
-
-    def test_release_trace(self):
-        fake = FakeLock()
-        lock = MeteredLock(fake, "test")
-        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
-            lock.acquire()
-            tracer.reset_mock()
-            lock.release()
-        self.assertListEqual(tracer.mock_calls, [call.trace().finish()])
-
-    def test_del_trace(self):
-        fake = FakeLock()
-        lock = MeteredLock(fake, "test")
-        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
-            lock.acquire()
-            tracer.reset_mock()
-            lock.__del__()
-        self.assertListEqual(tracer.mock_calls, [
-            call.trace().set_tag("deleted", "not_released"),
-            call.trace().finish(),
-        ])
-
-    def test_acquire_untracked(self):
-        fake = FakeLock()
-        lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
-            lock.acquire()
-        self.assertListEqual(tracer.mock_calls, [
-            call.trace("commcare.lock.acquire", resource="key"),
-            call.trace().__enter__(),
-            call.trace().__enter__().set_tags({
-                "key": "key",
-                "name": "test",
-                "acquired": "true",
-            }),
-            call.trace().__exit__(None, None, None),
-        ])
-
-    def test_reacquire_untracked(self):
-        fake = FakeLock(timeout=-1)
-        lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
-            lock.reacquire()
-        self.assertListEqual(tracer.mock_calls, [
-            call.trace("commcare.lock.reacquire", resource="key"),
-            call.trace().__enter__(),
-            call.trace().__enter__().set_tags({
-                "key": "key",
-                "name": "test",
-                "acquired": "true",
-            }),
-            call.trace().__exit__(None, None, None),
-        ])
-
-    def test_release_untracked(self):
-        fake = FakeLock()
-        lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
-            lock.acquire()
-            tracer.reset_mock()
-            lock.release()
-        self.assertListEqual(tracer.mock_calls, [])
-
-    def test_del_untracked(self):
-        fake = FakeLock()
-        lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
-            lock.acquire()
-            tracer.reset_mock()
-            lock.__del__()
-        self.assertListEqual(tracer.mock_calls, [])
 
     def test_local(self):
         redis = get_redis_connection()

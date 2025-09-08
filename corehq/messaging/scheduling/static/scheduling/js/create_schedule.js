@@ -2,7 +2,9 @@ import $ from "jquery";
 import ko from "knockout";
 
 import "jquery-ui/ui/widgets/datepicker";
+import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
 import "bootstrap-timepicker/js/bootstrap-timepicker";
+import "bootstrap-timepicker/less/timepicker.less";
 
 import "hqwebapp/js/components/rich_text_knockout_bindings";
 import "hqwebapp/js/components/select_toggle";

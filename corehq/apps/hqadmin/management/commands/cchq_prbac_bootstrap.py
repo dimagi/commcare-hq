@@ -238,7 +238,11 @@ class Command(BaseCommand):
         Role(slug=privileges.APP_DEPENDENCIES,
              name='App Dependencies',
              description='Set Android app dependencies that must be installed before using a CommCare app'),
-        Role(slug=privileges.BULK_DATA_CLEANING, name='Bulk Data Cleaning', description=''),
+        Role(slug=privileges.BULK_DATA_EDITING, name='Bulk Data Editing', description=''),
+        Role(slug=privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
+             name='Two Stage Mobile Worker Account Creation',
+             description='Allows two-stage user provisioning '
+                         '(users confirm and set their own passwords via email)'),
     ]
 
     BOOTSTRAP_PLANS = [

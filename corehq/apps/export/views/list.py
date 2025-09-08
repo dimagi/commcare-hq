@@ -30,7 +30,7 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import api_auth_allow_key_as_password_LIMITED_USE, login_and_domain_required
@@ -834,7 +834,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
             message = "Download Excel Dashboard"
         else:
             message = "Download Saved Export"
-        track_workflow(req.couch_user.username, message, properties={
+        track_workflow_noop(req.couch_user.username, message, properties={
             'domain': domain,
             'is_dimagi': req.couch_user.is_dimagi
         })

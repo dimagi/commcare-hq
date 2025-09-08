@@ -133,7 +133,7 @@ that the translator has enough context.
 
     message = _("User '{user}' has successfully been {action}.").format(
         user=user.raw_username,
-        action=_("Un-Archived") if user.is_active else _("Archived"),
+        action=_("Un-Archived") if user.is_active_in_domain(domain) else _("Archived"),
     )
 
 This ends up in the translations file as::
@@ -285,7 +285,7 @@ Keeping translations up to date
 Once a string has been added to the code, we can update the .po file by
 running `makemessages`.
 
-To do this for all langauges::
+To do this for all languages::
 
         $ django-admin makemessages --all
 

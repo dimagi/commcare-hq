@@ -8,7 +8,6 @@ from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler, SsoTestUserAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import (
@@ -41,10 +40,6 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         SSOExemptUsersAdminAsyncHandler,
         SsoTestUserAdminAsyncHandler,
     ]
-
-    @use_jquery_ui  # for datepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

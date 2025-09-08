@@ -9,6 +9,13 @@ CommCare HQ offers three ways of sharing data over FHIR:
    imports them as CommCare cases.
 #. The FHIR API exposes CommCare cases as FHIR resources.
 
+**However, it's crucial to understand that FHIR integration is a
+highly specialized and complex feature.** Its successful implementation
+often requires deep technical expertise and custom configuration to
+align with specific project requirements and external system nuances.
+Due to this complexity, careful planning and thorough understanding are
+essential for effective integration.
+
 FHIR-related functionality is enabled using the "FHIR integration"
 feature flag.
 

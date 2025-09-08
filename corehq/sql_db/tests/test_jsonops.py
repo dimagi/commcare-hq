@@ -7,7 +7,7 @@ from django.db.models.sql.compiler import SQLCompiler
 from django.forms import JSONField
 from django.test import TestCase
 
-from django_cte import CTEManager, With
+from django_cte import CTE, with_cte
 from django_cte.raw import raw_cte_sql
 
 from testil import assert_raises, eq
@@ -153,9 +153,11 @@ def eval_json_op(expression, data=None):
     data_cte.query.annotations = {}
     data_cte.query.values_select = []
     data_cte.query.annotation_select_mask = None
-    cte = With(data_cte)
-    qs = (
-        cte.queryset().with_cte(cte)
+    data_cte.query.deferred_loading = ()
+    cte = CTE(data_cte)
+    qs = with_cte(
+        cte,
+        select=cte.queryset()
         .annotate(val=expression)
         .values_list("val", flat=True)
     )
@@ -166,4 +168,4 @@ def eval_json_op(expression, data=None):
 
 @unregistered_django_model
 class _JsonModel(models.Model):
-    objects = CTEManager()
+    pass

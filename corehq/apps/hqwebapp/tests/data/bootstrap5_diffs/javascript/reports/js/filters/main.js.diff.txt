@@ -1,32 +1,30 @@
 --- 
 +++ 
-@@ -1,16 +1,16 @@
--hqDefine("reports/js/filters/bootstrap3/main", [
-+hqDefine("reports/js/filters/bootstrap5/main", [
-     'jquery',
-     'underscore',
-     'knockout',
--    'hqwebapp/js/bootstrap3/main',
--    'reports/js/bootstrap3/standard_hq_report',
-+    'hqwebapp/js/bootstrap5/main',
-+    'reports/js/bootstrap5/standard_hq_report',
-     'reports/js/filters/select2s',
-     'reports/js/filters/phone_number',
-     'reports/js/filters/button_group',
-     'reports/js/filters/schedule_instance',
-     'locations/js/location_drilldown',
-     'reports/js/filters/advanced_forms_options',
--    'reports/js/filters/bootstrap3/drilldown_options',
-+    'reports/js/filters/bootstrap5/drilldown_options',
-     'reports_core/js/choice_list_utils',
-     'reports/js/filters/case_list_explorer',
-     'select2/dist/js/select2.full.min',
-@@ -41,7 +41,7 @@
-                 var reportLabels = $filterRange.data('reportLabels');
-                 var standardHQReport = standardHQReportModule.getStandardHQReport();
+@@ -1,15 +1,15 @@
+ import $ from "jquery";
+ import _ from "underscore";
+ import ko from "knockout";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
+-import standardHQReportModule from "reports/js/bootstrap3/standard_hq_report";
++import hqMain from "hqwebapp/js/bootstrap5/main";
++import standardHQReportModule from "reports/js/bootstrap5/standard_hq_report";
+ import select2Filter from "reports/js/filters/select2s";
+ import phoneNumberFilter from "reports/js/filters/phone_number";
+ import buttonGroup from "reports/js/filters/button_group";
+ import scheduleInstanceFilter from "reports/js/filters/schedule_instance";
+ import locationDrilldown from "locations/js/location_drilldown";
+ import advancedFormsOptions from "reports/js/filters/advanced_forms_options";
+-import drilldownOptions from "reports/js/filters/bootstrap3/drilldown_options";
++import drilldownOptions from "reports/js/filters/bootstrap5/drilldown_options";
+ import choiceListUtils from "reports_core/js/choice_list_utils";
+ import caseListExplorer from "reports/js/filters/case_list_explorer";
+ import "select2/dist/js/select2.full.min";
+@@ -25,7 +25,7 @@
+             var reportLabels = $filterRange.data('reportLabels');
+             var standardHQReport = standardHQReportModule.getStandardHQReport();
  
--                $filterRange.createDateRangePicker(
-+                $filterRange.createDateRangePicker(/* todo B5: plugin:createDateRangePicker */
-                     reportLabels, separator,
-                     $filterRange.data('startDate'),
-                     $filterRange.data('endDate'),
+-            $filterRange.createDateRangePicker(
++            $filterRange.createDateRangePicker(/* todo B5: plugin:createDateRangePicker */
+                 reportLabels, separator,
+                 $filterRange.data('startDate'),
+                 $filterRange.data('endDate'),

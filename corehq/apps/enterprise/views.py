@@ -24,7 +24,7 @@ import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.analytics.tasks import record_event
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.enterprise.metric_events import ENTERPRISE_REPORT_REQUEST
@@ -58,14 +58,13 @@ from corehq.apps.enterprise.tasks import email_enterprise_report
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
 from corehq.apps.hqwebapp.context import get_page_context, Section
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
 
 
-@use_tempusdominus
 @use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin
@@ -113,7 +112,6 @@ def platform_overview(request, domain):
     return render(request, "enterprise/project_dashboard.html", context)
 
 
-@use_tempusdominus
 @use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin
@@ -217,7 +215,7 @@ def enterprise_dashboard_email(request, domain, slug):
         'email': request.couch_user.username,
     })
 
-    record_event(ENTERPRISE_REPORT_REQUEST, request.couch_user, {
+    record_google_analytics_event(ENTERPRISE_REPORT_REQUEST, request.couch_user, {
         'report_type': slug
     })
 

@@ -59,8 +59,8 @@ def get_index_schema_node(fixture_id, attrs_to_index):
 
 
 def clear_fixture_cache(domain, data_type_ids):
-    from corehq.apps.fixtures.models import FIXTURE_BUCKET
     assert not isinstance(data_type_ids, (str, UUID)), f'expected list or set, got {type(data_type_ids).__name__}'
     LookupTable.objects.filter(id__in=data_type_ids).update(last_modified=datetime.utcnow())
-
-    get_blob_db().delete(key=FIXTURE_BUCKET + '/' + domain)
+    from corehq.apps.fixtures.models import fixture_bucket
+    for data_type_id in data_type_ids:
+        get_blob_db().delete(key=fixture_bucket(data_type_id, domain))

@@ -39,7 +39,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.toggles import toggles_enabled_for_request
 from corehq.util.metrics import metrics_counter
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import set_file_download
 
@@ -267,10 +266,6 @@ def download_file(request, domain, app_id, path):
                 except Resolver404:
                     # ok this was just a url that doesn't exist
                     pass
-                else:
-                    # this resource should exist but doesn't
-                    _assert = soft_assert('@'.join(['jschweers', 'dimagi.com']))
-                    _assert(False, 'Expected build resource %s not found' % path)
                 raise Http404()
         try:
             callback, callback_args, callback_kwargs = resolve_path(path)

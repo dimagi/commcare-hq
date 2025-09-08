@@ -18,6 +18,12 @@ class EditableCaseSearchElasticRecord(CaseSearchElasticRecord):
             return None
 
     @property
+    def is_selected(self):
+        if self.edited_record:
+            return self.edited_record.is_selected
+        return False
+
+    @property
     @memoized
     def edited_properties(self):
         if self.edited_record:

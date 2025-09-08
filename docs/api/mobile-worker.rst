@@ -69,9 +69,19 @@ Request & Response Details
      - The location id of the primary location, it must be one of the locations
      - 26fc44e2792b4f2fa8ef86178f0a958e
    * - locations
-     - A list of location_ids that the mobile worker will be assigned to. Location id can be acquired by `Location API <locations.rst>`_.
+     - A list of location_ids that the mobile worker will be assigned to.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
+   * - require_account_confirmation
+     - If True, creates an unconfirmed account (similar to a deactivated account). False by default.
+     - True
+   * - send_confirmation_email_now
+     - If True, immediately sends an account confirmation email*. False by default.
+     - True
 
+\* To send a confirmation email, the following must be true:
+    - 'password' should be excluded from the input
+    - 'email' should be included in the input
+    - 'require_account_confirmation' must be True
 
 **Output Parameters**
 
@@ -107,6 +117,24 @@ Request & Response Details
        ],
        "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e", 
        "locations": ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"],
+       "user_data": {
+          "chw_id": "13/43/DFA"
+       }
+    }
+
+**Sample Input - Unconfirmed User (JSON Format)**
+
+.. code-block:: json
+
+    {
+       "username": "jdoe",
+       "first_name": "John",
+       "last_name": "Doe",
+       "email": "jdoe@example.org",
+       "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
+       "locations": ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"],
+       "require_account_confirmation": "True",
+       "send_confirmation_email_now": "True",
        "user_data": {
           "chw_id": "13/43/DFA"
        }
@@ -188,8 +216,11 @@ Request & Response Details
      - The location id of the primary location, it must be one of the locations. To remove the primary_location, pass an empty string.
      - 26fc44e2792b4f2fa8ef86178f0a958e
    * - locations
-     - A list of location_ids that the mobile worker will be assigned to. Location id can be acquired by `Location API <locations.rst>`_. To remove all assigned locations, pass an empty array.
+     - A list of location_ids that the mobile worker will be assigned to. To remove all assigned locations, pass an empty array.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
+   * - send_confirmation_email_now
+     - If True and the user is an unconfirmed account, immediately sends an account confirmation email. False by default.
+     - True
 
 **Sample Input**
 
@@ -211,6 +242,7 @@ Request & Response Details
        ],
        "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e", 
        "locations": ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"],
+       "send_confirmation_email_now": "True",
        "user_data": {
           "chw_id": "13/43/DFA"
        }
@@ -246,3 +278,36 @@ Endpoint Specifications
 
 **Authentication**
     For more information, please review  `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+Send Password Reset Email (Mobile Worker)
+=========================================
+
+Overview
+--------
+
+**Purpose**
+    Send a password reset email to a CommCare (mobile-worker) user.
+
+**Permissions Required**
+    Edit Mobile Workers & Edit Access API's
+
+Endpoint Specifications
+-----------------------
+
+**URL**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/user/v1/[id]/email_password_reset/
+
+**Method**
+
+.. code-block:: text
+
+    POST
+
+Request & Response Details
+---------------------------
+
+- **Request Body**: Empty
+- **Success**: Returns HTTP 202 Accepted with an empty body.

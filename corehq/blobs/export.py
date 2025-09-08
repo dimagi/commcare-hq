@@ -18,15 +18,18 @@ class BlobDbBackendExporter(object):
         self._already_exported = already_exported or set()
         self.src_db = get_blob_db()
         self.total_blobs = 0
-        self.not_found = 0
+        self.missing_ids = []
+        self.missing_ids_filename = "missing_blob_ids.txt"
 
     def __enter__(self):
         self.db.open('w:gz')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.db.close()
-        if self.not_found:
-            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
+        if self.missing_ids:
+            self._write_missing_ids()
+            print(PROCESSING_COMPLETE_MESSAGE.format(len(self.missing_ids), self.total_blobs))
+            print(f"Missing blob ids have been written in the log file: {self.missing_ids_filename}")
 
     def process_object(self, meta):
         self.total_blobs += 1
@@ -37,10 +40,20 @@ class BlobDbBackendExporter(object):
         try:
             content = self.src_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
-            self.not_found += 1
+            self.missing_ids.append(meta.key)
         else:
             with content:
                 self.db.copy_blob(content, key=meta.key)
+
+    def _write_missing_ids(self):
+        if os.path.exists(self.missing_ids_filename):
+            confirm = input(f"{self.missing_ids_filename} already exists. Overwrite? (y/N): ")
+            if confirm != 'y':
+                print("Cancelled export.")
+                return
+        with open(self.missing_ids_filename, 'w') as f:
+            for missing_id in self.missing_ids:
+                f.write(f"{missing_id}\n")
 
 
 class BlobExporter:
