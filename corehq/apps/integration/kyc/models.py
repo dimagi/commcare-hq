@@ -187,6 +187,9 @@ class KycUser:
         ):
             # Fall back to CommCareUser
             return getattr(self._user_or_case_obj, item)
+        if item == 'name' and self.kyc_config.user_data_store == UserDataStore.USER_CASE:
+            # Special case for usercase where name is stored directly on CommCareCase
+            return self._user_or_case_obj.name
         else:
             raise KeyError(item)
 
