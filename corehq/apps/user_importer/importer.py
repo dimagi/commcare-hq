@@ -381,8 +381,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
         invite_fields.update({'domain': domain, 'email': email})
 
         # pop already formatted fields before update
-        if invite_fields.get('primary_location'):
-            invite_fields.pop('primary_location')
+        invite_fields.pop('primary_location', None)
         invite_fields.pop('role')
         invite_fields.pop('profile')
 
