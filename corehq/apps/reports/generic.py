@@ -123,6 +123,7 @@ class GenericReportView(object):
     section_name = None  # string. ex: "Reports"
     dispatcher = None  # ReportDispatcher subclass
     toggles = ()  # Optionally provide toggles to turn on/off the report
+    rendered_as = None  # Set by ReportDispatcher.dispatch()
 
     # whether to use caching on @request_cache methods. will ignore this if CACHE_REPORTS is set to False
     is_cacheable = False
