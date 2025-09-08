@@ -4,10 +4,11 @@ import json
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from corehq.apps.reports.util import DatatablesServerSideParams
 from dimagi.utils.dates import DateSpan, add_months
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT, string_to_datetime
 
 from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.apps.reports.util import DatatablesServerSideParams
 from corehq.util.dates import iso_string_to_date
 
 
@@ -74,6 +75,65 @@ class HiddenLastMonthDateFilter(DatespanFilter):
         self.request.datespan = last_month
         self.context.update(dict(datespan=last_month))
         return last_month
+
+
+class DateTimeSpanFilter(BaseReportFilter):
+    template = "reports/filters/bootstrap3/datetimespan.html"
+    label = gettext_lazy("Date And Time Range")
+    slug = "datetimespan"
+    inclusive = True
+    default_days = 7
+    is_editable = True
+
+    @property
+    def start_datetime(self):
+        start_datetime_str = self.request.GET.get(f'{self.slug}_startdatetime', '')
+        if start_datetime_str:
+            return string_to_datetime(start_datetime_str)
+        return None
+
+    @property
+    def end_datetime(self):
+        end_datetime_str = self.request.GET.get(f'{self.slug}_enddatetime', '')
+        if end_datetime_str:
+            return string_to_datetime(end_datetime_str)
+        return None
+
+    @property
+    def datetimespan(self):
+        start_dt = self.start_datetime
+        end_dt = self.end_datetime
+
+        if start_dt and end_dt:
+            return DateSpan(startdate=start_dt, enddate=end_dt,
+                           timezone=self.timezone, inclusive=self.inclusive, format=ISO_DATETIME_FORMAT)
+
+        return DateSpan.since(self.default_days, timezone=self.timezone,
+                              inclusive=self.inclusive, format=ISO_DATETIME_FORMAT)
+
+    @property
+    def filter_context(self):
+        return {
+            'datetimespan': self.datetimespan,
+            'start_datetime': self.start_datetime,
+            'end_datetime': self.end_datetime,
+            'report_labels': self.report_labels,
+            'report_labels_json': self.report_labels_json,
+            'separator': _(' to '),
+            'timezone': self.timezone.zone,
+        }
+
+    @property
+    def report_labels(self):
+        return {
+            'last_7_days': _('Last 7 Days'),
+            'last_month': _('Last Month'),
+            'last_30_days': _('Last 30 Days')
+        }
+
+    @property
+    def report_labels_json(self):
+        return json.dumps(self.report_labels)
 
 
 class SingleDateFilter(BaseReportFilter):

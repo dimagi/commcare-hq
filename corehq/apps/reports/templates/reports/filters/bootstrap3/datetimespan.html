@@ -1,0 +1,41 @@
+{% extends 'reports/filters/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+  <div class="row">
+    <div class="col-sm-6">
+      <input
+        type="text"
+        id="filter_datetimespan"
+        class="datetime-range-picker form-control report-filter-datetimespan"
+        value="{% if start_datetime and end_datetime %}{{ start_datetime|date:'Y-m-d H:i' }}
+        to {{ end_datetime|date:'Y-m-d H:i' }}{% endif %}"
+        data-init="1"
+        data-separator="{% html_attr separator %}"
+        data-report-labels="{% html_attr report_labels %}"
+        data-start-datetime="{% if start_datetime %}{{ start_datetime.isoformat }}{% endif %}"
+        data-end-datetime="{% if end_datetime %}{{ end_datetime.isoformat }}{% endif %}"
+      />
+      <!-- Hidden inputs for form submission -->
+      <input
+        type="hidden"
+        id="{{ css_id }}_startdatetime"
+        name="datetimespan_startdatetime"
+        value="{% if start_datetime %}{{ start_datetime.isoformat }}{% endif %}"
+      />
+      <input
+        type="hidden"
+        id="{{ css_id }}_enddatetime"
+        name="datetimespan_enddatetime"
+        value="{% if end_datetime %}{{ end_datetime.isoformat }}{% endif %}"
+      />
+    </div>
+    <div class="col-xs-6">
+      <p class="help-block">
+        {% if timezone %}
+          {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
+        {% endif %}
+      </p>
+    </div>
+  </div>
+{% endblock %}
