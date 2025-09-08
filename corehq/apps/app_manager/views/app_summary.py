@@ -21,6 +21,7 @@ from corehq.apps.app_manager.app_schemas.form_metadata import (
     get_app_summary_formdata,
 )
 from corehq.apps.app_manager.const import WORKFLOW_FORM
+from corehq.apps.app_manager.decorators import require_can_edit_or_view_apps
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
 from corehq.apps.app_manager.util import is_linked_app, is_remote_app
@@ -32,7 +33,8 @@ from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 
 
-class AppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, BasePageView):
+@method_decorator(require_can_edit_or_view_apps, name='dispatch')
+class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 
     @property
     def main_context(self):
@@ -174,6 +176,7 @@ class AppDataView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     urlname = 'app_data_json'
 
+    @method_decorator(require_can_edit_or_view_apps, name='dispatch')
     def get(self, request, *args, **kwargs):
         modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         return json_response({
@@ -263,6 +266,7 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     urlname = 'download_app_summary'
     http_method_names = ['get']
 
+    @method_decorator(require_can_edit_or_view_apps)
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
         headers = [(self.app.name, tuple(APP_SUMMARY_EXPORT_HEADER_NAMES))]
@@ -485,9 +489,7 @@ class DownloadCaseSummaryView(ApplicationViewMixin, View):
     http_method_names = ['get']
 
     @method_decorator(login_or_api_key)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
+    @method_decorator(require_can_edit_or_view_apps)
     def get(self, request, domain, app_id):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')

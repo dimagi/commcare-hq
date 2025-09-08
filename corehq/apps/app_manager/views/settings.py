@@ -96,7 +96,7 @@ def edit_commcare_profile(request, domain, app_id):
 
 @method_decorator(no_conflict_require_POST, name='dispatch')
 @method_decorator(require_can_edit_apps, name='dispatch')
-class PromptSettingsUpdateView(ApplicationViewMixin, FormView):
+class PromptSettingsUpdateView(FormView, ApplicationViewMixin):
     form_class = PromptUpdateSettingsForm
     urlname = 'update_prompt_settings'
 

@@ -900,7 +900,7 @@ def iter_app_files(app, include_multimedia_files, include_index_files,
     return file_iterator, errors, (index_file_count + multimedia_file_count)
 
 
-class DownloadMultimediaZip(ApplicationViewMixin, View):
+class DownloadMultimediaZip(View, ApplicationViewMixin):
     """
     This is where the Multimedia for an application gets generated.
     Expects domain and app_id to be in its args
