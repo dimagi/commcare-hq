@@ -4,15 +4,14 @@ from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq import privileges
-from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase
+from corehq.util.test_utils import privilege_enabled
 
 
-class TestWebUserSyncUsercase(TestCase, DomainSubscriptionMixin):
+@privilege_enabled(privileges.USERCASE)
+class TestWebUserSyncUsercase(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -24,9 +23,6 @@ class TestWebUserSyncUsercase(TestCase, DomainSubscriptionMixin):
         cls.user = WebUser.create(cls.domain_name, cls.username, '***', None, None)
         cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
         cls.user_id = cls.user._id
-
-        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.PRO)
-        domain_has_privilege.clear(cls.domain_name, privileges.USERCASE)
 
     def test_sync_usercases(self):
         sync_usercases(self.user, self.domain_name)
@@ -49,7 +45,8 @@ class TestWebUserSyncUsercase(TestCase, DomainSubscriptionMixin):
         self.assertFalse(open_usercase.closed)
 
 
-class TestBulkSyncUsercases(TestCase, DomainSubscriptionMixin):
+@privilege_enabled(privileges.USERCASE)
+class TestBulkSyncUsercases(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestBulkSyncUsercases, cls).setUpClass()
@@ -60,9 +57,6 @@ class TestBulkSyncUsercases(TestCase, DomainSubscriptionMixin):
         cls.users = []
         cls.user_ids = []
         cls.usernames = ['test1', 'test2', 'test3']
-
-        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.PRO)
-        domain_has_privilege.clear(cls.domain_name, privileges.USERCASE)
 
         # Create multiple users
         for username in cls.usernames:
