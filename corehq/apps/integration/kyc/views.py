@@ -10,7 +10,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus, KycVerificationFailureCause
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.kyc.services import (
     verify_users,
 )
@@ -99,7 +99,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'has_invalid_data': False,
             'kyc_verification_status': {
                 'status': kyc_user.kyc_verification_status,
-                'error_message': self._get_verification_error_message(kyc_user),
+                'error_message': kyc_user.verification_error_message,
             },
             'kyc_last_verified_at': kyc_user.kyc_last_verified_at,
         }
@@ -112,16 +112,6 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
                     value = PASSWORD_PLACEHOLDER
                 row_data[field] = value
         return row_data
-
-    @staticmethod
-    def _get_verification_error_message(kyc_user):
-        verification_error = kyc_user.kyc_verification_error
-        if verification_error:
-            try:
-                return KycVerificationFailureCause(verification_error).label
-            except ValueError:
-                return _('Unknown error')
-        return None
 
     @staticmethod
     def _is_invalid_value(value):
