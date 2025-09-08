@@ -238,6 +238,15 @@ class KycUser:
         return self.user_data.get('kyc_verification_error')
 
     @property
+    def verification_error_message(self):
+        if self.kyc_verification_error:
+            try:
+                return KycVerificationFailureCause(self.kyc_verification_error).label
+            except ValueError:
+                return _('Unknown error')
+        return None
+
+    @property
     def kyc_verification_status(self):
         value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
