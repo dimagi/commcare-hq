@@ -34,7 +34,7 @@ from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
 
 from .cache import request_cache
-from .const import EXPORT_PAGE_LIMIT
+from .const import EXPORT_PAGE_LIMIT, AllowedRenderings
 from .datatables import DataTablesHeader
 from .exceptions import BadRequestError
 from .filters.dates import DatespanFilter
@@ -568,7 +568,11 @@ class GenericReportView(object):
     @property
     def js_options(self):
         try:
-            async_url = self.get_url(domain=self.domain, render_as='async', relative=True)
+            async_url = self.get_url(
+                domain=self.domain,
+                render_as=AllowedRenderings.ASYNC,
+                relative=True,
+            )
         except NoReverseMatch:
             async_url = ''
         return {
@@ -973,7 +977,7 @@ class GenericTabularReport(GenericReportView):
 
     @property
     def pagination_source(self):
-        return self.get_url(domain=self.domain, render_as='json')
+        return self.get_url(domain=self.domain, render_as=AllowedRenderings.JSON)
 
     _pagination = None
 

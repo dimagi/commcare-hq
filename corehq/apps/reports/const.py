@@ -31,3 +31,4 @@ class AllowedRenderings(StrEnum):
     EMAIL = auto()
     PARTIAL = auto()
     PRINT = auto()
+    VIEW = auto()

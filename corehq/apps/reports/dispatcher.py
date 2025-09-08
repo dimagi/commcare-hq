@@ -123,17 +123,17 @@ class ReportDispatcher(View):
     @datespan_default
     def dispatch(self, request, domain=None, report_slug=None, render_as=None,
                  permissions_check=None, *args, **kwargs):
-        render_as = render_as or 'view'
+        render_as = render_as or AllowedRenderings.VIEW
         domain = domain or getattr(request, 'domain', None)
 
         redirect_slug = self._redirect_slug(report_slug)
 
-        if redirect_slug and render_as == 'email':
+        if redirect_slug and render_as == AllowedRenderings.EMAIL:
             # todo saved reports should probably change the slug to the redirected slug. this seems like a hack.
             raise Http404
         elif redirect_slug:
             new_args = [domain] if domain else []
-            if render_as != 'view':
+            if render_as != AllowedRenderings.VIEW:
                 new_args.append(render_as)
             new_args.append(redirect_slug)
             return HttpResponseRedirect(reverse(self.name(), args=new_args))
@@ -273,7 +273,7 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
 
     def dispatch(self, request, *args, **kwargs):
         render_as = kwargs.get('render_as')
-        if not render_as == 'email':
+        if not render_as == AllowedRenderings.EMAIL:
             return self.dispatch_with_priv(request, *args, **kwargs)
         if not domain_has_privilege(request.domain, privileges.CUSTOM_REPORTS):
             raise PermissionDenied()
