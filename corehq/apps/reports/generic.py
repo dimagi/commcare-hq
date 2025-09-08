@@ -785,10 +785,6 @@ class GenericReportView(object):
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, relative=False, **kwargs):
-        # NOTE: I'm pretty sure this doesn't work if you ever pass in render_as
-        # but leaving as is for now, as it should be obvious as soon as that
-        # breaks something
-
         if render_as is not None and render_as not in cls.dispatcher.allowed_renderings():
             raise ValueError('The render_as parameter is not one of the following allowed values: %s' %
                              ', '.join(cls.dispatcher.allowed_renderings()))
