@@ -2060,7 +2060,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
-            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            [self._get_invited_spec(location_code=[self.loc1.site_code, self.loc2.site_code])],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
@@ -2074,7 +2074,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
 
         import_users_and_groups(
             self.domain.name,
-            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc2]])],
+            [self._get_invited_spec(location_code=[self.loc2.site_code])],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
@@ -2104,7 +2104,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
-            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1]])],
+            [self._get_invited_spec(location_code=[self.loc1.site_code])],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
