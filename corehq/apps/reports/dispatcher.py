@@ -27,6 +27,7 @@ from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.util.quickcache import quickcache
 
+from .const import AllowedRenderings
 from .lookup import ReportLookup
 
 datespan_default = datespan_in_request(
@@ -194,7 +195,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial', 'print']
+        return [e.value for e in AllowedRenderings]
 
     @classmethod
     def navigation_sections(cls, request, domain):
