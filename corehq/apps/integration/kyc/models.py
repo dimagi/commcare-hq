@@ -118,6 +118,9 @@ class KycConfig(models.Model):
             if wrapped_data:
                 yield KycUser(self, wrapped_data)
 
+    def get_kyc_users_count(self):
+        return self.get_kyc_users_query().count()
+
     def get_api_field_to_user_data_map_values(self):
         """
         The dict values for `api_field_to_user_data_map` consist of a dict with the following structure:

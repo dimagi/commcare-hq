@@ -182,9 +182,8 @@ class KycVerificationReportView(BaseDomainView):
     def _report_users_count_metric(self):
         if self.domain_has_config:
             kyc_config = KycConfig.objects.get(domain=self.domain)
-            total_users = len(list(kyc_config.get_kyc_users()))
             metrics_gauge(
                 'commcare.integration.kyc.total_users.count',
-                total_users,
+                kyc_config.get_kyc_users_count(),
                 tags={'domain': self.domain}
             )
