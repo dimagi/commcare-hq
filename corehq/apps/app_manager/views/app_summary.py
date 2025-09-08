@@ -9,7 +9,6 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.http import require_GET
 from django.views.generic import View
 
 from corehq import privileges
@@ -485,7 +484,6 @@ class DownloadCaseSummaryView(ApplicationViewMixin, View):
     urlname = 'download_case_summary'
     http_method_names = ['get']
 
-    @method_decorator(require_GET)
     @method_decorator(login_or_api_key)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
