@@ -51,7 +51,7 @@ class ProjectReport(GenericReportView):
     @property
     def template_context(self):
         context = super().template_context
-        context.update({'user_types': HQUserType.human_readable})
+        context['user_types'] = HQUserType.human_readable
         if self.rendered_as == 'view':
             # Add the email form to the context if it will be rendered
             email_form = EmailReportForm()
@@ -63,7 +63,7 @@ class ProjectReport(GenericReportView):
             if len(emails) <= MAX_WEB_USER_EMAILS:
                 choices = [(e, e) for e in emails]
                 email_form.fields['recipient_emails'].choices = choices
-            context.update({'email_form': email_form})
+            context['email_form'] = email_form
         return context
 
 
