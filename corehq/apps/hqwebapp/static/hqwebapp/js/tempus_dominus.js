@@ -128,6 +128,54 @@ define("hqwebapp/js/tempus_dominus", [
         return picker;
     };
 
+    let createDateTimeRangePicker = function (el, separator, start, end) {
+        let picker = new tempusDominus.TempusDominus(
+            el, {
+                dateRange: true,
+                useCurrent: false,
+                multipleDatesSeparator: separator,
+                display: {
+                    theme: 'light',
+                    components: {
+                        clock: true,
+                        year: true,
+                    },
+                    buttons: {
+                        clear: !!initialPageData.get('daterangepicker-show-clear'),
+                        close: true,
+                    },
+                },
+                localization: _.extend(defaultTranslations, {
+                    dayViewHeaderFormat: { month: 'long', year: '2-digit' },
+                    format: 'yyyy-MM-dd HH:mm',
+                    hourCycle: 'h23',
+                }),
+            },
+        );
+
+        if (start && end) {
+            picker.dates.setValue(new tempusDominus.DateTime(start), 0);
+            picker.dates.setValue(new tempusDominus.DateTime(end), 1);
+        }
+
+        picker.subscribe("change.td", function (e) {
+            const dates = picker.dates.picked;
+            if (dates.length === 2) {
+                const startInput = $(el).siblings(`input[name*="_startdatetime"]`)[0];
+                const endInput = $(el).siblings(`input[name*="_enddatetime"]`)[0];
+
+                if (startInput && endInput) {
+                    startInput.value = dates[0].toISOString();
+                    endInput.value = dates[1].toISOString();
+                }
+
+                picker.hide();
+            }
+        });
+
+        return picker;
+    };
+
     // Combine user-passed TD options with default options.
     // A shallow extend is insufficient because TD options can be nested.
     // A truly generic deep extension is complex, so cheat based on what
@@ -187,6 +235,7 @@ define("hqwebapp/js/tempus_dominus", [
     return {
         createDatePicker: createDatePicker,
         createDateRangePicker: createDateRangePicker,
+        createDateTimeRangePicker: createDateTimeRangePicker,
         createDefaultDateRangePicker: createDefaultDateRangePicker,
         createTimePicker: createTimePicker,
         getDateRangeSeparator: getDateRangeSeparator,
