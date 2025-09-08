@@ -1,5 +1,5 @@
 import warnings
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 
 from django.core.cache import cache
@@ -9,13 +9,14 @@ from django.utils.translation import gettext_noop
 import dateutil
 from memoized import memoized
 
-from corehq import toggles
-from corehq.apps.es.users import iter_web_user_emails
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
+from corehq import toggles
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.es.profiling import ESQueryProfiler
+from corehq.apps.es.users import iter_web_user_emails
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.const import LONG_RUNNING_CLE_THRESHOLD
@@ -286,6 +287,46 @@ class DatespanMixin(object):
         datespan.is_default = True
         return datespan
 
+
+class DateTimespanMixin(object):
+    """
+        Use this where you'd like to include the datespan field.
+    """
+    datetimespan_field = 'corehq.apps.reports.filters.dates.DateTimeSpanFilter'
+    datetimespan_default_days = 7
+    datetimespan_max_days = None
+    inclusive = True
+    default_datetimespan_end_date_to_today = False
+
+    _datetimespan = None
+
+    @property
+    def datetimespan(self):
+        if self._datetimespan is None:
+            datetimespan = self.default_datetimespan
+            if not hasattr(self.request, 'datetimespan'):
+                self.request.datetimespan = datetimespan
+            elif self.request.datetimespan.is_valid() and not self.request.datetimespan.is_default:
+                datetimespan.enddatetime = self.request.datetimespan.enddatetime
+                datetimespan.startdatetime = self.request.datetimespan.startdatetime
+                datetimespan.is_default = False
+            elif self.request.datetimespan.get_validation_reason() == "You can't use dates earlier than the year 1900":
+                raise BadRequestError()
+            self.context.update(dict(datetimespan=datetimespan))
+            self._datetimespan = datetimespan
+        return self._datetimespan
+
+    @property
+    def default_datetimespan(self):
+        enddate = None
+        if self.default_datetimespan_end_date_to_today:
+            enddate = ServerTime(datetime.now(timezone.utc)).user_time(self.timezone).done()
+
+        datespan = DateSpan.since(self.datetimespan_default_days, enddate=enddate, format=ISO_DATETIME_FORMAT, inclusive=self.inclusive,
+            timezone=self.timezone)
+        datespan.max_days = self.datetimespan_max_days
+        datespan.is_default = True
+        return datespan
 
 class MonthYearMixin(object):
     """
