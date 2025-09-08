@@ -26,7 +26,12 @@ from corehq.motech.models import ConnectionSettings
 
 from ..const import RECORD_QUEUED_STATES, State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
-from ..models import Repeater, RepeatRecord, get_all_repeater_types
+from ..models import (
+    Repeater,
+    RepeatRecord,
+    forwards_to_commcare_connect,
+    get_all_repeater_types,
+)
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo',
                               'class_name friendly_name has_config instances')
@@ -225,7 +230,10 @@ class EditRepeaterView(BaseRepeaterView):
             )
         else:
             repeater_id = self.kwargs['repeater_id']
-            repeater = Repeater.objects.get(id=repeater_id)
+            try:
+                repeater = Repeater.objects.get(id=repeater_id, domain=self.domain)
+            except Repeater.DoesNotExist:
+                raise Http404()
             data = repeater.to_json()
             data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(
@@ -273,6 +281,17 @@ class AddFormRepeaterView(AddRepeaterView):
         ) if xmlns]
         return repeater
 
+    def make_repeater(self):
+        repeater = super().make_repeater()
+        if forwards_to_commcare_connect(repeater):
+            # CommCare Connect uses Traefik Proxy, which (despite
+            # complaints from the community) insists on defaulting to
+            # returning 404 responses due to temporary overloading.
+            # Add 404 to back-off codes so that 404 responses get
+            # retried later.
+            repeater.add_backoff_code(404)
+        return repeater
+
 
 class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     urlname = 'edit_form_repeater'
@@ -281,6 +300,10 @@ class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     @property
     def page_url(self):
         return reverse(AddFormRepeaterView.urlname, args=[self.domain])
+
+
+class EditConnectFormRepeaterView(EditFormRepeaterView):
+    urlname = "edit_connect_form_repeater"
 
 
 class AddCaseRepeaterView(AddRepeaterView):

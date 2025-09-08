@@ -15,7 +15,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.apps.domain.views.base import covid19
 from corehq.apps.domain.views.feedback import submit_feedback
-from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.domain.views.settings import logo
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.urls import \
@@ -36,6 +35,7 @@ from corehq.apps.settings.urls import \
     domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect
 from corehq.apps.sms.urls import sms_admin_interface_urls
+import os
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -111,7 +111,6 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
-    url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),
@@ -156,7 +155,6 @@ urlpatterns = [
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
     url(r'^covid19/$', covid19, name='covid19'),
-    url(r'^pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname),
     url(r'^ping/$', ping, name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK, permanent=True), name='go_to_pricing'),
@@ -165,6 +163,9 @@ urlpatterns = [
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
 ] + LOCAL_APP_URLS
+
+if not os.getenv('CCHQ_WITHOUT_SSO'):
+    urlpatterns.append(url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')))
 
 if settings.ENABLE_PRELOGIN_SITE:
     # handle redirects from old prelogin

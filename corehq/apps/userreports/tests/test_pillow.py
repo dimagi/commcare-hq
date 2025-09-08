@@ -1,15 +1,16 @@
 import decimal
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest import mock
 from unittest.mock import patch
 
+from attrs import define, field
 from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from pillow_retry.models import PillowError
-from corehq.motech.repeaters.models import RepeatRecord
+
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.data_source_providers import (
     DynamicDataSourceProvider,
@@ -24,9 +25,9 @@ from corehq.apps.userreports.models import (
     Validation,
 )
 from corehq.apps.userreports.pillow import (
-    REBUILD_CHECK_INTERVAL,
     ConfigurableReportPillowProcessor,
     ConfigurableReportTableManager,
+    UcrTableManager,
 )
 from corehq.apps.userreports.pillow_utils import rebuild_table
 from corehq.apps.userreports.tasks import (
@@ -46,6 +47,8 @@ from corehq.form_processor.signals import sql_case_post_save
 from corehq.motech.repeaters.models import (
     ConnectionSettings,
     DataSourceRepeater,
+    DataSourceUpdate,
+    RepeatRecord,
 )
 from corehq.motech.repeaters.tests.test_repeater import BaseRepeaterTest
 from corehq.pillows.case import get_case_pillow
@@ -64,39 +67,72 @@ def teardown_module():
 def _get_pillow(configs, processor_chunk_size=0):
     pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
     # overwrite processors since we're only concerned with UCR here
-    table_manager = ConfigurableReportTableManager(data_source_providers=[])
-    ucr_processor = ConfigurableReportPillowProcessor(
-        table_manager
-    )
-    table_manager.bootstrap(configs)
+    configs_by_domain = {}
+    for config in configs:
+        configs_by_domain.setdefault(config.domain, []).append(config)
+    table_manager = ConfigurableReportTableManager(data_source_providers=[
+        MockDataSourceProvider(configs_by_domain)
+    ])
+    for domain in configs_by_domain:
+        table_manager.get_adapters(domain)  # bootstrap adapters
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     pillow.processors = [ucr_processor]
     return pillow
 
 
-class ConfigurableReportTableManagerTest(SimpleTestCase):
+@define
+class Config:
+    _id = field()
 
-    def test_needs_bootstrap_on_initialization(self):
-        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
-        self.assertTrue(table_manager.needs_bootstrap())
 
-    def test_bootstrap_sets_time(self):
-        before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
-        table_manager.bootstrap([])
-        after_now = datetime.utcnow() + timedelta(microseconds=1)
-        self.assertTrue(table_manager.bootstrapped)
-        self.assertTrue(before_now < table_manager.last_bootstrapped)
-        self.assertTrue(after_now > table_manager.last_bootstrapped)
-        self.assertFalse(table_manager.needs_bootstrap())
+@define
+class Adapter:
+    config = field()
 
-    def test_needs_bootstrap_window(self):
-        before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
-        table_manager.bootstrap([])
-        table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL - 5)
-        self.assertFalse(table_manager.needs_bootstrap())
-        table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL)
-        self.assertTrue(table_manager.needs_bootstrap())
+    @property
+    def config_id(self):
+        return self.config._id
+
+
+class UcrTableManagerTest(SimpleTestCase):
+
+    @patch("corehq.apps.userreports.pillow._get_indicator_adapter_for_pillow", Adapter)
+    def test_iter_adapters(self):
+        class TestManager(UcrTableManager):
+            def iter_configs(self, domain):
+                yield domain, Config(1)
+                yield domain, Config(2)
+                yield 'two', Config(1)
+
+            def iter_configs_since(self, timestamp):
+                raise NotImplementedError
+
+        manager = TestManager(None, False)
+        adapters = list(manager.iter_adapters('one'))
+        assert adapters == [
+            ('one', Adapter(Config(1))),
+            ('one', Adapter(Config(2))),
+            ('two', Adapter(Config(1))),
+        ]
+        assert adapters[0][1] is adapters[2][1], 'should be the same instance'
+
+    @patch("corehq.apps.userreports.pillow._get_indicator_adapter_for_pillow", Adapter)
+    def test_iter_adapters_since(self):
+        class TestManager(UcrTableManager):
+            def iter_configs(self, domain):
+                raise NotImplementedError
+
+            def iter_configs_since(self, timestamp):
+                yield 'one', Config(1)
+                yield 'two', Config(1)
+
+        manager = TestManager(None, False)
+        adapters = list(manager.iter_adapters(since=datetime.now(UTC)))
+        assert adapters == [
+            ('one', Adapter(Config(1))),
+            ('two', Adapter(Config(1))),
+        ]
+        assert adapters[0][1] is adapters[1][1], 'should be the same instance'
 
 
 class ConfigurableReportTableManagerDbTest(TestCase):
@@ -111,77 +147,29 @@ class ConfigurableReportTableManagerDbTest(TestCase):
 
         table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
             ds_1_domain: [data_source_1]
-        })])
-        table_manager.bootstrap()
-        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
-        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
-        self.assertEqual(data_source_1, table_manager.table_adapters_by_domain[ds_1_domain][0].config)
+        })], run_migrations=False)
 
-    def test_merge_table_adapters(self):
-        data_source_1 = get_sample_data_source()
-        data_source_1.save()
-        ds_1_domain = data_source_1.domain
-        table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
-            ds_1_domain: [data_source_1]
-        })])
-        table_manager.bootstrap()
-        # test in same domain
-        data_source_2 = self._copy_data_source(data_source_1)
-        data_source_2.save()
-        table_manager._add_data_sources_to_table_adapters([data_source_2], set())
-        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
-        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
-        self.assertEqual(
-            {data_source_1, data_source_2},
-            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
-        )
-        # test in a new domain
-        data_source_3 = self._copy_data_source(data_source_1)
-        ds3_domain = 'new_domain'
-        data_source_3.domain = ds3_domain
-        data_source_3.save()
-        table_manager._add_data_sources_to_table_adapters([data_source_3], set())
-        # should now be 2 domains in the map
-        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
-        # ensure domain 1 unchanged
-        self.assertEqual(
-            {data_source_1, data_source_2},
-            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
-        )
-        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds3_domain]))
-        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
+        adapters = table_manager.get_adapters(ds_1_domain)
+        assert [a.config for a in adapters] == [data_source_1]
 
-        # finally pass in existing data sources and ensure they modify in place
-        table_manager._add_data_sources_to_table_adapters([data_source_1, data_source_3], set())
-        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
-        self.assertEqual(
-            {data_source_1, data_source_2},
-            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
-        )
-        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
-
-    def test_complete_integration(self):
-        # initialize pillow with one data source
+    @patch("corehq.apps.userreports.pillow.rebuild_sql_tables")
+    def test_complete_integration(self, mock_rebuild_sql_tables):
         data_source_1 = get_sample_data_source()
         data_source_1.save()
         ds_1_domain = data_source_1.domain
         table_manager = ConfigurableReportTableManager([DynamicDataSourceProvider()])
-        table_manager.bootstrap()
-        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
-        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
-        self.assertEqual(data_source_1._id, table_manager.table_adapters_by_domain[ds_1_domain][0].config._id)
+
+        adapters = table_manager.get_adapters(ds_1_domain)
+        assert [a.config_id for a in adapters] == [data_source_1._id]
+        mock_rebuild_sql_tables.assert_called_once_with(adapters)
 
         data_source_2 = self._copy_data_source(data_source_1)
         data_source_2.save()
-        self.assertFalse(table_manager.needs_bootstrap())
-        # should call _update_modified_data_sources
-        table_manager.bootstrap_if_needed()
-        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
-        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
-        self.assertEqual(
-            {data_source_1._id, data_source_2._id},
-            {t.config._id for t in table_manager.table_adapters_by_domain[ds_1_domain]}
-        )
+        table_manager.refresh_cache()
+
+        adapters = table_manager.get_adapters(ds_1_domain)
+        assert [a.config_id for a in adapters] == [data_source_1._id, data_source_2._id]
+        mock_rebuild_sql_tables.assert_called_with([adapters[1]])
 
     @patch("corehq.apps.cachehq.mixins.invalidate_document")
     def test_bad_spec_error(self, _):
@@ -198,8 +186,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         data_source_1.save()
         del ExpressionFactory.spec_map["missing_expression"]
         table_manager = ConfigurableReportTableManager([DynamicDataSourceProvider()])
-        table_manager.bootstrap()
-        self.assertEqual(dict(table_manager.table_adapters_by_domain), {})
+        assert table_manager.get_adapters(data_source_1.domain) == []
 
     def _copy_data_source(self, data_source):
         data_source_json = data_source.to_json()
@@ -369,11 +356,6 @@ class ChunkedUCRProcessorTest(TestCase):
         invalid_data = InvalidUCRData.objects.all().values_list('doc_id', flat=True)
         self.assertEqual(set([case.case_id for case in cases]), set(invalid_data))
 
-    @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportTableManager.bootstrap_if_needed')
-    def test_bootstrap_if_needed(self, bootstrap_if_needed):
-        self._create_and_process_changes()
-        bootstrap_if_needed.assert_called_once_with()
-
 
 class IndicatorPillowTest(BaseRepeaterTest):
 
@@ -440,7 +422,6 @@ class IndicatorPillowTest(BaseRepeaterTest):
     @mock.patch('corehq.motech.repeaters.signals.create_repeat_records')
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_datasource_change_triggers_change_signal(self, datetime_mock, create_repeat_records_mock):
-        from corehq.apps.userreports.util import DataSourceUpdateLog
         data_source_id = self.config._id
         num_repeaters = 2
         self._setup_data_source_subscription(self.config.domain, data_source_id, num_repeaters=num_repeaters)
@@ -453,12 +434,12 @@ class IndicatorPillowTest(BaseRepeaterTest):
         create_repeat_records_mock.assert_called()
         # Assert that it will be created with the expected args
         call_args = create_repeat_records_mock.call_args[0]
-        self.assertEqual(call_args[0], DataSourceRepeater)
-        self.assertTrue(isinstance(call_args[1], DataSourceUpdateLog))
-        update_log = call_args[1]
-        self.assertEqual(update_log.domain, self.domain)
-        self.assertEqual(update_log.data_source_id, self.config._id)
-        self.assertEqual(update_log.doc_id, sample_doc["_id"])
+        assert call_args[0] == DataSourceRepeater
+        datasource_update = call_args[1]
+        assert type(datasource_update) is DataSourceUpdate
+        assert datasource_update.domain == self.domain
+        assert datasource_update.data_source_id == uuid.UUID(self.config._id)
+        assert datasource_update.doc_ids == [sample_doc["_id"]]
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_rebuild_indicators(self, datetime_mock):

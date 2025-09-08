@@ -105,35 +105,23 @@ from ``apps_base.html``.
 Why is old code formatted differently?
 --------------------------------------
 
-Most older entry points are written in a modified AMD
-style and should eventually be migrated to an ESM format.
+Some older entry points are written in AMD style and should be migrated to an ESM format.
 
-However, be careful when migrating modified AMD modules that aren't entry points, as some of these modules,
-like ``hqwebapp/js/initial_page_data``, are still being referenced by pages not using a JavaScript bundler.
-These pages still require this modified AMD approach until they transition to using Webpack.
-
-We will cover what common modified AMD modules look like in this section, but you can read more
-about this choice of module format in the `Historical Background on Module Patterns
-<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/module-history.rst>`__
+However, be careful not to migrate AMD modules that are imported by ESM modules.
 
 The process of migrating a module from AMD to ESM is very straightforward. To learn more,
 please see `Migrating Modules from AMD to ESM
 <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/amd-to-esm.rst>`__
 
 
-Modified AMD Legacy Modules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+AMD Modules
+~~~~~~~~~~~
 
-Modified AMD-style modules are used both on bundler pages and no-bundler pages.
-
-To differentiate between the two, look at the module's ``hqDefine`` call at the top of the file.
-
-Modules in this format used with Webpack will look like the following,
-with all dependencies loaded as part of ``hqDefine``:
+AMD modules look like this, with all dependencies loaded as part of ``define``:
 
 ::
 
-   hqDefine("my_app/js/my_file", [
+   define("my_app/js/my_file", [
        "knockout",
        "hqwebapp/js/initial_page_data"
    ], function (
@@ -141,18 +129,6 @@ with all dependencies loaded as part of ``hqDefine``:
        initialPageData
    ) {
        var myObservable = ko.observable(initialPageData.get("thing"));
-       ...
-   });
-
-In no-bundler areas of the codebase, "transition" AMD modules look like the following,
-having no dependency list and no function parameters.
-Additionally, HQ modules are loaded using ``hqImport`` in the body, and third-party libraries aren't declared at all,
-instead relying on globals like ``ko`` (for Knockout.js) in the example below.
-
-::
-
-   hqDefine("my_app/js/my_file", function () {
-       var myObservable = ko.observable(hqImport("hqwebapp/js/initial_page_data").get("thing"));
        ...
    });
 
@@ -178,11 +154,11 @@ How do I add a new internal module or external dependency to an existing page?
 Webpack supports multiple module formats, with ES Modules (ESM) being the preferred format.
 New modules should be written in the ESM format.
 
-That being said, a lot of legacy code on HQ is written in a modified AMD format.
+That being said, some legacy code on HQ, notably Web Apps and some of hqwebapp, is written in a AMD format.
 If you are adding a lot of new code to such a module, it is recommended that you
 `migrate this module to ESM format
 <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/amd-to-esm.rst>`__.
-However, not every modified AMD module is ready to be migrated to ESM immediately,
+However, not every AMD module is ready to be migrated to ESM immediately,
 so it's worth familiarizing yourself with working in that format.
 
 The format of the module you add a dependency to will determine how you include that dependency.
@@ -209,19 +185,19 @@ ESM modules provide an extensive and flexible away of managing and naming import
     import * as myAliasedDep from "hqwebapp/js/my_other_dependency";
 
 
-Modified AMD
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+AMD
+~~~
 
 .. warning::
     You should NOT create NEW modules with this style.
 
-To use your new module/dependency, add it your module’s ``hqDefine`` list of dependencies.
+To use your new module/dependency, add it your module’s ``define`` list of dependencies.
 If the new dependency will be directly referenced in the body of the module, also add a
-parameter to the ``hqDefine`` callback:
+parameter to the ``define`` callback:
 
 ::
 
-   hqDefine("my_app/js/my_module", [
+   define("my_app/js/my_module", [
        ...
        "hqwebapp/js/my_new_dependency",
    ], function (
@@ -231,51 +207,6 @@ parameter to the ``hqDefine`` callback:
        ...
        myDependency.myFunction();
    });
-
-
-No-Bundler Pages
-~~~~~~~~~~~~~~~~
-
-.. note::
-
-    No-Bundler pages are pages that do not have a Webpack entry point.
-    New pages should never be created without a ``js_entry`` entry point.
-
-    Eventually, the remaining pages in this category will be modularized properly to integrate with Webpack
-    as part of the `JS Bundler Migration
-    <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst>`__.
-
-    Also note that these pages are **only** compatible with legacy modified AMD modules. ESM modules
-    do not work here.
-
-In your HTML template, add a script tag to your new dependency. Your
-template likely already has scripts included in a ``js`` block:
-
-::
-
-   {% block js %}{{ block.super }}
-     ...
-     <script src="{% static 'hqwebapp/js/my_new_dependency.js' %}"></script>
-   {% endblock js %}
-
-In your JavaScript file, use ``hqImport`` to get access to your new
-dependency:
-
-::
-
-   hqDefine("my_app/js/my_module", function () {
-       ...
-       var myDependency = hqImport("hqwebapp/js/my_new_dependency");
-       myDependency.myFunction();
-   });
-
-Do **not** add the dependency list and parameters from the modified AMD style or
-use `hqImport` on ESM formatted modules. It's
-easy to introduce bugs that won’t be visible until the module is
-actually migrated, and migrations are harder when they have pre-existing
-bugs. See the `troubleshooting section of the JS Bundler Migration
-Guide <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst#troubleshooting>`__
-if you’re curious about the kinds of issues that crop up.
 
 
 My python tests are failing because of javascript
@@ -315,16 +246,12 @@ How close are we to a world where we’ll just have one set of conventions?
 As above, most code is migrated, but most of the remaining areas have
 significant complexity.
 
-`hqDefine.sh <https://github.com/dimagi/commcare-hq/blob/master/scripts/codechecks/hqDefine.sh>`__
+`amd.sh <https://github.com/dimagi/commcare-hq/blob/master/scripts/codechecks/amd.sh>`__
 generates metrics for the current status of the migration and locates
 un-migrated files. At the time of writing:
 
 ::
 
-    $ ./scripts/codechecks/hqDefine.sh
+    $ ./scripts/codechecks/amd.sh
 
-98%     (1352/1386) of HTML files are free of inline scripts
-97%     (533/555) of non-ESM JS files use hqDefine
-92%     (506/555) of non-ESM JS files specify their dependencies
-98%     (1355/1386) of HTML files are free of script tags
-13%     (82/637) of JS files use ESM format
+80%     (522/658) of JS files use ESM format

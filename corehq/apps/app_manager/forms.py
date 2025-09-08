@@ -51,12 +51,9 @@ class CopyApplicationForm(forms.Form):
         widget=forms.Select(choices=[], attrs={"class": "app-manager-version-dropdown",
                                                "placeholder": _("Current")}))
 
-    # Toggles to enable when copying the app
-    toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
-
     def __init__(self, from_domain, app, *args, **kwargs):
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
-        fields = ['domain', 'name', 'toggles', 'build_id']
+        fields = ['domain', 'name', 'build_id']
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
@@ -170,7 +167,8 @@ class PromptUpdateSettingsForm(forms.Form):
                 crispy.Field(
                     'apk_prompt',
                     # hide 'apk_version' depending on whether app_prompt is off or not
-                    onchange='$("#apk_version_id")[$("#id_apk_prompt").val() == "off"? "hide": "show"]()',
+                    onchange="document.getElementById('apk_version_id').style.display = "
+                             "document.getElementById('id_apk_prompt').value === 'off' ? 'none': 'block'",
                 ),
                 crispy.Div(
                     'apk_version',
@@ -179,7 +177,8 @@ class PromptUpdateSettingsForm(forms.Form):
                 crispy.Field(
                     'app_prompt',
                     # hide 'app_version' depending on whether app_prompt is off or not
-                    onchange='$("#app_version_id")[$("#id_app_prompt").val() == "off"? "hide": "show"]()',
+                    onchange="document.getElementById('app_version_id').style.display = "
+                             "document.getElementById('id_app_prompt').value === 'off' ? 'none': 'block'",
                 ),
                 crispy.Div(
                     'app_version',

@@ -341,8 +341,7 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     mapping = {
         "properties": {
             "value": {
-                "index": "not_analyzed",
-                "type": "string"
+                "type": "keyword"
             },
             "entropy": {
                 "type": "integer"

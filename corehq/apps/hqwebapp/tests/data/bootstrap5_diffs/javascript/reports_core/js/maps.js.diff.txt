@@ -1,12 +1,10 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
--hqDefine('reports_core/js/bootstrap3/maps', [
-+hqDefine('reports_core/js/bootstrap5/maps', [
-     'jquery',
-     'underscore',
--    'reports/js/bootstrap3/maps_utils',
-+    'reports/js/bootstrap5/maps_utils',
-     'leaflet',
- ], function (
-     $,
+@@ -1,6 +1,6 @@
+ import $ from "jquery";
+ import _ from "underscore";
+-import mapsUtils from "reports/js/bootstrap3/maps_utils";
++import mapsUtils from "reports/js/bootstrap5/maps_utils";
+ import L from "leaflet";
+ 
+ // Reset images needed for map markers, which don't play well with webpack.

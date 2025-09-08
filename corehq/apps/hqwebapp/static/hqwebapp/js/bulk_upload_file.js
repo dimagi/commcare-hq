@@ -1,19 +1,14 @@
-hqDefine("hqwebapp/js/bulk_upload_file", [
-    "jquery",
-    "knockout",
-    "commcarehq",
-], function (
-    $,
-    ko,
-) {
-    $(function () {
-        var $form = $("#bulk_upload_form");
-        if ($form.length) {
-            $form.koApplyBindings({
-                file: ko.observable(),
-            });
-        }
-    });
+import "commcarehq";
+import $ from "jquery";
+import ko from "knockout";
 
-    return 1;
+$(function () {
+    var $form = $("#bulk_upload_form");
+    if ($form.length) {
+        $form.koApplyBindings({
+            file: ko.observable(),
+        });
+    }
 });
+
+export default 1;

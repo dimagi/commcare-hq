@@ -74,6 +74,7 @@ from corehq.apps.accounting.utils.unpaid_invoice import (
     Downgrade,
     InvoiceReminder,
 )
+from corehq.apps.accounting.usage import get_web_user_usage
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
@@ -89,6 +90,7 @@ from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
 from corehq.util.serialization import deserialize_decimal
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.dates import force_to_date
 
 
 @transaction.atomic
@@ -469,28 +471,34 @@ def create_wire_credits_invoice(domain_name,
                                 date_start,
                                 date_end,
                                 contact_emails,
-                                cc_emails=None):
+                                cc_emails=None,
+                                date_due=None):
     deserialized_amount = deserialize_decimal(amount)
+    date_due = date_due or datetime.date.today() + datetime.timedelta(days=30)
+
+    date_start = force_to_date(date_start)
+    date_end = force_to_date(date_end)
+
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
-        date_start=datetime.date.fromisoformat(date_start),
-        date_end=datetime.date.fromisoformat(date_end),
-        date_due=datetime.date.today() + datetime.timedelta(days=30),
+        date_start=date_start,
+        date_end=date_end,
+        date_due=date_due,
         balance=deserialized_amount,
     )
-
     deserialized_items = []
     for item in invoice_items:
         general_credit_cost = item['unit_cost']
-        general_credit_qty = item['quantity']
         general_credit_amount = item['amount']
-        deserialized_credit_amount = deserialize_decimal(general_credit_amount)
-        deserialized_credit_cost = deserialize_decimal(general_credit_cost)
+        general_credit_prepaid = item['applied_credit']
+        general_credit_total = item['total']
         deserialized_items.append({
             'type': item['type'],
-            'amount': deserialized_credit_amount,
-            'unit_cost': deserialized_credit_cost,
-            'quantity': general_credit_qty,
+            'quantity': item['quantity'],
+            'unit_cost': deserialize_decimal(general_credit_cost),
+            'amount': deserialize_decimal(general_credit_amount),
+            'applied_credit': deserialize_decimal(general_credit_prepaid),
+            'total': deserialize_decimal(general_credit_total),
         })
 
     wire_invoice.items = deserialized_items
@@ -857,7 +865,7 @@ def calculate_web_users_in_all_billing_accounts(today=None):
     today = today or datetime.date.today()
     for account in BillingAccount.objects.all():
         record_date = today - relativedelta(days=1)
-        num_users = account.get_web_user_count()
+        num_users = get_web_user_usage(account.get_domains())
         try:
             BillingAccountWebUserHistory.objects.create(
                 billing_account=account,

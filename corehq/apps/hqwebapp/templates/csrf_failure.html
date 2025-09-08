@@ -1,18 +1,118 @@
 {% extends "error_base.html" %}
 {% load i18n %}
-{% block title %}{% trans "Cookies Required for CSRF" %}{% endblock %}
+{% load hq_shared_tags %}
+
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block title %}{% trans "Cookies are disabled!" %}{% endblock title %}
 {% block tabs %}{% endblock tabs %}
-{% block page_name %}{% trans "Cookies must be enabled to use CommCare" %}{% endblock %}
-{% block page_content %}
-  {% blocktrans %}
-    <p>
-      Please try refreshing your browser or clicking the blue "flower" icon in the top left hand corner.
-    </p>
-    <p>
-      No luck? Please clear your browser’s cache, close your browser, and reopen your browser.
-    </p>
-    <p>
-      If you believe you received this error as a mistake, please contact <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
-    </p>
-  {% endblocktrans %}
-{% endblock %}
+{% block content %}
+  <div class="container fs-5 pb-5">
+    <div class="text-center py-5">
+      <img
+        id="cookies-yum-yum"
+        width="264"
+        height="264"
+        src="{% static 'hqwebapp/images/cookie.png' %}"
+        alt="{% trans "Someone ate the cookies." %}"
+      />
+    </div>
+    <div class="page-header border-bottom mb-3">
+      <h1>
+        {% blocktrans %}
+          Oops! Looks like Cookies are disabled!
+        {% endblocktrans %}
+      </h1>
+    </div>
+    <div>
+      <p>
+        {% blocktrans %}
+          No worries! Here's how you can fix it:
+        {% endblocktrans %}
+      </p>
+      <ol class="list-style-none">
+        <li>
+          {% blocktrans %}
+            Try
+            <a
+              href="#"
+              x-data=""
+              @click.prevent="window.location.reload()"
+              class="fw-bold"
+            >refreshing</a> the page.
+          {% endblocktrans %}
+        </li>
+        <li>
+          {% blocktrans %}
+            Click on the CommCare icon <i class="fcc fcc-flower"></i> in the top left corner.
+          {% endblocktrans %}
+        </li>
+        <li>
+          {% blocktrans %}
+            If that doesn't work, clear your browser's cache, then close and reopen your browser.
+          {% endblocktrans %}
+        </li>
+      </ol>
+    </div>
+
+    <div class="d-flex align-items-stretch flex-row pt-4 pb-5">
+      <div class="alert alert-primary border-0 me-2 w-50">
+        <div class="d-flex justify-content-between text-periwinkle">
+          <h2 class="fs-3">{% trans "Need help?" %}</h2>
+          <div class="fs-4">
+            <i class="fa fa-wrench"></i>
+          </div>
+        </div>
+        <p>
+          {% blocktrans %}
+            Check out our step-by-step
+            <a
+              href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950826/Troubleshooting+Support"
+              class="fw-bold"
+              target="_blank"
+            >troubleshooting guide</a> with screenshots and quick tips.
+          {% endblocktrans %}
+        </p>
+      </div>
+      <div class="alert alert-primary border-0 ms-2 w-50">
+        <div class="d-flex justify-content-between text-periwinkle">
+          <h2 class="fs-3">{% trans "Still having trouble?" %}</h2>
+          <div class="fs-4">
+            <i class="fa fa-wrench"></i>
+          </div>
+        </div>
+        <p>
+          {% blocktrans %}
+            We are happy to assist!
+          {% endblocktrans %}<br />
+          {% blocktrans %}
+            Email us at
+            <a
+              href="mailto:{{ support_email }}"
+              class="fw-bold"
+              target="_blank"
+            >{{ support_email }}</a>.
+          {% endblocktrans %}
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block footer %}
+  {% if request.user_agent %}
+    <div class="position-relative w-100 fst-italic">
+      <div
+        class="
+          alert alert-primary border-0 mb-0 mt-0 rounded-0 text-center fs-5
+          position-absolute bottom-0 start-50 translate-middle-x w-100
+        "
+      >
+        <div class="container">
+          You're using: {{ request.user_agent.browser.family }} {{ request.user_agent.browser.version_string }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  {{ block.super }}
+{% endblock footer %}

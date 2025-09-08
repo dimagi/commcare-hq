@@ -28,7 +28,7 @@ from corehq.apps.analytics.tasks import (
     track_clicked_signup_on_hubspot,
     track_confirmed_account_on_hubspot,
     track_web_user_registration_hubspot,
-    track_workflow,
+    track_workflow_noop,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
@@ -38,7 +38,7 @@ from corehq.apps.domain.exceptions import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
     DomainRegistrationForm,
@@ -96,7 +96,8 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             reg_form,
             created_by=None,
             created_via=USER_CHANGE_VIA_WEB,
-            ip=get_ip(self.request)
+            ip=get_ip(self.request),
+            language=getattr(self.request, 'LANGUAGE_CODE', None),
         )
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
@@ -118,10 +119,10 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             persona = reg_form.cleaned_data['persona']
             persona_other = reg_form.cleaned_data['persona_other']
 
-            track_workflow(email, "Requested New Account", {
+            track_workflow_noop(email, "Requested New Account", {
                 'environment': settings.SERVER_ENVIRONMENT,
             })
-            track_workflow(email, "Persona Field Filled Out", {
+            track_workflow_noop(email, "Persona Field Filled Out", {
                 'personachoice': persona,
                 'personaother': persona_other,
             })
@@ -156,26 +157,15 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
         reg_form = RegisterWebUserForm(data['data'], is_sso=idp is not None)
         if reg_form.is_valid():
-            ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
-            appcues_ab_test = ab_test.context['version']
-
             if idp:
-                signup_request = AsyncSignupRequest.create_from_registration_form(
-                    reg_form,
-                    additional_hubspot_data={
-                        "appcues_test": appcues_ab_test,
-                    }
-                )
+                signup_request = AsyncSignupRequest.create_from_registration_form(reg_form)
                 return {
                     'success': True,
-                    'appcues_ab_test': appcues_ab_test,
                     'ssoLoginUrl': idp.get_login_url(signup_request.username),
                     'ssoIdpName': idp.name,
                 }
 
-            self._create_new_account(reg_form, additional_hubspot_data={
-                "appcues_test": appcues_ab_test,
-            })
+            self._create_new_account(reg_form)
             try:
                 request_new_domain(
                     self.request,
@@ -202,7 +192,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 }
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -227,7 +216,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         message = None
         restricted_by_domain = None
         if is_existing:
-            message = _("There is already a user with this email.")
+            current_env_data = ServerLocation.ENVS.get(settings.SERVER_ENVIRONMENT)
+            current_location = current_env_data['short_name'] if current_env_data else _("current")
+            message = _(
+                'This email is already registered in the {location} cloud location. '
+                'Please <a href="{login_link}">sign in here</a>.'
+            ).format(location=current_location, login_link=reverse('login'))
         else:
             domain = email[email.find("@") + 1:]
             for account in BillingAccount.get_enterprise_restricted_signup_accounts():
@@ -261,8 +255,6 @@ class UserRegistrationView(BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
-    @use_jquery_ui
-    @use_ko_validation
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -334,20 +326,6 @@ class RegisterDomainView(TemplateView):
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
     @property
-    def extra_context(self):
-        invitations = [
-            e for e in Invitation.by_email(self.request.user.username)
-            if not e.is_expired
-        ]
-        return {
-            'invitation_links': [{
-                'domain': i.domain,
-                'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
-            } for i in invitations],
-            'show_multiple_invites': len(invitations) > 1,
-        }
-
-    @property
     @memoized
     def is_new_user(self):
         user = self.request.user
@@ -410,7 +388,7 @@ class RegisterDomainView(TemplateView):
                 'requested_domain': domain_name,
                 'current_page': {'page_name': _('Confirm Account')},
             })
-            track_workflow(self.request.user.email, "Created new project")
+            track_workflow_noop(self.request.user.email, "Created new project")
             return render(request, 'registration/confirmation_sent.html', context)
 
         if nextpage:
@@ -424,12 +402,32 @@ class RegisterDomainView(TemplateView):
         if (not request.couch_user) or request.couch_user.is_commcare_user():
             raise Http404()
 
-        context = super(RegisterDomainView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context.update(get_domain_context())
+
+        invitations = [
+            e for e in Invitation.by_email(self.request.user.username)
+            if not e.is_expired
+        ]
+        invitation_links = [{
+            'domain': i.domain,
+            'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
+        } for i in invitations]
+
+        server_locations = [{
+            'env': env,
+            'subdomain': server['subdomain'],
+            'name': server['long_name'],
+        } for env, server in ServerLocation.ENVS.items() if env != settings.SERVER_ENVIRONMENT]
 
         context.update({
             'form': kwargs.get('form') or DomainRegistrationForm(),
+            'invitation_links': invitation_links,
             'is_new_user': self.is_new_user,
+            'name': self.request.user.first_name or self.request.user.username,
+            'pricing_page_url': settings.PRICING_PAGE_URL,
+            'server_locations': server_locations,
+            'show_multiple_invites': len(invitations) > 1,
         })
         return context
 
@@ -539,7 +537,7 @@ def confirm_domain(request, guid=''):
                 'Your account has been successfully activated.  Thank you for taking '
                 'the time to confirm your email address: %s.'
             % (requesting_user.username))
-        track_workflow(requesting_user.email, "Confirmed new project")
+        track_workflow_noop(requesting_user.email, "Confirmed new project")
         track_confirmed_account_on_hubspot.delay(requesting_user.get_id)
         request.session['CONFIRM'] = True
 

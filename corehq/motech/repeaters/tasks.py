@@ -77,6 +77,7 @@ from datetime import datetime, timedelta
 from inspect import cleandoc
 
 from django.conf import settings
+from django.db import connection
 
 from celery import chord
 from celery.schedules import crontab
@@ -114,6 +115,7 @@ from .const import (
     State,
 )
 from .models import (
+    DataSourceUpdate,
     Repeater,
     RepeatRecord,
     domain_can_forward,
@@ -491,21 +493,22 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
     """
     repeater = Repeater.objects.get(id=repeater_id)
     try:
-        if all(s in (State.Empty, None) for s in repeat_record_states):
-            # We can't tell anything about the remote endpoint.
-            return
-        success_or_invalid = (State.Success, State.InvalidPayload)
-        if any(s in success_or_invalid for s in repeat_record_states):
-            # The remote endpoint appears to be healthy.
-            repeater.reset_backoff()
-        else:
-            # All the payloads that were sent failed. Try again later.
-            metrics_counter(
-                'commcare.repeaters.process_repeaters.repeater_backoff',
-                tags={'domain': repeater.domain},
-            )
-            more = False
-            repeater.set_backoff()
+        if toggles.BACKOFF_REPEATERS.enabled(repeater.domain, namespace=toggles.NAMESPACE_DOMAIN):
+            if all(s in (State.Empty, None) for s in repeat_record_states):
+                # We can't tell anything about the remote endpoint.
+                return
+            success_or_invalid = (State.Success, State.InvalidPayload)
+            if any(s in success_or_invalid for s in repeat_record_states):
+                # The remote endpoint appears to be healthy.
+                repeater.reset_backoff()
+            else:
+                # All the payloads that were sent failed. Try again later.
+                metrics_counter(
+                    'commcare.repeaters.process_repeaters.repeater_backoff',
+                    tags={'domain': repeater.domain},
+                )
+                more = False
+                repeater.set_backoff()
     finally:
         lock = RepeaterLock(repeater_id, lock_token)
         if more:
@@ -552,6 +555,21 @@ class RepeaterLock:
         if self.token:
             lock.local.token = self.token
         return lock
+
+
+@periodic_task(
+    run_every=crontab(hour='5', minute='0', day_of_month='1'),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
+def purge_old_datasourceupdates():
+    table_name_format = f'{DataSourceUpdate.Meta.db_table}_y%Ym%m'
+    oldest_date = DataSourceUpdate.objects.get_oldest_date()
+    oldest_allowed = datetime.today() - DataSourceUpdate.MAX_AGE
+    while oldest_date and oldest_date < oldest_allowed:
+        table_name = oldest_date.strftime(table_name_format)
+        with connection.cursor() as cursor:
+            cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
+        oldest_date += timedelta(days=31)
 
 
 metrics_gauge_task(

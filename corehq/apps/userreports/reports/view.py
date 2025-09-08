@@ -31,11 +31,6 @@ from soil.util import get_download_context
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_daterangepicker,
-    use_jquery_ui,
-)
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
@@ -159,9 +154,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             return self._domain
         return super().domain
 
-    @use_daterangepicker
-    @use_jquery_ui
-    @use_datatables
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
@@ -728,6 +720,6 @@ def ucr_download_job_poll(request, domain,
 def _has_permission(domain, user, config_id):
     if domain is None:
         return False
-    if not user.is_active:
+    if not user.is_active_in_domain(domain):
         return False
     return user.can_view_report(domain, get_ucr_class_name(config_id))

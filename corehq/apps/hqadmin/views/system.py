@@ -33,7 +33,6 @@ from corehq.apps.hqadmin.utils import get_celery_stats
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
 )
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.receiverwrapper.rate_limiter import (
     global_submission_rate_limiter,
 )
@@ -45,8 +44,6 @@ class SystemInfoView(BaseAdminSectionView):
     urlname = 'system_info'
     template_name = "hqadmin/system_info.html"
 
-    @use_datatables
-    @use_jquery_ui
     @method_decorator(require_superuser_or_contractor)
     def dispatch(self, request, *args, **kwargs):
         return super(SystemInfoView, self).dispatch(request, *args, **kwargs)

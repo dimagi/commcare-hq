@@ -1,12 +1,14 @@
+import uuid
+import pytest
+from casexml.apps.case.mock import CaseFactory
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseFactory
 from corehq.apps.data_cleaning.models import (
     BulkEditChange,
-    EditActionType,
-    BulkEditSession,
     BulkEditRecord,
+    BulkEditSession,
+    EditActionType,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -45,12 +47,13 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.REPLACE,
             replace_string='Esperanza',
         )
-        self.assertEqual(change.edited_value(self.case), 'Esperanza')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == 'Esperanza'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'town': 'Segunda',
-            }), 'Esperanza'
-        )
+            }
+        ) == 'Esperanza'
 
     def test_replace_none(self):
         change = BulkEditChange(
@@ -58,7 +61,7 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.REPLACE,
             replace_string='Esperanza',
         )
-        self.assertEqual(change.edited_value(self.case), 'Esperanza')
+        assert change.edited_value(self.case) == 'Esperanza'
 
     def test_find_replace(self):
         change = BulkEditChange(
@@ -67,12 +70,13 @@ class BulkEditChangeTest(TestCase):
             find_string='Playa',
             replace_string='Punta',
         )
-        self.assertEqual(change.edited_value(self.case), 'Punta Bastimento')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == 'Punta Bastimento'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'favorite_beach': 'Bastimento Playa',
-            }), 'Bastimento Punta'
-        )
+            }
+        ) == 'Bastimento Punta'
 
     def test_find_replace_none(self):
         change = BulkEditChange(
@@ -81,7 +85,7 @@ class BulkEditChangeTest(TestCase):
             find_string='Playa',
             replace_string='Punta',
         )
-        self.assertEqual(change.edited_value(self.case), None)
+        assert change.edited_value(self.case) is None
 
     def test_find_replace_regex(self):
         change = BulkEditChange(
@@ -91,12 +95,13 @@ class BulkEditChangeTest(TestCase):
             find_string='(\\s)+',
             replace_string=' ',
         )
-        self.assertEqual(change.edited_value(self.case), 'Brittney Claasen')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == 'Brittney Claasen'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'friend': 'brittney \t\nclaasen',
-            }), 'brittney claasen'
-        )
+            },
+        ) == 'brittney claasen'
 
     def test_find_replace_regex_none(self):
         change = BulkEditChange(
@@ -106,26 +111,27 @@ class BulkEditChangeTest(TestCase):
             find_string='(\\s)+',
             replace_string=' ',
         )
-        self.assertEqual(change.edited_value(self.case), None)
+        assert change.edited_value(self.case) is None
 
     def test_strip(self):
         change = BulkEditChange(
             prop_id='art',
             action_type=EditActionType.STRIP,
         )
-        self.assertEqual(change.edited_value(self.case), ':)')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == ':)'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'art': '    :-)\t\n  ',
-            }), ':-)'
-        )
+            },
+        ) == ':-)'
 
     def test_strip_none(self):
         change = BulkEditChange(
             prop_id='unset',
             action_type=EditActionType.STRIP,
         )
-        self.assertEqual(change.edited_value(self.case), None)
+        assert change.edited_value(self.case) is None
 
     def test_copy_replace(self):
         change = BulkEditChange(
@@ -133,13 +139,14 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.COPY_REPLACE,
             copy_from_prop_id='favorite_beach',
         )
-        self.assertEqual(change.edited_value(self.case), 'Playa Bastimento')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == 'Playa Bastimento'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'favorite_beach': 'playa bastimento',
                 'nearest_ocean': 'Atlantic',
-            }), 'playa bastimento'
-        )
+            },
+        ) == 'playa bastimento'
 
     def test_copy_replace_none(self):
         change = BulkEditChange(
@@ -147,121 +154,127 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.COPY_REPLACE,
             copy_from_prop_id='favorite_beach',
         )
-        self.assertEqual(change.edited_value(self.case), 'Playa Bastimento')
+        assert change.edited_value(self.case) == 'Playa Bastimento'
 
     def test_title_case(self):
         change = BulkEditChange(
             prop_id='nearest_ocean',
             action_type=EditActionType.TITLE_CASE,
         )
-        self.assertEqual(change.edited_value(self.case), 'Atlantic')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == 'Atlantic'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'nearest_ocean': 'atlantic  ',
-            }), 'Atlantic  '
-        )
+            },
+        ) == 'Atlantic  '
 
     def test_title_case_none(self):
         change = BulkEditChange(
             prop_id='unset',
             action_type=EditActionType.TITLE_CASE,
         )
-        self.assertEqual(change.edited_value(self.case), None)
+        assert change.edited_value(self.case) is None
 
     def test_upper_case(self):
         change = BulkEditChange(
             prop_id='town',
             action_type=EditActionType.UPPER_CASE,
         )
-        self.assertEqual(change.edited_value(self.case), 'ISABEL SEGUNDA')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == 'ISABEL SEGUNDA'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'town': 'isbel',
-            }), 'ISBEL'
-        )
+            },
+        ) == 'ISBEL'
 
     def test_upper_case_none(self):
         change = BulkEditChange(
             prop_id='unset',
             action_type=EditActionType.UPPER_CASE,
         )
-        self.assertEqual(change.edited_value(self.case), None)
+        assert change.edited_value(self.case) is None
 
     def test_lower_case(self):
         change = BulkEditChange(
             prop_id='town',
             action_type=EditActionType.LOWER_CASE,
         )
-        self.assertEqual(change.edited_value(self.case), 'isabel segunda')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == 'isabel segunda'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'town': 'SEGUNDA',
-            }), 'segunda'
-        )
+            },
+        ) == 'segunda'
 
     def test_lower_case_none(self):
         change = BulkEditChange(
             prop_id='unset',
             action_type=EditActionType.LOWER_CASE,
         )
-        self.assertEqual(change.edited_value(self.case), None)
+        assert change.edited_value(self.case) is None
 
     def test_make_empty(self):
         change = BulkEditChange(
             prop_id='nearest_ocean',
             action_type=EditActionType.MAKE_EMPTY,
         )
-        self.assertEqual(change.edited_value(self.case), '')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == ''
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'nearest_ocean': 'pacific',
-            }), ''
-        )
+            },
+        ) == ''
 
     def test_empty_none(self):
         change = BulkEditChange(
             prop_id='unset',
             action_type=EditActionType.MAKE_EMPTY,
         )
-        self.assertEqual(change.edited_value(self.case), '')
+        assert change.edited_value(self.case) == ''
 
     def test_make_null(self):
         change = BulkEditChange(
             prop_id='nearest_ocean',
             action_type=EditActionType.MAKE_NULL,
         )
-        self.assertEqual(change.edited_value(self.case), None)
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) is None
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'nearest_ocean': 'pacific',
-            }), None
-        )
+            },
+        ) is None
 
     def test_make_null_none(self):
         change = BulkEditChange(
             prop_id='unset',
             action_type=EditActionType.MAKE_NULL,
         )
-        self.assertEqual(change.edited_value(self.case), None)
+        assert change.edited_value(self.case) is None
 
     def test_reset(self):
         change = BulkEditChange(
             prop_id='nearest_ocean',
             action_type=EditActionType.RESET,
         )
-        self.assertEqual(change.edited_value(self.case), 'atlantic')
-        self.assertEqual(change.edited_value(
-            self.case, edited_properties={
+        assert change.edited_value(self.case) == 'atlantic'
+        assert change.edited_value(
+            self.case,
+            edited_properties={
                 'nearest_ocean': 'pacific',
-            }), 'atlantic'
-        )
+            },
+        ) == 'atlantic'
 
     def test_reset_none(self):
         change = BulkEditChange(
             prop_id='unset',
             action_type=EditActionType.RESET,
         )
-        self.assertIsNone(change.edited_value(self.case))
+        assert change.edited_value(self.case) is None
 
 
 class BulkEditRecordChangesTest(TestCase):
@@ -274,17 +287,13 @@ class BulkEditRecordChangesTest(TestCase):
         cls.domain = create_domain(cls.domain_name)
         cls.addClassCleanup(cls.domain.delete)
 
-        cls.web_user = WebUser.create(
-            cls.domain.name, 'leaf@treeeeees.com', 'testpwd', None, None
-        )
+        cls.web_user = WebUser.create(cls.domain.name, 'leaf@treeeeees.com', 'testpwd', None, None)
         cls.user = User.objects.get(username=cls.web_user.username)
         cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
 
     def setUp(self):
         super().setUp()
-        self.session = BulkEditSession.new_case_session(
-            self.user, self.domain_name, self.case_type
-        )
+        self.session = BulkEditSession.objects.new_case_session(self.user, self.domain_name, self.case_type)
         factory = CaseFactory(domain=self.domain_name)
         self.case = factory.create_case(
             case_type=self.case_type,
@@ -304,7 +313,7 @@ class BulkEditRecordChangesTest(TestCase):
                 'pot_type': 'terra Cotta',
                 'friend': 'sugar  \n  wormWood  ',
                 'light_level': 'full_sun',
-            }
+            },
         )
 
     def tearDown(self):
@@ -316,8 +325,8 @@ class BulkEditRecordChangesTest(TestCase):
             session=self.session,
             doc_id=self.case.case_id,
         )
-        self.assertFalse(record.has_property_updates)
-        self.assertEqual(record.get_edited_case_properties(self.case), {})
+        assert not record.has_property_updates
+        assert record.get_edited_case_properties(self.case) == {}
 
     def test_single_change_to_record(self):
         record = BulkEditRecord.objects.create(
@@ -330,12 +339,12 @@ class BulkEditRecordChangesTest(TestCase):
             action_type=EditActionType.MAKE_NULL,
         )
         change.records.add(record)
-        self.assertTrue(record.has_property_updates)
+        assert record.has_property_updates
         edited_props = record.get_edited_case_properties(self.case)
-        self.assertEqual(edited_props, {'pot_type': None})
-        self.assertEqual(record.calculated_change_id, change.change_id)
-        self.assertEqual(record.calculated_properties, edited_props)
-        self.assertFalse(record.has_property_updates)
+        assert edited_props == {'pot_type': None}
+        assert record.calculated_change_id == change.change_id
+        assert record.calculated_properties == edited_props
+        assert not record.has_property_updates
 
     def test_multiple_changes_and_views_to_record(self):
         record = BulkEditRecord.objects.create(
@@ -356,11 +365,11 @@ class BulkEditRecordChangesTest(TestCase):
         change_two.records.add(record)
 
         # simulating the first view of the case in the table:
-        self.assertTrue(record.has_property_updates)
+        assert record.has_property_updates
         edited_props = record.get_edited_case_properties(self.case)
-        self.assertEqual(edited_props, {'name': 'WILD  \nRYE', 'pot_type': 'Terra Cotta'})
-        self.assertEqual(record.calculated_change_id, change_two.change_id)
-        self.assertEqual(record.calculated_properties, edited_props)
+        assert edited_props == {'name': 'WILD  \nRYE', 'pot_type': 'Terra Cotta'}
+        assert record.calculated_change_id == change_two.change_id
+        assert record.calculated_properties == edited_props
 
         change_three = BulkEditChange.objects.create(
             session=self.session,
@@ -373,11 +382,11 @@ class BulkEditRecordChangesTest(TestCase):
         change_three.records.add(record)
 
         # simulating the second view of the case in the table:
-        self.assertTrue(record.has_property_updates)
+        assert record.has_property_updates
         edited_props_two = record.get_edited_case_properties(self.case)
-        self.assertEqual(edited_props_two, {'name': 'WILD RYE', 'pot_type': 'Terra Cotta'})
-        self.assertEqual(record.calculated_change_id, change_three.change_id)
-        self.assertEqual(record.calculated_properties, edited_props_two)
+        assert edited_props_two == {'name': 'WILD RYE', 'pot_type': 'Terra Cotta'}
+        assert record.calculated_change_id == change_three.change_id
+        assert record.calculated_properties == edited_props_two
 
     def test_changes_to_multiple_records(self):
         record_one = BulkEditRecord.objects.create(
@@ -401,11 +410,11 @@ class BulkEditRecordChangesTest(TestCase):
         )
         change_two.records.add(record_one)
         edited_props_one = record_one.get_edited_case_properties(self.case)
-        self.assertEqual(record_one.calculated_change_id, change_two.change_id)
-        self.assertEqual(edited_props_one, {'name': 'Wild  \nRye'})
+        assert record_one.calculated_change_id == change_two.change_id
+        assert edited_props_one == {'name': 'Wild  \nRye'}
         edited_props_two = record_two.get_edited_case_properties(self.case_two)
-        self.assertEqual(record_two.calculated_change_id, change_one.change_id)
-        self.assertEqual(edited_props_two, {'name': 'Zesty flora'})
+        assert record_two.calculated_change_id == change_one.change_id
+        assert edited_props_two == {'name': 'Zesty flora'}
 
     def test_get_edited_case_properties_with_other_case(self):
         record = BulkEditRecord.objects.create(
@@ -418,5 +427,61 @@ class BulkEditRecordChangesTest(TestCase):
             action_type=EditActionType.LOWER_CASE,
         )
         change.records.add(record)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="case.case_id doesn't match record.doc_id"):
             record.get_edited_case_properties(self.case_two)
+
+
+class BulkEditChangeManagerTests(TestCase):
+    domain_name = 'forest'
+    case_type = 'plant'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.web_user = WebUser.create(cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None)
+        cls.django_user = User.objects.get(username=cls.web_user.username)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
+
+    def setUp(self):
+        super().setUp()
+        self.session = BulkEditSession.objects.new_case_session(self.django_user, self.domain_name, self.case_type)
+
+    def test_apply_inline_edit(self):
+        doc_id = str(uuid.uuid4())
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=doc_id,
+        )
+        change = record.changes.last()
+        assert change is None
+        self.session.changes.apply_inline_edit(
+            record=record,
+            prop_id='town',
+            value='Esperanza',
+        )
+        change = record.changes.last()
+        assert change.prop_id == 'town'
+        assert change.action_type == EditActionType.REPLACE
+        assert change.replace_string == 'Esperanza'
+
+    def test_apply_reset(self):
+        doc_id = str(uuid.uuid4())
+        record = BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=doc_id,
+        )
+        self.session.changes.apply_inline_edit(
+            record=record,
+            prop_id='town',
+            value='Esperanza',
+        )
+        self.session.changes.apply_reset(
+            record=record,
+            prop_id='town',
+        )
+        change = record.changes.last()
+        assert change.prop_id == 'town'
+        assert change.action_type == EditActionType.RESET

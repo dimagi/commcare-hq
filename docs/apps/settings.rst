@@ -67,7 +67,7 @@ Optional
    type='properties' (default).
 -  ``toggle`` - If specified, the property will only be shown if the
    given toggle is enabled. The value should be an identifier for a
-   toggle in ``corehq/toggles.py``, e.g. "CUSTOM\_APP\_BASE\_URL"
+   toggle in ``corehq/toggles.py``, e.g. ``CUSTOM_APP_BASE_URL``
 -  ``warning`` - Text displayed if the value of the setting is invalid
 
 

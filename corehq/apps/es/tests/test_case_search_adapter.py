@@ -8,7 +8,7 @@ from corehq.apps.es.case_search import (
     ElasticCaseSearch,
     case_search_adapter,
 )
-from corehq.apps.es.case_search_bha import case_search_bha_adapter
+from corehq.apps.es.case_search_sub import case_search_bha_adapter
 from corehq.apps.es.client import (
     ElasticMultiplexAdapter,
     create_document_adapter,

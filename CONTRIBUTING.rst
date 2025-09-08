@@ -111,20 +111,11 @@ Updating requirements
 
 Python
 ~~~~~~
-To update python requirements, edit:
-
-* ``requirements/requirements.in`` for packages for all environments
-
-* ``requirements/prod-requirements.in`` for packages for production environments only
-
-* ``requirements/test-requirements.in`` for packages for test environment only
-
-* ``requirements/dev-requirements.in`` for packages for dev environment only
-
-and run ``make requirements``.
+To update python requirements, add new requirement(s) to ``pyproject.toml`` or
+run ``uv lock --upgrade-package=<package-name>`` to update a specific package.
 
 To upgrade all requirements to their latest allowed version, you can run
-``make upgrade-requirements``—this usually results in a large number of upgrades
+``uv lock --upgrade``—this usually results in a large number of upgrades
 and is not something we can merge easily, but it is sometimes a useful exploratory first step.
 
 Javascript

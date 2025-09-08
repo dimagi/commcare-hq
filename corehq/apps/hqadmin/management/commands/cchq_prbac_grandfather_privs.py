@@ -94,13 +94,19 @@ class Command(BaseCommand):
 
 
 def _confirm_community_deprecated(skipped_editions, noinput=False):
-    if 'Community' in skipped_editions and 'Free' not in skipped_editions and not noinput:
+    mismatched_edition = 'Community' in skipped_editions and 'Free' not in skipped_editions
+    if mismatched_edition and not noinput:
         community_deprecated_msg = (
             "Community Edition was changed to Free Edition in April 2025.\n"
             "You should probably replace 'Community' with 'Free', or include both to be on the safe side."
             "\nProceed anyway?"
         )
         return _confirm(community_deprecated_msg)
+    if mismatched_edition and noinput:
+        message = "Warning: The 'Community' edition is deprecated. Using 'Free' edition instead."
+        print(f"\033[1m\033[93m{message}\033[0m")
+        skipped_editions.remove('Community')
+        skipped_editions.append('Free')
     return True
 
 

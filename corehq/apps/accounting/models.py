@@ -1,5 +1,6 @@
 import datetime
 import itertools
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -30,6 +31,7 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
     EXCHANGE_RATE_DECIMAL_PLACES,
+    PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
     SMALL_INVOICE_THRESHOLD,
 )
 from corehq.apps.accounting.emails import (
@@ -63,6 +65,7 @@ from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     get_privileges,
     is_active_subscription,
+    is_date_range_overlapping,
     log_accounting_error,
     log_accounting_info,
     quantize_accounting_decimal,
@@ -73,10 +76,7 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.dbaccessors import (
-    get_active_web_usernames_by_domain,
-    get_web_user_count,
-)
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
@@ -566,7 +566,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         old_web_user = WebUser.get_by_username(old_username)
         # Do not send email to inactive user
-        if old_web_user and not old_web_user.is_active:
+        if old_web_user and not old_web_user.is_active_in_domain(domain):
             return
         old_user_first_name = old_web_user.first_name if old_web_user else old_username
         email = old_web_user.get_email() if old_web_user else old_username
@@ -633,13 +633,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return web_users
 
-    def get_web_user_count(self):
-        domains = self.get_domains()
-        count = 0
-        for domain in domains:
-            count += get_web_user_count(domain, include_inactive=False)
-        return count
-
     @staticmethod
     def should_show_sms_billable_report(domain):
         account = BillingAccount.get_account_by_domain(domain)
@@ -665,11 +658,11 @@ class BillingContactInfo(models.Model):
         max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
     )
     company_name = models.CharField(
-        max_length=50, null=True, blank=True,
+        max_length=100, null=True, blank=True,
         verbose_name=_("Company / Organization")
     )
     first_line = models.CharField(
-        max_length=50, null=False,
+        max_length=50, null=False, blank=True,
         verbose_name=_("Address First Line")
     )
     second_line = models.CharField(
@@ -677,17 +670,17 @@ class BillingContactInfo(models.Model):
         verbose_name=_("Address Second Line")
     )
     city = models.CharField(
-        max_length=50, null=False, verbose_name=_("City")
+        max_length=50, null=False, blank=True, verbose_name=_("City")
     )
     state_province_region = models.CharField(
-        max_length=50, null=False,
+        max_length=50, null=False, blank=True,
         verbose_name=_("State / Province / Region"),
     )
     postal_code = models.CharField(
-        max_length=20, null=False, verbose_name=_("Postal Code")
+        max_length=20, null=False, blank=True, verbose_name=_("Postal Code")
     )
     country = models.CharField(
-        max_length=50, null=False, verbose_name=_("Country")
+        max_length=50, null=False, blank=True, verbose_name=_("Country")
     )
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -1009,6 +1002,7 @@ class SoftwarePlanVersion(models.Model):
                        'included': 'Infinite' if r.monthly_limit == UNLIMITED_FEATURE_USAGE else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
+            'is_annual_plan': self.plan.is_annual_plan,
         })
         return desc
 
@@ -1347,36 +1341,10 @@ class Subscription(models.Model):
         ).exclude(
             id=self.id,
         ):
-            related_has_no_end = sub.date_end is None
-            current_has_no_end = date_end is None
-            start_before_related_end = sub.date_end is not None and date_start < sub.date_end
-            start_before_related_start = date_start < sub.date_start
-            start_after_related_start = date_start > sub.date_start
-            end_before_related_end = (
-                date_end is not None and sub.date_end is not None
-                and date_end < sub.date_end
-            )
-            end_after_related_end = (
-                date_end is not None and sub.date_end is not None
-                and date_end > sub.date_end
-            )
-            end_after_related_start = date_end is not None and date_end > sub.date_start
-
-            if (
-                (start_before_related_end and start_after_related_start)
-                or (start_after_related_start and related_has_no_end)
-                or (end_after_related_start and end_before_related_end)
-                or (end_after_related_start and related_has_no_end)
-                or (start_before_related_start and end_after_related_end)
-                or (start_before_related_end and current_has_no_end)
-                or (current_has_no_end and related_has_no_end)
-            ):
+            if is_date_range_overlapping(date_start, date_end, sub.date_start, sub.date_end):
                 raise SubscriptionAdjustmentError(
-                    "The start date of %(start_date)s conflicts with the "
-                    "subscription dates to %(related_sub)s." % {
-                        'start_date': self.date_start.strftime(USER_DATE_FORMAT),
-                        'related_sub': sub,
-                    }
+                    "The start date and/or end date of the new subscription "
+                    f"conflicts with the subscription dates to {sub}."
                 )
 
     def update_subscription(self, date_start, date_end,
@@ -1500,7 +1468,7 @@ class Subscription(models.Model):
         subscription. The current subscription will always end immediately
         (today) and the date_start of the new subscription will always be today.
         """
-        from corehq.apps.analytics.tasks import track_workflow
+        from corehq.apps.analytics.tasks import track_workflow_noop
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -1572,9 +1540,9 @@ class Subscription(models.Model):
         upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
         if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
             if change_status_result.adjustment_reason in upgrade_reasons:
-                track_workflow(web_user, 'Changed Plan: Upgrade')
+                track_workflow_noop(web_user, 'Changed Plan: Upgrade')
             if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
-                track_workflow(web_user, 'Changed Plan: Downgrade')
+                track_workflow_noop(web_user, 'Changed Plan: Downgrade')
 
         return new_subscription
 
@@ -1634,7 +1602,7 @@ class Subscription(models.Model):
             )
 
         if new_version.plan.is_annual_plan:
-            new_date_end = self.date_end.replace(year=self.date_end.year + 1)
+            new_date_end = self.date_end + relativedelta(months=PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
         else:
             new_date_end = None
 
@@ -3349,14 +3317,13 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                     )
 
         if invoice.is_wire and invoice.is_prepayment:
-            applied_credit = 0
             for item in invoice.items:
                 template.add_item(item['type'],
                                   item['quantity'],
                                   item['unit_cost'],
                                   item['amount'],
-                                  applied_credit,
-                                  item['amount'])
+                                  item['applied_credit'],
+                                  item['total'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)
@@ -3560,59 +3527,40 @@ class CreditLine(models.Model):
 
     @classmethod
     def get_credits_for_line_item_in_invoice(cls, line_item, feature_type, is_product):
-        if feature_type:
-            return itertools.chain(
-                cls.get_credits_by_subscription_and_features(
-                    line_item.invoice.subscription,
-                    feature_type=feature_type,
-                ),
-                cls.get_credits_for_account(
-                    line_item.invoice.subscription.account,
-                    feature_type=feature_type,
-                )
-            )
-        if is_product:
-            return itertools.chain(
-                cls.get_credits_by_subscription_and_features(
-                    line_item.invoice.subscription,
-                    is_product=True,
-                ),
-                cls.get_credits_for_account(
-                    line_item.invoice.subscription.account,
-                    is_product=True,
-                )
-            )
+        return cls.get_credits_for_invoice(
+            line_item.invoice,
+            feature_type=feature_type,
+            is_product=is_product
+        )
 
     @classmethod
     def get_credits_for_line_item_in_customer_invoice(cls, line_item, feature_type, is_product):
-        if feature_type:
-            return itertools.chain(
-                cls.get_credits_for_subscriptions(
-                    subscriptions=line_item.invoice.subscriptions.all(),
-                    feature_type=feature_type
-                ),
-                cls.get_credits_for_account(
-                    account=line_item.invoice.account,
-                    feature_type=feature_type
-                )
+        return itertools.chain(
+            cls.get_credits_for_subscriptions(
+                subscriptions=line_item.invoice.subscriptions.all(),
+                feature_type=feature_type,
+                is_product=is_product,
+            ),
+            cls.get_credits_for_account(
+                account=line_item.invoice.account,
+                feature_type=feature_type,
+                is_product=is_product,
             )
-        if is_product:
-            return itertools.chain(
-                cls.get_credits_for_subscriptions(
-                    subscriptions=line_item.invoice.subscriptions.all(),
-                    is_product=is_product
-                ),
-                cls.get_credits_for_account(
-                    account=line_item.invoice.account,
-                    is_product=is_product
-                )
-            )
+        )
 
     @classmethod
-    def get_credits_for_invoice(cls, invoice):
+    def get_credits_for_invoice(cls, invoice, feature_type=None, is_product=False):
         relevant_credits = [
-            cls.get_credits_by_subscription_and_features(invoice.subscription),
-            cls.get_credits_for_account(invoice.subscription.account)
+            cls.get_credits_by_subscription_and_features(
+                invoice.subscription,
+                feature_type=feature_type,
+                is_product=is_product,
+            ),
+            cls.get_credits_for_account(
+                invoice.subscription.account,
+                feature_type=feature_type,
+                is_product=is_product,
+            )
         ]
         if invoice.subscription.next_subscription:
             # check for a transfer of subscription credits due to upgrades by
@@ -3623,13 +3571,19 @@ class CreditLine(models.Model):
             )
             if active_sub.account == invoice.subscription.account:
                 relevant_credits.append(
-                    cls.get_credits_by_subscription_and_features(active_sub)
+                    cls.get_credits_by_subscription_and_features(
+                        active_sub,
+                        feature_type=feature_type,
+                        is_product=is_product,
+                    )
                 )
             elif (invoice.subscription.next_subscription.account
                   == invoice.subscription.account):
                 relevant_credits.append(
                     cls.get_credits_by_subscription_and_features(
-                        invoice.subscription.next_subscription
+                        invoice.subscription.next_subscription,
+                        feature_type=feature_type,
+                        is_product=is_product,
                     )
                 )
         return itertools.chain(*relevant_credits)

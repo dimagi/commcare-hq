@@ -1,32 +1,28 @@
 --- 
 +++ 
-@@ -1,14 +1,14 @@
--hqDefine("userreports/js/bootstrap3/configurable_report", [
-+hqDefine("userreports/js/bootstrap5/configurable_report", [
-     'jquery',
-     'underscore',
-     'analytix/js/kissmetrix',
--    'hqwebapp/js/bootstrap3/main',
-+    'hqwebapp/js/bootstrap5/main',
-     'hqwebapp/js/initial_page_data',
--    'reports/js/bootstrap3/hq_report',
--    'reports/js/bootstrap3/report_config_models',
--    'reports/js/bootstrap3/standard_hq_report',
-+    'reports/js/bootstrap5/hq_report',
-+    'reports/js/bootstrap5/report_config_models',
-+    'reports/js/bootstrap5/standard_hq_report',
-     'userreports/js/report_analytix',
--    'userreports/js/bootstrap3/base',
-+    'userreports/js/bootstrap5/base',
-     'commcarehq',
- ], function (
-     $,
-@@ -70,7 +70,7 @@
-         $("#savedReports").koApplyBindings(reportConfigsView);
-         reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
+@@ -2,12 +2,12 @@
+ import $ from "jquery";
+ import _ from "underscore";
+ import noopMetrics from "analytix/js/noopMetrics";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import reportConfigModels from "reports/js/bootstrap3/report_config_models";
+-import standardHQReportModule from "reports/js/bootstrap3/standard_hq_report";
++import reportConfigModels from "reports/js/bootstrap5/report_config_models";
++import standardHQReportModule from "reports/js/bootstrap5/standard_hq_report";
+ import analytics from "userreports/js/report_analytix";
+-import "userreports/js/bootstrap3/base";
++import "userreports/js/bootstrap5/base";
  
--        $('#email-enabled').tooltip({
-+        $('#email-enabled').tooltip({  /* todo B5: js-tooltip */
-             placement: 'right',
-             html: true,
-             title: gettext("You can email a saved version<br />of this report."),
+ $(function () {
+     standardHQReportModule.getStandardHQReport();
+@@ -58,7 +58,7 @@
+     $("#savedReports").koApplyBindings(reportConfigsView);
+     reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
+ 
+-    $('#email-enabled').tooltip({
++    $('#email-enabled').tooltip({  /* todo B5: js-tooltip */
+         placement: 'right',
+         html: true,
+         title: gettext("You can email a saved version<br />of this report."),

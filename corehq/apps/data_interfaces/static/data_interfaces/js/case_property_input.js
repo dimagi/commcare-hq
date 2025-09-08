@@ -23,66 +23,56 @@
  *       caseTypeObservable: $root.caseType,
  *     "></case-property-input>
  */
-hqDefine('data_interfaces/js/case_property_input', [
-    'jquery',
-    'knockout',
-    'underscore',
-    'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/privileges',
-    'hqwebapp/js/select2_knockout_bindings.ko',
-], function (
-    $,
-    ko,
-    _,
-    initialPageData,
-    privileges,
-) {
-    var component = {
-        viewModel: function (params) {
-            var self = this;
+import ko from "knockout";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import privileges from "hqwebapp/js/privileges";
+import "hqwebapp/js/select2_knockout_bindings.ko";
 
-            self.caseTypeObservable = params.caseTypeObservable;
-            self.valueObservable = params.valueObservable;
-            self.disabled = initialPageData.get('read_only_mode') || false;
+var component = {
+    viewModel: function (params) {
+        var self = this;
 
-            if ('allCaseProperties' in params) {
-                self.allCaseProperties = params.allCaseProperties;
-            } else {
-                self.allCaseProperties = ko.observable(initialPageData.get("all_case_properties"));
+        self.caseTypeObservable = params.caseTypeObservable;
+        self.valueObservable = params.valueObservable;
+        self.disabled = initialPageData.get('read_only_mode') || false;
+
+        if ('allCaseProperties' in params) {
+            self.allCaseProperties = params.allCaseProperties;
+        } else {
+            self.allCaseProperties = ko.observable(initialPageData.get("all_case_properties"));
+        }
+        self.casePropertyNames = ko.computed(function () {
+            if (!self.allCaseProperties()) {
+                return [];
             }
-            self.casePropertyNames = ko.computed(function () {
-                if (!self.allCaseProperties()) {
-                    return [];
-                }
-                return self.allCaseProperties()[self.caseTypeObservable()] || [];
-            });
+            return self.allCaseProperties()[self.caseTypeObservable()] || [];
+        });
 
-            self.showDropdown = privileges.hasPrivilege('data_dictionary');
-            self.placeholder = gettext("case property name");
-        },
-        template: '<div>\
-          <!-- ko if: showDropdown -->\
-            <select class="form-control"\
-                    required\
-                    data-bind="value: valueObservable, autocompleteSelect2: casePropertyNames"\
-            ></select>\
-          <!-- /ko -->\
-          <!-- ko ifnot: showDropdown -->\
-          <input type="text"\
-                 required\
-                 class="textinput form-control"\
-                 data-bind="value: valueObservable, disable: disabled,\
-                 attr: { placeholder: placeholder }"\
-          />\
-          <!-- /ko -->\
-        </div>',
-    };
+        self.showDropdown = privileges.hasPrivilege('data_dictionary');
+        self.placeholder = gettext("case property name");
+    },
+    template: '<div>\
+      <!-- ko if: showDropdown -->\
+        <select class="form-control"\
+                required\
+                data-bind="value: valueObservable, autocompleteSelect2: casePropertyNames"\
+        ></select>\
+      <!-- /ko -->\
+      <!-- ko ifnot: showDropdown -->\
+      <input type="text"\
+             required\
+             class="textinput form-control"\
+             data-bind="value: valueObservable, disable: disabled,\
+             attr: { placeholder: placeholder }"\
+      />\
+      <!-- /ko -->\
+    </div>',
+};
 
-    var register = function () {
-        ko.components.register("case-property-input", component);
-    };
+var register = function () {
+    ko.components.register("case-property-input", component);
+};
 
-    return {
-        register: register,
-    };
-});
+export default {
+    register: register,
+};

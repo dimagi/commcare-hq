@@ -189,6 +189,11 @@ def check_access_and_redirect(func):
     @wraps(func)
     def wrapped(request, domain, *args, **kwargs):
         domain_obj = Domain.get_by_name(domain)
+        if not domain_obj:
+            return HttpResponse(
+                'Domain Not Found',
+                content_type='text/plain', status=404,
+            )
         if domain_obj.redirect_url:
             if request.GET:
                 path = '?'.join((request.path, request.GET.urlencode()))

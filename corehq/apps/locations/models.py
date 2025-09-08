@@ -3,11 +3,10 @@ from datetime import datetime
 from functools import partial
 
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 
 import jsonfield
 from django_bulk_update.helper import bulk_update as bulk_update_helper
-from django_cte import CTEQuerySet
 from memoized import memoized
 
 from corehq.apps.domain.models import Domain
@@ -284,7 +283,7 @@ class LocationQueriesMixin(object):
         return super(LocationQueriesMixin, self).delete(*args, **kwargs)
 
 
-class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
+class LocationQuerySet(LocationQueriesMixin, QuerySet):
 
     def accessible_to_user(self, domain, user):
         ids_query = super(LocationQuerySet, self).accessible_to_user(domain, user)

@@ -351,6 +351,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
     ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
+    ModelDeletion('app_manager', 'CredentialApplication', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),
@@ -430,6 +431,7 @@ DOMAIN_DELETE_OPERATIONS = [
     PartitionedModelDeletion('scheduling_partitioned', 'CaseTimedScheduleInstance', 'domain'),
     PartitionedModelDeletion('scheduling_partitioned', 'TimedScheduleInstance', 'domain'),
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
+    ModelDeletion('export', 'DeIdHash', 'domain'),
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
     CustomDeletion('export', _delete_data_files, []),
@@ -471,6 +473,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'UCRExpression', 'domain'),
     ModelDeletion('users', 'ConnectIDUserLink', 'domain'),
     ModelDeletion('users', 'ConnectIDMessagingKey', 'domain'),
+    ModelDeletion('users', 'UserCredential', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'DeactivateMobileWorkerTrigger', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
@@ -488,6 +491,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'FHIRImportResourceProperty',
     ]),
     ModelDeletion('repeaters', 'Repeater', 'domain', manager='all_objects'),
+    ModelDeletion('repeaters', 'DataSourceUpdate', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain', manager='all_objects'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),

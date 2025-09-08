@@ -41,7 +41,7 @@ class XFormPollingTests(SimpleTestCase):
         domain_privilege_patcher.start()
         self.addCleanup(domain_privilege_patcher.stop)
 
-        workflow_patcher = patch.object(resources, 'track_workflow')
+        workflow_patcher = patch.object(resources, 'track_workflow_noop')
         workflow_patcher.start()
         self.addCleanup(workflow_patcher.stop)
 
@@ -108,7 +108,7 @@ class ApplicationPollingTests(SimpleTestCase):
         domain_privilege_patcher.start()
         self.addCleanup(domain_privilege_patcher.stop)
 
-        workflow_patcher = patch.object(resources, 'track_workflow')
+        workflow_patcher = patch.object(resources, 'track_workflow_noop')
         workflow_patcher.start()
         self.addCleanup(workflow_patcher.stop)
 

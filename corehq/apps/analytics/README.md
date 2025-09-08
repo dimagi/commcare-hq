@@ -30,7 +30,7 @@ New tests need to be added to [ab_tests](https://github.com/dimagi/commcare-hq/b
 In production, analytics are tracked only\* on SaaS servers - that is, on [www.commcarehq.org](http://www.commcarehq.org). This is controlled by the `isEnabled` property in [global.html](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/templates/analytics/initial/global.html). All other servers bypass the setup code.
 
 Analytics are run in staging via a debug flag. This debug flag, along with the necessary API keys, can be set in localsettings to enable analytics on your local server:
-- `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient. We have test API keys for Google Analytics and Kissmetrics; you can pull these from the [staging vault](https://github.com/dimagi/commcare-cloud/tree/master/src/commcare_cloud/ansible/README.md#managing-secrets-with-vault).
+- `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient. We have test API keys for Google Analytics; you can pull these from the [staging vault](https://github.com/dimagi/commcare-cloud/tree/master/src/commcare_cloud/ansible/README.md#managing-secrets-with-vault).
 - `ANALYTICS_CONFIG.DEBUG`: Set `DEBUG` to `True` to enable analytics and override the server-specific checks (you still need to set the API keys, too).
 - `ANALYTICS_CONFIG.LOG_LEVEL`: Controls the client-side logging. Turning it up to `verbose` can help debug.
 
@@ -46,21 +46,12 @@ No server component, just [google.js](https://github.com/dimagi/commcare-hq/blob
 
 You can also add the `.track-usage-link` class to a link to track it in Google Analytics if it includes `hqwebapp/js/bootstrap3/main.js`.
 
-### Kissmetrics
+### Noop Metrics
 
-Used primarily by product team.
-
-Most A/B tests are tracked using client side Kissmetrics code, so [kissmetrix.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/kissmetrix.js) includes test setup.
-
-There is documentation for setting up A/B tests with kissmetrics via [SessionABTest](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/ab_tests.py).
-
-Most events are tracked client side using `<module>.track.event`. Some are done server side, using `track_workflow` and `identify` functions in the [analytics tasks](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py) file. `track_workflow` is used to register events and accepts an optional argument to update properties as well. `identify` can be used if you are only looking to update a property. From the data side, it doesn't matter whether the tracking was done on the client or the server.
-
-In addition to the event-based code, the `track_periodic_data` task runs nightly and sends a variety of aggregated data to Hubspot and Kissmetrics (form submission count, mobile worker count, etc.).
-
-We have a sandbox "site" on Kissmetrics that allows you to test and debug Kissmetrics usage if you set `ANALYTICS_IDS.KISSMETRICS_KEY` in localsettings (key is in the staging vault).
-
-You can also see events arriving almost in real time at [https://app.kissmetrics.com/live](https://app.kissmetrics.com/live).
+You can use track_workflow_noop in python and noopMetrics.track.event in JS to note a logical event metric
+that you do not wish to actually send to any metrics backend. Mostly used for historical metrics
+that were previously sent to Kissmetrics. These are little more than comments,
+and keeping or removing them is a matter of whether that "comment" is still helpful at all.
 
 ### HubSpot
 
@@ -70,7 +61,7 @@ Most of the code is server side [analytics tasks](https://github.com/dimagi/comm
 
 On the client side, [hubspot.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/hubspot.js) has functions to identify users and track events, but these are barely used. We do include a Hubspot-provided script that tracks basic usage (e.g., page visits) and also sets a cookie to identify the user (described [here](https://knowledge.hubspot.com/articles/kcs_article/reports/what-cookies-does-hubspot-set-in-a-visitor-s-browser) as the "hubspotutk" cookie). The server's form-sending code checks for this cookie and, if it isn't present, doesn't send forms.
 
-In addition to the event-based code, the `track_periodic_data` task runs nightly and sends a variety of aggregated data to Hubspot and Kissmetrics (form submission count, mobile worker count, etc.).
+In addition to the event-based code, the `track_periodic_data` task runs nightly and sends a variety of aggregated data to Hubspot (form submission count, mobile worker count, etc.).
 
 #### Adding/Removing Hubspot properties
 
@@ -91,10 +82,6 @@ Any changes to user properties related to the registration forms should be made 
 To start testing, run Celery and update `HUBSPOT_ACCESS_TOKEN` and `HUBSPOT_ID` in `settings.ANALYTICS_IDS`. Hubspot provides a public demo portal with API access for testing. The credentials for this are available on their [API overview page](http://developers.hubspot.com/docs/overview). If you need to test using our production portal the credentials can be found in dimagi_shared keepass. Let marketing know before testing on production portal and clean up after the testing is finished
 
 When troubleshooting in Hubspot's portal, it's often useful to create lists based on key events.
-
-### Drift
-
-This is the live chat feature available for new users. There's a [drift.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/drift.js) HQ module, though it doesn't do much. No server component.
 
 ### Facebook Pixel
 

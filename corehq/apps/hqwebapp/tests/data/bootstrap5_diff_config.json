@@ -128,10 +128,6 @@
           "_alert.scss"
         ],
         [
-          "appcues.less",
-          "_appcues.scss"
-        ],
-        [
           "backgrounds.less",
           "_backgrounds.scss"
         ],
@@ -170,6 +166,10 @@
         [
           "feedback.less",
           "_feedback.scss"
+        ],
+        [
+          "flag_icons.less",
+          "_flag_icons.scss"
         ],
         [
           "form_steps.less",

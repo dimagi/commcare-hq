@@ -50,7 +50,7 @@ class LocationAccessMiddleware(MiddlewareMixin):
     def apply_location_access(cls, request):
         user = getattr(request, 'couch_user', None)
         domain = getattr(request, 'domain', None)
-        if not domain or not user or not user.is_member_of(domain):
+        if not domain or not user or not user.is_member_of(domain) or not user.is_active_in_domain(domain):
             # This is probably some non-domain page or a test, let normal auth handle it
             request.can_access_all_locations = True
         elif user.has_permission(domain, 'access_all_locations'):

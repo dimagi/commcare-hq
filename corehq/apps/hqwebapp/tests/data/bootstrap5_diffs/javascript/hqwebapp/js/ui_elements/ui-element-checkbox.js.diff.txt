@@ -1,12 +1,10 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
+@@ -1,6 +1,6 @@
  
--hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-checkbox', [
-+hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-checkbox', [
-     'jquery',
--    'hqwebapp/js/bootstrap3/main',
-+    'hqwebapp/js/bootstrap5/main',
- ], function (
-     $,
-     hqMain,
+ import $ from "jquery";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ 
+ var module = {};
+ 

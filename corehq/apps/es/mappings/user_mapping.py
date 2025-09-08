@@ -222,6 +222,9 @@ USER_MAPPING = {
         "is_active": {
             "type": "boolean"
         },
+        "is_account_confirmed": {
+            "type": "boolean"
+        },
         "is_demo_user": {
             "type": "boolean"
         },
@@ -447,6 +450,44 @@ USER_MAPPING = {
                 },
                 "value": {
                     "type": "text"
+                }
+            }
+        },
+        "user_domain_memberships": {
+            "dynamic": False,
+            "type": "nested",
+            "properties": {
+                "assigned_location_ids": {
+                    "type": "keyword"
+                },
+                "doc_type": {
+                    "type": "keyword"
+                },
+                "domain": {
+                    "fields": {
+                        "exact": {
+                            "type": "keyword"
+                        }
+                    },
+                    "type": "text"
+                },
+                "is_admin": {
+                    "type": "boolean"
+                },
+                "location_id": {
+                    "type": "keyword"
+                },
+                "override_global_tz": {
+                    "type": "boolean"
+                },
+                "role_id": {
+                    "type": "keyword"
+                },
+                "timezone": {
+                    "type": "text"
+                },
+                "is_active": {
+                    "type": "boolean"
                 }
             }
         },

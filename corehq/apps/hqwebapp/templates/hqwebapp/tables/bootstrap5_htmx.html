@@ -12,9 +12,7 @@
 
 {% block table-container-attrs %}
   hx-get="{{ request.path_info }}{% querystring %}"
-  hx-replace-url="{% querystring %}"
-  hx-swap="outerHTML"
-  hx-trigger="hqRefresh"
+  hx-replace-url="{% querystring %}" hx-swap="outerHTML" hx-trigger="hqRefresh"
   hq-hx-loading="{{ table.loading_indicator_id }}"
 {% endblock %}
 
@@ -22,7 +20,7 @@
   <div
     class="table-loading-indicator"
     {% if table.loading_indicator_id %}
-      id="{{ table.loading_indicator_id  }}"
+      id="{{ table.loading_indicator_id }}"
     {% endif %}
   >
     <div class="spinner-border" role="status">
@@ -33,10 +31,9 @@
 
 {% block select-per-page-attr %}
   name="{{ table.per_page_field }}"
-  hx-get="{{ request.path_info }}"
+  hx-get="{{ request.path_info }}{% querystring %}"
   hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
-  hx-swap="outerHTML"
-  hq-hx-loading="{{ table.loading_indicator_id }}"
+  hx-swap="outerHTML" hq-hx-loading="{{ table.loading_indicator_id }}"
 {% endblock %}
 
 {% block prev-page-link-attr %}
@@ -44,8 +41,7 @@
   hx-replace-url="{% querystring table.prefixed_page_field=table.page.previous_page_number %}"
   hx-trigger="click"
   hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
-  hx-swap="outerHTML"
-  hq-hx-loading="{{ table.loading_indicator_id }}"
+  hx-swap="outerHTML" hq-hx-loading="{{ table.loading_indicator_id }}"
 {% endblock %}
 
 {% block next-page-link-attr %}
@@ -53,8 +49,7 @@
   hx-replace-url="{% querystring table.prefixed_page_field=table.page.next_page_number %}"
   hx-trigger="click"
   hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
-  hx-swap="outerHTML"
-  hq-hx-loading="{{ table.loading_indicator_id }}"
+  hx-swap="outerHTML" hq-hx-loading="{{ table.loading_indicator_id }}"
 {% endblock %}
 
 {% block pagination.range %}
@@ -67,8 +62,7 @@
           hx-replace-url="{% querystring table.prefixed_page_field=p %}"
           hx-trigger="click"
           hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
-          hx-swap="outerHTML"
-          hq-hx-loading="{{ table.loading_indicator_id }}"
+          hx-swap="outerHTML" hq-hx-loading="{{ table.loading_indicator_id }}"
         {% endif %}
       >
         {{ p }}

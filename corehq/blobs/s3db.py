@@ -86,7 +86,7 @@ class S3BlobDB(AbstractBlobDB):
                 chunk_sizes.append(bytes_sent)
 
             with self.report_timing('put', meta.key):
-                s3_bucket.upload_fileobj(content, meta.key, Callback=_track_transfer)
+                s3_bucket.upload_fileobj(NoClose(content), meta.key, Callback=_track_transfer)
             meta.content_length, meta.compressed_length = get_content_size(content, chunk_sizes)
             self.metadb.put(meta)
         return meta
@@ -165,8 +165,8 @@ class S3BlobDB(AbstractBlobDB):
 
 
 def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
-    return (err.response["Error"]["Code"] in not_found_codes or
-        err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
+    return (err.response["Error"]["Code"] in not_found_codes
+        or err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
 
 
 @contextmanager
@@ -179,3 +179,19 @@ def maybe_not_found(throw=None):
         metrics_counter('commcare.blobdb.notfound')
         if throw is not None:
             raise throw
+
+
+class NoClose(object):
+    """HACK file object with no-op `close()` to avoid close by S3Transfer
+
+    https://github.com/boto/s3transfer/issues/80
+    """
+
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+    def __getattr__(self, name):
+        return getattr(self.fileobj, name)
+
+    def close(self):
+        pass

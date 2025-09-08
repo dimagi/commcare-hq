@@ -4,5 +4,5 @@ Your api key "{{ key_name }}" (last used: {{ last_used }}) will expire on {{ exp
 Go to {{ url }} to generate a new key if needed.
 
 Thanks,
-CommCare HQ
+CommCare
 {% endblocktrans %}

@@ -20,9 +20,11 @@ from django.utils import timezone
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
+from corehq import privileges
+
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey, ConnectIDUserLink
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.metrics import metrics_counter
 
@@ -216,26 +218,33 @@ class ApiKeyFallbackBackend(object):
             return None
 
         try:
+            user = User.objects.get(username=username)
+
             is_unexpired_filter = (
-                Q(api_keys__expiration_date__isnull=True) | Q(api_keys__expiration_date__gte=datetime.now(tz.utc))
+                Q(expiration_date__isnull=True) | Q(expiration_date__gte=datetime.now(tz.utc))
             )
-            api_domain_filter = Q(api_keys__domain='')
+
+            api_domain_filter = Q(domain='')
             domain = getattr(request, 'domain', '')
             if domain:
-                api_domain_filter = api_domain_filter | Q(api_keys__domain=domain)
+                api_domain_filter = api_domain_filter | Q(domain=domain)
 
             ip = get_ip(request)
-            api_whitelist_filter = Q(api_keys__ip_allowlist=[]) | Q(api_keys__ip_allowlist__contains=[ip])
-            user = User.objects.get(is_unexpired_filter, api_domain_filter, api_whitelist_filter,
-                username=username, api_keys__key=password, api_keys__is_active=True)
-        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            api_whitelist_filter = Q(ip_allowlist=[]) | Q(ip_allowlist__contains=[ip])
+
+            keys_qs = user.api_keys.filter(is_unexpired_filter, api_domain_filter,
+                                           api_whitelist_filter, is_active=True)
+
+            for key in keys_qs:
+                if key.plaintext_key == password:
+                    request.skip_two_factor_check = True
+                    return user
             return None
-        else:
-            request.skip_two_factor_check = True
-            return user
+        except User.DoesNotExist:
+            return None
 
 
-def get_active_users_by_email(email):
+def get_active_users_by_email(email, domain=None):
     UserModel = get_user_model()
     possible_users = UserModel._default_manager.filter(
         Q(username__iexact=email) | Q(email__iexact=email),
@@ -246,15 +255,18 @@ def get_active_users_by_email(email):
         if user.username.lower() == email.lower():
             yield user
         else:
-            # also any mobile workers from TWO_STAGE_USER_PROVISIONING domains should be included
+            # also any mobile workers with domains with TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION privilege
+            # should be included
             couch_user = CouchUser.get_by_username(user.username, strict=True)
             if (couch_user
                     and couch_user.is_commcare_user()
-                    and TWO_STAGE_USER_PROVISIONING.enabled(couch_user.domain)):
+                    and domain_has_privilege(couch_user.domain,
+                                             privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                    and (domain is None or couch_user.domain == domain)):
                 yield user
             # intentionally excluded:
             # - WebUsers who have changed their email address from their login (though could revisit this)
-            # - CommCareUsers not belonging to domains with TWO_STAGE_USER_PROVISIONING enabled
+            # - CommCareUsers not belonging to domains with TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION privilege
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):
@@ -285,14 +297,23 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return False
 
         # ensure API Key exists
-        query = Q(key=api_key)
+        query = Q()
         domain = getattr(request, 'domain', '')
         if domain:
             domain_accessible = Q(domain='') | Q(domain=domain)
-            query = domain_accessible & query
+            query = domain_accessible
         try:
-            key = user.api_keys.get(query)
+            filtered_keys = user.api_keys.filter(query)
         except HQApiKey.DoesNotExist:
+            return self._unauthorized()
+
+        # ensure API Key exists
+        key = None
+        for filtered_key in filtered_keys:
+            if filtered_key.plaintext_key == api_key:
+                key = filtered_key
+                break
+        if not key:
             return self._unauthorized()
 
         # update api_key.last used every 30 seconds
@@ -376,6 +397,8 @@ class ConnectIDAuthBackend:
             domain=couch_user.domain,
             commcare_user__username=couch_user.username
         )
+        if not link.is_active:
+            return None
 
         return link.commcare_user
 

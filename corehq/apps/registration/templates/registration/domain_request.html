@@ -1,7 +1,19 @@
 {% extends "hqwebapp/bootstrap3/base_navigation.html" %}
 {% load i18n %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+    <link
+      type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/less/register-domain.less' %}"
+    />
+  {% endcompress %}
+{% endblock stylesheets %}
 
 {% block title %}New Project Space{% endblock title %}
 
@@ -10,8 +22,8 @@
     <div class="page-header">
       {% if is_new_user %}
         <h1>
-          {% blocktrans with request.couch_user.first_name as first_name %}
-            Welcome to CommCare HQ, {{ first_name }}!
+          {% blocktrans %}
+            Welcome to CommCare HQ, {{ name }}!
           {% endblocktrans %}
         </h1>
         <p class="lead">
@@ -28,19 +40,14 @@
         </p>
       {% else %}
         <h1>
-          {% blocktrans with request.couch_user.first_name as first_name %}
-            Let's add a new project, {{ first_name }}.
+          {% blocktrans %}
+            Let's add a new project, {{ name }}!
           {% endblocktrans %}
         </h1>
         <p class="lead">
           {% if invitation_links %}
             {% blocktrans %}
               Please accept an invitation or create your own project space.
-            {% endblocktrans %}
-          {% else %}
-            {% blocktrans %}
-              Create a project space below as a separate sandbox for new
-              applications, users, and form submissions.
             {% endblocktrans %}
           {% endif %}
         </p>
@@ -88,40 +95,106 @@
       </div>
     {% endif %}
     <div class="panel panel-modern-gray">
-      <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-          {% trans "Create a New Project Space" %}
-        </h4>
-      </div>
       <div class="panel-body">
+        <h4>{% trans "Your New Project Space" %}</h4>
         <p>
           {% blocktrans %}
-            Your project space contains all form submissions from your CommCare
-            mobile applications and tools to help you easily create, deploy, and monitor
-            your applications and workers.
+            A
+            <a
+              href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2932637701/Project+Space+Overview"
+              target="_blank"
+              ><b>project space</b></a
+            >
+            is your top-level environment in CommCare. It's where you build
+            applications, manage users, track data, and configure settings.
           {% endblocktrans %}
         </p>
 
+        <div class="spacer"></div>
+
         {% if not is_new_user %}
           <div class="alert alert-info">
-            <p>
-              {% blocktrans %}
-                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.
-              {% endblocktrans %}
-            </p>
-            <p>
-              {% blocktrans %}
-                <a href="https://dimagi.com/commcare/enterprise/" target="_blank">Learn more about CommCare Enterprise</a>
-                if you would like to link project spaces together under one account.
-              {% endblocktrans %}
-            </p>
+            <div class="row icon-row">
+              <div class="col-xs-1 text-center">
+                {% include 'registration/partials/icon_stack.html' with icon_class='fa fa-briefcase' %}
+              </div>
+              <div class="col-xs-11">
+                <h5><b>{% trans "Subscription" %}</b></h5>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-xs-11 col-xs-push-1">
+                <p>
+                  {% blocktrans %}
+                    All new projects start on CommCare's free edition. Once you
+                    create a new project, you can
+                    <a href="{{ pricing_page_url }}" target="_blank"
+                      ><b>upgrade</b></a
+                    >
+                    your subscription.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
+
+            <div class="row icon-row">
+              <div class="col-xs-1 text-center">
+                {% include 'registration/partials/icon_stack.html' with icon_class='fcc fcc-globe' %}
+              </div>
+              <div class="col-xs-11">
+                <h5><b>{% trans "Cloud Location" %}</b></h5>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-xs-11 col-xs-push-1">
+                <p>
+                  {% if server_display %}
+                    {% blocktrans with server_display.hr_name as server_location %}
+                      This project will be hosted on the
+                      <strong>{{ server_location }} cloud</strong>.
+                    {% endblocktrans %}
+                  {% else %}
+                    {% blocktrans %}
+                      This project will be hosted on a private cloud.
+                    {% endblocktrans %}
+                  {% endif %}
+                  {% blocktrans %}
+                    To create a project in a different
+                    <a
+                      href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations"
+                      target="_blank"
+                      ><b>cloud location</b></a
+                    >, create an account for that cloud location first, then
+                    create a project.
+                  {% endblocktrans %}
+                </p>
+                <ul>
+                  {% for server in server_locations %}
+                    <li>
+                      <a
+                        href="https://{{ server.subdomain }}.commcarehq.org{{ request.path }}"
+                        >{% trans server.name %}</a
+                      >
+                    </li>
+                  {% endfor %}
+                </ul>
+                <p>
+                  {% blocktrans %}
+                    Please note: Projects <strong>cannot</strong> be transferred
+                    between cloud locations after creation.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
           </div>
         {% else %}
           <div class="spacer"></div>
         {% endif %}
-
-        {% crispy form %}
       </div>
+    </div>
+
+    <div class="panel panel-modern-gray">
+      <div class="panel-body">{% crispy form %}</div>
     </div>
   </div>
 {% endblock %}

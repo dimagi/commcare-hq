@@ -3,7 +3,7 @@ Based on AWS Boilerplate
 **/
 
 
-hqDefine("integration/js/dialer/domain_dialer_main", [
+define("integration/js/dialer/domain_dialer_main", [
    "hqwebapp/js/initial_page_data",
    "integration/js/dialer/dialer_utils",
    "detectrtc/DetectRTC",

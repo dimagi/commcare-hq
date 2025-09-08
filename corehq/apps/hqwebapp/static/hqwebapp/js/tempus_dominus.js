@@ -5,11 +5,12 @@
   * It does not yet support predefined date ranges, which are not natively supported in tempus dominus.
   * It also does not yet support a default date range.
   */
-hqDefine("hqwebapp/js/tempus_dominus", [
+define("hqwebapp/js/tempus_dominus", [
     'underscore',
     'popper',
     'tempusDominus',
     'hqwebapp/js/initial_page_data',
+    '@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css',
 ], function (
     _,
     Popper,
@@ -25,6 +26,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 },
             },
             localization: _.extend(defaultTranslations, {
+                dayViewHeaderFormat: { month: 'long', year: '2-digit' },
                 format: 'yyyy-MM-dd',
             }),
         }));
@@ -56,6 +58,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         let picker = new tempusDominus.TempusDominus(
             el, {
                 dateRange: true,
+                useCurrent: false,
                 multipleDatesSeparator: separator,
                 display: {
                     theme: 'light',
@@ -69,6 +72,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                     },
                 },
                 localization: _.extend(defaultTranslations, {
+                    dayViewHeaderFormat: { month: 'long', year: '2-digit' },
                     format: 'yyyy-MM-dd',
                 }),
             },
@@ -79,9 +83,15 @@ hqDefine("hqwebapp/js/tempus_dominus", [
             picker.dates.setValue(new tempusDominus.DateTime(end), 1);
         }
 
+        picker.subscribe("change.td", function () {
+            // This won't close automatically on single-date ranges
+            if (picker.dates.picked.length === 2) {
+                picker.hide();
+            }
+        });
 
-        // Handle single-date ranges
         picker.subscribe("hide.td", function () {
+            // Handle single-date ranges
             if (picker.dates.picked.length === 1) {
                 picker.dates.setValue(picker.dates.picked[0], 0);
                 picker.dates.setValue(picker.dates.picked[0], 1);
@@ -100,6 +110,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 },
             },
             localization: _.extend(defaultTranslations, {
+                dayViewHeaderFormat: { month: 'long', year: '2-digit' },
                 hourCycle: 'h23',
                 format: 'H:mm',
             }),
@@ -147,7 +158,6 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     const defaultTranslations = {
         clear: gettext('Clear selection'),
         close: gettext('Close the picker'),
-        dayViewHeaderFormat: { month: gettext('long'), year: gettext('2-digit') },
         decrementHour: gettext('Decrement Hour'),
         decrementMinute: gettext('Decrement Minute'),
         decrementSecond: gettext('Decrement Second'),

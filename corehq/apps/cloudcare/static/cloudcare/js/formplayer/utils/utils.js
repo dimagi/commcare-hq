@@ -1,8 +1,8 @@
-hqDefine("cloudcare/js/formplayer/utils/utils", [
+define("cloudcare/js/formplayer/utils/utils", [
     'jquery',
     'underscore',
     'backbone',
-    'DOMPurify',
+    'dompurify',
     'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',

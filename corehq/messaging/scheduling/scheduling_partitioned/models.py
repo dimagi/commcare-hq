@@ -195,14 +195,14 @@ class ScheduleInstance(PartitionedModel):
         user_ids = set()
         for location_id in location_ids:
             if toggles.INCLUDE_ALL_LOCATIONS.enabled(domain):
-                user_ids_at_this_location = user_ids_at_locations([location_id])
+                user_ids_at_this_location = user_ids_at_locations(domain, [location_id])
                 users = (CouchUser.wrap_correctly(u)
                          for u in iter_docs(CouchUser.get_db(), user_ids_at_this_location))
             else:
                 users = get_all_users_by_location(domain, location_id)
 
             for user in users:
-                if user.is_active and user.get_id not in user_ids:
+                if user.is_active_in_domain(domain) and user.get_id not in user_ids:
                     user_ids.add(user.get_id)
                     yield user
 
@@ -348,6 +348,8 @@ class ScheduleInstance(PartitionedModel):
 
         recipient_count = 0
         for recipient in self.expand_recipients(log_filtered_recipient):
+            if isinstance(recipient, WebUser) and not recipient.is_active_in_domain(self.domain):
+                continue
             recipient_count += 1
 
             #   The framework will retry sending a non-processed schedule instance

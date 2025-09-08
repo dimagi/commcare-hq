@@ -1,13 +1,13 @@
-hqDefine("cloudcare/js/formplayer/menus/views", [
+define("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
     'backbone',
     'backbone.marionette',
-    'DOMPurify',
+    'dompurify',
     'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/apps/api',
@@ -28,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     bootstrap,
     initialPageData,
     toggles,
-    kissmetrics,
+    noopMetrics,
     constants,
     FormplayerFrontend,
     AppsAPI,
@@ -648,7 +648,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
             scrollToBottomButton: '#scroll-to-bottom',
-            mapShowHideButton: '#hide-map-button',
+            mapShowHideButton: '.hide-map-button',
         };
     };
 
@@ -867,10 +867,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             const user = UsersModels.getCurrentUser();
-            const configStorageId = this.getConfigStorageId(user);
+            self.configStorageId = this.getConfigStorageId(user);
             self.columnConfigModel = new ColumnConfigModel({
                 columnNames: self.headers,
-                configStorageId: configStorageId,
+                configStorageId: self.configStorageId,
                 styles: self.styles,
             });
             self.redoLast = options.redoLast;
@@ -884,12 +884,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
-            self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
+            self.mapVisible = localStorage.getItem(`${self.configStorageId}-map-visible`) === "true";
+            self.mapAvailable = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
             self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 self.handleSmallScreenChange(smallScreenEnabled);
             });
             self.smallScreenListener.listen();
             self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+            self.scrollContainer.scrollTop(0);
         },
 
         ui: CaseListViewUI(),
@@ -899,7 +901,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         handleSmallScreenChange: function (enabled) {
             const self = this;
             self.smallScreenEnabled = enabled;
-            if (self.options.sidebarEnabled) {
+            if (self.options.sidebarEnabled || self.mapAvailable) {
                 self.positionStickyItems(enabled);
             }
         },
@@ -959,7 +961,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         paginateAction: function (e) {
             const pageSelection = $(e.currentTarget).data("id");
             FormplayerFrontend.trigger("menu:paginate", pageSelection, this.selectedCaseIds);
-            kissmetrics.track.event("Accessibility Tracking - Pagination Interaction");
+            noopMetrics.track.event("Accessibility Tracking - Pagination Interaction");
         },
 
         onPerPageLimitChange: function (e) {
@@ -973,7 +975,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const goText = Number(this.ui.paginationGoText.val());
             const pageNo = formplayerUtils.paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
-            kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
+            noopMetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
 
         paginateKeyAction: function (e) {
@@ -1002,8 +1004,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         showHideMap: function (e) {
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
-            const hideButton = $('#hide-map-button');
-            if (!mapDiv.hasClass("d-none")) {
+            const hideButton = $('.hide-map-button');
+            if (this.mapVisible) {
                 mapDiv.addClass("d-none");
                 moduleCaseList.removeClass('col-lg-7').addClass('col-lg');
                 hideButton.text(gettext('Show Map'));
@@ -1014,7 +1016,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
             }
-
+            this.mapVisible = !this.mapVisible;
+            localStorage.setItem(`${this.configStorageId}-map-visible`, this.mapVisible);
         },
 
         _allCaseIds: function () {
@@ -1028,7 +1031,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         continueAction: function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
-                kissmetrics.track.event('Completed Case Search', {
+                noopMetrics.track.event('Completed Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
@@ -1228,7 +1231,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         onAttach() {
             const self = this;
-            if (self.showMap) {
+            if (self.mapAvailable) {
                 self.loadMap();
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
@@ -1252,6 +1255,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         templateContext: function () {
+            const self = this;
             const paginateItems = formplayerUtils.paginateOptions(
                 this.options.currentPage,
                 this.options.pageCount,
@@ -1283,7 +1287,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
-                showMap: this.showMap,
+                mapAvailable: this.mapAvailable,
                 sidebarEnabled: this.options.sidebarEnabled,
                 splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 smallScreenEnabled: this.smallScreenEnabled,
@@ -1294,6 +1298,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 },
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0) && this.columnConfigModel.isVisible(index);
+                },
+
+                mapVisible: function () {
+                    return self.mapVisible;
                 },
             });
         },
@@ -1714,7 +1722,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
                 if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
-                    kissmetrics.track.event('Completed Case Search', {
+                    noopMetrics.track.event('Completed Case Search', {
                         'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                     });
                 }
