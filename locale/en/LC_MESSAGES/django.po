@@ -994,6 +994,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -5369,6 +5370,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/forms.py
@@ -18347,6 +18349,107 @@ msgstr ""
 msgid "Action Type"
 msgstr ""
 
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid "CommCare Companion (Beta)"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              This feature is made available as a <strong>Beta Service</"
+"strong> under\n"
+"              <a href=\"https://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\"\n"
+"                >Dimagi's Terms of Service</a\n"
+"              >\n"
+"              and\n"
+"              <a href=\"https://dimagi.com/terms/latest/ba\" "
+"target=\"_blank\"\n"
+"                >Business Agreement</a\n"
+"              >.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              <strong>Beta Services</strong> are services or features that "
+"may not be\n"
+"              supported, fully reliable, or subject to service level\n"
+"              commitments.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              <strong>As per Dimagi's Business Agreement</strong>, despite "
+"anything to the\n"
+"              contrary in this Agreement: (a) Customer may choose to use "
+"Beta\n"
+"              Services in its sole discretion; (b) Beta Services may not be\n"
+"              supported by Dimagi and may be changed at any time without "
+"notice;\n"
+"              (c) Beta Services may not be as reliable or available as the\n"
+"              Services; (d) Beta Services have not been subjected to the "
+"same\n"
+"              security measures and auditing to which the Services have "
+"been\n"
+"              subjected; and (e) DIMAGI WILL HAVE NO LIABILITY ARISING OUT "
+"OF OR\n"
+"              IN CONNECTION WITH CUSTOMER'S USE OF BETA SERVICES – ANY SUCH "
+"USE\n"
+"              WILL BE AT CUSTOMER'S OWN RISK.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid "Please note:"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"                This feature has <strong>not been technically audited</"
+"strong> and may not\n"
+"                perform consistently.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"                You should\n"
+"                <strong\n"
+"                  >not upload or enter any personally identifiable "
+"information\n"
+"                  (PII) or protected health information (PHI)</strong\n"
+"                >\n"
+"                into the chatbot. If you choose to do so, you do so\n"
+"                <strong>at your own risk.</strong>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"                By enabling this feature, you confirm that you are an\n"
+"                <strong\n"
+"                  >admin authorized to accept these risks on behalf of all\n"
+"                  current and future users in this project space.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              I confirm that I have read and I accept the terms outlined "
+"above,\n"
+"              including the risks associated with Beta Services.\n"
+"            "
+msgstr ""
+
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 msgid "Measure"
 msgstr ""
@@ -20062,6 +20165,38 @@ msgid ""
 "                We will email instructions to you for resetting your "
 "password.\n"
 "              "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+msgid ""
+"\n"
+"      Looking to sign into a different cloud environment?\n"
+"    "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#, python-format
+msgid ""
+"\n"
+"          %(server_name)s\n"
+"          Cloud\n"
+"        "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+msgid ""
+"\n"
+"      Learn more about our\n"
+"      <a\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+"        target=\"_blank\"\n"
+"        >cloud environments</a\n"
+"      >.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
@@ -27146,15 +27281,15 @@ msgid "Please enter valid CAPTCHA"
 msgstr ""
 
 #: corehq/apps/hqwebapp/models.py
-msgid "United States"
-msgstr ""
-
-#: corehq/apps/hqwebapp/models.py corehq/util/context_processors.py
 msgid "India"
 msgstr ""
 
 #: corehq/apps/hqwebapp/models.py
-msgid "European Union"
+msgid "United States"
+msgstr ""
+
+#: corehq/apps/hqwebapp/models.py
+msgid "US"
 msgstr ""
 
 #: corehq/apps/hqwebapp/tables/export.py
@@ -27663,6 +27798,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/registration/forms.py
 #: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Cloud Location"
 msgstr ""
@@ -28887,7 +29023,7 @@ msgid "Request failed"
 msgstr ""
 
 #: corehq/apps/integration/payments/filters.py
-msgid "Batch number"
+msgid "Payment status"
 msgstr ""
 
 #: corehq/apps/integration/payments/filters.py
@@ -28897,7 +29033,29 @@ msgid "Show all"
 msgstr ""
 
 #: corehq/apps/integration/payments/filters.py
-msgid "Payment status"
+msgid "Batch number"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py corehq/tabs/tabclasses.py
+msgid "Campaign"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+msgid "Activity"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+msgid "Funder"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/users/forms.py
+msgid "Phone number"
 msgstr ""
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
@@ -31262,6 +31420,19 @@ msgstr ""
 
 #: corehq/apps/programs/views.py
 msgid "Edit Program"
+msgstr ""
+
+#: corehq/apps/registration/forms.py
+#, python-brace-format
+msgid "{location_name} Cloud"
+msgstr ""
+
+#: corehq/apps/registration/forms.py
+#, python-brace-format
+msgid ""
+"*You're creating an account and project space in the chosen cloud location."
+"<br/>These cannot be transferred between cloud locations. <a "
+"href='{help_link}' target='_blank'>Learn more</a>."
 msgstr ""
 
 #: corehq/apps/registration/forms.py
@@ -35709,12 +35880,6 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
 #: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/users/forms.py
-msgid "Phone number"
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
 msgid "Edit User Information"
 msgstr ""
 
@@ -36660,6 +36825,10 @@ msgid "Other SMS"
 msgstr ""
 
 #: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+msgid "Connect Message Survey"
+msgstr ""
+
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
 #: corehq/apps/smsforms/models.py
 msgid "In Progress"
 msgstr ""
@@ -37494,10 +37663,6 @@ msgid "FCM Push Notification"
 msgstr ""
 
 #: corehq/apps/sms/models.py
-msgid "Connect Message Survey"
-msgstr ""
-
-#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr ""
 
@@ -37869,10 +38034,10 @@ msgstr ""
 msgid ""
 "\n"
 "      To enable messaging features, please request access by sending an "
-"email\n"
-"      to <a href=\"mailto:%(SALES_EMAIL)s\">%(SALES_EMAIL)s</a> from your "
-"work\n"
-"      email address containing the following information:\n"
+"email to\n"
+"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from "
+"your\n"
+"      work email address containing the following information:\n"
 "    "
 msgstr ""
 
@@ -45536,6 +45701,15 @@ msgid ""
 msgstr ""
 
 #: corehq/feature_previews.py
+msgid "CommCare Companion AI Support Bot"
+msgstr ""
+
+#: corehq/feature_previews.py
+msgid ""
+"This setting allows users to chat with a chatbot to get help with CommCare."
+msgstr ""
+
+#: corehq/feature_previews.py
 msgid "Call Center"
 msgstr ""
 
@@ -49264,10 +49438,6 @@ msgstr ""
 msgid "Microplanning"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py
-msgid "Campaign"
-msgstr ""
-
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"
 msgstr ""
@@ -49584,11 +49754,33 @@ msgid "hash"
 msgstr ""
 
 #: corehq/util/context_processors.py
-msgid "US"
+msgid "Need Help?"
 msgstr ""
 
 #: corehq/util/context_processors.py
-msgid "EU"
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "I need help with building my CommCare application."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "I need help troubleshooting my mobile application."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "I need help with exporting or understanding my data."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "Finding the best answer"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
 msgstr ""
 
 #: corehq/util/jsonattrs.py

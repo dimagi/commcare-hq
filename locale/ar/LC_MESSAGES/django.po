@@ -1042,6 +1042,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -6839,6 +6840,7 @@ msgstr "تفعيل إعداد عرض القائمة لكل وحدة"
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/forms.py
@@ -22773,6 +22775,151 @@ msgstr "كلمة مفتاحية للرسائل القصيرة"
 msgid "Action Type"
 msgstr "نوع الإجراء"
 
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid "CommCare Version Compliance"
+msgid "CommCare Companion (Beta)"
+msgstr "الامتثال لإصدار CommCare"
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      By clicking this button, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+#| "target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+#| "target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"\n"
+"              This feature is made available as a <strong>Beta Service</"
+"strong> under\n"
+"              <a href=\"https://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\"\n"
+"                >Dimagi's Terms of Service</a\n"
+"              >\n"
+"              and\n"
+"              <a href=\"https://dimagi.com/terms/latest/ba\" "
+"target=\"_blank\"\n"
+"                >Business Agreement</a\n"
+"              >.\n"
+"            "
+msgstr ""
+"\n"
+"      بالنقر على هذا الزر، أنت توافق على\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\">شروط الخدمة</a> و\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">سياسة الخصوصية</a> الخاصة بـ Dimagi.\n"
+"    "
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              <strong>Beta Services</strong> are services or features that "
+"may not be\n"
+"              supported, fully reliable, or subject to service level\n"
+"              commitments.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              <strong>As per Dimagi's Business Agreement</strong>, despite "
+"anything to the\n"
+"              contrary in this Agreement: (a) Customer may choose to use "
+"Beta\n"
+"              Services in its sole discretion; (b) Beta Services may not be\n"
+"              supported by Dimagi and may be changed at any time without "
+"notice;\n"
+"              (c) Beta Services may not be as reliable or available as the\n"
+"              Services; (d) Beta Services have not been subjected to the "
+"same\n"
+"              security measures and auditing to which the Services have "
+"been\n"
+"              subjected; and (e) DIMAGI WILL HAVE NO LIABILITY ARISING OUT "
+"OF OR\n"
+"              IN CONNECTION WITH CUSTOMER'S USE OF BETA SERVICES – ANY SUCH "
+"USE\n"
+"              WILL BE AT CUSTOMER'S OWN RISK.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid "Release Mode"
+msgid "Please note:"
+msgstr "وضع الإصدار"
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Will delete <strong>all</strong> of "
+#| "%(friendly_name)s's\n"
+#| "                    form submissions.\n"
+#| "                  "
+msgid ""
+"\n"
+"                This feature has <strong>not been technically audited</"
+"strong> and may not\n"
+"                perform consistently.\n"
+"              "
+msgstr ""
+"\n"
+"                    سيتم حذف <strong>جميع</strong> إرساليات النماذج الخاصة "
+"بـ %(friendly_name)s.\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"                You should\n"
+"                <strong\n"
+"                  >not upload or enter any personally identifiable "
+"information\n"
+"                  (PII) or protected health information (PHI)</strong\n"
+"                >\n"
+"                into the chatbot. If you choose to do so, you do so\n"
+"                <strong>at your own risk.</strong>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent an email with "
+#| "instructions to\n"
+#| "                              set a password and be able to login to this "
+#| "project.\n"
+#| "                            "
+msgid ""
+"\n"
+"                By enabling this feature, you confirm that you are an\n"
+"                <strong\n"
+"                  >admin authorized to accept these risks on behalf of all\n"
+"                  current and future users in this project space.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+"\n"
+"                              سيتم إرسال بريد إلكتروني للمستخدم مع تعليمات\n"
+"                              لتعيين كلمة مرور والقدرة على تسجيل الدخول إلى "
+"هذا المشروع.\n"
+"                            "
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              I confirm that I have read and I accept the terms outlined "
+"above,\n"
+"              including the risks associated with Beta Services.\n"
+"            "
+msgstr ""
+
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 msgid "Measure"
 msgstr "إجراء"
@@ -25228,6 +25375,59 @@ msgstr ""
 "                سنرسل إليك تعليمات عبر البريد الإلكتروني لإعادة تعيين كلمة "
 "المرور الخاصة بك.\n"
 "              "
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+msgid ""
+"\n"
+"      Looking to sign into a different cloud environment?\n"
+"    "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Not %(username)s?\n"
+#| "                "
+msgid ""
+"\n"
+"          %(server_name)s\n"
+"          Cloud\n"
+"        "
+msgstr ""
+"\n"
+"                  لست %(username)s؟\n"
+"                "
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"      Learn more about our\n"
+"      <a\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+"        target=\"_blank\"\n"
+"        >cloud environments</a\n"
+"      >.\n"
+"    "
+msgstr ""
+"\n"
+"                تعرف على المزيد حول التصديرات في <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">موقع المساعدة</a>.\n"
+"            "
 
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
 #: corehq/apps/domain/urls.py
@@ -33445,18 +33645,18 @@ msgstr "يرجى إدخال رمز CAPTCHA صالح"
 
 #: corehq/apps/hqwebapp/models.py
 #, fuzzy
-#| msgid "Invalid Date"
-msgid "United States"
-msgstr "تاريخ غير صالح"
-
-#: corehq/apps/hqwebapp/models.py corehq/util/context_processors.py
-#, fuzzy
 #| msgid "Indices"
 msgid "India"
 msgstr "المؤشرات"
 
 #: corehq/apps/hqwebapp/models.py
-msgid "European Union"
+#, fuzzy
+#| msgid "Invalid Date"
+msgid "United States"
+msgstr "تاريخ غير صالح"
+
+#: corehq/apps/hqwebapp/models.py
+msgid "US"
 msgstr ""
 
 #: corehq/apps/hqwebapp/tables/export.py
@@ -34125,6 +34325,7 @@ msgstr "تسجيل الخروج"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/registration/forms.py
 #: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid "Child Locations"
@@ -35631,8 +35832,8 @@ msgid "Request failed"
 msgstr "فشل الطلب"
 
 #: corehq/apps/integration/payments/filters.py
-msgid "Batch number"
-msgstr "رقم الدفعة"
+msgid "Payment status"
+msgstr "حالة الدفع"
 
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
@@ -35641,8 +35842,34 @@ msgid "Show all"
 msgstr "عرض الكل"
 
 #: corehq/apps/integration/payments/filters.py
-msgid "Payment status"
-msgstr "حالة الدفع"
+msgid "Batch number"
+msgstr "رقم الدفعة"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py corehq/tabs/tabclasses.py
+msgid "Campaign"
+msgstr "الحملة"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Activities"
+msgid "Activity"
+msgstr "أنشطة"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "underline"
+msgid "Funder"
+msgstr "تحته خط"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/users/forms.py
+msgid "Phone number"
+msgstr "رقم الهاتف"
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
@@ -38395,6 +38622,20 @@ msgstr "تم حفظ البرنامج!"
 #: corehq/apps/programs/views.py
 msgid "Edit Program"
 msgstr "تعديل البرنامج"
+
+#: corehq/apps/registration/forms.py
+#, fuzzy, python-brace-format
+#| msgid "Use location name"
+msgid "{location_name} Cloud"
+msgstr "استخدم اسم الموقع"
+
+#: corehq/apps/registration/forms.py
+#, python-brace-format
+msgid ""
+"*You're creating an account and project space in the chosen cloud location."
+"<br/>These cannot be transferred between cloud locations. <a "
+"href='{help_link}' target='_blank'>Learn more</a>."
+msgstr ""
 
 #: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -43574,12 +43815,6 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
 #: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/users/forms.py
-msgid "Phone number"
-msgstr "رقم الهاتف"
-
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
 msgid "Edit User Information"
 msgstr "تعديل معلومات المستخدم"
 
@@ -44670,6 +44905,10 @@ msgid "Other SMS"
 msgstr "رسائل نصية أخرى"
 
 #: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+msgid "Connect Message Survey"
+msgstr "استبيان رسالة Connect"
+
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
 #: corehq/apps/smsforms/models.py
 msgid "In Progress"
 msgstr "قيد التنفيذ"
@@ -45597,10 +45836,6 @@ msgid "FCM Push Notification"
 msgstr "إشعار دفع FCM"
 
 #: corehq/apps/sms/models.py
-msgid "Connect Message Survey"
-msgstr "استبيان رسالة Connect"
-
-#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr "مجموعة مستخدمين"
 
@@ -46027,14 +46262,22 @@ msgid "Request Access to Messaging Features"
 msgstr "طلب الوصول إلى ميزات الرسائل"
 
 #: corehq/apps/sms/templates/sms/wall.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      To enable messaging features, please request access by sending an "
+#| "email\n"
+#| "      to <a href=\"mailto:%(SALES_EMAIL)s\">%(SALES_EMAIL)s</a> from your "
+#| "work\n"
+#| "      email address containing the following information:\n"
+#| "    "
 msgid ""
 "\n"
 "      To enable messaging features, please request access by sending an "
-"email\n"
-"      to <a href=\"mailto:%(SALES_EMAIL)s\">%(SALES_EMAIL)s</a> from your "
-"work\n"
-"      email address containing the following information:\n"
+"email to\n"
+"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from "
+"your\n"
+"      work email address containing the following information:\n"
 "    "
 msgstr ""
 "\n"
@@ -55470,6 +55713,15 @@ msgstr ""
 "الكامل للموقع."
 
 #: corehq/feature_previews.py
+msgid "CommCare Companion AI Support Bot"
+msgstr ""
+
+#: corehq/feature_previews.py
+msgid ""
+"This setting allows users to chat with a chatbot to get help with CommCare."
+msgstr ""
+
+#: corehq/feature_previews.py
 msgid "Call Center"
 msgstr "مركز الاتصالات"
 
@@ -59674,10 +59926,6 @@ msgstr "إحصائيات النطاق"
 msgid "Microplanning"
 msgstr "التخطيط الدقيق"
 
-#: corehq/tabs/tabclasses.py
-msgid "Campaign"
-msgstr "الحملة"
-
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"
 msgstr "عرض الكل"
@@ -59999,11 +60247,35 @@ msgid "hash"
 msgstr ""
 
 #: corehq/util/context_processors.py
-msgid "US"
+msgid "Need Help?"
 msgstr ""
 
 #: corehq/util/context_processors.py
-msgid "EU"
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+
+#: corehq/util/context_processors.py
+#, fuzzy
+#| msgid "How to Create and Deploy a CommCare Application."
+msgid "I need help with building my CommCare application."
+msgstr "كيفية إنشاء ونشر تطبيق CommCare."
+
+#: corehq/util/context_processors.py
+msgid "I need help troubleshooting my mobile application."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "I need help with exporting or understanding my data."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "Finding the best answer"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
 msgstr ""
 
 #: corehq/util/jsonattrs.py
@@ -60866,29 +61138,6 @@ msgstr "أدخل JSON صالحًا"
 #~ "href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
 #~ "    </p>\n"
 #~ "  "
-
-#, fuzzy
-#~| msgid ""
-#~| "\n"
-#~| "                              The user will be sent an email with "
-#~| "instructions to\n"
-#~| "                              set a password and be able to login to "
-#~| "this project.\n"
-#~| "                            "
-#~ msgid ""
-#~ "\n"
-#~ "                                  The user will be sent an email with\n"
-#~ "                                  instructions to set a password and be "
-#~ "able to\n"
-#~ "                                  login to this project.\n"
-#~ "                                "
-#~ msgstr ""
-#~ "\n"
-#~ "                              سيتم إرسال بريد إلكتروني للمستخدم مع "
-#~ "تعليمات\n"
-#~ "                              لتعيين كلمة مرور والقدرة على تسجيل الدخول "
-#~ "إلى هذا المشروع.\n"
-#~ "                            "
 
 #~ msgid "Explore Case Data (Preview)"
 #~ msgstr "استكشاف بيانات الحالات (معاينة)"
