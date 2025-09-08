@@ -1,20 +1,21 @@
-import $ from "jquery";
-import _ from "underscore";
-import ko from "knockout";
 import hqMain from "hqwebapp/js/bootstrap3/main";
-import standardHQReportModule from "reports/js/bootstrap3/standard_hq_report";
-import select2Filter from "reports/js/filters/select2s";
-import phoneNumberFilter from "reports/js/filters/phone_number";
-import buttonGroup from "reports/js/filters/button_group";
-import scheduleInstanceFilter from "reports/js/filters/schedule_instance";
+import "hqwebapp/js/daterangepicker.config";
+import hqTempusDominus from "hqwebapp/js/tempus_dominus";
+import $ from "jquery";
+import ko from "knockout";
 import locationDrilldown from "locations/js/location_drilldown";
+import standardHQReportModule from "reports/js/bootstrap3/standard_hq_report";
 import advancedFormsOptions from "reports/js/filters/advanced_forms_options";
 import drilldownOptions from "reports/js/filters/bootstrap3/drilldown_options";
-import choiceListUtils from "reports_core/js/choice_list_utils";
+import buttonGroup from "reports/js/filters/button_group";
 import caseListExplorer from "reports/js/filters/case_list_explorer";
-import "select2/dist/js/select2.full.min";
 import "reports/js/filters/case_list_explorer_knockout_bindings";
-import "hqwebapp/js/daterangepicker.config";
+import phoneNumberFilter from "reports/js/filters/phone_number";
+import scheduleInstanceFilter from "reports/js/filters/schedule_instance";
+import select2Filter from "reports/js/filters/select2s";
+import choiceListUtils from "reports_core/js/choice_list_utils";
+import "select2/dist/js/select2.full.min";
+import _ from "underscore";
 
 var init = function () {
     // Datespans
@@ -35,6 +36,29 @@ var init = function () {
                 $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
                 $('#report_filter_datespan_startdate').val(dates[0]);
                 $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
+                $('#report_filter_datespan_enddate').val(dates[1]);
+            });
+        }
+    });
+
+    // Datetime spans
+    $('.report-filter-datetimespan').each(function () {
+        var $filterRange = $(this);
+        if ($filterRange.data("init")) {
+            var separator = $filterRange.data('separator');
+            var reportLabels = $filterRange.data('reportLabels');
+            var standardHQReport = standardHQReportModule.getStandardHQReport();
+
+            hqTempusDominus.createDateTimeRangePicker(
+                $filterRange[0], separator,
+                $filterRange.data('startDatetime'),
+                $filterRange.data('endDatetime')
+            );
+            $filterRange.on('change apply', function () {
+                var dates = $(this).val().split(separator);
+                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datetimespan.start_datetime', dates[0]);
+                $('#report_filter_datespan_startdate').val(dates[0]);
+                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datetimespan.end_datetime', dates[1]);
                 $('#report_filter_datespan_enddate').val(dates[1]);
             });
         }
