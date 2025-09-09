@@ -29,7 +29,7 @@ from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from corehq.util.timer import TimingContext
 
-from .adaptercache import MigrationCache, TTLCache
+from .adaptercache import AdapterCache, MigrationCache, TTLCache
 from .const import KAFKA_TOPICS
 from .data_source_providers import (
     DynamicDataSourceProvider,
@@ -44,6 +44,7 @@ from .util import get_indicator_adapter
 
 REBUILD_CHECK_INTERVAL = 3 * 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
+_SHARED_ADAPTER_CACHES = defaultdict(AdapterCache)
 
 
 class WarmShutdown(object):
@@ -121,13 +122,14 @@ def _get_indicator_adapter_for_pillow(config):
 class UcrTableManager(ABC):
     """Base class for table managers that encapsulates the bootstrap and refresh
     functionality."""
-    def __init__(self, bootstrap_interval, run_migrations):
+    def __init__(self, bootstrap_interval, run_migrations, adapter_cache):
         """
         :param bootstrap_interval: time in seconds when SQL tables are rebuilt.
         :param run_migrations: If True, rebuild tables if the data source changes. Otherwise,
             do not attempt to change database
+        :param adapter_cache: AdapterCache. May be shared across multiple table managers.
         """
-        self.cache = TTLCache(self.iter_adapters)
+        self.cache = TTLCache(self.iter_adapters, adapter_cache)
         self.is_dedicated_migration_process = False
         if run_migrations:
             interval = bootstrap_interval or REBUILD_CHECK_INTERVAL
@@ -256,7 +258,7 @@ class ConfigurableReportTableManager(UcrTableManager):
 
     def __init__(self, data_source_providers, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=None,
-                 run_migrations=True):
+                 run_migrations=True, adapter_cache=None):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -266,7 +268,7 @@ class ConfigurableReportTableManager(UcrTableManager):
         include_ucrs -- list of ucr 'table_ids' to be included in this processor
         exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
         """
-        super().__init__(bootstrap_interval, run_migrations)
+        super().__init__(bootstrap_interval, run_migrations, adapter_cache)
         self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
@@ -315,10 +317,10 @@ class ConfigurableReportTableManager(UcrTableManager):
 
 class RegistryDataSourceTableManager(UcrTableManager):
 
-    def __init__(self, bootstrap_interval=None, run_migrations=True):
+    def __init__(self, bootstrap_interval=None, run_migrations=True, adapter_cache=None):
         """Initializes the processor for UCRs backed by a data registry
         """
-        super().__init__(bootstrap_interval, run_migrations)
+        super().__init__(bootstrap_interval, run_migrations, adapter_cache)
         self.data_source_provider = RegistryDataSourceProvider()
 
     def iter_configs(self, domain):
@@ -589,13 +591,15 @@ def get_ucr_processor(data_source_providers,
         exclude_ucrs=exclude_ucrs,
         bootstrap_interval=bootstrap_interval,
         run_migrations=run_migrations,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_ucr_processor],
     )
     return ConfigurableReportPillowProcessor(table_manager)
 
 
 def get_data_registry_ucr_processor(run_migrations):
     table_manager = RegistryDataSourceTableManager(
-        run_migrations=run_migrations
+        run_migrations=run_migrations,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_data_registry_ucr_processor],
     )
     return ConfigurableReportPillowProcessor(table_manager)
 
@@ -617,7 +621,8 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
-        run_migrations=(process_num == 0)  # only first process runs migrations
+        run_migrations=(process_num == 0),  # only first process runs migrations
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_kafka_ucr_pillow],
     )
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(table_manager),
@@ -650,7 +655,8 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
-        run_migrations=(process_num == 0)  # only first process runs migrations
+        run_migrations=(process_num == 0),  # only first process runs migrations
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_kafka_ucr_static_pillow],
     )
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(table_manager),
@@ -681,7 +687,8 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
             DynamicDataSourceProvider('Location'),
             StaticDataSourceProvider('Location')
         ],
-        include_ucrs=include_ucrs
+        include_ucrs=include_ucrs,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_location_pillow],
     )
     ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
