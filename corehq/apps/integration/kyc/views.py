@@ -4,9 +4,12 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
+from memoized import memoized
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
@@ -21,8 +24,10 @@ from corehq.apps.integration.kyc.tables import (
     KycUserElasticRecord,
     KycVerifyTable,
 )
+from corehq.apps.reports.generic import get_filter_classes
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.timezones.utils import get_timezone
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -153,9 +158,35 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         ]
 
 
+class KYCFiltersMixin:
+
+    fields = [
+        'corehq.apps.integration.kyc.filters.KycVerificationStatusFilter',
+    ]
+
+    def filters_context(self):
+        return {
+            'report': {
+                'title': self.page_title,
+                'section_name': self.section_name,
+                'show_filters': True,
+            },
+            'report_filters': [
+                dict(field=f.render(), slug=f.slug) for f in self.filter_classes
+            ],
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
+        }
+
+    @property
+    @memoized
+    def filter_classes(self):
+        timezone = get_timezone(self.request, self.domain)
+        return get_filter_classes(self.fields, self.request, self.domain, timezone, use_bootstrap5=True)
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
-class KycVerificationReportView(BaseDomainView):
+class KycVerificationReportView(BaseDomainView, KYCFiltersMixin):
     urlname = 'kyc_verify'
     template_name = 'kyc/kyc_verify_report.html'
     section_name = _('Data')
@@ -166,6 +197,7 @@ class KycVerificationReportView(BaseDomainView):
         context = super().page_context
         context.update({
             'domain_has_config': self.domain_has_config,
+            **self.filters_context(),
         })
         return context
 

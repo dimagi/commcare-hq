@@ -290,6 +290,16 @@ class KycVerificationStatus:
     ERROR = 'error'
     INVALID = 'invalid'   # indicates an invalid value was manually set by a user
 
+    @staticmethod
+    def choices():
+        return [
+            (KycVerificationStatus.PASSED, _('Passed')),
+            (KycVerificationStatus.FAILED, _('Failed')),
+            ('pending', _('Pending')),
+            (KycVerificationStatus.ERROR, _('Error')),
+            (KycVerificationStatus.INVALID, _('Invalid')),
+        ]
+
 
 class KycVerificationFailureCause(models.TextChoices):
     USER_INFORMATION_INCOMPLETE = (
