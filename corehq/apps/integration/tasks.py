@@ -24,7 +24,7 @@ REQUEST_MOMO_PAYMENTS_TASK_SLUG = 'request_momo_payments'
 def report_verification_status_count():
     for domain in KYC_VERIFICATION.get_enabled_domains():
         kyc_config = KycConfig.objects.get(domain=domain)
-        kyc_users = kyc_config.get_kyc_users()
+        kyc_users = kyc_config.get_all_kyc_users()
         success_count = 0
         failure_count = 0
         for kyc_user in kyc_users:

@@ -94,7 +94,7 @@ class TestGetUserObjectsUsers(BaseKycUsersSetup):
             domain=DOMAIN,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
         )
-        kyc_users = list(config.get_kyc_users())
+        kyc_users = list(config.get_all_kyc_users())
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'commcare_profile': '',
@@ -119,7 +119,7 @@ class TestGetUserObjectsUsers(BaseKycUsersSetup):
             domain=DOMAIN,
             user_data_store=UserDataStore.USER_CASE,
         )
-        kyc_users = list(config.get_kyc_users())
+        kyc_users = list(config.get_all_kyc_users())
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'user_case_property': 'user_case_value',
@@ -161,7 +161,7 @@ class TestGetUserObjectsCases(TestCase):
             user_data_store=UserDataStore.OTHER_CASE_TYPE,
             other_case_type='other_case_type',
         )
-        kyc_users = list(config.get_kyc_users())
+        kyc_users = list(config.get_all_kyc_users())
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'other_case_property': 'other_case_value',
@@ -194,7 +194,7 @@ class TestGetUserObjectsCases(TestCase):
             user_data_store=UserDataStore.OTHER_CASE_TYPE,
         )
         with pytest.raises(AssertionError):
-            config.get_kyc_users()
+            config.get_all_kyc_users()
 
 
 class TestKycUser(BaseKycUsersSetup):
