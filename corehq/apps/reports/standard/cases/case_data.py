@@ -449,11 +449,7 @@ def case_xml(request, domain, case_id):
 @require_GET
 def case_property_names(request, domain, case_id):
     case = safely_get_case(request, domain, case_id)
-    all_property_names = set(CaseProperty.objects.filter(
-        case_type__domain=domain,
-        case_type__name=case.type,
-        deprecated=False,
-    ).values_list('name', flat=True))
+    all_property_names = set(case.dynamic_case_properties())
     all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES) | {"case_name"}
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
