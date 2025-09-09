@@ -89,13 +89,8 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
-<<<<<<< HEAD
-from corehq.apps.hqwebapp.models import HQOauthApplication
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page, is_logged_in
-=======
 from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page
->>>>>>> master
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page, is_logged_in
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
 from corehq.apps.locations.permissions import location_safe
