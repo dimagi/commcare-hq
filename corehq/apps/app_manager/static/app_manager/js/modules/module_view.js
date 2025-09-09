@@ -99,7 +99,7 @@ $(function () {
     var showCaseTypeError = function (message) {
         var $caseTypeError = $('#case_type_error');
         $caseTypeError.css('display', 'block').removeClass('hide');
-        $caseTypeError.text(message);
+        $caseTypeError.html(message);
     };
     var hideCaseTypeError = function () {
         $('#case_type_error').addClass('hide');
@@ -154,7 +154,7 @@ $(function () {
         } else if (appManager.valueIsReservedWord(valueNoSpaces) && moduleType !== 'advanced') {
             $el.closest('.form-group').addClass('has-error');
             showCaseTypeError(
-                appManager.reservedWordErrorMsg,
+                appManager.getReservedWordErrorMsg(valueNoSpaces),
             );
 
         } else {
