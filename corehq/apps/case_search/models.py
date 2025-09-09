@@ -2,12 +2,18 @@ import re
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.dispatch import receiver
 from django.forms import model_to_dict
+from django.db.models.signals import post_save
+from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
 import attr
+
+from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
@@ -290,10 +296,11 @@ class CaseSearchConfig(models.Model):
     sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
+    # Deprecated - this will be removed in a later PR
     fuzzy_prefix_length = models.SmallIntegerField(blank=True, null=True, validators=[
         MinValueValidator(0), MaxValueValidator(10),
     ])
-    # See case_search_bha.py docstring for context
+    # See case_search_sub.py docstring for context
     index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
         "Name or alias of alternative index to use for case search"))
 
@@ -437,3 +444,92 @@ class DomainsNotInCaseSearchIndex(models.Model):
         db_index=True,
     )
     estimated_size = models.IntegerField()
+
+
+def validate_user_data_criteria(value):
+    valid_operators = CSQLFixtureExpression.VALID_OPERATORS
+    for criteria in value:
+        if criteria['operator'] not in valid_operators:
+            raise ValidationError(
+                _(f'Invalid operator "{criteria["operator"]}". Allowed values are '
+                f'{", ".join(valid_operators)}.')
+            )
+
+
+class CSQLFixtureExpression(models.Model):
+    MATCH_IS = "IS"
+    MATCH_IS_NOT = "IS_NOT"
+    VALID_OPERATORS = {MATCH_IS, MATCH_IS_NOT}
+
+    domain = models.CharField(max_length=64, default='')
+    name = models.CharField(max_length=64, null=False)
+    csql = models.CharField(null=False)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    deleted = models.BooleanField(default=False)
+    user_data_criteria = models.JSONField(default=list, blank=True,
+                                          validators=(validate_user_data_criteria,))
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain, deleted=False)
+
+    @classmethod
+    def matches_user_data_criteria(cls, user_data, user_data_criteria):
+        for criteria in user_data_criteria:
+            operator = criteria['operator']
+            property_name = criteria['property_name']
+
+            value = user_data.get(property_name)
+
+            if value is None or value == '':
+                continue
+
+            try:
+                if operator == cls.MATCH_IS and not string_to_boolean(value):
+                    return False
+                elif operator == cls.MATCH_IS_NOT and string_to_boolean(value):
+                    return False
+            except ValueError:
+                continue
+
+        return True
+
+    @atomic
+    def soft_delete(self):
+        self.deleted = True
+        self.save()
+        CSQLFixtureExpressionLog.objects.create(
+            expression=self,
+            action=CSQLFixtureExpressionLog.Action.DELETE,
+        )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class CSQLFixtureExpressionLog(models.Model):
+    class Action(models.TextChoices):
+        CREATE = 'CR', _('Create')
+        DELETE = 'DE', _('Delete')
+        UPDATE = 'UP', _('Update')
+
+    expression = models.ForeignKey(CSQLFixtureExpression, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=2, choices=Action.choices, null=False)
+    name = models.CharField(max_length=64, default='')
+    csql = models.TextField(default='')
+
+
+@receiver(post_save, sender=CSQLFixtureExpression)
+def after_save(sender, instance, created, **kwargs):
+    if not instance.deleted:
+        updated_or_created = (CSQLFixtureExpressionLog.Action.CREATE if created
+                            else CSQLFixtureExpressionLog.Action.UPDATE)
+        CSQLFixtureExpressionLog.objects.create(
+            expression=instance,
+            action=updated_or_created,
+            name=instance.name,
+            csql=instance.csql
+        )

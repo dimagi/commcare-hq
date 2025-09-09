@@ -4,7 +4,7 @@ from datetime import datetime
 from django.apps import apps
 from django.conf import settings
 
-from corehq.apps.sms.models import OUTGOING, SMS
+from corehq.apps.sms.models import SMS
 
 short_text = "This is a test text message under 160 characters."
 
@@ -24,7 +24,6 @@ def bootstrap_smsbillables():
     from ..management.commands.bootstrap_telerivet_gateway import bootstrap_telerivet_gateway
     from ..management.commands.bootstrap_test_gateway import bootstrap_test_gateway
     from ..management.commands.bootstrap_tropo_gateway import bootstrap_tropo_gateway
-    from ..management.commands.bootstrap_unicel_gateway import bootstrap_unicel_gateway
     from ..management.commands.bootstrap_usage_fees import bootstrap_usage_fees
     from ..management.commands.bootstrap_yo_gateway import bootstrap_yo_gateway
 
@@ -36,7 +35,6 @@ def bootstrap_smsbillables():
     bootstrap_grapevine_gateway(apps)
     bootstrap_mach_gateway(apps)
     bootstrap_tropo_gateway(apps)
-    bootstrap_unicel_gateway(apps)
     bootstrap_usage_fees(apps)
     bootstrap_moz_gateway(apps)
     bootstrap_test_gateway(apps)

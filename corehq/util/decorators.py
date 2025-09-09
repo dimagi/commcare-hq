@@ -12,7 +12,6 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.celery import task
 from corehq.util.global_request import get_request
-from corehq.util.metrics import metrics_counter
 
 
 def handle_uncaught_exceptions(mail_admins=True):
@@ -42,6 +41,8 @@ def silence_and_report_error(message, metric_name):
 
     Instead, report the issue to sentry and track the overall count as a metric
     """
+    # indirectly causes Django settings access on import
+    from corehq.util.metrics import metrics_counter
 
     try:
         yield
@@ -63,7 +64,7 @@ def run_only_when(condition):
     return outer
 
 
-enterprise_skip = run_only_when(not settings.ENTERPRISE_MODE)
+enterprise_skip = run_only_when(lambda: not settings.ENTERPRISE_MODE)
 
 
 class change_log_level(ContextDecorator):
@@ -101,7 +102,7 @@ class require_debug_true(ContextDecorator):
         pass
 
 
-class CouldNotAqcuireLock(Exception):
+class CouldNotAcquireLock(Exception):
     pass
 
 
@@ -163,9 +164,9 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
                 finally:
                     release_lock(lock, True)
             else:
-                msg = "Could not aquire lock '{}' for task '{}'.".format(
+                msg = "Could not acquire lock '{}' for task '{}'.".format(
                     key, fn.__name__)
-                self.retry(exc=CouldNotAqcuireLock(msg))
+                self.retry(exc=CouldNotAcquireLock(msg))
         return _inner
     return decorator
 

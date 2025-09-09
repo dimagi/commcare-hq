@@ -1,0 +1,22 @@
+--- 
++++ 
+@@ -3,8 +3,8 @@
+ import _ from "underscore";
+ import ko from "knockout";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import standardHqReport from "reports/js/bootstrap3/standard_hq_report";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import standardHqReport from "reports/js/bootstrap5/standard_hq_report";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ 
+ var caseManagement = function (o) {
+     var self = {};
+@@ -127,7 +127,7 @@
+         }
+         if (_.isEmpty(newOwner)) {
+             $modal.find('.modal-body').text("Please select an owner");
+-            $modal.modal('show');
++            $modal.modal('show');  /* todo B5: js-modal */
+         } else {
+             if (self.selectAllMatches()) {
+                 self.updateAllMatches(newOwner);

@@ -1,6 +1,6 @@
 import datetime
 import random
-from corehq.apps.accounting.utils import months_from_date
+from corehq.apps.accounting.utils import get_first_day_x_months_later
 
 
 def get_first_name():
@@ -39,6 +39,16 @@ def get_fake_app():
     return random.choice(apps)
 
 
-def get_past_date():
+def get_owner():
+    owners = ('worker1', 'worker2', 'worker3', 'worker4')
+    return random.choice(owners)
+
+
+def get_status():
+    return random.choice(['open', 'closed'])
+
+
+def get_past_date(months_away=None):
+    months_away = months_away or [6, 12, 24, 48]
     today = datetime.datetime.today()
-    return months_from_date(today, -1 * random.choice([6, 12, 24, 48])).strftime("%Y-%m-%d")
+    return get_first_day_x_months_later(today, -1 * random.choice(months_away)).strftime("%Y-%m-%d")

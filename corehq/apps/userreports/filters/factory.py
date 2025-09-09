@@ -70,10 +70,7 @@ def _build_boolean_expression_filter(spec, factory_context):
 
 def _build_named_filter(spec, factory_context):
     wrapped = NamedFilterSpec.wrap(spec)
-    try:
-        filter = factory_context.named_filters[wrapped.name]
-    except KeyError as e:
-        raise BadSpecError(_("Couldn't find named filter with name: {}").format(str(e)))
+    filter = factory_context.get_named_filter(wrapped.name)
     return NamedFilter(wrapped.name, filter)
 
 

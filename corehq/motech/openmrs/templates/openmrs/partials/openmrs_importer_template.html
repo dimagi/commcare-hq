@@ -13,10 +13,11 @@
         </legend>
 
         {% for field in form %}
-        <div class="mb-3">
-            <label class="form-label {% if field.field.required %} requiredField{% endif %}">
+        <div class="mb-3 row">
+            <label class="form-label field-label {% if field.field.required %} requiredField{% endif %}">
                 {{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
             </label>
+            <div class="field-control">
             {% if field.field.widget.input_type == 'select' %}
                 <select name="{{ field.html_name }}"
                         class="select form-control"
@@ -41,6 +42,7 @@
             {% if field.help_text %}
                 <p class="help-block">{{ field.help_text }}</p>
             {% endif %}
+            </div>
         </div>
         {% endfor %}
 

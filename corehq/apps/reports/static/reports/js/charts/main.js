@@ -1,20 +1,19 @@
-hqDefine('reports/js/charts/main', function () {
-    var init = function () {
-        var pieCharts = hqImport('reports/js/charts/pie_chart');
-        $('.charts-pie-chart').each(function (i, el) {
-            var $el = $(el),
-                data = $el.data();
-            pieCharts.init(data);
-        });
+import $ from "jquery";
+import multibarCharts from "reports/js/charts/multibar_chart";
+import pieCharts from "reports/js/charts/pie_chart";
 
-        var multibarCharts = hqImport('reports/js/charts/multibar_chart');
-        $('.charts-multibar-chart').each(function (i, el) {
-            var $el = $(el),
-                data = $el.data();
-            multibarCharts.init(data);
-        });
+var init = function () {
+    $('.charts-pie-chart').each(function (i, el) {
+        var $el = $(el),
+            data = $el.data();
+        pieCharts.init(data);
+    });
 
-    };
+    $('.charts-multibar-chart').each(function (i, el) {
+        var $el = $(el),
+            data = $el.data();
+        multibarCharts.init(data);
+    });
+};
 
-    return { init: init };
-});
+export default { init: init };

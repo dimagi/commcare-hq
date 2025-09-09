@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<hr />
+<h4 class="text-center">
+  {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
+</h4>
+{% for message in messages %}
+  <div class="alert alert-warning alert-downgrade">
+    {{ message.message }}
+    <ul>
+      {% for detail in message.details %}
+        <li>{{ detail }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endfor %}

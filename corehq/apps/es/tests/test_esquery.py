@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.test import SimpleTestCase
 
@@ -35,8 +35,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                                 )
                             }
                         },
-                        {'term': {'base_doc': 'couchuser'}},
-                        {'term': {'is_active': True}}
+                        {'term': {'base_doc': 'couchuser'}}
                     ],
                     "must": {
                         "match_all": {}
@@ -46,7 +45,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         }
         raw_query = query.raw_query
-        self.checkQuery(raw_query, json_output, is_raw_query=True)
+        self.checkQuery(raw_query, json_output, is_raw_query=True, validate_query=False)
 
     def test_basic_query(self):
         json_output = {
@@ -118,11 +117,6 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                             "term": {
                                 "base_doc": "couchuser"
                             }
-                        },
-                        {
-                            "term": {
-                                "is_active": True
-                            }
                         }
                     ],
                     "must": {
@@ -168,9 +162,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
 
     def test_remove_all_defaults(self):
         # Elasticsearch fails if you pass it an empty list of filters
-        query = (users.UserES()
-                 .remove_default_filter('not_deleted')
-                 .remove_default_filter('active'))
+        query = users.UserES().remove_default_filters()
         filters = query.raw_query['query']['bool']['filter']
         self.assertTrue(len(filters) > 0)
 
@@ -345,7 +337,8 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             'base_username': 'u1',
             'user_data_es': [],
             '__group_ids': [],
-            '__group_names': []
+            '__group_names': [],
+            'user_domain_memberships': []
         })
         self.assertEqual([doc], list(query.scroll_ids_to_disk_and_iter_docs()))
 
@@ -368,8 +361,33 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             'doc_id': 'test',
             'user_data_es': [],
             '__group_ids': [],
-            '__group_names': []
+            '__group_names': [],
+            'user_domain_memberships': []
         })
         real_scroll = query.scroll
         with patch.object(query, "scroll", scroll_then_delete_one):
             self.assertEqual([doc1], list(query.scroll_ids_to_disk_and_iter_docs()))
+
+    def test_exists_query(self):
+
+        docs = [
+            {"_id": "123", "doc_type": "Something", "created_on": "2025-01-01", "username": "1"},
+            {"_id": "456", "doc_type": "Something", "created_on": "2025-01-01", "username": "1"},
+        ]
+        for doc in docs:
+            with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+                users.user_adapter.index(doc, refresh=True)
+                self.addCleanup(users.user_adapter.delete, doc['_id'])
+
+        def query_created(**params):
+            return users.UserES().remove_default_filters().created(**params).exists()
+
+        self.assertFalse(query_created(gt="2025-04-01"))
+        self.assertTrue(query_created(lt="2025-04-01"))
+
+        with patch('corehq.apps.es.es_query.ESQuerySet', return_value=MagicMock(total=1)) as ESQuerySet:
+            query_created(lt="2025-04-01")
+        # No docs returned
+        self.assertEqual(ESQuerySet.call_args[0][0]['hits']['hits'], [])
+        # there are two docs, but only 1 was scanned (per shard)
+        self.assertEqual(ESQuerySet.call_args[0][0]['hits']['total'], 1)

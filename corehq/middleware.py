@@ -18,6 +18,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from corehq.util.timer import DURATION_REPORTING_THRESHOLD
+from corehq.util.view_utils import set_language_cookie
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
@@ -269,7 +270,7 @@ class SentryContextMiddleware(MiddlewareMixin):
     def __init__(self, get_response):
         super(SentryContextMiddleware, self).__init__(get_response)
         try:
-            from sentry_sdk import configure_scope  # noqa: F401
+            from sentry_sdk import Scope  # noqa: F401
         except ImportError:
             raise MiddlewareNotUsed
 
@@ -277,15 +278,14 @@ class SentryContextMiddleware(MiddlewareMixin):
             raise MiddlewareNotUsed
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        from sentry_sdk import configure_scope
+        from sentry_sdk import Scope
+        scope = Scope.get_current_scope()
+        if getattr(request, 'couch_user', None):
+            scope.set_extra('couch_user_id', request.couch_user.get_id)
+            scope.set_tag('user.username', request.couch_user.username)
 
-        with configure_scope() as scope:
-            if getattr(request, 'couch_user', None):
-                scope.set_extra('couch_user_id', request.couch_user.get_id)
-                scope.set_tag('user.username', request.couch_user.username)
-
-            if getattr(request, 'domain', None):
-                scope.set_tag('domain', request.domain)
+        if getattr(request, 'domain', None):
+            scope.set_tag('domain', request.domain)
 
 
 class SelectiveSessionMiddleware(SessionMiddleware):
@@ -341,9 +341,60 @@ def get_view_func(view_fn, view_kwargs):
 
 
 class SecureCookiesMiddleware(MiddlewareMixin):
+    """Sets `secure` flag for cookies on the response object.
+    Must be come before middleware that adds cookies, because of order and layering.
+    https://docs.djangoproject.com/en/4.2/topics/http/middleware/#middleware-order-and-layering
+    """
 
     def process_response(self, request, response):
         if hasattr(response, 'cookies') and response.cookies:
             for cookie in response.cookies:
                 response.cookies[cookie]['secure'] = settings.SECURE_COOKIES or response.cookies[cookie]['secure']
+        return response
+
+
+class HqHtmxActionMiddleware:
+    """
+    We append `_hq-hx-action` to HTMX requests using hq-hx-action
+    so browsers can cache fragments under a distinct URL per action.
+
+    This middleware removes the flag before views run, keeping handler
+    code and user-facing URLs clean.
+
+    Benefits:
+      - Unique cache slots for HTMX fragments without polluting view logic
+      - Clean request parameters in views
+      - Transparent request logs revealing the HTMX action name in the URL
+    """
+    _FLAG = "_hq-hx-action"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if self._FLAG in request.GET:
+            q = request.GET.copy()
+            q.pop(self._FLAG, None)
+            request.GET = q
+        return self.get_response(request)
+
+
+class SyncUserLanguageMiddleware:
+    """
+    Sets display language to the logged in user's account language if defined.
+    Useful when a user logs in from any source or if the cookie gets deleted.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        couch_user = getattr(request, 'couch_user', None)
+        if (
+            couch_user
+            and couch_user.language
+            and couch_user.language != request.LANGUAGE_CODE
+        ):
+            response = set_language_cookie(response, couch_user.language)
         return response

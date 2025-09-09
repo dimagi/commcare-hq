@@ -8,6 +8,7 @@ from django.test.testcases import SimpleTestCase
 
 from couchforms.geopoint import GeoPoint
 
+from corehq.privileges import DATA_DICTIONARY
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.case_search.xpath_functions.comparison import adjust_input_date_by_timezone
@@ -22,6 +23,7 @@ from corehq.apps.es.case_search import (
     case_property_starts_with,
     case_property_text_query,
     case_search_adapter,
+    get_case_property_unique_values,
     wrap_case_search_hit,
 )
 from corehq.apps.es.const import SIZE_LIMIT
@@ -29,7 +31,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
-from corehq.util.test_utils import create_and_save_a_case, flag_enabled
+from corehq.util.test_utils import create_and_save_a_case, flag_enabled, privilege_enabled
 
 
 @es_test
@@ -166,6 +168,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                     "case_properties.value": {
                                                                         "value": "polly",
                                                                         "fuzziness": "AUTO",
+                                                                        "prefix_length": 2,
                                                                         "max_expansions": 100
                                                                     }
                                                                 }
@@ -219,7 +222,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def test_fuzzy_property_query(self):
         query = self.es.domain('swashbucklers').filter(
-            case_property_query("foo", "backbeard", fuzzy=True, fuzzy_prefix_length=2)
+            case_property_query("foo", "backbeard", fuzzy=True)
         )
         expected = {
             "query": {
@@ -389,10 +392,11 @@ class BaseCaseSearchTest(TestCase):
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
         self._bootstrap_cases_in_es_for_domain(domain, input_cases)
-        self.assertItemsEqual(
-            query.get_ids(),
-            output
-        )
+        if query:
+            self.assertItemsEqual(
+                query.get_ids(),
+                output
+            )
         if xpath_query:
             self.assertItemsEqual(
                 CaseSearchES().xpath_query(self.domain, xpath_query).get_ids(),
@@ -424,25 +428,27 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             [
                 {'_id': 'c1', 'foo': 'redbeard'},
                 {'_id': 'c2', 'foo': 'blackbeard'},
+                {'_id': 'c3', 'foo': 'backbird'},
             ],
+            # 'backbird' is a fuzzy match - off by two edits
+            # 'blackbeard' is even closer, but it is omitted because of prefix_length=2
             CaseSearchES().domain(self.domain).case_property_query("foo", "backbeard", fuzzy=True),
             None,
-            ['c2']
+            ['c3']
         )
 
-    def test_fuzzy_case_property_query_with_prefix(self):
+    def test_fuzzy_date(self):
         self._assert_query_runs_correctly(
             self.domain,
             [
-                {'_id': 'c1', 'foo': 'redbeard'},
-                {'_id': 'c2', 'foo': 'blackbeard'},
-                {'_id': 'c3', 'foo': 'backbird'},
+                {'_id': 'c1', 'dob': date(2020, 3, 1)},
+                {'_id': 'c2', 'dob': date(2020, 1, 3)},
+                {'_id': 'c3', 'dob': date(2002, 3, 1)},
+                {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
-            CaseSearchES().domain(self.domain).filter(
-                case_property_query("foo", "backbeard", fuzzy=True, fuzzy_prefix_length=2)
-            ),
             None,
-            ['c3']
+            "fuzzy-date(dob, '2020-03-01')",
+            ['c1', 'c2', 'c3']
         )
 
     def test_multiple_case_search_queries(self):
@@ -546,8 +552,8 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             )
         )
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @patch('corehq.pillows.case_search.get_gps_properties', return_value={'coords'})
+    @privilege_enabled(DATA_DICTIONARY)
     def test_geopoint_query_for_gps_properties(self, _):
         self._bootstrap_cases_in_es_for_domain(self.domain, [
             {'_id': 'c1', 'coords': "42.373611 -71.110558 0 0"},
@@ -560,7 +566,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         ).get_ids()
         self.assertItemsEqual(res, ['c3', 'c4'])
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.pillows.case_search.get_geo_case_property', return_value='domain_coord')
     def test_geopoint_query_for_domain_geo_case_property(self, *args):
         self._bootstrap_cases_in_es_for_domain(self.domain, [
@@ -589,6 +595,38 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             "starts-with(ssn, '100')",
             ['c5', 'c6', 'c2']
         )
+
+    def test_get_case_property_unique_values(self):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'status': 'active'},
+            {'_id': 'c2', 'status': 'inactive'},
+            {'_id': 'c3', 'status': 'active'},
+            {'_id': 'c5', 'status': ''},  # empty value
+            {'_id': 'c6'},  # missing property
+        ])
+
+        unique_values = get_case_property_unique_values(self.domain, self.case_type, 'status')
+        expected_values = ['active', 'inactive']
+        self.assertEqual(sorted(unique_values), expected_values)
+
+    def test_get_case_property_unique_values_with_empty(self):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'status': 'active'},
+            {'_id': 'c2', 'status': 'inactive'},
+            {'_id': 'c3', 'status': 'active'},
+            {'_id': 'c5', 'status': ''},  # empty value
+            {'_id': 'c6'},  # missing property
+        ])
+
+        unique_values_with_empty = get_case_property_unique_values(
+            self.domain, self.case_type, 'status', include_empty=True
+        )
+        expected_values_with_empty = ['', 'active', 'inactive']
+        self.assertEqual(sorted(unique_values_with_empty), expected_values_with_empty)
+
+    def test_get_case_property_unique_values_no_cases(self):
+        unique_values = get_case_property_unique_values(self.domain, self.case_type, 'nonexistent')
+        self.assertEqual(unique_values, [])
 
 
 class TestForwardTimezoneAdjustment(TestCase):

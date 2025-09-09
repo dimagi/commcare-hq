@@ -216,7 +216,6 @@ On production, this currently returns
     ('258', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_MOZ'>),
     ('266', <SQLMobileBackend: Global Backend 'GRAPEVINE-ZA'>),
     ('265', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_TWILIO'>),
-    ('91', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_UNICEL'>),
     ('268', <SQLMobileBackend: Global Backend 'GRAPEVINE-ZA'>),
     ('256', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_YO'>),
     ('*', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_MACH'>)

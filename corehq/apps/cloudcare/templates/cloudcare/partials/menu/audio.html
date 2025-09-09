@@ -1,0 +1,26 @@
+<script type="text/template" id="menu-view-row-audio-template">
+  <td class="module-column module-column-icon">
+    <% if (imageUrl) { %>
+    <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
+    </div>
+    <% } else { %>
+    <div class="module-icon-container badge-container">
+      <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
+    </div>
+    <% } %>
+  </td>
+  <td class="module-column module-column-name module-column-name-audio">
+    <h3><%- displayText ? displayText : "" %></h3>
+  </td>
+  <td class="module-column module-column-name-audio">
+    <div class="module-audio-controls-container position-relative">
+      <audio class="js-module-audio">
+        <source src="<%- audioUrl %>" type="audio/mpeg">
+      </audio>
+      <div class="module-audio-control module-audio-play js-module-audio-play"><i class="fa fa-volume-up module-audio-icon js-module-audio-icon"></i></div>
+      <div class="module-audio-control module-audio-pause js-module-audio-pause d-none"><i class="fa fa-pause module-audio-icon js-module-audio-icon"></i></div>
+    </div>
+  </td>
+</script>

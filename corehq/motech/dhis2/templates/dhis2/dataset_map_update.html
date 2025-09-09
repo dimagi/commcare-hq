@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main_b5 "dhis2/js/dataset_map_update" %}
+{% js_entry "dhis2/js/dataset_map_update" %}
 
 {% block pagination_header %}
   {% registerurl "send_dataset_now" domain dataset_map_id %}

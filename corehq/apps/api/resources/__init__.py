@@ -2,14 +2,14 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from django.urls import NoReverseMatch
+from django.urls import NoReverseMatch, include, re_path
 
 from tastypie import http
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
 from tastypie.resources import Resource, convert_post_to_patch
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.api.cors import add_cors_headers_to_response
 from corehq.apps.api.util import get_obj
 from corehq.apps.users.util import is_dimagi_email
@@ -89,7 +89,42 @@ class CorsResourceMixin(object):
         return request_method
 
 
-class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
+class ApiVersioningMixin:
+    def __init__(self, api_name=None):
+        super().__init__(api_name)
+        # Tastypie sets `api_name` on `_meta`, which is a singleton, so if a
+        # resource registered multiple times, each instances uses the
+        # `api_name` that came last. This approach works with multiple versions
+        self.api_name = api_name or self._meta.api_name
+
+    @property
+    def urls(self):
+        # Old way of doing things, in line with tastypie's versioning scheme
+        return [
+            re_path(r"^(?P<resource_name>%s)/" % (self._meta.resource_name), include(self._get_urls()))
+        ]
+
+    @classmethod
+    def get_urlpattern(cls, version):
+        # Newer URL pattern, allows for versioning per resource
+        resource = cls(api_name=version)
+        return re_path(
+            r"^(?P<resource_name>%s)/(?P<api_name>%s)/" % (resource._meta.resource_name, version),
+            include(resource._get_urls()),
+        )
+
+    def _get_urls(self):
+        return self.prepend_urls() + [
+            re_path(r"^$", self.wrap_view('dispatch_list'), name="api_dispatch_list"),
+            re_path(r"^schema/$", self.wrap_view('get_schema'), name="api_get_schema"),
+            re_path(r"^set/(?P<%s_list>.*?)/$" % (self._meta.detail_uri_name),
+                    self.wrap_view('get_multiple'), name="api_get_multiple"),
+            re_path(r"^(?P<%s>.*?)/$" % (self._meta.detail_uri_name),
+                    self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+        ]
+
+
+class HqBaseResource(ApiVersioningMixin, CorsResourceMixin, JsonResourceMixin, Resource):
     """
     Convenience class to allow easy adjustment of API resource base classes.
     """
@@ -104,7 +139,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
                 status=401))
         if request.user.is_superuser or domain_has_privilege(request.domain, self.get_required_privilege()):
             if isinstance(self, DomainSpecificResourceMixin):
-                track_workflow(request.user.username, "API Request", properties={
+                track_workflow_noop(request.user.username, "API Request", properties={
                     'domain': request.domain,
                     'is_dimagi': is_dimagi_email(request.user.username),
                 })
@@ -260,8 +295,8 @@ class DomainSpecificResourceMixin(object):
         kwargs = dict(kwargs)
         kwargs['resource_name'] = self._meta.resource_name
 
-        if self._meta.api_name is not None:
-            kwargs['api_name'] = self._meta.api_name
+        if self.api_name is not None:
+            kwargs['api_name'] = self.api_name
 
         try:
             return self._build_reverse_url("api_dispatch_list", kwargs=kwargs)

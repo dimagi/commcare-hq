@@ -12,9 +12,16 @@ def default(request):
     return HttpResponseRedirect(UserListReport.get_url())
 
 
-def get_hqadmin_base_context(request):
+def get_breadcrumbs(current_title, current_urlname):
     return {
-        "domain": None,
+        'current_page': {
+            'url': reverse(current_urlname),
+            'page_name': current_title,
+        },
+        'section': {
+            'url': reverse('default_admin_report'),
+            'title': 'Admin',
+        },
     }
 
 

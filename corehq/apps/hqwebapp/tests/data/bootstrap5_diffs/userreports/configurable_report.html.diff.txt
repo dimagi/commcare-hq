@@ -1,0 +1,27 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "userreports/bootstrap3/base.html" %}
++{% extends "userreports/bootstrap5/base.html" %}
+ {% load compress %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 "userreports/js/bootstrap3/configurable_report" %}
++{% js_entry "userreports/js/bootstrap5/configurable_report" %}
+ 
+ {% block report_alerts %}
+   {{ block.super }}
+@@ -35,10 +35,10 @@
+   {% if can_edit_report %}
+     {% include 'userreports/partials/edit_report_button.html' %}
+   {% elif can_delete_report %}
+-    {% include 'userreports/partials/bootstrap3/delete_report_button.html' with report_id=report.report_config_id %}
++    {% include 'userreports/partials/bootstrap5/delete_report_button.html' with report_id=report.report_config_id %}
+   {% endif %}
+ {% endblock %}
+ 
+ {% block filter_panel %}
+-  {% include "userreports/partials/bootstrap3/filter_panel.html" %}
++  {% include "userreports/partials/bootstrap5/filter_panel.html" %}
+ {% endblock %}

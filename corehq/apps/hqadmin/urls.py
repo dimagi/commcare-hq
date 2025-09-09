@@ -28,6 +28,7 @@ from corehq.apps.hqadmin.views.users import (
     SuperuserManagement,
     OffboardingUserList,
     WebUserDataView,
+    email_status,
     superuser_table,
     web_user_lookup,
 )
@@ -48,6 +49,7 @@ urlpatterns = [
     url(r'^get_offboarding_list/$', OffboardingUserList.as_view(), name=OffboardingUserList.urlname),
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
+    url(r'^email_status/$', email_status, name='email_status'),
     url(r'^create_tombstone/$', create_tombstone, name='create_tombstone'),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),

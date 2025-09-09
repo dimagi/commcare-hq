@@ -349,7 +349,7 @@ class CaseClaimXpath(object):
 
     def default_relevant(self):
         # Checks to see if the searched-for case already exists in the casedb:
-        # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
+        # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0   # noqa: E501
         return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
 
     @classmethod

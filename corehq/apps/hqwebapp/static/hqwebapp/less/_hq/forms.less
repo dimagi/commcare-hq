@@ -161,7 +161,7 @@ textarea.vertical-resize {
     color: @cc-brand-mid;
   }
 
-  .btn-default {
+  .btn-default:not(:hover) {
     background-color: @call-to-action-extra-hi;
   }
 }
@@ -372,4 +372,10 @@ textarea.vertical-resize {
   float: none;
   position: initial;
   width: 13px;
+}
+
+#id_bulk_upload_file.form-control {     // override .form-control styles
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }

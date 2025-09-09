@@ -1,38 +1,48 @@
 --- 
 +++ 
-@@ -9,7 +9,7 @@
- 
-     This file also controls some basic event handling for report pages, such as the "Apply" button.
+@@ -3,9 +3,10 @@
  */
--hqDefine("reports/js/bootstrap3/standard_hq_report", [
-+hqDefine("reports/js/bootstrap5/standard_hq_report", [
-     'jquery',
-     'underscore',
-     'hqwebapp/js/initial_page_data',
-@@ -37,7 +37,7 @@
-                 // UCRs
-                 standardReport = hqImport(ucr).getStandardHQReport();
-             } else {
--                hqRequire(["reports/js/bootstrap3/hq_report"], function (hqReportModule) {
-+                hqRequire(["reports/js/bootstrap5/hq_report"], function (hqReportModule) {
-                     // Standard reports
-                     var reportOptions = _.extend({}, initialPageData.get('js_options'), {
-                         emailSuccessMessage: gettext('Report successfully emailed'),
-@@ -65,7 +65,7 @@
+ import $ from "jquery";
+ import _ from "underscore";
++import { Popover } from "bootstrap5";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import util from "reports/js/util";
+-import hqReportModule from "reports/js/bootstrap3/hq_report";
++import hqReportModule from "reports/js/bootstrap5/hq_report";
  
-         var reportOptions = initialPageData.get('js_options') || {};
-         if (reportOptions.slug && reportOptions.async) {
--            var asyncHQReport = hqImport("reports/js/bootstrap3/reports.async")({
-+            var asyncHQReport = hqImport("reports/js/bootstrap5/reports.async")({
+ var standardReport = undefined,
+     asyncReport = undefined;
+@@ -49,7 +50,7 @@
+     var reportOptions = initialPageData.get('js_options') || {};
+     if (reportOptions.slug && reportOptions.async) {
+         let promise = $.Deferred();
+-        import("reports/js/bootstrap3/async").then(function (asyncHQReportModule) {
++        import("reports/js/bootstrap5/async").then(function (asyncHQReportModule) {
+             var asyncHQReport = asyncHQReportModule.default({
                  standardReport: getStandard(),
              });
-             asyncHQReport.init();
-@@ -90,7 +90,7 @@
-             $('.row-offcanvas').toggleClass('active');
-         });
+@@ -68,13 +69,19 @@
+ asyncReport = getAsync();
  
--        $('.report-description-popover').popover({
-+        $('.report-description-popover').popover({  /* todo B5: plugin:popover */
-             placement: 'right',
-             trigger: 'hover',
-         });
+ $(function () {
+-    $('[data-toggle="offcanvas"]').click(function () {
+-        $('.row-offcanvas').toggleClass('active');
++
++    $('[data-hq-toggle]').click(function () {
++        $($(this).data('hqToggle')).toggleClass('active');
+     });
+ 
+-    $('.report-description-popover').popover({
+-        placement: 'right',
+-        trigger: 'hover',
++    const reportsWithDescriptions = document.getElementsByClassName('report-description-popover');
++    Array.from(reportsWithDescriptions).forEach((elem) => {
++        new Popover(elem, {
++            title: elem.dataset.title,
++            content: elem.dataset.content,
++            placement: 'right',
++            trigger: 'hover',
++        });
+     });
+ });
+ 

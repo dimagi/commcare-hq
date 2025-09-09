@@ -1,14 +1,13 @@
-'use strict';
-hqDefine("cloudcare/js/formplayer/users/models", [
+define("cloudcare/js/formplayer/users/models", [
     "underscore",
     "backbone",
-    "analytix/js/kissmetrix",
+    "analytix/js/noopMetrics",
     "cloudcare/js/formplayer/constants",
 ], function (
     _,
     Backbone,
-    kissmetrics,
-    Const
+    noopMetrics,
+    Const,
 ) {
     var self = {};
 
@@ -34,12 +33,12 @@ hqDefine("cloudcare/js/formplayer/users/models", [
         },
 
         trackVersionChange: function (model) {
-            kissmetrics.track.event(
+            noopMetrics.track.event(
                 '[app-preview] App version changed',
                 {
                     previousVersion: model.previous('versionInfo'),
                     currentVersion: model.get('versionInfo'),
-                }
+                },
             );
         },
     });
@@ -85,15 +84,15 @@ hqDefine("cloudcare/js/formplayer/users/models", [
         userInstance.formplayer_url = options.formplayer_url;
         userInstance.debuggerEnabled = options.debuggerEnabled;
         userInstance.environment = options.environment;
+        userInstance.isAppPreview = options.environment === Const.PREVIEW_APP_ENVIRONMENT;
         userInstance.changeFormLanguage = options.changeFormLanguage;
 
         var savedDisplayOptions = _.pick(
             self.getSavedDisplayOptions(),
-            Const.ALLOWED_SAVED_OPTIONS
+            Const.ALLOWED_SAVED_OPTIONS,
         );
         userInstance.displayOptions = _.defaults(savedDisplayOptions, {
             singleAppMode: options.singleAppMode,
-            landingPageAppMode: options.landingPageAppMode,
             phoneMode: options.phoneMode,
             oneQuestionPerScreen: options.oneQuestionPerScreen,
             language: options.language,

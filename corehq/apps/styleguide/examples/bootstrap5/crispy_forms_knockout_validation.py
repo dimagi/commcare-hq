@@ -41,7 +41,6 @@ class KnockoutValidationCrispyExampleForm(forms.Form):
                 _("Create New User"),
                 crispy.Div(
                     crispy.Div(
-                        '',
                         css_class="alert alert-info",
                         data_bind="text: alertText",
                     ),

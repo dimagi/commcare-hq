@@ -1,4 +1,4 @@
-from unittest.case import TestCase
+from django.test import SimpleTestCase
 from unittest.mock import patch
 
 from corehq.apps.data_interfaces.tasks import (
@@ -7,7 +7,7 @@ from corehq.apps.data_interfaces.tasks import (
 )
 
 
-class TestTasks(TestCase):
+class TestTasks(SimpleTestCase):
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
     @patch('corehq.apps.data_interfaces.utils._get_sql_repeat_record')
@@ -43,13 +43,14 @@ class TestTasks(TestCase):
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
     @patch('corehq.apps.data_interfaces.utils._get_sql_repeat_record')
-    @patch('corehq.apps.data_interfaces.tasks._get_repeat_record_ids')
+    @patch('corehq.apps.data_interfaces.tasks.RepeatRecord.objects.get_repeat_record_ids')
     def test_task_generate_ids_and_operate_on_payloads_no_action(
         self,
         get_repeat_record_ids_mock,
         unused_1,
         unused_2,
     ):
+
         get_repeat_record_ids_mock.return_value = ['c0ffee', 'deadbeef']
         response = task_generate_ids_and_operate_on_payloads(
             payload_id='c0ffee',
@@ -70,7 +71,9 @@ class TestTasks(TestCase):
             }
         })
 
-    def test_task_generate_ids_and_operate_on_payloads_no_data(self):
+    @patch('corehq.apps.data_interfaces.tasks.RepeatRecord.objects.get_repeat_record_ids')
+    def test_task_generate_ids_and_operate_on_payloads_no_data(self, get_repeat_record_ids_mock):
+        get_repeat_record_ids_mock.return_value = []
         response = task_generate_ids_and_operate_on_payloads(
             payload_id=None,
             repeater_id=None,

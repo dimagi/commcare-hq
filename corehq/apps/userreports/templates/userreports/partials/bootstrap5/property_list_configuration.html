@@ -1,0 +1,217 @@
+{% load i18n %}
+{% comment %}
+It might not be imediately obvious where this snippet is used because it is
+injected into a template through crispy forms. It's "parent" html is found
+here: apps/userreports/templates/reportbuilder/configure_report.html
+{% endcomment %}
+
+{% comment %}
+TODO:
+- Move the fade stuff into an option for the `sortable` binding.
+- The span1's don't give the best look...
+- Move grip and delete icons into their own widgets/templates
+{% endcomment%}
+
+<table class="table table-editprops table-properties">
+  <colgroup>
+    <col width="32px">
+    <!--ko if: $data.hasDisplayCol -->
+    <col>
+    <!--/ko-->
+    <!--ko if: $data.hasFormatCol -->
+    <col>
+    <!--/ko-->
+    <!--ko if: $data.hasCalculationCol -->
+    <col>
+    <!--/ko-->
+    <!--ko if: $data.hasFilterValueCol -->
+    <col>
+    <!--/ko-->
+    <col>
+    <col width="50px">
+  </colgroup>
+
+  <thead data-bind="visible: columns().length > 0">
+  <tr>
+    <th></th>
+    <th>
+      <!--ko if: $data.propertyHelpText -->
+      <span data-bind="makeHqHelp: {description: propertyHelpText}"></span>
+      <!--/ko-->
+      {% trans "Property" %}
+    </th>
+    <!--ko if: $data.hasDisplayCol -->
+    <th>
+      <!--ko if: $data.displayHelpText -->
+      <span data-bind="makeHqHelp: {description: displayHelpText}"></span>
+      <!--/ko-->
+      {% trans "Label" %}
+    </th>
+    <!--/ko-->
+    <!--ko if: $data.hasFormatCol -->
+    <th class="table-editprops-format">
+      <!--ko if: $data.formatHelpText -->
+      <span data-bind="makeHqHelp: {description: formatHelpText}"></span>
+      <!--/ko-->
+      {% trans "Format" %}
+    </th>
+    <!--/ko-->
+    <!--ko if: $data.hasCalculationCol -->
+    <th class="table-editprops-format">
+      {% trans "Format" %}
+      <!--ko if: $data.calcHelpText -->
+      <span data-bind="makeHqHelp: {description: calcHelpText}"></span>
+      <!--/ko-->
+    </th>
+    <!--/ko-->
+    <!--ko if: $data.hasFilterValueCol -->
+    <th class="table-editprops-filterval">
+      {% trans "Filter Value" %}
+      <!--ko if: $data.filterValueHelpText -->
+      <span data-bind="makeHqHelp: {description: filterValueHelpText}"></span>
+      <!--/ko-->
+    </th>
+    <!--/ko-->
+    <th></th>
+  </tr>
+  </thead>
+
+  <tbody data-bind="sortable: {
+        data: columns,
+        afterMove: reorderColumn,
+        afterRender: afterRender
+    }"
+    {# there must be no whitespace between <tbody> and <tr> #}
+    {# the .hide().fadeIn() will fail badly on FireFox #}
+  ><tr data-bind="attr: {'data-order': _sortableOrder}">
+    <td>
+      <i class="grip sortable-handle hq-icon-full fa-solid fa-up-down"></i>
+    </td>
+
+    <td data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">  {# todo B5: css-has-error #}
+
+      <div class="property-name">{% block property_name_display %}</div>
+        <!-- ko ifnot: $root.optionsContainQuestions -->
+        <select class="form-select"
+                data-bind="select2: $parent.selectablePropertyOptions, value: property"></select>
+        <!-- /ko -->
+        <!-- ko if: $root.optionsContainQuestions -->
+        <select class="form-select" data-bind="
+                questionsSelect: $parent.selectablePropertyOptions.concat(
+                    existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
+                ),
+                value: existsInCurrentVersion() ? property : dataSourceField,
+                attr: {disabled: !existsInCurrentVersion()}
+            "></select>
+        <!-- /ko -->
+      {% endblock %}
+      <strong class="help-block" data-bind="if: $parent.showWarnings() && !property()">
+        {% trans "Please select a property." %}</strong>
+      <strong class="help-block" data-bind="if: !existsInCurrentVersion()">
+        {% blocktrans %}
+          This property or question no longer exists in your app. <br>
+          You must delete this property to update this report.
+        {% endblocktrans %}
+      </strong>
+    </td>
+
+    <!--ko if: $parent.hasDisplayCol -->
+    <td>
+      <div data-bind="css: {'has-error': showDisplayTextError}">  {# todo B5: css-has-error #}
+        <input type="text" class="form-control input-sm" data-bind="
+                    textInput: inputBoundDisplayText,
+                    attr: {disabled: !isEditable},
+                ">
+        <strong data-bind="if: showDisplayTextError" class="help-block">
+          {% trans "Display text should not be blank." %}
+        </strong>
+      </div>
+    </td>
+    <!--/ko-->
+
+    <!--ko if: $parent.hasFormatCol -->
+    <td>
+      <!--ko if: !$parent.hasFilterValueCol -->
+      <select class="form-select input-sm" data-bind="
+                options: $root.formatOptions,
+                value: format,
+                attr: {disabled: !existsInCurrentVersion()}
+            "></select>
+      <!--/ko-->
+      <!--ko if: $parent.hasFilterValueCol -->
+      <select class="form-select input-sm" data-bind="
+                options: $root.defaultFilterFormatOptions,
+                value: format,
+                attr: {disabled: !existsInCurrentVersion()}
+            "></select>
+      <!--/ko-->
+    </td>
+    <!--/ko-->
+
+    <!--ko if: $parent.hasCalculationCol -->
+    <td>
+      <select class="form-select input-sm" data-bind="
+                options: calculationOptions,
+                value: inputBoundCalculation,
+                attr: {disabled: !existsInCurrentVersion()}
+            "></select>
+    </td>
+    <!--/ko-->
+
+    <!--ko if: $parent.hasFilterValueCol -->
+    <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && hasFilterValueWarning()}">  {# todo B5: css-form-group, css-has-error #}
+      <!--ko if: $data.format() === 'Date'-->
+      <select class="form-select input-sm" data-bind="
+                options: $root.dateRangeOptions,
+                optionsText: function (o) { return o.description; },
+                optionsValue: function (o) { return o.slug; },
+                value: filterOperator,
+                attr: {disabled: !existsInCurrentVersion()}
+            "></select>
+      <!--/ko-->
+      <!--ko if: !$data.acceptsFormatValue() -->
+      <label>{% trans "N/A" %}</label>
+      <!--/ko-->
+      <!--ko if: $data.format() !== 'Date' && $data.acceptsFormatValue() -->
+      <input type="text" class="form-control input-sm" data-bind="
+                textInput: filterValue,
+                attr: {disabled: !existsInCurrentVersion()}
+            "/>
+      <!--/ko-->
+
+      <label class="help-block" data-bind="if: $parent.showWarnings() && hasFilterValueWarning()">
+        {% trans "Filter Value should not be blank." %}</label>
+    </td>
+    <!--/ko-->
+
+    <td>
+      <button
+        class="btn btn-outline-danger btn-sm"
+        data-bind="click: function(){$parent.removeColumn($data)}"
+      >
+        <i class="fa fa-remove"></i>
+      </button>
+    </td>
+    {# there must be no whitespace between <tbody> and <tr> #}
+    {# the .hide().fadeIn() will fail badly on FireFox #}
+  </tr></tbody>
+  <tbody data-bind="visible: columns().length < 40" class="add-prop">
+  <tr>
+    {% block add_property_row %}
+      <td></td>
+      <td>
+        <button class="btn btn-outline-primary" data-bind="
+                      click: buttonHandler
+                  ">
+          <i class="fa fa-plus"></i>&nbsp;
+          <span data-bind="text: buttonText"></span>
+        </button>
+      </td>
+    {% endblock %}
+  </tr>
+  </tbody>
+</table>
+<div data-bind="visible: requireColumns && columns().length < 1" class="has-error">  {# todo B5: css-has-error #}
+  <label class="help-block" data-bind="text: requireColumnsText">
+  </label>
+</div>

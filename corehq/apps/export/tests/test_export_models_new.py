@@ -1,6 +1,7 @@
+import pytest
 from django.test import TestCase
 from unittest.mock import patch
-from nose.plugins.attrib import attr
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
 
 import pytz
@@ -13,9 +14,16 @@ from corehq.util.es.elasticsearch import TransportError
 from corehq.apps.export.models.new import CaseExportInstance, FormExportInstance
 
 
-@attr('slow')
-@es_test
+@pytest.mark.slow
+@es_test(setup_class=True)
 class FormExportInstanceTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.domain_obj = Domain(name='test-domain', is_active=True)
+        cls.domain_obj.save()
+        cls.addClassCleanup(cls.domain_obj.delete)
+
     def setUp(self):
         super().setUp()
 
@@ -61,7 +69,7 @@ class FormExportInstanceTests(TestCase):
         self.assertEqual(export.get_count(), 2)
 
 
-@attr('slow')
+@pytest.mark.slow
 @es_test
 class CaseExportInstanceTests(TestCase):
     def setUp(self):

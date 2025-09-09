@@ -1,0 +1,2 @@
+class SystemLimitIllegalScopeChange(Exception):
+    pass

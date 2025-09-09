@@ -1,0 +1,70 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{# use this entry point if you don't need to add any extra javascript to an HTMX + Alpine page #}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block content %}
+  <div class="container py-4">
+
+    <h1>
+      {% trans "To-Do" %}
+      <button
+          class="btn btn-primary btn-sm"
+          {# request.path_info is just the same URL for this view #}
+          {# an alternative would be {% url "sg_htmx_todo_list_example" %} #}
+          hx-post="{{ request.path_info }}"
+          {# hq-hx-action triggers the create_new_item method in TodoListDemoView #}
+          hq-hx-action="create_new_item"
+          {# the next two lines tell HTMX to insert the returned HTML from the post at the beginning of the #todo-list <ul> below #}
+          hx-target="#todo-list"
+          hx-swap="afterbegin"
+      >
+        <i class="fa-solid fa-plus"></i> {% trans "Add Item" %}
+      </button>
+    </h1>
+    <ul
+        class="list-group"
+        id="todo-list"
+    >
+      {% for item in items %}
+        {% if not item.is_done %}
+          {% include 'styleguide/htmx_todo/item.html' %}
+        {% endif %}
+      {% endfor %}
+    </ul>
+
+    <h2 class="pt-5">
+      {% trans "Done" %}
+    </h2>
+    <ul
+        class="list-group"
+        id="done-items"
+    >
+      {% for item in items %}
+        {% if item.is_done %}
+          {% include 'styleguide/htmx_todo/item_done.html' %}
+        {% endif %}
+      {% endfor %}
+    </ul>
+
+    <div class="py-5">
+      <button
+          class="btn btn-outline-danger"
+          type="button"
+          {# this button posts to a non existent @hq_hx_action method in the view, purposely triggering the error modal #}
+          hx-post="{{ request.path_info }}"
+          hq-hx-action="does_not_exist"
+      >
+        {% trans "Trigger Error" %}
+      </button>
+    </div>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  {# you can either include this template or include an extension of this template to show HTMX errors to the user #}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

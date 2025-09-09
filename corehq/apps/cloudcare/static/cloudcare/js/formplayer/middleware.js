@@ -1,5 +1,4 @@
-'use strict';
-hqDefine("cloudcare/js/formplayer/middleware", [
+define("cloudcare/js/formplayer/middleware", [
     'jquery',
     'underscore',
     'cloudcare/js/formplayer/app',
@@ -8,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/middleware", [
     $,
     _,
     FormplayerFrontend,
-    UsersModels
+    UsersModels,
 ) {
     var clearFormMiddleware = function () {
         FormplayerFrontend.trigger("clearForm");

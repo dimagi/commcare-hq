@@ -11,12 +11,13 @@ import couchforms
 from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils import convert_xform_to_json
+from corehq.form_processor.utils.xform import convert_xform_to_json, sanitize_instance_xml
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -28,7 +29,7 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/".format(domain=domain)
 
 
-def submit_form_locally(instance, domain, max_wait=..., **kwargs):
+def submit_form_locally(instance, domain, max_wait=..., app_id=None, build_id=None, **kwargs):
     """
     :param instance: XML instance (as a string) to submit
     :param domain: The domain to submit the form to
@@ -45,9 +46,13 @@ def submit_form_locally(instance, domain, max_wait=..., **kwargs):
         rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=max_wait)
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
+    if app_id is not None and build_id is None:
+        app_id, build_id = get_app_and_build_ids(domain, app_id)
     result = SubmissionPost(
         domain=domain,
         instance=instance,
+        app_id=app_id,
+        build_id=build_id,
         **kwargs
     ).run()
     if not 200 <= result.response.status_code < 300:
@@ -87,7 +92,7 @@ def get_version_from_build_id(domain, build_id):
 
     try:
         build = get_app(domain, build_id)
-    except (ResourceNotFound, Http404):
+    except (ResourceNotFound, Http404, AppInDifferentDomainException):
         return None
     if not build.copy_of:
         return None
@@ -150,7 +155,13 @@ def get_commcare_version_from_appversion_text(appversion_text):
         r'"([\d.]+)"\s+\(\d+\)',
         r'"\s*([\d.]+)\s*"',
     ]
-    return _first_group_match(appversion_text, patterns)
+    version = _first_group_match(appversion_text, patterns)
+
+    # Check if the version is in the format of major.minor or major and append .0 if needed
+    while version and version.count('.') < 2:
+        version += '.0'
+
+    return version
 
 
 def _first_group_match(text, patterns):
@@ -258,6 +269,7 @@ def should_ignore_submission(request):
     form_json = None
     if settings.IGNORE_ALL_DEMO_USER_SUBMISSIONS:
         instance, _ = couchforms.get_instance_and_attachment(request)
+        instance = sanitize_instance_xml(instance, request)
         try:
             form_json = convert_xform_to_json(instance)
         except couchforms.XMLSyntaxError:
@@ -274,6 +286,7 @@ def should_ignore_submission(request):
 
     if form_json is None:
         instance, _ = couchforms.get_instance_and_attachment(request)
+        instance = sanitize_instance_xml(instance, request)
         form_json = convert_xform_to_json(instance)
     return False if from_demo_user(form_json) else True
 

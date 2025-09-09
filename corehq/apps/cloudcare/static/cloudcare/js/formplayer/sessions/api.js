@@ -1,8 +1,7 @@
-'use strict';
 /**
  * Backbone model for listing and selecting FormEntrySessions
  */
-hqDefine("cloudcare/js/formplayer/sessions/api", [
+define("cloudcare/js/formplayer/sessions/api", [
     'jquery',
     'underscore',
     'cloudcare/js/formplayer/sessions/collections',
@@ -15,7 +14,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", [
     Collections,
     FormplayerFrontend,
     MenuCollections,
-    UsersModels
+    UsersModels,
 ) {
     var API = {
 
@@ -38,7 +37,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", [
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception,
-                            response.type === 'html'
+                            response.type === 'html',
                         );
                         FormplayerFrontend.trigger('navigation:back');
                     } else {
@@ -94,7 +93,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", [
                             'showError',
                             _.template(gettext("Unable to delete incomplete form '<%- title %>'"))({
                                 title: session.get('title'),
-                            })
+                            }),
                         );
                         window.console.error(xhr.responseJSON.exception);
                     }

@@ -15,10 +15,12 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -60,6 +62,7 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
 from corehq.apps.data_dictionary.models import CaseProperty
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseExportView(BaseProjectDataView):
     """Base class for all create and edit export views"""
     template_name = 'export/customize_export_new.html'
@@ -100,7 +103,7 @@ class BaseExportView(BaseProjectDataView):
             'help_text': mark_safe(  # nosec: no user input
                 _("""
                 Learn more about exports on our <a
-                href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
+                href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports"
                 target="_blank">Help Site</a>.
             """)),
             'name_label': _("Export Name"),
@@ -181,16 +184,11 @@ class BaseExportView(BaseProjectDataView):
     @property
     def _possible_form_geo_properties(self):
         export_table = self.export_instance.tables[0]
-        geo_props = []
-
-        for column in export_table.columns:
-            if column.item.doc_type == 'GeopointItem':
-                # show the path to the geo properties, not the column headers, because the
-                # paths do not change.
-                path_str = '.'.join([f"{node.name}" for node in column.item.path])
-                geo_props.append(path_str)
-
-        return geo_props
+        return [
+            col.item.readable_path
+            for col in export_table.columns
+            if col.item.doc_type == 'GeopointItem'
+        ]
 
     @property
     def _possible_case_geo_properties(self):
@@ -234,7 +232,7 @@ class BaseExportView(BaseProjectDataView):
         if not export._rev:
             # This is a new export
 
-            track_workflow(
+            track_workflow_noop(
                 request.user.username,
                 f'{self.metric_name} - Created Export',
                 properties={'domain': self.domain}
@@ -276,7 +274,7 @@ class BaseExportView(BaseProjectDataView):
                 event_title = "[BI Integration] Clicked Save button for feed copy"
             else:
                 event_title = "[BI Integration] Clicked Save button for feed creation"
-            track_workflow(request.user.username, event_title, {
+            track_workflow_noop(request.user.username, event_title, {
                 "Feed Type": export.type,
                 "Number of additional nodes": num_nodes,
             })
@@ -361,7 +359,7 @@ class CreateNewCustomFormExportView(BaseExportView):
     def create_new_export_instance(self, schema, username, export_settings=None):
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
-        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+        track_workflow_noop(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
             'domain': self.domain
         })
 
@@ -403,7 +401,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
             load_deprecated=load_deprecated
         )
 
-        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+        track_workflow_noop(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
             'domain': self.domain
         })
 
@@ -412,6 +410,16 @@ class CreateNewCustomCaseExportView(BaseExportView):
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
+        if (
+            case_type not in get_case_types_for_domain(request.domain)
+            and case_type != ALL_CASE_TYPE_EXPORT
+        ):
+            messages.error(
+                request,
+                _("Case type '{case_type}' does not exist for this project.").format(case_type=case_type)
+            )
+            url = self.export_home_url
+            return HttpResponseRedirect(url)
         # First check if project is allowed to do a bulk export and redirect if necessary
         if case_type == ALL_CASE_TYPE_EXPORT and case_type_or_app_limit_exceeded(self.domain):
             messages.error(

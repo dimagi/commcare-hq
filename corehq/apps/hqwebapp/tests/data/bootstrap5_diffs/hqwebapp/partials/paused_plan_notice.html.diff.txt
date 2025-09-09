@@ -3,8 +3,8 @@
 @@ -1,11 +1,11 @@
  {% load i18n %}
  
--<div class="paused-plan well">
-+<div class="paused-plan card mb-3 p-3">
+-<div class="plan-notice well">
++<div class="plan-notice card mb-3 p-3">
    <div class="row">
 -    <div class="col-xs-3 column-icon">
 +    <div class="col-sm-3 column-icon">

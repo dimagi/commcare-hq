@@ -13,9 +13,6 @@ DATABASES = {
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
         'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
     },
 }
 
@@ -39,7 +36,6 @@ redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
     # match production settings
-    'PARSER_CLASS': 'redis.connection.HiredisParser',
     'REDIS_CLIENT_KWARGS': {
         'health_check_interval': 15,
     },
@@ -56,9 +52,9 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch5'
-ELASTICSEARCH_PORT = 9200  # ES 5 port
-ELASTICSEARCH_MAJOR_VERSION = 5
+ELASTICSEARCH_HOST = 'elasticsearch6'
+ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 6
 
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
@@ -70,7 +66,6 @@ S3_BLOB_DB_SETTINGS = {
     "config": {
         "connect_timeout": 3,
         "read_timeout": 5,
-        "signature_version": "s3"
     },
 }
 
@@ -164,9 +159,6 @@ COMPRESS_OFFLINE = False
 FORMPLAYER_URL = 'http://formplayer:8080'
 FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
 FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
-
-CCHQ_API_THROTTLE_REQUESTS = 200
-CCHQ_API_THROTTLE_TIMEFRAME = 10
 
 RESTORE_PAYLOAD_DIR_NAME = 'restore'
 SHARED_TEMP_DIR_NAME = 'temp'

@@ -1,5 +1,5 @@
-import collections
 import signal
+from collections.abc import Iterable
 from functools import wraps
 
 from django.dispatch import Signal
@@ -23,7 +23,7 @@ class SignalHandlerContext(object):
     """
 
     def __init__(self, signals, handler, default_handler=signal.SIG_DFL):
-        if not isinstance(signals, collections.Iterable):
+        if not isinstance(signals, Iterable):
             signals = [signals]
         for sig in signals:
             if not isinstance(sig, int):

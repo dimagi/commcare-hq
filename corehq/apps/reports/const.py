@@ -1,7 +1,10 @@
+from enum import StrEnum, auto
+
 from django.utils.translation import gettext_lazy as _
 
 USER_QUERY_LIMIT = 5000
 DEFAULT_PAGE_LIMIT = 10
+EXPORT_PAGE_LIMIT = 5000
 
 TABLEAU_ROLES = (
     ('Explorer', _('Explorer')),
@@ -15,3 +18,17 @@ TABLEAU_ROLES = (
 )
 
 HQ_TABLEAU_GROUP_NAME = 'HQ'
+
+LONG_RUNNING_CLE_THRESHOLD = 10
+
+
+class AllowedRenderings(StrEnum):
+    JSON = auto()
+    ASYNC = auto()
+    FILTERS = auto()
+    EXPORT = auto()
+    MOBILE = auto()
+    EMAIL = auto()
+    PARTIAL = auto()
+    PRINT = auto()
+    VIEW = auto()

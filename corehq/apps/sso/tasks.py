@@ -21,7 +21,9 @@ from corehq.apps.sso.utils.entra import MSGraphIssue
 from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
+from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
 from django.contrib.auth.models import User
+from corehq.const import USER_CHANGE_VIA_SSO_DEACTIVATION
 from corehq.sql_db.util import paginate_query
 from django.db import router
 from django.db.models import Q
@@ -132,8 +134,8 @@ def auto_deactivate_removed_sso_users():
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
-                                            error=EntraVerificationFailed.error,
-                                            error_description=EntraVerificationFailed.message)
+                                            error=e.error,
+                                            error_description=e.message)
             continue
         except requests.exceptions.HTTPError as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
@@ -163,6 +165,11 @@ def auto_deactivate_removed_sso_users():
                 if user and user.is_active:
                     user.is_active = False
                     user.save()
+                    log_user_change(by_domain=None, for_domain=None,
+                            by_domain_required_for_log=False, for_domain_required_for_log=False,
+                            couch_user=user, fields_changed={'is_active': user.is_active},
+                            changed_via=USER_CHANGE_VIA_SSO_DEACTIVATION,
+                            changed_by_user=SYSTEM_USER_ID)
 
 
 def send_deactivation_skipped_email(idp, failure_code, error=None, error_description=None):

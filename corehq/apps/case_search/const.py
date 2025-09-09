@@ -54,6 +54,7 @@ INDEXED_METADATA_BY_KEY = {prop.key: prop for prop in [
     _INDEXED_METADATA(
         key='@case_id',
         system_name='_id',
+        _es_field_name='doc_id',
     ),
     _INDEXED_METADATA(
         key='@case_type',

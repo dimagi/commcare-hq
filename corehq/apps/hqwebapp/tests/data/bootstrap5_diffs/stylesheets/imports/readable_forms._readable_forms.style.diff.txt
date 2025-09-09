@@ -5,6 +5,6 @@
  
      i {
 -        color: @cc-brand-mid;
-+        color: $cc-brand-mid;
++        color: $primary;
      }
  }

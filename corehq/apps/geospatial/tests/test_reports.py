@@ -57,7 +57,7 @@ def test_validate_geometry_schema():
         validate_geometry(geojson_geometry)
 
 
-@flag_enabled('GEOSPATIAL')
+@flag_enabled('MICROPLANNING')
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestCaseGroupingReport(BaseReportTest):
 

@@ -40,21 +40,17 @@ from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.data_dictionary.util import is_case_type_deprecated
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
-from corehq.apps.export.models import CaseExportDataSchema
-from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.hqcase.utils import (
     EDIT_FORM_XMLNS,
     resave_case,
     submit_case_blocks,
 )
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     DisplayConfig,
     get_table_as_rows,
@@ -131,7 +127,6 @@ class CaseDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
-    @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
             messages.info(request,
@@ -215,8 +210,16 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
+        backoff_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
+            self.domain, toggles.NAMESPACE_DOMAIN
+        ) and toggles.BACKOFF_REPEATERS.enabled(self.domain, toggles.NAMESPACE_DOMAIN)
         repeat_records = [
-            RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
+            RepeatRecordDisplay(
+                record,
+                timezone,
+                date_format=DATE_FORMAT,
+                backoff_repeaters_enabled=backoff_repeaters_enabled,
+            )
             for record in RepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
         ]
 
@@ -393,7 +396,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 @require_GET
 def download_case_history(request, domain, case_id):
     case = safely_get_case(request, domain, case_id)
-    track_workflow(request.couch_user.username, "Case Data Page: Case History csv Downloaded")
+    track_workflow_noop(request.couch_user.username, "Case Data Page: Case History csv Downloaded")
     history = get_case_history(case)
     properties = set()
     for f in history:
@@ -446,17 +449,7 @@ def case_xml(request, domain, case_id):
 @require_GET
 def case_property_names(request, domain, case_id):
     case = safely_get_case(request, domain, case_id)
-
-    # We need to look at the export schema in order to remove any case properties that
-    # have been deleted from the app. When the data dictionary is fully public, we can use that
-    # so that users may deprecate those properties manually
-    export_schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case.type)
-    property_schema = export_schema.group_schemas[0]
-    last_app_ids = get_latest_app_ids_and_versions(domain)
-    all_property_names = {
-        item.path[-1].name for item in property_schema.items
-        if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
-    }
+    all_property_names = set(case.dynamic_case_properties())
     all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES) | {"case_name"}
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
@@ -521,7 +514,7 @@ def resave_case_view(request, domain, case_id):
     resave_case(domain, case)
     messages.success(
         request,
-        _('Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
+        _('Case {} was successfully saved. Please allow a few minutes for the change to be reflected in all reports.').format(case.name),  # noqa: E501
     )
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 

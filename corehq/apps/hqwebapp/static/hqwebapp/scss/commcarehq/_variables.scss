@@ -10,6 +10,8 @@ $container-max-widths: (
   xxl: 1160px
 );
 
+// Spacing override
+$enable-negative-margins: true;
 
 // Typography Overrides
 $font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -33,6 +35,9 @@ $navbar-padding-x: 0;
 
 $caret-width: 4px;
 $caret-vertical-align: $caret-width * .87;
+
+// Breadcrumbs
+$breadcrumb-divider: quote(">");
 
 // Dropdowns
 $dropdown-border-radius: 3px;
@@ -114,7 +119,6 @@ $dimagi-marigold: #FEAF31;
 $dimagi-sunset: #E44434;
 $dimagi-mango: #FC5F36;
 
-
 // Base color overrides
 $blue: #5D70D2;
 $green: #358623;
@@ -138,6 +142,9 @@ $gray-800: #343a40;
 $blue-600: shade-color($blue, 20%);
 $blue-900: shade-color($blue, 80%);
 
+// Purple from default stylesheet - needed for reference
+$purple-400: tint-color($purple, 20%);
+
 // for determining when to show black or white text on top of color
 $min-contrast-ratio: 3;
 
@@ -150,6 +157,7 @@ $info:      $teal;
 $warning:   $yellow;
 $light:     $gray-100;
 $dark:      $gray-800;
+$periwinkle: #6F76AC;
 
 $theme-colors: (
   "primary":    $primary,
@@ -160,6 +168,7 @@ $theme-colors: (
   "dark":       $dark,
   "secondary":  $secondary,
   "light":      $light,
+  "periwinkle": $periwinkle,
 );
 
 $body-color: $dark;
@@ -228,3 +237,18 @@ $form-validation-states: (
 // Make pagination-lg the same height as other lg inputs
 $pagination-padding-x-lg: 1.0rem;
 $pagination-padding-y-lg: 0.5rem;
+
+// Table loading indicator
+$table-loading-spinner-size: 150px;
+$table-loading-spinner-border-width: 20px;
+
+// Override bootstrap position values to include 25%
+$position-values: (
+  0: 0,
+  25: 25%,
+  50: 50%,
+  100: 100%,
+);
+
+// WebApps
+$home-screen-start-button: #6AB849;

@@ -1,11 +1,10 @@
 --- 
 +++ 
-@@ -1,44 +1,94 @@
+@@ -1,45 +1,98 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
 -@import "_hq/alerts.less";
--@import "_hq/appcues.less";
 -@import "_hq/ace_cle.less";
 -@import "_hq/backgrounds.less";
 -@import "_hq/breadcrumbs.less";
@@ -17,6 +16,7 @@
 -@import "_hq/datetimepicker.less";
 -@import "_hq/facet.less";
 -@import "_hq/feedback.less";
+-@import "_hq/flag_icons.less";
 -@import "_hq/form_steps.less";
 -@import "_hq/forms.less";
 -@import "_hq/helpbubble.less";
@@ -33,7 +33,7 @@
 -@import "_hq/notifications.less";
 -@import "_hq/pagination.less";
 -@import "_hq/panels.less";
--@import "_hq/paused.less";
+-@import "_hq/plan_notice.less";
 -@import "_hq/popovers.less";
 -@import "_hq/report.less";
 -@import "_hq/radio_select.less";
@@ -45,6 +45,7 @@
 -@import "_hq/svg.less";
 -@import "_hq/utils.less";
 -@import "_hq/bootstrap5-temp.less";
+-@import "_hq/ocs_widget.less";
 +// Configuration
 +@import "functions";
 +@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults
@@ -55,12 +56,14 @@
 +@import "mixins";
 +@import "commcarehq/mixins";
 +@import "utilities";
++@import "commcarehq/animations";
 +
 +// Layout & components
 +@import "root";
 +@import "reboot";
 +@import "type";
 +@import "commcarehq/type";
++@import "commcarehq/print";
 +@import "images";
 +@import "containers";
 +@import "commcarehq/containers";
@@ -111,7 +114,6 @@
 +
 +// Custom Widgets
 +@import "commcarehq/ace_cle";
-+@import "commcarehq/appcues";
 +@import "commcarehq/backgrounds";
 +@import "commcarehq/datagrid";
 +@import "commcarehq/datatables";
@@ -119,9 +121,11 @@
 +@import "commcarehq/datetimepicker";
 +@import "commcarehq/facet";
 +@import "commcarehq/feedback";
++@import "commcarehq/flag_icons";
 +@import "commcarehq/form_steps";
 +@import "commcarehq/helpbubble";
 +@import "commcarehq/hubspot";
++@import "commcarehq/htmx";
 +@import "commcarehq/icons";
 +@import "commcarehq/inline_edit";
 +@import "commcarehq/label";
@@ -129,9 +133,10 @@
 +@import "commcarehq/list";
 +@import "commcarehq/mapbox";
 +@import "commcarehq/notifications";
++@import "commcarehq/ocs_widget";
 +@import "commcarehq/pagination";
-+@import "commcarehq/panels";
-+@import "commcarehq/paused";
++@import "commcarehq/card";
++@import "commcarehq/plan_notice";
 +@import "commcarehq/radio_select";
 +@import "commcarehq/readable_forms";
 +@import "commcarehq/report";

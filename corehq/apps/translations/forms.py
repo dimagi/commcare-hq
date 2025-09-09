@@ -34,7 +34,6 @@ from corehq.apps.translations.models import (
     TransifexBlacklist,
     TransifexProject,
 )
-from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 
@@ -307,7 +306,7 @@ class DownloadAppTranslationsForm(CreateUpdateAppTranslationsForm):
 class TransifexOrganizationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TransifexOrganizationForm, self).__init__(*args, **kwargs)
-        self.initial['api_token'] = b64_aes_decrypt(self.instance.api_token)
+        self.initial['api_token'] = self.instance.plaintext_api_token
 
 
 class AddTransifexBlacklistForm(forms.ModelForm):

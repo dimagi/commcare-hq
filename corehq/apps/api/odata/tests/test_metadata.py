@@ -39,7 +39,8 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
                 self.view_urlname,
                 kwargs={
                     'domain': self.domain.name,
-                    'config_id': 'FAKEID'
+                    'api_version': 'v1',
+                    'config_id': 'FAKEID',
                 }
             )
         )
@@ -92,7 +93,8 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
                 self.view_urlname,
                 kwargs={
                     'domain': self.domain.name,
-                    'config_id': 'FAKEID'
+                    'api_version': 'v1',
+                    'config_id': 'FAKEID',
                 }
             )
         )

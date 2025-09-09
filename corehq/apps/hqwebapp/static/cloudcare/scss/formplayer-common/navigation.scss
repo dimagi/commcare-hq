@@ -12,4 +12,9 @@
 
 #hq-navigation {
   transition: all 1s;
+  z-index: $zindex-hq-navigation;
+}
+
+.bg-cc-light-warm-accent-extra-hi {
+  background-color: $cc-light-warm-accent-hi;
 }

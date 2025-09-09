@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 'reminders/js/reminders.keywords.ko' %}
+{% js_entry 'reminders/js/keyword' %}
 
 {% block page_content %}
   {% initial_page_data 'current_values' form.current_values %}

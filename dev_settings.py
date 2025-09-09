@@ -12,11 +12,6 @@ LOCAL_APPS = (
     'django_extensions',
 )
 
-# TEST_RUNNER is overridden in testsettings, which is the default settings
-# module for the test command (see manage.py); this has no effect by default.
-# Use ./manage.py test --settings=settings to use this setting.
-TEST_RUNNER = 'testrunner.DevTestRunner'
-
 SKIP_TESTS_REQUIRING_EXTRA_SETUP = True
 
 # touchforms must be running when this is false or not set
@@ -55,8 +50,8 @@ LOCAL_LOGGING_CONFIG = {
             'handlers': ['null'],
             'level': 'WARNING',
         },
-        # The following configuration will print out all queries that are run through sqlalchemy on the command line
-        # Useful for UCR debugging
+        # The following configuration will print out all queries that are run
+        # through sqlalchemy on the command line. Useful for UCR debugging
         # 'sqlalchemy.engine': {
         #     'handlers': ['console'],
         #     'level': 'INFO',
@@ -72,9 +67,6 @@ DATABASES = {
         'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
         'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
     }
 }
 
@@ -92,7 +84,6 @@ redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/0',
     # match production settings
-    'PARSER_CLASS': 'redis.connection.HiredisParser',
     'REDIS_CLIENT_KWARGS': {
         'health_check_interval': 15,
     },
@@ -172,15 +163,9 @@ if settingshelper.is_testing():
         "config": {
             "connect_timeout": 3,
             "read_timeout": 5,
-            "signature_version": "s3"
         },
     }
 
-# substantially increase the API request limits in dev, in part
-# to prevent AssertionError: 429 != 200  test failures
-CCHQ_API_THROTTLE_REQUESTS = 200  # number of requests allowed per timeframe
-CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
-
-### LOG FILES ###
+# LOG FILES
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
 LOG_FILE = "/tmp/commcare-hq.log"

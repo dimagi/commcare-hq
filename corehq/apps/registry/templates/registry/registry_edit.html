@@ -16,7 +16,7 @@
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 'registry/js/registry_edit' %}
+{% js_entry 'registry/js/registry_edit' %}
 
 {% block page_content %}
 {% initial_page_data "registry" registry %}
@@ -33,7 +33,7 @@
 <div id="edit-registry" class="registry-inlines">
   <div class="row">
     <div class="col-md-6 col-lg-4">
-      <inline-edit params="
+      <inline-edit data-apply-bindings="false" params="
           value: name,
           containerClass: 'h3',
           url: '{% url "edit_registry_attr" registry.domain registry.slug 'name' %}',
@@ -84,7 +84,7 @@
   <div class="row">
     <div class="col-md-8 col-lg-6">
       {% if is_owner %}
-      <inline-edit params="
+      <inline-edit data-apply-bindings="false" params="
             value: '{{ registry.description|escapejs }}',
             url: '{% url "edit_registry_attr" registry.domain registry.slug 'description' %}',
             placeholder: '{% trans "Enter data registry description here"|escapejs %}',

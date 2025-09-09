@@ -15,16 +15,21 @@ Table of contents
     :maxdepth: 1
 
     code-organization
+    static-files
 
 .. toctree::
     :caption: Dependencies
     :maxdepth: 1
 
     dependencies
-    module-history
-    migrating
     libraries
     external-packages
+
+.. toctree::
+    :caption: Migrations
+    :maxdepth: 1
+
+    amd-to-esm
 
 .. toctree::
     :caption: Best practices
@@ -32,7 +37,6 @@ Table of contents
 
     integration-patterns
     security
-    static-files
     inheritance
     code-review
 

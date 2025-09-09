@@ -6,7 +6,6 @@ from django.utils.translation import gettext as _
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.custom_data_fields.models import (
-    COMMCARE_PROJECT,
     PROFILE_SLUG,
     CustomDataFieldsProfile,
     CustomDataFieldsDefinition,
@@ -63,13 +62,12 @@ class UserData:
         return {
             **(self.profile.fields if self.profile else {}),
             PROFILE_SLUG: self.profile_id or '',
-            COMMCARE_PROJECT: self.domain,
         }
 
     def to_dict(self):
         return {
             **self._schema_defaults,
-            **self._local_to_user,
+            **{k: v for k, v in self._local_to_user.items() if k not in self._provided_by_system},
             **self._provided_by_system,
         }
 
@@ -163,7 +161,7 @@ class UserData:
 
     def __setitem__(self, key, value):
         if key in self._provided_by_system:
-            if value == self._provided_by_system[key]:
+            if value == self._provided_by_system.get(key, object()):
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
         self._local_to_user[key] = value
@@ -192,11 +190,11 @@ class UserData:
         del self._local_to_user[key]
 
     def pop(self, key, default=...):
+        if key in self._provided_by_system:
+            raise UserDataError(_("{} cannot be deleted").format(key))
         try:
             ret = self._local_to_user[key]
         except KeyError as e:
-            if key in self._provided_by_system:
-                raise UserDataError(_("{} cannot be deleted").format(key)) from e
             if default != ...:
                 return default
             raise e
@@ -205,15 +203,28 @@ class UserData:
             return ret
 
 
+class SQLUserDataManager(models.Manager):
+
+    def get_queryset(self):
+        """
+        By default, this manager omits soft deleted SQLUserData from any query
+        """
+        return super().get_queryset().filter(deleted_on__isnull=True)
+
+
 class SQLUserData(models.Model):
     domain = models.CharField(max_length=128)
     user_id = models.CharField(max_length=36)
     django_user = models.ForeignKey(User, on_delete=models.CASCADE)
     modified_on = models.DateTimeField(auto_now=True)
+    deleted_on = models.DateTimeField(null=True)
 
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
-                                on_delete=models.PROTECT, null=True)
+                                on_delete=models.SET_NULL, null=True)
     data = models.JSONField()
+
+    all_objects = models.Manager()
+    objects = SQLUserDataManager()
 
     class Meta:
         unique_together = ("user_id", "domain")

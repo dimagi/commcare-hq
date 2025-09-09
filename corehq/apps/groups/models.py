@@ -153,7 +153,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
                 return False
             if only_commcare and user.__class__ != CommCareUser().__class__:
                 return False
-            if is_active and not user.is_active:
+            if is_active and not user.is_active_in_domain(self.domain):
                 return False
             return True
         users = map(CouchUser.wrap_correctly, iter_docs(self.get_db(), self.users))

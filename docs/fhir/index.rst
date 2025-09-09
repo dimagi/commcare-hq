@@ -9,6 +9,13 @@ CommCare HQ offers three ways of sharing data over FHIR:
    imports them as CommCare cases.
 #. The FHIR API exposes CommCare cases as FHIR resources.
 
+**However, it's crucial to understand that FHIR integration is a
+highly specialized and complex feature.** Its successful implementation
+often requires deep technical expertise and custom configuration to
+align with specific project requirements and external system nuances.
+Due to this complexity, careful planning and thorough understanding are
+essential for effective integration.
+
 FHIR-related functionality is enabled using the "FHIR integration"
 feature flag.
 
@@ -93,14 +100,14 @@ to become more familiar with JSONPath.
 
 
 .. _JSONPath: https://goessner.net/articles/JsonPath/
-.. _FHIR Patient: https://www.hl7.org/fhir/patient.html#resource
-.. _HumanName: https://www.hl7.org/fhir/datatypes.html#HumanName
+.. _FHIR Patient: https://hl7.org/fhir/R4/patient.html#resource
+.. _HumanName: https://hl7.org/fhir/R4/datatypes.html#HumanName
 .. _JSONPath expression syntax: https://goessner.net/articles/JsonPath/index.html#e2
 .. _JSONPath Online Evaluator: https://jsonpath.com/
 .. _Postman REST Client: https://www.postman.com/product/rest-client/
 .. _Firefox add-on: https://addons.mozilla.org/en-US/firefox/addon/rested/
 .. _Chrome extension: https://chrome.google.com/webstore/detail/rested/eelcnbccaccipfolokglfhhmapdchbfg
-.. _API key authentication: https://confluence.dimagi.com/display/commcarepublic/Authentication#Authentication-ApiKeyauthentication
+.. _API key authentication: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication
 
 
 .. _admin-interface-mapping:

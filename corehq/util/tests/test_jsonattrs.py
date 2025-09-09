@@ -32,9 +32,9 @@ def test_attrsobject():
         '["'
         "'point' field value has an invalid format: "
         "Cannot construct Point with {} -> "
-        "TypeError: __init__() missing 2 required positional arguments: 'x' and 'y'"
+        "TypeError: Point.__init__() missing 2 required positional arguments: 'x' and 'y'"
         '"]'
-    )):
+    ).replace('Point.__init__', point_init)):
         set_json_value(check, "point", {})
 
 
@@ -58,9 +58,9 @@ def test_attrsdict():
         '["'
         "'points' field value has an invalid format: "
         "Cannot construct Point with {} -> "
-        "TypeError: __init__() missing 2 required positional arguments: 'x' and 'y'"
+        "TypeError: Point.__init__() missing 2 required positional arguments: 'x' and 'y'"
         '"]'
-    )):
+    ).replace('Point.__init__', point_init)):
         set_json_value(check, "points", {"north": {}})
 
 
@@ -322,3 +322,10 @@ class Event:
     def __jsonattrs_from_json__(cls, data):
         data["day"] = date.fromisoformat(data["day"])
         return cls(**data)
+
+
+# Can be removed when Python 3.9 is no longer supported
+# Python<3.10: TypeError: __init__() missing ... required positional argument...
+# Python>=3.10: TypeError: Point.__init__() missing ... required positional argument...
+import sys  # noqa: E402
+point_init = 'Point.__init__' if sys.version_info >= (3, 10) else '__init__'

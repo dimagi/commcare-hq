@@ -1,12 +1,13 @@
-from dataclasses import dataclass, field
+import weakref
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
 
+from django.utils.translation import gettext
 from memoized import memoized
 
-from dimagi.ext.jsonobject import StringProperty
-
 from corehq import toggles
+from corehq.apps.userreports.exceptions import BadSpecError
+from dimagi.ext.jsonobject import StringProperty
 
 
 def TypeProperty(value):
@@ -18,15 +19,70 @@ def TypeProperty(value):
     return StringProperty(required=True, choices=[value])
 
 
-@dataclass
-class FactoryContext():
-    named_expressions: dict
-    _named_expressions: dict = field(init=False, repr=False)
+class BaseContainer:
+    """Class used to manage access to named filters and expressions and
+    check for circular references.
+    """
+    def __init__(self, factory_context, expressions, domain=None):
+        self.factory_context = weakref.proxy(factory_context)
+        self.expressions = expressions
+        self.domain = domain
+        self.stack = set()
 
-    named_filters: dict
-    _named_filters: dict = field(init=False, repr=False)
+    def replace(self, expressions):
+        self.expressions = expressions
 
-    domain: Optional[str] = None
+    def __getitem__(self, item):
+        with self._search_scope(item):
+            from corehq.apps.userreports.models import LazyExpressionWrapper
+            all_expressions = self._get_db_expressions() | self.expressions
+            expr = all_expressions.get(item)
+            if not expr:
+                raise KeyError(item)
+            if isinstance(expr, LazyExpressionWrapper):
+                # load here to force evaluation of the lazy expression and catch recursive references
+                expr = expr.wrapped_expression
+            return expr
+
+    @contextmanager
+    def _search_scope(self, name):
+        """Return a context manager that will raise an error if the name is already in the stack."""
+        if name in self.stack:
+            raise BadSpecError(gettext("Recursive expression reference: {name}").format(name=name))
+
+        self.stack.add(name)
+        try:
+            yield self
+        finally:
+            self.stack.remove(name)
+
+    @memoized
+    def _get_db_expressions(self):
+        if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            return self._load_db_expressions()
+        return {}
+
+    def _load_db_expressions(self):
+        raise NotImplementedError()
+
+
+class FilterContainer(BaseContainer):
+    def _load_db_expressions(self):
+        from corehq.apps.userreports.models import UCRExpression
+        return UCRExpression.objects.get_wrapped_filters_for_domain(self.domain, self.factory_context)
+
+
+class ExpressionContainer(BaseContainer):
+    def _load_db_expressions(self):
+        from corehq.apps.userreports.models import UCRExpression
+        return UCRExpression.objects.get_wrapped_expressions_for_domain(self.domain, self.factory_context)
+
+
+class FactoryContext:
+    def __init__(self, named_expressions, named_filters, domain=None):
+        self.named_expressions = ExpressionContainer(self, named_expressions, domain)
+        self.named_filters = FilterContainer(self, named_filters, domain)
+        self.domain = domain
 
     def expression_from_spec(self, spec):
         from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -36,31 +92,17 @@ class FactoryContext():
         from corehq.apps.userreports.filters.factory import FilterFactory
         return FilterFactory.from_spec(spec, self)
 
-    @property
-    @memoized
-    def named_filters(self):
-        extra_filters = {}
-        if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
-            from corehq.apps.userreports.models import UCRExpression
-            extra_filters = UCRExpression.objects.get_wrapped_filters_for_domain(self.domain, self)
-        return extra_filters | self._named_filters
+    def get_named_filter(self, name):
+        try:
+            return self.named_filters[name]
+        except KeyError as e:
+            raise BadSpecError(gettext("Named filter not found: {name}").format(name=name)) from e
 
-    @named_filters.setter
-    def named_filters(self, named_filters):
-        self._named_filters = named_filters
-
-    @property
-    @memoized
-    def named_expressions(self):
-        extra_expressions = {}
-        if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
-            from corehq.apps.userreports.models import UCRExpression
-            extra_expressions = UCRExpression.objects.get_wrapped_expressions_for_domain(self.domain, self)
-        return extra_expressions | self._named_expressions
-
-    @named_expressions.setter
-    def named_expressions(self, named_expressions):
-        self._named_expressions = named_expressions
+    def get_named_expression(self, name):
+        try:
+            return self.named_expressions[name]
+        except KeyError as e:
+            raise BadSpecError(gettext("Named expression not found: {name}").format(name=name)) from e
 
     @staticmethod
     def empty(domain=None):

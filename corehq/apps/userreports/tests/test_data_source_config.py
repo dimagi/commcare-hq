@@ -3,25 +3,20 @@ from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
-from freezegun import freeze_time
+from time_machine import travel
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
-from corehq.apps.userreports.const import (
-    UCR_NAMED_EXPRESSION,
-    UCR_NAMED_FILTER,
-)
-from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import (
-    DataSourceConfiguration,
-    UCRExpression,
-)
-from corehq.apps.userreports.tests.utils import (
-    get_sample_data_source,
-    get_sample_doc_and_indicators,
-)
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.test_utils import flag_enabled
+
+from ..alembic_diffs import DiffTypes
+from ..const import UCR_NAMED_EXPRESSION, UCR_NAMED_FILTER
+from ..exceptions import BadSpecError
+from ..models import DataSourceConfiguration, UCRExpression
+from ..specs import EvaluationContext, FactoryContext
+from ..tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from ..util import get_table_name
 
 
 class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
@@ -93,7 +88,8 @@ class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
         self.assertIsNone(self.config.validate())
 
 
-@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions',
+       MagicMock(return_value=[]))
 class DataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
@@ -339,6 +335,21 @@ class DataSourceFilterInterpolationTest(SimpleTestCase):
 
 class DataSourceConfigurationTests(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        for domain, table_id in [
+            ('foo', 'foo1'),
+            ('foo', 'foo2'),
+            ('bar', 'bar1')
+        ]:
+            config = DataSourceConfiguration(
+                domain=domain,
+                table_id=table_id,
+                referenced_doc_type='XFormInstance')
+            config.save()
+            cls.addClassCleanup(config.delete)
+
     def test_by_domain_returns_relevant_datasource_configs(self):
         results = DataSourceConfiguration.by_domain('foo')
         self.assertEqual(len(results), 2)
@@ -350,13 +361,13 @@ class DataSourceConfigurationTests(TestCase):
 
     def test_all(self):
         results = list(DataSourceConfiguration.all())
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 3, results)
         self.assertEqual({r.table_id for r in results},
                          {'foo1', 'foo2', 'bar1'})
 
     def test_last_modified_date_updates_successfully(self):
         initial_date = datetime.datetime(2020, 1, 1)
-        with freeze_time(initial_date) as frozen_time:
+        with travel(initial_date, tick=False) as frozen_time:
             datasource = DataSourceConfiguration(
                 domain='mod-test', table_id='mod-test',
                 referenced_doc_type='XFormInstance')
@@ -364,7 +375,7 @@ class DataSourceConfigurationTests(TestCase):
             self.addCleanup(datasource.delete)
 
             previous_modified_date = datasource.last_modified
-            frozen_time.tick(delta=datetime.timedelta(hours=1))
+            frozen_time.shift(datetime.timedelta(hours=1))
             datasource.save()
 
         self.assertGreater(datasource.last_modified, previous_modified_date)
@@ -383,20 +394,86 @@ class DataSourceConfigurationTests(TestCase):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        for domain, table_id in [('foo', 'foo1'), ('foo', 'foo2'),
-                                 ('bar', 'bar1')]:
-            config = DataSourceConfiguration(
-                domain=domain,
-                table_id=table_id,
-                referenced_doc_type='XFormInstance')
-            config.save()
-            cls.addClassCleanup(config.delete)
+
+class DataSourceConfigurationRebuildTests(TestCase):
+
+    def setUp(self):
+        self.config = DataSourceConfiguration(
+            domain='test-domain',
+            table_id='table_id',
+            referenced_doc_type='XFormInstance'
+        )
+        self.config.save()
+        self.addCleanup(self.config.delete)
+
+    def test_set_build_not_required(self):
+        self.config.set_build_not_required()
+        assert self.config.meta.build.awaiting is False
+        assert self.config.meta.build.initiated is None
+        assert self.config.meta.build.finished is False
+
+    def test_set_build_queued(self):
+        self.config.set_build_queued()
+        assert self.config.meta.build.awaiting is True
+        assert self.config.meta.build.initiated is None
+        assert self.config.meta.build.finished is False
+
+    def test_rebuild_flag_for_missing_table(self):
+        assert self.config.meta.build.awaiting is False
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_migratable_table(self, mock_get_table_diffs, mock_table_exists):
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        diff = MagicMock(table_name=table_name, type=DiffTypes.ADD_NULLABLE_COLUMN)
+        mock_get_table_diffs.return_value = [diff]
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is False
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_rebuildable_table(self, mock_get_table_diffs, mock_table_exists):
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        diff = MagicMock(table_name=table_name, type=DiffTypes.MODIFY_TYPE)
+        mock_get_table_diffs.return_value = [diff]
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_no_change(self, mock_get_table_diffs, mock_table_exists):
+        mock_get_table_diffs.return_value = []
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is False
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_already_queued_table(self, mock_get_table_diffs, mock_table_exists):
+        # If a rebuild is already awaiting, it is not unset.
+        mock_get_table_diffs.return_value = []
+        self.config.meta.build.awaiting = True
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_rebuild_flag_for_rebuilding_table(self, mock_get_table_diffs, mock_table_exists):
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        diff = MagicMock(table_name=table_name, type=DiffTypes.MODIFY_TYPE)
+        mock_get_table_diffs.return_value = [diff]
+
+        self.config.meta.build.awaiting = False
+        self.config.meta.build.initiated = datetime.datetime.now()
+        self.config.meta.build.finished = False
+
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
 
 
-@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions',
+       MagicMock(return_value=[]))
 class IndicatorNamedExpressionTest(SimpleTestCase):
 
     def setUp(self):
@@ -776,6 +853,115 @@ class TestDBExpressions(TestCase):
             i = 2
             self.assertEqual('laugh_sound', values[i].column.id)
             self.assertEqual(laugh, values[i].value)
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_db_named_db_expression(self):
+        """Test that named expressions work in DB expressions"""
+        UCRExpression.objects.create(
+            name='laugh_sound',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'jsonpath',
+                'jsonpath': 'laugh_sound',
+            },
+        )
+
+        reference = UCRExpression.objects.create(
+            name='laugh_sound_db',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'named',
+                'name': 'laugh_sound',
+            },
+        )
+
+        expression = reference.wrapped_definition(FactoryContext.empty(domain='test'))
+        result = expression({
+            'laugh_sound': 'te he he'
+        }, EvaluationContext.empty())
+        self.assertEqual('te he he', result)
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_recursive_named_db_expression(self):
+        UCRExpression.objects.create(
+            name='bad',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'named',
+                'name': 'more_bad',
+            },
+        )
+
+        reference = UCRExpression.objects.create(
+            name='more_bad',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'named',
+                'name': 'bad',
+            },
+        )
+
+        with self.assertRaises(BadSpecError):
+            reference.wrapped_definition(FactoryContext.empty(domain='test'))
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_db_named_db_filter(self):
+        """Test that named filters work in DB expressions"""
+        UCRExpression.objects.create(
+            name='pregnant',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'property_match',
+                'property_name': 'mother_state',
+                'property_value': 'pregnant',
+            },
+        )
+
+        reference = UCRExpression.objects.create(
+            name='is_pregnant',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'named',
+                'name': 'pregnant',
+            },
+        )
+
+        expression = reference.wrapped_definition(FactoryContext.empty(domain='test'))
+        result = expression({
+            'mother_state': 'not pregnant'
+        }, EvaluationContext.empty())
+        self.assertFalse(result)
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_recursive_named_db_filter(self):
+        """Test that named expressions work in DB expressions"""
+        UCRExpression.objects.create(
+            name='rotten',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'named',
+                'name': 'to the core',
+            },
+        )
+
+        reference = UCRExpression.objects.create(
+            name='to the core',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'named',
+                'name': 'rotten',
+            },
+        )
+        with self.assertRaises(BadSpecError):
+            reference.wrapped_definition(FactoryContext.empty(domain='test'))
 
     @flag_enabled('UCR_EXPRESSION_REGISTRY')
     def test_named_db_filter(self):

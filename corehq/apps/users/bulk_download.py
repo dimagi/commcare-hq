@@ -152,7 +152,7 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, deactivatio
         'username': user.raw_username,
         'language': user.language,
         'user_id': user._id,
-        'is_active': str(user.is_active),
+        'is_active': str(user.is_active_in_domain(domain)),
         'User IMEIs (read only)': get_devices(user),
         'location_code': location_codes,
         'role': role.name if role else '',
@@ -186,19 +186,22 @@ def make_web_user_dict(user, location_cache, domain):
     role_name = get_user_role_name(domain_membership)
     location_codes = get_location_codes(location_cache, domain_membership.location_id,
                                         domain_membership.assigned_location_ids)
-    return {
+    dict = {
         'username': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
         'role': role_name,
         'location_code': location_codes,
-        'status': gettext('Active User'),
+        'status': gettext('Active User') if user.is_active else gettext('Inactive User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
         'domain': domain,
+        'is_active_in_domain': str(user.is_active_in_domain(domain) if user.is_active else ''),
     }
+
+    return dict
 
 
 def make_invited_web_user_dict(invite, location_cache):
@@ -254,10 +257,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             }
         else:
             deactivation_triggers = {}
-        for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
-            group_memoizer = load_memoizer(current_domain)
+        group_memoizer = load_memoizer(current_domain)
+        for user in get_mobile_users_by_filters(current_domain, user_filters):
             group_names = sorted([
-                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+                group.name for group in group_memoizer.by_user_id(user.user_id)
             ], key=alphanumeric_sort_key)
 
             user_dict = make_mobile_user_dict(
@@ -325,7 +328,7 @@ def parse_web_users(domain, user_filters, owner, task=None, total_count=None):
 
     user_headers = [
         'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
-        'last_login (read only)', 'status', 'remove'
+        'last_login (read only)', 'status', 'remove', 'is_active_in_domain',
     ]
     user_headers.extend(user_data_contributor.get_headers())
     if domain_has_privilege(domain, privileges.LOCATIONS):

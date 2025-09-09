@@ -1,8 +1,7 @@
 import hashlib
 import json
 import logging
-import re
-from xml.dom.minidom import parseString
+from xml.sax.saxutils import escape
 
 from django.conf import settings
 from django.contrib import messages
@@ -36,7 +35,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.const import (
     USERCASE_PREFIX,
-    USERCASE_TYPE,
     WORKFLOW_DEFAULT,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
@@ -51,6 +49,7 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppMisconfigurationError,
     FormNotFoundException,
     ModuleNotFoundException,
@@ -68,7 +67,6 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
-    FormActions,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
@@ -91,7 +89,6 @@ from corehq.apps.app_manager.util import (
     save_xform,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
-from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import (
     CASE_TYPE_CONFLICT_MSG,
@@ -110,9 +107,9 @@ from corehq.apps.app_manager.xform import (
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
-    add_properties_to_data_dictionary,
-    get_case_property_description_dict,
     get_case_property_deprecated_dict,
+    get_case_property_description_dict,
+    get_case_property_count,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -124,6 +121,8 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
+from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
+from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
 
 
@@ -212,8 +211,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         form.extra_actions = actions
     else:
         form.actions = actions
-    for action in actions.load_update_cases:
-        add_properties_to_data_dictionary(domain, action.case_type, list(action.case_properties.keys()))
     if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
 
@@ -232,10 +229,10 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
 def edit_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
-    module = form.get_module()
     old_load_from_form = form.actions.load_from_form
-    form.actions = FormActions.wrap(json.loads(request.POST['actions']))
-    add_properties_to_data_dictionary(domain, module.case_type, list(form.actions.update_case.update.keys()))
+
+    form.actions = _get_updates(form.actions, request.POST)
+
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
 
@@ -246,13 +243,18 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     if actions_use_usercase(form.actions):
         if not is_usercase_in_use(domain):
             enable_usercase(domain)
-        add_properties_to_data_dictionary(domain, USERCASE_TYPE, list(form.actions.usercase_update.update.keys()))
 
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
+
+
+def _get_updates(existing_actions, data):
+    updates = json.loads(data['actions'])
+    update_diff = json.loads(data['update_diff']) if 'update_diff' in data else {}
+    return existing_actions.with_updates(updates, update_diff)
 
 
 @waf_allow('XSS_BODY')
@@ -334,17 +336,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
-
-            if request.POST.get('cleanup', False):
-                try:
-                    # First, we strip all newlines and reformat the DOM.
-                    px = parseString(xform.replace('\r\n', '')).toprettyxml()
-                    # Then we remove excess newlines from the DOM output.
-                    text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-                    prettyXml = text_re.sub(r'>\g<1></', px)
-                    xform = prettyXml
-                except Exception:
-                    pass
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
@@ -419,18 +410,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     if should_edit('custom_instances'):
         instances = json.loads(request.POST.get('custom_instances'))
-        try:  # validate that custom instances can be added into the XML
-            for instance in instances:
-                etree.fromstring(
-                    "<instance id='{}' src='{}' />".format(
-                        instance.get('instanceId'),
-                        instance.get('instancePath')
+        for instance in instances:
+            for key in ['instanceId', 'instancePath']:
+                val = instance.get(key)
+                if val != escape(val):
+                    raise AppMisconfigurationError(
+                        _("'{val}' is an invalid custom instance {key}").format(val=val, key=key)
                     )
-                )
-        except etree.XMLSyntaxError as error:
-            raise AppMisconfigurationError(
-                _("There was an issue with your custom instances: {}").format(error)
-            )
 
         form.custom_instances = [
             CustomInstance(
@@ -468,9 +454,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
-    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
-        return HttpResponse(json.dumps(resp))
+        return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
 
@@ -561,7 +546,6 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
-    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return JsonResponse(response_json)
 
 
@@ -588,8 +572,7 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     source = form.source
-    response = HttpResponse(source)
-    response['Content-Type'] = "application/xml"
+    response = HttpResponse(source, content_type='application/xml')
     filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:
@@ -803,6 +786,7 @@ def get_form_view_context(
         'reserved_words': load_case_reserved_words(),
         'usercasePropertiesMap': usercase_properties_map,
     }
+    case_property_count = get_case_property_count(domain, case_config_options['caseType'])
     context = {
         'nav_form': form,
         'xform_languages': languages,
@@ -836,6 +820,11 @@ def get_form_view_context(
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
+        'case_property_warning': {
+            'count': case_property_count,
+            'limit': _get_case_property_limit(domain),
+            'type': case_config_options['caseType'],
+        }
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
@@ -897,6 +886,12 @@ def get_form_view_context(
 
     context.update({'case_config_options': case_config_options})
     return context
+
+
+def _get_case_property_limit(domain):
+    return SystemLimit.get_limit_for_key(
+        CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE, domain=domain
+    )
 
 
 def _get_form_link_context(app, module, form, langs):
@@ -995,7 +990,10 @@ def get_form_datums(request, domain, app_id):
 
 def _get_form_datums(domain, app_id, form_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-    app = get_app(domain, app_id)
+    try:
+        app = get_app(domain, app_id)
+    except AppInDifferentDomainException as e:
+        raise Http404(str(e))
 
     try:
         module_id, form_id = form_id.split('.')

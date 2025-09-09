@@ -3,16 +3,23 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
-import simplejson
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
+import simplejson
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
+from corehq.apps.accounting.const import (
+    SMALL_INVOICE_THRESHOLD,
+    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
+)
+from corehq.apps.accounting.emails import (
+    send_flagged_pay_annually_subscription_alert,
+)
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -20,18 +27,17 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
 )
 from corehq.apps.accounting.models import (
-    SMALL_INVOICE_THRESHOLD,
     UNLIMITED_FEATURE_USAGE,
     BillingAccount,
-    BillingRecord,
     BillingAccountWebUserHistory,
+    BillingRecord,
     CreditLine,
     CustomerBillingRecord,
     CustomerInvoice,
-    DefaultProductPlan,
     DomainUserHistory,
     EntryPoint,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     Invoice,
     InvoicingPlan,
     LineItem,
@@ -48,10 +54,17 @@ from corehq.apps.accounting.utils import (
     ensure_domain_instance,
     log_accounting_error,
     log_accounting_info,
-    months_from_date,
+    get_first_day_x_months_later,
 )
-from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
-from corehq.apps.domain.utils import get_serializable_wire_invoice_general_credit
+from corehq.apps.accounting.utils.invoicing import (
+    get_flagged_pay_annually_prepay_invoice,
+    get_prorated_software_plan_cost,
+)
+from corehq.apps.domain.dbaccessors import deleted_domain_exists, domain_exists
+from corehq.apps.domain.utils import (
+    get_serializable_wire_invoice_general_credit,
+    get_serializable_wire_invoice_prepaid_item,
+)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,
@@ -82,9 +95,10 @@ class DomainInvoiceFactory(object):
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
 
     def create_invoices(self):
-        subscriptions = self._get_subscriptions()
-        self._ensure_full_coverage(subscriptions)
-        for subscription in subscriptions:
+        all_subscriptions = self._get_subscriptions()
+        chargeable_subscriptions = [sub for sub in all_subscriptions
+                                    if sub.plan_version.plan.edition != SoftwarePlanEdition.PAUSED]
+        for subscription in chargeable_subscriptions:
             try:
                 if subscription.account.is_customer_billing_account:
                     log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
@@ -105,51 +119,8 @@ class DomainInvoiceFactory(object):
             ),
             subscriber=self.subscriber,
             date_start__lte=self.date_end,
-        ).exclude(
-            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
-
-    @transaction.atomic
-    def _ensure_full_coverage(self, subscriptions):
-        plan_version = DefaultProductPlan.get_default_plan_version()
-        if not plan_version.feature_charges_exist_for_domain(self.domain):
-            return
-
-        community_ranges = self._get_community_ranges(subscriptions)
-        if not community_ranges:
-            return
-
-        # First check to make sure none of the existing subscriptions is set
-        # to do not invoice. Let's be on the safe side and not send a
-        # community invoice out, if that's the case.
-        do_not_invoice = any([s.do_not_invoice for s in subscriptions])
-
-        account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name,
-            created_by=self.__class__.__name__,
-            entry_point=EntryPoint.SELF_STARTED,
-        )[0]
-        if account.date_confirmed_extra_charges is None:
-            log_accounting_info(
-                "Did not generate invoice because date_confirmed_extra_charges "
-                "was null for domain %s" % self.domain.name
-            )
-            do_not_invoice = True
-
-        for start_date, end_date in community_ranges:
-            # create a new community subscription for each
-            # date range that the domain did not have a subscription
-            community_subscription = Subscription(
-                account=account,
-                plan_version=plan_version,
-                subscriber=self.subscriber,
-                date_start=start_date,
-                date_end=end_date,
-                do_not_invoice=do_not_invoice,
-            )
-            community_subscription.save()
-            subscriptions.append(community_subscription)
 
     def _create_invoice_for_subscription(self, subscription):
         def _get_invoice_start(sub, date_start):
@@ -187,39 +158,15 @@ class DomainInvoiceFactory(object):
                 if not self.logged_throttle_error:
                     log_accounting_error(str(e))
                     self.logged_throttle_error = True
+
+            flagged_prepay_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
+            if flagged_prepay_invoice:
+                send_flagged_pay_annually_subscription_alert(subscription, invoice, flagged_prepay_invoice)
         else:
             record.skipped_email = True
             record.save()
 
         return invoice
-
-    def _get_community_ranges(self, subscriptions):
-        community_ranges = []
-        if len(subscriptions) == 0:
-            return [(self.date_start, self.date_end + datetime.timedelta(days=1))]
-        else:
-            prev_sub_end = self.date_end
-            for ind, sub in enumerate(subscriptions):
-                if ind == 0 and sub.date_start > self.date_start:
-                    # the first subscription started AFTER the beginning
-                    # of the invoicing period
-                    community_ranges.append((self.date_start, sub.date_start))
-
-                if prev_sub_end < self.date_end and sub.date_start > prev_sub_end:
-                    community_ranges.append((prev_sub_end, sub.date_start))
-                prev_sub_end = sub.date_end
-
-                if (
-                    ind == len(subscriptions) - 1
-                    and sub.date_end is not None
-                    and sub.date_end <= self.date_end
-                ):
-                    # the last subscription ended BEFORE the end of
-                    # the invoicing period
-                    community_ranges.append(
-                        (sub.date_end, self.date_end + datetime.timedelta(days=1))
-                    )
-            return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
         # use create_or_get when is_hidden_to_ops is False to utilize unique index on Invoice
@@ -282,10 +229,11 @@ class DomainInvoiceFactory(object):
 
 class DomainWireInvoiceFactory(object):
 
-    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, account=None):
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, cc_emails=None, account=None):
         self.date_start = date_start
         self.date_end = date_end
         self.contact_emails = contact_emails
+        self.cc_emails = cc_emails
         self.domain = ensure_domain_instance(domain)
         self.logged_throttle_error = False
         if self.domain is None:
@@ -352,18 +300,72 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, amount, general_credit):
+    def create_wire_credits_invoice(self, amount, credit_label, unit_cost, quantity, date_due=None):
 
         serializable_amount = simplejson.dumps(amount, use_decimal=True)
-        serializable_items = get_serializable_wire_invoice_general_credit(general_credit)
+        serializable_items = get_serializable_wire_invoice_general_credit(
+            amount, credit_label, unit_cost, quantity
+        )
 
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
             amount=serializable_amount,
             invoice_items=serializable_items,
-            contact_emails=self.contact_emails
+            date_start=self.date_start,
+            date_end=self.date_end,
+            contact_emails=self.contact_emails,
+            cc_emails=self.cc_emails,
+            date_due=date_due,
         )
+
+    def create_subscription_credits_invoice(self, plan_version, date_start, date_end):
+        label = f"One month of {plan_version.plan.name}"
+        monthly_fee = plan_version.product_rate.monthly_fee
+        duration = relativedelta(date_end, date_start)
+        num_months = duration.years * 12 + duration.months
+        amount = monthly_fee * num_months
+        date_due = self.date_due(date_start)
+        self.create_wire_credits_invoice(amount, label, monthly_fee, num_months, date_due=date_due)
+
+    def create_prorated_subscription_change_credits_invoice(self, old_date_start, new_date_start, date_end,
+                                                            old_plan_version, new_plan_version):
+        old_monthly_fee = old_plan_version.product_rate.monthly_fee
+        new_monthly_fee = new_plan_version.product_rate.monthly_fee
+        old_sub_prepaid = get_prorated_software_plan_cost(old_date_start, date_end, old_monthly_fee)
+        old_sub_cost = get_prorated_software_plan_cost(old_date_start, new_date_start, old_monthly_fee)
+        new_sub_cost = get_prorated_software_plan_cost(new_date_start, date_end, new_monthly_fee)
+
+        new_plan_label = f"{new_plan_version.plan.name} (Prorated for term)"
+        new_plan_line_item = get_serializable_wire_invoice_general_credit(
+            new_sub_cost, new_plan_label, new_sub_cost, 1)
+
+        old_plan_label = f"{old_plan_version.plan.name} (Prepaid credit applied)"
+        old_plan_total = old_sub_cost - old_sub_prepaid
+        old_plan_line_item = get_serializable_wire_invoice_prepaid_item(
+            old_plan_total, old_plan_label, old_plan_total)
+
+        items = new_plan_line_item + old_plan_line_item
+        amount = new_sub_cost + old_plan_total
+        serializable_amount = simplejson.dumps(amount, use_decimal=True)
+        date_due = self.date_due(new_date_start)
+
+        from corehq.apps.accounting.tasks import create_wire_credits_invoice
+        create_wire_credits_invoice.delay(
+            domain_name=self.domain.name,
+            amount=serializable_amount,
+            invoice_items=items,
+            date_start=self.date_start,
+            date_end=self.date_end,
+            contact_emails=self.contact_emails,
+            cc_emails=self.cc_emails,
+            date_due=date_due,
+        )
+
+    @staticmethod
+    def date_due(date_start):
+        return max(date_start,
+                   datetime.date.today() + datetime.timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
 
 
 class CustomerAccountInvoiceFactory(object):
@@ -386,7 +388,7 @@ class CustomerAccountInvoiceFactory(object):
 
     def create_invoice(self):
         for sub in self.account.subscription_set.filter(do_not_invoice=False):
-            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.FREE
                     and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end)):
                 self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:
@@ -554,6 +556,7 @@ class LineItemFactory(object):
         try:
             return {
                 FeatureType.SMS: SmsLineItemFactory,
+                FeatureType.FORM_SUBMITTING_MOBILE_WORKER: FormSubmittingMobileWorkerLineItemFactory,
                 FeatureType.USER: UserLineItemFactory,
                 FeatureType.WEB_USER: WebUserLineItemFactory,
             }[feature_type]
@@ -687,7 +690,7 @@ class ProductLineItemFactory(LineItemFactory):
     def months_product_active_over_period(self, num_months):
         # Calculate the number of months out of num_months the subscription was active
         quantity = 0
-        date_start = months_from_date(self.invoice.date_end, -(num_months - 1))
+        date_start = get_first_day_x_months_later(self.invoice.date_end, -(num_months - 1))
         while date_start < self.invoice.date_end:
             if self.subscription.date_end and self.subscription.date_end <= date_start:
                 continue
@@ -745,19 +748,23 @@ class UserLineItemFactory(FeatureLineItemFactory):
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
         for date in dates:
-            total_users = 0
-            for domain in self.subscribed_domains:
-                try:
-                    history = DomainUserHistory.objects.get(domain=domain, record_date=date)
-                    total_users += history.num_users
-                except DomainUserHistory.DoesNotExist:
-                    if not deleted_domain_exists(domain):
-                        # this checks to see if the domain still exists
-                        # before raising an error. If it was deleted the
-                        # loop will continue
-                        raise
+            total_users = self.total_users_for_date(date)
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
+
+    def total_users_for_date(self, date):
+        total_users = 0
+        for domain in self.subscribed_domains:
+            try:
+                history = DomainUserHistory.objects.get(domain=domain, record_date=date)
+                total_users += history.num_users
+            except DomainUserHistory.DoesNotExist:
+                if not deleted_domain_exists(domain):
+                    # this checks to see if the domain still exists
+                    # before raising an error. If it was deleted the
+                    # loop will continue
+                    raise
+        return total_users
 
     def all_month_ends_in_invoice(self):
         _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
@@ -777,41 +784,43 @@ class UserLineItemFactory(FeatureLineItemFactory):
                 )
             )
         if self.quantity > 0:
-            return ngettext(
-                "Per-{user} fee exceeding limit of {monthly_limit} {user} "
-                "with plan above.{prorated_notice}",
-                "Per-{user} fee exceeding limit of {monthly_limit} {user}s "
-                "with plan above.{prorated_notice}",
-                self.rate.monthly_limit
-            ).format(
-                monthly_limit=self.rate.monthly_limit,
-                prorated_notice=prorated_notice,
-                user=user_type
-            )
+            return _("Fee for each {user} exceeding the plan limit of {monthly_limit}.").format(
+                user=_(user_type), monthly_limit=self.rate.monthly_limit
+            ) + prorated_notice
 
     @property
     def unit_description(self):
         return self._unit_description_by_user_type("mobile user")
 
 
-class WebUserLineItemFactory(UserLineItemFactory):
+class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
+
+    def total_users_for_date(self, date):
+        total_users = 0
+        for domain in self.subscribed_domains:
+            try:
+                history = FormSubmittingMobileWorkerHistory.objects.get(domain=domain, record_date=date)
+                total_users += history.num_users
+            except FormSubmittingMobileWorkerHistory.DoesNotExist:
+                if not deleted_domain_exists(domain):
+                    raise
+        return total_users
 
     @property
-    @memoized
-    def quantity(self):
-        # Iterate through all months in the invoice date range to aggregate total users into one line item
-        dates = self.all_month_ends_in_invoice()
-        excess_users = 0
-        for date in dates:
-            total_users = 0
-            try:
-                history = BillingAccountWebUserHistory.objects.get(
-                    billing_account=self.subscription.account, record_date=date)
-                total_users += history.num_users
-            except BillingAccountWebUserHistory.DoesNotExist:
-                raise
-            excess_users += max(total_users - self.rate.monthly_limit, 0)
-        return excess_users
+    def unit_description(self):
+        return super()._unit_description_by_user_type("form-submitting mobile worker")
+
+
+class WebUserLineItemFactory(UserLineItemFactory):
+
+    def total_users_for_date(self, date):
+        try:
+            history = BillingAccountWebUserHistory.objects.get(
+                billing_account=self.subscription.account, record_date=date)
+            total_users = history.num_users
+        except BillingAccountWebUserHistory.DoesNotExist:
+            raise
+        return total_users
 
     @property
     def unit_description(self):

@@ -30,8 +30,14 @@
            <table class="table table-condensed">
              <thead>
              <th>&nbsp;</th>
-@@ -42,7 +42,7 @@
-                                                      explorerColumnsAutocomplete: $parent.suggestedProperties()"
+@@ -38,33 +38,33 @@
+               <td>
+                 <div class="has-feedback">
+                   <input type="text" class="form-control" data-bind="
+-                                                     value: name,
+-                                                     explorerColumnsAutocomplete: $parent.suggestedProperties()"
++                    value: name,
++                    explorerColumnsAutocomplete: $parent.suggestedProperties()"
                    />
                    <span class="form-control-feedback" data-bind="visible: meta_type">
 -                    <span class="label label-primary" data-bind="text: meta_type"></span>
@@ -39,7 +45,20 @@
                    </span>
                  </div>
                </td>
-@@ -57,14 +57,14 @@
+               <td>
+                 <div class="has-feedback">
+-                  <select class="form-control" data-bind="
+-                                                options: {{ property_label_options }},
+-                                                optionsText: 'name',
+-                                                optionsValue: 'type',
+-                                                value: label,
+-                                                "/>
++                  <select class="form-select" data-bind="
++                    options: {{ property_label_options }},
++                    optionsText: 'name',
++                    optionsValue: 'type',
++                    value: label,
++                  "></select>
                  </div>
                </td>
                <td>

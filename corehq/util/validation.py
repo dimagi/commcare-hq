@@ -35,7 +35,7 @@ def is_url_or_host_banned(url_or_host):
 
 
 def has_scheme(url):
-    scheme_regex = r'(?:.+:)?//'  # Should match 'http://', 'file://', '//' etc
+    scheme_regex = r'^(?:[^:]+:)?//'  # Should match 'http://', 'file://', '//' etc
     return bool(re.match(scheme_regex, url))
 
 

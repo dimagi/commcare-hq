@@ -1,13 +1,15 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+
+{% js_entry 'domain/js/feature_previews' %}
 
 {% block page_content %}
   <p class="lead">
     {% trans "Feature Previews" %}
   </p>
   <div class="row">
-    <div class="col-md-6">
+    <div class="col-lg-6">
       <p class="help-block">
         <strong>
           {% trans "What are Feature Previews?" %}
@@ -92,7 +94,7 @@
             Looking for something that used to be here?
           {% endblocktrans %}
         </p>
-        <p>
+        <p class="mb-0">
           {% blocktrans %}
             The feature flags <strong>Control Mapping in Case List</strong>,
             <strong>Custom Calculations in Case List</strong>, <strong>Custom
@@ -106,14 +108,16 @@
     </div>
   </div>
 
+  {% include "domain/admin/partials/ocs_chatbot_enable_modal.html" %}
+
   <div class="row">
-    <div class="col-sm-10">
-      <form action="" method="post">
+    <div class="col-md-10">
+      <form action="" method="post" id="feature-previews-form">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary">{% trans "Update previews" %}</button>
         <table class="table table-striped">
           <thead>
-          <th class="col-sm-3">{% trans "Feature Name" %}</th>
+          <th class="col-md-3">{% trans "Feature Name" %}</th>
           <th>{% trans "Description" %}</th>
           <th>{% trans "Enable" %}</th>
           </thead>
@@ -128,7 +132,7 @@
                 {% endif %}
               </td>
               <td>
-                <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>
+                <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %} id="{{ feature.slug }}-checkbox"/>
               </td>
             </tr>
           {% endfor %}

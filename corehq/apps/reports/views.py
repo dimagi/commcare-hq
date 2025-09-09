@@ -59,13 +59,8 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.es.users import iter_web_user_emails
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_multiselect,
-)
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
@@ -96,17 +91,13 @@ from corehq.apps.saved_reports.tasks import (
 )
 from corehq.apps.userreports.util import \
     default_language as ucr_default_language
-from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import (
-    CommCareUser,
-    HqPermissions,
-    WebUser,
-)
+from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
+    SUBMISSION_HISTORY_PERMISSION,
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
@@ -155,7 +146,7 @@ require_case_export_permission = require_permission(
 
 require_form_view_permission = require_permission(
     HqPermissions.view_report,
-    'corehq.apps.reports.standard.inspect.SubmitHistory',
+    SUBMISSION_HISTORY_PERMISSION,
     login_decorator=None,
 )
 
@@ -220,12 +211,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = gettext_noop("My Saved Reports")
     template_name = 'reports/bootstrap3/reports_home.html'
-
-    @use_jquery_ui
-    @use_datatables
-    @use_daterangepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def language(self):
@@ -685,8 +670,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     template_name = 'reports/bootstrap3/edit_scheduled_report.html'
 
     @method_decorator(require_permission(HqPermissions.download_reports))
-    @use_multiselect
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
 
@@ -784,31 +767,28 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         kwargs = {'initial': initial}
         if self.request.method == "POST":
             args = (self.request.POST, )
-            selected_emails = self.request.POST.getlist('recipient_emails', {})
+            selected_emails = self.request.POST.getlist('recipient_emails', [])
         else:
             args = ()
             selected_emails = kwargs.get('initial', {}).get('recipient_emails', [])
 
-        web_user_emails = [
-            WebUser.wrap(row['doc']).get_email()
-            for row in get_all_user_rows(self.domain, include_web_users=True,
-                                         include_mobile_users=False, include_docs=True)
+        selected_emails_set = set(selected_emails)
+        web_user_emails = selected_emails + [
+            e for e in iter_web_user_emails(self.domain)
+            if e not in selected_emails_set
         ]
-        for email in selected_emails:
-            if email not in web_user_emails:
-                web_user_emails = [email] + web_user_emails
 
         from corehq.apps.reports.forms import ScheduledReportForm
         form = ScheduledReportForm(*args, **kwargs)
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
-        form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                         (Domain.get_by_name(self.domain)['default_timezone'],
-                                          get_timezone_difference(self.domain))
-        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                              (Domain.get_by_name(self.domain)['default_timezone'],
-                                               get_timezone_difference(self.domain))
+        timezone_help_text = _("This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)") % {
+            'timezone': Domain.get_by_name(self.domain)['default_timezone'],
+            'utc_offset': get_timezone_difference(self.domain)
+        }
+        form.fields['hour'].help_text = timezone_help_text
+        form.fields['stop_hour'].help_text = timezone_help_text
         return form
 
     @property
@@ -1904,6 +1884,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             _("Title"),
             _("Server"),
             _("View URL"),
+            _("Visible to Location-Restricted Users"),
         ]
 
     @property
@@ -1925,13 +1906,14 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
+            'location_safe': tableau_visualization.location_safe,
             'updateForm': self.get_update_form_response(
                 self.get_update_form(tableau_visualization)
             ),
         }
         return data
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         tableau_viz = TableauVisualization.objects.get(
             pk=item_id,
             domain=self.domain,
@@ -2045,29 +2027,51 @@ def get_or_create_filter_hash(request, domain):
 @location_safe
 def copy_cases(request, domain, *args, **kwargs):
     from corehq.apps.hqcase.case_helper import CaseCopier
-    body = json.loads(request.body)
-
-    case_ids = body.get('case_ids')
-    if not case_ids:
-        return JsonResponse({'error': _("Missing case ids")}, status=400)
-
-    new_owner = body.get('owner_id')
-    if not new_owner:
-        return JsonResponse({'error': _("Missing new owner id")}, status=400)
+    data, error = _get_case_action_data(request)
+    if error:
+        assert data is None, data
+        return JsonResponse({'error': error}, status=400)
 
     censor_data = {
         prop['name']: prop['label']
-        for prop in body.get('sensitive_properties', [])
+        for prop in data['body'].get('sensitive_properties', [])
     }
 
     case_copier = CaseCopier(
         domain,
-        to_owner=new_owner,
+        to_owner=data['owner_id'],
         censor_data=censor_data,
     )
-    case_id_pairs, errors = case_copier.copy_cases(case_ids)
+    case_id_pairs, errors = case_copier.copy_cases(data['case_ids'])
     count = len(case_id_pairs)
     return JsonResponse(
-        {'copied_cases': count, 'error': errors},
+        {'case_count': count, 'error': errors},
         status=400 if count == 0 else 200,
     )
+
+
+@require_POST
+@require_permission(HqPermissions.edit_data)
+@location_safe
+def reassign_cases(request, domain, *args, **kwargs):
+    from corehq.apps.data_interfaces.tasks import reassign_cases
+    data, error = _get_case_action_data(request)
+    if error:
+        assert data is None, data
+        return JsonResponse({'error': error}, status=400)
+    result = reassign_cases(domain, request.couch_user, data['owner_id'], data['case_ids'])
+    return JsonResponse(result, status=200)
+
+
+def _get_case_action_data(request):
+    body = json.loads(request.body)
+
+    case_ids = body.get('case_ids')
+    if not case_ids:
+        return None, _("Missing case ids")
+
+    owner_id = body.get('owner_id')
+    if not owner_id:
+        return None, _("Missing new owner id")
+
+    return {"owner_id": owner_id, "case_ids": case_ids, "body": body}, None

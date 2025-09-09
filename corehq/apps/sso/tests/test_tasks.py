@@ -2,7 +2,7 @@ import datetime
 from unittest.mock import ANY, patch
 
 from django.test import TestCase
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests import generator as accounting_generator
@@ -119,7 +119,7 @@ class TestSSOTasks(TestCase):
         self.idp.save()
         # test alerts
         for num_days in remind_days:
-            with freeze_time(expires - datetime.timedelta(days=num_days)):
+            with travel(expires - datetime.timedelta(days=num_days), tick=False):
                 with patch("corehq.apps.sso.tasks.send_html_email_async.delay") as mock_send:
                     idp_cert_expires_reminder()
                     if assert_reminder:
@@ -157,7 +157,7 @@ class TestSSOTasks(TestCase):
         self.idp.save()
         # test alerts
         for num_days in remind_days:
-            with freeze_time(expires - datetime.timedelta(days=num_days)):
+            with travel(expires - datetime.timedelta(days=num_days), tick=False):
                 with patch("corehq.apps.sso.tasks.send_html_email_async.delay") as mock_send:
                     send_api_token_expiration_reminder()
                     if assert_reminder:
@@ -235,7 +235,8 @@ class GetKeysExpiringAfterTests(TestCase):
 
     def _create_key(self, expiration_date=None, is_active=True):
         return HQApiKey.objects.create(
-            user=self.user, key='key', name='test-key', expiration_date=expiration_date, is_active=is_active)
+            user=self.user, plaintext_key='key', name='test-key',
+            expiration_date=expiration_date, is_active=is_active)
 
 
 class EnforceKeyExpirationTaskTests(TestCase):
@@ -250,11 +251,11 @@ class EnforceKeyExpirationTaskTests(TestCase):
         key = self._create_key_for_user(user, expiration_date=None)
 
         current_time = datetime.datetime(year=2024, month=8, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             num_updates = enforce_key_expiration_for_idp(idp)
 
-        updated_key = HQApiKey.objects.get(id=key.id)
-        self.assertEqual(updated_key.expiration_date, current_time + datetime.timedelta(days=30))
+        key.refresh_from_db()
+        self.assertEqual(key.expiration_date, current_time + datetime.timedelta(days=30))
         self.assertEqual(num_updates, 1)
 
     def test_exits_when_no_maximum_date_exists(self):
@@ -263,7 +264,7 @@ class EnforceKeyExpirationTaskTests(TestCase):
         self._create_key_for_user(user, expiration_date=None)
 
         current_time = datetime.datetime(year=2024, month=8, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             num_updates = enforce_key_expiration_for_idp(idp)
 
         self.assertEqual(num_updates, 0)
@@ -274,7 +275,7 @@ class EnforceKeyExpirationTaskTests(TestCase):
         self._create_key_for_user(user, expiration_date=None)
 
         current_time = datetime.datetime(year=2024, month=8, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             num_updates = enforce_key_expiration_for_idp(idp)
 
         self.assertEqual(num_updates, 0)
@@ -285,11 +286,11 @@ class EnforceKeyExpirationTaskTests(TestCase):
         key = self._create_key_for_user(user, expiration_date=None)
 
         current_time = datetime.datetime(year=2024, month=8, day=1)
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             update_sso_user_api_key_expiration_dates(idp.id)
 
-        updated_key = HQApiKey.objects.get(id=key.id)
-        self.assertEqual(updated_key.expiration_date, current_time + datetime.timedelta(days=30))
+        key.refresh_from_db()
+        self.assertEqual(key.expiration_date, current_time + datetime.timedelta(days=30))
 
     def _create_idp_for_domains(self, domains, max_days_until_user_api_key_expiration=30):
         idp = generator.create_idp('test-idp', account=self.account)
@@ -307,7 +308,7 @@ class EnforceKeyExpirationTaskTests(TestCase):
 
     def _create_key_for_user(self, user, expiration_date=None):
         return HQApiKey.objects.create(
-            user=user.get_django_user(), key='key', name='test-key', expiration_date=expiration_date)
+            user=user.get_django_user(), plaintext_key='key', name='test-key', expiration_date=expiration_date)
 
 
 class TestAutoDeactivationTask(TestCase):

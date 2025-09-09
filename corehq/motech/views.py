@@ -24,7 +24,7 @@ from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.const import PASSWORD_PLACEHOLDER
+from corehq.motech.const import PASSWORD_PLACEHOLDER, OAUTH2_CLIENT, OAUTH2_PWD
 from corehq.motech.forms import ConnectionSettingsForm, UnrecognizedHost
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
@@ -241,7 +241,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
 
         return data
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         connection_settings = ConnectionSettings.objects.get(
             pk=item_id,
             domain=self.domain,
@@ -308,7 +308,14 @@ def test_connection_settings(request, domain):
         raise Http404
 
     # If auth_type is set to None, we ignore this check
-    if request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER and request.POST.get('auth_type'):
+    auth_type = request.POST.get('auth_type')
+    client_secret = request.POST.get('plaintext_client_secret')
+    if auth_type in (OAUTH2_CLIENT, OAUTH2_PWD) and client_secret == PASSWORD_PLACEHOLDER:
+        return JsonResponse({
+            "success": False,
+            "response": _("Please enter client secret again."),
+        })
+    if auth_type and request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER:
         # The user is editing an existing instance, and the form is
         # showing the password placeholder. (We don't tell the user what
         # the API password is.)

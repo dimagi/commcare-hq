@@ -1,19 +1,18 @@
 --- 
 +++ 
-@@ -1,10 +1,10 @@
+@@ -1,9 +1,9 @@
 -{% extends "reports/bootstrap3/base_template.html" %}
 +{% extends "reports/bootstrap5/base_template.html" %}
  {% load hq_shared_tags %}
  {% load compress %}
  {% load i18n %}
  
- {% block js %}{{ block.super }}
--  <script src="{% static 'reports/js/bootstrap3/submission_error_report.js' %}"></script>
-+  <script src="{% static 'reports/js/bootstrap5/submission_error_report.js' %}"></script>
- {% endblock js %}
+-{% js_entry_b3 "reports/js/bootstrap3/submission_error_report" %}
++{% js_entry "reports/js/bootstrap5/submission_error_report" %}
  
  {% block modals %}{{ block.super }}
-@@ -13,8 +13,8 @@
+   {% registerurl 'reprocess_xform_errors' domain %}
+@@ -11,8 +11,8 @@
    <div class="modal fade" id="processing-error-modal" tabindex="-1" role="dialog">
      <div class="modal-dialog" role="document">
        <div class="modal-content">
@@ -24,7 +23,7 @@
            </button>
            <h4 class="modal-title">{% trans "Error re-processing form" %}</h4>
          </div>
-@@ -22,7 +22,7 @@
+@@ -20,7 +20,7 @@
            <div class="error-message"></div>
          </div>
          <div class="modal-footer">

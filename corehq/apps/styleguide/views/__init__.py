@@ -65,11 +65,22 @@ class BaseStyleGuideArticleView(TemplateView):
         """
         return {}
 
-    def example(self, filename):
-        examples = os.path.join(os.path.dirname(__file__),
+    def example(self, filename, js_filename=None):
+        html_dir = os.path.join(os.path.dirname(__file__),
                                 '..', 'templates', 'styleguide', 'bootstrap3', 'examples')
-        with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
-            return content.read()
+        with open(os.path.join(html_dir, filename), 'r', encoding='utf-8') as content:
+            content = content.read()
+        if js_filename:
+            js_dir = os.path.join(os.path.dirname(__file__),
+                                  '..', 'static', 'styleguide', 'bootstrap3', 'js')
+            with open(os.path.join(js_dir, js_filename), 'r', encoding='utf-8') as js_content:
+                js_content = js_content.read()
+            return {
+                'html': content,
+                'js': js_content,
+            }
+        else:
+            return content
 
     def render_to_response(self, context, **response_kwargs):
         context.update(self.section_context)
@@ -277,17 +288,17 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'examples': {
                 'selections': {
                     'button_group': self.example('button_group.html'),
-                    'select2': self.example('select2.html'),
-                    'multiselect': self.example('multiselect.html'),
+                    'select2': self.example('select2.html', 'select2.js'),
+                    'multiselect': self.example('multiselect.html', 'multiselect.js'),
                 },
                 'checkbox_in_form': self.example('checkbox_in_form.html'),
                 'lonely_checkbox': self.example('lonely_checkbox.html'),
                 'modals': self.example('modals.html'),
-                'pagination': self.example('pagination.html'),
-                'search_box': self.example('search_box.html'),
-                'inline_edit': self.example('inline_edit.html'),
+                'pagination': self.example('pagination.html', 'pagination.js'),
+                'search_box': self.example('search_box.html', 'search_box.js'),
+                'inline_edit': self.example('inline_edit.html', 'inline_edit.js'),
                 'help': self.example('help.html'),
-                'feedback': self.example('feedback.html'),
+                'feedback': self.example('feedback.html', 'feedback.js'),
             },
         }
 

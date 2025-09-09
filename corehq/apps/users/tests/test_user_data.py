@@ -1,9 +1,12 @@
+from datetime import datetime
 import uuid
 from unittest.mock import patch, PropertyMock
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
+from corehq.apps.commtrack.tests.util import make_loc
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Field, CustomDataFieldsDefinition
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -35,7 +38,6 @@ class TestUserData(TestCase):
     def test_user_data_accessor(self):
         user = self.make_commcare_user()
         user_data = user.get_user_data(self.domain)
-        self.assertEqual(user_data['commcare_project'], self.domain)
         user_data.update({
             'cruise': 'control',
             'this': 'road',
@@ -58,12 +60,10 @@ class TestUserData(TestCase):
 
         # Each domain has a separate user_data object
         self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'what_domain_is_it': 'domain 1',
         })
         self.assertEqual(web_user.get_user_data('another_domain').to_dict(), {
-            'commcare_project': 'another_domain',
             'commcare_profile': '',
             'what_domain_is_it': 'domain 2',
         })
@@ -140,8 +140,17 @@ def _get_profile(self, profile_id):
 
 
 @patch('corehq.apps.users.user_data.UserData._get_profile', new=_get_profile)
-class TestUserDataModel(SimpleTestCase):
-    domain = 'test-user-data-model'
+class TestUserDataModel(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestUserDataModel, cls).setUpClass()
+        cls.domain = 'test-user-data-model'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.loc1 = make_loc('1', 'loc1', cls.domain)
+        cls.loc2 = make_loc('2', 'loc2', cls.domain)
+        cls.loc_ids = [loc.location_id for loc in [cls.loc1, cls.loc2]]
 
     def setUp(self):
         self.user_fields = []
@@ -151,11 +160,21 @@ class TestUserDataModel(SimpleTestCase):
 
         self.addCleanup(field_patcher.stop)
 
-    def init_user_data(self, raw_user_data=None, profile_id=None):
+        self.user = CommCareUser.create(
+            domain=self.domain,
+            username='cc1',
+            password='***',
+            created_by=None,
+            created_via=None,
+            last_login=datetime.now()
+        )
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
+    def init_user_data(self, raw_user_data=None, profile_id=None, domain=None):
         return UserData(
             raw_user_data=raw_user_data or {},
-            couch_user=None,  # This is only used for saving to the db
-            domain=self.domain,
+            couch_user=self.user,
+            domain=domain or self.domain,
             profile_id=profile_id,
         )
 
@@ -175,14 +194,12 @@ class TestUserDataModel(SimpleTestCase):
         # Custom user data profiles get their data added to metadata automatically for mobile users
         user_data = self.init_user_data({'yearbook_quote': 'Not all who wander are lost.'})
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'yearbook_quote': 'Not all who wander are lost.',
         })
 
         user_data.profile_id = 'blues'
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': 'blues',
             'favorite_color': 'blue',  # provided by the profile
             'yearbook_quote': 'Not all who wander are lost.',
@@ -191,7 +208,6 @@ class TestUserDataModel(SimpleTestCase):
         # Remove profile should remove it and related fields
         user_data.profile_id = None
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'yearbook_quote': 'Not all who wander are lost.',
         })
@@ -289,3 +305,98 @@ class TestUserDataModel(SimpleTestCase):
         changed = user_data.remove_unrecognized({'a', 'b'})
         self.assertFalse(changed)
         self.assertEqual(user_data.raw, {})
+
+    def test_no_location_info_in_user_data_when_no_location_assigned(self):
+        user_data = self.user.get_user_data(self.domain)
+
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_profile': '',
+        })
+
+
+class TestUserDataLifecycle(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain('user-data-lifecycle-test')
+        cls.addClassCleanup(cls.domain.delete)
+
+    def _create_user_data(self, user, domain, raw_user_data, commit=True):
+        user_data = UserData(
+            raw_user_data=raw_user_data,
+            couch_user=user,
+            domain=domain,
+        )
+        if commit:
+            user_data.save()
+
+    def _create_web_user(self, username):
+        user = WebUser.create(self.domain.name, username, 'testpwd', None, None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        return user
+
+    def test_user_data_is_soft_deleted_when_domain_membership_is_deleted(self):
+        web_user = self._create_web_user('test@example.com')
+        self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
+        # test that removing this user's domain membership removes the user data
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        web_user.delete_domain_membership(self.domain.name)
+        self.assertFalse(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        self.assertTrue(
+            SQLUserData.all_objects.filter(
+                django_user=web_user.get_django_user(), domain=self.domain.name, deleted_on__isnull=False
+            ).exists()
+        )
+
+    def test_user_data_is_undeleted_when_domain_membership_is_restored(self):
+        web_user = self._create_web_user('test@example.com')
+        self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        record = web_user.delete_domain_membership(self.domain.name, create_record=True)
+        record.undo()
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        self.assertFalse(
+            SQLUserData.all_objects.filter(
+                django_user=web_user.get_django_user(), domain=self.domain.name, deleted_on__isnull=False
+            ).exists()
+        )
+
+    def test_user_data_for_another_domain_is_not_deleted(self):
+        web_user = self._create_web_user('test@example.com')
+        new_domain_obj = create_domain('new-domain')
+        self.addCleanup(new_domain_obj.delete)
+        web_user.add_domain_membership('new-domain')
+        web_user.save()
+        self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
+        self._create_user_data(web_user, 'new-domain', {'favorite_color': 'green'})
+
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain='new-domain').exists()
+        )
+        web_user.delete_domain_membership(self.domain.name)
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain='new-domain').exists()
+        )
+
+    def test_soft_deleted_user_data_is_removed_before_readding_to_domain(self):
+        web_user = self._create_web_user('test@example.com')
+        self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        web_user.delete_domain_membership(self.domain.name, create_record=True)
+        web_user.add_domain_membership(self.domain.name)
+        # no user data should exist at this point
+        self.assertFalse(
+            SQLUserData.all_objects.filter(
+                django_user=web_user.get_django_user(), domain=self.domain.name
+            ).exists()
+        )

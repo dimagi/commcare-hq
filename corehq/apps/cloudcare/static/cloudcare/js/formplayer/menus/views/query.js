@@ -1,14 +1,14 @@
-'use strict';
-hqDefine("cloudcare/js/formplayer/menus/views/query", [
+define("cloudcare/js/formplayer/menus/views/query", [
     'jquery',
     'underscore',
     'backbone',
-    'DOMPurify/dist/purify.min',
+    'dompurify',
     'backbone.marionette',
     'moment',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
@@ -17,8 +17,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/utils/utils',
-    'hqwebapp/js/bootstrap3/hq.helpers',   // needed for hqHelp
-    'bootstrap-daterangepicker/daterangepicker',  // needed for $.daterangepicker
+    'hqwebapp/js/bootstrap5/hq.helpers',   // needed for hqHelp
     'cloudcare/js/formplayer/menus/api',    // needed for app:select:menus
     'select2/dist/js/select2.full.min',
 ], function (
@@ -29,8 +28,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     Marionette,
     moment,
     initialPageData,
+    hqTempusDominus,
     toggles,
-    kissmetrics,
+    noopMetrics,
     markdown,
     cloudcareUtils,
     formEntryConstants,
@@ -38,9 +38,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     FormplayerFrontend,
     formplayerConstants,
     Collection,
-    formplayerUtils
+    formplayerUtils,
 ) {
-    var separator = " to ",
+    var separator = hqTempusDominus.getDateRangeSeparator(),
         serverSeparator = "__",
         serverPrefix = "__range__",
         dateFormat = cloudcareUtils.dateFormat,
@@ -140,7 +140,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         },
         geocoderItemCallback = function (addressTopic, model) {
             return function (item) {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
+                noopMetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
                 const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
@@ -153,7 +153,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         },
         geocoderOnClearCallback = function (addressTopic) {
             return function () {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
+                noopMetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 $.publish(addressTopic, formEntryConstants.NO_ANSWER);
             };
         },
@@ -194,7 +194,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                         var val = option.val();
                         if (option.length === 1 && domElement.val().indexOf(val) === -1) {
                             domElement.val(
-                                domElement.val().concat(val)
+                                domElement.val().concat(val),
                             ).trigger("change");
                         }
                     } else {
@@ -212,7 +212,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 inputId = id + "_mapbox",
                 $field = $("#" + inputId);
             $(function () {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
+                noopMetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
             });
             const queryKey = sessionStorage.queryKey;
             const storedGeocoderValues = sessionStorage.geocoderValues;
@@ -225,7 +225,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 if (!initialPageData.get("has_geocoder_privs")) {
                     $("#" + inputId).addClass('unsupported alert alert-warning');
                     $("#" + inputId).text(gettext(
-                        "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
+                        "Sorry, this input is not supported because your project doesn't have a Geocoder privilege"),
                     );
                     return true;
                 }
@@ -266,6 +266,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 errorMessage: this.errorMessage,
                 itemsetChoicesDict: itemsetChoicesDict,
                 contentTag: this.parentView.options.sidebarEnabled ? "div" : "td",
+                cid: this.options.model.cid,
             };
         },
 
@@ -299,7 +300,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         events: {
             'change @ui.queryField': 'changeQueryField',
             'change @ui.searchForBlank': 'notifyParentOfFieldChange',
-            'dp.change @ui.queryField': 'changeDateQueryField',
+            'change.td @ui.date': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
@@ -378,9 +379,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             self.errorMessage = null;
             self.model.set('searchForBlank', false);
             sessionStorage.removeItem('geocoderValues');
-            if (self.ui.date.length) {
-                self.ui.date.data("DateTimePicker").clear();
-            }
             self._render();
             FormplayerFrontend.trigger('clearNotifications');
         },
@@ -470,29 +468,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         onRender: function () {
             this._initializeSelect2Dropdown();
             const fallback = this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled ?  'bottom' : 'right';
-            if (window.USE_BOOTSTRAP5) {
-                this.ui.hqHelp.hqHelp({placement: 'auto', fallbackPlacements: [fallback]});
-            } else {
-                this.ui.hqHelp.hqHelp({placement: 'auto ' + fallback});
-            }
+            this.ui.hqHelp.hqHelp({
+                placement: 'auto',
+                fallbackPlacements: [fallback],
+            });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
-            this.ui.dateRange.daterangepicker({
-                locale: {
-                    format: dateFormat,
-                    separator: separator,
-                },
-                autoUpdateInput: false,
-                "autoApply": true,
+            this.ui.dateRange.each(function (index, el) {
+                hqTempusDominus.createDefaultDateRangePicker(el.parentNode, {
+                    localization: {
+                        format: dateFormat,
+                    },
+                });
             });
             this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
-            this.ui.dateRange.on('cancel.daterangepicker', function () {
-                $(this).val('').trigger('change');
-            });
-            this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
-                $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
-            });
             this.ui.dateRange.on('change', function () {
                 // Validate free-text input
                 var start, end,
@@ -514,7 +504,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 }
             });
             if (this.model.get('hidden') === 'true') {
-                this.$el.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+                this.$el.addClass("d-none");
             }
         },
 
@@ -585,7 +575,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                         groupKey: child.get('groupKey'),
                         required: child.get('required'),
                     },
-                    childViewOptions
+                    childViewOptions,
                 );
             } else {
                 options = _.extend({model: child}, childViewOptions);
@@ -672,7 +662,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                     } else {
                         return [item];
                     }
-                }
+                },
             ));
         },
 
@@ -739,22 +729,43 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             var self = this;
             e.preventDefault();
             self.performSubmit();
+            self.displayErrors();
         },
 
         performSubmit: function (initiatedBy) {
             var self = this;
-            self.validateAllFields().done(function () {
-                FormplayerFrontend.trigger(
-                    "menu:query",
-                    self.getAnswers(),
-                    self.options.sidebarEnabled,
-                    initiatedBy
-                );
-                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
-                    $('#sidebar-region').collapse('hide');
+            if (!self.inputsHaveErrors()) {
+                self.executeSearch(initiatedBy).done(function (response) {
+                    self.updateModels(response);
+                });
+            }
+        },
+
+        inputsHaveErrors: function () {
+            var self = this;
+            const childViews = self._getChildren();
+            for (let childView of childViews) {
+                if (childView.getError()) {
+                    return true;
                 }
-                sessionStorage.submitPerformed = true;
-            });
+            }
+            return false;
+        },
+
+        executeSearch: function (initiatedBy) {
+            var self = this;
+            var request = FormplayerFrontend.getChannel().request(
+                "menu:query",
+                self.getAnswers(),
+                self.options.sidebarEnabled,
+                initiatedBy,
+            );
+
+            if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                $('#sidebar-region').collapse('hide');
+            }
+            sessionStorage.submitPerformed = true;
+            return request;
         },
 
         updateSearchResults: function () {
@@ -786,44 +797,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             return promise;
         },
 
-        /*
-         *  Send request to formplayer to validate fields. Displays any errors.
-         *  Returns a promise that contains the formplayer response.
-         */
-        validateAllFields: function () {
-            var self = this;
-            var promise = $.Deferred();
-            var invalidFields = [];
-            var updatingModels = self.updateModelsForValidation || self._updateModelsForValidation();
-
-            $.when(updatingModels).done(function (response) {
-                // Gather error messages
-                self._getChildren().forEach(function (childView) {
-                    if (!childView.isValid()) {
-                        invalidFields.push(childView.model.get('text'));
-                    }
-                });
-
-                // Display error messages
-                FormplayerFrontend.trigger('clearNotifications');
-                if (invalidFields.length) {
-                    var errorHTML = gettext("Please check the following fields:");
-                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                        return "<li>" + DOMPurify.sanitize(f) + "</li>";
-                    }).join("") + "</ul>";
-                    FormplayerFrontend.trigger('showError', errorHTML, true, false);
-                }
-
-                if (invalidFields.length) {
-                    promise.reject(response);
-                } else {
-                    promise.resolve(response);
-                }
-            });
-
-            return promise;
-        },
-
         _updateModelsForValidation: function (initiatedByTag) {
             var self = this;
             var promise = $.Deferred();
@@ -839,30 +812,57 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             urlObject.setRequestInitiatedByTag(initiatedByTag);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
-                // Update models based on response
-                if (response.queryResponse) {
-                    _.each(response.queryResponse.displays, function (responseModel, i) {
-                        self._getChildModels()[i].set({
-                            error: responseModel.error,
-                            required: responseModel.required,
-                            required_msg: responseModel.required_msg,
-                        });
-                    });
-                } else {
-                    _.each(response.models, function (responseModel, i) {
-                        const childModels = self._getChildModels();
-                        childModels[i].set({
-                            error: responseModel.get('error'),
-                            required: responseModel.get('required'),
-                            required_msg: responseModel.get('required_msg'),
-                        });
-                    });
-                }
+                self.updateModels(response);
                 promise.resolve(response);
 
             });
             sessionStorage.validationInProgress = false;
             return promise;
+        },
+
+        displayErrors: function () {
+            var self = this;
+            // Gather error messages
+            var invalidFields = [];
+            self._getChildren().forEach(function (childView) {
+                if (!childView.isValid()) {
+                    invalidFields.push(childView.model.get('text'));
+                }
+            });
+
+            // Display error messages
+            FormplayerFrontend.trigger('clearNotifications');
+            if (invalidFields.length) {
+                var errorHTML = gettext("Please check the following fields:");
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                }).join("") + "</ul>";
+                FormplayerFrontend.trigger('showError', errorHTML, true, false);
+            }
+            return invalidFields;
+        },
+
+        updateModels: function (response) {
+            var self = this;
+            // Update models based on response
+            if (response.queryResponse) {
+                _.each(response.queryResponse.displays, function (responseModel, i) {
+                    self._getChildModels()[i].set({
+                        error: responseModel.error,
+                        required: responseModel.required,
+                        required_msg: responseModel.required_msg,
+                    });
+                });
+            } else {
+                _.each(response.models, function (responseModel, i) {
+                    const childModels = self._getChildModels();
+                    childModels[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
+            }
         },
 
         setStickyQueryInputs: function () {

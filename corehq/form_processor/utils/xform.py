@@ -9,6 +9,7 @@ import xml2json
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment, XFormInstance
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
+from corehq.toggles import CONVERT_XML_GROUP_SEPARATOR
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -67,6 +68,7 @@ class TestFormMetadata(jsonobject.JsonObject):
     time_start = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
     # Set this property to fake the submission time
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
+    __test__ = False
 
 
 class FormSubmissionBuilder(object):
@@ -177,6 +179,14 @@ def extract_meta_user_id(form):
     elif form.get('Meta'):
         user_id = form.get('Meta').get('user_id', None)
     return user_id
+
+
+def sanitize_instance_xml(xml_string, request):
+    GROUP_SEPARATOR = b'&#29;'
+    REPLACEMENT_CHARACTER = b'&#xFFFD;'
+    if CONVERT_XML_GROUP_SEPARATOR.enabled_for_request(request):
+        xml_string = xml_string.replace(GROUP_SEPARATOR, REPLACEMENT_CHARACTER)
+    return xml_string
 
 
 def convert_xform_to_json(xml_string):

@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'hqwebapp/bootstrap3/base_page.html' %}
++{% extends 'hqwebapp/bootstrap5/base_page.html' %}
+ {% load i18n %}
+ 
+ {% block page_content %}
+   {% if is_paused %}
+-    {% include 'hqwebapp/partials/bootstrap3/paused_plan_notice.html' %}
++    {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
+   {% else %}
+     <p class="lead">
+       {% blocktrans %}
+@@ -23,7 +23,7 @@
+     {% endif %}
+     <div class="btn-toolbar">
+       <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details"
+-         class="btn btn-default" target="_blank">{% trans 'Read more about our plans' %}</a>
++         class="btn btn-outline-primary" target="_blank">{% trans 'Read more about our plans' %}</a>
+       {% if is_domain_admin %}
+         <a href="{{ change_subscription_url }}" class="btn btn-primary">{% trans 'Change My Plan' %}</a>
+       {% endif %}

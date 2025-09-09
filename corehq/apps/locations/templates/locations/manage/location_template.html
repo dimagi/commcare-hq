@@ -1,23 +1,24 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block stylesheets %}
-  <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
-{% endblock %}
-
-<div class="row">
-  <div class="col-lg-12" style="clear: both">
-    <div id="location_tree">
-      <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
-    </div>
-  </div>
+<div id="location_tree" class="w-50 ms-n3">
+  <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
 </div>
+
+<style>
+.loc_header {
+  border-color: #ddd;
+  &:hover {
+    background-color: #eef;
+  }
+}
+</style>
 
 <script type="text/html" id="location-template">
   <div class="loc_section">
     <!-- header bar -->
-    <div class="loc_header clearfix" data-bind="if: name() != '_root'">
-      <div style="float:right;" data-bind="if: can_edit()" id="button-template">
+    <div class="mb-2 clearfix loc_header" data-bind="if: name() != '_root', css: {'border-bottom': name() != '_root'}">
+      <div class="float-end" data-bind="if: can_edit()" id="button-template">
         {% if not show_inactive %}
           <a class="btn btn-primary"
              data-bind="attr: { href: loc_edit_url(uuid()) }">
@@ -32,19 +33,19 @@
         {% endif %}
         {% if not view_only %}
           {% if show_inactive %}
-            <button class="btn btn-default"
+            <button class="btn btn-outline-primary"
                     data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
               <i class="fa fa-archive"></i>
               {% trans "Unarchive" %}
             </button>
           {% else %}
-            <button class="btn btn-default"
+            <button class="btn btn-outline-primary"
                     data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
               <i class="fa fa-archive"></i>
               {% trans "Archive" %}
             </button>
           {% endif %}
-          <button class="btn btn-danger"
+          <button class="btn btn-outline-danger"
                   data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
             <i class="fa-regular fa-trash-can"></i>
             {% trans "Delete" %}
@@ -53,7 +54,7 @@
       </div>
 
       <!-- want to make entire row clickable, but overrides click on 'edit' button -->
-      <div data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
+      <div class="pt-1" data-bind="click: toggle, css: { clickable: can_have_children() }">
           <!-- ko if: can_have_children -->
               <!-- ko if: !expanded() -->
                 <i class="fa-solid fa-square-plus fa-lg"></i>
@@ -65,15 +66,13 @@
                 <i class="fa-regular fa-square-plus fa-lg"></i>
               <!-- /ko -->
           <!-- /ko -->
-        <span class="loc_name" data-bind="text: name"></span>
-        <span class="loc_type">(<span data-bind="text: type"></span>)</span>
+        <span class="loc_name fs-5" data-bind="text: name"></span>
+        <span class="badge text-bg-secondary text-capitalize" data-bind="text: type"></span>
       </div>
-      <div style="clear: both;"></div>
-      <hr style="margin: 0px;"/>
     </div>
 
     <!-- child content -->
-    <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
+    <div class="loc_children mb-4 ms-2 ps-2 border-4" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')', borderLeftStyle: 'solid' }">
 
       <!-- ajax spinner -->
       <div class="loc_section loc_child" data-bind="visible: children_status() == 'loading'">
@@ -89,7 +88,7 @@
         </div>
 
         <!-- 'no children' message -->
-        <div class="loc_child no_children alert alert-info" data-bind="visible: children().length == 0, text: no_children_caption"></div>
+        <div class="loc_child alert alert-info mt-1" data-bind="visible: children().length == 0, text: no_children_caption"></div>
 
       </div>
 
@@ -113,8 +112,8 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title">{% trans "Delete Location:" %} <span data-bind="text: name" /></h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
           <div class="modal-body">
             <p>
@@ -125,11 +124,11 @@
                 <strong><span data-bind="text: count"></span></strong> in the box below.
               {% endblocktrans %}
             </p>
-            <input data-bind="value: signOff, valueUpdate: 'input'" />
+            <input class="form-control" data-bind="value: signOff, valueUpdate: 'input'" />
           </div>
           <div class="modal-footer">
-            <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-            <button data-bind="click: delete_fn, css: {disabled: !(signOff() == count)}" class="btn btn-danger">{% trans "Delete" %}</button>
+            <button data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</button>
+            <button data-bind="click: delete_fn, css: {disabled: !(signOff() == count)}" class="btn btn-outline-danger">{% trans "Delete" %}</button>
           </div>
         </div>
       </div>
@@ -139,8 +138,8 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title">{% trans "Archive Location:" %} <span data-bind="text: name" /></h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
           <div class="modal-body">
             <p>
@@ -153,8 +152,8 @@
             </p>
           </div>
           <div class="modal-footer">
-            <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-            <button data-bind="click: archive_fn" class="btn btn-danger">{% trans "Archive" %}</button>
+            <button data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</button>
+            <button data-bind="click: archive_fn" class="btn btn-outline-danger">{% trans "Archive" %}</button>
           </div>
         </div>
       </div>

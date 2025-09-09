@@ -5,71 +5,43 @@
 {% load i18n %}
 {% load compress %}
 
-{% comment %}
-  This template expects to be passed an app.
-{% endcomment %}
+{% js_entry_b3 "app_manager/js/app_manager" %}
 
 {% block page_sidebar_classes %}
   appmanager-sidebar
 {% endblock %}
 
-
 {% block page_content_classes %}
   appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
 {% endblock %}
 
-{% block title %}{% trans "Applications" %}{% endblock %}
+{% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
   {% include 'app_manager/partials/apps_stylesheets.html' %}
+  <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
 {% endblock %}
 
-{% block js %}{{ block.super }}
-  <!--
-      jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
-      tooltip widgets conflict. The B3 base template takes care of that when you use the
-      @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
-      actually used in app manager (no tooltip).
-  -->
-  {% compress js %}
-    <!-- this defines jquery ui ($.ui) so this MUST come first -->
-    <script src="{% static 'jquery-ui/ui/version.js' %}"></script>
+{% block page_navigation %}
+  {% if app %}
+    <div class="appmanager-loading-container">
+      <div class="appmanager-loading appmanager-loading-nav">
+        <i class="fa fa-spin fa-spinner"></i>
+      </div>
+    </div>
+    <nav class="appmanager-content">
 
-    <!-- all files originally in core.js, as that file now requires use of an AMD and it will be deprecated in 1.13 -->
-    <script src="{% static 'jquery-ui/ui/data.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/disable-selection.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/focusable.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/form.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/ie.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/keycode.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/labels.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/plugin.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/safe-active-element.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/safe-blur.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/scroll-parent.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/tabbable.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/unique-id.js' %}"></script>
+      {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app.id app_name=app.name releases_active=release_manager settings_active=is_app_settings_page linked_name=linked_name linked_version=app.upstream_version %}
 
-    <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
+      {% if app.get_doc_type == 'Application' %}
+        {% if not app.is_remote_app and app.langs|length > 1%}
+          {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
+        {% endif %}
 
-    <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/widgets/mouse.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/widgets/autocomplete.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/widgets/draggable.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/widgets/droppable.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/widgets/menu.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/widgets/sortable.js' %}"></script>
-  {% endcompress %}
-
-  {% include 'hqwebapp/includes/atwho.html' %}
-  <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
-
-  {% include 'hqwebapp/includes/ui_element_js.html' %}
-  {% compress js %}
-    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
-  {% endcompress %}
+        {% include 'app_manager/partials/menu/appnav_menu.html' %}
+      {% endif %}
+    </nav>
+  {% endif %}
 {% endblock %}
 
 {% block page_breadcrumbs %}{% endblock %}
@@ -79,6 +51,9 @@
   {% include 'app_manager/partials/preview_app.html'%}
 {% endblock %}
 
+{% block pre_page_content %}
+{% endblock %}
+
 {% block page_content %}
   <div class="appmanager-loading-bg">
   </div>
@@ -86,7 +61,27 @@
        id="js-appmanager-body">
     {% include 'app_manager/partials/vellum_case_management_warning.html' %}
 
-    {% block app-content %}{% endblock %}
+    {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
+    {% initial_page_data 'app_subset' app_subset %}
+    {% initial_page_data 'formdesigner' formdesigner %}
+    {% initial_page_data 'add_ons' add_ons %}
+    {% initial_page_data 'add_ons_layout' add_ons_layout %}
+    {% registerurl 'current_app_version' domain app.id %}
+    {% registerurl "new_form" domain app.id "---" %}
+    {% registerurl "all_case_types" domain %}
+    {% block pre_form_content %}{% endblock %}
+    {% block form-view %}{% endblock %}
+    {% include 'app_manager/partials/add_item_templates.html' %}
+    <script type="text/html" id="XPathValidator.template">
+      <div class="js-xpath-input-target control-group" data-bind="css: {error: xpathValidator.error}">
+        <textarea class="form-control vertical-resize" spellcheck="false"
+                  data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
+                          value: xpathValidator.xpathText"></textarea>
+        <!--ko if: xpathValidator.error()-->
+        <div class="alert alert-danger" data-bind="html: errorHtml"></div>
+        <!--/ko-->
+      </div>
+    </script>
   </div>
 {% endblock %}
 
@@ -97,6 +92,10 @@
   {% if app.is_deleted %}
     {% include 'app_manager/partials/undo_delete_app.html' %}
   {% endif %}
+  {% include "hqwebapp/bootstrap3/rollout_revert_modal.html" %}
+  {% include 'app_manager/partials/confirm_delete_app.html' %}
+  {% include 'app_manager/partials/add_new_module_modal.html' %}
+  {% include 'app_manager/partials/define_case_type_modal.html' %}
 {% endblock modals %}
 
 {% block page_row_classes %}appmanager-content-row{% endblock %}

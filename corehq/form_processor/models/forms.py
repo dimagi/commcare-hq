@@ -389,7 +389,8 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
+    def hard_delete_forms(
+            self, domain, form_ids, return_ids=False, delete_attachments=True, *, publish_changes=True):
         """Delete forms permanently
 
         :param publish_changes: Flag for change feed publication.
@@ -398,12 +399,17 @@ class XFormInstanceManager(RequireDBManager):
         assert isinstance(form_ids, list)
 
         deleted_count = 0
+        deleted_ids = []
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             # cascade should delete the operations
-            _, deleted_models = self.using(db_name).filter(
-                domain=domain, form_id__in=split_form_ids
-            ).delete()
+            query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
+            with transaction.atomic():
+                if return_ids:
+                    found_forms = list(query.values_list('form_id', flat=True))
+                _, deleted_models = query.delete()
             deleted_count += deleted_models.get(self.model._meta.label, 0)
+            if return_ids:
+                deleted_ids.extend(found_forms)
 
         if delete_attachments and deleted_count:
             if deleted_count != len(form_ids):
@@ -421,7 +427,7 @@ class XFormInstanceManager(RequireDBManager):
         if publish_changes:
             self.publish_deleted_forms(domain, form_ids)
 
-        return deleted_count
+        return deleted_ids if return_ids else deleted_count
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):
@@ -637,6 +643,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return operations
 
     @property
+    @memoized
     def metadata(self):
         from ..utils import clean_metadata
         if const.TAG_META in self.form_data:
@@ -649,6 +656,13 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     def name(self):
         return self.form_data.get(const.TAG_NAME, "")
+
+    @property
+    def device_id(self):
+        try:
+            return self.metadata and self.metadata.deviceID
+        except MissingFormXml:
+            pass
 
     @memoized
     def get_sync_token(self):

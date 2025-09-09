@@ -65,7 +65,6 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :maxdepth: 1
 
     reporting
-    maps
     exports
     change_feeds
     pillows
@@ -78,6 +77,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     ucr
     ucr/examples
     ucr/faq
+    ucr/mobile_ucr_v2_migration_guide
 
 .. toctree::
     :caption: Messaging
@@ -89,10 +89,11 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Integrations
     :maxdepth: 1
 
-    api
+    api/index
     fhir/index
     openmrs
     value_source
+    integrations/kyc
 
 .. toctree::
     :caption: Single Sign On (SSO)

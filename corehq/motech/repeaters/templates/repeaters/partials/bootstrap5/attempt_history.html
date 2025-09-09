@@ -30,7 +30,7 @@
                             {% endif %}
                             {% if attempt.message %}
                                 <div class="card record-attempt" style="font-family: monospace;">  {# todo B5: css:well, inline style #}
-                                    {{ attempt.message }}
+                                    {{ attempt.message|escape|linebreaksbr }}
                                 </div>
                             {% endif %}
                         </div>

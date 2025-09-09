@@ -123,7 +123,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
 class TestCustomerInvoice(BaseCustomerInvoiceCase):
 
     def test_multiple_subscription_invoice(self):
-        invoice_date = utils.months_from_date(self.main_subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start,
                                               random.randint(3, self.non_main_subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
@@ -151,7 +151,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         """
         No invoices should be generated for the months after the end date of the subscriptions.
         """
-        invoice_date = utils.months_from_date(self.main_subscription.date_end, 2)
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_end, 2)
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 0)
@@ -160,7 +160,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         """
         Test the customer invoice can still be created after one of the domains was deleted
         """
-        invoice_date = utils.months_from_date(self.main_subscription.date_start, 2)
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 2)
 
         domain_to_be_deleted = generator.arbitrary_domain()
         generator.generate_domain_subscription(
@@ -193,7 +193,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         self.product_rate = self.main_subscription.plan_version.product_rate
 
     def test_product_line_items(self):
-        invoice_date = utils.months_from_date(self.main_subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start,
                                               random.randint(2, self.main_subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
@@ -212,7 +212,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
     def test_product_line_items_in_quarterly_invoice(self):
         self.account.invoicing_plan = InvoicingPlan.QUARTERLY
         self.account.save()
-        invoice_date = utils.months_from_date(self.main_subscription.date_start, 14)
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
         for months_before_invoice_date in range(3):
             user_date = date(invoice_date.year, invoice_date.month, 1)
             user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
@@ -232,7 +232,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
     def test_product_line_items_in_yearly_invoice(self):
         self.account.invoicing_plan = InvoicingPlan.YEARLY
         self.account.save()
-        invoice_date = utils.months_from_date(self.main_subscription.date_start, 14)
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
         for months_before_invoice_date in range(12):
             user_date = date(invoice_date.year, invoice_date.month, 1)
             user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
@@ -255,7 +255,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
             account=self.account,
             is_product=True
         )
-        invoice_date = utils.months_from_date(self.main_subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start,
                                               random.randint(2, self.main_subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
@@ -270,7 +270,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
             is_product=True,
             subscription=self.main_subscription
         )
-        invoice_date = utils.months_from_date(self.main_subscription.date_start,
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start,
                                               random.randint(2, self.main_subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
@@ -288,14 +288,14 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         super(TestUserLineItem, self).setUp()
         self.user_rate = self.main_subscription.plan_version.feature_rates \
             .filter(feature__feature_type=FeatureType.USER).get()
-        self.invoice_date = utils.months_from_date(self.main_subscription.date_start,
+        self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start,
                                                    random.randint(2, self.non_main_subscription_length))
 
     def test_under_limit(self):
-        num_users_main_domain = random.randint(0, self.user_rate.monthly_limit / 2)
+        num_users_main_domain = random.randint(0, self.user_rate.monthly_limit // 2)
         generator.arbitrary_commcare_users_for_domain(self.main_domain.name, num_users_main_domain)
 
-        num_users_non_main_domain1 = random.randint(0, self.user_rate.monthly_limit / 2)
+        num_users_non_main_domain1 = random.randint(0, self.user_rate.monthly_limit // 2)
         generator.arbitrary_commcare_users_for_domain(self.non_main_domain1.name, num_users_non_main_domain1)
 
         self.addCleanup(self.cleanUpUser)
@@ -431,10 +431,10 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         self.sms_rate = self.main_subscription.plan_version.feature_rates.filter(
             feature__feature_type=FeatureType.SMS
         ).get()
-        self.invoice_date = utils.months_from_date(
+        self.invoice_date = utils.get_first_day_x_months_later(
             self.main_subscription.date_start, random.randint(2, self.non_main_subscription_length)
         )
-        self.sms_date = utils.months_from_date(self.invoice_date, -1)
+        self.sms_date = utils.get_first_day_x_months_later(self.invoice_date, -1)
 
     def tearDown(self):
         self._delete_sms_billables()
@@ -590,10 +590,10 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
         self.sms_rate = self.main_subscription.plan_version.feature_rates.filter(
             feature__feature_type=FeatureType.SMS
         ).get()
-        self.invoice_date = utils.months_from_date(
+        self.invoice_date = utils.get_first_day_x_months_later(
             self.main_subscription.date_start, random.randint(3, self.non_main_subscription_length)
         )
-        self.sms_date = utils.months_from_date(self.invoice_date, -1)
+        self.sms_date = utils.get_first_day_x_months_later(self.invoice_date, -1)
 
     def initialize_domain_user_history_objects(self):
         record_dates = []
@@ -640,7 +640,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
     def test_user_over_limit_in_yearly_invoice(self):
         self.account.invoicing_plan = InvoicingPlan.YEARLY
         self.account.save()
-        invoice_date = utils.months_from_date(self.main_subscription.date_start, 14)
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
         tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 

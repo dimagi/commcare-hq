@@ -1,0 +1,47 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+
+{% block page_content %}
+  <p>{% trans "Check the status of an email" %}</p>
+  <form method="GET" action="">
+    <div class="row">
+      <div class="col-sm-4">
+        <input
+          name="q"
+          type="text"
+          class="form-control"
+          placeholder="you@example.com"
+        />
+      </div>
+      <div class="col-sm-4">
+        <button class="btn btn-primary" type="submit">
+          {% trans "Check Status" %}
+        </button>
+      </div>
+    </div>
+  </form>
+  {% if statuses %}
+    <hr />
+    <h1>{% blocktrans %}Email status for {{ email }}{% endblocktrans %}</h1>
+    <p>
+      See documentation on
+      <a
+        href="https://dimagi.atlassian.net/wiki/spaces/saas/pages/2146610035/Handling+SES+Email+Bounces"
+        >SES Email Bounces</a
+      >
+      for more information.
+    </p>
+    <table class="table table-striped table-bordered">
+      <tr>
+        <th class="col-sm-4">{% trans "Type" %}</th>
+        <th class="col-sm-4">{% trans "Status" %}</th>
+      </tr>
+      {% for type, status in statuses.items %}
+        <tr>
+          <td>{{ type }}</td>
+          <td>{{ status }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+{% endblock %}

@@ -4,6 +4,7 @@ import json
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+from corehq.apps.reports.util import DatatablesServerSideParams
 from dimagi.utils.dates import DateSpan, add_months
 
 from corehq.apps.reports.filters.base import BaseReportFilter
@@ -89,7 +90,7 @@ class SingleDateFilter(BaseReportFilter):
 
     @property
     def date(self):
-        from_req = self.request.GET.get(self.slug)
+        from_req = DatatablesServerSideParams.get_value_from_request(self.request, self.slug)
         if from_req:
             try:
                 return iso_string_to_date(from_req)

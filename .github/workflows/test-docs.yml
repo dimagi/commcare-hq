@@ -3,23 +3,26 @@ on:
   pull_request:
     branches:
       - master
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
-      - uses: actions/setup-python@v4
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.9'
+          version: '0.7.2'
       - name: Install docs requirements
-        run: pip install -r requirements/docs-requirements.txt
+        run: uv sync --group=docs --no-group=sso --locked --compile-bytecode --no-progress
       - name: Test docs build
-        run: bash ./scripts/test-make-docs.sh
+        run: |
+          source .venv/bin/activate
+          ./scripts/test-make-docs.sh
       - name: Upload test artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: make-docs-artifacts
           path: artifacts

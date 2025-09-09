@@ -1,5 +1,6 @@
 import re
 
+import pytest
 import testil
 
 from corehq.extensions.interface import CommCareExtensions, ExtensionError, ResultFormat
@@ -44,19 +45,15 @@ def demo_extension_3(**kwargs):
     return "p3"
 
 
-def test_commcare_extensions():
-    def check(args, kwargs, expected):
-        results = ext_point_a(*args, **kwargs)
-        testil.eq(results, expected)
-
-    cases = [
-        ([], {"arg1": 1, "domain": "d1"}, ["p2", "p3"]),
-        ([], {"arg1": 2, "domain": "d1"}, ["p3"]),
-        ([1, "d2"], {}, ["p1", "p2"]),
-        ([], {"arg1": 2, "domain": "d2"}, []),
-    ]
-    for args, kwargs, expected in cases:
-        yield check, args, kwargs, expected
+@pytest.mark.parametrize("args, kwargs, expected", [
+    ([], {"arg1": 1, "domain": "d1"}, ["p2", "p3"]),
+    ([], {"arg1": 2, "domain": "d1"}, ["p3"]),
+    ([1, "d2"], {}, ["p1", "p2"]),
+    ([], {"arg1": 2, "domain": "d2"}, []),
+])
+def test_commcare_extensions(args, kwargs, expected):
+    results = ext_point_a(*args, **kwargs)
+    testil.eq(results, expected)
 
 
 def test_validation_not_callable():

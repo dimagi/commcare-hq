@@ -94,10 +94,10 @@ to see how that works.
 
 .. _Dimagi: http://www.dimagi.com/
 .. _issue tracker: https://github.com/dimagi/commcare-hq/issues
-.. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
+.. _bug reports: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956931/Submit+a+Support+Request
 .. _Standards and Best Practices: STANDARDS.rst
 .. _Style Guide: https://www.commcarehq.org/styleguide/
-.. _Javascript Guide: docs/js-guide/README.md
+.. _Javascript Guide: docs/js-guide/README.rst
 .. _Guide to Authoring Pull Requests: https://github.com/dimagi/open-source/blob/master/docs/Writing_PRs.md
 .. _Developers category: https://forum.dimagi.com/c/developers
 .. _CommCare Forum: https://forum.dimagi.com/
@@ -108,21 +108,27 @@ to see how that works.
 
 Updating requirements
 ---------------------
-To update requirements edit:
 
-* ``requirements/requirements.in`` for packages for all environments
+Python
+~~~~~~
+To update python requirements, add new requirement(s) to ``pyproject.toml`` or
+run ``uv lock --upgrade-package=<package-name>`` to update a specific package.
 
-* ``requirements/prod-requirements.in`` for packages for production environments only
-
-* ``requirements/test-requirements.in`` for packages for test environment only
-
-* ``requirements/dev-requirements.in`` for packages for dev environment only
-
-and run ``make requirements``.
-
-To upgrade all requirements to their latest allowed version you can run
-``make upgrade-requirements``—this usually results in a large number of upgrades
+To upgrade all requirements to their latest allowed version, you can run
+``uv lock --upgrade``—this usually results in a large number of upgrades
 and is not something we can merge easily, but it is sometimes a useful exploratory first step.
+
+Javascript
+~~~~~~~~~~
+To update javascript requirements, edit ``package.json``:
+
+* ``dependencies`` for dependencies needed for all environments
+
+* ``devDependencies`` for developer environments only
+
+and run ``yarn install``.
+
+Commit the changes to ``package.json`` along with the updates to ``yarn.lock``.
 
 PR labels
 ---------
@@ -186,3 +192,26 @@ PRs that are not ready to be merged can be labeled with one of the following lab
 - Open for review: do not merge
 
 As long as either of these labels are present on the PR it will have a pending status.
+
+Reviews with CodeRabbit
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: CodeRabbit is being evaluated as a code review tool for CommCare HQ.
+
+CodeRabbit is an AI-powered code reviewer that delivers context-aware feedback on pull requests within
+minutes. It provides a fresh perspective and catches issues that are often missed, enhancing the
+overall review quality. A clean CodeRabbit review does not constitute approval allowing the PR to be merged.
+
+Although not required, it's recommended that you use CodeRabbit to review your PRs, ideally before any human-reviewers
+do so. A good way to do this is creating a draft PR first, let CodeRabbit review, address the feedback, then
+convert it to a regular PR.
+
+CodeRabbit specifies a `list of commands <https://docs.coderabbit.ai/guides/commands/>`_ for managing
+the bot’s review workflow. It’s recommended that you read through the page at least once to gain some
+perspective on how CodeRabbit functions, but the main commands you’ll probably want to know about are
+the following:
+
+- `@coderabbitai review` - Triggers a review from CodeRabbit. This command will do an incremental review of the PR, meaning that CodeRabbit will only review each commit once. This command is suited for most use-cases.
+- `@coderabbitai full review` - Triggers a full review again. This command is useful for when major changes require a fresh perspective.
+- `@coderabbitai resolve` - This resolves all CodeRabbit comments and is useful for when you want to clean up
+the CodeRabbit comments.

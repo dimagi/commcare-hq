@@ -237,7 +237,7 @@ export GITHUB_ACTIONS="$GITHUB_ACTIONS"
 export GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME"
 export JS_SETUP="${JS_SETUP:-no}"
 export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
-export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
+export DIVIDED_WE_RUN="$DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
 export STRIPE_PRIVATE_KEY="$STRIPE_PRIVATE_KEY"
 export TRAVIS="$TRAVIS"
@@ -297,8 +297,8 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-    # Disabled due to: https://github.com/github/feedback/discussions/8848
-    # [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
+    # Disable group if https://github.com/github/feedback/discussions/8848 resurfaces
+    [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
     docker compose pull --quiet
 
@@ -354,8 +354,7 @@ else
         fi
         docker volume rm \
             ${VOLUME_PREFIX}couchdb \
-            ${VOLUME_PREFIX}elasticsearch2 \
-            ${VOLUME_PREFIX}elasticsearch5 \
+            ${VOLUME_PREFIX}elasticsearch6 \
             ${VOLUME_PREFIX}kafka \
             ${VOLUME_PREFIX}lib \
             ${VOLUME_PREFIX}postgresql \

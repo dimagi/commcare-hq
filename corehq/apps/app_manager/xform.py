@@ -28,7 +28,7 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_UNSCHEDULED_VISIT,
     USERCASE_ID,
 )
-from corehq.apps.app_manager.xpath import XPath, UsercaseXPath
+from corehq.apps.app_manager.xpath import XPath
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.toggles import DONT_INDEX_SAME_CASETYPE, NAMESPACE_DOMAIN, SAVE_ONLY_EDITED_FORM_FIELDS
 from corehq.util.view_utils import get_request
@@ -41,7 +41,6 @@ from .exceptions import (
     XFormValidationFailed,
     DangerousXmlException,
 )
-from .suite_xml.xml_models import Instance
 from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
@@ -407,7 +406,7 @@ class XFormCaseBlock(object):
             'case_id': '',
             'date_modified': '',
             'user_id': '',
-            }, nsmap={
+        }, nsmap={
             None: namespaces['cx2'][1:-1]
         })
 
@@ -597,8 +596,8 @@ class XFormCaseBlock(object):
 
 
 def autoset_owner_id_for_open_case(actions):
-    return not ('update_case' in actions and
-                'owner_id' in actions['update_case'].update)
+    return not ('update_case' in actions
+                and 'owner_id' in actions['update_case'].update)
 
 
 def autoset_owner_id_for_subcase(subcase):
@@ -705,7 +704,8 @@ class XForm(WrappedNode):
     @raise_if_none("Can't find <itext>")
     def itext_node(self):
         # awful, awful hack. It will be many weeks before I can look people in the eye again.
-        return self.model_node.find('{f}itext') or self.model_node.find('itext')
+        node = self.model_node.find('{f}itext')
+        return node if node is not None else self.model_node.find('itext')
 
     @property
     def case_node(self):
@@ -729,7 +729,8 @@ class XForm(WrappedNode):
     def text_references(self, lang=None):
         # Accepts lang param for consistency with image_references, etc.,
         # but current text references aren't language-specific
-        nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]/{f}extra[@key="cc:print_template_reference"]')
+        nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]'
+                             '/{f}extra[@key="cc:print_template_reference"]')
         return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
     def image_references(self, lang=None):
@@ -1117,7 +1118,7 @@ class XForm(WrappedNode):
             if is_group and not include_groups:
                 continue
 
-            if node.tag_name == 'trigger'and not include_triggers:
+            if node.tag_name == 'trigger' and not include_triggers:
                 continue
 
             if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
@@ -1219,7 +1220,10 @@ class XForm(WrappedNode):
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
                     if len(parent):
-                        is_stock_element = any([namespace == COMMTRACK_REPORT_XMLNS for namespace in parent.nsmap.values()])
+                        is_stock_element = any(
+                            namespace == COMMTRACK_REPORT_XMLNS
+                            for namespace in parent.nsmap.values()
+                        )
                         if is_stock_element:
                             question.update({
                                 "stock_entry_attributes": dict(data_node.xml.attrib),
@@ -1596,8 +1600,8 @@ class XForm(WrappedNode):
         """
         instance_xpath = 'instance[@id="%s"]' % id
         conflicting = (
-            self.model_node.find('{f}%s' % instance_xpath).exists() or
-            self.model_node.find(instance_xpath).exists()
+            self.model_node.find('{f}%s' % instance_xpath).exists()
+            or self.model_node.find(instance_xpath).exists()
         )
         if not conflicting:
             # insert right after the main <instance> block
@@ -1938,8 +1942,8 @@ class XForm(WrappedNode):
                 )
 
         module = form.get_module()
-        has_schedule = (module.has_schedule and getattr(form, 'schedule', False) and form.schedule.enabled and
-                        getattr(form.get_phase(), 'anchor', False))
+        has_schedule = (module.has_schedule and getattr(form, 'schedule', False) and form.schedule.enabled
+                        and getattr(form.get_phase(), 'anchor', False))
         last_real_action = next(
             (action for action in reversed(form.actions.load_update_cases)
              if not (action.auto_select) and action.case_type == module.case_type),
@@ -2146,6 +2150,7 @@ class XForm(WrappedNode):
     def _add_scheduler_case_update(self, case_type, case_property):
         self._scheduler_case_updates[case_type].add(case_property)
 
+
 VELLUM_TYPES = {
     "AndroidIntent": {
         'tag': 'input',
@@ -2186,6 +2191,12 @@ VELLUM_TYPES = {
         'type': 'xsd:double',
         'icon': 'fcc fcc-fd-decimal',
         'editable': True,
+    },
+    "Document": {
+        'tag': 'upload',
+        'media': 'application/*,text/*',
+        'type': 'binary',
+        'icon': 'fa fa-file',
     },
     "FieldList": {
         'tag': 'group',

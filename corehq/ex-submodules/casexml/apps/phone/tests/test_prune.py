@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
-from freezegun import freeze_time
+from time_machine import travel
 
 from casexml.apps.phone.models import (
     SimplifiedSyncLog,
@@ -15,7 +15,7 @@ from casexml.apps.phone.tasks import SYNCLOG_RETENTION_DAYS, prune_synclogs
 from corehq.util.test_utils import DocTestMixin
 
 
-@freeze_time('2021-08-02')
+@travel('2021-08-02', tick=False)
 class SyncLogPruneTest(TestCase, DocTestMixin):
     maxDiff = None
 

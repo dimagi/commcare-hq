@@ -18,6 +18,8 @@ from memoized import memoized
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
+from corehq.motech.rate_limiter import repeater_rate_limiter
+from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -40,7 +42,7 @@ from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
 )
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_bootstrap5
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
@@ -52,15 +54,9 @@ from corehq.const import USER_CHANGE_VIA_WEB
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
     strict_domain_fetching = True
 
-    @method_decorator(always_allow_project_access)
-    @method_decorator(login_and_domain_required)
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
-
     @property
     def main_context(self):
-        context = super(BaseInternalDomainSettingsView, self).main_context
+        context = super().main_context
         context.update({
             'project': self.domain_object,
         })
@@ -69,13 +65,6 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
     @property
     def page_name(self):
         return format_html("{} <small>Internal</small>", self.page_title)
-
-
-@method_decorator(use_bootstrap5, name='dispatch')
-class TestBootstrap5DomainView(BaseInternalDomainSettingsView):
-    urlname = 'test_bootstrap5_domain_view'
-    page_title = gettext_lazy("Test Bootstrap 5 Changes")
-    template_name = 'domain/test_bootstrap5.html'
 
 
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
@@ -87,10 +76,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
-    @use_jquery_ui  # datepicker
-    @use_multiselect
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -141,7 +129,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if can_edit_eula:
             internal_attrs += [
                 'custom_eula',
-                'can_use_data',
             ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
@@ -191,23 +178,18 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             )
             eula_props_changed = (
                 bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula)
-                or bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data)
             )
 
             if eula_props_changed and settings.EULA_CHANGE_EMAIL:
                 message = '\n'.join([
-                    '{user} changed either the EULA or data sharing properties for domain {domain}.',
+                    '{user} changed the EULA properties for domain {domain}.',
                     '',
-                    'The properties changed were:',
                     '- Custom eula: {eula_old} --> {eula_new}',
-                    '- Can use data: {can_use_data_old} --> {can_use_data_new}'
                 ]).format(
                     user=self.request.couch_user.username,
                     domain=self.domain,
                     eula_old=old_attrs.custom_eula,
                     eula_new=self.domain_object.internal.custom_eula,
-                    can_use_data_old=old_attrs.can_use_data,
-                    can_use_data_new=self.domain_object.internal.can_use_data,
                 )
                 send_mail_async.delay(
                     'Custom EULA or data use flags changed for {}'.format(self.domain),
@@ -230,11 +212,12 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     page_title = gettext_lazy("Calculated Properties")
     template_name = 'domain/internal_calculations.html'
 
+    @use_bootstrap5
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -244,6 +227,7 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_superuser, name='dispatch')
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
@@ -258,6 +242,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
                     toggle['tag_index'],
                     toggle['label'])
 
+        editable_tags_slugs = self._editable_tags_slugs()
         unsorted_toggles = [{
             'slug': toggle.slug,
             'label': toggle.label,
@@ -269,11 +254,15 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'tag_css_class': toggle.tag.css_class,
             'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,
             'domain_enabled': toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
+            'can_edit': toggle.tag.slug in editable_tags_slugs,
             'user_enabled': toggle.enabled(self.request.couch_user.username,
                                            namespace=toggles.NAMESPACE_USER),
         } for toggle in toggles.all_toggles()]
 
         return sorted(unsorted_toggles, key=_sort_key)
+
+    def _editable_tags_slugs(self):
+        return [tag.slug for tag in get_editable_toggle_tags_for_user(self.request.user.username)]
 
     def _get_privileges(self):
         return sorted([
@@ -292,6 +281,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_superuser, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class ProjectLimitsView(BaseAdminProjectSettingsView):
     urlname = 'internal_project_limits_summary'
     page_title = gettext_lazy("Project Limits")
@@ -303,6 +293,7 @@ class ProjectLimitsView(BaseAdminProjectSettingsView):
             ('Submission Rate Limits', submission_rate_limiter),
             ('Case Rate Limits', domain_case_rate_limiter),
             ('Restore Rate Limits', restore_rate_limiter),
+            ('Repeater Rate Limits', repeater_rate_limiter),
         ], self.domain)
 
 
@@ -352,7 +343,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
                 messages.info(request,
                               _("Resent transfer request for project '{domain}'").format(domain=self.domain))
 
-        return super(TransferDomainView, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         form = self.transfer_domain_form
@@ -372,11 +363,12 @@ class TransferDomainView(BaseAdminProjectSettingsView):
         else:
             return {'form': self.transfer_domain_form}
 
+    @use_bootstrap5
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if not toggles.TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
-        return super(TransferDomainView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ActivateTransferDomainView(BasePageView):
@@ -408,7 +400,7 @@ class ActivateTransferDomainView(BasePageView):
                 and not request.user.is_superuser):
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, guid, *args, **kwargs):
         self.guid = guid
@@ -426,9 +418,10 @@ class ActivateTransferDomainView(BasePageView):
 
         return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(ActivateTransferDomainView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
 
 class DeactivateTransferDomainView(View):
@@ -460,7 +453,7 @@ class DeactivateTransferDomainView(View):
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
 
 @login_and_domain_required

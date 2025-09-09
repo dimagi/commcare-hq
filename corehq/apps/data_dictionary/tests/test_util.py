@@ -11,16 +11,18 @@ from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     delete_case_property,
     generate_data_dictionary,
+    get_case_property_count,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
     get_case_property_group_name_for_properties,
     get_case_property_label_dict,
     get_column_headings,
     get_data_dict_deprecated_case_types,
-    get_used_props_by_case_type,
     get_values_hints_dict,
     is_case_type_deprecated,
     is_case_type_or_prop_name_valid,
+    is_case_type_unused,
+    is_case_property_unused,
     map_row_values_to_column_names,
     update_url_query_params,
 )
@@ -32,9 +34,6 @@ from corehq.util.workbook_reading.datamodels import Cell
 @patch('corehq.apps.data_dictionary.util._get_properties_by_case_type')
 class GenerateDictionaryTest(TestCase):
     domain = uuid.uuid4().hex
-
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
 
     def test_no_types(self, mock):
         mock.return_value = {}
@@ -121,11 +120,6 @@ class DeleteCasePropertyTest(TestCase):
         cls.case_prop_obj = CaseProperty(case_type=cls.case_type_obj, name=cls.case_prop_name)
         cls.case_prop_obj.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        super().tearDownClass()
-
     def test_delete_case_property(self):
         error = delete_case_property(self.case_prop_name, self.case_type, self.domain)
         does_exist = CaseProperty.objects.filter(
@@ -188,9 +182,6 @@ class MiscUtilTest(TestCase):
             'bar': 'col_2',
             'test column': 'col_3',
         }
-
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
 
     def test_no_data_dict_info(self):
         case_type_name = 'bare'
@@ -348,38 +339,23 @@ class MiscUtilTest(TestCase):
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
-class UsedPropsByCaseTypeTest(TestCase):
-
-    domain = uuid.uuid4().hex
+class TestUnusedCaseTypeAndProperty(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.domain = 'test-unused-types-and-props'
         cls.case_blocks = [
             cls._create_case_block(
                 case_type='case-type',
                 name='Case A',
-                props={'prop': True},
-            ),
-            cls._create_case_block(
-                case_type='case-type',
-                name='Case B',
-                props={'other-prop': True},
-            ),
-            cls._create_case_block(
-                case_type='other-case-type',
-                name='Case C',
-                props={'prop': True, 'foobar': True},
-            ),
-            cls._create_case_block(
-                case_type='no-props',
-                name='Case D',
-                props={},
+                props={'prop': True, 'empty-prop': '', 'null-prop': None},
             ),
         ]
         case_search_es_setup(cls.domain, cls.case_blocks)
 
-    def _create_case_block(case_type, name, props):
+    @classmethod
+    def _create_case_block(cls, case_type, name, props):
         return CaseBlock(
             case_id=uuid.uuid4().hex,
             case_type=case_type,
@@ -387,24 +363,23 @@ class UsedPropsByCaseTypeTest(TestCase):
             update=props,
         )
 
-    def test_get_used_props_by_case_type(self):
-        used_props_by_case_type = get_used_props_by_case_type(self.domain)
-        self.assertEqual(len(used_props_by_case_type), 3)
+    def test_unused_case_type_returns_true(self):
+        self.assertTrue(is_case_type_unused(self.domain, 'random-case-type'))
 
-        # No props were passed to this case type, so should only contain metadata
-        # properties which we are not concerned about
-        metadata_props = set(used_props_by_case_type['no-props'])
+    def test_used_case_type_returns_false(self):
+        self.assertFalse(is_case_type_unused(self.domain, 'case-type'))
 
-        props = set(used_props_by_case_type['case-type']) - metadata_props
-        self.assertEqual({'prop', 'other-prop'}, props)
-        props = set(used_props_by_case_type['other-case-type']) - metadata_props
-        self.assertEqual({'prop', 'foobar'}, props)
+    def test_unused_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'random-prop'))
 
-    def test_get_used_props_by_case_type_with_case_type_param(self):
-        used_props_by_case_type = get_used_props_by_case_type(self.domain, 'case-type')
-        self.assertEqual(len(used_props_by_case_type), 1)
-        props = set(used_props_by_case_type['case-type'])
-        self.assertTrue(props.issuperset({'prop', 'other-prop'}))
+    def test_used_case_property_returns_false(self):
+        self.assertFalse(is_case_property_unused(self.domain, 'case-type', 'prop'))
+
+    def test_empty_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'empty-prop'))
+
+    def test_null_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'null-prop'))
 
 
 class TestUpdateUrlQueryParams(SimpleTestCase):
@@ -421,3 +396,23 @@ class TestUpdateUrlQueryParams(SimpleTestCase):
     def test_no_params(self):
         result = update_url_query_params(self.url, {})
         self.assertEqual(result, self.url)
+
+
+class TestGetCasePropertyCount(TestCase):
+
+    domain = 'test-count'
+
+    def test_returns_accurate_count(self):
+        """Count is directly reflective of linked CaseProperty objects"""
+        case_type = CaseType.objects.create(name='count', domain=self.domain)
+        for i in range(5):
+            CaseProperty.objects.create(name=f'count-{i}', case_type=case_type)
+        assert get_case_property_count(self.domain, case_type.name) == 5
+
+    def test_exludes_deprecated_properties(self):
+        case_type = CaseType.objects.create(name='count', domain=self.domain)
+        for i in range(5):
+            CaseProperty.objects.create(name=f'count-{i}', case_type=case_type)
+        for i in range(2):
+            CaseProperty.objects.create(name=f'count-dep-{i}', case_type=case_type, deprecated=True)
+        assert get_case_property_count(self.domain, case_type.name) == 5

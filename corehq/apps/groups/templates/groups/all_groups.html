@@ -1,7 +1,8 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% requirejs_main_b5 "groups/js/all_groups" %}
+
+{% js_entry "groups/js/all_groups" %}
 
 {% block page_title %}
   {% trans "Groups" %}

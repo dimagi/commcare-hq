@@ -114,7 +114,8 @@ def safe_cached_download(f):
             if not username:
                 content_response = dict(error="app.update.not.allowed.user.logged_out",
                                         default_response=_("Please log in to the app to check for an update."))
-                return HttpResponse(status=406, content=json.dumps(content_response))
+                return HttpResponse(status=406, content=json.dumps(content_response),
+                                    content_type='application/json')
         if latest and not target:
             latest_enabled_build = _get_latest_enabled_build(domain, username, app_id, request.GET.get('profile'),
                                                              location_flag_enabled)
@@ -188,6 +189,11 @@ def check_access_and_redirect(func):
     @wraps(func)
     def wrapped(request, domain, *args, **kwargs):
         domain_obj = Domain.get_by_name(domain)
+        if not domain_obj:
+            return HttpResponse(
+                'Domain Not Found',
+                content_type='text/plain', status=404,
+            )
         if domain_obj.redirect_url:
             if request.GET:
                 path = '?'.join((request.path, request.GET.urlencode()))

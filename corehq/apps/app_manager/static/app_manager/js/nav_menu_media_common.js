@@ -1,19 +1,17 @@
-/* globals HQMediaFileUploadController */
-hqDefine("app_manager/js/nav_menu_media_common", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        uploaders = {};
+import _ from "underscore";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import uploadersModule from "hqmedia/js/uploaders";
 
-    _.each(initialPageData.get("multimedia_upload_managers"), function (uploader, type) {
-        uploaders[type] = new HQMediaFileUploadController(
-            uploader.slug,
-            uploader.media_type,
-            uploader.options
-        );
-        uploaders[type].init();
-    });
+let uploaders = {};
 
-    return {
-        audioUploader: uploaders.audio,
-        iconUploader: uploaders.icon,
-    };
+_.each(initialPageData.get("multimedia_upload_managers"), function (uploader, type) {
+    uploaders[type] = uploadersModule.uploader(
+        uploader.slug,
+        uploader.options,
+    );
 });
+
+export default {
+    audioUploader: uploaders.audio,
+    iconUploader: uploaders.icon,
+};

@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -5,7 +5,7 @@
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import casePropertyInput from "data_interfaces/js/case_property_input";
+ import CaseRuleCriteria from "data_interfaces/js/case_rule_criteria";
+-import "hqwebapp/js/bootstrap3/widgets";
++import "hqwebapp/js/bootstrap5/widgets";
+ 
+ 
+ /*

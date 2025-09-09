@@ -18,7 +18,7 @@ const bugReportModal = new bootstrap.Modal($('#bugReport'));
 bugReportModal.hide();
 ```
 
-Hint: make sure to list `hqwebapp/js/bootstrap5_loader` as a js dependency in the file where
+Hint: make sure to list `bootstrap5` as a js dependency in the file where
 bootstrap is referenced.
 
 Old docs: https://getbootstrap.com/docs/3.4/javascript/#modals

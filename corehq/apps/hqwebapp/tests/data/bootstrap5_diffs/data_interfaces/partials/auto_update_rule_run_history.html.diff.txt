@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -9,8 +9,8 @@
+         information associated with each rule run.
+       {% endblocktrans %}
+     </p>
+-  <div class="panel panel-default">
+-    <div class="panel-body">
++  <div class="card ">  {# todo B5: css-panel #}
++    <div class="card-body">
+       <search-box data-apply-bindings="false"
+           params="value: caseTypeQuery,
+                   action: filter,

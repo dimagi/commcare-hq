@@ -17,6 +17,7 @@ from django.core.validators import validate_email
 from django.db import models
 from django.http import Http404, HttpRequest, QueryDict
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from couchdbkit.ext.django.schema import (
     BooleanProperty,
@@ -48,6 +49,7 @@ from corehq.apps.reports.daterange import (
 )
 from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
+    DomainReportDispatcher,
     ProjectReportDispatcher,
     ReleaseManagementReportDispatcher,
 )
@@ -61,7 +63,7 @@ from corehq.apps.userreports.util import \
     default_language as ucr_default_language
 from corehq.apps.userreports.util import localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.elastic import ESError
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
@@ -73,6 +75,7 @@ from corehq.util.quickcache import quickcache
 
 ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
+UNKNOWN_OWNER = gettext_lazy("Unknown User")
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
@@ -177,7 +180,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
-            'report_creator': self.owner.username,
+            'report_creator': self.owner.username if self.owner else UNKNOWN_OWNER,
             'report_name': self.report_name,
             'date_description': self.date_description,
             'datespan_filters': self.datespan_filter_choices(
@@ -203,7 +206,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             CustomProjectReportDispatcher,
             EnterpriseReportDispatcher,
             ReleaseManagementReportDispatcher,
-            CaseManagementMapDispatcher
+            CaseManagementMapDispatcher,
+            DomainReportDispatcher,
         ]
 
         for dispatcher in dispatchers:
@@ -433,7 +437,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                         "is no longer active."
                     ) % {
                         'config_name': self.name,
-                        'username': self.owner.username
+                        'username': self.owner.username if self.owner else UNKNOWN_OWNER
                     },
                     None,
                 )
@@ -445,6 +449,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 email_text = content_json['report']
 
             email_html = mark_safe(email_text)  # nosec: this is HTML we generate
+            # `render_as` is not an `AllowedRendering` value because
+            # `dispatch_func()` returns `ConfigurableReportView.as_view()`
+            # or `CustomConfigurableReportDispatcher.as_view()`, and those
+            # classes don't extend `GenericReportView`.
             excel_attachment = dispatch_func(render_as='excel') if attach_excel else None
             return ReportContent(email_html, excel_attachment)
         except PermissionDenied:
@@ -730,6 +738,9 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:
+            web_user = WebUser.get_by_username(email)
+            if web_user and not web_user.is_active_in_domain(self.domain):
+                continue
             language = user_languages.get(email, fallback_language) or fallback_language
             recipients[language].append(email)
         return immutabledict(recipients)
@@ -739,6 +750,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return hashlib.sha1((uuid + email).encode('utf-8')).hexdigest()[:20]
 
     def send(self):
+        if not self.owner:
+            self.delete()
+            return
+
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
         if not self.owner.is_member_of(self.domain, allow_enterprise=True):
@@ -898,7 +913,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def remove_recipient(self, email):
         try:
-            if email == self.owner.get_email():
+            if email == self.owner_email:
                 self.send_to_owner = False
             self.recipient_emails.remove(email)
         except ValueError:

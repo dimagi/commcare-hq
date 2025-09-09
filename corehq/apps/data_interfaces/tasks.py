@@ -11,6 +11,7 @@ from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
 from soil import DownloadBase
+from soil.progress import set_task_progress
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.celery import periodic_task, task
@@ -18,8 +19,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
@@ -176,6 +178,12 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
             rule.save(update_fields=['last_run'])
 
 
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def run_case_update_rules_on_save_ng(case_id):
+    case = CommCareCase.objects.get_case(case_id)
+    run_case_update_rules_on_save(case)
+
+
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
 def run_case_update_rules_on_save(case):
     key = 'case-update-on-save-case-{case}'.format(case=case.case_id)
@@ -212,53 +220,22 @@ def task_generate_ids_and_operate_on_payloads(
     payload_id: Optional[str],
     repeater_id: Optional[str],
     domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    action: Literal['resend', 'cancel', 'requeue'],
+    state: Literal[None, State.Pending, State.Cancelled] = None,
 ) -> dict:
-    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
+    repeat_record_ids = RepeatRecord.objects.get_repeat_record_ids(
+        domain, repeater_id=repeater_id, state=state, payload_id=payload_id,
+    )
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
-
-
-def _get_repeat_record_ids(payload_id, repeater_id, domain):
-    if payload_id:
-        queryset = RepeatRecord.objects.filter(
-            domain=domain,
-            payload_id=payload_id,
-        )
-    elif repeater_id:
-        queryset = RepeatRecord.objects.filter(
-            domain=domain,
-            repeater__id=repeater_id,
-        )
-    else:
-        return []
-    return list(queryset.order_by().values_list("id", flat=True))
 
 
 @task
 def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url):
     task = bulk_case_reassign_async
-    case_ids = DownloadBase.get(download_id).get_content()
-    DownloadBase.set_progress(task, 0, len(case_ids))
     user = CouchUser.get_by_user_id(user_id)
-    submission_handler = SubmitCaseBlockHandler(
-        domain,
-        import_results=None,
-        case_type=None,
-        user=user,
-        record_form_callback=None,
-        throttle=True,
-    )
-    for idx, case_id in enumerate(case_ids):
-        submission_handler.add_caseblock(
-            RowAndCase(idx, CaseBlock(case_id, owner_id=owner_id))
-        )
-        DownloadBase.set_progress(task, idx, len(case_ids))
-    submission_handler.commit_caseblocks()
-    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
-    result = submission_handler.results.to_json()
-    result['success'] = True
-    result['case_count'] = len(case_ids)
+    case_ids = DownloadBase.get(download_id).get_content()
+    result = reassign_cases(domain, user, owner_id, case_ids, task=task)
     result['report_url'] = report_url
 
     def _send_email():
@@ -286,12 +263,37 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
     return {"messages": result}
 
 
+def reassign_cases(domain, user, owner_id, case_ids, task=None):
+    set_task_progress(task, 0, len(case_ids), src="reassign_cases")
+    submission_handler = SubmitCaseBlockHandler(
+        domain,
+        import_results=None,
+        case_type=None,
+        user=user,
+        record_form_callback=None,
+        throttle=True,
+        form_name="Case Reassignment (via HQ)",
+        device_id=f"{__name__}.reassign_cases",
+    )
+    for idx, case_id in enumerate(case_ids):
+        submission_handler.add_caseblock(
+            RowAndCase(idx, CaseBlock(case_id, owner_id=owner_id))
+        )
+        set_task_progress(task, idx, len(case_ids), src="reassign_cases")
+    submission_handler.commit_caseblocks()
+    set_task_progress(task, len(case_ids), len(case_ids), src="reassign_cases")
+    result = submission_handler.results.to_json()
+    result['success'] = True
+    result['case_count'] = len(case_ids)
+    return result
+
+
 @task
 def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **kwargs):
     from corehq.apps.hqcase.case_helper import CaseCopier
     task = bulk_case_copy_async
     case_ids = DownloadBase.get(download_id).get_content()
-    DownloadBase.set_progress(task, 0, len(case_ids))
+    set_task_progress(task, 0, len(case_ids), src="copy_cases")
     user = CouchUser.get_by_user_id(user_id)
 
     case_copier = CaseCopier(
@@ -301,7 +303,7 @@ def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **k
     )
     case_copier.copy_cases(case_ids, progress_task=task)
 
-    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
+    set_task_progress(task, len(case_ids), len(case_ids), src="copy_cases")
     result = case_copier.submission_handler.results.to_json()
     result['success'] = True
     result['case_count'] = len(case_ids)

@@ -3,19 +3,26 @@
 <div class="controls translation-controls">
   <div class="checkbox">
     <label>
-      <input type="checkbox" data-bind="checked: translate" class="checkboxinput" />
+      <input
+        type="checkbox"
+        data-bind="checked: translate"
+        class="checkboxinput"
+      />
       {% trans "Translate this message" %}
     </label>
   </div>
 </div>
 
 <div class="controls translation-controls" data-bind="visible: !translate()">
-  <textarea data-bind="ckeditor: nonTranslatedMessage" data-image-upload-url="upload_messaging_image"></textarea>
+  {% include "scheduling/partials/rich_text_editor.html" with editableText="nonTranslatedMessage" %}
 </div>
 
 <div data-bind="visible: translate(), foreach: translatedMessages">
   <div class="controls translation-controls">
-    <label>{% trans "Translation" %} (<span data-bind="text: language_code"></span>):</label>
-    <textarea data-bind="ckeditor: html_message" data-image-upload-url="upload_messaging_image"></textarea>
+    <label
+      >{% trans "Translation" %} (<span data-bind="text: language_code"></span
+      >):</label
+    >
+    {% include "scheduling/partials/rich_text_editor.html" with editableText="html_message" %}
   </div>
 </div>

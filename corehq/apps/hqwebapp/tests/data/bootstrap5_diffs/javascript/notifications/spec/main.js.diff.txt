@@ -1,0 +1,9 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ import hqMocha from "mocha/js/main";
+ 
+-import "notifications/spec/bootstrap3/NotificationsService.spec.mo";
++import "notifications/spec/bootstrap5/NotificationsService.spec.mo";
+ 
+ hqMocha.run();

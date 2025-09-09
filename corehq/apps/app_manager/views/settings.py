@@ -3,9 +3,9 @@ from collections import defaultdict
 
 from django.contrib import messages
 from django.http import (
-    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -14,7 +14,8 @@ from django.views.generic.edit import FormView
 
 from dimagi.utils.web import json_response
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
@@ -24,13 +25,14 @@ from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.apps import edit_app_attr
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.app_manager.models import CredentialApplication
 
 
 @require_GET
 @login_and_domain_required
 def commcare_profile(request, domain, app_id):
     app = get_app(domain, app_id)
-    return HttpResponse(json.dumps(app.profile))
+    return JsonResponse(app.profile, safe=False)
 
 
 @no_conflict_require_POST
@@ -71,8 +73,22 @@ def edit_commcare_profile(request, domain, app_id):
         for name, value in settings.get(settings_type, {}).items():
             if settings_type not in app.profile:
                 app.profile[settings_type] = {}
+
             app.profile[settings_type][name] = value
             changed[settings_type][name] = value
+
+    if "credentials" in changed["features"]:
+        CredentialApplication.objects.filter(
+            app_id=app.id,
+        ).update(
+            activity_level=app.profile["features"]["credentials"]
+        )
+
+    if not domain_has_privilege(domain, privileges.APP_DEPENDENCIES):
+        # remove dependencies if they were set before
+        if 'dependencies' in app.profile.get('features', {}):
+            del app.profile['features']['dependencies']
+
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
     return json_response(response_json)

@@ -8,7 +8,6 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.case_helper import CaseHelper
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -60,7 +59,7 @@ class BaseEventView(BaseDomainView):
 
 class EventsView(BaseEventView, CRUDPaginatedViewMixin):
     urlname = "events_page"
-    template_name = 'events_list.html'
+    template_name = 'events/events_list.html'
 
     page_title = _("Attendance Tracking Events")
 
@@ -154,14 +153,9 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
 
 class EventCreateView(BaseEventView):
     urlname = 'add_attendance_tracking_event'
-    template_name = "new_event.html"
+    template_name = "events/new_event.html"
 
     page_title = _("Add Attendance Tracking Event")
-
-    @use_multiselect
-    @use_jquery_ui
-    def dispatch(self, request, *args, **kwargs):
-        return super(EventCreateView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_name(self):
@@ -220,14 +214,12 @@ class EventCreateView(BaseEventView):
 
 class EventEditView(EventCreateView):
     urlname = 'edit_attendance_tracking_event'
-    template_name = "new_event.html"
+    template_name = "events/new_event.html"
     http_method_names = ['get', 'post']
 
     page_title = _("Edit Attendance Tracking Event")
     event_obj = None
 
-    @use_multiselect
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         try:
             self.event_obj = Event.objects.get(
@@ -276,14 +268,13 @@ class EventEditView(EventCreateView):
 
 class AttendeesListView(JSONResponseMixin, BaseEventView):
     urlname = "event_attendees"
-    template_name = 'event_attendees.html'
+    template_name = 'events/event_attendees.html'
     page_title = _("Attendees")
 
     limit_text = _("Attendees per page")
     empty_notification = _("You have no attendees")
     loading_message = _("Loading attendees")
 
-    @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         # The FF check is temporary till the full feature is released
         toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
@@ -334,7 +325,7 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
 
 class AttendeeEditView(BaseEventView):
     urlname = 'edit_attendee'
-    template_name = "edit_attendee.html"
+    template_name = "events/edit_attendee.html"
 
     page_title = _("Edit Attendee")
 
@@ -342,8 +333,6 @@ class AttendeeEditView(BaseEventView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.attendee_id))
 
-    @use_multiselect
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         self.attendee_id = kwargs['attendee_id']
         return super().dispatch(request, *args, **kwargs)
@@ -503,7 +492,7 @@ def poll_mobile_worker_attendee_progress(request, domain, download_id):
             'custom_message': _("Disabling mobile worker attendees in progress. This may take a while..."),
         })
 
-    template = "partials/attendee_conversion_status.html"
+    template = "events/partials/attendee_conversion_status.html"
     return render(request, template, context)
 
 

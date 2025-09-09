@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from unittest import mock
 from deployment.gunicorn.gunicorn_conf import _child_exit, _on_starting
 from testil import eq
@@ -25,18 +26,9 @@ def setup():
     os.environ.pop('prometheus_multiproc_dir', None)
 
 
-def test_on_starting():
-    paths = [
-        None,
-        '',
-        '/not/a/real/path',
-    ]
-
-    def _test(path):
-        _on_starting(Server(), path=path)
-
-    for path in paths:
-        yield _test, path
+@pytest.mark.parametrize("path", [None, '', '/not/a/real/path'])
+def test_on_starting(path):
+    _on_starting(Server(), path=path)
 
 
 def test_on_starting_error():

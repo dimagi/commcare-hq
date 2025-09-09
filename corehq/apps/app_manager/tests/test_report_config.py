@@ -1,10 +1,9 @@
 import os
 from collections import OrderedDict
+from unittest import mock
 from xml.etree import cElementTree as ElementTree
 
 from django.test import SimpleTestCase, TestCase
-
-from unittest import mock
 
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
@@ -13,9 +12,6 @@ from casexml.apps.phone.tests.utils import (
 
 from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
-from corehq.apps.app_manager.fixtures.mobile_ucr import (
-    ReportFixturesProviderV1,
-)
 from corehq.apps.app_manager.models import (
     Application,
     GraphConfiguration,
@@ -279,9 +275,11 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 with mock.patch('corehq.apps.app_manager.fixtures.mobile_ucr.get_apps_in_domain',
                                 lambda domain, include_remote: [cls.app]):
                     with mock_datasource_config():
-                        fixtures = call_fixture_generator(report_fixture_generator, cls.user)
-                        fixture = [f for f in fixtures if f.attrib.get('id') == ReportFixturesProviderV1.id][0]
-        cls.fixture = ElementTree.tostring(fixture, encoding='utf-8')
+                        cls.fixtures = list(call_fixture_generator(report_fixture_generator, cls.user))
+
+    def _get_fixture_xml_by_id(self, id):
+        return next(ElementTree.tostring(fixture, encoding='utf-8')
+                    for fixture in self.fixtures if fixture.attrib.get('id') == id)
 
     def test_filter_entry(self):
         self.assertXmlPartialEqual("""
@@ -292,14 +290,21 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.name"/>
               </text>
             </command>
+            <instance id="commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664"
+                      src="jr://fixture/commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664"/>
+            <instance id="commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664"
+                      src="jr://fixture/commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664"/>
             <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
             <instance id="commcaresession" src="jr://instance/session"/>
-            <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
               <datum autoselect="true" detail-persistent="report_context_tile" id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update"/>
-              <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='fav_fruit_abc123_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.fav_fruit_abc123_1" />
-              <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
-              <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" autoselect="true"/>
+              <datum detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.fav_fruit_abc123_1"
+                     id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1"
+                     nodeset="instance('commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664')/filters/filter[@field='fav_fruit_abc123_1']/option" value="./@value"/>
+              <datum detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"
+                     id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1"
+                     nodeset="instance('commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664')/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value"/>
+              <datum autoselect="true" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664')/rows" value="./@id"/>
             </session>
           </entry>
         </partial>
@@ -313,11 +318,14 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.name"/>
               </text>
             </command>
+            <instance id="commcare-reports:45152061d8dc4d2a8d987a0568abe1ae"
+                      src="jr://fixture/commcare-reports:45152061d8dc4d2a8d987a0568abe1ae"/>
             <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
-            <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
               <datum autoselect="true" detail-persistent="report_context_tile" id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update"/>
-              <datum autoselect="true" detail-confirm="reports.45152061d8dc4d2a8d987a0568abe1ae.summary" detail-select="reports.45152061d8dc4d2a8d987a0568abe1ae.select" id="report_id_45152061d8dc4d2a8d987a0568abe1ae" nodeset="instance('reports')/reports/report[@id='45152061d8dc4d2a8d987a0568abe1ae']" value="./@id"/>
+              <datum autoselect="true" detail-confirm="reports.45152061d8dc4d2a8d987a0568abe1ae.summary"
+                     detail-select="reports.45152061d8dc4d2a8d987a0568abe1ae.select" id="report_id_45152061d8dc4d2a8d987a0568abe1ae"
+                     nodeset="instance('commcare-reports:45152061d8dc4d2a8d987a0568abe1ae')/rows" value="./@id"/>
             </session>
           </entry>
         </partial>
@@ -347,7 +355,8 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
     def test_data_detail(self):
         self.assertXmlPartialEqual("""
         <partial>
-          <detail nodeset="rows/row[column[@id='fav_fruit_abc123']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]" id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data">
+          <detail id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data"
+                  nodeset="row[fav_fruit_abc123=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1][computed_owner_name_40cc88a0=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
             <title>
               <text>
                 <locale id="cchq.report_data_table"/>
@@ -362,7 +371,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </template>
               <sort direction="ascending" order="1" type="int">
                 <text>
-                  <xpath function="column[@id='row_index']"/>
+                  <xpath function="row_index"/>
                 </text>
               </sort>
             </field>
@@ -374,7 +383,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="column[@id='color_94ec39e6']"/>
+                  <xpath function="color_94ec39e6"/>
                 </text>
               </template>
             </field>
@@ -386,7 +395,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="column[@id='count']"/>
+                  <xpath function="count"/>
                 </text>
               </template>
             </field>
@@ -399,10 +408,10 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         <partial>
           <template form="graph">
             <graph type="bar">
-              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[@is_total_row='False'][column[@id='fav_fruit_abc123']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
+               <series nodeset="instance('commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664')/rows/row[@is_total_row='False'][fav_fruit_abc123=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1][computed_owner_name_40cc88a0=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
                 <configuration/>
-                <x function="column[@id='color_94ec39e6']"/>
-                <y function="column[@id='count']"/>
+                <x function="color_94ec39e6" />
+                <y function="count"/>
               </series>
               <configuration/>
             </graph>
@@ -413,53 +422,55 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
     def test_fixture_rows(self):
         self.assertXmlPartialEqual("""
         <partial>
-          <rows>
             <row index="0" is_total_row="False">
-              <column id="row_index">0</column>
-              <column id="color_94ec39e6">red</column>
-              <column id="computed_owner_name_40cc88a0">cory</column>
-              <column id="count">2</column>
-              <column id="fav_fruit_abc123">c</column>
+              <row_index>0</row_index>
+              <color_94ec39e6>red</color_94ec39e6>
+              <computed_owner_name_40cc88a0>cory</computed_owner_name_40cc88a0>
+              <count>2</count>
+              <fav_fruit_abc123>c</fav_fruit_abc123>
             </row>
             <row index="1" is_total_row="False">
-              <column id="row_index">1</column>
-              <column id="color_94ec39e6">black</column>
-              <column id="computed_owner_name_40cc88a0">ctsims</column>
-              <column id="count">1</column>
-              <column id="fav_fruit_abc123">b</column>
+              <row_index>1</row_index>
+              <color_94ec39e6>black</color_94ec39e6>
+              <computed_owner_name_40cc88a0>ctsims</computed_owner_name_40cc88a0>
+              <count>1</count>
+              <fav_fruit_abc123>b</fav_fruit_abc123>
             </row>
             <row index="2" is_total_row="False">
-              <column id="row_index">2</column>
-              <column id="color_94ec39e6">red</column>
-              <column id="computed_owner_name_40cc88a0">daniel</column>
-              <column id="count">3</column>
-              <column id="fav_fruit_abc123">b</column>
+              <row_index>2</row_index>
+              <color_94ec39e6>red</color_94ec39e6>
+              <computed_owner_name_40cc88a0>daniel</computed_owner_name_40cc88a0>
+              <count>3</count>
+              <fav_fruit_abc123>b</fav_fruit_abc123>
             </row>
-          </rows>
         </partial>
-        """, self.fixture, "reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows")
+        """, self._get_fixture_xml_by_id('commcare-reports:a98c812873986df34fd1b4ceb45e6164ae9cc664'), "rows/row")
 
     def test_fixture_filters(self):
-        self.assertXmlPartialEqual("""
-        <partial>
-          <filters>
-            <filter field="fav_fruit_abc123_1">
-              <option value="b">banana</option>
-              <option value="c">clementine</option>
-            </filter>
-            <filter field="computed_owner_name_40cc88a0_1">
-              <option value="ctsims">Clayton Sims</option>
-              <option value="cory">Cory Zue</option>
-              <option value="daniel">Daniel Roberts</option>
-            </filter>
-          </filters>
-        </partial>
-        """, self.fixture, "reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters")
+        self.assertXmlPartialEqual(
+            """
+                <partial>
+                  <filters>
+                    <filter field="fav_fruit_abc123_1">
+                      <option value="b">banana</option>
+                      <option value="c">clementine</option>
+                    </filter>
+                    <filter field="computed_owner_name_40cc88a0_1">
+                      <option value="ctsims">Clayton Sims</option>
+                      <option value="cory">Cory Zue</option>
+                      <option value="daniel">Daniel Roberts</option>
+                    </filter>
+                  </filters>
+                </partial>
+            """,
+            self._get_fixture_xml_by_id('commcare-reports-filters:a98c812873986df34fd1b4ceb45e6164ae9cc664'),
+            "filters"
+        )
 
     def test_hidden_columns_data_detail(self):
         self.assertXmlPartialEqual("""
         <partial>
-          <detail id="reports.45152061d8dc4d2a8d987a0568abe1ae.data" nodeset="rows/row">
+          <detail id="reports.45152061d8dc4d2a8d987a0568abe1ae.data" nodeset="row">
             <title>
               <text>
                 <locale id="cchq.report_data_table"/>
@@ -474,7 +485,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </template>
               <sort direction="ascending" order="1" type="int">
                 <text>
-                  <xpath function="column[@id='row_index']"/>
+                  <xpath function="row_index"/>
                 </text>
               </sort>
             </field>
@@ -486,7 +497,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="column[@id='color_94ec39e6']"/>
+                  <xpath function="color_94ec39e6"/>
                 </text>
               </template>
             </field>
@@ -498,7 +509,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="column[@id='count']"/>
+                  <xpath function="count"/>
                 </text>
               </template>
             </field>

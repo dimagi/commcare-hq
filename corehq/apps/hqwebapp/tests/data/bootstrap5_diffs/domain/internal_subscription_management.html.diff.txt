@@ -1,0 +1,28 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
++{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+ {% load i18n %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 'domain/js/bootstrap3/internal_subscription_management' %}
++{% js_entry 'domain/js/bootstrap5/internal_subscription_management' %}
+ 
+ {% block page_content %}
+   {% blocktrans %}
+@@ -25,11 +25,11 @@
+   {% endblocktrans %}
+ 
+   <div id="subscription_management">
+-    {% crispy select_subscription_type_form %}
++    {% crispy select_subscription_type_form %}  {# todo B5: crispy #}
+ 
+     {% for form in subscription_management_forms %}
+       <div data-bind="visible: subscriptionType() == '{{ form.slug }}'">
+-        {% crispy form %}
++        {% crispy form %}  {# todo B5: crispy #}
+       </div>
+     {% endfor %}
+   </div>

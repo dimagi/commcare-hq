@@ -1,6 +1,11 @@
 --- 
 +++ 
-@@ -5,28 +5,28 @@
+@@ -1,32 +1,32 @@
+-{% extends report_base|default:"reports/async/bootstrap3/default.html" %}
++{% extends report_base|default:"reports/async/bootstrap5/default.html" %}
+ 
+ {% load i18n %}
+ 
  {% block reportcontent %}
    <div class="container-fluid">
      <div class="row text-center">

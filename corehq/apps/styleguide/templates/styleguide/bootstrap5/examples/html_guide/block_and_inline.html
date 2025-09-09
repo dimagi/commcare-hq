@@ -1,0 +1,44 @@
+<div class="row mt-4">
+  <h1>Short titles: one line ok</h1>
+  <h2>
+    However, longer titles (like a sentence) should be indented.
+  </h2>
+  <p>
+    This is paragraph text within a block element. It should always follow
+    standard indentation nested within its parent element. If you have a
+    <a href="https://dimagi.com">link</a> within the paragraph, that's fine to
+    leave inline with text, as well as <code>code</code> tags or
+    <span data-somedata="foo">span</span> tags, etc.
+    <a
+      class="btn-link"
+      href="http://dimagi.com" target="_blank"
+    >Long links</a>, even though they are inline elements, can also behave more
+    like block elements within the paragraph, to reduce the overall line
+    length of that text.
+  </p>
+  <p>
+    Short paragraph text should also be on its own line within a <code>p</code> parent.
+  </p>
+  <p>
+    {% blocktrans %}
+      Translated text within a paragraph tag should always be indented like this
+    {% endblocktrans %}
+  </p>
+  <h3>
+    {% trans "Short titles are fine" %}
+  </h3>
+  <p>
+    If you have <img alt="{% trans "Translated text within attributes" %}">, then use
+    <code>trans</code> instead of <code>blocktrans</code>.
+  </p>
+  <p>
+    And if you have lists....
+  </p>
+  <ul>
+    <li>
+      <p>
+        The Indentation structure should look like this.
+      </p>
+    </li>
+  </ul>
+</div>

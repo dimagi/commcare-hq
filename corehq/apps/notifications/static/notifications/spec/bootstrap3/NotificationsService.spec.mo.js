@@ -1,3 +1,7 @@
+import $ from "jquery";
+import sinon from "sinon";
+import notifications from "notifications/js/bootstrap3/notifications_service";
+
 describe('NotificationsService Unit Tests', function () {
     var fakeRMIUrl = '/fake/rmi',
         viewModel,
@@ -20,10 +24,9 @@ describe('NotificationsService Unit Tests', function () {
         };
 
     var fakePromise = new FakePromise({});
-    sinon.stub($, 'ajax', fakePromise.mock);
+    sinon.stub($, 'ajax').callsFake(fakePromise.mock);
 
     it('Initialization', function () {
-        var notifications = hqImport('notifications/js/bootstrap3/notifications_service');
         var csrfToken = $("#csrfTokenContainer").val();
         notifications.setRMI(fakeRMIUrl, csrfToken);
         notifications.initService('#js-settingsmenu-notifications');

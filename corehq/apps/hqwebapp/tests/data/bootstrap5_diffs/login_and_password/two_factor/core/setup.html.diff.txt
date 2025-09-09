@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ {# lightly modified version of two_factor/core/setup.html #}
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load i18n %}
+ {% load crispy_forms_tags %}
+ 
+@@ -52,6 +52,6 @@
+ 
+   <form action="" method="post" class="form-horizontal" >{% csrf_token %}
+     {{ wizard.management_form }}
+-    {% crispy wizard.form %}
++    {% crispy wizard.form %}  {# todo B5: crispy #}
+   </form>
+ {% endblock %}

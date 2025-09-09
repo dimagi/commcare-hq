@@ -29,13 +29,19 @@ from corehq.toggles import (
     BULK_UPLOAD_DATE_OPENED,
     CASE_IMPORT_DATA_DICTIONARY_VALIDATION,
     DOMAIN_PERMISSIONS_MIRROR,
+    MTN_MOBILE_WORKER_VERIFICATION,
 )
-from corehq.util.metrics import metrics_counter, metrics_histogram
+from corehq.util.metrics import metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
-from .const import LookupErrors
+from .const import (
+    LookupErrors,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
+    MOMO_NO_EDIT_PAYMENT_FIELDS,
+    MOMO_PAYMENT_CASE_TYPE,
+)
 from .exceptions import (
     BlankExternalId,
     CaseGeneration,
@@ -169,6 +175,12 @@ class _TimedAndThrottledImporter:
     def import_row(self, row_num, raw_row, import_context):
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
+        if (
+            self.mtn_mobile_worker_verification_ff_enabled
+            and self.submission_handler.case_type == MOMO_PAYMENT_CASE_TYPE
+        ):
+            self._validate_payment_fields(fields_to_update)
+
         if self._has_custom_case_import_operations():
             fields_to_update = self._perform_custom_case_import_operations(
                 row_num,
@@ -207,6 +219,29 @@ class _TimedAndThrottledImporter:
 
         self.submission_handler.add_caseblock(RowAndCase(row_num, caseblock))
 
+    def _validate_payment_fields(self, fields):
+        errors = []
+        for field_name in MOMO_NO_EDIT_PAYMENT_FIELDS:
+            if fields.get(field_name):
+                errors.append(CaseRowError(
+                    column_name=field_name,
+                    message=_(
+                        'This field value cannot be set for cases with the '
+                        '"{}" case type.'
+                    ).format(MOMO_PAYMENT_CASE_TYPE),
+                ))
+        for field_name in MOMO_REQUIRED_PAYMENT_FIELDS:
+            if field_name not in fields or not fields[field_name]:
+                errors.append(CaseRowError(
+                    column_name=field_name,
+                    message=_(
+                        'This field requires a value for cases with the '
+                        '"{}" case type.'
+                    ).format(MOMO_PAYMENT_CASE_TYPE),
+                ))
+        if any(errors):
+            raise CaseRowErrorList(errors)
+
     def _has_custom_case_import_operations(self):
         return any(
             extension.should_call_for_domain(self.domain)
@@ -226,6 +261,10 @@ class _TimedAndThrottledImporter:
     @cached_property
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id)
+
+    @cached_property
+    def mtn_mobile_worker_verification_ff_enabled(self):
+        return MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
 
     def _parse_search_id(self, row):
         """ Find and convert the search id in an Excel row """
@@ -339,13 +378,6 @@ class _TimedAndThrottledImporter:
             buckets=[50, 70, 100, 150, 250, 350, 500], bucket_tag='duration', bucket_unit='ms',
         )
 
-        for rows, status in ((rows_created, 'created'),
-                             (rows_updated, 'updated'),
-                             (rows_failed, 'error')):
-            metrics_counter('commcare.case_importer.cases', rows, tags={
-                'status': status,
-            })
-
 
 class SubmitCaseBlockHandler:
     """
@@ -366,6 +398,8 @@ class SubmitCaseBlockHandler:
         record_form_callback=None,
         throttle=False,
         add_inferred_props_to_schema=True,
+        form_name=None,
+        device_id=__name__,
     ):
         """
         Initialize ``SubmitCaseBlockHandler``.
@@ -394,6 +428,8 @@ class SubmitCaseBlockHandler:
         self.add_inferred_props_to_schema = add_inferred_props_to_schema
         self.case_type = case_type
         self.user = user
+        self.form_name = form_name
+        self.device_id = device_id
 
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
@@ -486,10 +522,11 @@ class SubmitCaseBlockHandler:
             self.domain,
             self.user.username,
             self.user.user_id,
-            device_id=__name__ + ".do_import",
+            device_id=self.device_id,
             # Skip the rate-limiting because this importing code will
             # take care of any rate-limiting
             max_wait=None,
+            form_name=self.form_name,
         )
 
 
@@ -639,7 +676,7 @@ class _CaseImportRow(object):
 
 
 def _log_case_lookup(domain):
-    case_load_counter("case_importer", domain)
+    case_load_counter("case_importer", domain)()
 
 
 class _ImportResults(object):

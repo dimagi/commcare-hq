@@ -1,52 +1,32 @@
 $card-dashboard-border: darken($navbar-default-bg, 5);
 $card-dashboard-header-bg: $navbar-default-bg;
+$dashboard-card-body-height: 197px;
+$dashboard-icon-size: 100px;
 
 .dashboard-icon {
-  display: block;
-  text-align: center;
+  font-size: $dashboard-icon-size;
 }
 
-.dashboard-icon-large {
-  margin: 0 auto;
-  $icon-size: 220px;
-  width: $icon-size;
-  height: $icon-size;
-  font-size: 200px;
-}
-
-.dashboard-icon-medium {
-  $icon-size: 230px;
-  width: 100%;
-  height: $icon-size;
-  margin: 0 auto;
-  font-size: 170px;
-  @include media-breakpoint-down(lg) {
-    font-size: 140px;
-    padding-top: 15px;
-  }
-  @include media-breakpoint-down(md) {
-    font-size: 170px;
-  }
-}
-
-.dashboard-icon-bg {
+.dashboard-icon-bg-container {
   position: absolute;
-  top: 57px;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  color: #e7e7e7;
+  width: calc(100% - 32px);
+  height: $dashboard-card-body-height;
+  .dashboard-icon {
+    color: #e7e7e7;
+  }
 }
 
-.dashboard-link,
-.dashboard-button {
+.dashboard-link {
+  $y-padding: calc(($dashboard-card-body-height - $dashboard-icon-size) / 2);
+  $x-padding: calc((100% - $dashboard-icon-size) / 2);
+  padding: $y-padding $x-padding;
   &:hover,
   &:focus {
     text-decoration: none;
     outline: none;
-    .dashboard-icon-medium {
-      background-position: 0px -189px;
-    }
+  }
+  i.dashboard-icon::before{
+    padding: 7px 0;
   }
 }
 
@@ -58,7 +38,7 @@ $card-dashboard-header-bg: $navbar-default-bg;
 }
 
 .card-dashboard-medium {
-  height: 275px;
+  height: 22.9167 * $font-size-base;
   position: relative;
 
   .list-group {

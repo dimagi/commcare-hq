@@ -1,14 +1,13 @@
-'use strict';
 /*
  * Executes the queue in a FIFO action. When a task is added, it will be immediately
  * executed if the queue was previously empty.
  *
  * All task functions are expected to return a promise.
  */
-hqDefine("cloudcare/js/form_entry/task_queue", [
+define("cloudcare/js/form_entry/task_queue", [
     'underscore',
 ], function (
-    _
+    _,
 ) {
     var TaskQueue = function () {
         var self = {};

@@ -28,7 +28,7 @@
         {% elif module.is_training_module %}
           <i class="fa fa-book appnav-primary-icon"
         {% elif not module.is_surveys %}
-          <i class="fa fa-bars appnav-primary-icon"
+          <i class="fa-solid fa-list-check appnav-primary-icon"
         {% else %}
           <i class="fa fa-folder-open appnav-primary-icon"
         {% endif %}
@@ -36,7 +36,15 @@
             data-toggle="tooltip"
             data-placement="right"
             data-container="body"></i>
-        <span {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}>
+        <span
+          {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}
+          {% if module.case_type %}
+            title="{% blocktrans  with module.case_type as case_type %}case type: {{case_type}}{% endblocktrans %}"
+            data-toggle="tooltip"
+            data-placement="right"
+            data-container="body"
+          {% endif %}
+        >
             {{ module.name|html_trans_prefix:langs }}
         </span>
     </a>

@@ -27,9 +27,13 @@ from corehq.apps.app_manager.const import (
     USERCASE_ID,
     USERCASE_PREFIX,
     USERCASE_TYPE,
+    MOBILE_UCR_V1_FIXTURE_IDENTIFIER,
+    MOBILE_UCR_V1_ALL_REFERENCES,
+    MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppManagerException,
     PracticeUserException,
     SuiteError,
@@ -313,9 +317,9 @@ def languages_mapping():
     if not mapping:
         with open('submodules/langcodes/langs.json', encoding='utf-8') as langs_file:
             lang_data = json.load(langs_file)
-            mapping = dict([(l["two"], l["names"]) for l in lang_data])
+            mapping = dict([(lang["two"], lang["names"]) for lang in lang_data])
         mapping["default"] = ["Default Language"]
-        cache.set('__languages_mapping', mapping, 12*60*60)
+        cache.set('__languages_mapping', mapping, 12 * 60 * 60)
     return mapping
 
 
@@ -361,8 +365,8 @@ def get_commcare_builds(request_user):
 
 
 def actions_use_usercase(actions):
-    return (('usercase_update' in actions and actions['usercase_update'].update) or
-            ('usercase_preload' in actions and actions['usercase_preload'].preload))
+    return (('usercase_update' in actions and actions['usercase_update'].update)
+            or ('usercase_preload' in actions and actions['usercase_preload'].preload))
 
 
 def advanced_actions_use_usercase(actions):
@@ -410,8 +414,8 @@ def module_offers_search(module):
     from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
 
     return (
-        isinstance(module, (Module, AdvancedModule, ShadowModule)) and
-        module.search_config
+        isinstance(module, (Module, AdvancedModule, ShadowModule))
+        and module.search_config
         and (module.search_config.properties
         or module.search_config.default_properties)
     )
@@ -537,6 +541,11 @@ def _app_callout_templates():
         yield data
 
 
+@quickcache([], timeout=60 * 60 * 24 * 7)  # 1 week
+def app_callout_templates_ids():
+    return {t['id'] for t in next(_app_callout_templates())}
+
+
 app_callout_templates = _app_callout_templates()
 
 
@@ -592,7 +601,9 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
             except IndexError:
                 raise AppManagerException(f"Sort column references an unknown column at index: {column_index}")
             if not column.useXpathExpression:
-                raise AppManagerException(f"Calculation sort column references an incorrect column: {column.field}")
+                raise AppManagerException(
+                    f"Calculation sort column references an incorrect column: {column.field}"
+                )
             sort_columns[column.field] = (element, element_order)
 
     sort_only_elements = [
@@ -624,7 +635,7 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
             _("User {username} has been deleted, you can't use that user as practice user").format(
                 username=user.username)
         )
-    if not user.is_active:
+    if not user.is_active_in_domain(domain):
         raise PracticeUserException(
             _("User {username} has been deactivated, you can't use that user as practice user").format(
                 username=user.username)
@@ -640,7 +651,7 @@ def get_form_source_download_url(xform):
 
     try:
         app = get_app(xform.domain, xform.build_id)
-    except Http404:
+    except (Http404, AppInDifferentDomainException):
         return None
     if app.is_remote_app():
         return None
@@ -752,3 +763,21 @@ def extract_instance_id_from_nodeset_ref(nodeset):
     if nodeset:
         matches = re.findall(r"instance\('(.*?)'\)", nodeset)
         return matches[0] if matches else None
+
+
+def does_app_have_mobile_ucr_v1_refs(app):
+    suite = app.create_suite()
+    re_mobile_ucr_v1_case_list_references_pattern = re.compile(MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN)
+    if re.search(re_mobile_ucr_v1_case_list_references_pattern, suite.decode()):
+        return True
+
+    re_mobile_ucr_v1_all_refs = re.compile(MOBILE_UCR_V1_ALL_REFERENCES)
+    for form in app.get_forms():
+        # The second condition should always be False if the first one is
+        # but just as a precaution we'll check for it
+        if (
+            MOBILE_UCR_V1_FIXTURE_IDENTIFIER in form.source
+            or re_mobile_ucr_v1_all_refs.search(form.source)
+        ):
+            return True
+    return False

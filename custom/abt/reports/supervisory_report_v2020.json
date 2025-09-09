@@ -16,6 +16,7 @@
         "kenya-vca",
         "pmievolve-ethiopia-1",
         "pmievolve-ghana",
+        "pmievolve-kenya",
         "pmievolve-madagascar",
         "pmievolve-malawi",
         "pmievolve-mozambique",
@@ -483,6 +484,48 @@
                     "sw": "Comments",
                     "kin": "Comments",
                     "por": "Coment\u00E1rio"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "description",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "description",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Description",
+                    "frm": "Description",
+                    "en": "Description",
+                    "sw": "Maelezo",
+                    "kin": "Description",
+                    "por": "Descrição"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "time_spent",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "time_spent",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Temps passé",
+                    "frm": "Temps passé",
+                    "en": "Time spent",
+                    "sw": "Muda uliotumika",
+                    "kin": "Time spent",
+                    "por": "Tempo gasto"
                 },
                 "aggregation": "simple"
             }

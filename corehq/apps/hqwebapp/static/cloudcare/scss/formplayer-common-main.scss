@@ -6,12 +6,13 @@ These are the styles shared across both PREVIEW and the FULL PAGE WEB APP
 version of FORMPLAYER
 **/
 
+@import "cloudcare-variables";
 @import "formplayer-common/mixins";
 
+@import "formplayer-common/config";
 @import "formplayer-common/navigation";
 @import "formplayer-common/notifications";
 @import "formplayer-common/grid";
-@import "formplayer-common/breadcrumbs";
 @import "formplayer-common/paginate";
 @import "formplayer-common/appicon";
 @import "formplayer-common/case";
@@ -22,6 +23,7 @@ version of FORMPLAYER
 @import "formplayer-common/formnav";
 @import "formplayer-common/markdown-table";
 @import "formplayer-common/address";
+@import "formplayer-common/query";
 @import "formplayer-common/webforms";
 
 @import "debugger/debugger";

@@ -48,7 +48,7 @@ tabs
     Menu structure for CommCare HQ.
 tests
     Contains a few tests for high-level functionality like locks, as well as tooling to run tests with
-    `nose <https://nose.readthedocs.io/en/latest/>`_, an extension of ``unittest``.
+    `pytest <https://docs.pytest.org/en/stable/>`_.
 toggles.py
     Toggles allow limiting functionality based on user or domain. Also see ``ex-submodules/toggle`` and ``corehq.apps.toggle_ui``.
 util

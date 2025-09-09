@@ -18,7 +18,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
-import langcodes
 import qrcode
 from django_otp import devices_for_user
 from memoized import memoized
@@ -38,6 +37,9 @@ from two_factor.plugins.phonenumber.views import (
 from dimagi.utils.web import json_response
 
 from corehq import toggles
+from corehq import privileges
+
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import (
     active_domains_required,
     login_and_domain_required,
@@ -49,7 +51,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
@@ -66,6 +68,7 @@ from corehq.apps.settings.forms import (
     HQPhoneNumberMethodForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.settings.languages import get_languages_for_user
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -157,7 +160,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     @property
     @memoized
     def settings_form(self):
-        language_choices = langcodes.get_all_langs_for_select()
+        language_choices = get_languages_for_user(self.request.couch_user)
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         try:
             domain = self.request.domain
@@ -368,7 +371,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
 
 class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     urlname = 'two_factor_settings'
-    template_name = 'two_factor/profile/profile.html'
+    template_name = 'two_factor/profile/bootstrap3/profile.html'
     page_title = gettext_lazy("Two Factor Authentication")
 
     @method_decorator(active_domains_required)
@@ -400,7 +403,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
     urlname = 'two_factor_setup'
-    template_name = 'two_factor/core/setup.html'
+    template_name = 'two_factor/core/bootstrap3/setup.html'
     page_title = gettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
@@ -434,7 +437,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     urlname = 'two_factor_setup_complete'
-    template_name = 'two_factor/core/setup_complete.html'
+    template_name = 'two_factor/core/bootstrap3/setup_complete.html'
     page_title = gettext_lazy("Two Factor Authentication Setup Complete")
 
     @method_decorator(login_required)
@@ -451,7 +454,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
 
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     urlname = 'two_factor_backup_tokens'
-    template_name = 'two_factor/core/backup_tokens.html'
+    template_name = 'two_factor/core/bootstrap3/backup_tokens.html'
     page_title = gettext_lazy("Two Factor Authentication Backup Tokens")
 
     @method_decorator(login_required)
@@ -471,14 +474,14 @@ def _show_link_to_webapps(user):
         if user.domain_memberships:
             membership = user.domain_memberships[0]
             if membership.role and membership.role.default_landing_page == "webapps":
-                if toggles.TWO_STAGE_USER_PROVISIONING.enabled(membership.domain):
+                if domain_has_privilege(membership.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION):
                     return True
     return False
 
 
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
     urlname = 'two_factor_disable'
-    template_name = 'two_factor/profile/disable.html'
+    template_name = 'two_factor/profile/bootstrap3/disable.html'
     page_title = gettext_lazy("Remove Two-Factor Authentication")
 
     @method_decorator(login_required)
@@ -492,7 +495,7 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
 
 class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     urlname = 'two_factor_phone_setup'
-    template_name = 'two_factor/core/phone_register.html'
+    template_name = 'two_factor/core/bootstrap3/phone_register.html'
     page_title = gettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
@@ -622,7 +625,6 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     template_name = "settings/user_api_keys.html"
 
     @use_bootstrap5
-    @use_tempusdominus
     def dispatch(self, request, *args, **kwargs):
         return super(ApiKeyView, self).dispatch(request, *args, **kwargs)
 
@@ -716,15 +718,15 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_json(self, api_key, redacted=True):
         if redacted:
-            key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
-            full_key = api_key.key
+            key = f"{api_key.plaintext_key[0:4]}…{api_key.plaintext_key[-4:]}"
+            full_key = api_key.plaintext_key
         else:
             if self.allow_viewable_API_keys:
-                key = api_key.key
+                key = api_key.plaintext_key
             else:
                 copy_msg = _("Copy this in a secure place. It will not be shown again.")
-                key = f"{api_key.key} ({copy_msg})",
-            full_key = api_key.key
+                key = f"{api_key.plaintext_key} ({copy_msg})",
+            full_key = api_key.plaintext_key
 
         if api_key.expiration_date and api_key.expiration_date < datetime.now():
             status = "expired"
@@ -778,7 +780,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 timezone=self.get_user_timezone(),
             )
         return HQApiKeyForm(
-            user_domains=user_domains,
+            user_domains=sorted(user_domains),
             max_allowed_expiration_days=max_expiration_window,
             timezone=self.get_user_timezone(),
         )
@@ -793,7 +795,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             'template': 'new-user-api-key-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         deleted_key = self.base_query.get(id=item_id)
         deleted_key.delete()
         return {

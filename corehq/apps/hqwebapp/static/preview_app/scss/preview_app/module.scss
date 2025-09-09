@@ -45,15 +45,17 @@
   }
 }
 
-.module-per-page-container {
-  .pagination-lg .form-control,
-  .pagination-lg .btn{
+.pagination-container {
+  .form-select,
+  .pagination-lg .page-link,
+  .input-group-lg .form-control,
+  .input-group-lg .btn {
     font-size: 11px;
     height: 30px;
     padding: 5px 10px;
   }
-  .pagination-lg .btn [class*='fa-'] {
-    font-size: 11px;
+  .form-select {
+    padding: 5px 20px;  // extra padding for the sake of the arrow
   }
 }
 
@@ -125,12 +127,6 @@
 .module-case-detail-tabs .nav-tabs li a {
   font-size: 10px;
   padding: 8px;
-}
-
-.module-banner {
-  font-size: 11px;
-  padding-left: 6px;
-  padding-right: 6px;
 }
 
 .module-menu-bar-offset {

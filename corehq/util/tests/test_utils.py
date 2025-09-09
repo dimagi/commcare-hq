@@ -1,33 +1,13 @@
-import re
-import time
-
 from unittest import TestCase
 
-from testil import assert_raises, eq
+from testil import eq
 
-from ..test_utils import disable_quickcache, generate_cases, timelimit
-
-
-def test_timelimit_pass():
-    @timelimit(0.001)
-    def addone(x):
-        return x + 1
-    eq(addone(x=1), 2)
-
-
-def test_timelimit_fail():
-    @timelimit(0.0001)
-    def sleeper():
-        time.sleep(0.001)
-    with assert_raises(AssertionError, msg=re.compile("sleeper took too long")):
-        sleeper()
-
-
-def test_timelimit_default():
-    @timelimit
-    def double(x):
-        return x * 2
-    eq(double(2), 4)
+from ..test_utils import (
+    disable_quickcache,
+    flag_disabled,
+    flag_enabled,
+    generate_cases,
+)
 
 
 def test_disable_quickcache():
@@ -106,3 +86,29 @@ def check_case(Test):
         test = getattr(test_case, name, None)
         assert test is not None, (name, dir(test_case))
         eq(test(), str(arg))
+
+
+@flag_enabled("ASYNC_RESTORE")  # random flag chosen for testing
+class TestFlagEnabled(TestCase):
+
+    def test_flag_is_enabled(self):
+        from corehq.toggles import ASYNC_RESTORE
+        assert ASYNC_RESTORE.enabled(...)
+        assert ASYNC_RESTORE.enabled_for_request(...)
+
+    @flag_disabled("ASYNC_RESTORE")
+    def test_flag_disabled_in_class_where_it_is_enabled(self):
+        from corehq.toggles import ASYNC_RESTORE
+        assert not ASYNC_RESTORE.enabled(...)
+        assert not ASYNC_RESTORE.enabled_for_request(...)
+
+        # context manager should be effective
+        with flag_enabled("ASYNC_RESTORE"):
+            assert ASYNC_RESTORE.enabled(...)
+            assert ASYNC_RESTORE.enabled_for_request(...)
+
+    @flag_enabled("USER_CONFIGURABLE_REPORTS")
+    def test_multiple_flags_enabled_at_different_levels(self):
+        from corehq.toggles import ASYNC_RESTORE, USER_CONFIGURABLE_REPORTS
+        assert ASYNC_RESTORE.enabled(...)
+        assert USER_CONFIGURABLE_REPORTS.enabled(...)

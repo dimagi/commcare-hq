@@ -1,6 +1,3 @@
-[submodule "corehq/apps/hqmedia/static/hqmedia/MediaUploader"]
-	path = corehq/apps/hqmedia/static/hqmedia/MediaUploader
-	url = https://github.com/dimagi/MediaUploader.git
 [submodule "submodules/commcare-translations"]
 	path = submodules/commcare-translations
 	url = https://github.com/dimagi/commcare-translations.git

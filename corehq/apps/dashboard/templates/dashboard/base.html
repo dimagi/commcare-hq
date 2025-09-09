@@ -2,7 +2,8 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% requirejs_main_b5 'dashboard/js/dashboard' %}
+
+{% js_entry 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
   {% compress css %}
@@ -25,6 +26,8 @@
     </h1>
     {% if is_paused %}
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
+    {% elif should_show_pending_notice %}
+      {% include 'hqwebapp/partials/pending_plan_notice.html' %}
     {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">
@@ -47,7 +50,11 @@
             <div class="card-body">
 
               <!-- Icon in a watermark style, displayed under item list -->
-              <i data-bind="css: icon, visible: showBackgroundIcon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
+              <!-- ko ifnot: showIconLink -->
+              <div class="d-flex justify-content-center align-items-center dashboard-icon-bg-container">
+                <i data-bind="css: icon, visible: showBackgroundIcon" class="dashboard-icon"></i>
+              </div>
+              <!-- /ko -->
 
               <!-- Spinner -->
               <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
@@ -80,18 +87,21 @@
 
               <!-- No items to show or there's an error, just show an icon that links -->
               <!-- ko if: showIconLink -->
-              <a class="dashboard-link"
-                 data-bind="
-                                   attr: {href: url},
-                                   popover: {
-                                       title: title,
-                                       content: helpText,
-                                       placement: 'top',
-                                       trigger: 'hover',
-                                   },
-                               ">
-                <i class="dashboard-icon dashboard-icon-medium" data-bind="css: icon"></i>
-              </a>
+              <div class="d-flex justify-content-center align-items-center">
+                <a
+                  class="dashboard-link"
+                  data-bind="
+                                attr: {href: url},
+                                popover: {
+                                    title: title,
+                                    content: helpText,
+                                    placement: 'top',
+                                    trigger: 'hover',
+                                },
+                            ">
+                  <i class="dashboard-icon" data-bind="css: icon"></i>
+                </a>
+              </div>
               <!-- /ko -->
 
             </div>

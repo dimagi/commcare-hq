@@ -1,7 +1,7 @@
 import warnings
 from difflib import unified_diff
 from functools import wraps
-from unittest import TestCase, TestResult, TestSuite
+from unittest import TestCase, TestResult as Result, TestSuite as Suite
 from unittest.mock import patch
 
 from testil import Regex, assert_raises, eq
@@ -110,7 +110,7 @@ def test_class_decorator():
             log.append("test")
 
     log = []
-    TestSuite([Test()]).debug()
+    Suite([Test()]).debug()
     eq(log, ["setup", "test", "teardown"])
 
 
@@ -133,8 +133,8 @@ def test_class_decorator_should_not_catch_unfiltered_setup_warning():
             log.append("test")
 
     log = []
-    result = TestResult()
-    TestSuite([Test()]).run(result)
+    result = Result()
+    Suite([Test()]).run(result)
     eq(str(result.errors), Regex(r" in setUpClass\\n .*Warning: fail"), result)
     eq(log, ["setup"])
 
@@ -158,8 +158,8 @@ def test_class_decorator_should_not_catch_unfiltered_test_warning():
             log.append("test")  # should not get here
 
     log = []
-    result = TestResult()
-    TestSuite([Test()]).run(result)
+    result = Result()
+    Suite([Test()]).run(result)
     eq(str(result.errors), Regex(r" in runTest\\n .*Warning: fail"), result)
     eq(log, ["setup", "teardown"])
 
@@ -182,7 +182,7 @@ def test_class_decorator_should_not_catch_unfiltered_teardown_warning():
             log.append("test")  # should not get here
 
     log = []
-    result = TestResult()
-    TestSuite([Test()]).run(result)
+    result = Result()
+    Suite([Test()]).run(result)
     eq(str(result.errors), Regex(r" in tearDownClass\\n .*Warning: fail"), result)
     eq(log, ["setup", "test"])

@@ -1,0 +1,64 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'app_manager/js/manage_releases_by_location' %}
++{% js_entry 'app_manager/js/manage_releases_by_location' %}
+ 
+ {% block page_content %}
+   {% initial_page_data 'app_releases_by_location' app_releases_by_location %}
+@@ -16,22 +16,22 @@
+   {% registerurl 'location_search' domain %}
+ 
+   <div class="row">
+-    <div class="col-sm-12">
+-      <div class="panel panel-modern-gray panel-form-only">
+-        <div class="panel-body">
++    <div class="col-md-12">
++      <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
++        <div class="card-body">
+           <form class="form-horizontal disable-on-submit" id="manage-app-releases" action=""
+                 method='post'>
+-            {% crispy manage_releases_by_location_form %}
++            {% crispy manage_releases_by_location_form %}  {# todo B5: crispy #}
+           </form>
+           {% if app_releases_by_location %}
+             <table id="managed-releases" class="table">
+               <thead>
+               <tr>
+-                <th class="col-sm-2">{% trans 'Application' %}</th>
+-                <th class="col-sm-2">{% trans 'Location' %}</th>
+-                <th class="col-sm-2">{% trans 'Version' %}</th>
+-                <th class="col-sm-4">{% trans 'Last Activity' %}</th>
+-                <th class="col-sm-2">{% trans 'Action' %}</th>
++                <th class="col-md-2">{% trans 'Application' %}</th>
++                <th class="col-md-2">{% trans 'Location' %}</th>
++                <th class="col-md-2">{% trans 'Version' %}</th>
++                <th class="col-md-4">{% trans 'Last Activity' %}</th>
++                <th class="col-md-2">{% trans 'Action' %}</th>
+               </tr>
+               </thead>
+               <tbody data-bind="foreach: appReleasesByLocation, visible: appReleasesByLocation">
+@@ -50,7 +50,7 @@
+                   </div>
+                 </td>
+                 <td>
+-                  <button type="button" class="btn btn-default"
++                  <button type="button" class="btn btn-outline-primary"
+                           data-bind="click: toggleRestriction, css: buttonClass,
+                                             disable: ajaxInProgress">
+                     <span data-bind="text: actionText"></span>
+@@ -58,7 +58,7 @@
+                        data-bind="visible: ajaxInProgress"></i>
+                   </button>
+                   <br/>
+-                  <span class="error-message label label-danger" data-bind="visible: error">
++                  <span class="error-message badge text-bg-danger" data-bind="visible: error">
+                     {% trans 'Could not update!' %}
+                     <span data-bind="text: errorMessage"></span>
+                   </span>

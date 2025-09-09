@@ -1,9 +1,0 @@
---- 
-+++ 
-@@ -1,5 +1,3 @@
- <script type="text/html" id="grouped-element-tile-row-fullform-ko-template">
--  <div class="row">
--    <div data-bind="template: { name: childTemplate, foreach: $data.children }" class="question-tile-row"/>
--  </div>
-+  <div data-bind="template: { name: childTemplate, foreach: $data.children }" class="question-tile-row"/>
- </script>

@@ -1,7 +1,6 @@
 import io
-import json
 
-from django.http import HttpResponse
+from django.http import JsonResponse
 from memoized import memoized
 
 import openpyxl
@@ -112,9 +111,9 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
 
     @property
     def email_response(self):
-        return HttpResponse(json.dumps({
+        return JsonResponse({
             'report': '',
-        }))
+        })
 
 
 class UniqueSOPSumDataSource(SqlData):

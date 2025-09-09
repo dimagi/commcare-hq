@@ -38,14 +38,16 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop, activate
+from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
+
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
@@ -87,8 +89,13 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
+<<<<<<< HEAD
 from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page, is_logged_in
+=======
+from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
+>>>>>>> master
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
 from corehq.apps.locations.permissions import location_safe
@@ -100,12 +107,17 @@ from corehq.apps.users.util import format_username, is_dimagi_email
 from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
-from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
+from corehq.util.metrics import (
+    create_metrics_event,
+    limit_domains,
+    metrics_counter,
+    metrics_gauge,
+)
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.view_utils import reverse
+from corehq.util.view_utils import reverse, set_language_cookie
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
@@ -114,7 +126,6 @@ from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception, notify_error
 from dimagi.utils.web import get_url_base
-from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
@@ -207,7 +218,7 @@ def redirect_to_default(req, domain=None):
     if domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
-            template='two_factor/core/otp_required.html',
+            template='two_factor/core/bootstrap3/otp_required.html',
             status=403,
         )
 
@@ -332,8 +343,8 @@ def server_up(req):
 
 
 @use_bootstrap5
-def _no_permissions_message(request, template_name="403.html", message=None):
-    t = loader.get_template(template_name)
+def _no_permissions_message(request, message=None):
+    t = loader.get_template("403.html")
     return t.render(
         context={
             'MEDIA_URL': settings.MEDIA_URL,
@@ -345,16 +356,18 @@ def _no_permissions_message(request, template_name="403.html", message=None):
 
 
 @use_bootstrap5
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
-    """
-    403 error handler.
-    """
-    return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
+def no_permissions(request, redirect_to=None, message=None, exception=None):
+    """403 error handler. Called automatically by Django on PermissionDenied
 
-
-@use_bootstrap5
-def no_permissions_exception(request, template_name="403.html", message=None):
-    return Http403(_no_permissions_message(request, template_name, message))
+    :param exception: Instance of PermissionDenied or subclass. Class name will
+    be reported to datadog.
+    """
+    metrics_counter('commcare.no_permissions.count', tags={
+        'domain': limit_domains(getattr(request, 'domain', '__other__')),
+        'exception_type': exception.__class__.__name__ if exception else 'Other',
+    })
+    message = message or getattr(exception, 'user_facing_message', None)
+    return HttpResponseForbidden(_no_permissions_message(request, message))
 
 
 @use_bootstrap5
@@ -364,6 +377,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
         context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
+            'support_email': settings.SUPPORT_EMAIL,
         },
         request=request,
     ))
@@ -388,7 +402,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
+    template_name = custom_login_page if custom_login_page else 'login_and_password/bootstrap3/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
@@ -398,11 +412,13 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'next': req_params.get('next', '/a/%s/' % domain_name),
             'allow_domain_requests': domain_obj.allow_domain_requests,
             'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
+            'default_password_reset_link': reverse('domain_password_reset_email', kwargs={'domain': domain_name}),
         })
     else:
-        commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
+        commcare_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_NAME"]
         context.update({
-            'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
+            'current_page': {'page_name': _('Welcome back to %s!') % commcare_name},
+            'default_password_reset_link': reverse('password_reset_email'),
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
@@ -423,10 +439,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
-            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
             # reset cookie to an empty list on login to show domain alerts again
             response.set_cookie('viewed_domain_alerts', [])
-            activate(couch_user.language)
 
     return response
 
@@ -516,6 +530,16 @@ class HQLoginView(LoginView):
                 return HttpResponseRedirect(idp.get_login_url(username=username))
         return super().post(*args, **kwargs)
 
+    def can_select_server(self):
+        env = settings.SERVER_ENVIRONMENT
+        # domain is server-specific, so we won't give the option to switch servers on domain logins
+        is_domain_login = self.extra_context.get('domain')
+        # also check the next param, because domain or other server-specific ids can exist there
+        has_next_url = self.request.GET.get('next')
+        return (env in ServerLocation.ENVS
+                and not is_domain_login
+                and not has_next_url)
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
@@ -530,6 +554,12 @@ class HQLoginView(LoginView):
             and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
+        context['can_select_server'] = self.can_select_server()
+        if self.can_select_server():
+            context['server_choices'] = [
+                server for env, server in ServerLocation.ENVS.items()
+                if env != settings.SERVER_ENVIRONMENT
+            ]
         if domain and not is_domain_using_sso(domain):
             # ensure that domain login pages not associated with SSO do not
             # enforce SSO on the login screen
@@ -554,8 +584,9 @@ def logout(req, default_domain_redirect='domain_login'):
     LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
-        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
-        return HttpResponseRedirect('%s' % domain_login_url)
+        if not (req.couch_user.is_web_user() and not req.couch_user.is_active_in_domain(domain)):
+            domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
+            return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
 
@@ -765,13 +796,13 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
 
     other_recipients = [el.strip() for el in report['cc'].split(",") if el]
 
-    message = (
+    message_parts = [(
         f"username: {report['username']}\n"
         f"full name: {report['full_name']}\n"
         f"domain: {report['domain']}\n"
         f"url: {report['url']}\n"
         f"recipients: {', '.join(other_recipients)}\n"
-    )
+    )]
 
     domain_object = Domain.get_by_name(domain) if report['domain'] else None
     debug_context = {
@@ -789,7 +820,7 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
             domain_object.project_description = new_project_description
             domain_object.save()
 
-        message += ((
+        message_parts.append((
             "software plan: {software_plan}\n"
         ).format(
             software_plan=Subscription.get_subscribed_plan_by_domain(domain),
@@ -798,7 +829,6 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
         debug_context.update({
             'self_started': domain_object.internal.self_started,
             'has_handoff_info': bool(domain_object.internal.partner_contact),
-            'project_description': domain_object.project_description,
         })
 
     subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
@@ -813,7 +843,10 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
     if settings.HQ_ACCOUNT_ROOT in reply_to:
         reply_to = settings.SERVER_EMAIL
 
-    message += "Message:\n\n{message}\n".format(message=report['message'])
+    message_parts.append("Message:\n\n{message}\n".format(message=report['message']))
+    if domain_object and domain_object.project_description:
+        message_parts.append(f"Project description: {domain_object.project_description}\n")
+
     if post_params.get('five-hundred-report'):
         extra_message = ("This message was reported from a 500 error page! "
                          "Please fix this ASAP (as if you wouldn't anyway)...")
@@ -821,13 +854,13 @@ def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
             "datetime: {datetime}\n"
             "Is self start: {self_started}\n"
             "Has Support Hand-off Info: {has_handoff_info}\n"
-            "Project description: {project_description}\n"
             "Sentry Error: {sentry_error}\n"
         ).format(**debug_context)
         traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
         cache.cache.delete(report['500traceback'])
-        message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
+        message_parts.append("\n\n".join([extra_debug_info, extra_message, traceback_info]))
 
+    message = "".join(message_parts)
     email = EmailMessage(
         subject=subject,
         body=message,
@@ -1111,7 +1144,7 @@ class CRUDPaginatedViewMixin(object):
         Return this in the post method of your view class.
         """
         response = getattr(self, '%s_response' % self.action)
-        return HttpResponse(json.dumps(response, cls=LazyEncoder))
+        return HttpResponse(json.dumps(response, cls=LazyEncoder), content_type='application/json')
 
     @property
     def create_response(self):
@@ -1154,7 +1187,7 @@ class CRUDPaginatedViewMixin(object):
     @property
     def delete_response(self):
         try:
-            response = self.get_deleted_item_data(self.item_id)
+            response = self.delete_item(self.item_id)
             return {
                 'deletedItem': response
             }
@@ -1253,7 +1286,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_updated_item_data")
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         """
         This should return a dict of data for the deleted item.
         {
@@ -1264,7 +1297,7 @@ class CRUDPaginatedViewMixin(object):
             'template': <knockout template id>
         }
         """
-        raise NotImplementedError("You must implement get_deleted_item_data")
+        raise NotImplementedError("You must implement delete_item")
 
 
 @login_required
@@ -1532,3 +1565,27 @@ def check_sso_login_status(request):
         'sso_url': sso_url,
         'continue_text': continue_text,
     })
+
+
+@require_POST
+def set_language(request):
+    """
+    Redirect to the current page while setting the chosen language, if valid.
+    If no http referer is available or it is not safe, just set the language.
+    Based on django.views.i18n.set_language.
+    """
+    next_url = request.META.get("HTTP_REFERER")
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        response = HttpResponseRedirect(next_url)
+    else:
+        response = HttpResponse(status=204)
+
+    lang_code = request.POST.get("language")
+    valid_lang_codes = [lang_code for lang_code, __ in settings.LANGUAGES]
+    if lang_code and lang_code in valid_lang_codes:
+        response = set_language_cookie(response, lang_code)
+    return response

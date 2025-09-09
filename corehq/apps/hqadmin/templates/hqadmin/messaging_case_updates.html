@@ -1,9 +1,9 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
-{% block reportcontent %}
-  <h2>{% trans "Reprocess Messaging Case Updates" %}</h2>
-  <div class="row">
-    {% crispy form %}
-  </div>
+
+{% block title %}{{ current_page.page_name }}{% endblock %}
+
+{% block page_content %}
+  {% crispy form %}
 {% endblock %}

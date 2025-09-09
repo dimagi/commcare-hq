@@ -52,6 +52,7 @@ IGNORE_MODELS = {
     "cleanup.DeletedCouchDoc",
     "cleanup.DeletedSQLDoc",
     "contenttypes.ContentType",
+    "data_analytics.DomainMetrics",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
     "django_celery_results.ChordCounter",
@@ -65,6 +66,7 @@ IGNORE_MODELS = {
     "dropbox.DropboxUploadHelper",
     "enterprise.EnterpriseMobileWorkerSettings",    # tied to an account, not a domain
     "enterprise.EnterprisePermissions",
+    "experiments.ExperimentEnabler",
     "export.DefaultExportSettings",     # tied to an account, not a domain
     "export.EmailExportWhenDoneRequest",  # transient model tied to an export task
     "form_processor.DeprecatedXFormAttachmentSQL",
@@ -84,7 +86,10 @@ IGNORE_MODELS = {
     "pillowtop.DjangoPillowCheckpoint",
     "pillowtop.KafkaCheckpoint",
     "project_limits.DynamicRateDefinition",
+    "project_limits.SystemLimit",
     "project_limits.RateLimitedTwoFactorLog",
+    "project_limits.PillowLagGaugeDefinition",
+    "registration.SelfSignupWorkflow",
 
     # 'registry' models only make sense across multiple domains
     "registry.DataRegistry",
@@ -96,6 +101,7 @@ IGNORE_MODELS = {
     "sites.Site",
     "tastypie.ApiAccess",  # not tagged by domain
     "tastypie.ApiKey",  # not domain-specific
+    "toggles.ToggleEditPermission",
     "toggle_ui.ToggleAudit",
     "phonenumber.PhoneDevice",
     "users.Permission",
@@ -135,9 +141,6 @@ UNKNOWN_MODELS = {
     "oauth2_provider.Grant",
     "oauth2_provider.IDToken",
     "oauth2_provider.RefreshToken",
-    "oauth_integrations.GoogleApiToken",
-    "oauth_integrations.LiveGoogleSheetRefreshStatus",
-    "oauth_integrations.LiveGoogleSheetSchedule",
     "registration.AsyncSignupRequest",
     "registration.RegistrationRequest",
     "reminders.EmailUsage",
@@ -166,8 +169,10 @@ UNKNOWN_MODELS = {
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
     "users.HQApiKey",
+    "users.InvitationHistory",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
+    'ota.IntegritySamplePercentage',
 }
 
 

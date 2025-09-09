@@ -1,3 +1,2 @@
-hqDefine('settings/js/change_my_password', [
-    'registration/js/bootstrap5/password',
-], function () {});
+import "commcarehq";
+import "registration/js/bootstrap5/password";

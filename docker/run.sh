@@ -7,7 +7,6 @@ if [ -z "$1" ]; then
     exit 0
 fi
 
-
 # NOTE: the following variable is:
 #   - Used by the 'run_tests' subcommand only.
 #   - Not externally exposed because it's only useful for debugging this script.
@@ -21,7 +20,7 @@ VALID_TEST_SUITES=(
     python
     python-sharded
     python-sharded-and-javascript
-    python-elasticsearch-v5
+    python-elasticsearch-v6
 )
 
 
@@ -36,8 +35,7 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    pip-sync requirements/test-requirements.txt
-    pip check  # make sure there are no incompatibilities in test-requirements.txt
+    uv sync --locked --group=test --no-dev --no-progress
     python_preheat  # preheat the python libs
 
     # compile pyc files
@@ -80,8 +78,8 @@ function python_preheat {
 }
 
 function run_tests {
-    # Disabled due to: https://github.com/github/feedback/discussions/8848
-    # [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
+    # Disable group if https://github.com/github/feedback/discussions/8848 resurfaces
+    [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
     TEST="$1"
     shift
     suite_pat=$(printf '%s|' "${VALID_TEST_SUITES[@]}" | sed -E 's/\|$//')
@@ -111,7 +109,7 @@ function run_tests {
                 logdo ls -la "$dirpath"
             done
             logdo python -m site
-            logdo pip freeze
+            logdo uv pip freeze
             logdo npm config list
             logdo yarn --version
             logdo cat -n ../run_tests
@@ -132,6 +130,12 @@ function run_tests {
 
         send_timing_metric_to_datadog "setup" $delta
 
+        if [ "$TEST" == "python-sharded-and-javascript" ]; then
+            logmsg INFO "Building Webpack"
+            chown -R cchq:cchq ./webpack
+            su cchq -c "yarn test"
+        fi
+
         log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
@@ -139,9 +143,9 @@ function run_tests {
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
             su cchq -c scripts/test-prod-entrypoints.sh
-            scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh
             su cchq -c scripts/test-django-migrations.sh
+            uv lock --check
         fi
         delta=$(($(date +%s) - $now))
 
@@ -173,29 +177,29 @@ function _run_tests {
         python-sharded*)
             export USE_PARTITIONED_DATABASE=yes
             # TODO make it possible to run a subset of python-sharded tests
-            py_test_args+=("--attr=sharded")
+            py_test_args+=("-msharded")
             ;;
-        python-elasticsearch-v5)
-            export ELASTICSEARCH_HOST='elasticsearch5'
-            export ELASTICSEARCH_PORT=9205
-            export ELASTICSEARCH_MAJOR_VERSION=5
-            py_test_args+=("--attr=es_test")
+        python-elasticsearch-v6)
+            export ELASTICSEARCH_HOST='elasticsearch6'
+            export ELASTICSEARCH_PORT=9200
+            export ELASTICSEARCH_MAJOR_VERSION=6
+            py_test_args+=("-mes_test")
             ;;
     esac
 
     function _test_python {
         ./manage.py create_kafka_topics
         if [ -n "$CI" ]; then
-            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
+            logmsg INFO "coverage run $(which pytest) ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
-            coverage run manage.py test "${py_test_args[@]}"
+            coverage run $(which pytest) "${py_test_args[@]}"
             coverage xml
             if [ -n "$TRAVIS" ]; then
                 bash <(curl -s https://codecov.io/bash)
             fi
         else
-            logmsg INFO "./manage.py test ${py_test_args[*]}"
-            ./manage.py test "${py_test_args[@]}"
+            logmsg INFO "pytest ${py_test_args[*]}"
+            pytest "${py_test_args[@]}"
         fi
     }
 
@@ -211,7 +215,7 @@ function _run_tests {
     }
 
     function _test_javascript {
-        ./manage.py migrate --noinput
+        SKIP_GEVENT_PATCHING=1 ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         _wait_for_runserver
         logmsg INFO "grunt test ${js_test_args[*]}"

@@ -30,6 +30,7 @@ class LocationResource(v0_5.LocationResource):
         max_limit = 5000
         queryset = SQLLocation.active_objects.all()
         detail_uri_name = 'location_id'
+        ordering = ['last_modified']
         authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
         list_allowed_methods = ['get', 'post', 'patch']
         detail_allowed_methods = ['get', 'put']
@@ -46,7 +47,25 @@ class LocationResource(v0_5.LocationResource):
             'location_data',
         }
         filtering = {
-            "domain": ('exact',),
+            "domain": ['exact'],
+            'name': ['exact'],
+            'site_code': ['exact'],
+            'last_modified': ['gt', 'gte', 'lt', 'lte'],
+        }
+
+    def build_filters(self, filters=None, **kwargs):
+        orm_filters = {}
+        if filters:
+            # Turn last_modified.gte to last_modified__gte
+            filters = {'__'.join(k.split('.')): v for k, v in filters.items()}
+            if code := filters.pop('location_type_code', None):
+                orm_filters['location_type__code'] = code
+            if parent_id := filters.pop('parent_location_id', None):
+                orm_filters['parent__location_id'] = parent_id
+
+        return {
+            **super().build_filters(filters, **kwargs),
+            **orm_filters,
         }
 
     def dehydrate(self, bundle):

@@ -1,4 +1,4 @@
-import settings
+from django.conf import settings
 
 ALERT_ERROR = 'error'
 ALERT_WARNING = 'warning'

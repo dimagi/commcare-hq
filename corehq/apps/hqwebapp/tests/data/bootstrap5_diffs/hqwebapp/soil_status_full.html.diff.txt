@@ -6,8 +6,8 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
--{% requirejs_main "hqwebapp/js/soil" %}
-+{% requirejs_main_b5 "hqwebapp/js/soil" %}
+-{% js_entry_b3 "hqwebapp/js/soil" %}
++{% js_entry "hqwebapp/js/soil" %}
  
  {% block page_content %}
    {% initial_page_data 'download_id' download_id %}

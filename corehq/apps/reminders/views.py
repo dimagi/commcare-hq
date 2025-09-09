@@ -10,7 +10,7 @@ from memoized import memoized
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
@@ -281,7 +281,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     loading_message = gettext_noop("Loading keywords...")
 
     @use_bootstrap5
-    @use_multiselect
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(KeywordsListView, self).dispatch(*args, **kwargs)
@@ -362,7 +361,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'description': keyword.description,
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         try:
             k = Keyword.objects.get(couch_id=item_id)
         except Keyword.DoesNotExist:

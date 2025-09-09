@@ -1,25 +1,28 @@
+import _ from "underscore";
+import sinon from "sinon";
+
+import Toggles from "hqwebapp/js/toggles";
+import FormWorkflow from "app_manager/js/forms/form_workflow";
+
 describe('Form Workflow', function () {
     var workflow;
-    var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow;
 
     describe('#workflowOptions', function () {
-        const Toggles = hqImport('hqwebapp/js/toggles'),
-            sandbox = sinon.sandbox.create();
 
-        sandbox.stub(Toggles, 'toggleEnabled').withArgs('FORM_LINK_ADVANCED_MODE').returns(true);
+        sinon.stub(Toggles, 'toggleEnabled').withArgs('FORM_LINK_ADVANCED_MODE').returns(true);
 
         beforeEach(function () {
             var labels = {},
                 options = {};
 
-            labels[FormWorkflow.Values.DEFAULT] = 'Home Screen';
-            labels[FormWorkflow.Values.ROOT] = 'First Menu';
+            labels[FormWorkflow.FormWorkflow.Values.DEFAULT] = 'Home Screen';
+            labels[FormWorkflow.FormWorkflow.Values.ROOT] = 'First Menu';
             options = {
                 labels: labels,
-                workflow: FormWorkflow.Values.ROOT,
+                workflow: FormWorkflow.FormWorkflow.Values.ROOT,
             };
 
-            workflow = new FormWorkflow(options);
+            workflow = new FormWorkflow.FormWorkflow(options);
         });
 
         it('Should generate correct workflowOptions default', function () {
@@ -27,10 +30,10 @@ describe('Form Workflow', function () {
                 default_;
 
             assert.equal(options.length, 2);
-            default_ = _.find(options, function (d) { return d.value === FormWorkflow.Values.DEFAULT; });
+            default_ = _.find(options, function (d) { return d.value === FormWorkflow.FormWorkflow.Values.DEFAULT; });
 
             assert.equal(default_.label, '* Home Screen');
-            assert.equal(default_.value, FormWorkflow.Values.DEFAULT);
+            assert.equal(default_.value, FormWorkflow.FormWorkflow.Values.DEFAULT);
 
         });
 
@@ -39,9 +42,9 @@ describe('Form Workflow', function () {
                 root;
 
             assert.equal(options.length, 2);
-            root = _.find(options, function (d) { return d.value === FormWorkflow.Values.ROOT; });
+            root = _.find(options, function (d) { return d.value === FormWorkflow.FormWorkflow.Values.ROOT; });
             assert.equal(root.label, 'First Menu');
-            assert.equal(root.value, FormWorkflow.Values.ROOT);
+            assert.equal(root.value, FormWorkflow.FormWorkflow.Values.ROOT);
         });
     });
 
@@ -50,15 +53,15 @@ describe('Form Workflow', function () {
             options = {};
         beforeEach(function () {
 
-            labels[FormWorkflow.Values.FORM] = 'Form Link';
+            labels[FormWorkflow.FormWorkflow.Values.FORM] = 'Form Link';
             options = {
                 labels: labels,
-                workflow: FormWorkflow.Values.FORM,
+                workflow: FormWorkflow.FormWorkflow.Values.FORM,
             };
         });
 
         it('Should generate correctly initializing config variables', function () {
-            workflow = new FormWorkflow(options);
+            workflow = new FormWorkflow.FormWorkflow(options);
 
             assert.isTrue(workflow.showFormLinkUI());
             assert.lengthOf(workflow.forms, 0);
@@ -70,11 +73,11 @@ describe('Form Workflow', function () {
                 { name: 'My First Form', unique_id: 'abc123', auto_link: true },
                 { name: 'My Second Form', unique_id: 'def456', auto_link: false },
             ];
-            workflow = new FormWorkflow(options);
+            workflow = new FormWorkflow.FormWorkflow(options);
             assert.lengthOf(workflow.forms, 2);
             assert.lengthOf(workflow.formLinks(), 0);
 
-            FormWorkflow.prototype.onAddFormLink.call(workflow, workflow, {});
+            FormWorkflow.FormWorkflow.prototype.onAddFormLink.call(workflow, workflow, {});
             assert.lengthOf(workflow.formLinks(), 1);
         });
 
@@ -88,7 +91,7 @@ describe('Form Workflow', function () {
                 { xpath: "true()", doc_type: "FormLink", form_id: realID, datums: [], uniqueId: realID },
                 { xpath: "false()", doc_type: "FormLink", form_id: fakeID, datums: [], uniqueId: fakeID },
             ];
-            workflow = new FormWorkflow(options);
+            workflow = new FormWorkflow.FormWorkflow(options);
             assert.lengthOf(workflow.forms, 1);
             assert.lengthOf(workflow.formLinks(), 1);
         });

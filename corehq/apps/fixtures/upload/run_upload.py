@@ -1,5 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
+from functools import partial
+from itertools import chain
 from operator import attrgetter
 
 from attrs import define, field
@@ -45,8 +47,8 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     following trade-off: it does not support fixture ownership. All
     fixtures must be global.
     """
-    def process_table(table, new_table):
-        def process_row(row, new_row):
+    def process_table(table, new_table, old_table):
+        def process_row(row, new_row, old_row):
             update_progress(table)
             if skip_orm:
                 return  # fast upload does not do ownership
@@ -56,6 +58,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
                 workbook.iter_ownerships(new_row, row.id, owner_ids, result.errors),
                 owner_key,
                 deleted_key=attrgetter("id"),
+                on_change=partial(modified_table_ids.add, table.id),
             )
 
         old_rows = list(LookupTableRow.objects.iter_rows(domain, tag=table.tag))
@@ -68,15 +71,30 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             ):
                 old_owners[owner.row_id].append(owner)
 
+        row_key_ = row_key
+        if table is new_table:
+            # Define row_key_ so that every row has a unique key.
+            # Importantly, no new row has the same key as an old row.
+            row_key_ = id
+            if not replace:
+                new_rows = workbook.iter_rows(table, sort_keys)
+                if _would_discard_rows(old_table, old_rows, new_rows, workbook):
+                    tables.undo_update(new_table, old_table)
+                    result.errors.append(_would_discard_rows_message(table))
+                    return
+
         rows.process(
             workbook,
             old_rows,
             workbook.iter_rows(table, sort_keys),
-            row_key,
+            row_key_,
             process_row,
             delete_missing=replace,
+            on_change=partial(modified_table_ids.add, table.id),
         )
         if len(rows.to_create) > 1000 or len(rows.to_delete) > 1000:
+            for table in chain(tables.to_create, tables.to_delete):
+                ignore_table_ids.add(table.id)
             flush(tables, rows, owners)
 
     result = FixtureUploadResult()
@@ -93,6 +111,8 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     tables = Mutation()
     rows = Mutation()
     owners = Mutation()
+    modified_table_ids = set()
+    ignore_table_ids = set()
     try:
         tables.process(
             workbook,
@@ -105,9 +125,11 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         )
 
         update_progress(None)
+        for table in chain(tables.to_create, tables.to_delete):
+            ignore_table_ids.add(table.id)
         flush(tables, rows, owners)
     finally:
-        clear_fixture_cache(domain)
+        clear_fixture_cache(domain, modified_table_ids - ignore_table_ids)
     return result
 
 
@@ -122,9 +144,10 @@ class Mutation:
         old_items,
         new_items,
         key,
-        process_item=lambda item, new_item: None,
+        process_item=lambda item, new_item, old_item: None,
         delete_missing=True,
         deleted_key=lambda obj: obj.id.hex,
+        on_change=lambda: None,
     ):
         old_map = {key(old): old for old in old_items}
         get_deleted_item = {deleted_key(x): x for x in old_items}.get
@@ -134,6 +157,7 @@ class Mutation:
                 old = get_deleted_item(new.key)
                 if old is not None:
                     self.to_delete.append(old)
+                    on_change()
                 continue
             old = old_map.pop(key(new), None)
             if old is None:
@@ -141,16 +165,22 @@ class Mutation:
                 if old is not None:
                     self.to_delete.append(old)
                 self.to_create.append(new)
+                on_change()
                 item = new
             else:
                 item = old
-            process_item(item, new)
+            process_item(item, new, old)
         if delete_missing:
             self.to_delete.extend(old_map.values())
+            on_change()
 
     def clear(self):
         self.to_delete = []
         self.to_create = []
+
+    def undo_update(self, new_item, old_item):
+        self.to_create.remove(new_item)
+        self.to_delete.remove(old_item)
 
 
 def flush(tables, rows, owners):
@@ -282,3 +312,19 @@ def _load_location_ids_by_name(location_names, domain_name):
         by_name[name] = MULTIPLE if name in by_name else location_id
         by_code[site_code] = location_id
     return by_name | by_code
+
+
+def _would_discard_rows(old_table, old_rows, new_rows, workbook):
+    if old_table is None:
+        return False
+    new_keys = {workbook.get_key(row) for row in new_rows}
+    return any(r.id.hex not in new_keys for r in old_rows)
+
+
+def _would_discard_rows_message(table):
+    return _(
+        "The table structure of '{tag}' cannot be "
+        "changed while also modifying its data. If you need to do both, "
+        "include all existing rows in the upload or perform the upload "
+        "using the 'Replace existing tables' option."
+    ).format(tag=table.tag)

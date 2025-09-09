@@ -15,7 +15,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.apps.domain.views.base import covid19
 from corehq.apps.domain.views.feedback import submit_feedback
-from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.domain.views.settings import logo
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.urls import \
@@ -36,6 +35,7 @@ from corehq.apps.settings.urls import \
     domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect
 from corehq.apps.sms.urls import sms_admin_interface_urls
+import os
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -71,14 +71,16 @@ domain_specific = [
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
+    url(r'^clean/', include('corehq.apps.data_cleaning.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
-    url(r'^geospatial/', include('corehq.apps.geospatial.urls')),
+    url(r'^campaign/', include('corehq.apps.campaign.urls')),
+    url(r'^microplanning/', include('corehq.apps.geospatial.urls')),
+    url(r'^kyc/', include('corehq.apps.integration.kyc.urls')),
+    url(r'^payments/', include('corehq.apps.integration.payments.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
-    url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
     url(r'^', include('corehq.motech.fhir.urls')),
@@ -109,7 +111,6 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
-    url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),
@@ -119,7 +120,6 @@ urlpatterns = [
     url(r'^hq/admin/', include('corehq.util.metrics.urls')),
     url(r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
     url(r'^hq/notifications/', include('corehq.apps.notifications.urls')),
-    url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     url(r'^push/', include('corehq.messaging.smsbackends.push.urls')),
     url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
@@ -137,6 +137,7 @@ urlpatterns = [
     url(r'^yo/', include('corehq.messaging.smsbackends.yo.urls')),
     url(r'^gvi/', include('corehq.messaging.smsbackends.grapevine.urls')),
     url(r'^sislog/', include('corehq.messaging.smsbackends.sislog.urls')),
+    url(r'^connectid/', include('corehq.messaging.smsbackends.connectid.urls')),
     url(r'^langcodes/', include('langcodes.urls')),
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
@@ -154,7 +155,6 @@ urlpatterns = [
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
     url(r'^covid19/$', covid19, name='covid19'),
-    url(r'^pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname),
     url(r'^ping/$', ping, name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK, permanent=True), name='go_to_pricing'),
@@ -162,8 +162,10 @@ urlpatterns = [
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
-    url(r'^oauth/', include('corehq.apps.oauth_integrations.urls')),
 ] + LOCAL_APP_URLS
+
+if not os.getenv('CCHQ_WITHOUT_SSO'):
+    urlpatterns.append(url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')))
 
 if settings.ENABLE_PRELOGIN_SITE:
     # handle redirects from old prelogin

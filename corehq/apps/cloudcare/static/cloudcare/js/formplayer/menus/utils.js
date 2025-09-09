@@ -1,9 +1,8 @@
-'use strict';
-hqDefine("cloudcare/js/formplayer/menus/utils", [
+define("cloudcare/js/formplayer/menus/utils", [
     'underscore',
     'backbone',
     'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
+    'analytix/js/noopMetrics',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/layout/views/progress_bar',
@@ -11,18 +10,20 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/menus/views',
+    'cloudcare/js/gtx',
 ], function (
     _,
     Backbone,
     toggles,
-    kissmetrics,
+    noopMetrics,
     FormplayerFrontend,
     constants,
     ProgressBar,
     view,
     UsersModels,
     utils,
-    views
+    views,
+    gtx,
 ) {
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -33,7 +34,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
 
     var handleLocationRequest = function (optionsFromLastRequest) {
         var success = function (position) {
-            hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+            import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
                 FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                 recordPosition(position);
                 MenusController.selectMenu(optionsFromLastRequest);
@@ -45,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             FormplayerFrontend.trigger('showError',
                 getErrorMessage(err) +
                 "Without access to your location, computations that rely on the here() function will show up blank.",
-                false, false
+                false, false,
             );
         };
 
@@ -108,7 +109,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
-            breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
+            breadcrumbMenuDropdown: "#navbar-menu-region",
         });
 
         if (langs && langs.length > 1) {
@@ -197,7 +198,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
                 props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
             }
-            kissmetrics.track.event('Case Search', props);
+            noopMetrics.track.event('Case Search', props);
             urlObject.setQueryData({
                 inputs: {},
                 execute: false,
@@ -205,25 +206,26 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             });
             return view.queryListView(menuData);
         } else if (menuResponse.type === constants.ENTITIES) {
-            var searchText = urlObject.search;
-            var event = "Viewed Case List";
-            if (searchText) {
-                event = "Searched Case List";
-            }
+
             if (isSidebarEnabled(menuResponse)) {
                 menuData.sidebarEnabled = true;
             }
-            var eventData = {
+            var eventData = {};
+            var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
+            var searchFieldList = [];
+            if (!_.isEmpty(fields)) {
+                searchFieldList = _.sortBy(_.keys(fields));
+                eventData.searchFields = searchFieldList.join(",");
+            }
+
+            noopMetrics.track.event("Viewed Case List", _.extend(eventData, {
                 domain: UsersModels.getCurrentUser().domain,
                 name: menuResponse.title,
-            };
-            var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
-            if (!_.isEmpty(fields)) {
-                eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
-            }
-            kissmetrics.track.event(event, eventData);
+            }));
+            gtx.logCaseList(menuResponse, searchFieldList);
+
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
-                kissmetrics.track.event('Started Case Search', {
+                noopMetrics.track.event('Started Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }

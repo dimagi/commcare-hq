@@ -15,7 +15,7 @@ def _grandfather_export_multisort_priv(apps, schema_editor):
     # EXPORT_MULTISORT are Standard Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
     ))
     call_command(
         'cchq_prbac_grandfather_privs',

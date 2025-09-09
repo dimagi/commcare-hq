@@ -27,7 +27,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
+from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs, retry_on_couch_error
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from corehq import privileges, toggles
@@ -255,6 +255,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
         return hashlib.md5(data).hexdigest()
 
     @classmethod
+    @retry_on_couch_error
     def get_by_hash(cls, file_hash):
         result = cls.view('hqmedia/by_hash', key=file_hash, include_docs=True).first()
         if not result:
@@ -644,11 +645,6 @@ class ModuleMediaMixin(MediaMixin):
                 media.append(ApplicationMediaReference(details.lookup_image, media_class=CommCareImage,
                                                        is_menu_media=True, **kwargs))
 
-            # Print template - not language-specific
-            if display and details.display == 'long' and details.print_template:
-                media.append(ApplicationMediaReference(details.print_template['path'],
-                                                       media_class=CommCareMultimedia, **kwargs))
-
             # Icon-formatted columns
             for column in details.get_columns():
                 if column.format == 'enum-image' or column.format == 'clickable-icon':
@@ -684,11 +680,6 @@ class ModuleMediaMixin(MediaMixin):
                 if details.lookup_image == old_path:
                     details.lookup_image = new_path
                     count += 1
-
-            # Print template
-            if display and details.display == 'long' and details.print_template:
-                details.print_template['path'] = new_path
-                count += 1
 
             # Icon-formatted columns
             for column in details.get_columns():

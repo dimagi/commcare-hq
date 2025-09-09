@@ -1,10 +1,10 @@
-{%  extends 'hqwebapp/bootstrap3/base_section.html' %}
+{%  extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% requirejs_main 'export/js/export_list_main' %}
+{% js_entry 'export/js/export_list_main' %}
 
 {% block page_title %}
   {{ current_page.title }}
@@ -35,7 +35,7 @@
   <p>{{ lead_text }}</p>
 
   {% if is_odata %}
-    <div class="pull-right">
+    <div class="float-end">
       <feedback params="featureName: '{% trans_html_attr 'PowerBI / Tableau Integration' %}'"></feedback>
     </div>
   {% endif %}

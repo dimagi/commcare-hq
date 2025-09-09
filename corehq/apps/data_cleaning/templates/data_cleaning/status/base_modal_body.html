@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<div {% block htmx-attrs %}{% endblock htmx-attrs %}>
+  <div class="modal-header">
+    <h5 class="modal-title">
+      {% block modal-header %}{% endblock modal-header %}
+    </h5>
+  </div>
+  <div class="modal-body">
+    {% block task-status-progress %}
+      <div class="alert alert-success">
+        {% include "data_cleaning/status/partial/task_progress_bar.html" %}
+        {% block task-status-text %}
+        {% endblock task-status-text %}
+      </div>
+    {% endblock task-status-progress %}
+    {% block modal-body %}
+    {% endblock modal-body %}
+  </div>
+  <div class="modal-footer">
+    <a
+      class="btn btn-outline-primary"
+      href="{{ exit_url }}"
+      @click="$store.gtm.sendEvent('bulk_edit_exit_session_status');"
+    >
+      {% trans "Exit session" %}
+    </a>
+    {% block continue-button %}
+      <button type="button" class="btn btn-primary" disabled="disabled">
+        {% trans "Continue editing" %}
+      </button>
+    {% endblock continue-button %}
+  </div>
+</div>

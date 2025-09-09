@@ -2,6 +2,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% js_entry_b3 'inddex/js/main' %}
+
 {% block filter_panel %}
     {% if report.description %}<p class="lead">{{ report.description }}</p>{% endif %}
     {{ block.super }}

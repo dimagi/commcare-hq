@@ -1,15 +1,15 @@
-'use strict';
+
 /**
  * Backbone model and functions for listing and selecting CommCare apps
  */
-hqDefine("cloudcare/js/formplayer/apps/api", [
+define("cloudcare/js/formplayer/apps/api", [
     'jquery',
     'cloudcare/js/formplayer/apps/collections',
     'cloudcare/js/formplayer/users/models',
 ], function (
     $,
     Collections,
-    UsersModels
+    UsersModels,
 ) {
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
@@ -59,7 +59,12 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
                 return null;
             }
             var appCollection = Collections(apps);
-            return appCollection.get(id);
+            let fetchedApp = appCollection.get(id);
+            if (!fetchedApp) {
+                fetchedApp = appCollection.models.find(currApp => currApp.get("copy_of") === id);
+            }
+
+            return fetchedApp;
         },
     };
 

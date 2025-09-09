@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
@@ -17,6 +17,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.data_analytics.esaccessors import get_mobile_users
+from corehq.apps.data_analytics.models import DOMAIN_METRICS_TO_PROPERTIES_MAP
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
@@ -249,6 +250,7 @@ def uses_reminders(domain, *args):
 def not_implemented(domain, *args):
     return '<p class="text-danger">not implemented</p>'
 
+
 CALC_ORDER = [
     'num_web_users', 'num_mobile_users', 'forms', 'cases',
     'active_mobile_users', 'inactive_mobile_users', 'active_mobile_users--365',
@@ -345,6 +347,22 @@ def all_domain_stats():
         "web_users": webuser_counts,
         "commcare_users": commcare_counts,
     }
+
+
+def domain_metrics(domain_obj, id, all_stats):
+    props = calced_props(domain_obj, id, all_stats)
+    metrics_dict = {
+        metrics_attr: props.get(props_key)
+        for metrics_attr, props_key in DOMAIN_METRICS_TO_PROPERTIES_MAP.items()
+    }
+    metrics_dict['domain'] = domain_obj.name
+    metrics_dict['last_modified'] = datetime.now(tz=timezone.utc)
+
+    # these are calculated fields on the Django model, so don't try to write them
+    for key in ['has_app', 'has_used_sms', 'has_used_sms_in_last_30_days']:
+        del metrics_dict[key]
+
+    return metrics_dict
 
 
 def calced_props(domain_obj, id, all_stats):
@@ -447,7 +465,7 @@ def num_location_restricted_roles(domain):
 
 
 def num_case_sharing_loc_types(domain):
-    loc_types = [l for l in LocationType.objects.by_domain(domain) if l.shares_cases]
+    loc_types = [l_type for l_type in LocationType.objects.by_domain(domain) if l_type.shares_cases]
     return len(loc_types)
 
 

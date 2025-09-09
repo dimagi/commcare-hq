@@ -1,0 +1,82 @@
+// B5 TODO: This need to be revisited and use as much of B5 built-in utilities as possible
+.hq-add-new-module-modal {
+  .modal-header {
+    border-bottom: 1px solid lightgray;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: -20px;
+    margin-bottom: 20px;
+    // B5 TODO: After migrated, find a better color that close to #676B70
+    color: lighten(@cc-text, 20);
+  }
+
+  .new-module-modal-flex-container {
+    max-height: 400px;
+    // Make the container scrollable
+    overflow-y: auto;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding-top: 10px;
+    align-items: stretch;
+  }
+}
+
+.new-module-option {
+  display: flex;
+  flex-direction: column;
+  // 80px is the total width of the margin
+  width: calc((100% - 80px) / 2);
+  box-sizing: border-box;
+  background-color: transparent;
+  border: none;
+  // B5 TODO: Use one of the available predefined shades
+  color: lighten(@cc-text, 20);
+  margin: 20px;
+  margin-top: 0px;
+  margin-bottom: 10px;
+
+  &:hover {
+    .panel {
+      border: 1px solid @call-to-action-mid;
+    }
+
+    .panel-heading {
+      color: @call-to-action-mid;
+    }
+
+    [class*="fa-"] {
+      color: @call-to-action-mid;
+    }
+  }
+
+  .panel {
+    flex: 1; // Stretch the panel to match the button height
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-heading {
+    font-size: 1.5rem;
+  }
+
+  .panel-body {
+    padding: 20px;
+  }
+
+  .panel .panel-body [class*="fa-"] {
+    font-size: 5rem;
+    display: block;
+    text-align: center;
+    width: 100%;
+  }
+
+  p {
+    margin: 10px 5px 0;
+  }
+}

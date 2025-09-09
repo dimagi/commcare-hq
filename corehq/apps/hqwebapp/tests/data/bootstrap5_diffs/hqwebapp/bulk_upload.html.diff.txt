@@ -5,8 +5,8 @@
 +{% extends "hqwebapp/bootstrap5/base_section.html" %}
  {% load hq_shared_tags %}
  
--{% requirejs_main 'hqwebapp/js/bulk_upload_file' %}
-+{% requirejs_main_b5 'hqwebapp/js/bulk_upload_file' %}
+-{% js_entry_b3 'hqwebapp/js/bulk_upload_file' %}
++{% js_entry 'hqwebapp/js/bulk_upload_file' %}
  
  {% block page_content%}
 -    {% include "hqwebapp/partials/bootstrap3/bulk_upload.html" %}

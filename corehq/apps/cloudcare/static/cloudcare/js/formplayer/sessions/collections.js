@@ -1,12 +1,11 @@
-'use strict';
-hqDefine("cloudcare/js/formplayer/sessions/collections", [
+define("cloudcare/js/formplayer/sessions/collections", [
     'backbone',
     'cloudcare/js/formplayer/sessions/models',
     'cloudcare/js/formplayer/utils/utils',
 ], function (
     Backbone,
     Models,
-    utils
+    utils,
 ) {
     var session = Backbone.Collection.extend({
         model: Models,

@@ -14,26 +14,28 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
         '\t https://commcare-cloud.readthedocs.io/en/latest/changelog/0076-upgrade-to-es-5.html'
     )
 elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
-    import elasticsearch5 as elasticsearch
-    from elasticsearch5.exceptions import AuthorizationException
-    from elasticsearch5 import (
-        ConnectionError,
+    raise RuntimeError(
+        'Elasticsearch version 5 is no longer supported. Please upgrade Elasticsearch.\n'
+        'Details - https://commcare-cloud.readthedocs.io/en/latest/changelog/0087-upgrade-to-es-6.html'
+    )
+elif settings.ELASTICSEARCH_MAJOR_VERSION == 6:
+    import elasticsearch6 as elasticsearch
+    from elasticsearch6 import (
         ConflictError,
+        ConnectionError,
         ConnectionTimeout,
         Elasticsearch,
         ElasticsearchException,
         NotFoundError,
+        RequestError,
         SerializationError,
         TransportError,
-        RequestError,
     )
-    from elasticsearch5.client import (
-        IndicesClient,
-        SnapshotClient,
-    )
-    from elasticsearch5.helpers import BulkIndexError, bulk
+    from elasticsearch6.client import IndicesClient, SnapshotClient
+    from elasticsearch6.exceptions import AuthorizationException
+    from elasticsearch6.helpers import BulkIndexError, bulk
 else:
-    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2 or 5, given {}".format(
+    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 5 or 6, given {}".format(
         settings.ELASTICSEARCH_MAJOR_VERSION))
 
 

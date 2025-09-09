@@ -6,7 +6,7 @@
 
 {% block title %}Edit Config : DHIS2 :: {% endblock %}
 
-{% requirejs_main_b5 'dhis2/js/dhis2_events_config' %}
+{% js_entry 'dhis2/js/dhis2_events_config' %}
 
 {% block page_content %}
 {% initial_page_data 'form_configs' form_configs %}

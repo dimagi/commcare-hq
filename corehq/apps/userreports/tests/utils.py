@@ -19,7 +19,10 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration, RegistryDataSourceConfiguration,
 )
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
+
+from ..data_source_providers import MockDataSourceProvider
 
 
 def get_sample_report_config():
@@ -34,6 +37,30 @@ def get_sample_data_source():
 
 def get_sample_registry_data_source(**kwargs):
     return _get_sample_doc('sample_registry_data_source.json', RegistryDataSourceConfiguration, **kwargs)
+
+
+def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
+    configs_by_domain = {}
+    for config in configs:
+        configs_by_domain.setdefault(config.domain, []).append(config)
+
+    for proc in pillow.processors:
+        if hasattr(proc, 'table_manager'):
+            proc.table_manager.data_source_providers = [
+                MockDataSourceProvider(configs_by_domain)
+            ]
+            for domain, configs in configs_by_domain.items():
+                if rebuild_adapters:
+                    for config in configs:
+                        proc.table_manager.rebuild_coordinator.reset(config._id)
+                proc.table_manager.get_adapters(domain)  # bootstrap
+
+
+def cleanup_ucr(data_source):
+    try:
+        get_indicator_adapter(data_source).drop_table()
+    finally:
+        data_source.delete()
 
 
 def get_data_source_with_related_doc_type():

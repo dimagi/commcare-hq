@@ -1,3 +1,5 @@
+import ko from "knockout";
+
 ko.subscribable.fn.snakeCase = function (re) {
     // Converts non-word characters to snake case
     // this.my_thing = ko.observable('hi there').snakeCase()

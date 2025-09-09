@@ -6,7 +6,7 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.models import Domain
 from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.apps.sms.api import incoming, send_sms_to_verified_number
+from corehq.apps.sms.api import incoming, send_message_to_verified_number
 from corehq.apps.sms.messages import MSG_OPTED_IN, MSG_OPTED_OUT, get_message
 from corehq.apps.sms.models import SMS, PhoneBlacklist, PhoneNumber, SQLMobileBackendMapping, SQLMobileBackend
 from corehq.apps.sms.tests.util import (
@@ -44,7 +44,6 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         )
         cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
         cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
-
 
     @classmethod
     def tearDownClass(cls):
@@ -108,7 +107,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         v = PhoneNumber.get_two_way_number('99912345678')
         self.assertIsNotNone(v)
 
-        send_sms_to_verified_number(v, 'hello')
+        send_message_to_verified_number(v, 'hello')
         sms = self.get_last_sms('+99912345678')
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')
@@ -118,7 +117,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         phone_number = PhoneBlacklist.objects.get(phone_number='99912345678')
         self.assertFalse(phone_number.send_sms)
 
-        send_sms_to_verified_number(v, 'hello')
+        send_message_to_verified_number(v, 'hello')
         sms = self.get_last_sms('+99912345678')
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')
@@ -130,7 +129,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         phone_number = PhoneBlacklist.objects.get(phone_number='99912345678')
         self.assertTrue(phone_number.send_sms)
 
-        send_sms_to_verified_number(v, 'hello')
+        send_message_to_verified_number(v, 'hello')
         sms = self.get_last_sms('+99912345678')
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')
@@ -144,7 +143,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         v = PhoneNumber.get_two_way_number('19912345678')
         self.assertIsNotNone(v)
 
-        send_sms_to_verified_number(v, 'hello')
+        send_message_to_verified_number(v, 'hello')
         sms = self.get_last_sms('+19912345678')
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')
@@ -154,7 +153,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         phone_number = PhoneBlacklist.objects.get(phone_number='19912345678')
         self.assertFalse(phone_number.send_sms)
 
-        send_sms_to_verified_number(v, 'hello')
+        send_message_to_verified_number(v, 'hello')
         sms = self.get_last_sms('+19912345678')
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')
@@ -166,7 +165,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         phone_number = PhoneBlacklist.objects.get(phone_number='19912345678')
         self.assertTrue(phone_number.send_sms)
 
-        send_sms_to_verified_number(v, 'hello')
+        send_message_to_verified_number(v, 'hello')
         sms = self.get_last_sms('+19912345678')
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')

@@ -105,7 +105,7 @@ class DetailContributor(SectionContributor):
                 if detail.custom_xml:
                     elements.append(self._get_custom_xml_detail(module, detail, detail_type))
                 else:
-                    if detail.sort_nodeset_columns_for_detail():
+                    if detail.sort_nodeset_columns_for_long_detail():
                         # list of DetailColumnInfo named tuples
                         detail_column_infos = get_detail_column_infos_for_tabs_with_sorting(detail)
                     else:
@@ -126,10 +126,12 @@ class DetailContributor(SectionContributor):
                             title,
                             tabs=list(detail.get_tabs()),
                             id=detail_id,
-                            print_template=detail.print_template['path'] if detail.print_template else None,
                         )
                         if d:
                             elements.append(d)
+                            if (self.app.supports_case_list_optimizations
+                                    and module.show_case_list_optimization_options):
+                                _add_detail_optimizations(module_detail=detail, detail_xml_object=d)
 
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
@@ -149,13 +151,13 @@ class DetailContributor(SectionContributor):
         return elements
 
     def build_detail(self, module, detail_type, detail, detail_column_infos, title, tabs=None, id=None,
-                     nodeset=None, print_template=None, start=0, end=None, relevant=None):
+                     nodeset=None, start=0, end=None, relevant=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template, relevant=relevant)
+        d = Detail(id=id, title=title, nodeset=nodeset, relevant=relevant)
         if (detail_type == 'case_short' or detail_type == 'search_short') \
                 and hasattr(module, 'lazy_load_case_list_fields') and module.lazy_load_case_list_fields:
             d.lazy_loading = module.lazy_load_case_list_fields
@@ -590,6 +592,28 @@ class DetailsHelper(object):
             detail_type=detail_type,
         )
         return detail_id if detail_id in self.active_details else None
+
+
+def _add_detail_optimizations(module_detail, detail_xml_object):
+    """
+    Add optimizations on detail based on optimizations added on columns under the detail.
+    We set any optimization on the detail that is preset on any of the column.
+
+    This is needed by CommCare app to maintain consistency with features that already use these optimizations
+    via different settings/feature flags, which should get deprecated by this feature.
+    """
+    column_optimizations = [
+        column.optimization if column.supports_optimizations else None
+        for column in module_detail.get_columns()
+    ]
+    if 'cache_and_lazy_load' in column_optimizations:
+        detail_xml_object.cache_enabled = True
+        detail_xml_object.lazy_loading = True
+    else:
+        if 'cache' in column_optimizations:
+            detail_xml_object.cache_enabled = True
+        if 'lazy_load' in column_optimizations:
+            detail_xml_object.lazy_loading = True
 
 
 def get_nodeset_sort_elements(detail):

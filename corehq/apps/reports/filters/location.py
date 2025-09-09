@@ -10,6 +10,7 @@ from corehq.apps.reports.filters.controllers import (
 
 from .api import EmwfOptionsView
 from .users import ExpandedMobileWorkerFilter
+from ..util import DatatablesServerSideParams
 
 
 class LocationGroupFilter(ExpandedMobileWorkerFilter):
@@ -27,7 +28,7 @@ class LocationGroupFilter(ExpandedMobileWorkerFilter):
     @property
     @memoized
     def selected(self):
-        selected_ids = self.request.GET.getlist(self.slug)
+        selected_ids = DatatablesServerSideParams.get_value_from_request(self.request, self.slug, as_list=True)
 
         selected = (self._selected_group_entries(selected_ids) +
                     self._selected_location_entries(selected_ids))

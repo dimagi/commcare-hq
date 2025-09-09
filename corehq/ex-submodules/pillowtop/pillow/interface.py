@@ -1,20 +1,18 @@
 import time
-from abc import ABCMeta, abstractproperty, abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections import Counter, defaultdict
 from datetime import datetime
 
 from django.conf import settings
 from memoized import memoized
 
-import sys
-
-from sentry_sdk import configure_scope
+from sentry_sdk import Scope
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
-from kafka.common import TopicPartition
+from kafka import TopicPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
@@ -45,10 +43,13 @@ class PillowRuntimeContext(object):
         self.changes_seen = 0
 
 
-class PillowBase(metaclass=ABCMeta):
+class ConstructedPillow:
     """
-    This defines the external pillowtop API. Everything else should be considered a specialization
-    on top of it.
+    An almost-implemented Pillow that relies on being passed the various constructor
+    arguments it needs.
+
+    :param name: unique identifier for this pillow
+    :param checkpoint: a PillowCheckpoint instance dealing with checkpoints
     """
 
     # set to true to disable saving pillow retry errors
@@ -56,37 +57,36 @@ class PillowBase(metaclass=ABCMeta):
     # this will be the batch size for processors that support batch processing
     processor_chunk_size = 0
 
-    @abstractproperty
-    def pillow_id(self):
-        """
-        A unique ID for this pillow
-        """
-        pass
+    def __init__(self, name, checkpoint, change_feed, processor, process_num=0,
+                 change_processed_event_handler=None, processor_chunk_size=0,
+                 is_dedicated_migration_process=False):
+        self.pillow_id = name
+        self.checkpoint = checkpoint
+        self.change_feed = change_feed
+        self.processor_chunk_size = processor_chunk_size
+        if isinstance(processor, list):
+            self.processors = processor
+        else:
+            self.processors = [processor]
 
-    @abstractproperty
-    def document_store(self):
-        """
-        Returns a DocumentStore instance for retreiving documents.
-        """
-        pass
+        self._change_processed_event_handler = change_processed_event_handler
+        self.is_dedicated_migration_process = is_dedicated_migration_process
 
-    @abstractproperty
-    def checkpoint(self):
-        """
-        Returns a PillowCheckpoint instance dealing with checkpoints.
-        """
-        pass
+    @property
+    def topics(self):
+        return self.change_feed.topics
 
-    @abstractmethod
     def get_change_feed(self):
         """
-        Returns a ChangeFeed instance for iterating changes.
+        DEPRECATED: Use the `change_feed` attribute instead.
         """
-        pass
+        return self.change_feed
 
-    @abstractmethod
     def get_name(self):
-        pass
+        """
+        DEPRECATED: Use the `pillow_id` attribute instead.
+        """
+        return self.pillow_id
 
     def get_last_checkpoint_sequence(self):
         return self.checkpoint.get_or_create_wrapped().wrapped_sequence
@@ -104,16 +104,22 @@ class PillowBase(metaclass=ABCMeta):
         """
         Main entry point for running pillows forever.
         """
-        pillow_logging.info("Starting pillow %s" % self.__class__)
-        with configure_scope() as scope:
-            scope.set_tag("pillow_name", self.get_name())
+        pillow_logging.info("Starting pillow %s" % self.pillow_id)
+        scope = Scope.get_current_scope()
+        scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:
-            for processor in self.processors:
-                processor.bootstrap_if_needed()
-            time.sleep(10)
+            self._run_migrations_forever()
         else:
             while True:
                 self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+
+    def _run_migrations_forever(self):
+        for processor in self.processors:
+            processor.configure_dedicated_migration_process()
+        while True:
+            for processor in self.processors:
+                processor.run_migrations()
+            time.sleep(10)
 
     def _update_checkpoint(self, change, context):
         if change and context:
@@ -161,7 +167,7 @@ class PillowBase(metaclass=ABCMeta):
         last_process_time = datetime.utcnow()
 
         try:
-            for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
+            for change in self.change_feed.iter_changes(since=since or None, forever=forever):
                 context.changes_seen += 1
                 if change:
                     if self.batch_processors:
@@ -268,16 +274,18 @@ class PillowBase(metaclass=ABCMeta):
             self._record_change_success_in_datadog(change)
         return timer.duration
 
-    @abstractmethod
     def process_change(self, change, serial_only=False):
-        pass
+        processors = self.serial_processors if serial_only else self.processors
+        for processor in processors:
+            processor.process_change(change)
 
-    @abstractmethod
     def update_checkpoint(self, change, context):
         """
         :return: True if checkpoint was updated otherwise False
         """
-        pass
+        if self._change_processed_event_handler is not None:
+            return self._change_processed_event_handler.update_checkpoint(change, context)
+        return False
 
     def _normalize_checkpoint_sequence(self):
         if self.checkpoint is None:
@@ -288,14 +296,12 @@ class PillowBase(metaclass=ABCMeta):
 
     def _normalize_sequence(self, sequence):
         from pillowtop.feed.couch import CouchChangeFeed
-        change_feed = self.get_change_feed()
 
         if not isinstance(sequence, dict):
-            if isinstance(change_feed, CouchChangeFeed):
-                topic = change_feed.couch_db
-            else:
+            if not isinstance(self.change_feed, CouchChangeFeed):
                 return {}
 
+            topic = self.change_feed.couch_db
             sequence = {topic: force_seq_int(sequence)}
         return sequence
 
@@ -376,13 +382,26 @@ class PillowBase(metaclass=ABCMeta):
             metrics_counter(metric, tags=metric_tags)
 
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
-            metrics_gauge('commcare.change_feed.change_lag', change_lag, tags={
-                'pillow_name': self.get_name(),
-                'topic': _topic_for_ddog(
-                    TopicPartition(change.topic, change.partition)
-                    if change.partition is not None else change.topic
-                ),
-            }, multiprocess_mode=MPM_MAX)
+            dd_topic = _topic_for_ddog(
+                TopicPartition(change.topic, change.partition)
+                if change.partition is not None else change.topic)
+            metrics_gauge(
+                'commcare.change_feed.change_lag',
+                change_lag,
+                tags={
+                    'pillow_name': self.get_name(),
+                    'topic': dd_topic
+                },
+                multiprocess_mode=MPM_MAX
+            )
+            if change.partition is not None:
+                # adding check for partition as dd_topic may or
+                # may not contain partition name.
+                # and for the pillows that we are interested in
+                # we would be needing both topic and partition.
+                from corehq.project_limits.gauge import case_pillow_lag_gauge
+                if case_pillow_lag_gauge.feature_key == change.topic:
+                    case_pillow_lag_gauge.report(dd_topic, change_lag)
 
             if processing_time:
                 tags = {'pillow_name': self.get_name()}
@@ -419,59 +438,6 @@ class ChangeEventHandler(metaclass=ABCMeta):
         :return: appropriate sequence value to update the checkpoint to
         """
         pass
-
-
-class ConstructedPillow(PillowBase):
-    """
-    An almost-implemented Pillow that relies on being passed the various constructor
-    arguments it needs.
-    """
-
-    def __init__(self, name, checkpoint, change_feed, processor, process_num=0,
-                 change_processed_event_handler=None, processor_chunk_size=0,
-                 is_dedicated_migration_process=False):
-        self._name = name
-        self._checkpoint = checkpoint
-        self._change_feed = change_feed
-        self.processor_chunk_size = processor_chunk_size
-        if isinstance(processor, list):
-            self.processors = processor
-        else:
-            self.processors = [processor]
-
-        self._change_processed_event_handler = change_processed_event_handler
-        self.is_dedicated_migration_process = is_dedicated_migration_process
-
-    @property
-    def topics(self):
-        return self._change_feed.topics
-
-    @property
-    def pillow_id(self):
-        return self._name
-
-    def get_name(self):
-        return self._name
-
-    def document_store(self):
-        raise NotImplementedError()
-
-    @property
-    def checkpoint(self):
-        return self._checkpoint
-
-    def get_change_feed(self):
-        return self._change_feed
-
-    def process_change(self, change, serial_only=False):
-        processors = self.serial_processors if serial_only else self.processors
-        for processor in processors:
-            processor.process_change(change)
-
-    def update_checkpoint(self, change, context):
-        if self._change_processed_event_handler is not None:
-            return self._change_processed_event_handler.update_checkpoint(change, context)
-        return False
 
 
 def handle_pillow_error(pillow, change, exception):

@@ -43,8 +43,7 @@ class HQPasswordChangeForm(PasswordChangeForm):
     def __init__(self, user, *args, **kwargs):
 
         super(HQPasswordChangeForm, self).__init__(user, *args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Specify New Password'),
@@ -54,11 +53,13 @@ class HQPasswordChangeForm(PasswordChangeForm):
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
                 'new_password2',
-                twbscrispy.StrictButton(
-                    _('Change Password'),
-                    css_class='btn-primary',
-                    type='submit',
-                    data_bind="enable: passwordSufficient(), click: submitCheck"
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _('Change Password'),
+                        css_class='btn-primary',
+                        type='submit',
+                        data_bind="enable: passwordSufficient(), click: submitCheck"
+                    ),
                 ),
                 css_class='check-password',
             )
@@ -180,7 +181,19 @@ class HQTwoFactorMethodForm(MethodForm):
 
 
 class HQTOTPDeviceForm(TOTPDeviceForm):
-    token = forms.IntegerField(required=False, label=_("Token"), min_value=1, max_value=int('9' * totp_digits()))
+    token = forms.IntegerField(
+        required=False,
+        label=_("Token"),
+        min_value=1,
+        max_value=int('9' * totp_digits()),
+        widget=forms.TextInput(
+            attrs={
+                'pattern': r'^[0-9]{%s}$' % totp_digits(),
+                'maxlength': totp_digits(),
+                'inputmode': 'numeric',
+            }
+        ),
+    )
 
     def __init__(self, key, user, **kwargs):
         super(HQTOTPDeviceForm, self).__init__(key, user, **kwargs)
@@ -256,6 +269,7 @@ class HQPhoneNumberForm(PhoneNumberForm):
 
 
 class HQApiKeyForm(forms.Form):
+    ALL_DOMAINS_UI = 'ALL_DOMAINS_UI'
     ALL_DOMAINS = ''
     name = forms.CharField()
     ip_allowlist = SimpleArrayField(
@@ -266,7 +280,7 @@ class HQApiKeyForm(forms.Form):
         required=False,
     )
     domain = forms.ChoiceField(
-        required=False,
+        required=True,
         help_text=gettext_lazy("Limit the key's access to a single project space")
     )
     expiration_date = forms.DateTimeField(
@@ -278,8 +292,9 @@ class HQApiKeyForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         user_domains = user_domains or []
-        all_domains = (self.ALL_DOMAINS, _('All Projects'))
-        self.fields['domain'].choices = [all_domains] + [(d, d) for d in user_domains]
+        all_domains = (self.ALL_DOMAINS_UI, _('All Projects'))
+        default_empty_choice = ('', '')
+        self.fields['domain'].choices = [default_empty_choice] + [(d, d) for d in user_domains] + [all_domains]
 
         self.maximum_expiration_date = None
         self.timezone = timezone or ZoneInfo('UTC')
@@ -306,10 +321,12 @@ class HQApiKeyForm(forms.Form):
                 crispy.Field('ip_allowlist'),
                 crispy.Field('expiration_date', css_class='date-picker'),
             ),
-            StrictButton(
-                format_html('<i class="fa fa-plus"></i> {}', _("Generate New API Key")),
-                css_class='btn btn-primary',
-                type='submit'
+            hqcrispy.FormActions(
+                StrictButton(
+                    format_html('<i class="fa fa-plus"></i> {}', _("Generate New API Key")),
+                    css_class='btn btn-primary',
+                    type='submit'
+                )
             )
         )
 
@@ -333,10 +350,15 @@ class HQApiKeyForm(forms.Form):
                 name=self.cleaned_data['name'],
                 ip_allowlist=self.cleaned_data['ip_allowlist'],
                 user=user,
-                domain=self.cleaned_data['domain'] or '',
+                domain=self.cleaned_data['domain'],
                 expiration_date=self.cleaned_data['expiration_date'],
             )
             return new_key
+
+    def clean_domain(self):
+        if self.cleaned_data['domain'] == self.ALL_DOMAINS_UI:
+            return self.ALL_DOMAINS
+        return self.cleaned_data['domain']
 
     def clean_expiration_date(self):
         if not self.cleaned_data['expiration_date']:

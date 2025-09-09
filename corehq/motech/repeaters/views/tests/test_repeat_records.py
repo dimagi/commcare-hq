@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.http import QueryDict
 from django.test import SimpleTestCase, TestCase
 from nose.tools import assert_equal
 from unittest.mock import Mock
@@ -9,7 +8,7 @@ from corehq.motech.models import ConnectionSettings
 
 from .. import repeaters
 from .. import repeat_records
-from ...models import FormRepeater, RepeatRecord
+from ...models import FormRepeater, RepeatRecord, State
 
 
 class TestUtilities(SimpleTestCase):
@@ -35,54 +34,21 @@ class TestUtilities(SimpleTestCase):
             records_ids = repeat_records._get_record_ids_from_request(mock_request)
             self.assertEqual(records_ids, expected_result)
 
-    def test__get_flag(self):
+    def test__get_state(self):
         mock_request = Mock()
-        flag_values = [None, '', 'flag']
-        expected_results = ['', '', 'flag']
-        for value, expected_result in zip(flag_values, expected_results):
+        state_values = [None, 'PENDING']
+        expected_results = [None, State.Pending]
+        for value, expected_result in zip(state_values, expected_results):
             mock_request.POST.get.return_value = value
-            result = repeat_records._get_flag(mock_request)
+            result = repeat_records._get_state(mock_request)
             assert_equal(result, expected_result)
 
-    def test__change_record_state(self):
-        query_strings = [
-            None,
-            '',
-            'repeater=&record_state=&payload_id=payload_3',
-            'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
-            'repeater=&record_state=&payload_id=',
-            'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
-            'repeater=&record_state=STATUS&payload_id=payload_2',
-            'repeater=repeater_2&record_state=STATUS&payload_id=',
-        ]
-        strings_to_add = [
-            'NO_STATUS',
-            'NO_STATUS',
-            None,
-            '',
-            'STATUS',
-            'STATUS_2',
-            'STATUS_3',
-            'STATUS_4',
-        ]
-        desired_strings = [
-            '',
-            '',
-            'repeater=&record_state=&payload_id=payload_3',
-            'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
-            'repeater=&record_state=STATUS&payload_id=',
-            'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
-            'repeater=&record_state=STATUS_3&payload_id=payload_2',
-            'repeater=repeater_2&record_state=STATUS_4&payload_id=',
-        ]
-
-        for qs, str_to_add, expected_result in zip(query_strings,
-                                                   strings_to_add,
-                                                   desired_strings):
-            query_dict = QueryDict(qs)
-            result = repeat_records._change_record_state(
-                query_dict, str_to_add).urlencode()
-            self.assertEqual(result, expected_result)
+    def test__get_state_raises_key_error(self):
+        mock_request = Mock()
+        state_values = ['', 'ALL']
+        for value in state_values:
+            with self.assertRaises(KeyError):
+                repeat_records._get_state(mock_request)
 
 
 class TestDomainForwardingOptionsView(TestCase):
@@ -113,11 +79,13 @@ class TestDomainForwardingOptionsView(TestCase):
         self.assertEqual(repeater.count_State, {
             # templates that reference `count_State` may need to be
             # updated if the keys in this dict change
-            'Pending': 1,
-            'Fail': 0,
-            'Success': 0,
             'Cancelled': 0,
             'Empty': 0,
+            'EmptyOrSuccess': 0,
+            'Fail': 0,
+            'InvalidPayload': 0,
+            'Pending': 1,
+            'Success': 0
         })
 
 

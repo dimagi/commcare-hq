@@ -1,8 +1,6 @@
-The `button` plugin has been restructured since the removal of jQuery.
+The `button` plugin has been removed from in bootstrap 5 since the removal of jQuery from the library
 
-Essentially, the support for stateful buttons has been removed.
-
-Please feel free to update this help text as you find common replacements/restructuring
-for our usage of this plugin. Thanks!
+We have recreated this plugin with `changeButtonState`, so please replace the `button` call
+with `changeButtonState`. Please make sure to test out usage so that it works as expected!
 
 Old docs: https://getbootstrap.com/docs/3.4/javascript/#buttons

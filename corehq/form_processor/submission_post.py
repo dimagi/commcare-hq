@@ -28,7 +28,7 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.es.client import BulkActionItem
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.permissions import has_permission_to_view_report
+from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstance
@@ -71,7 +71,7 @@ class SubmissionPost(object):
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
                  partial_submission=False, case_db=None, force_logs=False,
-                 timing_context=None):
+                 timing_context=None, instance_json=None):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -86,6 +86,7 @@ class SubmissionPost(object):
         self.last_sync_token = last_sync_token
         self.openrosa_headers = openrosa_headers or {}
         self.instance = instance
+        self.instance_json = instance_json
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
@@ -204,8 +205,7 @@ class SubmissionPost(object):
         from corehq.apps.reports.standard.cases.case_data import CaseDataView
         from corehq.apps.reports.views import FormDataView
         form_link = case_link = form_export_link = case_export_link = None
-        form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
-        if has_permission_to_view_report(user, instance.domain, form_view):
+        if has_permission_to_view_report(user, instance.domain, SUBMISSION_HISTORY_PERMISSION):
             form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
         case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
         if cases and has_permission_to_view_report(user, instance.domain, case_view):
@@ -253,7 +253,13 @@ class SubmissionPost(object):
             if failure_response:
                 return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-            result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+            result = process_xform_xml(
+                self.domain,
+                self.instance,
+                self.attachments,
+                self.auth_context.to_json(),
+                instance_json=self.instance_json,
+            )
             submitted_form = result.submitted_form
 
             self._post_process_form(submitted_form)
@@ -398,7 +404,7 @@ class SubmissionPost(object):
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
         if (url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER)
-                and not BLOCK_SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), self.domain)):
+                and not BLOCK_SUMOLOGIC_LOGS.enabled(self.domain)):
             SumoLogicLog(self.domain, instance).send_data(url)
 
     def _invalidate_caches(self, xform):

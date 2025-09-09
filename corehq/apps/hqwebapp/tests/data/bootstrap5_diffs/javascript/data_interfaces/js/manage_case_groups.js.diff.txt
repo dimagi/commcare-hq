@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ import $ from "jquery";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import "hqwebapp/js/bootstrap3/crud_paginated_list_init";
++import "hqwebapp/js/bootstrap5/crud_paginated_list_init";
+ 
+ $(function () {
+     var bulkUploadId = initialPageData.get("bulk_upload_id");

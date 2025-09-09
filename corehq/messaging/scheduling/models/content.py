@@ -1,5 +1,3 @@
-import os
-from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
 
@@ -7,62 +5,39 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
-from django.http import Http404
 from django.utils.translation import gettext as _
 
-import css_inline
 import jsonfield as old_jsonfield
-from memoized import memoized
 
+from dimagi.utils.logging import notify_error
 from dimagi.utils.modules import to_function
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial
-from corehq.apps.app_manager.dbaccessors import (
-    get_app,
-    get_latest_released_app,
-)
-from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.models import Domain
-from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.reminders.models import EmailUsage
+from corehq.apps.sms.api import send_message_to_verified_number
 from corehq.apps.sms.models import (
+    ConnectMessagingNumber,
     Email,
     MessagingEvent,
     PhoneBlacklist,
     PhoneNumber,
 )
-from corehq.apps.sms.util import (
-    get_formplayer_exception,
-    touchforms_error_is_config_error,
-)
-from corehq.apps.smsforms.app import start_session
-from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.tasks import send_first_message
-from corehq.apps.smsforms.util import (
-    critical_section_for_smsforms_sessions,
-    form_requires_input,
-)
-from corehq.apps.users.models import CommCareUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.fcm.exceptions import FCMTokenValidationException
-from corehq.messaging.fcm.utils import FCMUtil
 from corehq.messaging.scheduling.exceptions import EmailValidationException
-from corehq.messaging.scheduling.models.abstract import Content
+from corehq.messaging.scheduling.models.abstract import Content, SurveyContent
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import NullJsonField
 from corehq.util.view_utils import absolute_reverse
-
-
-@contextmanager
-def no_op_context_manager():
-    yield
 
 
 class SMSContent(Content):
@@ -164,12 +139,6 @@ class EmailContent(Content):
                 self.html_message,
                 recipient.get_language_code()
             )
-            # Add extra css added by CKEditor, and inline css styles from template
-            email_css_filepath = os.path.join(
-                "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
-            with open(email_css_filepath, 'r') as css_file:
-                css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
-            html_message = css_inliner.inline(html_message)
 
         try:
             subject, message, html_message = self.render_subject_and_message(
@@ -197,6 +166,7 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
+        is_conditional_alert = self.case is not None
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
         if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
             send_html_email_async.delay(
@@ -206,7 +176,8 @@ class EmailContent(Content):
                 text_content=message,
                 messaging_event_id=logged_subevent.id,
                 domain=domain,
-                use_domain_gateway=True)
+                use_domain_gateway=True,
+                is_conditional_alert=is_conditional_alert)
         else:
             send_mail_async.delay(
                 subject,
@@ -214,7 +185,8 @@ class EmailContent(Content):
                 [email_address],
                 messaging_event_id=logged_subevent.id,
                 domain=domain,
-                use_domain_gateway=True)
+                use_domain_gateway=True,
+                is_conditional_alert=is_conditional_alert)
 
         email = Email(
             domain=domain,
@@ -244,16 +216,7 @@ class EmailContent(Content):
         return email_address
 
 
-class SMSSurveyContent(Content):
-    app_id = models.CharField(max_length=126, null=True)
-    form_unique_id = models.CharField(max_length=126)
-
-    # See corehq.apps.smsforms.models.SQLXFormsSession for an
-    # explanation of these properties
-    expire_after = models.IntegerField()
-    reminder_intervals = models.JSONField(default=list)
-    submit_partially_completed_forms = models.BooleanField(default=False)
-    include_case_updates_in_partial_submissions = models.BooleanField(default=False)
+class SMSSurveyContent(SurveyContent):
 
     def create_copy(self):
         """
@@ -268,20 +231,6 @@ class SMSSurveyContent(Content):
             include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
         )
 
-    @memoized
-    def get_memoized_app_module_form(self, domain):
-        try:
-            if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain, toggles.NAMESPACE_DOMAIN):
-                app = get_app(domain, self.app_id)
-            else:
-                app = get_latest_released_app(domain, self.app_id)
-            form = app.get_form(self.form_unique_id)
-            module = form.get_module()
-        except (Http404, FormNotFoundException):
-            return None, None, None, None
-
-        return app, module, form, form_requires_input(form)
-
     def phone_has_opted_out(self, phone_entry_or_number):
         if isinstance(phone_entry_or_number, PhoneNumber):
             pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number.phone_number)
@@ -289,12 +238,6 @@ class SMSSurveyContent(Content):
             pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number)
 
         return pb is not None and not pb.send_sms
-
-    def get_critical_section(self, recipient):
-        if self.critical_section_already_acquired:
-            return no_op_context_manager()
-
-        return critical_section_for_smsforms_sessions(recipient.get_id)
 
     def send(self, recipient, logged_event, phone_entry=None):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)
@@ -366,58 +309,6 @@ class SMSSurveyContent(Content):
                     logged_subevent,
                     self.get_workflow(logged_event)
                 )
-
-    def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
-            app, form):
-        # Close all currently open sessions
-        SQLXFormsSession.close_all_open_sms_sessions(domain, recipient.get_id)
-
-        # Start the new session
-        try:
-            session, responses = start_session(
-                SQLXFormsSession.create_session_object(
-                    domain,
-                    recipient,
-                    (phone_entry_or_number.phone_number
-                     if isinstance(phone_entry_or_number, PhoneNumber)
-                     else phone_entry_or_number),
-                    app,
-                    form,
-                    expire_after=self.expire_after,
-                    reminder_intervals=self.reminder_intervals,
-                    submit_partially_completed_forms=self.submit_partially_completed_forms,
-                    include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions
-                ),
-                domain,
-                recipient,
-                app,
-                form,
-                case_id,
-                yield_responses=True
-            )
-        except TouchformsError as e:
-            logged_subevent.error(
-                MessagingEvent.ERROR_TOUCHFORMS_ERROR,
-                additional_error_text=get_formplayer_exception(domain, e)
-            )
-
-            if touchforms_error_is_config_error(domain, e):
-                # Don't reraise the exception because this means there are configuration
-                # issues with the form that need to be fixed. The error is logged in the
-                # above lines.
-                return None, None
-
-            # Reraise the exception so that the framework retries it again later
-            raise
-        except Exception:
-            logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
-            # Reraise the exception so that the framework retries it again later
-            raise
-
-        session.workflow = workflow
-        session.save()
-
-        return session, responses
 
 
 class IVRSurveyContent(Content):
@@ -590,69 +481,13 @@ class FCMNotificationContent(Content):
         return data
 
     def send(self, recipient, logged_event, phone_entry=None):
-        domain_obj = Domain.get_by_name(logged_event.domain)
-
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
             case_id=self.case.case_id if self.case else None,
         )
-        subject = message = data = None
-
-        if not settings.FCM_CREDS:
-            logged_subevent.error(MessagingEvent.ERROR_FCM_NOT_AVAILABLE)
-            return
-
-        if not toggles.FCM_NOTIFICATION.enabled(logged_event.domain):
-            logged_subevent.error(MessagingEvent.ERROR_FCM_DOMAIN_NOT_ENABLED)
-            return
-
-        if not isinstance(recipient, CommCareUser):
-            logged_subevent.error(MessagingEvent.ERROR_FCM_UNSUPPORTED_RECIPIENT)
-            return
-
-        if self.message_type == self.MESSAGE_TYPE_NOTIFICATION:
-            if not (self.subject or self.message):
-                logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
-                return
-
-            recipient_language_code = recipient.get_language_code()
-            subject = self.get_translation_from_message_dict(
-                domain_obj,
-                self.subject,
-                recipient_language_code
-            )
-
-            message = self.get_translation_from_message_dict(
-                domain_obj,
-                self.message,
-                recipient_language_code
-            )
-
-            try:
-                subject, message = self.render_subject_and_message(subject, message, recipient)
-            except Exception:
-                logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
-                return
-        else:
-            if not self.action:
-                logged_subevent.error(MessagingEvent.ERROR_FCM_NO_ACTION)
-                return
-            data = self.build_fcm_data_field(recipient)
-
-        try:
-            devices_fcm_tokens = self.get_recipient_devices_fcm_tokens(recipient)
-        except FCMTokenValidationException as e:
-            logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
-            return
-
-        result = FCMUtil().send_to_multiple_devices(registration_tokens=devices_fcm_tokens, title=subject,
-                                                    body=message, data=data)
-        if result.failure_count == len(devices_fcm_tokens):
-            logged_subevent.error(MessagingEvent.ERROR_FCM_NOTIFICATION_FAILURE)
-            return
-
-        logged_subevent.completed()
+        logged_subevent.error("FCM pre-release feature has been removed. Please contact support.")
+        notify_error("FCM pre-release feature has been removed and is not expected to be in use.")
 
     def get_recipient_devices_fcm_tokens(self, recipient):
         devices_fcm_tokens = recipient.get_devices_fcm_tokens()
@@ -767,3 +602,98 @@ class EmailImage(object):
         return absolute_reverse("download_messaging_image", args=[self.domain, self.blob_id])
 
     DoesNotExist = BlobMeta.DoesNotExist
+
+
+class ConnectMessageContent(Content):
+    message = old_jsonfield.JSONField(default=dict)
+
+    def create_copy(self):
+        return ConnectMessageContent(
+            message=deepcopy(self.message),
+        )
+
+    def send(self, recipient, logged_event, phone_entry=None):
+        domain = logged_event.domain
+        domain_obj = Domain.get_by_name(domain)
+
+        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+            recipient,
+            self,
+            case_id=None,
+        )
+        message = self.get_translation_from_message_dict(
+            domain_obj,
+            self.message,
+            recipient.get_language_code()
+        )
+        connect_number = ConnectMessagingNumber(recipient)
+
+        send_message_to_verified_number(connect_number, message, logged_subevent=logged_subevent)
+
+
+class ConnectMessageSurveyContent(SurveyContent):
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return ConnectMessageSurveyContent(
+            app_id=None,
+            form_unique_id=None,
+            expire_after=self.expire_after,
+            reminder_intervals=deepcopy(self.reminder_intervals),
+            submit_partially_completed_forms=self.submit_partially_completed_forms,
+            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
+        )
+
+    def send(self, recipient, logged_event, phone_entry=None):
+        app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)
+        if any([o is None for o in (app, module, form)]):
+            logged_event.error(MessagingEvent.ERROR_CANNOT_FIND_FORM)
+            return
+
+        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+            recipient,
+            self,
+            case_id=self.case.case_id if self.case else None,
+        )
+
+        connect_number = ConnectMessagingNumber(recipient)
+
+        with self.get_critical_section(recipient):
+            # Get the case to submit the form against, if any
+            case_id = None
+            if self.case:
+                case_id = self.case.case_id
+
+            if form.requires_case() and not case_id:
+                logged_subevent.error(MessagingEvent.ERROR_NO_CASE_GIVEN)
+                return
+
+            session, responses = self.start_smsforms_session(
+                logged_event.domain,
+                recipient,
+                case_id,
+                connect_number.phone_number,
+                logged_subevent,
+                self.get_workflow(logged_event),
+                app,
+                form
+            )
+
+            if session:
+                logged_subevent.xforms_session = session
+                logged_subevent.save()
+                # send_first_message is a celery task
+                # but we first call it synchronously to save resources in the 99% case
+                # send_first_message will retry itself as a delayed celery task
+                # if there are conflicting sessions preventing it from sending immediately
+                send_first_message(
+                    logged_event.domain,
+                    recipient,
+                    connect_number,
+                    session,
+                    responses,
+                    logged_subevent,
+                    self.get_workflow(logged_event)
+                )

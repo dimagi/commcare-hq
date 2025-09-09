@@ -1,5 +1,5 @@
 {% load hq_shared_tags %}
-{% if is_saas_environment or ANALYTICS_CONFIG.DEBUG %}
+{% if IS_ANALYTICS_ENVIRONMENT or ANALYTICS_CONFIG.DEBUG%}
   {% initial_analytics_data 'global.isEnabled' True %}
 {% else %}
   {% initial_analytics_data 'global.isEnabled' False %}

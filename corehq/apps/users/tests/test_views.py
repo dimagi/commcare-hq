@@ -1,10 +1,14 @@
 import json
 from contextlib import contextmanager
 from copy import deepcopy
-from unittest.mock import patch
+from io import BytesIO
+from openpyxl import Workbook
+from unittest.mock import patch, Mock
+import re
 
-from django.http import Http404
-from django.test import TestCase
+from django.http import Http404, HttpResponseRedirect
+from django.test import TestCase, Client
+from django.test.client import RequestFactory
 from django.urls import reverse
 
 from corehq import privileges
@@ -19,6 +23,7 @@ from corehq.apps.events.models import (
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
+from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.exceptions import InvalidRequestException
@@ -28,16 +33,17 @@ from corehq.apps.users.models import (
     HqPermissions,
     UserHistory,
     UserRole,
-    WebUser,
+    WebUser, HQApiKey,
 )
-from corehq.apps.users.views import _delete_user_role, _update_role_from_view
-from corehq.apps.users.views.mobile.users import MobileWorkerListView
+from corehq.apps.users.views import _delete_user_role, _update_role_from_view, BaseUploadUser
+from corehq.apps.users.views.mobile.users import MobileWorkerListView, CommCareUserPasswordResetView
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.test_utils import (
     flag_enabled,
     generate_cases,
     privilege_enabled,
 )
+from corehq.util.workbook_json.excel import WorkbookJSONError
 
 
 def get_default_available_permissions(**kwargs):
@@ -233,7 +239,6 @@ class TestUpdateRoleFromView(TestCase):
         self.assertFalse(role.is_non_admin_editable)
         self.assertEqual(role.assignable_by, [self.role.couch_id])
         self.assertEqual(role.permissions.to_json(), role_data['permissions'])
-        return role
 
     def test_create_role_duplicate_name(self):
         role_data = deepcopy(self.BASE_JSON)
@@ -436,3 +441,347 @@ class TestCountWebUsers(TestCase):
         )
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
         self.assertEqual(json.loads(result.content)['user_count'], 2)
+
+
+class BulkUserUploadAPITest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_name = 'bulk-user-upload-domain'
+        cls.domain = create_domain(cls.domain_name)
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+        cls.user = WebUser.create(cls.domain_name, 'test@test.com', 'password', created_by=None, created_via=None)
+        cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
+        cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user(), domain=cls.domain_name)
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('bulk_user_upload_api', args=[self.domain_name])
+
+    @staticmethod
+    def _create_valid_workbook():
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['username', 'email', 'password'])
+        users_sheet.append(['test_user', 'test@example.com', 'password'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        return file
+
+    def _make_post_request(self, file):
+        return self.client.post(
+            self.url,
+            {'bulk_upload_file': file},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
+            format='multipart'
+        )
+
+    def test_success(self):
+        file = self._create_valid_workbook()
+
+        with patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users'):
+            response = self._make_post_request(file)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), {'success': True})
+
+    def test_api_no_authentication(self):
+        response = self.client.post(self.url, {'bulk_upload_file': 'mock_file'})
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.content.decode(), 'Authorization Required')
+
+    def test_api_invalid_authentication(self):
+        response = self.client.post(
+            self.url,
+            {'bulk_upload_file': 'mock_file'},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:invalid_key'
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_no_file_uploaded(self):
+        response = self.client.post(
+            self.url,
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
+            format='multipart'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'success': False, 'message': 'no file uploaded'})
+
+    @patch('corehq.apps.users.views.mobile.users.get_workbook')
+    def test_invalid_file_format(self, mock_get_workbook):
+        mock_get_workbook.side_effect = WorkbookJSONError('Invalid file format')
+        file = BytesIO(b'invalid file content')
+        file.name = 'invalid_file.txt'
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'success': False, 'message': 'Invalid file format'})
+
+    def test_invalid_workbook_headers(self):
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['invalid_header', 'email', 'password'])
+        users_sheet.append(['test_user', 'test@example.com', 'password'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'message': 'The following are required column headers: username.\n'
+                       'The following are illegal column headers: invalid_header.',
+            'success': False
+        })
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    def test_tableau_role_and_groups_headers(self):
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['username', 'email', 'password', 'tableau_role', 'tableau_groups'])
+        users_sheet.append(['test_user', 'test@example.com', 'password', 'fakerole', 'fakegroup'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        # Test user with permission to edit Tableau Configs
+        self.user.is_superuser = False
+        role_with_upload_and_edit_tableau_permission = UserRole.create(
+            self.domain, 'edit-tableau', permissions=HqPermissions(edit_web_users=True,
+                                                                   edit_user_tableau_config=True)
+        )
+        self.user.set_role(self.domain_name,
+                        role_with_upload_and_edit_tableau_permission.get_qualified_id())
+        self.user.save()
+
+        with patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users'):
+            response = self._make_post_request(file)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), {'success': True})
+
+        # Test user without permission to edit Tableau Configs
+        role_with_upload_permission = UserRole.create(
+            self.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
+        )
+        self.user.set_role(self.domain_name, role_with_upload_permission.get_qualified_id())
+        self.user.save()
+
+        file.seek(0)
+        response = self._make_post_request(file)
+        self.assertEqual(response.status_code, 400)
+
+        expected_pattern = re.compile(
+            r"Only users with 'Manage Tableau Configuration' edit permission in domains "
+            r"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
+            r"and/or 'Tableau Groups' fields\.\nThe following are illegal column headers: "
+            r"(?:tableau_groups, tableau_role|tableau_role, tableau_groups)\.",
+        )
+        self.assertRegex(response.json()['message'], expected_pattern)
+
+    @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
+    def test_user_upload_error(self, mock_upload_users):
+        mock_upload_users.side_effect = UserUploadError('User upload error')
+        file = self._create_valid_workbook()
+
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'success': False, 'message': 'User upload error'})
+
+    @patch('corehq.apps.users.views.mobile.users.notify_exception')
+    @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
+    def test_exception(self, mock_upload_users, mock_notify_exception):
+        mock_upload_users.side_effect = Exception('Unexpected error')
+        file = self._create_valid_workbook()
+
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json(), {'success': False, 'message': 'Unexpected error'})
+        mock_notify_exception.assert_called_once_with(None, message='Unexpected error')
+
+    def test_cant_upload_multiple_files(self):
+        file1 = self._create_valid_workbook()
+        file2 = self._create_valid_workbook()
+
+        response = self.client.post(
+            self.url,
+            {'bulk_upload_file': file1, 'another_file': file2},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
+            format='multipart'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'success': False,
+            'message': 'only one file can be uploaded at a time'
+        })
+
+
+class BaseUploadUserTest(TestCase):
+
+    mock_couch_user = WebUser(
+        username="testuser",
+        _id="user123",
+        domain="test-domain",
+    )
+
+    def setUp(self):
+        self.domain = 'test-domain'
+        self.factory = RequestFactory()
+        self.view = BaseUploadUser()
+        self.view.request = self.factory.get('/')
+        self.view.args = []
+        self.view.kwargs = {'domain': self.domain}
+        self.view._domain = self.domain
+        self.view.is_web_upload = True
+
+    @patch('corehq.apps.users.views.reverse')
+    @patch('corehq.apps.users.views.BaseUploadUser.upload_users')
+    @patch('corehq.apps.users.views.BaseUploadUser.process_workbook')
+    @patch('corehq.apps.users.views.get_workbook')
+    def test_post_success(self, mock_get_workbook, mock_process_workbook, mock_upload_users, mock_reverse):
+        mock_get_workbook.return_value = Mock()
+        mock_process_workbook.return_value = (Mock(), Mock())
+        mock_task_ref = Mock()
+        mock_upload_users.return_value = mock_task_ref
+        mock_reverse.return_value = '/success/'
+
+        request = self.factory.post('/', {'bulk_upload_file': Mock()})
+        request.couch_user = self.mock_couch_user
+        response = self.view.post(request)
+
+        mock_reverse.assert_called_once_with(
+            'web_user_upload_status',
+            args=[self.domain, mock_task_ref.download_id]
+        )
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, '/success/')
+
+
+class TestCommCareUserPasswordResetView(TestCase):
+    domain = 'test-password-reset'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = RequestFactory()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.editable_user = CommCareUser.create(cls.domain, 'mobile_user1', 'password123',
+                                             None, None)
+        cls.addClassCleanup(cls.editable_user.delete, cls.domain, deleted_by=None)
+        cls.editable_user_id = cls.editable_user.user_id
+
+        cls.url = reverse(
+            CommCareUserPasswordResetView.urlname,
+            args=[cls.domain, cls.editable_user_id]
+        )
+
+    def _create_request(self, data=None):
+        request = self.factory.post(self.url, data or {})
+        request.domain = self.domain
+        return request
+
+    def _mock_commcare_user(self, is_active=True, has_usable_password=True):
+        mock_user = Mock()
+        mock_user._id = "mock-user-id"
+        mock_user.get_email.return_value = "test@example.com"
+        mock_django_user = Mock()
+        mock_django_user.is_active = is_active
+        mock_django_user.has_usable_password.return_value = has_usable_password
+        mock_user.get_django_user.return_value = mock_django_user
+        return mock_user
+
+    @patch('corehq.apps.users.views.mobile.users.user_can_access_other_user')
+    @patch('corehq.apps.users.views.mobile.users.CommCareUser.get_by_user_id')
+    @patch('corehq.apps.users.views.mobile.users.reverse')
+    @patch('corehq.apps.users.views.mobile.users.messages')
+    def test_inactive_user_fails(self, mock_messages, mock_reverse, mock_get_user, mock_user_can_access):
+        mock_user_can_access.return_value = True
+        mock_reverse.return_value = '/edit/user/url'
+        mock_get_user.return_value = self._mock_commcare_user(is_active=False, has_usable_password=True)
+
+        request = self._create_request()
+
+        view = CommCareUserPasswordResetView()
+        view.setup(request, domain=self.domain, couch_user_id=self.editable_user_id)
+
+        response = view.post(request)
+
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, '/edit/user/url#user-password')
+
+        mock_messages.error.assert_called_once()
+        error_call_args = mock_messages.error.call_args[0]
+        self.assertIn('inactive', str(error_call_args[1]).lower())
+
+    @patch('corehq.apps.users.views.mobile.users.user_can_access_other_user')
+    @patch('corehq.apps.users.views.mobile.users.CommCareUser.get_by_user_id')
+    @patch('corehq.apps.users.views.mobile.users.reverse')
+    @patch('corehq.apps.users.views.mobile.users.messages')
+    def test_user_with_unusable_password_fails(self, mock_messages, mock_reverse, mock_get_user,
+                                               mock_user_can_access):
+        mock_user_can_access.return_value = True
+        mock_reverse.return_value = '/edit/user/url'
+        mock_get_user.return_value = self._mock_commcare_user(is_active=True, has_usable_password=False)
+
+        request = self._create_request()
+
+        view = CommCareUserPasswordResetView()
+        view.setup(request, domain=self.domain, couch_user_id=self.editable_user_id)
+
+        response = view.post(request)
+
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, '/edit/user/url#user-password')
+
+        mock_messages.error.assert_called_once()
+        error_call_args = mock_messages.error.call_args[0]
+        self.assertIn('This user account cannot reset the password.', str(error_call_args[1]))
+
+    @patch('corehq.apps.users.views.mobile.users.user_can_access_other_user')
+    @patch('corehq.apps.users.views.mobile.users.CommCareUser.get_by_user_id')
+    @patch('corehq.apps.users.views.mobile.users.CommCareUserPasswordResetView.get_form')
+    @patch('corehq.apps.users.views.mobile.users.reverse')
+    @patch('corehq.apps.users.views.mobile.users.messages')
+    def test_form_is_valid(self, mock_messages, mock_reverse, mock_form_class,
+                        mock_get_user, mock_user_can_access):
+        mock_user_can_access.return_value = True
+        mock_reverse.return_value = '/edit/user/url'
+        mock_get_user.return_value = self._mock_commcare_user()
+
+        mock_form = Mock()
+        mock_form.is_valid.return_value = True
+        mock_form.save = Mock()
+        mock_form_class.return_value = mock_form
+
+        request = self._create_request()
+        request.is_secure = Mock(return_value=True)
+
+        view = CommCareUserPasswordResetView()
+        view.setup(request, domain=self.domain, couch_user_id=self.editable_user_id)
+
+        response = view.post(request)
+
+        mock_form.save.assert_called_once_with(
+            use_https=True,
+            request=request
+        )
+
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, '/edit/user/url#user-password')
+
+        mock_messages.success.assert_called_once()
+        success_call_args = mock_messages.success.call_args[0]
+        self.assertIn('sent', str(success_call_args[1]).lower())

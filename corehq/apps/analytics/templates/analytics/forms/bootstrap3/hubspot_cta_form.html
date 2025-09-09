@@ -15,10 +15,12 @@
             {% trans "First name" %}<span class="asteriskField">*</span>
           </label>
           <div class="controls">
-            <input type="text"
-                   name="firstname"
-                   data-bind="textInput: firstname"
-                   class="form-control">
+            <input
+              class="form-control"
+              type="text"
+              name="firstname"
+              data-bind="textInput: firstname"
+            />
           </div>
         </div>
       </div>
@@ -28,107 +30,108 @@
             {% trans "Last name" %}<span class="asteriskField">*</span>
           </label>
           <div class="controls">
-            <input type="text"
-                   name="lastname"
-                   data-bind="textInput: lastname"
-                   class="form-control">
+            <input
+              class="form-control"
+              type="text"
+              name="lastname"
+              data-bind="textInput: lastname"
+            />
           </div>
         </div>
       </div>
     </div>
     <div class="form-group">
       <label class="control-label">
-        {% trans "Organization" %}<span class="asteriskField">*</span>
+        {% trans "Professional email" %}<span class="asteriskField">*</span>
       </label>
       <div class="controls">
-        <input type="text"
-               name="company"
-               data-bind="textInput: company"
-               class="form-control">
+        <input
+          type="email"
+          name="email"
+          data-bind="textInput: email"
+          class="form-control"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="form-group">
+          <label class="control-label">
+            {% trans "Organization" %}<span class="asteriskField">*</span>
+          </label>
+          <div class="controls">
+            <input
+              class="form-control"
+              type="text"
+              name="company"
+              data-bind="textInput: company"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="form-group">
+          <label class="control-label">
+            {% trans "Job title" %}<span class="asteriskField">*</span>
+          </label>
+          <div class="controls">
+            <input
+              class="form-control"
+              type="text"
+              name="jobtitle"
+              data-bind="textInput: jobtitle"
+            />
+          </div>
+        </div>
       </div>
     </div>
     <div class="form-group">
       <label class="control-label">
-        {% trans "Professional email address" %}<span class="asteriskField">*</span>
+        {% trans "Preferred language" %}<span class="asteriskField">*</span>
       </label>
       <div class="controls">
-        <input type="email"
-               name="email"
-               data-bind="textInput: email"
-               class="form-control">
-      </div>
-    </div>
-    <div class="form-group"
-         data-bind="visible: showContactMethod">
-      <label class="control-label">
-          {% trans "How should we contact you?" %}<span class="asteriskField">*</span>
-      </label>
-      <div class="controls">
-        <select name="preferred_method_of_contact"
-                data-bind="value: preferred_method_of_contact"
-                class="select form-control">
-          <option value="">{% trans "Please Select" %}</option>
-          <option value="Phone">{% trans "Phone" %}</option>
-          <option value="Skype">{% trans "Skype" %}</option>
-          <!-- ko if: useWhatsApp -->
-            <option value="WhatsApp">{% trans "WhatsApp" %}</option>
-          <!-- /ko -->
-          <!-- ko if: useGoogleHangouts -->
-            <option value="Google hangouts">{% trans "Google hangouts" %}</option>
-          <!-- /ko -->
-        </select>
-      </div>
-    </div>
-    <div class="form-group"
-         data-bind="visible: showPhoneNumber">
-      <label class="control-label">
-          {% trans "Preferred phone number" %}<span class="asteriskField">*</span>
-      </label>
-      <div class="controls">
-        <input type="text"
-               name="phone"
-               data-bind="textInput: phone"
-               class="form-control">
-      </div>
-    </div>
-    <div class="form-group"
-         data-bind="visible: showSkype">
-      <label class="control-label">
-          {% trans "Skype username" %}<span class="asteriskField">*</span>
-      </label>
-      <div class="controls">
-        <input type="text"
-               name="skype__c"
-               data-bind="textInput: skype__c"
-               class="form-control">
-      </div>
-    </div>
-    <div class="form-group"
-         data-bind="visible: showWhatsApp">
-      <label class="control-label">
-          {% trans "Preferred WhatsApp number" %}<span class="asteriskField">*</span>
-      </label>
-      <div class="controls">
-        <input type="text"
-               name="preferred_whatsapp_number"
-               data-bind="textInput: preferred_whatsapp_number"
-               class="form-control">
-      </div>
-    </div>
-    <div class="form-group"
-         data-bind="visible: showPreferredLanguage">
-      <label class="control-label">
-        {% trans "Preferred Language" %}<span class="asteriskField">*</span>
-      </label>
-      <div class="controls">
-        <select name="language__c"
-                data-bind="value: language__c"
-                class="form-control">
+        <select
+          class="form-control"
+          name="language"
+          data-bind="value: language"
+        >
           <option value="">{% trans "Please Select" %}</option>
           <option value="English">{% trans "English" %}</option>
           <option value="French">{% trans "French" %}</option>
           <option value="Spanish">{% trans "Spanish" %}</option>
         </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label">
+        {% trans "How did you hear about us?" %}
+      </label>
+      <select
+        class="form-control"
+        name="discoverySource"
+        data-bind="value: discoverySource"
+      >
+        <option value="">{% trans "Please Select" %}</option>
+        <option value="Newsletter">{% trans "Newsletter" %}</option>
+        <option value="Podcast">{% trans "Podcast" %}</option>
+        <option value="Social Media">{% trans "Social Media" %}</option>
+        <option value="Web Search">{% trans "Web Search (e.g. Google)" %}</option>
+        <option value="Referral">{% trans "Word of Mouth / Referral" %}</option>
+        <option value="Event / Conference">{% trans "Event / Conference" %}</option>
+        <option value="Other">{% trans "Other" %}</option>
+      </select>
+    </div>
+    <div class="form-group" data-bind="visible: discoverySource() === 'Other'">
+      <label class="control-label">
+        {% trans "We'd love to hear more! Please specify -" %}
+      </label>
+      <div class="controls">
+        <input
+          class="form-control"
+          type="text"
+          name="otherSource"
+          data-bind="textInput: otherSource"
+        />
       </div>
     </div>
     {% blocktrans %}
@@ -138,9 +141,11 @@
     {% endblocktrans %}
   </div>
   <div class="modal-footer">
-    <button class="btn btn btn-primary"
-            data-bind="click: submitForm, disable: isSubmitDisabled"
-            type="button">
+    <button
+      class="btn btn btn-primary"
+      type="button"
+      data-bind="click: submitForm, disable: isSubmitDisabled"
+    >
       <!-- ko text: nextButtonText --><!-- /ko -->
     </button>
   </div>

@@ -840,6 +840,20 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         self.assertEqual(module.search_config.description,
                          {'en': 'More information', 'fra': "Plus d'information"})
 
+    def test_translation_elements_are_up_to_date_with_app_langs(self):
+        self.assertEqual(self.app.langs, ["en", "fra"])
+        # upload translations to ensure all translation elements are created
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
+
+        # change default language and upload again
+        self.app.langs = ["fra", "en"]
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
+
+        xform = self.app.get_module(0).get_form(0).wrapped_xform()
+        itext_node = xform.model_node.find("{f}itext")
+        self.assertEqual(itext_node.find("./{f}translation[@lang='fra']").get("default"), "")
+        self.assertIsNone(itext_node.find("./{f}translation[@lang='en']").get('default'))
+
 
 class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
 

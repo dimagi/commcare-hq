@@ -3,7 +3,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% requirejs_main_b5 'case_search/js/case_search' %}
+{% js_entry 'case_search/js/case_search' %}
 
 {% block page_content %}
   {% registerurl 'case_data' request.domain '___' %}
@@ -73,7 +73,7 @@
                       <input name="fuzzy" type="checkbox" data-bind="checked: fuzzy">
                     </td>
                     <td>
-                      <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="Regular Expression" class="form-control"/>
+                      <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="e.g. +" class="form-control"/>
                     </td>
                     <td>
                       <span class='btn btn-outline-danger' data-bind="click: $parent.removeParameter">

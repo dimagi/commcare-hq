@@ -7,6 +7,7 @@ from django.views import View
 from memoized import memoized
 
 from dimagi.utils.parsing import string_to_utc_datetime
+from django.utils.translation import gettext_lazy
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -32,6 +33,7 @@ def _compare_submissions(x, y):
 
 class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     name = gettext_noop("Raw Forms, Errors & Duplicates")
+    description = gettext_lazy("View all submissions, including errors and archived forms.")
     slug = "submit_errors"
     ajax_pagination = True
     asynchronous = False
@@ -63,13 +65,13 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     def selected_user_ids(self):
         return EMWF.user_es_query(
             self.domain,
-            self.request.GET.getlist(EMWF.slug),
+            self.get_request_param(EMWF.slug, as_list=True),
             self.request.couch_user,
         ).get_ids()
 
     @property
     def has_user_filters(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
         return len(mobile_user_and_group_slugs) > 0
 
     @property
@@ -86,7 +88,7 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
             param_name = f'{form_filter.slug}_{label[2]}'
             params.append(dict(
                 name=param_name,
-                value=self.request.GET.get(param_name, None)
+                value=self.get_request_param(param_name, None)
             ))
         return params
 

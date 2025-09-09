@@ -41,7 +41,7 @@
               <li><hr class="dropdown-divider"></li>
               <li class="dropdown-header nav-header">{% trans 'Manage Enterprise' %}</li>
               <li>
-                <a href="{% url "enterprise_dashboard" domain %}" class="dropdown-item">
+                <a href="{% url "platform_overview" domain %}" class="dropdown-item">
                   <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Enterprise Console" %}
                 </a>
               </li>
@@ -91,12 +91,22 @@
           </a>
         </li>
         <li>
-          <a href="{% url "logout" %}" class="dropdown-item track-usage-link"
-             data-category="Nav Bar" data-action="Gear Icon" data-label="Sign Out">
-            <i class="icon-signout fa fa-sign-out"></i>
-            {% trans 'Sign Out' %}
-          </a>
+          <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item fw-normal">
+              <i class="icon-signout fa fa-sign-out"></i>
+              {% trans 'Sign Out' %}
+            </button>
+          </form>
         </li>
+        {% if server_display %}
+          <li><hr class="dropdown-divider"></li>
+          <li class="dropdown-header nav-header">{% trans 'Cloud Location' %}</li>
+          <li class="dropdown-item-text">
+            <span class="fi fi-{{ server_display.country_code }}"></span>
+            {% trans server_display.hr_name %}
+          </li>
+        {% endif %}
       </ul>
     </li>
     {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}

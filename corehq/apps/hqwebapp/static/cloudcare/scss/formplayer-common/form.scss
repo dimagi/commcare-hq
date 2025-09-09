@@ -35,9 +35,22 @@ legend {
     padding-top: 20px;
 }
 
-.question-tile-row {
-  .gr {
-    padding-right: 20px !important;
-    padding-left: 20px !important;
+.form-container .form-actions {
+  margin: 30px (-$form-text-indent) 0 (-$form-text-indent);
+  padding: 0px;
+
+  .submit .btn {
+    font-size: 20px;
+    padding: 0.5em 1.5em;
+    transition: all .5s;
+    margin: 0.5em;
   }
 }
+
+.sticky-submit {
+    position: sticky;
+    bottom: 0;
+    /* Puts the anchored submit button in front of form elements that use
+       bootstrap's .form-control, which adds z-index of 2 (3 when focused) */
+    z-index: $zindex-formplayer-anchored-submit;
+  }

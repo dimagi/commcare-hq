@@ -1,0 +1,30 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'accounting/less/pricing.less' %}" />
+  {% endcompress %}
+{% endblock %}
+
+{% block page_content %}
+  {% block plan_breadcrumbs %}
+  <ol class="breadcrumb">  {# todo B5: css-breadcrumb #}
+    {% for step in steps %}
+      <li>
+        <a href="{{ step.url }}" class="breadcrumb-{{ forloop.counter }}">{{ step.title }}</a>
+      </li>
+    {% endfor %}
+  </ol>
+  {% endblock %}
+  <div class="select-plan-header">
+    <h2>{{ step_title }}</h2>
+  </div>
+  {% block form_content %}
+  {% endblock %}
+{% endblock %}

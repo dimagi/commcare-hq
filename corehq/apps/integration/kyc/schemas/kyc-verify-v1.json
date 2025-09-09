@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "firstName",
+        "lastName",
+        "phoneNumber",
+        "emailAddress",
+        "nationalIdNumber",
+        "streetAddress",
+        "city",
+        "postCode",
+        "country"
+    ],
+    "properties": {
+        "firstName": {
+            "type": "string"
+        },
+        "lastName": {
+            "type": "string"
+        },
+        "phoneNumber": {
+            "type": "string"
+        },
+        "emailAddress": {
+            "type": "string"
+        },
+        "nationalIdNumber": {
+            "type": "string"
+        },
+        "streetAddress": {
+            "type": "string"
+        },
+        "city": {
+            "type": "string"
+        },
+        "postCode": {
+            "type": "string"
+        },
+        "country": {
+            "type": "string"
+        }
+    }
+}

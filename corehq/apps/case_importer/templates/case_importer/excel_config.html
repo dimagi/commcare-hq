@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 "case_importer/js/main" %}
+{% js_entry "case_importer/js/main" %}
 
 {% block page_content %}
   {% include 'case_importer/partials/help_message.html' %}
@@ -20,7 +20,7 @@
       <p>
         Documentation for bulk case imports can be found on our
         <a
-          href="https://confluence.dimagi.com/display/commcarepublic/Updating+Cases+-+Update+multiple+case+types+in+a+single+Excel+import"
+          href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Importing+Cases+Using+Excel#Update-Multiple-Case-Types-in-a-Single-Import"
           target="_blank">
           help page for this feature.
         </a>
@@ -84,7 +84,7 @@
         <div class="col-md-6">
           <select class="form-control hqwebapp-select2" name="search_column" id="search_column" {% if is_bulk_import %}disabled="disabled"{% endif %}>
             {% for column in columns %}
-              <option value="{{column|escape}}">
+              <option value="{{column|escape}}" {% if column == "caseid" %}selected{% endif %}>
                 {{column|escape}}
               </option>
             {% endfor %}

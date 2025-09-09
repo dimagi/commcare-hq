@@ -38,7 +38,7 @@ class ProjectMigrator(object):
         self.domain = domain
         self.project_slug = project_slug
         self.project = TransifexProject.objects.get(slug=project_slug)
-        self.client = TransifexApiClient(self.project.organization.get_api_token, self.project.organization,
+        self.client = TransifexApiClient(self.project.organization.plaintext_api_token, self.project.organization,
                                          project_slug)
         self.source_app_id = source_app_id
         self.target_app_id = target_app_id

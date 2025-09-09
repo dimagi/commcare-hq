@@ -4,6 +4,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
+from testil import Regex
 
 import openpyxl
 
@@ -207,15 +208,22 @@ validation_test_cases = [
             ('N', 'things', 'yes', 'name', 'lang')
         ]
     }),
+    ('invalid_field_name', [
+        "Error in 'types' sheet for 'field 1', 'name()'. "
+        "Field names cannot include special characters or begin with 'xml' or a number",
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name()'), (None, 'N', 'apple')],
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 'name()')]
+    }),
     ('invalid_field_name_numerical', [
         "Error in 'types' sheet for 'field 1', '100'. "
-        "Field names should be strings, not numbers",
+        "Field names cannot include special characters or begin with 'xml' or a number",
     ], {
         'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
         'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 100)]
     }),
     ('not_excel_file', [
-        "Upload failed! Please make sure you are using a valid Excel 2007 or later (.xlsx) file. " \
+        "Upload failed! Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
         "Error details: \"There is no item named '[Content_Types].xml' in the archive\".",
     ], None),
     ('no_types_sheet', [
@@ -531,6 +539,64 @@ class TestFixtureUpload(TestCase):
         self.upload(self.get_workbook_from_data(headers, data))
         self.assertEqual(self.get_rows(part), ['branch'])
 
+    def test_replace_table_with_removed_index(self):
+        self.upload([(None, 'N', 'apple'), (None, 'N', 'banana')])
+        ids = {row_name(r): r.id.hex for r in self.get_rows(None)}
+        headers = (
+            (
+                'types',
+                ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1')
+            ),
+            self.headers[1],
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'name')]),
+            ('things', [(ids['apple'], 'N', 'apple')]),
+            ('things', [(None, 'N', 'orange')]),
+        ]
+
+        self.upload(self.get_workbook_from_data(headers, data), replace=True)
+        self.assertEqual(self.get_rows(), ['apple', 'orange'])
+
+    def test_update_table_with_removed_index(self):
+        self.upload([(None, 'N', 'apple')])
+        ids = {row_name(r): r.id.hex for r in self.get_rows(None)}
+        headers = (
+            (
+                'types',
+                ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1')
+            ),
+            self.headers[1],
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'name')]),
+            ('things', [(ids['apple'], 'N', 'apple')]),
+            ('things', [(None, 'N', 'orange')]),
+        ]
+
+        self.upload(self.get_workbook_from_data(headers, data))
+        self.assertEqual(self.get_rows(), ['apple', 'orange'])
+
+    def test_partial_update_table_with_removed_index(self):
+        self.upload([(None, 'N', 'apple')])
+        headers = (
+            (
+                'types',
+                ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1')
+            ),
+            self.headers[1],
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'name')]),
+            ('things', [(None, 'N', 'orange')]),
+        ]
+
+        result = self.upload(self.get_workbook_from_data(headers, data))
+        self.assertEqual(result.errors, [
+            Regex(r"^The table structure of 'things' cannot be changed")
+        ])
+        self.assertEqual(self.get_rows(), ['apple'])
+
     def test_upload_sheet_with_missing_UID_column(self):
         self.upload([(None, 'N', 'apple')])
 
@@ -677,6 +743,24 @@ class TestFixtureUpload(TestCase):
             self.upload([(None, 'N', 'orange')])
         clear_cache.assert_called_once()
 
+    def test_row_added_clears_its_table_cache(self):
+        self.upload([(None, 'N', 'apple')])
+        table = self.get_table()
+        apple_id = self.get_rows(None)[0].id.hex
+
+        with patch.object(mod, "clear_fixture_cache") as mock_clear:
+            self.upload([(apple_id, 'N', 'apple'), (None, 'N', 'banana')])
+            self.assertEqual(mock_clear.call_args[0][1], {table.id})
+
+    def test_row_deleted_clears_its_table_cache(self):
+        self.upload([(None, 'N', 'apple')])
+        table = self.get_table()
+        apple_id = self.get_rows(None)[0].id.hex
+
+        with patch.object(mod, "clear_fixture_cache") as mock_clear:
+            self.upload([(apple_id, 'Y', 'apple')])
+            self.assertEqual(mock_clear.call_args[0][1], {table.id})
+
 
 class TestLookupTableOwnershipUpload(TestCase):
     do_upload = _run_upload
@@ -799,6 +883,26 @@ class TestLookupTableOwnershipUpload(TestCase):
         result = self.upload([(None, 'N', 'apple', 3, 3, 3)], check_result=False)
         self.assertEqual(self.get_rows(), [('apple', {'3'}, {'3'}, {'3'})])
         self.assertFalse(result.errors)
+
+    def test_owner_added_clears_cache(self):
+        """Test that adding an owner to an existing row clears that table's cache"""
+        self.upload([(None, 'N', 'apple')])
+        table = LookupTable.objects.by_domain_tag(self.domain, 'things')
+        apple_id = self.get_rows(None)[0].id.hex
+
+        with patch.object(mod, "clear_fixture_cache") as mock_clear:
+            self.upload([(apple_id, 'N', 'apple', 'user1', 'G1', 'loc1')])
+            self.assertEqual(mock_clear.call_args[0][1], {table.id})
+
+    def test_owner_deleted_clears_cache(self):
+        """Test that removing an owner from an existing row clears that table's cache"""
+        self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
+        table = LookupTable.objects.by_domain_tag(self.domain, 'things')
+        apple_id = self.get_rows(None)[0].id.hex
+
+        with patch.object(mod, "clear_fixture_cache") as mock_clear:
+            self.upload([(apple_id, 'N', 'apple', None, None, None)])
+            self.assertEqual(mock_clear.call_args[0][1], {table.id})
 
     def upload(self, rows, *, check_result=True, **kw):
         data = self.make_rows(rows)

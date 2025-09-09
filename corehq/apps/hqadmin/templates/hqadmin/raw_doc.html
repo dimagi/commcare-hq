@@ -4,7 +4,7 @@
 {% block title %}Doc {{ doc_id }} ({{ doc_type }}){% endblock %}
 
 {% block js %}{{ block.super }}
-  {% requirejs_main 'hqadmin/js/raw_doc' %}
+  {% js_entry_b3 'hqadmin/js/raw_doc' %}
 {% endblock %}
 
 

@@ -1,25 +1,12 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block title %}Mass Email Users{% endblock %}
-{% block js-inline %} {{ block.super }}
-  <script>
-    $(function () {
-      $('#real_email').click(function(e) {
-        if($(this).prop('checked')) {
-          $('#warning_modal').modal();
-          e.preventDefault();
-        }
-      });
 
-      $('#accept_mass_email').click(function() {
-        $('#real_email').prop('checked', 'checked');
-      });
-    });
-  </script>
-{% endblock %}
-{% block reportcontent %}
-  <br><br>
+{% block title %}{{ current_page.page_name }}{% endblock %}
+
+{% js_entry_b3 "hqadmin/js/mass_email" %}
+
+{% block page_content %}
   {% if form.errors %}
     <div class="alert alert-danger">{{ form.errors }}</div>
   {% endif %}
@@ -28,7 +15,7 @@
       This is the email mailing list tool. Please exercise caution
       when using it.
     </p>
-    </p>
+    <p>
     Leave the <strong>email all users</strong> checkbox unchecked to send a test
     email only to yourself. This is useful for verifying that
     your formatting is correct before sending a real message.
@@ -49,8 +36,7 @@
           name="email_subject"
           type="text"
           class="form-control"
-          placeholder="Enter subject...">
-        </input>
+          placeholder="Enter subject..."/>
       </div>
 
       <div class="form-group">

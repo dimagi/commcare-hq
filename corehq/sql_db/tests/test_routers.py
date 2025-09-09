@@ -4,6 +4,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
+import pytest
 from unittest.mock import patch
 from nose.tools import assert_equal, assert_false, assert_true
 
@@ -89,11 +90,13 @@ def test_load_balanced_read_apps(_, __):
     assert_equal(get_load_balanced_app_db('users', default='default_option'), 'default_option')
 
 
-@ignore_databases_override_warning
-@override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS)
-def test_load_balanced_plproxy():
-    primary_config = PlProxyConfig.from_dict(PARTITION_CONFIG_WITH_STANDBYS)
-    standby_config = _get_standby_plproxy_config(primary_config)
+def _make_cases():
+    with (
+        ignore_databases_override_warning,
+        override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS),
+    ):
+        primary_config = PlProxyConfig.from_dict(PARTITION_CONFIG_WITH_STANDBYS)
+        standby_config = _get_standby_plproxy_config(primary_config)
 
     master_standby_mapping = {
         'db1': {'db1_standby'},
@@ -122,7 +125,12 @@ def test_load_balanced_plproxy():
         (plproxy_shard_0, [], plproxy_shard_0),
     ]
     for case in test_cases:
-        yield (_test_load_balanced_plproxy,) + case
+        yield _test_load_balanced_plproxy, case
+
+
+@pytest.mark.parametrize("test, args", list(_make_cases()))
+def test_load_balanced_plproxy(test, args):
+    test(*args)
 
 
 def test_get_read_write_db_for_partitioned_model_decorator():
@@ -135,16 +143,11 @@ def test_get_read_write_db_for_partitioned_model_decorator():
     assert_false(allow_read_from_plproxy_standby())
 
 
-def test_get_read_write_db_for_partitioned_model():
-    test_cases = [
-        patch.dict(os.environ, {READ_FROM_PLPROXY_STANDBYS: '1'}),
-        read_from_plproxy_standbys(),
-    ]
-    for case in test_cases:
-        yield _test_get_read_write_db_for_partitioned_model, case
-
-
-def _test_get_read_write_db_for_partitioned_model(context):
+@pytest.mark.parametrize("context", [
+    patch.dict(os.environ, {READ_FROM_PLPROXY_STANDBYS: '1'}),
+    read_from_plproxy_standbys(),
+])
+def test_get_read_write_db_for_partitioned_model(context):
     assert_false(allow_read_from_plproxy_standby())
     with context:
         assert_true(allow_read_from_plproxy_standby())

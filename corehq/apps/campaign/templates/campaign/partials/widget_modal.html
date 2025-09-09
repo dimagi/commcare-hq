@@ -1,0 +1,26 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+<div class="modal fade" id="widget-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"></h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body" id="widget-modal-body">
+        <div id="widget-modal-spinner">
+          <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+        </div>
+        <div id="widget-success-message" class="alert alert-success d-none">
+          {% trans "Saved! Reloading, please wait.." %}
+        </div>
+        <div id="widget-form"></div>
+      </div>
+    </div>
+  </div>
+</div>

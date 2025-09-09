@@ -30,6 +30,7 @@ class Command(BaseCommand):
                                 invitation.assigned_locations.all().values_list('location_id', flat=True)),
                             program_id=invitation.program,
                             profile=invitation.profile,
+                            custom_user_data=invitation.custom_user_data,
                             tableau_role=invitation.tableau_role,
                             tableau_group_ids=invitation.tableau_group_ids)
         invitation.is_accepted = True

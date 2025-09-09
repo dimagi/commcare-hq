@@ -7,10 +7,8 @@
     <form name="exportOptionsForm" class="form form-horizontal" data-bind="submit: handleSubmitForm">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
-            <span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span>
-          </button>
           <h4 class="modal-title">{{ create_export_form_title }}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
         <div class="modal-body" data-bind="visible: !isLoaded()">
           <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
@@ -20,7 +18,7 @@
             <i class="fa-solid fa-triangle-exclamation"></i>
             <strong data-bind="text: drilldownSubmissionError"></strong>
             <p>
-              {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.{% endblocktrans %}
+              {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-bs-toggle="modal">Report an Issue</a>.{% endblocktrans %}
             </p>
           </div>
           {% crispy create_export_form %}
@@ -38,22 +36,27 @@
             <i class="fa-solid fa-triangle-exclamation"></i>
             {% trans "Mislabeled" %}
           </div>
-          <div class="well" data-bind="visible: showSuggestions">
-            <h4>{% trans "Suggestions" %}</h4>
-            <div data-bind="visible: showAppDoesNotExist">
-              {% trans "These form submissions are tagged as if they belong to an application that doesn't exist." %}
-            </div>
-            <div data-bind="visible: showDuplicate">
-              <p>{% trans "These submissions could belong to one of the following forms:" %}</p>
-              <ul data-bind="foreach: duplicatePossibilities">
-                <ul>
-                  <span data-bind="text: app.name"></span> &gt;
-                  <span data-bind="text: $root.selectedFormName"></span>
-                  <span data-bind="visible: app_deleted">
-                                        {% trans "App was deleted." %}
-                                    </span>
-                  </li>
-                </ul>
+          <div class="card" data-bind="visible: showSuggestions">
+            <div class="card-body">
+              <h5 class="card-title">{% trans "Suggestions" %}</h5>
+              <div class="card-text">
+                <div data-bind="visible: showAppDoesNotExist">
+                  {% trans "These form submissions are tagged as if they belong to an application that doesn't exist." %}
+                </div>
+                <div data-bind="visible: showDuplicate">
+                  <p>{% trans "These submissions could belong to one of the following forms:" %}</p>
+                  <ul data-bind="foreach: duplicatePossibilities">
+                    <ul>
+                      <li>
+                        <span data-bind="text: app.name"></span> &gt;
+                        <span data-bind="text: $root.selectedFormName"></span>
+                        <span data-bind="visible: app_deleted">
+                          {% trans "App was deleted." %}
+                        </span>
+                      </li>
+                    </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -79,7 +82,7 @@
           <p>
             {% blocktrans %}
               If this problem persists, please <a href="#modalReportIssue"
-                                                  data-toggle="modal">Report an Issue</a> and include this error
+                                                  data-bs-toggle="modal">Report an Issue</a> and include this error
               message in the description.
             {% endblocktrans %}
           </p>
@@ -91,7 +94,7 @@
               Please deploy an application and submit data before creating any {{ export_type_plural }}.
             {% endblocktrans %}
           </p>
-          <a href="https://confluence.dimagi.com/display/commcarepublic/Application+Building"
+          <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946283/Application+Development"
              target="_blank">
             <i class="fa fa-info-circle"></i>
             {% trans 'How to Create and Deploy a CommCare Application.' %}
@@ -99,8 +102,8 @@
         </div>
         <div class="modal-footer">
           <button type="button"
-                  class="btn btn-default"
-                  data-dismiss="modal"
+                  class="btn btn-outline-primary"
+                  data-bs-dismiss="modal"
                   data-bind="disabled: isSubmitting">{% trans 'Cancel' %}</button>
           <button type="submit"
                   class="btn btn-primary"

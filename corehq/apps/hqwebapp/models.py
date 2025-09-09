@@ -4,6 +4,7 @@ from datetime import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 import architect
 from oauth2_provider.settings import APPLICATION_MODEL
@@ -118,3 +119,32 @@ def pkce_required(client_id):
         return application.pkce_required
     except HQOauthApplication.DoesNotExist:
         return False
+
+
+class ServerLocation:
+    EU = 'eu'
+    INDIA = 'india'
+    PRODUCTION = 'production'
+
+    ENVS = {
+        EU: {
+            'country_code': 'eu',
+            'long_name': _("European Union"),
+            'short_name': _("EU"),
+            'subdomain': 'eu',
+        },
+        INDIA: {
+            'country_code': 'in',
+            'long_name': _("India"),
+            'short_name': _("India"),
+            'subdomain': 'india',
+        },
+        PRODUCTION: {
+            'country_code': 'us',
+            'long_name': _("United States"),
+            'short_name': _("US"),
+            'subdomain': 'www',
+        },
+    }
+
+    SUBDOMAINS = {env: server['subdomain'] for env, server in ENVS.items()}

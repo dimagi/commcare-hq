@@ -22,7 +22,7 @@ from corehq.apps.domain.calculations import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
-from corehq.apps.es import CaseES, UserES
+from corehq.apps.es import CaseES
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
@@ -1015,7 +1015,7 @@ class TestUserESAccessors(TestCase):
         super(TestUserESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, is_active=True):
-        self.user.is_active = is_active
+        self.user.set_is_active(self.domain, is_active)
         user_adapter.index(self.user, refresh=True)
 
     def test_active_user_query(self):
@@ -1025,7 +1025,6 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(len(results), 1)
         metadata = results[0].pop('user_data_es')
         self.assertEqual({
-            'commcare_project': 'user-esaccessors-test',
             PROFILE_SLUG: self.profile.id,
             'job': 'reporter',
             'office': 'phone_booth',
@@ -1037,6 +1036,7 @@ class TestUserESAccessors(TestCase):
             'domain': self.user.domain,
             'username': self.user.username,
             'is_active': True,
+            'domain_membership': {'domain': self.user.domain, 'is_active': True},
             'first_name': self.user.first_name,
             'last_name': self.user.last_name,
             'doc_type': 'CommCareUser',
@@ -1054,20 +1054,12 @@ class TestUserESAccessors(TestCase):
             'domain': self.user.domain,
             'username': self.user.username,
             'is_active': False,
+            'domain_membership': {'domain': self.user.domain, 'is_active': True},
             'first_name': self.user.first_name,
             'last_name': self.user.last_name,
             'doc_type': 'CommCareUser',
             'location_id': None
         })
-
-    def test_domain_allow_enterprise(self):
-        self._send_user_to_es()
-        self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
-        self.assertEqual([], UserES().domain(self.source_domain).values_list('username', flat=True))
-        self.assertEqual(
-            ['superman'],
-            UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)
-        )
 
 
 @es_test(requires=[group_adapter])

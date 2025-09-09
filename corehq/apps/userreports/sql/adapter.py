@@ -6,21 +6,22 @@ from django.utils.translation import gettext as _
 import psycopg2
 import sqlalchemy
 from memoized import memoized
-from sqlalchemy.exc import ProgrammingError, OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
-from corehq.apps.userreports.adapter import IndicatorAdapter
-from corehq.apps.userreports.exceptions import (
+from corehq.sql_db.connections import connection_manager
+from corehq.util.test_utils import unit_testing_only
+
+from ..adapter import IndicatorAdapter
+from ..exceptions import (
     ColumnNotFoundError,
     TableRebuildError,
     translate_programming_error,
 )
-from corehq.apps.userreports.sql.columns import column_to_sql
-from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.connections import connection_manager
-from corehq.util.test_utils import unit_testing_only
-from corehq.apps.userreports.util import register_data_source_row_change
+from ..util import get_table_name, register_data_source_row_change
+from .columns import column_to_sql
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,9 +56,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
         )
 
+    @memoized
+    def get_existing_table_from_db(self):
+        """Loads existing table directly from database if one exists"""
+        try:
+            return sqlalchemy.Table(self.get_table().name, sqlalchemy.MetaData(), autoload_with=self.engine)
+        except sqlalchemy.exc.NoSuchTableError:
+            pass
+
     @property
     def table_exists(self):
-        return self.engine.has_table(self.get_table().name)
+        table_name = _get_table_name_for_adapter(self.override_table_name, self.config)
+        return self.engine.has_table(table_name)
 
     @memoized
     def get_sqlalchemy_orm_table(self):
@@ -269,6 +279,14 @@ class MultiDBSqlAdapter(object):
         return getattr(self.main_adapter, attr)
 
     @property
+    def config_id(self):
+        return self.config._id
+
+    @property
+    def is_active(self):
+        return not self.config.is_deactivated
+
+    @property
     def table_id(self):
         return self.config.table_id
 
@@ -340,7 +358,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         orig_exception = getattr(exception, 'orig', None)
         if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
             if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
-                from corehq.apps.userreports.models import InvalidUCRData
+                from ..models import InvalidUCRData
                 InvalidUCRData.objects.get_or_create(
                     doc_id=doc['_id'],
                     indicator_config_id=self.config._id,
@@ -360,9 +378,13 @@ class ErrorRaisingMultiDBAdapter(MultiDBSqlAdapter):
     mirror_adapter_cls = ErrorRaisingIndicatorSqlAdapter
 
 
+def _get_table_name_for_adapter(override_table_name, config):
+    return override_table_name or get_table_name(config.domain, config.table_id)
+
+
 def get_indicator_table(indicator_config, metadata, override_table_name=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
-    table_name = override_table_name or get_table_name(indicator_config.domain, indicator_config.table_id)
+    table_name = _get_table_name_for_adapter(override_table_name, indicator_config)
     columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
 

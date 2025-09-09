@@ -1,0 +1,5 @@
+import "commcarehq";
+import "jquery";
+import "hqwebapp/js/initial_page_data";
+import "hqwebapp/js/bootstrap5/crud_paginated_list_init";
+import "hqwebapp/js/base_ace";

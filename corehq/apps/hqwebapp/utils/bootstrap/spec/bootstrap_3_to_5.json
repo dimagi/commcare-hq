@@ -22,9 +22,11 @@
         "panel-modern-gray": "card-modern-gray",
         "panel-form-only": "card-form-only",
         "panel-heading": "card-header",
+        "panel-title-nolink": "card-title-nolink",
         "panel-default": "",
         "panel-info": "text-bg-info",
         "panel-danger": "text-bg-danger",
+        "panel-group": "card-group",
         "panel": "card",
         "well": "card",
         "close": "btn-close",
@@ -68,7 +70,7 @@
         "col-xs-offset-<num>": "offset-sm-<num>"
     },
     "template_tag_renames": {
-        "requirejs_main": "requirejs_main_b5"
+        "js_entry_b3": "js_entry"
     },
     "data_attribute_renames": {
         "data-toggle": "data-bs-toggle",
@@ -91,7 +93,6 @@
         "has-success",
         "input-group-addon",
         "input-group-btn",
-        "modal-header",
         "nav",
         "navbar",
         "navbar-dark",
@@ -104,7 +105,6 @@
     ],
     "flagged_js_plugins": [
         "affix",
-        "bootstrapSwitch",
         "button",
         "createDateRangePicker",
         "datetimepicker",
@@ -115,8 +115,8 @@
     ],
     "template_tags_with_dependencies": [
         "extends",
-        "requirejs_main",
-        "requirejs_main_b5",
+        "js_entry",
+        "js_entry_b3",
         "static",
         "include"
     ]

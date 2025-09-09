@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 'settings/js/edit_my_account' %}
+{% js_entry 'settings/js/edit_my_account' %}
 
 {% block modals %}{{ block.super }}
   {% if user_type == 'web' %}

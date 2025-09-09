@@ -133,7 +133,7 @@ that the translator has enough context.
 
     message = _("User '{user}' has successfully been {action}.").format(
         user=user.raw_username,
-        action=_("Un-Archived") if user.is_active else _("Archived"),
+        action=_("Un-Archived") if user.is_active_in_domain(domain) else _("Archived"),
     )
 
 This ends up in the translations file as::
@@ -265,10 +265,7 @@ JavaScript has a ``gettext`` function that works exactly the same as in python:
 
     gettext("Welcome to CommCare HQ")
 
-``gettext`` is available globally in HQ, coming from `django.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/django.js>`__
-which is available via the `base RequireJS setup
-<https://github.com/dimagi/commcare-hq/blob/f922211689b39240fcf16efe36d9dc13382977b8/corehq/apps/hqwebapp/templates/hqwebapp/partials/requirejs.html#L28>`__,
-so it doesn't need to be added as a dependency to modules that use it.
+``gettext`` is available globally in HQ, added to the global namespace in ``djangojs.js``.
 
 For translations with interpolated variables, use Underscore's `_.template <https://underscorejs.org/#template>`__
 function similarly to python's string formatting, calling ``gettext`` on the template and __then__ interpolating
@@ -288,7 +285,7 @@ Keeping translations up to date
 Once a string has been added to the code, we can update the .po file by
 running `makemessages`.
 
-To do this for all langauges::
+To do this for all languages::
 
         $ django-admin makemessages --all
 

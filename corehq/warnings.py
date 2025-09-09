@@ -19,16 +19,17 @@ WHITELIST = [
     # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
+    ("bs4.builder", "option of HTMLParser() has never done anything"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
-    ("nose.importer", "the imp module is deprecated"),
-    ("nose.util", "inspect.getargspec() is deprecated"),
+    ("ddtrace.internal.module", "pkg_resources is deprecated as an API"),
+    ("eulxml", "pkg_resources is deprecated as an API"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
-    ("nose.suite", "'collections.abc'"),
-    ("nose.plugins.collect", "'collections.abc'"),
-    ("", "", RemovedInDjango50Warning),
-    ("", "", RemovedInDjango51Warning),
+
+    ("tastypie.compat", "The django.utils.datetime_safe module is deprecated.", RemovedInDjango50Warning),
+    ("django.db.models.options", "'index_together' is deprecated", RemovedInDjango51Warning),
 
     # warnings that can be resolved with HQ code changes
+    ("", "datetime.datetime.utcnow() is deprecated"),
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
     ("", "property_match are deprecated. Use boolean_expression instead."),
     ("corehq.util.validation", "metaschema specified by $schema was not found"),
@@ -42,12 +43,17 @@ WHITELIST = [
         UserWarning,
     ),
     (
-        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        # Should be removed  after es5 references are removed
         "elasticsearch5.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
-    # Should be removed when Nose is updated
-    ("nose.plugins.manager", "pkg_resources is deprecated as an API."),
+    (
+        # This should be tested on a newer version(>6.8) of ES.Should be removed if fixed
+        "elasticsearch6.connection.http_urllib3",
+        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
+    ),
+    # Open files are leaked all over the place, it will probably take a long time to fix all of them
+    ("", "unclosed file", ResourceWarning),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
@@ -61,10 +67,13 @@ WHITELIST = [
     # warnings that should not be ignored
     # note: override_action "default" causes warning to be printed on stderr
     ("django.db.backends.postgresql.base", "unable to create a connection", RuntimeWarning, "default"),
+    # This is an internal stripe-python warning that is not actionable as of now
+    # It might get resolved in the future, but for now, it is not actionable
+    ("stripe", "For internal stripe-python use only. The public interface will be removed in a future version"),
 ]
 
 
-def configure_warnings(is_testing):
+def configure_warnings(is_testing=False):
     strict = is_testing or os.environ.get("CCHQ_STRICT_WARNINGS")
     if strict:
         augment_warning_messages()

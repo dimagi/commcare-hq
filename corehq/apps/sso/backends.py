@@ -4,10 +4,11 @@ from django.contrib.auth.models import User
 from django.utils.translation import gettext as _
 
 from corehq.apps.registration.models import AsyncSignupRequest
+from corehq.apps.users.util import log_user_change
 from dimagi.utils.web import get_ip
 
 from corehq.apps.analytics.tasks import (
-    track_workflow,
+    track_workflow_noop,
     track_web_user_registration_hubspot,
     send_hubspot_form,
     HUBSPOT_NEW_USER_INVITE_FORM,
@@ -21,6 +22,7 @@ from corehq.apps.sso.utils.session_helpers import (
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.const import (
+    USER_CHANGE_VIA_REACTIVATION,
     USER_CHANGE_VIA_SSO_INVITE,
     USER_CHANGE_VIA_SSO_NEW_USER,
 )
@@ -84,6 +86,12 @@ class SsoBackend(ModelBackend):
         if not is_new_user and not web_user.is_active:
             web_user.is_active = True
             web_user.save()
+            log_user_change(by_domain=None, for_domain=None,
+                            couch_user=web_user, changed_by_user=web_user,
+                            changed_via=USER_CHANGE_VIA_REACTIVATION,
+                            fields_changed={'is_active': web_user.is_active},
+                            by_domain_required_for_log=False, for_domain_required_for_log=False,)
+            user.refresh_from_db()
             request.sso_new_user_messages['success'].append(
                 _("User account for {} has been re-activated.").format(web_user.username)
             )
@@ -111,13 +119,14 @@ class SsoBackend(ModelBackend):
 
         new_web_user = activate_new_user(
             username=username,
-            password=User.objects.make_random_password(),
+            password=None,  # disable password auth
             created_by=created_by,
             created_via=created_via,
             first_name=get_sso_user_first_name_from_session(request),
             last_name=get_sso_user_last_name_from_session(request),
             domain=domain,
             ip=get_ip(request),
+            language=getattr(request, 'LANGUAGE_CODE', None),
         )
         request.sso_new_user_messages['success'].append(
             _("User account for {} created.").format(new_web_user.username)
@@ -135,7 +144,7 @@ class SsoBackend(ModelBackend):
         """
         if not async_signup:
             if settings.IS_SAAS_ENVIRONMENT:
-                track_workflow(
+                track_workflow_noop(
                     new_web_user.username,
                     "Requested New Account via SSO (Bypassed Signup Form)",
                     {
@@ -152,7 +161,7 @@ class SsoBackend(ModelBackend):
             new_web_user.save()
 
         if settings.IS_SAAS_ENVIRONMENT:
-            track_workflow(
+            track_workflow_noop(
                 new_web_user.username,
                 "Requested New Account via SSO",
                 {
@@ -160,7 +169,7 @@ class SsoBackend(ModelBackend):
                 }
             )
             if async_signup.persona:
-                track_workflow(
+                track_workflow_noop(
                     new_web_user.username,
                     "Persona Field Filled Out via SSO",
                     {
@@ -174,7 +183,7 @@ class SsoBackend(ModelBackend):
                     async_signup.additional_hubspot_data,
                 )
             else:
-                track_workflow(
+                track_workflow_noop(
                     new_web_user.username,
                     "New User created through SSO, but Persona info missing"
                 )
@@ -202,11 +211,12 @@ class SsoBackend(ModelBackend):
         )
 
         if settings.IS_SAAS_ENVIRONMENT and is_new_user:
-            track_workflow(
+            track_workflow_noop(
                 web_user.username,
                 "New User Accepted a project invitation with SSO",
                 {"New User Accepted a project invitation": "yes"}
             )
+        if settings.ANALYTICS_IDS.get("HUBSPOT_API_ID") and is_new_user:
             send_hubspot_form(
                 HUBSPOT_NEW_USER_INVITE_FORM,
                 request,

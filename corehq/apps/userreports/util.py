@@ -1,41 +1,35 @@
-import collections
 import hashlib
+import logging
 import re
-from typing import Any, Optional
+import uuid
+from collections.abc import Mapping
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
-from dataclasses import dataclass
+
+from dimagi.utils.couch.undo import is_deleted, remove_deleted_doc_type_suffix
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
-from corehq.apps.userreports.exceptions import BadSpecError, ReportConfigurationNotFoundError, \
-    DataSourceConfigurationNotFoundError
+from corehq.apps.userreports.const import (
+    REPORT_BUILDER_EVENTS_KEY,
+    TEMP_REPORT_PREFIX,
+)
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    DataSourceConfigurationNotFoundError,
+    ReportConfigurationNotFoundError,
+)
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
-from dimagi.utils.couch.undo import is_deleted, remove_deleted_doc_type_suffix
-import logging
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
-
-
-@dataclass
-class DataSourceUpdateLog:
-    domain: str
-    data_source_id: str
-    doc_id: str
-    rows: Optional[list[dict[str, Any]]] = None
-
-    @property
-    def get_id(self):
-        return self.doc_id
 
 
 def localize(value, lang):
@@ -48,7 +42,7 @@ def localize(value, lang):
     :param value: A dict-like object or string
     :param lang: A language code.
     """
-    if isinstance(value, collections.Mapping) and len(value):
+    if isinstance(value, Mapping) and len(value):
         return (
             value.get(lang, None)
             or value.get(default_language(), None)
@@ -161,6 +155,11 @@ def allowed_report_builder_reports(request):
     return 0
 
 
+def get_configurable_and_static_reports_for_data_source(domain, data_source_id):
+    reports = get_configurable_and_static_reports(domain)
+    return [report for report in reports if report.config_id == data_source_id]
+
+
 def get_configurable_and_static_reports(domain):
     from corehq.apps.userreports.models import StaticReportConfiguration
     return get_existing_reports(domain) + StaticReportConfiguration.by_domain(domain)
@@ -192,8 +191,12 @@ def number_of_ucr_reports(domain):
 
 
 def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
-    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter, \
-        MultiDBSqlAdapter, ErrorRaisingMultiDBAdapter
+    from corehq.apps.userreports.sql.adapter import (
+        ErrorRaisingIndicatorSqlAdapter,
+        ErrorRaisingMultiDBAdapter,
+        IndicatorSqlAdapter,
+        MultiDBSqlAdapter,
+    )
     requires_mirroring = config.mirrored_engine_ids
     if requires_mirroring and ENABLE_UCR_MIRRORS.enabled(config.domain):
         adapter_cls = ErrorRaisingMultiDBAdapter if raise_errors else MultiDBSqlAdapter
@@ -265,8 +268,11 @@ def get_async_indicator_modify_lock_key(doc_id):
 
 
 def get_static_report_mapping(from_domain, to_domain):
-    from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
-        CUSTOM_REPORT_PREFIX
+    from corehq.apps.userreports.models import (
+        CUSTOM_REPORT_PREFIX,
+        STATIC_PREFIX,
+        StaticReportConfiguration,
+    )
 
     report_map = {}
 
@@ -316,9 +322,9 @@ def get_report_config_or_not_found(domain, config_id):
 
 def get_ucr_datasource_config_by_id(indicator_config_id, allow_deleted=False):
     from corehq.apps.userreports.models import (
-        id_is_static,
-        StaticDataSourceConfiguration,
         DataSourceConfiguration,
+        StaticDataSourceConfiguration,
+        id_is_static,
     )
     if id_is_static(indicator_config_id):
         return StaticDataSourceConfiguration.by_id(indicator_config_id)
@@ -344,8 +350,8 @@ def _wrap_data_source_by_doc_type(doc, allow_deleted=False):
 
 def wrap_report_config_by_type(config, allow_deleted=False):
     from corehq.apps.userreports.models import (
-        ReportConfiguration,
         RegistryReportConfiguration,
+        ReportConfiguration,
     )
     if is_deleted(config) and not allow_deleted:
         raise ReportConfigurationNotFoundError()
@@ -373,8 +379,12 @@ def get_domain_for_ucr_table_name(table_name):
 
 
 def register_data_source_row_change(domain, data_source_id, doc_ids):
-    from corehq.motech.repeaters.models import DataSourceRepeater
+    from corehq.motech.repeaters.models import (
+        DataSourceRepeater,
+        DataSourceUpdate,
+    )
     from corehq.motech.repeaters.signals import ucr_data_source_updated
+
     try:
         if not (
             toggles.SUPERSET_ANALYTICS.enabled(domain)
@@ -382,16 +392,15 @@ def register_data_source_row_change(domain, data_source_id, doc_ids):
         ):
             return
 
-        for doc_id in doc_ids:
-            update_log = DataSourceUpdateLog(
-                domain,
-                data_source_id=data_source_id,
-                doc_id=doc_id,
-                # We don't need to set `rows` here. We will determine
-                # them at send time. See DataSourceRepeater.payload_doc()
-                rows=None,
-            )
-            ucr_data_source_updated.send_robust(sender=None, update_log=update_log)
+        datasource_update = DataSourceUpdate.objects.create(
+            domain=domain,
+            data_source_id=uuid.UUID(data_source_id),
+            doc_ids=list(doc_ids),
+        )
+        ucr_data_source_updated.send_robust(
+            sender=None,
+            datasource_update=datasource_update
+        )
 
     except Exception as e:
         logging.exception(str(e))

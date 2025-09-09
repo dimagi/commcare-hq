@@ -1,0 +1,31 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/template" id="restore-as-view-template">
+  <div class="module-menu-container">
+    <div class="page-header menu-header d-none d-md-block">
+      <h1 class="page-title">{% trans "Log in as user" %}</h1>
+    </div>
+    <form class="module-search-container js-user-search">
+      <div class="input-group input-group-lg">
+        <input
+          type="text"
+          class="js-user-query form-control"
+          value="<%- query %>"
+          placeholder="{% trans_html_attr "Filter workers" %}" />
+          <button class="btn btn-outline-primary" type="submit">
+            <i class="fa fa-search<% if (isAppPreview) { %> align-top<% } %>" aria-hidden="true"></i>
+          </button>
+      </div>
+    </form>
+    <table class="table module-table">
+      <tbody>
+      </tbody>
+    </table>
+    <% if (endPage) { %>
+      {% block pagination_templates %}
+        {% include 'cloudcare/partials/pagination.html' %}
+      {% endblock %}
+    <% } %>
+  </div>
+</script>

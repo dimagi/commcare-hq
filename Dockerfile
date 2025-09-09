@@ -1,61 +1,59 @@
 # syntax=docker/dockerfile:1
 
-# This Dockerfile is built as the `dimagi/commcarehq_base` image, which
-# is used for running tests.
+# This Dockerfile is built as the `dimagi/commcarehq-pyX.Y` image, where X.Y
+# is the version in .python-version, and which is used for running tests.
 
-FROM python:3.9
-MAINTAINER Dimagi <devops@dimagi.com>
+FROM ghcr.io/astral-sh/uv:0.7.17-python3.13-bookworm-slim
+LABEL org.opencontainers.image.authors="Dimagi <devops@dimagi.com>"
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
     PATH=/vendor/bin:$PATH \
-    NODE_VERSION=20.11.1
+    NODE_VERSION=20.11.1 \
+    # Compile bytecode during installation to improve startup time. Also
+    # suppresses a couchdbkit syntax error that happens during bytecode
+    # compilation.
+    UV_COMPILE_BYTECODE=1 \
+    # Copy from the cache instead of linking since it's a mounted volume
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/vendor
 
 RUN mkdir /vendor
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl gnupg \
+  && curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+  && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends \
+     # allows uv to build dependencies; increases image size by 240 MB
+     build-essential \
+     bzip2 \
+     default-jre \
+     gettext \
+     git \
+     google-chrome-stable \
+     libmagic1 \
+     libpq5 \
+     # for xmlsec on Python 3.13
+     libxml2 libxmlsec1 libxmlsec1-openssl \
+     make \
+  && rm -rf /var/lib/apt/lists/* /src/*.deb
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-     default-jdk \
-     wget \
-     libxml2-dev \
-     libxmlsec1-dev \
-     libxmlsec1-openssl \
-     gettext
-
-# Install latest chrome dev package and fonts to support major
-# charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
-# Note: this installs the necessary libs to make the bundled version
-# of Chromium that Puppeteer installs, work.
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends \
-     google-chrome-unstable \
-     fonts-ipafont-gothic \
-     fonts-wqy-zenhei \
-     fonts-thai-tlwg \
-     fonts-kacst \
-     fonts-freefont-ttf
-
-# Deletes all package sources, so don't apt-get install anything after this:
-RUN rm -rf /var/lib/apt/lists/* /src/*.deb
-
-COPY requirements/test-requirements.txt package.json /vendor/
-
-# prefer https for git checkouts made by pip
-RUN git config --global url."https://".insteadOf git:// \
- && pip install --upgrade pip \
- && pip install -r /vendor/test-requirements.txt --user --upgrade \
- && rm -rf /root/.cache/pip
+COPY .python-version pyproject.toml uv.lock /tmp-project/
+RUN --mount=type=cache,target=/root/.cache/uv \
+  uv sync --locked --group=test --no-dev --project=/tmp-project --no-install-project \
+  && rm -rf /tmp-project
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
-#   executablePath: 'google-chrome-unstable'
-ENV PUPPETEER_SKIP_DOWNLOAD true
+#   executablePath: 'google-chrome-stable'
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
+COPY package.json /vendor/
 RUN npm -g install \
     yarn \
     bower \

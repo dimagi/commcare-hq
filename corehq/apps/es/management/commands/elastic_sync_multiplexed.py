@@ -1,11 +1,11 @@
 import logging
 import time
 import gevent
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.es import CANONICAL_NAME_ADAPTER_MAP
+from corehq.apps.es import canonical_name_adapter_map
 
 import corehq.apps.es.const as es_consts
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
@@ -42,7 +42,7 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000, requests_per_second=None):
+    def start_reindex(self, cname, reindex_batch_size=1000, requests_per_second=None, purge_ids=False):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -57,7 +57,8 @@ class ESSyncUtil:
 
         logger.info("Starting ReIndex process")
         task_id = es_manager.reindex(
-            source_index, destination_index, requests_per_second=requests_per_second
+            source_index, destination_index,
+            requests_per_second=requests_per_second, batch_size=reindex_batch_size, purge_ids=purge_ids
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_number = task_id.split(':')[1]
@@ -161,17 +162,23 @@ class ESSyncUtil:
         """
         es_manager.index_refresh(adapter.primary.index_name)
         es_manager.index_refresh(adapter.secondary.index_name)
-
         self.perform_cleanup(adapter)
 
-        greenlets = gevent.joinall([
-            gevent.spawn(adapter.count, {}),
-            gevent.spawn(adapter.secondary.count, {})
-        ])
-        primary_count, secondary_count = [g.get() for g in greenlets]
+        def get_doc_count(_adapter):
+            return {_adapter.index_name: _adapter.count({})}
 
-        print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
-        print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
+        greenlets = gevent.joinall([
+            gevent.spawn(get_doc_count, adapter.primary),
+            gevent.spawn(get_doc_count, adapter.secondary)
+        ])
+        counts = {}
+        for greenlet in greenlets:
+            counts.update(greenlet.get())
+
+        print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {counts[adapter.primary.index_name]}")
+        print(
+            f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {counts[adapter.secondary.index_name]}\n"
+        )
 
     def display_backfill_subindex_doc_counts_for_domain(self, source_adapter, destination_adapter, domain):
         if not destination_adapter.parent_index_cname:
@@ -204,7 +211,7 @@ class ESSyncUtil:
         except TaskMissing:
             raise CommandError(f"No Reindex process with {task_id} found")
 
-        start_time = datetime.utcfromtimestamp(task_info['start_time_in_millis'] / 1000)
+        start_time = datetime.fromtimestamp(task_info['start_time_in_millis'] / 1000, tz=timezone.utc)
         running_duration_seconds = task_info['running_time_in_nanos'] / 10**9
         duration = timedelta(running_duration_seconds)
 
@@ -260,33 +267,45 @@ class ESSyncUtil:
         older_index = getattr(es_consts, f"HQ_{cname.upper()}_INDEX_NAME")
         return (current_index, older_index)
 
-    def set_checkpoints_for_new_index(self, cname):
+    def set_checkpoints_for_new_index(self, cnames):
         """
-        Takes in an index cname and create new checkpoint for all the pillows that use the older index name
+        Takes in a list of index cnames and creates a new checkpoint for all pillows that use the older index name
         for that cname.
+        If the list of cnames contains 'all', checkpoints will be copied for all indices.
         Can only be performed when indexes are still multiplexed and not swapped.
         When we swap the indexes, the primary index changes which updates the checkpoint names.
         We should stop the pillows and copy the checkpoint to the new checkpoint ids, swap the indexes
         and then start the pillows.
         """
-        adapter = doc_adapter_from_cname(cname)
-        if not isinstance(adapter, ElasticMultiplexAdapter):
-            raise IndexNotMultiplexedException(f"""Checkpoints can be copied on multiplexed indexes.
-                Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to True """)
-
-        current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
-
-        if getattr(es_consts, f'ES_{cname.upper()}_INDEX_SWAPPED'):
-            raise IndexAlreadySwappedException(
-                f"""Checkpoints can only be copied before swapping indexes.
-                Make sure you have set ES_{cname.upper()}_INDEX_SWAPPED to False."""
-            )
-
         all_pillows = get_all_pillow_instances()
+        if 'all' in cnames:
+            assert len(cnames) == 1, f"Unexpected cnames provided with 'all': {cnames}"
+            cnames = iter_index_cnames()
+        for cname in cnames:
+            adapter = doc_adapter_from_cname(cname)
+            if not isinstance(adapter, ElasticMultiplexAdapter):
+                raise IndexNotMultiplexedException(f"""Checkpoints can only be copied on multiplexed indexes.
+                    Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to True """)
+
+            current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
+
+            if getattr(es_consts, f'ES_{cname.upper()}_INDEX_SWAPPED'):
+                raise IndexAlreadySwappedException(
+                    f"""Checkpoints can only be copied before swapping indexes.
+                    Make sure you have set ES_{cname.upper()}_INDEX_SWAPPED to False."""
+                )
+
         for pillow in all_pillows:
             old_checkpoint_id = pillow.checkpoint.checkpoint_id
-            if older_index_name in old_checkpoint_id:
-                new_checkpoint_id = old_checkpoint_id.replace(older_index_name, current_index_name)
+            new_checkpoint_id = old_checkpoint_id
+            checkpoint_updated = False
+            for cname in cnames:
+                current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
+                if older_index_name in old_checkpoint_id:
+                    assert new_checkpoint_id.count(older_index_name) == 1, (new_checkpoint_id, older_index_name)
+                    new_checkpoint_id = new_checkpoint_id.replace(older_index_name, current_index_name)
+                    checkpoint_updated = True
+            if checkpoint_updated:
                 print(f"Copying checkpoints of Checkpoint ID -  [{old_checkpoint_id}] to [{new_checkpoint_id}]")
                 self._copy_checkpoints(pillow, new_checkpoint_id)
 
@@ -297,7 +316,7 @@ class ESSyncUtil:
 
     def estimate_disk_space_for_reindex(self, stdout=None):
         indices_info = es_manager.indices_info()
-        index_cname_map = self._get_index_name_cname_map()
+        index_cname_map = self._get_index_name_cname_map(ignore_subindices=True)
         index_size_rows = []
         total_size = 0
         for index_name in index_cname_map.keys():
@@ -314,8 +333,13 @@ class ESSyncUtil:
         print("\n\n")
         print(f"Minimum free disk space recommended before starting the reindex: {recommended_disk}")
 
-    def _get_index_name_cname_map(self):
-        return {adapter.index_name: cname for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items()}
+    def _get_index_name_cname_map(self, ignore_subindices=False):
+        index_name_cname_map = {}
+        for cname, adapter in canonical_name_adapter_map().items():
+            if ignore_subindices and adapter.parent_index_cname:
+                continue
+            index_name_cname_map[adapter.index_name] = cname
+        return index_name_cname_map
 
     def _format_bytes(self, size):
         units = ['B', 'KB', 'MB', 'GB', 'TB']
@@ -367,9 +391,9 @@ class ESSyncUtil:
             print("No residual indices found on the environment")
 
     def _get_all_known_index_names(self):
-        # get index name from CANONICAL_NAME_ADAPTER_MAP
+        # get index name from canonical_name_adapter_map()
         known_indices = set()
-        for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
+        for cname in canonical_name_adapter_map().keys():
             known_indices.update(self._get_current_and_older_index_name(cname))
         return [index for index in known_indices if index]
 
@@ -457,7 +481,7 @@ class Command(BaseCommand):
 
     For getting current count of both the indices
         ```bash
-        /manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
+        ./manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
         ```
 
     For getting current shard allocation status for the cluster
@@ -549,8 +573,9 @@ class Command(BaseCommand):
         copy_checkpoint_cmd.set_defaults(func=self.es_helper.set_checkpoints_for_new_index)
         copy_checkpoint_cmd.add_argument(
             'index_cname',
-            choices=INDEXES,
-            help="""Cannonical Name of the index whose checkpoints are to be copied""",
+            nargs='+',
+            choices=INDEXES + ['all'],
+            help="""Cannonical Names of the indices whose checkpoints are to be copied""",
         )
 
         # Set replicas for secondary index
@@ -596,7 +621,12 @@ class Command(BaseCommand):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(options['index_cname'], options['batch_size'], options['requests_per_second'])
+            cmd_func(
+                options['index_cname'],
+                options['batch_size'],
+                options['requests_per_second'],
+                options['purge_ids']
+            )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup' or sub_cmd == 'display_doc_counts':

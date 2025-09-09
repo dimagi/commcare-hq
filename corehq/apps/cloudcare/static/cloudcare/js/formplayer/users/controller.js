@@ -1,5 +1,4 @@
-'use strict';
-hqDefine("cloudcare/js/formplayer/users/controller", [
+define("cloudcare/js/formplayer/users/controller", [
     'cloudcare/js/formplayer/users/collections',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/users/models',
@@ -8,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/users/controller", [
     Collections,
     FormplayerFrontend,
     models,
-    views
+    views,
 ) {
     return {
         listUsers: function (page, query) {

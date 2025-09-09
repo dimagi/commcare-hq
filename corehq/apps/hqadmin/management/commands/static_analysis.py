@@ -84,18 +84,15 @@ class Command(BaseCommand):
         self.logger.log("commcare.static_analysis.custom_domain_count", custom_domain_count)
 
     def show_js_dependencies(self):
-        proc = subprocess.Popen(["./scripts/codechecks/hqDefine.sh", "static-analysis"], stdout=subprocess.PIPE)
+        proc = subprocess.Popen(["./scripts/codechecks/amd.sh", "static-analysis"], stdout=subprocess.PIPE)
         output = proc.communicate()[0].strip().decode("utf-8")
-        (step1, step2, step3) = output.split(" ")
+        (step1, step2) = output.split(" ")
 
         self.logger.log("commcare.static_analysis.hqdefine_file_count", int(step1), tags=[
-            'status:unmigrated',
+            'status:esm',
         ])
         self.logger.log("commcare.static_analysis.hqdefine_file_count", int(step2), tags=[
-            'status:hqdefine_only',
-        ])
-        self.logger.log("commcare.static_analysis.requirejs_file_count", int(step3), tags=[
-            'status:migrated',
+            'status:hqdefine',
         ])
 
     def show_toggles(self):

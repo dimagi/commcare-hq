@@ -5,6 +5,7 @@ from memoized import memoized
 
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.smsbillables.async_handlers import (
     PublicSMSRatesAsyncHandler,
@@ -23,8 +24,9 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
-        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -49,8 +51,9 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
-        return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     @memoized

@@ -1,130 +1,268 @@
 --- 
 +++ 
-@@ -4,34 +4,34 @@
-      data-bind="modal: configBeingEdited" tabindex="-1" role="dialog">
+@@ -1,116 +1,172 @@
+ {% load i18n %}
+-<div id="report-config-modal"
+-     class="modal fade"
+-     data-bind="modal: configBeingEdited" tabindex="-1" role="dialog">
++<div
++  id="report-config-modal"
++  class="modal fade"
++  tabindex="-1" role="dialog"
++  data-bind="modal: configBeingEdited"
++>
    <div class="modal-dialog">
-     <div class="modal-content" data-bind="with: configBeingEdited">
--      <div class="modal-header">
+-    <div class="modal-content" data-bind="with: configBeingEdited">
++    <div
++      class="modal-content"
++      data-bind="with: configBeingEdited"
++    >
+       <div class="modal-header">
 -        <button type="button" data-bind="click: $root.unsetConfigBeingEdited" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-+      <div class="modal-header">  {# todo B5: css:modal-header #}
-+        <button type="button" data-bind="click: $root.unsetConfigBeingEdited" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css:close #}
-         <h4 class="modal-title" data-bind="text: modalTitle"></h4>
+-        <h4 class="modal-title" data-bind="text: modalTitle"></h4>
++        <h4
++          class="modal-title"
++          data-bind="text: modalTitle"
++        ></h4>
++        <button
++          class="btn-close"
++          aria-label="{% trans "Close" %}" type="button"
++          data-bind="click: $root.unsetConfigBeingEdited"
++          data-bs-dismiss="modal"
++        ></button>
        </div>
-       <form class="form form-horizontal">
+-      <form class="form form-horizontal">
++      <form class="form">
          <div class="modal-body">
-           <div class="alert alert-danger" data-bind="visible: error, text: errorMessage">
+-          <div class="alert alert-danger" data-bind="visible: error, text: errorMessage">
++          <div
++            class="alert alert-danger"
++            data-bind="visible: error, text: errorMessage"
++          ></div>
++          <div class="mb-3">
++            <label class="form-label" for="save_report_modal_name">{% trans "Name" %}</label>
++            <input
++              class="form-control" id="save_report_modal_name" type="text"
++              data-bind="value: name"
++            />
++            <span class="help-inline">
++              <small class="badge text-bg-secondary">{% trans "Required" %}</small>
++            </span>
            </div>
 -          <div class="form-group">
 -            <label class="control-label col-xs-3" for="name">{% trans "Name" %}</label>
 -            <div class="col-xs-9">
-+          <div class="form-group">  {# todo B5: css:form-group #}
-+            <label class="form-label col-sm-3" for="name">{% trans "Name" %}</label>
-+            <div class="col-sm-9">
-               <input type="text" id="name" data-bind="value: name" class="form-control" />
-               <span class="help-inline">
+-              <input type="text" id="name" data-bind="value: name" class="form-control" />
+-              <span class="help-inline">
 -                                <small class="label label-default">{% trans "Required" %}</small>
-+                                <small class="badge text-bg-secondary">{% trans "Required" %}</small>
-                             </span>
-             </div>
+-                            </span>
+-            </div>
++          <div class="mb-3">
++            <label class="form-label" for="save_report_modal_description">{% trans "Description" %}</label>
++            <textarea
++              id="save_report_modal_description"
++              class="form-control vertical-resize"
++              name="description"
++              rows="3"
++              data-bind="value: description"
++            ></textarea>
            </div>
 -          <div class="form-group">
 -            <label class="control-label col-xs-3" for="description">{% trans "Description" %}</label>
 -            <div class="col-xs-9">
-+          <div class="form-group">  {# todo B5: css:form-group #}
-+            <label class="form-label col-sm-3" for="description">{% trans "Description" %}</label>
-+            <div class="col-sm-9">
-               <textarea rows="3" name="description" data-bind="value: description" class="form-control vertical-resize"></textarea>
+-              <textarea rows="3" name="description" data-bind="value: description" class="form-control vertical-resize"></textarea>
++
++          <div
++            data-bind="visible: has_ucr_datespan"
++          >
++            <div class="mb-3">
++              <label class="form-label" for="save_report_modal_ucr_datespan">{% trans "Date Filter" %}</label>
++              <select
++                class="form-select"
++                id="save_report_modal_ucr_datespan"
++                name="ucr_datespan"
++                data-bind="
++                  options: datespan_filters,
++                  optionsText: 'display',
++                  optionsValue: 'slug',
++                  value: datespan_slug
++                "
++              ></select>
              </div>
            </div>
  
-           <div data-bind="visible: has_ucr_datespan">
+-          <div data-bind="visible: has_ucr_datespan">
 -            <div class="form-group">
 -              <label class="control-label col-xs-3">{% trans "Date Filter" %}</label>
 -              <div class="col-xs-9">
-+            <div class="form-group">  {# todo B5: css:form-group #}
-+              <label class="form-label col-sm-3">{% trans "Date Filter" %}</label>
-+              <div class="col-sm-9">
-                 <select class="form-control"
-                         data-bind="
-                                     options: datespan_filters,
-@@ -44,9 +44,9 @@
-           </div>
- 
-           <div data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())">
+-                <select class="form-control"
+-                        data-bind="
+-                                    options: datespan_filters,
+-                                    optionsText: 'display',
+-                                    optionsValue: 'slug',
+-                                    value: datespan_slug
+-                                "></select>
+-              </div>
++          <div
++            data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())"
++          >
++            <div class="mb-3">
++              <label class="form-label" for="save_report_modal_date_range">{% trans "Default Date Range" %}</label>
++              <select
++                id="save_report_modal_date_range"
++                class="form-select"
++                name="date_range"
++                data-bind="value: date_range"
++              >
++                <option value="last7">{% trans "Last 7 days" %}</option>
++                <option value="last30">{% trans "Last 30 days" %}</option>
++                <option value="lastmonth">{% trans "Last month" %}</option>
++                {% if not hide_lastyear %}
++                  <option value="lastyear">{% trans "Last year" %}</option>
++                {% endif %}
++                <option value="lastn">{% trans "Days ago" %}</option>
++                <option value="since">{% trans "Since a date" %}</option>
++                <option value="range">{% trans "From a date to a date" %}</option>
++              </select>
+             </div>
+-          </div>
+-
+-          <div data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())">
 -            <div class="form-group">
 -              <label class="control-label col-xs-3" for="date_range">{% trans "Default Date Range" %}</label>
 -              <div class="col-xs-9">
-+            <div class="form-group">  {# todo B5: css:form-group #}
-+              <label class="form-label col-sm-3" for="date_range">{% trans "Default Date Range" %}</label>
-+              <div class="col-sm-9">
-                 <select name="date_range" data-bind="value: date_range" class="form-control">
-                   <option value="last7">{% trans "Last 7 days" %}</option>
-                   <option value="last30">{% trans "Last 30 days" %}</option>
-@@ -58,9 +58,9 @@
-                 </select>
-               </div>
+-                <select name="date_range" data-bind="value: date_range" class="form-control">
+-                  <option value="last7">{% trans "Last 7 days" %}</option>
+-                  <option value="last30">{% trans "Last 30 days" %}</option>
+-                  <option value="lastmonth">{% trans "Last month" %}</option>
+-                  {% if not hide_lastyear %}<option value="lastyear">{% trans "Last year" %}</option>{% endif %}
+-                  <option value="lastn">{% trans "Days ago" %}</option>
+-                  <option value="since">{% trans "Since a date" %}</option>
+-                  <option value="range">{% trans "From a date to a date" %}</option>
+-                </select>
+-              </div>
++            <div
++              class="mb-3"
++              data-bind="visible: date_range() === 'lastn'"
++            >
++              <label class="form-label" for="save_report_modal_days">{% trans "Number of Days" %}</label>
++              <input
++                id="save_report_modal_days"
++                class="form-control"
++                name="days"
++                type="number"
++                min="1"
++                step="1"
++                data-bind="value: days"
++              />
++              <span class="help-inline">
++                <small class="badge text-bg-secondary">{% trans "Required" %}</small>
++              </span>
              </div>
 -            <div class="form-group" data-bind="visible: date_range() === 'lastn'">
 -              <label class="control-label col-xs-3" for="days">{% trans "Number of Days" %}</label>
 -              <div class="col-xs-9">
-+            <div class="form-group" data-bind="visible: date_range() === 'lastn'">  {# todo B5: css:form-group #}
-+              <label class="form-label col-sm-3" for="days">{% trans "Number of Days" %}</label>
-+              <div class="col-sm-9">
-                 <input type="number"
-                        name="days"
-                        min="1"
-@@ -68,42 +68,42 @@
-                        data-bind="value: days"
-                        class="form-control" />
-                 <span class="help-inline">
+-                <input type="number"
+-                       name="days"
+-                       min="1"
+-                       step="1"
+-                       data-bind="value: days"
+-                       class="form-control" />
+-                <span class="help-inline">
 -                  <small class="label label-default">{% trans "Required" %}</small>
-+                  <small class="badge text-bg-secondary">{% trans "Required" %}</small>
-                 </span>
-               </div>
+-                </span>
+-              </div>
++            <div
++              class="mb-3"
++              data-bind="visible: date_range() == 'since' || date_range() == 'range'"
++            >
++              <label class="form-label" for="save_report_modal_start_date">{% trans "Begin Date" %}</label>
++              <input
++                id="save_report_modal_start_date"
++                class="date-picker form-control"
++                name="start_date"
++                type="text"
++                placeholder="{% trans "YYYY-MM-DD" %}"
++                data-bind="value: start_date"
++              />
++              <span class="help-inline">
++                <small class="badge text-bg-secondary">{% trans "YYYY-MM-DD" %}</small>
++                <small class="badge text-bg-secondary">{% trans "Required" %}</small>
++              </span>
              </div>
 -            <div class="form-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
 -              <label class="control-label col-xs-3" for="start_date">{% trans "Begin Date" %}</label>
 -              <div class="col-xs-9">
-+            <div class="form-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">  {# todo B5: css:form-group #}
-+              <label class="form-label col-sm-3" for="start_date">{% trans "Begin Date" %}</label>
-+              <div class="col-sm-9">
-                 <input type="text"
-                        class="date-picker form-control"
-                        name="start_date"
-                        data-bind="value: start_date"
-                        placeholder="{% trans "YYYY-MM-DD" %}" />
-                 <span class="help-inline">
+-                <input type="text"
+-                       class="date-picker form-control"
+-                       name="start_date"
+-                       data-bind="value: start_date"
+-                       placeholder="{% trans "YYYY-MM-DD" %}" />
+-                <span class="help-inline">
 -                  <small class="label label-default">{% trans "YYYY-MM-DD" %}</small>
 -                  <small class="label label-default">{% trans "Required" %}</small>
-+                  <small class="badge text-bg-secondary">{% trans "YYYY-MM-DD" %}</small>
-+                  <small class="badge text-bg-secondary">{% trans "Required" %}</small>
-                 </span>
-               </div>
-             </div>
+-                </span>
+-              </div>
+-            </div>
 -            <div class="form-group" data-bind="visible: date_range() == 'range'">
 -              <label class="control-label col-xs-3" for="end_date">{% trans "End Date" %}</label>
 -              <div class="col-xs-9">
-+            <div class="form-group" data-bind="visible: date_range() == 'range'">  {# todo B5: css:form-group #}
-+              <label class="form-label col-sm-3" for="end_date">{% trans "End Date" %}</label>
-+              <div class="col-sm-9">
-                 <input type="text"
-                        class="date-picker form-control"
-                        name="end_date"
-                        data-bind="value: end_date"
-                        placeholder="{% trans "YYYY-MM-DD" %}" />
-                 <span class="help-inline">
+-                <input type="text"
+-                       class="date-picker form-control"
+-                       name="end_date"
+-                       data-bind="value: end_date"
+-                       placeholder="{% trans "YYYY-MM-DD" %}" />
+-                <span class="help-inline">
 -                  <small class="label label-default">{% trans "YYYY-MM-DD" %}</small>
 -                  <small class="label label-default">{% trans "Required" %}</small>
-+                  <small class="badge text-bg-secondary">{% trans "YYYY-MM-DD" %}</small>
-+                  <small class="badge text-bg-secondary">{% trans "Required" %}</small>
-                 </span>
-               </div>
+-                </span>
+-              </div>
++            <div
++              class="mb-3"
++              data-bind="visible: date_range() == 'range'"
++            >
++              <label class="form-label" for="save_report_modal_end_date">{% trans "End Date" %}</label>
++              <input
++                id="save_report_modal_end_date"
++                class="date-picker form-control"
++                name="end_date"
++                type="text"
++                placeholder="{% trans "YYYY-MM-DD" %}"
++                data-bind="value: end_date"
++              />
++              <span class="help-inline">
++                <small class="badge text-bg-secondary">{% trans "YYYY-MM-DD" %}</small>
++                <small class="badge text-bg-secondary">{% trans "Required" %}</small>
++              </span>
              </div>
            </div>
          </div>
          <div class="modal-footer">
 -          <a href="#" class="btn btn-default" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</a>
-+          <a href="#" class="btn btn-outline-primary" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</a>
-           <div class="btn-group"
-                data-bind="click: $root.trackConfigBeingEdited({% if report.spec.report_meta.created_by_builder %}'{{ report.spec.report_meta.builder_report_type }}'{% endif %})">
+-          <div class="btn-group"
+-               data-bind="click: $root.trackConfigBeingEdited({% if report.spec.report_meta.created_by_builder %}'{{ report.spec.report_meta.builder_report_type }}'{% endif %})">
++          <button
++            class="btn btn-outline-primary"
++            type="button"
++            data-bind="click: $root.unsetConfigBeingEdited"
++          >
++            {% trans 'Cancel' %}
++          </button>
++          <div
++            class="btn-group"
++            data-bind="
++              click: $root.trackConfigBeingEdited({% if report.spec.report_meta.created_by_builder %}'{{ report.spec.report_meta.builder_report_type }}'{% endif %})
++            "
++          >
              <span
+               id="modal-save-button"
+               data-bind="
+-                        saveButton2: $root.modalSaveButton.state,
+-                        saveOptions: $root.modalSaveButton.saveOptions"></span>
++                saveButton2: $root.modalSaveButton.state,
++                saveOptions: $root.modalSaveButton.saveOptions
++              "
++            ></span>
+           </div>
+         </div>
+       </form>

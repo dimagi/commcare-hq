@@ -35,6 +35,7 @@ from corehq.apps.es.transient_util import doc_adapter_from_cname
 from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
+from .aggregations import TermsAggregation, FilterAggregation, NestedAggregation
 from .cases import case_adapter
 from .client import BulkActionItem, ElasticDocumentAdapter, create_document_adapter
 from .const import (
@@ -233,8 +234,7 @@ def multiplex_to_adapter(domain):
     return None
 
 
-def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None,
-                        fuzzy_prefix_length=None):
+def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None, boost_first=False):
     """
     Search for all cases where case property with name `case_property_name`` has text value `value`
     """
@@ -245,18 +245,24 @@ def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:
-        kwargs = {'fuzziness': 'AUTO'}
-        if fuzzy_prefix_length:
-            kwargs['prefix_length'] = fuzzy_prefix_length
         return _base_property_query(
             case_property_name,
             filters.OR(
                 # fuzzy match. This portion of this query OR's together multi-word case
                 # property values and doesn't respect multivalue_mode
-                queries.fuzzy(value, PROPERTY_VALUE, **kwargs),
+                queries.fuzzy(value, PROPERTY_VALUE, fuzziness='AUTO', prefix_length=2),
                 # non-fuzzy match. added to improve the score of exact matches
                 queries.match(value, PROPERTY_VALUE, operator=multivalue_mode)
             ),
+        )
+    if boost_first:
+        return _base_property_query(
+            case_property_name,
+            filters.OR(
+                filters.term(PROPERTY_VALUE, value),
+                queries.match(value[0], PROPERTY_VALUE)
+            )
+
         )
     if not fuzzy and multivalue_mode in ['or', 'and']:
         return case_property_text_query(case_property_name, value, operator=multivalue_mode)
@@ -404,6 +410,51 @@ def external_id(external_id):
 
 def indexed_on(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range(INDEXED_ON, gt, gte, lt, lte)
+
+
+def get_case_property_unique_values(domain, case_type, property_name, include_empty=False):
+    """
+    Gets unique values for a specific case property for given domain and case type.
+    Notes:
+    - Uses an ES terms aggregation (avoid high-cardinality fields like UUIDs or datetimes).
+    - Empty string values are returned as '' if include_empty=True.
+    """
+    terms_agg = TermsAggregation(
+        'unique_values',
+        'case_properties.value.exact'
+    )
+
+    filter_agg = FilterAggregation(
+        'property_filter',
+        filters.term('case_properties.key.exact', property_name)
+    ).aggregation(terms_agg)
+
+    nested_agg = NestedAggregation(
+        'nested_case_props',
+        'case_properties'
+    ).aggregation(filter_agg)
+
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .case_type(case_type)
+        .aggregation(nested_agg)
+        .size(0)
+    )
+
+    results = query.run()
+
+    buckets = (
+        results.aggregations
+        .nested_case_props
+        .property_filter
+        .unique_values
+        .normalized_buckets
+    )
+    if include_empty:
+        return [b['key'] for b in buckets]
+    else:
+        return [b['key'] for b in buckets if b['key'] != '']
 
 
 def wrap_case_search_hit(hit, include_score=False):

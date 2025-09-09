@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from corehq.motech.auth import BasicAuthManager
-from corehq.motech.const import ALGO_AES, BASIC_AUTH
+from corehq.motech.const import ALGO_AES_CBC, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
 
 
@@ -30,4 +30,4 @@ class ConnectionSettingsAuthManagerTests(TestCase):
         self.assertEqual(auth_manager.username, self.username)
         self.assertEqual(auth_manager.password, self.password)
         self.assertNotEqual(auth_manager.password, self.connx.password)
-        self.assertTrue(self.connx.password.startswith(f'${ALGO_AES}$'))
+        self.assertTrue(self.connx.password.startswith(f'${ALGO_AES_CBC}$'))

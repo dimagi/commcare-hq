@@ -22,16 +22,10 @@
 
 .form-container .gr {
   background-color: desaturate(lighten($cc-brand-hi, 8), 40);
-  margin-left: -10px;
-  margin-right: -10px;
   padding: 10px;
   margin-bottom: 10px;
   border-bottom: 3px solid desaturate($cc-brand-hi, 30);
   border-top: 3px solid desaturate($cc-brand-hi, 30);
-}
-
-.form-container .gr-has-no-nested-questions {
-  display: none;
 }
 
 .form-container .gr.gr-no-children {
@@ -53,16 +47,8 @@
   padding-top: 0px;
 }
 
-.form-container .form-actions {
-  background-color: transparent;
-  border-top: none;
-  padding-top: 0;
-
-  .btn {
-    width: 100%;
-    font-size: 16px;
-    transition: all .5s;
-  }
+.form-container .form-actions .submit .btn {
+  font-size: 14px;
 }
 
 .form-container {
@@ -73,7 +59,7 @@
   }
 }
 
-.form-group {
+.q {
   padding: 10px 0;
   label {
     margin-right: 10px;
@@ -81,15 +67,12 @@
   }
 }
 
-.form-group.required {
+.q.required {
   transition: all .5s;
   margin-bottom: 0;
-  label:before {
-    display: none;
-  }
 }
 
-.form-group.required.on {
+.q.required.on {
   background-color: $cc-att-neg-hi;
   border: 10px solid $cc-att-neg-mid;
   border-bottom: none;
@@ -119,7 +102,7 @@
   border: none;
 }
 
-.form-group .help-block {
+.q .help-block {
   font-size: 11px;
   &:before {
     content: "\f05a";
@@ -127,4 +110,24 @@
     display: inline-block;
     padding-right: 5px;
   }
+}
+
+.multi-choice {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  position: relative;
+}
+
+.multi-choice-spacer {
+  flex: 1;
+}
+
+.multi-choice-clear {
+  width: max-content;
+  max-width: none;
+  transform: translateX(-50%);
+  left: 50%;
+  position: relative;
+  margin: -3px -5px;  // this is a hack to make the button look more centered
 }
