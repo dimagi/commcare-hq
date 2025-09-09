@@ -609,6 +609,7 @@ class BulkEditSessionChangesTests(CaseDataTestMixin, BaseBulkEditSessionTest):
         for record in self.session.records.all():
             assert record.doc_id in ['c1', 'c2']
 
+    @mock.patch('corehq.apps.data_cleaning.models.session.MAX_SESSION_CHANGES', 3)
     def test_are_bulk_edits_allowed_below_max_changes(self):
         self.session.select_multiple_records(['c1', 'c2'])
         change1 = BulkEditChange(
