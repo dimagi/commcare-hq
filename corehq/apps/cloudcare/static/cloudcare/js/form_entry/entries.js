@@ -1036,7 +1036,8 @@ FileEntry.prototype.onClear = function () {
  */
 function ImageEntry(question, options) {
     FileEntry.call(this, question, options);
-    // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.pyself.accept = "image/*";
+    // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
+    self.accept = "image/*";
 }
 ImageEntry.prototype = Object.create(FileEntry.prototype);
 ImageEntry.prototype.constructor = FileEntry;
@@ -1048,7 +1049,8 @@ function DocumentEntry(question, options) {
     var self = this;
     FileEntry.call(this, question, options);
     self.accept = ".pdf,.xlsx,.docx,.html,.txt,.rtf,.msg";
-    // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.pyself.acceptedMimeTypes = "application/*,text/*";
+    // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
+    self.acceptedMimeTypes = "application/*,text/*";
 }
 DocumentEntry.prototype = Object.create(FileEntry.prototype);
 DocumentEntry.prototype.constructor = FileEntry;
@@ -1070,7 +1072,8 @@ AudioEntry.prototype.constructor = FileEntry;
  */
 function VideoEntry(question, options) {
     FileEntry.call(this, question, options);
-    // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.pyself.accept = "video/*";
+    // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
+    self.accept = "video/*";
 }
 VideoEntry.prototype = Object.create(FileEntry.prototype);
 VideoEntry.prototype.constructor = FileEntry;
