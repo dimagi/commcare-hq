@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 import pytest
 
@@ -7,7 +7,12 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycUser,
+    KycVerificationStatus,
+    UserDataStore,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case

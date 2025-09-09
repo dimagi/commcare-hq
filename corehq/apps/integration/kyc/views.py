@@ -10,11 +10,17 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus, UserDataStore
-from corehq.apps.integration.kyc.services import (
-    verify_users,
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycVerificationStatus,
+    UserDataStore,
 )
-from corehq.apps.integration.kyc.tables import KycVerifyTable, KycUserElasticRecord, KycCaseElasticRecord
+from corehq.apps.integration.kyc.services import verify_users
+from corehq.apps.integration.kyc.tables import (
+    KycCaseElasticRecord,
+    KycUserElasticRecord,
+    KycVerifyTable,
+)
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
 
