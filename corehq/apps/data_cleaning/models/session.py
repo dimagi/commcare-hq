@@ -343,7 +343,7 @@ class BulkEditSession(models.Model):
     def num_changed_records(self):
         if not self.committed_on:
             raise RuntimeError(
-                'Session not committed yet. Please commit the session first or use get_change_counts()'
+                'Session must be committed before counting changed records.'
             )
         return self.result['record_count'] if self.completed_on else self.records.count()
 
