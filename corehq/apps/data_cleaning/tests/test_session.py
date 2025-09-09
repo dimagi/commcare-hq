@@ -583,7 +583,7 @@ class BulkEditSessionChangesTests(CaseDataTestMixin, BaseBulkEditSessionTest):
         for record in self.session.records.all():
             assert record.doc_id in ['c1', 'c2']
 
-    def clear_all_changes(self):
+    def test_clear_all_changes(self):
         self.session.select_multiple_records(['c1', 'c2'])
         change1 = BulkEditChange(
             session=self.session,
@@ -600,16 +600,16 @@ class BulkEditSessionChangesTests(CaseDataTestMixin, BaseBulkEditSessionTest):
         )
         self.session.select_multiple_records(['c1', 'c2', 'c3'])
         change2 = self.session.apply_change_to_selected_records(change2)
-        self.deselect_multiple_records(['c3'])
+        self.session.deselect_multiple_records(['c3'])
         assert self.session.changes.count() == 2
         assert self.session.records.count() == 3
         self.session.clear_all_changes()
         assert self.session.changes.count() == 0
-        assert self.session.records.count() == 1
+        assert self.session.records.count() == 2
         for record in self.session.records.all():
-            assert record.doc_id in ['c1']
+            assert record.doc_id in ['c1', 'c2']
 
-    def are_bulk_edits_allowed_below_max_changes(self):
+    def test_are_bulk_edits_allowed_below_max_changes(self):
         self.session.select_multiple_records(['c1', 'c2'])
         change1 = BulkEditChange(
             session=self.session,
@@ -628,8 +628,8 @@ class BulkEditSessionChangesTests(CaseDataTestMixin, BaseBulkEditSessionTest):
         change2 = self.session.apply_change_to_selected_records(change2)
         assert self.session.are_bulk_edits_allowed()
 
-    @mock.patch('corehq.apps.data_cleaning.models.session.MAX_CHANGES_LIMIT', 2)
-    def are_bulk_edits_not_allowed_above_max_changes(self):
+    @mock.patch('corehq.apps.data_cleaning.models.session.MAX_SESSION_CHANGES', 2)
+    def test_are_bulk_edits_not_allowed_above_max_changes(self):
         self.session.select_multiple_records(['c1', 'c2'])
         change1 = BulkEditChange(
             session=self.session,
