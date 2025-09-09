@@ -104,3 +104,16 @@ class FormSubmissionBuilderTests(TestCase, TestXmlMixin):
         updates = {'eight': 'ocho'}
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
         self.assertEqual(['eight'], errors)
+
+    def test_update_responses_preserves_build_id(self):
+        formxml = FormSubmissionBuilder(form_id='123', form_properties={'nine': 'nueve'}).as_xml_string()
+        xform = submit_form_locally(formxml, DOMAIN).xform
+        xform.build_id = 'b1234'
+        xform.save()
+
+        updates = {'eight': 'ocho'}
+        FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
+
+        new_xform = XFormInstance.objects.partitioned_get(xform.form_id)
+        old_xform = XFormInstance.objects.partitioned_get(new_xform.deprecated_form_id)
+        self.assertEqual(old_xform.build_id, new_xform.build_id)
