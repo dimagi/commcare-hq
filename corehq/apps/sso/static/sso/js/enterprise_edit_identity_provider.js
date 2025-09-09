@@ -3,7 +3,7 @@ import ko from "knockout";
 import emailUtils from "hqwebapp/js/utils/email";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import models from "sso/js/models";
-import "hqwebapp/js/bootstrap3/widgets";
+import "hqwebapp/js/bootstrap5/widgets";
 
 $(function () {
     let ssoExemptUserManager = models.linkedObjectListModel({
