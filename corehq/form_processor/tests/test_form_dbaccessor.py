@@ -116,4 +116,5 @@ class FormSubmissionBuilderTests(TestCase, TestXmlMixin):
 
         new_xform = XFormInstance.objects.partitioned_get(xform.form_id)
         old_xform = XFormInstance.objects.partitioned_get(new_xform.deprecated_form_id)
-        self.assertEqual(old_xform.build_id, new_xform.build_id)
+        self.assertEqual(old_xform.build_id, 'b1234')
+        self.assertEqual(new_xform.build_id, 'b1234')
