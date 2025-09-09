@@ -4,8 +4,8 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory
-from corehq.apps.app_manager.const import USERCASE_TYPE
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
@@ -16,8 +16,8 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationReportView,
     KycVerificationTableView,
 )
-from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.util.test_utils import flag_enabled
 
 

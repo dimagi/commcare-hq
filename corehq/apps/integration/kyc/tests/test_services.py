@@ -1,16 +1,21 @@
 import doctest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-import requests
 from django.test import TestCase
 
 import jsonschema
 import pytest
+import requests
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus, \
-    KycVerificationFailureCause
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycUser,
+    KycVerificationFailureCause,
+    KycVerificationStatus,
+    UserDataStore,
+)
 from corehq.apps.integration.kyc.services import (
     _validate_schema,
     get_user_data_for_api,
