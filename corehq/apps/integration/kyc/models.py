@@ -91,7 +91,7 @@ class KycConfig(models.Model):
             case_type = self.other_case_type
         return CaseSearchES().domain(self.domain).case_type(case_type)
 
-    def get_kyc_users(self):
+    def get_all_kyc_users(self):
         """
         Yields all kyc users in the domain based on the user data store.
         """

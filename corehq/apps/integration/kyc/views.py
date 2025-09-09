@@ -104,7 +104,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
         if request.POST.get('verify_all') == 'true':
-            kyc_users = list(self.kyc_config.get_kyc_users())
+            kyc_users = list(self.kyc_config.get_all_kyc_users())
         else:
             selected_ids = request.POST.getlist('selected_ids')
             kyc_users = list(self.kyc_config.get_kyc_users_by_ids(selected_ids))
