@@ -176,7 +176,7 @@ class AppDataView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     urlname = 'app_data_json'
 
-    @method_decorator(require_can_edit_or_view_apps, name='dispatch')
+    @method_decorator(require_can_edit_or_view_apps)
     def get(self, request, *args, **kwargs):
         modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         return json_response({
