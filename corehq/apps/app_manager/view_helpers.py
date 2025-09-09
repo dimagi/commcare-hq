@@ -1,8 +1,6 @@
-from django.http import Http404
-
-from memoized import memoized
-
 from dimagi.utils.logging import notify_exception
+from django.http import Http404
+from memoized import memoized
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.views.base import DomainViewMixin
