@@ -736,7 +736,6 @@ msgid "You have unchanged user properties settings"
 msgstr "Hai impostazioni delle proprietà utente non modificate"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#, fuzzy
 #| msgid "Property uses unrecognized prefix <strong>"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La proprietà utilizza un prefisso non riconosciuto <strong>"
@@ -1102,16 +1101,14 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} non è un genitore dati valido"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
 #| msgid "Create"
 msgid "createXML"
-msgstr "Crea"
+msgstr "creaXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
 #| msgid "User Data"
 msgid "getData"
-msgstr "Dati utente"
+msgstr "ottieniDati"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "getMugByPath"
@@ -1681,10 +1678,9 @@ msgstr "Riassegnato"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
 #| msgid "Copied!"
 msgid "Copied"
-msgstr "Copiato!"
+msgstr "Copiato"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1698,17 +1694,15 @@ msgstr "Oggi"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
 #| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
-msgstr "Scarica <%- count %> posizioni"
+msgstr "Riassegnati <%- count %> casi"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
 #| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
-msgstr "Scarica <%- count %> posizioni"
+msgstr "Copiati <%- count %> casi"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3626,10 +3620,9 @@ msgid "Unavailable"
 msgstr "Non disponibile"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#, fuzzy
 #| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
-msgstr "Restano <%- days %> giorni"
+msgstr "<%- minutes %> minuti rimanenti"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."

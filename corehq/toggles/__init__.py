@@ -1555,13 +1555,6 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
-    'show_ids_in_report_builder',
-    'Allow adding Case IDs to report builder reports.',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-)
-
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
@@ -1656,18 +1649,6 @@ OPEN_SUBMISSION_ENDPOINT = StaticToggle(
     'Leave submission endpoint open to let old APIs keep working',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
-)
-
-EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
-    'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users or Locations filter',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    description=(
-        "This flag allows you filter the users to display in the same way as the "
-        "other reports - by individual user, group, or location.  Note that this "
-        "will also force the report to always display by user."
-    ),
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -2584,14 +2565,6 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Provides access to views for report scheduling '
                 'such as schedule creation and deletion.'
-)
-
-WEB_USERS_IN_REPORTS = StaticToggle(
-    'web_users_in_reports',
-    'Adds web users to to the body of the Worker Activity and Project Health reports',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Adds web users to the body of the Worker Activity and Project Health reports'
 )
 
 CUSTOM_EMAIL_GATEWAY = StaticToggle(

@@ -1031,7 +1031,15 @@ Question.prototype.fromJS = function (json) {
                 return options.data ? markdown.render(options.data) : null;
             },
         },
-    };
+    hint: {
+                update: function (options) {
+                    if (self.stylesContains(constants.HINT_AS_PLACEHOLDER)) {
+                        return options.data || null;
+                    }
+                    return options.data ? markdown.render(options.data) : null;
+                },
+            },
+        };
 
     ko.mapping.fromJS(json, mapping, self);
 };

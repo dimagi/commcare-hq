@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ {% load i18n %}
+ 
+ <p class="text-center">
+-  <a data-toggle="collapse" data-target="#server-location-select">
++  <a data-bs-toggle="collapse" data-bs-target="#server-location-select">
+     {% blocktrans %}
+       Looking to sign into a different cloud environment?
+     {% endblocktrans %}

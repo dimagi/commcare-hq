@@ -449,6 +449,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 email_text = content_json['report']
 
             email_html = mark_safe(email_text)  # nosec: this is HTML we generate
+            # `render_as` is not an `AllowedRendering` value because
+            # `dispatch_func()` returns `ConfigurableReportView.as_view()`
+            # or `CustomConfigurableReportDispatcher.as_view()`, and those
+            # classes don't extend `GenericReportView`.
             excel_attachment = dispatch_func(render_as='excel') if attach_excel else None
             return ReportContent(email_html, excel_attachment)
         except PermissionDenied:

@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block page_navigation %}
-  <div class=ko-template">
+  <div class="ko-template">
     <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
     <ul class="nav nav-hq-sidebar">
       <!-- ko foreach: caseTypes -->
@@ -185,6 +185,10 @@
   {% initial_page_data 'casePropertyLimit' case_property_limit %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
   {% url 'geospatial_settings' domain as geospatial_settings_url %}
+  <h4 id="dd-loading">
+    <i class="fa fa-spin fa-spinner"></i>
+    {% trans "Loading data dictionary..." %}
+  </h4>
   <div class="ko-template">
     <div id="case-type-error" class="alert alert-danger" hidden>
       <p>
@@ -319,6 +323,12 @@
               <div class="row-item-small"></div>
             {% endif %}
             </div>
+            <h4
+              id="case-type-loading"
+              data-bind="visible: caseTypeIsLoading"
+            ><i class="fa fa-spin fa-spinner"></i>
+              {% trans "Loading properties..." %}
+            </h4>
             <div
               data-bind="
                 sortable: {

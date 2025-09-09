@@ -1,6 +1,7 @@
 import warnings
 from datetime import datetime
 from functools import wraps
+from itertools import islice
 
 from django.core.cache import cache
 from django.urls import reverse
@@ -10,6 +11,7 @@ import dateutil
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.es.users import iter_web_user_emails
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 
@@ -31,6 +33,9 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 
+# Do not prepopulate "recipient_emails" field if more than 1,500 web users
+MAX_WEB_USER_EMAILS = 1_500
+
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
@@ -46,10 +51,19 @@ class ProjectReport(GenericReportView):
     @property
     def template_context(self):
         context = super().template_context
-        context.update({
-            'user_types': HQUserType.human_readable,
-            'email_form': EmailReportForm()
-        })
+        context['user_types'] = HQUserType.human_readable
+        if self.rendered_as == 'view':
+            # Add the email form to the context if it will be rendered
+            email_form = EmailReportForm()
+            # Fetch enough to tell whether there are too many.
+            emails = list(islice(
+                iter_web_user_emails(self.domain),
+                MAX_WEB_USER_EMAILS + 1
+            ))
+            if len(emails) <= MAX_WEB_USER_EMAILS:
+                choices = [(e, e) for e in emails]
+                email_form.fields['recipient_emails'].choices = choices
+            context['email_form'] = email_form
         return context
 
 
