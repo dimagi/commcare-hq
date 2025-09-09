@@ -45,8 +45,7 @@ def check_pillows_for_rewind():
                         'This could mean we are in a rewind state'.format(checkpoint.checkpoint_id),
                 details={
                     'pillow checkpoint seq': checkpoint.get_current_sequence_id(),
-                    'stored seq': historical_seq
-                }
+                    'stored seq': historical_seq}
             )
 
 
@@ -78,7 +77,7 @@ def send_mass_emails(email_for_requesting_user, real_email, subject, html, text)
             'username': h['username'],
             'email': h['email'] or h['username'],
             'first_name': h['first_name'] or 'CommCare User',
-        } for h in UserES().web_users().run().hits]
+        } for h in UserES().web_users().active_on_any_domain().run().hits]
     else:
         recipients = [{
             'username': email_for_requesting_user,
@@ -195,7 +194,8 @@ def track_pg_limits():
             for table, sequence in results:
                 cursor.execute(f'select last_value from "{sequence}"')
                 current_value = cursor.fetchone()[0]
-                metrics_gauge('commcare.postgres.sequence.current_value', current_value, {'table': table, 'database': db})
+                metrics_gauge('commcare.postgres.sequence.current_value',
+                    current_value, {'table': table, 'database': db})
 
 
 @periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))

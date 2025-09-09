@@ -4,28 +4,39 @@ from django.test import TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory
-from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 
+from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.groups import group_adapter
-from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.integration.kyc.models import KycVerificationStatus, UserDataStore, KycConfig
-from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
+from corehq.apps.es.users import user_adapter
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycVerificationStatus,
+    UserDataStore,
+)
+from corehq.apps.integration.payments.const import (
+    PaymentProperties,
+    PaymentStatus,
+)
+from corehq.apps.integration.payments.filters import (
+    BatchNumberFilter,
+    CampaignFilter,
+    PaymentVerifiedByFilter,
+)
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.views import (
+    PaymentConfigurationView,
     PaymentsVerificationReportView,
     PaymentsVerificationTableView,
-    PaymentConfigurationView,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
-from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
 from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
-from corehq.apps.integration.payments.filters import BatchNumberFilter, PaymentVerifiedByFilter
 
 
 class BaseTestPaymentsView(TestCase):
@@ -96,6 +107,7 @@ class BaseTestPaymentsView(TestCase):
         return self.client.get(url)
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestPaymentsVerificationReportView(BaseTestPaymentsView):
     urlname = PaymentsVerificationReportView.urlname
 
@@ -238,6 +250,56 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.context['failure_count'] == 0
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_invalid_status(self):
+        submitted_case = _create_case(
+            self.factory,
+            name='submitted_case',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+            }
+        )
+        self.addCleanup(submitted_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [submitted_case.case_id]},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        assert (
+            b"Only payments in 'Not Verified' or 'Request failed' state are eligible for verification."
+            in response.content
+        )
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_no_cases(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': []},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        assert b"One or more case IDs are required for verification." in response.content
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_limit_crossed(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': ['abcd'] * 101},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        limit = PaymentsVerificationTableView.VERIFICATION_ROWS_LIMIT
+        assert "You can only verify for up to {} cases at a time.".format(limit) in str(response.content)
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_verification_status(self):
         response = self._make_request()
 
@@ -256,6 +318,127 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
             self.case_linked_to_payment_case.case_id: KycVerificationStatus.PASSED
         }
 
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_revert_verification_success(self):
+        verified_case = _create_case(
+            self.factory,
+            name='verified_case',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+                PaymentProperties.PAYMENT_VERIFIED_BY: 'test_user',
+                PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: 'test_user_id',
+                PaymentProperties.PAYMENT_VERIFIED_ON_UTC: '2024-01-01',
+            }
+        )
+        self.addCleanup(verified_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [verified_case.case_id]},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 200
+        verified_case.refresh_from_db()
+        case_json = verified_case.case_json
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED] == 'False'
+        assert case_json[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.NOT_VERIFIED
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY] == ''
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID] == ''
+        assert case_json[PaymentProperties.PAYMENT_VERIFIED_ON_UTC] == ''
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_revert_verification_invalid_status(self):
+        submitted_case = _create_case(
+            self.factory,
+            name='submitted_case',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+            }
+        )
+        self.addCleanup(submitted_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [submitted_case.case_id]},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 400
+        assert (
+            "Only payments in the '{}' state are eligible for verification reversal.".format(
+                PaymentStatus.PENDING_SUBMISSION.label
+            )
+            in str(response.content)
+        )
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_revert_verification_no_cases(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': []},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 400
+        assert b"One or more case IDs are required to revert verification." in response.content
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_revert_verification_limit_crossed(self):
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': ['abcd'] * 101},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 400
+        limit = PaymentsVerificationTableView.REVERT_VERIFICATION_ROWS_LIMIT
+        assert (
+            "You can only revert verification for up to {} cases at a time.".format(limit)
+            in str(response.content)
+        )
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @patch(
+        'corehq.apps.integration.payments.views.PaymentsVerificationTableView.'
+        '_check_for_active_revert_verification_request'
+    )
+    @patch('corehq.apps.integration.payments.views.get_celery_task_tracker')
+    def test_revert_verification_payment_submissions_active(self, mock_task_tracker, *args):
+        # Setup: mock the task tracker to simulate active submissions
+        mock_task_tracker.return_value.is_active.return_value = True
+
+        verified_case = _create_case(
+            self.factory,
+            name='verified_case_active',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: 'True',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+            }
+        )
+        self.addCleanup(verified_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [verified_case.case_id]},
+            headers={'HQ-HX-Action': 'revert_verification'},
+        )
+
+        assert response.status_code == 400
+        assert (
+            b"Payment submissions are currently active for your project and should be completed shortly."
+            b" Please try again later."
+            in response.content
+        )
+
 
 @es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
@@ -273,7 +456,11 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                 data={
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.PAYMENT_VERIFIED: True,
-                    PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING,
+                    PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+                    PaymentProperties.CAMPAIGN: 'Campaign A',
+                    PaymentProperties.ACTIVITY: 'Activity A',
+                    PaymentProperties.FUNDER: 'Funder A',
+                    PaymentProperties.PHONE_NUMBER: '987654321',
                 }),
             _create_case(
                 cls.factory,
@@ -282,12 +469,19 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.PAYMENT_VERIFIED: True,
                     PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
+                    PaymentProperties.CAMPAIGN: 'Campaign A',
+                    PaymentProperties.ACTIVITY: 'Activity A',
+                    PaymentProperties.FUNDER: 'Funder A',
+                    PaymentProperties.PHONE_NUMBER: '123456789'
                 }),
             _create_case(
                 cls.factory,
                 name='baz',
                 data={
                     PaymentProperties.BATCH_NUMBER: 'B001',
+                    PaymentProperties.CAMPAIGN: 'Campaign B',
+                    PaymentProperties.ACTIVITY: 'Activity B',
+                    PaymentProperties.FUNDER: 'Funder B',
                 }),
             _create_case(
                 cls.factory,
@@ -312,24 +506,6 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         assert response.status_code == 404
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_verified_has_two(self):
-        response = self._make_request(querystring='payment_verification_status=verified')
-        queryset = response.context['table'].data
-        assert len(queryset) == 2
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_unverified_has_two(self):
-        response = self._make_request(querystring='payment_verification_status=unverified')
-        queryset = response.context['table'].data
-        assert len(queryset) == 2
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_unfiltered(self):
-        response = self._make_request(querystring='payment_verification_status=')
-        queryset = response.context['table'].data
-        assert len(queryset) == 4
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_batch_number_filter_has_none(self):
         response = self._make_request(querystring='batch_number=9999')
         queryset = response.context['table'].data
@@ -349,7 +525,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_payment_status_filter_pending_payments_has_one(self):
-        response = self._make_request(querystring=f'payment_status={PaymentStatus.PENDING}')
+        response = self._make_request(querystring=f'payment_status={PaymentStatus.PENDING_SUBMISSION}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 
@@ -362,6 +538,30 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_case_owner_filter(self):
         response = self._make_request(querystring=f'{EMWF.slug}=u__{self.user_with_access.user_id}')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_campaign_filter(self):
+        response = self._make_request(querystring=f'{CampaignFilter.slug}=Campaign A')
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_activity_filter(self):
+        response = self._make_request(querystring='activity=Activity A')
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_funder_filter(self):
+        response = self._make_request(querystring='funder=Funder A')
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_phone_number_filter(self):
+        response = self._make_request(querystring='phone_number=987654321')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 

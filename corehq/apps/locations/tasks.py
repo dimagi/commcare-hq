@@ -105,7 +105,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
         close_supply_point_case(domain, supply_point_id)
 
     # unassign users from locations
-    unassign_user_ids = user_ids_at_locations(location_ids)
+    unassign_user_ids = user_ids_at_locations(domain, location_ids)
     for doc in iter_docs(CouchUser.get_db(), unassign_user_ids):
         user = CouchUser.wrap_correctly(doc)
         for location_id in location_ids:
@@ -117,7 +117,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
                 user.unset_location_by_id(location_id, fall_back_to_next=True)
 
     # update fixtures for users at ancestor locations
-    user_ids = user_ids_at_locations(ancestor_ids)
+    user_ids = user_ids_at_locations(domain, ancestor_ids)
     UserLookupTableStatus.bulk_update(user_ids, UserLookupTableStatus.Fixture.LOCATION)
 
 

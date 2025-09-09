@@ -820,13 +820,6 @@ BIOMETRIC_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-CASE_DETAIL_PRINT = StaticToggle(
-    'case_detail_print',
-    'MLabour: Allowing printing of the case detail, based on an HTML template',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 COPY_FORM_TO_APP = StaticToggle(
     'copy_form_to_app',
     'Allow copying a form from one app to another',
@@ -1171,18 +1164,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
         reindex_case_search_for_domain.delay(domain)
 
 
-EXPLORE_CASE_DATA = StaticToggle(
-    'explore_case_data',
-    'Show the Explore Case Data report (in dev)',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    description='Show the Explore Case Data report (in dev). Please make sure the project '
-    'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.\n\n'
-    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
-    'This will be deprecated once the Feature Preview is in full swing.',
-)
-
 SAAS_PROTOTYPE = StaticToggle(
     'saas_prototype',
     'Use allowed to view SaaS prototypes',
@@ -1197,26 +1178,6 @@ FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_USER],
     description='Allows users to save questions to case properties within the Form Builder'
-)
-
-ECD_MIGRATED_DOMAINS = StaticToggle(
-    'ecd_migrated_domains',
-    'Explore Case Data for domains that have undergone migration',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Domains that have undergone migration for Explore Case Data and have a '
-    'CaseSearch elasticsearch index created.\n\n'
-    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
-)
-
-ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
-    'ecd_enterprise_domains',
-    'Explore Case Data feature preview for Enterprise domains',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Enterprise Domains that are eligible to view the Explore Case Data '
-    'Feature Preview. By default, this feature will only be available for '
-    'domains that are Advanced or Pro and have undergone the ECD migration.'
 )
 
 ACTION_TIMES_API = StaticToggle(
@@ -1295,7 +1256,7 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description='Allows printing from CommCare on the device',
     help_link='https://confluence.dimagi.com/display/saas/Printing+from+a+form+in+CommCare+Android',
@@ -1351,7 +1312,7 @@ MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
      'through the app builder'),
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
@@ -1594,13 +1555,6 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
-    'show_ids_in_report_builder',
-    'Allow adding Case IDs to report builder reports.',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-)
-
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
@@ -1695,18 +1649,6 @@ OPEN_SUBMISSION_ENDPOINT = StaticToggle(
     'Leave submission endpoint open to let old APIs keep working',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
-)
-
-EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
-    'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users or Locations filter',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    description=(
-        "This flag allows you filter the users to display in the same way as the "
-        "other reports - by individual user, group, or location.  Note that this "
-        "will also force the report to always display by user."
-    ),
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1870,18 +1812,6 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
-    'filter_on_groups_and_locations',
-    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
-    'ONSE domain with group and location filters',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='For reports filtered by groups and locations, change the OR logic to an AND, so that '
-                '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
-                'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
-                'have group and location filters, such as the Submissions by Form report.',
-)
-
 DONT_INDEX_SAME_CASETYPE = StaticToggle(
     'dont_index_same_casetype',
     "Don't create a parent index if the child case has the same case type as the parent case",
@@ -1913,13 +1843,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
-)
-
-HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
-    'hide_hq_on_mobile_experience',
-    'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN]
 )
 
 COPY_CASES = StaticToggle(
@@ -2006,20 +1929,6 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     When an individual project is having problems with rate limiting,
     use this toggle to lift the restriction for them on a temporary basis,
     just to unblock them while we sort out the conversation with the client.
-    """
-)
-
-RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
-    'rate_limit_repeaters',
-    'Apply rate limiting to data forwarding (repeaters)',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-    description="""
-    Rate limits are based on aggregate time spent waiting on data forwarding responses
-    within tasks for each project within the last second, minute, hour, day, and week windows.
-    Project allowances are based on the number of mobile workers in the project or subscription.
-    Rate limits are only applied (to any project) when global thresholds are surpassed.
-    The specific per-domain and global thresholds can be dynamically updated within the Django Admin.
     """
 )
 
@@ -2148,7 +2057,8 @@ ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TWO_STAGE_USER_PROVISIONING = StaticToggle(
+TWO_STAGE_USER_PROVISIONING = FrozenPrivilegeToggle(
+    privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
     TAG_SOLUTIONS_LIMITED,
@@ -2657,14 +2567,6 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
                 'such as schedule creation and deletion.'
 )
 
-WEB_USERS_IN_REPORTS = StaticToggle(
-    'web_users_in_reports',
-    'Adds web users to to the body of the Worker Activity and Project Health reports',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Adds web users to the body of the Worker Activity and Project Health reports'
-)
-
 CUSTOM_EMAIL_GATEWAY = StaticToggle(
     'custom_email_gateway',
     'Allows user to define custom email gateway that can be used to send emails from HQ',
@@ -2851,14 +2753,6 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
                'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
-DEACTIVATE_WEB_USERS = StaticToggle(
-    slug='deactivate_web_users',
-    label='USH: Deactivate Web Users',
-    tag=TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Allow domains to deactivate web users just for that domain',
-)
-
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
@@ -3012,6 +2906,13 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
+    slug='convert_xml_group_separator',
+    label='Convert the group separator to a symbol XML can support',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

@@ -3,7 +3,7 @@ from itertools import chain
 from unittest.mock import patch, PropertyMock
 
 from django.test import TestCase
-from freezegun import freeze_time
+from time_machine import travel
 
 from faker import Faker
 
@@ -687,7 +687,7 @@ class CaseDeduplicationActionTest(TestCase):
         new_case.server_modified_on = current_time - timedelta(hours=1)
         mock_case_exists.return_value = False
 
-        with freeze_time(current_time):
+        with travel(current_time, tick=False):
             self.rule.run_rule(new_case, datetime.now())
 
         created_duplicates = CaseDuplicateNew.objects.filter(case_id=new_case.case_id)

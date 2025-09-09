@@ -12,6 +12,6 @@ You can also pre-pay for several months at any time by following the steps at ht
 If you have any questions, please don’t hesitate to contact {{ contact_email }}. Thank you for using CommCare.
 
 Best regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org
 {% endblocktrans %}

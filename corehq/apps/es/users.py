@@ -17,8 +17,7 @@ of all unknown users, web users, and demo users on a domain.
 
     query = (user_es.UserES()
              .domain(self.domain)
-             .OR(*user_filters)
-             .show_inactive())
+             .OR(*user_filters))
 
     owner_ids = query.get_ids()
 """
@@ -39,16 +38,17 @@ class UserES(HQESQuery):
     index = HQ_USERS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_deleted': filters.term("base_doc", "couchuser"),
-        'active': filters.term("is_active", True),
     }
 
     @property
     def builtin_filters(self):
         return [
             domain,
+            active_on_any_domain,
             created,
             mobile_users,
             web_users,
+            exclude_dimagi_users,
             user_ids,
             location,
             login_as_user,
@@ -59,18 +59,11 @@ class UserES(HQESQuery):
             is_admin,
             role_id,
             is_active,
+            is_inactive,
+            account_confirmed,
             username,
             missing_or_empty_user_data_property,
-            has_domain_membership,
         ] + super(UserES, self).builtin_filters
-
-    def show_inactive(self):
-        """Include inactive users, which would normally be filtered out."""
-        return self.remove_default_filter('active')
-
-    def show_only_inactive(self):
-        query = self.remove_default_filter('active')
-        return query.is_active(False)
 
 
 class ElasticUser(ElasticDocumentAdapter):
@@ -131,22 +124,62 @@ user_adapter = create_document_adapter(
 )
 
 
-def domain(domain, allow_enterprise=False):
+def domain(domain, *, include_active=True, include_inactive=False):
     domains = [domain] if isinstance(domain, str) else domain
-    if allow_enterprise:
-        domains += list(_get_enterprise_domains(domains))
-    return filters.OR(
+    domain_filter = filters.OR(
         filters.term("domain.exact", domains),
-        filters.term("domain_memberships.domain.exact", domains)
+        filters.nested(
+            'user_domain_memberships',
+            filters.term('user_domain_memberships.domain.exact', domains),
+        )
+    )
+
+    if include_active and include_inactive:  # all
+        return domain_filter
+    if include_active and not include_inactive:  # only active
+        return filters.AND(
+            domain_filter,
+            is_active(domain),
+        )
+    if not include_active and include_inactive:  # only inactive
+        return filters.AND(
+            domain_filter,
+            is_inactive(domain),
+        )
+    return filters.match_none()
+
+
+def is_active(domain):
+    return filters.AND(
+        filters.term("is_active", True),
+        filters.nested('user_domain_memberships', filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.NOT(filters.term('user_domain_memberships.is_active', False)),
+        ))
     )
 
 
-def _get_enterprise_domains(domains):
-    from corehq.apps.enterprise.models import EnterprisePermissions
-    for domain in domains:
-        source_domain = EnterprisePermissions.get_source_domain(domain)
-        if source_domain:
-            yield source_domain
+def is_inactive(domain):
+    return filters.OR(
+        filters.term("is_active", False),
+        filters.nested('user_domain_memberships', filters.AND(
+            filters.term('user_domain_memberships.domain.exact', domain),
+            filters.term('user_domain_memberships.is_active', False),
+        ))
+    )
+
+
+def account_confirmed(is_confirmed=False):
+    return filters.term("is_account_confirmed", is_confirmed)
+
+
+def active_on_any_domain():
+    return filters.AND(
+        filters.term("is_active", True),
+        filters.nested('user_domain_memberships', filters.AND(
+            filters.term('user_domain_memberships.is_active', True)
+        ))
+    )
 
 
 def analytics_enabled(enabled=True):
@@ -190,6 +223,11 @@ def admin_users():
 def demo_users():
     """Matches users who has is_demo_user set to True"""
     return filters.term("is_demo_user", True)
+
+
+def exclude_dimagi_users():
+    """Exclude users whose username ends with @dimagi.com"""
+    return filters.NOT(filters.wildcard("username.exact", "*@dimagi.com"))
 
 
 def created(gt=None, gte=None, lt=None, lte=None):
@@ -240,29 +278,6 @@ def role_id(role_id):
     )
 
 
-def is_active(active=True):
-    return filters.term("is_active", active)
-
-
-def has_domain_membership(domain, active=True):
-    if active:
-        return filters.AND(
-            filters.term("is_active", True),
-            filters.nested('user_domain_memberships', filters.AND(
-                filters.term('user_domain_memberships.domain.exact', domain),
-                filters.NOT(filters.term('user_domain_memberships.is_active', False)),
-            ))
-        )
-    else:
-        return filters.OR(
-            filters.term("is_active", False),
-            filters.nested('user_domain_memberships', filters.AND(
-                filters.term('user_domain_memberships.domain.exact', domain),
-                filters.term('user_domain_memberships.is_active', False),
-            ))
-        )
-
-
 def _user_data(key, filter_):
     # Note: user data does not exist in ES for web users
     return queries.nested(
@@ -311,4 +326,17 @@ def missing_or_empty_user_data_property(property_name):
     return filters.OR(
         _missing_user_data_property(property_name),
         _empty_user_data_property(property_name),
+    )
+
+
+def iter_web_user_emails(domain_name):
+    return (
+        hit['email'] or hit['username']
+        for hit in (
+            UserES()
+            .domain(domain_name)
+            .web_users()
+            .fields(('email', 'username'))
+            .scroll()
+        )
     )

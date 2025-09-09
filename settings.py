@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# flake8: noqa: F405
+# flake8: noqa: E266, F405
 
 import inspect
 from collections import defaultdict
@@ -162,6 +162,7 @@ MIDDLEWARE = [
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.SentryContextMiddleware',
+    'corehq.middleware.SyncUserLanguageMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.middleware.LogLongRequestMiddleware',
@@ -175,6 +176,7 @@ MIDDLEWARE = [
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
+    'corehq.apps.sso.middleware.SingleSignOnErrorMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -189,6 +191,7 @@ MINIMUM_ZXCVBN_SCORE = 2
 MINIMUM_PASSWORD_LENGTH = 8
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
+FORMS_URLFIELD_ASSUME_HTTPS = True
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -198,15 +201,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 PASSWORD_HASHERS = (
-    # this is the default list with SHA1 moved to the front
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'corehq.util.auth.SHA1PasswordHasher',
     'django.contrib.auth.hashers.MD5PasswordHasher',
-    'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
-    'django.contrib.auth.hashers.CryptPasswordHasher',
 )
+PASSWORD_RESET_TIMEOUT = 3600
 
 ROOT_URLCONF = "urls"
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
@@ -481,14 +482,13 @@ SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "support@example.com"
 SAAS_OPS_EMAIL = "saas-ops@example.com"
-PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
 ACCOUNTS_EMAIL = 'accounts@example.com'
 DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'accounts@example.com'
-GROWTH_EMAIL = 'growth@example.com'
+GROWTH_EMAIL = 'saas-revenue-team@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
@@ -831,6 +831,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.ReferCaseRepeater',
     'corehq.motech.repeaters.models.DataRegistryCaseUpdateRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.ConnectFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
@@ -869,7 +870,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 5
+ELASTICSEARCH_MAJOR_VERSION = 6
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
@@ -1163,6 +1164,7 @@ CONNECTID_CLIENT_ID = ''
 CONNECTID_SECRET_KEY = ''
 CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
+CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
@@ -1291,7 +1293,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain',
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
-                'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
@@ -1302,6 +1303,8 @@ TEMPLATES = [
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
+                'corehq.util.context_processors.server_location_display',
+                'corehq.util.context_processors.chat_widget_config',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1694,7 +1697,7 @@ HQ can only provide in HTML.  Please set your email client to view this email
 in HTML or read this email in a client that supports HTML email.
 
 Thanks,
-The CommCare HQ Team"""
+The CommCare Team"""
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',

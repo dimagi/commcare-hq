@@ -37,7 +37,6 @@ dependencies = [
     "crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165",
     "django-cte",
     "django-field-audit",
-    "django-formtools",
     "django-oauth-toolkit",
     "django-otp",
     "django-phonenumber-field",
@@ -55,7 +54,6 @@ dependencies = [
     "django>=4.2.16,<5.0",
     "djangorestframework",
     "dropbox",
-    "elasticsearch5>=5.0.0,<6.0.0",
     "elasticsearch6>=6.0.0,<7.0.0",
     "ethiopian-date-converter",
     "eulxml",
@@ -136,12 +134,6 @@ Repository = "https://github.com/dimagi/commcare-hq"
 [tool.uv]
 required-version = ">=0.7.0"
 default-groups = ["dev", "sso"]
-no-binary-package = [
-    # fixes xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
-    # revisit if new lxml or xmlsec versions are released
-    # https://github.com/xmlsec/python-xmlsec/issues/316
-    "lxml",
-]
 
 [dependency-groups]
 dev = [
@@ -184,18 +176,15 @@ test = [
     'requests-mock',
     'Faker',
     'flaky>=3.8', # required for pytest 8.2 (and possibly earlier versions)
-    'freezegun',
     'radon>=5.0', # v5 no longer depends on flake8-polyfill
-    # pytest is pinned to a git commit until 8.4 is released.
-    # `minversion = 8.4` should also be set in [tool.pytest.ini_options] below at that time.
-    'pytest @ git+https://github.com/pytest-dev/pytest.git@85760bff2776989b365167c7aeb35c86308ab76b',
+    'time-machine',
     'pytest-django',
     'pytest-unmagic',
     'coverage',
 ]
 
 [tool.pytest.ini_options]
-minversion = '8.1'
+minversion = '8.4'
 
 addopts = [
     '--strict-markers',

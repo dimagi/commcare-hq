@@ -480,6 +480,7 @@ def track_periodic_data():
                             .aggregations.domain.counts_by_bucket())
         domains_to_mobile_users = (UserES()
                                    .mobile_users()
+                                   .active_on_any_domain()
                                    .terms_aggregation('domain.exact', 'domain')
                                    .size(0)
                                    .run()
@@ -768,9 +769,10 @@ def generate_partner_reports():
     )
 
 
-def record_event(event_name, couch_user, event_properties=None):
+def record_google_analytics_event(event_name, couch_user, event_properties=None):
     """
-    Record an event in Google Analytics.
+    Record an event in Google Analytics via the Measurement Protocol.
+    See https://developers.google.com/analytics/devguides/collection/protocol/ga4 for details.
     """
     if not couch_user.analytics_enabled:
         return
@@ -787,17 +789,22 @@ def record_event(event_name, couch_user, event_properties=None):
         'client_id': couch_user.userID,
         'user_id': couch_user.userID,
         'timestamp_micros': timestamp,
+        'user_properties': {
+            'hq_environment': {
+                'value': settings.ANALYTICS_CONFIG.get('HQ_INSTANCE')
+            }
+        },
         'events': [{
             'name': event_name,
             'params': event_properties,
         }]
     }
 
-    _record_event_task.delay(json.dumps(event_body))
+    _record_google_analytics_event_task.delay(json.dumps(event_body))
 
 
 @analytics_task()
-def _record_event_task(event_json):
+def _record_google_analytics_event_task(event_json):
     ga_secret = settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_SECRET', None)
     ga_measurement_id = settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_MEASUREMENT_ID', None)
 

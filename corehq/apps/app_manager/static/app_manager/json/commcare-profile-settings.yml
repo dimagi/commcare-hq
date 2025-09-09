@@ -313,6 +313,19 @@
   since: "2.24"
   force: true
 
+- name: "Auto-Capture Location Accuracy"
+  description: "The target accuracy of auto-captured GPS in meters. Once a reading meets this accuracy, it will be captured and the form will stop polling the GPS"
+  id: "cc-gps-auto-capture-accuracy"
+  values:
+    - ['5', '5 Meters']
+    - ['10', '10 Meters']
+    - ['20', '20 Meters']
+    - ['40', '40 Meters']
+    - ['80', '80 Meters']
+  default: 10
+  since: "2.30"
+  force: true
+
 - name: "Default Map Tileset"
   description: "For mobile map displays, chooses a base tileset for the underlying map layer"
   id: "cc-maps-default-layer"
@@ -363,4 +376,20 @@
     - ['com.simprints.id', 'Simprints ID']
   default: []  # multiSelect default takes a list
   since: '2.54'
+  force: true
+
+- id: 'credentials'
+  name: 'Worker Activity'
+  type: 'features'
+  description: >
+    Issues credentials to mobile workers who have been active users of this app for the specified period of time.
+  values:
+    - ['1MON_ACTIVE', '1 Month']
+    - ['2MON_ACTIVE', '2 Months']
+    - ['3MON_ACTIVE', '3 Months']
+    - ['6MON_ACTIVE', '6 Months']
+    - ['9MON_ACTIVE', '9 Months']
+    - ['12MON_ACTIVE', '12 Months']
+  default: '3MON_ACTIVE'
+  group: 'app_activity'
   force: true

@@ -75,6 +75,7 @@ IGNORE_MODELS = {
     'users.ConnectIDMessagingKey',   # handled by cascading delete of user link model (from user model)
     'users.InvitationHistory',
     'users.UserHistory',
+    'ota.IntegritySamplePercentage',
 }
 
 

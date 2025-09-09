@@ -36,7 +36,7 @@ from corehq.apps.users.models import (
     WebUser, HQApiKey,
 )
 from corehq.apps.users.views import _delete_user_role, _update_role_from_view, BaseUploadUser
-from corehq.apps.users.views.mobile.users import MobileWorkerListView
+from corehq.apps.users.views.mobile.users import MobileWorkerListView, CommCareUserPasswordResetView
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.test_utils import (
     flag_enabled,
@@ -666,3 +666,122 @@ class BaseUploadUserTest(TestCase):
         )
         self.assertIsInstance(response, HttpResponseRedirect)
         self.assertEqual(response.url, '/success/')
+
+
+class TestCommCareUserPasswordResetView(TestCase):
+    domain = 'test-password-reset'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = RequestFactory()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.editable_user = CommCareUser.create(cls.domain, 'mobile_user1', 'password123',
+                                             None, None)
+        cls.addClassCleanup(cls.editable_user.delete, cls.domain, deleted_by=None)
+        cls.editable_user_id = cls.editable_user.user_id
+
+        cls.url = reverse(
+            CommCareUserPasswordResetView.urlname,
+            args=[cls.domain, cls.editable_user_id]
+        )
+
+    def _create_request(self, data=None):
+        request = self.factory.post(self.url, data or {})
+        request.domain = self.domain
+        return request
+
+    def _mock_commcare_user(self, is_active=True, has_usable_password=True):
+        mock_user = Mock()
+        mock_user._id = "mock-user-id"
+        mock_user.get_email.return_value = "test@example.com"
+        mock_django_user = Mock()
+        mock_django_user.is_active = is_active
+        mock_django_user.has_usable_password.return_value = has_usable_password
+        mock_user.get_django_user.return_value = mock_django_user
+        return mock_user
+
+    @patch('corehq.apps.users.views.mobile.users.user_can_access_other_user')
+    @patch('corehq.apps.users.views.mobile.users.CommCareUser.get_by_user_id')
+    @patch('corehq.apps.users.views.mobile.users.reverse')
+    @patch('corehq.apps.users.views.mobile.users.messages')
+    def test_inactive_user_fails(self, mock_messages, mock_reverse, mock_get_user, mock_user_can_access):
+        mock_user_can_access.return_value = True
+        mock_reverse.return_value = '/edit/user/url'
+        mock_get_user.return_value = self._mock_commcare_user(is_active=False, has_usable_password=True)
+
+        request = self._create_request()
+
+        view = CommCareUserPasswordResetView()
+        view.setup(request, domain=self.domain, couch_user_id=self.editable_user_id)
+
+        response = view.post(request)
+
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, '/edit/user/url#user-password')
+
+        mock_messages.error.assert_called_once()
+        error_call_args = mock_messages.error.call_args[0]
+        self.assertIn('inactive', str(error_call_args[1]).lower())
+
+    @patch('corehq.apps.users.views.mobile.users.user_can_access_other_user')
+    @patch('corehq.apps.users.views.mobile.users.CommCareUser.get_by_user_id')
+    @patch('corehq.apps.users.views.mobile.users.reverse')
+    @patch('corehq.apps.users.views.mobile.users.messages')
+    def test_user_with_unusable_password_fails(self, mock_messages, mock_reverse, mock_get_user,
+                                               mock_user_can_access):
+        mock_user_can_access.return_value = True
+        mock_reverse.return_value = '/edit/user/url'
+        mock_get_user.return_value = self._mock_commcare_user(is_active=True, has_usable_password=False)
+
+        request = self._create_request()
+
+        view = CommCareUserPasswordResetView()
+        view.setup(request, domain=self.domain, couch_user_id=self.editable_user_id)
+
+        response = view.post(request)
+
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, '/edit/user/url#user-password')
+
+        mock_messages.error.assert_called_once()
+        error_call_args = mock_messages.error.call_args[0]
+        self.assertIn('This user account cannot reset the password.', str(error_call_args[1]))
+
+    @patch('corehq.apps.users.views.mobile.users.user_can_access_other_user')
+    @patch('corehq.apps.users.views.mobile.users.CommCareUser.get_by_user_id')
+    @patch('corehq.apps.users.views.mobile.users.CommCareUserPasswordResetView.get_form')
+    @patch('corehq.apps.users.views.mobile.users.reverse')
+    @patch('corehq.apps.users.views.mobile.users.messages')
+    def test_form_is_valid(self, mock_messages, mock_reverse, mock_form_class,
+                        mock_get_user, mock_user_can_access):
+        mock_user_can_access.return_value = True
+        mock_reverse.return_value = '/edit/user/url'
+        mock_get_user.return_value = self._mock_commcare_user()
+
+        mock_form = Mock()
+        mock_form.is_valid.return_value = True
+        mock_form.save = Mock()
+        mock_form_class.return_value = mock_form
+
+        request = self._create_request()
+        request.is_secure = Mock(return_value=True)
+
+        view = CommCareUserPasswordResetView()
+        view.setup(request, domain=self.domain, couch_user_id=self.editable_user_id)
+
+        response = view.post(request)
+
+        mock_form.save.assert_called_once_with(
+            use_https=True,
+            request=request
+        )
+
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, '/edit/user/url#user-password')
+
+        mock_messages.success.assert_called_once()
+        success_call_args = mock_messages.success.call_args[0]
+        self.assertIn('sent', str(success_call_args[1]).lower())

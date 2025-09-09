@@ -8,8 +8,10 @@ jobs:
   update_translations:
     name: Update transifex translations
     runs-on: ubuntu-latest
+    env:
+      CCHQ_WITHOUT_SSO: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: master
           submodules: recursive
@@ -23,7 +25,7 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Install Python requirements
         run: |
-          uv sync --locked --compile-bytecode --no-progress
+          uv sync --no-group=sso --locked --compile-bytecode --no-progress
           uv pip install openai
       - name: Install transifex client
         run: |

@@ -526,7 +526,13 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
-def get_domain_languages(domain):
+def get_domain_languages(domain, default_to_all_langs=False):
+    """
+    :param default_to_all_langs: returns all languages if no translations have
+    been setup for this domain yet
+    """
+    from corehq.apps.settings.languages import format_language_for_display
+
     app_languages = get_app_languages(domain)
     translations = SMSTranslations.objects.filter(domain=domain).first()
     sms_languages = translations.langs if translations else []
@@ -534,10 +540,13 @@ def get_domain_languages(domain):
     domain_languages = []
     for lang_code in app_languages.union(sms_languages):
         name = langcodes.get_name(lang_code)
-        label = "{} ({})".format(lang_code, name) if name else lang_code
+        label = format_language_for_display(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
 
-    return sorted(domain_languages) or langcodes.get_all_langs_for_select()
+    if not domain_languages and default_to_all_langs:
+        return langcodes.get_all_langs_for_select()
+
+    return sorted(domain_languages)
 
 
 class BaseRoleAccessView(BaseUserSettingsView):
@@ -808,7 +817,7 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().show_inactive().domain(domains).mobile_users().sort('username.exact')
+        UserES().domain(domains, include_inactive=True).mobile_users().sort('username.exact')
         .login_as_user(web_user_usernames)
         .run()
     )
@@ -834,7 +843,7 @@ def paginate_enterprise_users(request, domain):
                 'profile': profile.name if profile else None,
                 'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
                 'loginAsUser': web_user.username,
-                'is_active': mobile_user.is_active,
+                'is_active': mobile_user.is_active_in_domain(mobile_user.domain),
             })
 
     return JsonResponse({
@@ -883,8 +892,7 @@ def paginate_web_users(request, domain):
             'reactivateUrl': '',
         }
         # Omit option to deactivate/reactivate for a domain if user access is controlled by an IdentityProvider
-        if (IdentityProvider.get_required_identity_provider(u.username) is None
-                and toggles.DEACTIVATE_WEB_USERS.enabled(domain)):
+        if IdentityProvider.get_required_identity_provider(u.username) is None:
             if u.is_active_in_domain(domain):
                 user.update({
                     'deactivateUrl': (
@@ -914,8 +922,16 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
     query = request.GET.get('query')
     active_in_domain = json.loads(request.GET.get('showActiveUsers', None))
 
+    user_es = UserES()
+    if active_in_domain is None:
+        user_es = user_es.domain(domains)
+    else:
+        user_es = user_es.domain(domains, include_active=active_in_domain, include_inactive=not active_in_domain)
+        assert len(domains) == 1
+
     user_es = (
-        UserES().domain(domains).web_users().sort('username.exact')
+        user_es
+        .web_users().sort('username.exact')
         .search_string_query(query, ["username", "last_name", "first_name"])
         .start(skip).size(limit)
     )
@@ -923,10 +939,6 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
         assert len(domains) == 1
         domain = domains[0]
         user_es = filter_user_query_by_locations_accessible_to_user(user_es, domain, request.couch_user)
-    if active_in_domain is not None:
-        assert len(domains) == 1
-        domain = domains[0]
-        user_es = user_es.has_domain_membership(domain, active_in_domain)
     result = user_es.run()
 
     return (
@@ -986,7 +998,6 @@ def undo_remove_web_user(request, domain, record_id):
 
 @always_allow_project_access
 @require_can_edit_web_users
-@toggles.DEACTIVATE_WEB_USERS.required_decorator()
 @require_POST
 @location_safe
 def deactivate_web_user(request, domain, couch_user_id):
@@ -1001,7 +1012,6 @@ def deactivate_web_user(request, domain, couch_user_id):
 
 @always_allow_project_access
 @require_can_edit_web_users
-@toggles.DEACTIVATE_WEB_USERS.required_decorator()
 @require_POST
 @location_safe
 def reactivate_web_user(request, domain, couch_user_id):
@@ -1718,7 +1728,9 @@ def change_password(request, domain, login_id):
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
     json_dump = {}
-    if not commcare_user or not user_can_access_other_user(domain, request.couch_user, commcare_user):
+    if (not commcare_user or not user_can_access_other_user(domain, request.couch_user, commcare_user)
+            or (domain_has_privilege(domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
+                and commcare_user.self_set_password)):
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":

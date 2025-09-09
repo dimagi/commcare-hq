@@ -18,7 +18,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
-import langcodes
 import qrcode
 from django_otp import devices_for_user
 from memoized import memoized
@@ -38,6 +37,9 @@ from two_factor.plugins.phonenumber.views import (
 from dimagi.utils.web import json_response
 
 from corehq import toggles
+from corehq import privileges
+
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import (
     active_domains_required,
     login_and_domain_required,
@@ -66,6 +68,7 @@ from corehq.apps.settings.forms import (
     HQPhoneNumberMethodForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.settings.languages import get_languages_for_user
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -157,7 +160,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     @property
     @memoized
     def settings_form(self):
-        language_choices = langcodes.get_all_langs_for_select()
+        language_choices = get_languages_for_user(self.request.couch_user)
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         try:
             domain = self.request.domain
@@ -471,7 +474,7 @@ def _show_link_to_webapps(user):
         if user.domain_memberships:
             membership = user.domain_memberships[0]
             if membership.role and membership.role.default_landing_page == "webapps":
-                if toggles.TWO_STAGE_USER_PROVISIONING.enabled(membership.domain):
+                if domain_has_privilege(membership.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION):
                     return True
     return False
 
@@ -777,7 +780,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 timezone=self.get_user_timezone(),
             )
         return HQApiKeyForm(
-            user_domains=user_domains,
+            user_domains=sorted(user_domains),
             max_allowed_expiration_days=max_expiration_window,
             timezone=self.get_user_timezone(),
         )

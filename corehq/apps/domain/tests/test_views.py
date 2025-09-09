@@ -1,9 +1,9 @@
 from contextlib import contextmanager
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 from django.contrib.messages import get_messages
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.test.client import Client
 from django.urls import reverse
 
@@ -17,18 +17,27 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import ActivityLevel, Application, CredentialApplication
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.views import FlagsAndPrivilegesView
 from corehq.apps.domain.views.settings import (
     MAX_ACTIVE_ALERTS,
     EditDomainAlertView,
+    FeaturePreviewsView,
     ManageDomainAlertsView,
+    CredentialsApplicationSettingsView,
 )
 from corehq.apps.hqwebapp.models import Alert
+from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.users.models import WebUser
+from corehq.feature_previews import FeaturePreview
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater
+from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, Tag
 from corehq.util.test_utils import privilege_enabled
+from corehq.apps.app_manager.dbaccessors import get_app
 
 
 class TestDomainViews(TestCase, DomainSubscriptionMixin):
@@ -537,6 +546,100 @@ class TestSubscriptionRenewalViews(TestCase):
         self.assertEqual(response.context['next_plan'], expected_next_plan.user_facing_description)
 
 
+class TestCredentialsApplicationSettingsView(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.domain = generator.arbitrary_domain()
+        self.user = generator.arbitrary_user(self.domain.name, is_webuser=True, is_admin=True)
+        self.account = generator.billing_account(self.user, self.user.name)
+        self.client = Client()
+        self.client.force_login(user=self.user.get_django_user())
+
+        self.url = reverse(CredentialsApplicationSettingsView.urlname, args=[self.domain.name])
+
+    def tearDown(self):
+        self.user.delete(self.domain.name, deleted_by=None)
+        self.domain.delete()
+        super().tearDown()
+
+    def test_create_new_credential_app(self):
+        app_id = self._get_app().id
+
+        self.client.post(
+            self.url,
+            data={
+                'app_id': app_id,
+            }
+        )
+        credential_app = CredentialApplication.objects.get(app_id=app_id)
+        assert credential_app.activity_level == ActivityLevel.THREE_MONTHS
+
+        app = get_app(self.domain.name, app_id)
+        assert app.profile['features']['credentials'] == ActivityLevel.THREE_MONTHS
+
+    def test_specify_new_credential_app_with_existing_app(self):
+        app_id = self._get_app().id
+        self.client.post(
+            self.url,
+            data={
+                'app_id': app_id,
+            }
+        )
+
+        another_app_id = self._get_app().id
+        self.client.post(
+            self.url,
+            data={
+                'app_id': another_app_id,
+            }
+        )
+        three_months = ActivityLevel.THREE_MONTHS
+
+        credential_app = CredentialApplication.objects.get(app_id=another_app_id)
+        assert not CredentialApplication.objects.filter(app_id=app_id).exists()
+        assert credential_app.activity_level == three_months
+
+        previous_issuing_app = get_app(self.domain.name, app_id)
+        assert 'credentials' not in previous_issuing_app.profile['features']
+
+        new_issuing_app = get_app(self.domain.name, another_app_id)
+        assert new_issuing_app.profile['features']['credentials'] == three_months
+
+    def test_specify_no_credential_app_with_no_existing_issuing_app(self):
+        self.client.post(
+            self.url,
+            data={
+                'app_id': '',
+            }
+        )
+        assert not CredentialApplication.objects.filter(domain=self.domain.name).exists()
+
+    def test_specify_no_credential_app_with_existing_issuing_app(self):
+        app_id = self._get_app().id
+        self.client.post(
+            self.url,
+            data={
+                'app_id': app_id,
+            }
+        )
+
+        self.client.post(
+            self.url,
+            data={
+                'app_id': '',
+            }
+        )
+        previous_issuing_app = get_app(self.domain.name, app_id)
+        assert 'credentials' not in previous_issuing_app.profile['features']
+        assert not CredentialApplication.objects.filter(domain=self.domain.name).exists()
+
+    def _get_app(self):
+        factory = AppFactory(domain=self.domain.name, build_version='2.51.0')
+        app = factory.app
+        app.save()
+        return app
+
+
 @contextmanager
 def domain_fixture(domain_name, allow_domain_requests=False):
     domain = Domain(name=domain_name, is_active=True)
@@ -561,3 +664,155 @@ def connection_fixture(domain_name):
         yield connx
     finally:
         connx.delete()
+
+
+@patch('corehq.toggles.Tag.index', new_callable=PropertyMock(return_value=1))
+class TestFlagsAndPrivilegesViewAccess(TestCase):
+    domain = 'example-domain'
+    url_name = FlagsAndPrivilegesView.urlname
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.tag = Tag(name='test_tag', slug='test_tag', css_class='success', description='Test tag')
+
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.superuser = WebUser.create(
+            domain=cls.domain,
+            username="superuser",
+            password="password",
+            created_by=None,
+            created_via=None,
+            is_superuser=True,
+        )
+        cls.addClassCleanup(cls.superuser.delete, None, None)
+
+        cls.regular_user = WebUser.create(
+            domain=cls.domain,
+            username="regular_user",
+            password="password",
+            created_by=None,
+            created_via=None,
+            is_superuser=False,
+        )
+        cls.addClassCleanup(cls.regular_user.delete, None, None)
+
+    @property
+    def endpoint(self):
+        return reverse(self.url_name, args=[self.domain])
+
+    def test_superuser_access(self, *args):
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_superuser_access(self, *args):
+        self.client.login(username=self.regular_user.username, password='password')
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 302)
+
+    @patch('corehq.apps.domain.views.internal.toggles')
+    @patch('corehq.apps.domain.views.internal.get_editable_toggle_tags_for_user')
+    def test_edit_toggles_access(self, mocked_get_editable_toggle_tags_for_user, mocked_toggles, *args):
+        mocked_get_editable_toggle_tags_for_user.return_value = [self.tag]
+        mocked_toggles.all_toggles.return_value = [
+            StaticToggle(slug='flag_1', label='Flag 1', tag=self.tag),
+            StaticToggle(slug='flag_2', label='Flag 2', tag=self.tag),
+            StaticToggle(
+                slug='flag_3',
+                label='Flag 3',
+                tag=Tag(name='other_tag', slug='other_tag', css_class='info', description='Other tag')
+            ),
+        ]
+
+        self.client.login(username=self.superuser.username, password='password')
+        response = self.client.get(self.endpoint)
+
+        self.assertEqual(response.status_code, 200)
+        for toggle in response.context['toggles']:
+            if toggle['slug'] in ['flag_1', 'flag_2']:
+                self.assertTrue(toggle['can_edit'])
+            else:
+                self.assertFalse(toggle['can_edit'])
+
+
+class TestFeaturePreviewsView(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.user = WebUser.create(
+            domain=cls.domain,
+            username='testuser@test.com',
+            password='password',
+            created_by=None,
+            created_via=None,
+        )
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
+
+        cls.test_feature = FeaturePreview(
+            slug='test-feature',
+            label='Test Feature',
+            description='Test description',
+        )
+
+        cls.factory = RequestFactory()
+        cls.request = cls.factory.post('/fake-url/')
+        cls.request.couch_user = cls.user
+
+        cls.view = FeaturePreviewsView()
+        cls.view.args = (cls.domain,)
+        cls.view.request = cls.request
+
+    def test_enables_feature_and_creates_audit(self):
+        self.view.update_feature(feature=self.test_feature, current_state=False, new_state=True)
+
+        audit_records = ToggleAudit.objects.filter(slug='test-feature')
+        self.assertEqual(audit_records.count(), 1)
+
+        audit = audit_records.first()
+        self.assertEqual(audit.slug, 'test-feature')
+        self.assertEqual(audit.username, 'testuser@test.com')
+        self.assertEqual(audit.action, ToggleAudit.ACTION_ADD)
+        self.assertEqual(audit.namespace, NAMESPACE_DOMAIN)
+        self.assertEqual(audit.item, 'test-domain')
+
+    def test_disables_feature_and_creates_audit(self):
+        self.view.update_feature(feature=self.test_feature, current_state=True, new_state=False)
+
+        audit_records = ToggleAudit.objects.filter(slug='test-feature')
+        self.assertEqual(audit_records.count(), 1)
+
+        audit = audit_records.first()
+        self.assertEqual(audit.slug, 'test-feature')
+        self.assertEqual(audit.username, 'testuser@test.com')
+        self.assertEqual(audit.action, ToggleAudit.ACTION_REMOVE)
+        self.assertEqual(audit.namespace, NAMESPACE_DOMAIN)
+        self.assertEqual(audit.item, 'test-domain')
+
+    def test_update_feature_no_change_does_not_create_audit(self):
+        self.view.update_feature(feature=self.test_feature, current_state=True, new_state=True)
+
+        audit_records = ToggleAudit.objects.filter(slug='test-feature')
+        self.assertEqual(audit_records.count(), 0)
+
+    def test_update_feature_multiple_changes_create_multiple_audits(self):
+        self.view.update_feature(feature=self.test_feature, current_state=False, new_state=True)
+        self.view.update_feature(feature=self.test_feature, current_state=True, new_state=False)
+        self.view.update_feature(feature=self.test_feature, current_state=False, new_state=True)
+
+        audit_records = ToggleAudit.objects.filter(slug='test-feature').order_by('created')
+        self.assertEqual(audit_records.count(), 3)
+
+        actions = [audit.action for audit in audit_records]
+        self.assertEqual(actions, [
+            ToggleAudit.ACTION_ADD,
+            ToggleAudit.ACTION_REMOVE,
+            ToggleAudit.ACTION_ADD
+        ])

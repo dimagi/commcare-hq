@@ -28,20 +28,18 @@ from dimagi.utils.web import json_request, json_response
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
-from corehq.apps.reports.cache import request_cache
-from corehq.apps.reports.const import EXPORT_PAGE_LIMIT
-from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.reports.util import (
-    DatatablesPagination,
-    DatatablesServerSideParams,
-)
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
+
+from .cache import request_cache
+from .const import EXPORT_PAGE_LIMIT, AllowedRenderings
+from .datatables import DataTablesHeader
+from .exceptions import BadRequestError
+from .filters.dates import DatespanFilter
+from .tasks import export_all_rows_task
+from .util import DatatablesPagination, DatatablesServerSideParams
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -125,6 +123,7 @@ class GenericReportView(object):
     section_name = None  # string. ex: "Reports"
     dispatcher = None  # ReportDispatcher subclass
     toggles = ()  # Optionally provide toggles to turn on/off the report
+    rendered_as = None  # Set by ReportDispatcher.dispatch()
 
     # whether to use caching on @request_cache methods. will ignore this if CACHE_REPORTS is set to False
     is_cacheable = False
@@ -569,7 +568,11 @@ class GenericReportView(object):
     @property
     def js_options(self):
         try:
-            async_url = self.get_url(domain=self.domain, render_as='async', relative=True)
+            async_url = self.get_url(
+                domain=self.domain,
+                render_as=AllowedRenderings.ASYNC,
+                relative=True,
+            )
         except NoReverseMatch:
             async_url = ''
         return {
@@ -782,13 +785,6 @@ class GenericReportView(object):
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, relative=False, **kwargs):
-        # NOTE: I'm pretty sure this doesn't work if you ever pass in render_as
-        # but leaving as is for now, as it should be obvious as soon as that
-        # breaks something
-
-        if isinstance(cls, cls):
-            domain = getattr(cls, 'domain')
-            render_as = getattr(cls, 'rendered_as')
         if render_as is not None and render_as not in cls.dispatcher.allowed_renderings():
             raise ValueError('The render_as parameter is not one of the following allowed values: %s' %
                              ', '.join(cls.dispatcher.allowed_renderings()))
@@ -974,7 +970,7 @@ class GenericTabularReport(GenericReportView):
 
     @property
     def pagination_source(self):
-        return self.get_url(domain=self.domain, render_as='json')
+        return self.get_url(domain=self.domain, render_as=AllowedRenderings.JSON)
 
     _pagination = None
 

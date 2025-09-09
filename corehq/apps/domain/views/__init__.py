@@ -41,11 +41,6 @@ from corehq.apps.domain.views.internal import (
     calculated_properties,
     toggle_diff,
 )
-from corehq.apps.domain.views.pro_bono import (
-    ProBonoMixin,
-    ProBonoStaticView,
-    ProBonoView,
-)
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseEditProjectInfoView,
@@ -59,6 +54,7 @@ from corehq.apps.domain.views.settings import (
     FeaturePreviewsView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
+    ImportAppFromAnotherServerView,
     logo,
 )
 from corehq.apps.domain.views.sms import PublicSMSRatesView, SMSRatesView

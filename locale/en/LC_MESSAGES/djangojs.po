@@ -123,7 +123,6 @@ msgid "Billed Monthly"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr ""
 
@@ -1559,7 +1558,12 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
+msgid "Reassigned"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Copied"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
@@ -1569,12 +1573,17 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
+msgid "Today"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
+msgid "Reassigned <%- count %> cases"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+msgid "Copied <%- count %> cases"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
@@ -3373,7 +3382,11 @@ msgid "Error determining number of matching users"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
+msgid "Unavailable"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "<%- minutes %> minutes remaining"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js

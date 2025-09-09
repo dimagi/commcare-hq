@@ -19,6 +19,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import moment from "moment/moment";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import assertProperties from "hqwebapp/js/assert_properties";
 import googleAnalytics from "analytix/js/google";
@@ -38,7 +39,6 @@ var STATUS = {
     SUCCESS: 'success',
     WARNING: 'warning',
     ERROR: 'danger',
-    DISABLED: 'disabled',
 };
 
 var rmi = function () {};
@@ -62,6 +62,7 @@ var userModel = function (options) {
         is_account_confirmed: true,
         is_personalid_link_active: null,
         deactivate_after_date: '',
+        confirmation_sent_at: null,
     });
 
     var self = ko.mapping.fromJS(options);
@@ -72,18 +73,45 @@ var userModel = function (options) {
         can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
     });
 
+    self.confirmationSentAtText = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return gettext('Unavailable');
+        }
+        return moment(self.confirmation_sent_at()).format("MMMM Do YYYY, h:mm a");
+    });
+
+    self.minutesRemaining = ko.computed(function () {
+        var expirationDate = new Date(self.confirmation_sent_at());
+        expirationDate.setHours(expirationDate.getHours() + 1);
+        return (expirationDate - new Date()) / (60 * 1000);
+    });
+    self.isExpired = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return false;
+        }
+        return self.minutesRemaining() < 0;
+    });
+    self.minutesRemainingText = ko.computed(function () {
+        if (!self.confirmation_sent_at()) {
+            return '';
+        }
+        return _.template(gettext("<%- minutes %> minutes remaining"))({
+            minutes: Math.floor(self.minutesRemaining()),
+        });
+    });
+
     self.email.extend({
         emailRFC2822: true,
     });
 
     // used by two-stage provisioning
     self.emailRequired = ko.observable(self.force_account_confirmation());
-    self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
+    self.requireAccountConfirmation = ko.observable(self.force_account_confirmation());
 
     // used by two-stage sms provisioning
     self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
 
-    self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
+    self.passwordVisible = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
 
     self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -137,6 +165,7 @@ var userModel = function (options) {
                 $modal.modal('hide');
                 if (data.success) {
                     self.action_error('');
+                    self.confirmation_sent_at(new Date());
                 } else {
                     self.action_error(data.error);
                 }
@@ -162,6 +191,7 @@ var userModel = function (options) {
                 $modal.modal('hide');
                 if (data.success) {
                     self.action_error('');
+                    self.confirmation_sent_at(new Date());
                 } else {
                     self.action_error(data.error);
                 }
@@ -287,14 +317,6 @@ var newUserCreationModel = function (options) {
             return self.STATUS.NONE;
         }
 
-        if (self.stagedUser().force_account_confirmation()) {
-            return self.STATUS.DISABLED;
-        }
-
-        if (self.stagedUser().force_account_confirmation_by_sms()) {
-            return self.STATUS.DISABLED;
-        }
-
         if (!self.useStrongPasswords()) {
             // No validation
             return self.STATUS.NONE;
@@ -355,16 +377,14 @@ var newUserCreationModel = function (options) {
             return self.STATUS.NONE;
         }
 
-        if (self.requiredEmailMissing() || self.emailIsInvalid()) {
+        if (self.emailIsInvalid()) {
             return self.STATUS.ERROR;
         }
     });
 
     self.emailStatusMessage = ko.computed(function () {
 
-        if (self.requiredEmailMissing()) {
-            return gettext('Email address is required when users confirm their own accounts.');
-        } else if (self.emailIsInvalid()) {
+        if (self.emailIsInvalid()) {
             return gettext('Please enter a valid email address.');
         }
         return "";
@@ -496,14 +516,14 @@ var newUserCreationModel = function (options) {
                 user.emailRequired(true);
                 // clear and disable password input
                 user.password('');
-                user.passwordEnabled(false);
-                user.sendConfirmationEmailEnabled(true);
+                user.passwordVisible(false);
+                user.requireAccountConfirmation(true);
             } else {
                 // make email optional
                 user.emailRequired(false);
                 // enable password input
-                user.passwordEnabled(true);
-                user.sendConfirmationEmailEnabled(false);
+                user.passwordVisible(true);
+                user.requireAccountConfirmation(false);
                 // uncheck email confirmation box if it was checked
                 user.send_account_confirmation_email(false);
             }
@@ -514,13 +534,15 @@ var newUserCreationModel = function (options) {
                 user.phoneRequired(true);
                 // clear and disable password input
                 user.password('');
-                user.passwordEnabled(false);
-                user.sendConfirmationEmailEnabled(true);
+                user.passwordVisible(false);
+                user.requireAccountConfirmation(true);
             } else {
                 // make phone number optional
                 user.phoneRequired(false);
                 // enable password input
-                user.passwordEnabled(true);
+                user.passwordVisible(true);
+                user.requireAccountConfirmation(false);
+                user.send_account_confirmation_email(false);
             }
         });
     });
@@ -562,7 +584,7 @@ var newUserCreationModel = function (options) {
         if (!self.stagedUser().username()) {
             return false;
         }
-        if (self.stagedUser().passwordEnabled()) {
+        if (self.stagedUser().passwordVisible()) {
             if  (!self.stagedUser().password()) {
                 return false;
             }
@@ -598,7 +620,7 @@ var newUserCreationModel = function (options) {
         self.newUsers.push(newUser);
         newUser.creation_status(STATUS.PENDING);
         // if we disabled the password, set it just in time before going to the server
-        if (!newUser.passwordEnabled()) {
+        if (!newUser.passwordVisible()) {
             newUser.password(self.generateStrongPassword());
         }
         rmi('create_mobile_worker', {
@@ -624,6 +646,72 @@ var newUserCreationModel = function (options) {
     return self;
 };
 
+var usersConfirmationModel = function () {
+    var self = {};
+    self.users = ko.observableArray();
+
+    self.itemsPerPage = ko.observable(5);
+    self.totalItems = ko.observable();
+
+    self.query = ko.observable('');
+
+    // Visibility of spinners, messages, and user table
+    self.hasError = ko.observable(false);
+    self.showLoadingSpinner = ko.observable(true);
+    self.showPaginationSpinner = ko.observable(false);
+    self.projectHasUsers = ko.observable(true);
+
+    self.showProjectHasNoUsers = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError() && !self.projectHasUsers();
+    });
+
+    self.showNoUsers = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
+    });
+
+    self.showTable = ko.computed(function () {
+        return !self.showLoadingSpinner() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
+    });
+
+    self.goToPage = function (page) {
+        self.users.removeAll();
+        $.ajax({
+            method: 'GET',
+            url: initialPageData.reverse('paginate_mobile_workers'),
+            data: {
+                page: page || 1,
+                query: self.query(),
+                limit: self.itemsPerPage(),
+                showDeactivatedUsers: true,
+                showUnconfirmedUsers: true,
+            },
+            success: function (data) {
+                self.totalItems(data.total);
+                self.users(_.map(data.users, function (user) {
+                    return userModel(user);
+                }));
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+                self.hasError(false);
+                if (!self.query()) {
+                    self.projectHasUsers(!!data.users.length);
+                }
+            },
+            error: function () {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+                self.hasError(true);
+            },
+
+        });
+    };
+    self.onPaginationLoad = function () {
+        self.goToPage(1);
+    };
+
+    return self;
+};
+
 $(function () {
     var rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
     rmi = function (remoteMethod, data) {
@@ -643,4 +731,5 @@ $(function () {
     $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
     $("#new-user-modal").koApplyBindings(newUserCreation);
     $("#new-users-list").koApplyBindings(newUserCreation);
+    $("#mobile-worker-confirmation-panel").koApplyBindings(usersConfirmationModel);
 });

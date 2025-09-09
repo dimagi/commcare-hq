@@ -1,3 +1,6 @@
+import types
+from collections import Counter
+
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -6,6 +9,7 @@ from corehq.apps.es.users import (
     UserES,
     _empty_user_data_property,
     _missing_user_data_property,
+    iter_web_user_emails,
     missing_or_empty_user_data_property,
     user_adapter,
 )
@@ -65,7 +69,7 @@ class TestUserDataFilters(TestCase):
                    .get_ids())
 
         expected_ids = [self.user_no_data.user_id, self.user_empty_data.user_id, self.user_other_data.user_id]
-        self.assertCountEqual(results, expected_ids)
+        assert Counter(results) == Counter(expected_ids)
 
     def test_missing_or_empty_user_data_multiple_properties(self):
         results = (UserES()
@@ -75,7 +79,7 @@ class TestUserDataFilters(TestCase):
                    .get_ids())
 
         expected_ids = [self.user_no_data.user_id, self.user_empty_data.user_id]
-        self.assertCountEqual(results, expected_ids)
+        assert Counter(results) == Counter(expected_ids)
 
     def test_missing_user_data_property(self):
         results = (UserES()
@@ -84,7 +88,7 @@ class TestUserDataFilters(TestCase):
                    .get_ids())
 
         expected_ids = [self.user_no_data.user_id, self.user_other_data.user_id]
-        self.assertCountEqual(results, expected_ids)
+        assert Counter(results) == Counter(expected_ids)
 
     def test_empty_user_data_property(self):
         results = (UserES()
@@ -93,7 +97,7 @@ class TestUserDataFilters(TestCase):
                    .get_ids())
 
         expected_ids = [self.user_empty_data.user_id]
-        self.assertCountEqual(results, expected_ids)
+        assert Counter(results) == Counter(expected_ids)
 
 
 @es_test(requires=[user_adapter], setup_class=True)
@@ -111,7 +115,7 @@ class TestIsActiveOnDomain(TestCase):
         cls.cc_user_active_other_domain = cls.make_cc_user('cc_user_active_other_domain', cls.other_domain)
         cls.cc_user_inactive_other_domain = cls.make_cc_user(
             'cc_user_inactive_other_domain', cls.other_domain, is_active=False)
-        cls.web_user_active = cls.make_web_user('web_user_active', active_domains=[cls.domain])
+        cls.web_user_active = cls.make_web_user('web_user_active@dimagi.com', active_domains=[cls.domain])
         cls.web_user_inactive = cls.make_web_user('web_user_inactive', inactive_domains=[cls.domain])
         cls.web_user_active_other_domain = cls.make_web_user(
             'web_user_active_other_domain', active_domains=[cls.other_domain])
@@ -129,7 +133,7 @@ class TestIsActiveOnDomain(TestCase):
     @classmethod
     def make_cc_user(cls, username, domain, is_active=True):
         user = CommCareUser.create(domain, username, "***********", None, None)
-        user.is_active = is_active
+        user.set_is_active(domain, is_active)
         user_adapter.index(user, refresh=True)
         cls.addClassCleanup(user.delete, None, None)
         cls.addClassCleanup(user_adapter.delete, user._id)
@@ -148,99 +152,110 @@ class TestIsActiveOnDomain(TestCase):
         return user
 
     def test_get_all(self):
-        self.assertItemsEqual(
-            UserES().show_inactive().values_list('username', flat=True),
-            [
-                'cc_user_active',
-                'cc_user_inactive',
-                'cc_user_active_other_domain',
-                'cc_user_inactive_other_domain',
-                'web_user_active',
-                'web_user_inactive',
-                'web_user_active_other_domain',
-                'web_user_inactive_other_domain',
-                'web_user_active_both_domains',
-                'web_user_inactive_both_domains',
-                'web_user_active_inactive_other',
-                'web_user_inactive_active_other',
-            ]
-        )
+        assert Counter(
+            UserES().values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_active',
+            'cc_user_inactive',
+            'cc_user_active_other_domain',
+            'cc_user_inactive_other_domain',
+            'web_user_active@dimagi.com',
+            'web_user_inactive',
+            'web_user_active_other_domain',
+            'web_user_inactive_other_domain',
+            'web_user_active_both_domains',
+            'web_user_inactive_both_domains',
+            'web_user_active_inactive_other',
+            'web_user_inactive_active_other',
+        ])
 
     def test_get_active_in_domain(self):
-        self.assertItemsEqual(
-            UserES().domain(self.domain).has_domain_membership(self.domain, active=True)
-            .values_list('username', flat=True),
-            [
-                'cc_user_active',
-                'web_user_active',
-                'web_user_active_both_domains',
-                'web_user_active_inactive_other',
-            ]
-        )
+        assert Counter(
+            UserES().domain(self.domain).values_list('username', flat=True),
+        ) == Counter([
+            'cc_user_active',
+            'web_user_active@dimagi.com',
+            'web_user_active_both_domains',
+            'web_user_active_inactive_other',
+        ])
 
     def test_get_inactive_in_domain(self):
-        self.assertItemsEqual(
+        assert Counter(
             UserES()
-            .domain(self.domain)
-            .show_inactive()
-            .has_domain_membership(self.domain, active=False)
-            .values_list('username', flat=True),
-            [
-                'cc_user_inactive',
-                'web_user_inactive',
-                'web_user_inactive_both_domains',
-                'web_user_inactive_active_other',
-            ]
-        )
+            .domain(self.domain, include_inactive=True, include_active=False)
+            .values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_inactive',
+            'web_user_inactive',
+            'web_user_inactive_both_domains',
+            'web_user_inactive_active_other',
+        ])
 
     def test_get_all_in_domain(self):
-        self.assertItemsEqual(
-            UserES().domain(self.domain).show_inactive().values_list('username', flat=True),
-            [
-                'cc_user_active',
-                'cc_user_inactive',
-                'web_user_active',
-                'web_user_inactive',
-                'web_user_active_both_domains',
-                'web_user_inactive_both_domains',
-                'web_user_active_inactive_other',
-                'web_user_inactive_active_other',
-            ]
-        )
+        assert Counter(
+            UserES()
+            .domain(self.domain, include_inactive=True)
+            .values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_active',
+            'cc_user_inactive',
+            'web_user_active@dimagi.com',
+            'web_user_inactive',
+            'web_user_active_both_domains',
+            'web_user_inactive_both_domains',
+            'web_user_active_inactive_other',
+            'web_user_inactive_active_other',
+        ])
 
     def test_get_active_in_domains(self):
         domains = [self.domain, self.other_domain]
-        self.assertItemsEqual(
+        assert Counter(
             UserES()
             .domain(domains)
-            .has_domain_membership(domains, active=True)
-            .values_list('username', flat=True),
-            [
-                'cc_user_active',
-                'cc_user_active_other_domain',
-                'web_user_active',
-                'web_user_active_other_domain',
-                'web_user_active_both_domains',
-                'web_user_active_inactive_other',
-                'web_user_inactive_active_other',
-            ]
-        )
+            .values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_active',
+            'cc_user_active_other_domain',
+            'web_user_active@dimagi.com',
+            'web_user_active_other_domain',
+            'web_user_active_both_domains',
+            'web_user_active_inactive_other',
+            'web_user_inactive_active_other',
+        ])
 
     def test_get_inactive_in_domains(self):
         domains = [self.domain, self.other_domain]
-        self.assertItemsEqual(
+        assert Counter(
             UserES()
-            .domain(domains)
-            .show_inactive()
-            .has_domain_membership(domains, active=False)
-            .values_list('username', flat=True),
-            [
-                'cc_user_inactive',
-                'cc_user_inactive_other_domain',
-                'web_user_inactive',
-                'web_user_inactive_other_domain',
-                'web_user_inactive_both_domains',
-                'web_user_active_inactive_other',
-                'web_user_inactive_active_other',
-            ]
-        )
+            .domain(domains, include_active=False, include_inactive=True)
+            .values_list('username', flat=True)
+        ) == Counter([
+            'cc_user_inactive',
+            'cc_user_inactive_other_domain',
+            'web_user_inactive',
+            'web_user_inactive_other_domain',
+            'web_user_inactive_both_domains',
+            'web_user_active_inactive_other',
+            'web_user_inactive_active_other',
+        ])
+
+    def test_iter_web_user_emails(self):
+        web_user_emails = iter_web_user_emails(self.domain)
+        assert isinstance(web_user_emails, types.GeneratorType)
+        assert Counter(list(web_user_emails)) == Counter([
+            'web_user_active@dimagi.com',
+            'web_user_active_both_domains',
+            'web_user_active_inactive_other',
+        ])
+
+    def test_exclude_dimagi_users(self):
+        assert Counter(
+            UserES()
+            .domain([self.domain])
+            .web_users()
+            .exclude_dimagi_users()
+            .values_list('username', flat=True)
+        ) == Counter([
+            'web_user_active_both_domains',
+            'web_user_active_inactive_other',
+        ])

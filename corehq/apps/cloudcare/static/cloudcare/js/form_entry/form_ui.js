@@ -974,7 +974,9 @@ define("cloudcare/js/form_entry/form_ui", [
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
         };
-        self.afterRender = function () { self.entry.afterRender(); };
+        self.afterRender = function (elements, entry) {
+            self.entry.afterRender(elements, entry);
+        };
 
         self.ixInfo = function (o) {
             var fullIx = getIx(o);
@@ -1042,6 +1044,14 @@ define("cloudcare/js/form_entry/form_ui", [
             },
             help: {
                 update: function (options) {
+                    return options.data ? markdown.render(options.data) : null;
+                },
+            },
+            hint: {
+                update: function (options) {
+                    if (self.stylesContains(constants.HINT_AS_PLACEHOLDER)) {
+                        return options.data || null;
+                    }
                     return options.data ? markdown.render(options.data) : null;
                 },
             },

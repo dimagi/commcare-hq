@@ -38,14 +38,16 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop, activate
+from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
+
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
@@ -87,7 +89,7 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
-from corehq.apps.hqwebapp.models import HQOauthApplication
+from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
@@ -110,7 +112,7 @@ from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.view_utils import reverse
+from corehq.util.view_utils import reverse, set_language_cookie
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
@@ -370,6 +372,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
         context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
+            'support_email': settings.SUPPORT_EMAIL,
         },
         request=request,
     ))
@@ -407,9 +410,9 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'default_password_reset_link': reverse('domain_password_reset_email', kwargs={'domain': domain_name}),
         })
     else:
-        commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
+        commcare_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_NAME"]
         context.update({
-            'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
+            'current_page': {'page_name': _('Welcome back to %s!') % commcare_name},
             'default_password_reset_link': reverse('password_reset_email'),
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
@@ -431,10 +434,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
-            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
             # reset cookie to an empty list on login to show domain alerts again
             response.set_cookie('viewed_domain_alerts', [])
-            activate(couch_user.language)
 
     return response
 
@@ -524,6 +525,16 @@ class HQLoginView(LoginView):
                 return HttpResponseRedirect(idp.get_login_url(username=username))
         return super().post(*args, **kwargs)
 
+    def can_select_server(self):
+        env = settings.SERVER_ENVIRONMENT
+        # domain is server-specific, so we won't give the option to switch servers on domain logins
+        is_domain_login = self.extra_context.get('domain')
+        # also check the next param, because domain or other server-specific ids can exist there
+        has_next_url = self.request.GET.get('next')
+        return (env in ServerLocation.ENVS
+                and not is_domain_login
+                and not has_next_url)
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
@@ -538,6 +549,12 @@ class HQLoginView(LoginView):
             and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
+        context['can_select_server'] = self.can_select_server()
+        if self.can_select_server():
+            context['server_choices'] = [
+                server for env, server in ServerLocation.ENVS.items()
+                if env != settings.SERVER_ENVIRONMENT
+            ]
         if domain and not is_domain_using_sso(domain):
             # ensure that domain login pages not associated with SSO do not
             # enforce SSO on the login screen
@@ -1543,3 +1560,27 @@ def check_sso_login_status(request):
         'sso_url': sso_url,
         'continue_text': continue_text,
     })
+
+
+@require_POST
+def set_language(request):
+    """
+    Redirect to the current page while setting the chosen language, if valid.
+    If no http referer is available or it is not safe, just set the language.
+    Based on django.views.i18n.set_language.
+    """
+    next_url = request.META.get("HTTP_REFERER")
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        response = HttpResponseRedirect(next_url)
+    else:
+        response = HttpResponse(status=204)
+
+    lang_code = request.POST.get("language")
+    valid_lang_codes = [lang_code for lang_code, __ in settings.LANGUAGES]
+    if lang_code and lang_code in valid_lang_codes:
+        response = set_language_cookie(response, lang_code)
+    return response

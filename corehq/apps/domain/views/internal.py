@@ -19,6 +19,7 @@ from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from corehq.motech.rate_limiter import repeater_rate_limiter
+from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -128,7 +129,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if can_edit_eula:
             internal_attrs += [
                 'custom_eula',
-                'can_use_data',
             ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
@@ -178,23 +178,18 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             )
             eula_props_changed = (
                 bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula)
-                or bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data)
             )
 
             if eula_props_changed and settings.EULA_CHANGE_EMAIL:
                 message = '\n'.join([
-                    '{user} changed either the EULA or data sharing properties for domain {domain}.',
+                    '{user} changed the EULA properties for domain {domain}.',
                     '',
-                    'The properties changed were:',
                     '- Custom eula: {eula_old} --> {eula_new}',
-                    '- Can use data: {can_use_data_old} --> {can_use_data_new}'
                 ]).format(
                     user=self.request.couch_user.username,
                     domain=self.domain,
                     eula_old=old_attrs.custom_eula,
                     eula_new=self.domain_object.internal.custom_eula,
-                    can_use_data_old=old_attrs.can_use_data,
-                    can_use_data_new=self.domain_object.internal.can_use_data,
                 )
                 send_mail_async.delay(
                     'Custom EULA or data use flags changed for {}'.format(self.domain),
@@ -247,6 +242,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
                     toggle['tag_index'],
                     toggle['label'])
 
+        editable_tags_slugs = self._editable_tags_slugs()
         unsorted_toggles = [{
             'slug': toggle.slug,
             'label': toggle.label,
@@ -258,11 +254,15 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'tag_css_class': toggle.tag.css_class,
             'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,
             'domain_enabled': toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
+            'can_edit': toggle.tag.slug in editable_tags_slugs,
             'user_enabled': toggle.enabled(self.request.couch_user.username,
                                            namespace=toggles.NAMESPACE_USER),
         } for toggle in toggles.all_toggles()]
 
         return sorted(unsorted_toggles, key=_sort_key)
+
+    def _editable_tags_slugs(self):
+        return [tag.slug for tag in get_editable_toggle_tags_for_user(self.request.user.username)]
 
     def _get_privileges(self):
         return sorted([

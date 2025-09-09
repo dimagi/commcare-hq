@@ -38,6 +38,7 @@ from corehq.apps.domain.exceptions import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
     DomainRegistrationForm,
@@ -95,7 +96,8 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             reg_form,
             created_by=None,
             created_via=USER_CHANGE_VIA_WEB,
-            ip=get_ip(self.request)
+            ip=get_ip(self.request),
+            language=getattr(self.request, 'LANGUAGE_CODE', None),
         )
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
@@ -214,7 +216,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         message = None
         restricted_by_domain = None
         if is_existing:
-            message = _("There is already a user with this email.")
+            current_env_data = ServerLocation.ENVS.get(settings.SERVER_ENVIRONMENT)
+            current_location = current_env_data['short_name'] if current_env_data else _("current")
+            message = _(
+                'This email is already registered in the {location} cloud location. '
+                'Please <a href="{login_link}">sign in here</a>.'
+            ).format(location=current_location, login_link=reverse('login'))
         else:
             domain = email[email.find("@") + 1:]
             for account in BillingAccount.get_enterprise_restricted_signup_accounts():
@@ -319,20 +326,6 @@ class RegisterDomainView(TemplateView):
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
     @property
-    def extra_context(self):
-        invitations = [
-            e for e in Invitation.by_email(self.request.user.username)
-            if not e.is_expired
-        ]
-        return {
-            'invitation_links': [{
-                'domain': i.domain,
-                'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
-            } for i in invitations],
-            'show_multiple_invites': len(invitations) > 1,
-        }
-
-    @property
     @memoized
     def is_new_user(self):
         user = self.request.user
@@ -409,12 +402,32 @@ class RegisterDomainView(TemplateView):
         if (not request.couch_user) or request.couch_user.is_commcare_user():
             raise Http404()
 
-        context = super(RegisterDomainView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context.update(get_domain_context())
+
+        invitations = [
+            e for e in Invitation.by_email(self.request.user.username)
+            if not e.is_expired
+        ]
+        invitation_links = [{
+            'domain': i.domain,
+            'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
+        } for i in invitations]
+
+        server_locations = [{
+            'env': env,
+            'subdomain': server['subdomain'],
+            'name': server['long_name'],
+        } for env, server in ServerLocation.ENVS.items() if env != settings.SERVER_ENVIRONMENT]
 
         context.update({
             'form': kwargs.get('form') or DomainRegistrationForm(),
+            'invitation_links': invitation_links,
             'is_new_user': self.is_new_user,
+            'name': self.request.user.first_name or self.request.user.username,
+            'pricing_page_url': settings.PRICING_PAGE_URL,
+            'server_locations': server_locations,
+            'show_multiple_invites': len(invitations) > 1,
         })
         return context
 

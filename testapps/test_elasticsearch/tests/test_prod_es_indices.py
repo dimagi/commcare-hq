@@ -4,6 +4,7 @@ from django.test import SimpleTestCase, override_settings
 from corehq.apps.es import canonical_name_adapter_map
 from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es import const as es_const
 from corehq.pillows.utils import get_all_expected_es_indices
 
 
@@ -69,7 +70,7 @@ class ProdIndexManagementTest(SimpleTestCase):
 
 EXPECTED_PROD_INDICES = [
     {
-        "index": "test_case-search-20230524",
+        "index": f"test_{es_const.HQ_CASE_SEARCH_INDEX_NAME}",
         "type": "case",
         "hq_index_name": "case_search",
         "meta": {
@@ -106,7 +107,7 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "index": "test_case-search-bha-2024-05-10",
+        "index": f"test_{es_const.HQ_CASE_SEARCH_BHA_INDEX_NAME}",
         "type": "case",
         "hq_index_name": "case_search_bha",
         "meta": {
@@ -181,7 +182,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqapps",
-        "index": "test_apps-20230524",
+        "index": f"test_{es_const.HQ_APPS_INDEX_NAME}",
         "type": "app",
         "meta": {
             "settings": {
@@ -201,7 +202,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqcases",
-        "index": "test_cases-20230524",
+        "index": f"test_{es_const.HQ_CASES_INDEX_NAME}",
         "type": "case",
         "meta": {
             "settings": {
@@ -223,7 +224,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqdomains",
-        "index": "test_domains-20230524",
+        "index": f"test_{es_const.HQ_DOMAINS_INDEX_NAME}",
         "type": "hqdomain",
         "meta": {
             "settings": {
@@ -247,7 +248,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqgroups",
-        "index": "test_groups-20230524",
+        "index": f"test_{es_const.HQ_GROUPS_INDEX_NAME}",
         "type": "group",
         "meta": {
             "settings": {
@@ -269,7 +270,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqusers",
-        "index": "test_users-20230524",
+        "index": f"test_{es_const.HQ_USERS_INDEX_NAME}",
         "type": "user",
         "meta": {
             "settings": {
@@ -289,7 +290,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "smslogs",
-        "index": "test_sms-20230524",
+        "index": f"test_{es_const.HQ_SMS_INDEX_NAME}",
         "type": "sms",
         "meta": {
             "settings": {
@@ -311,7 +312,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "xforms",
-        "index": "test_forms-20230524",
+        "index": f"test_{es_const.HQ_FORMS_INDEX_NAME}",
         "type": "xform",
         "meta": {
             "settings": {

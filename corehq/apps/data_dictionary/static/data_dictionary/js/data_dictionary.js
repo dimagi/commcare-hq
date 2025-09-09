@@ -19,7 +19,8 @@ var caseType = function (
     fhirResourceType,
     deprecated,
     moduleCount,
-    propertiesCount,
+    propertyCount,
+    deprecatedPropertyCount,
     geoCaseProp,
     isSafeToDelete,
     changeSaveButton,
@@ -30,7 +31,8 @@ var caseType = function (
     self.name = name || gettext("No Name");
     self.deprecated = deprecated;
     self.appCount = moduleCount;  // The number of application modules using this case type
-    self.propertyCount = propertiesCount;
+    self.propertyCount = propertyCount;
+    self.deprecatedPropertyCount = deprecatedPropertyCount;
     self.url = "#" + name;
     self.fhirResourceType = ko.observable(fhirResourceType);
     self.groups = ko.observableArray();
@@ -42,12 +44,14 @@ var caseType = function (
 
     self.groups.subscribe(changeSaveButton);
 
-    self.loadCaseProperties = function () {
+    self.loadCaseProperties = function (isLoading) {
         if (self.groups().length === 0) {
+            isLoading(true);
             const caseTypeUrl = self.dataUrl + self.name + '/';
             fetchCaseProperties(caseTypeUrl).then(() => {
                 self.groups.sort(sortGroupsFn);
                 self.resetSaveButton();
+                isLoading(false);
             });
         }
     };
@@ -323,6 +327,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.showAll = ko.observable(false);
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+    self.caseTypeIsLoading = ko.observable();
 
     self.casePropertyWarningViewModel = new casePropertyWarningViewModel(casePropertyLimit);
 
@@ -423,7 +428,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.fhir_resource_type,
                         caseTypeData.is_deprecated,
                         caseTypeData.module_count,
-                        caseTypeData.properties_count,
+                        caseTypeData.property_count,
+                        caseTypeData.deprecated_property_count,
                         data.geo_case_property,
                         caseTypeData.is_safe_to_delete,
                         changeSaveButton,
@@ -444,6 +450,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 }
                 self.fhirResourceType.subscribe(changeSaveButton);
                 self.removefhirResourceType.subscribe(changeSaveButton);
+            })
+            .always(function () {
                 callback();
             });
     };
@@ -538,7 +546,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 return;
             }
         }
-        caseType.loadCaseProperties();
+        caseType.loadCaseProperties(self.caseTypeIsLoading);
         self.activeCaseType(caseType.name);
         self.fhirResourceType(caseType.fhirResourceType());
         self.removefhirResourceType(false);
@@ -628,7 +636,8 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
 
     self.activeCaseType.subscribe(function () {
         const caseType = self.getActiveCaseType();
-        self.casePropertyWarningViewModel.updateViewModel(caseType.name, caseType.propertyCount);
+        const nonDeprecatedPropertyCount = caseType.propertyCount - caseType.deprecatedPropertyCount;
+        self.casePropertyWarningViewModel.updateViewModel(caseType.name, nonDeprecatedPropertyCount);
     });
 
     self.showDeprecated = function () {
@@ -716,10 +725,14 @@ $(function () {
         }
     }
 
-    window.onhashchange = doHashNavigation;
+    function ready() {
+        doHashNavigation();
+        $('#hq-content').parent().koApplyBindings(viewModel);
+        $('#dd-loading').addClass('hide');
+    }
 
-    viewModel.init(doHashNavigation);
-    $('#hq-content').parent().koApplyBindings(viewModel);
+    window.onhashchange = doHashNavigation;
+    viewModel.init(ready);
     $('#download-dict').click(function () {
         googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
     });

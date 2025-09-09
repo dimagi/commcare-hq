@@ -4,6 +4,8 @@ import ipaddress
 import json
 import logging
 import uuid
+import re
+import urllib.parse
 
 from django import forms
 from django.conf import settings
@@ -92,6 +94,7 @@ from corehq.apps.app_manager.models import (
     AppReleaseByLocation,
     LatestEnabledBuildProfiles,
     RemoteApp,
+    CredentialApplication,
 )
 from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
@@ -116,7 +119,7 @@ from corehq.apps.domain.models import (
 from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
-from corehq.apps.hqwebapp.fields import MultiCharField
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import (
     BootstrapCheckboxInput,
@@ -144,7 +147,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
 
-upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
+upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT / (1024 * 1024):,.0f}"
 
 
 def tf_choices(true_txt, false_txt):
@@ -590,6 +593,19 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy("Name of the channel created in connect messaging.")
     )
 
+    opt_out_of_data_sharing = BooleanField(
+        label=gettext_lazy("Data Sharing"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(gettext_lazy(
+                "Opt Out of "
+                "<a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2386001966/"
+                "Data+Sharing+Opt-Outs+-+CommCare\" "
+                "target=\"_blank\"> Aggregate Data Usage</a>"
+            )),
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -627,6 +643,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
         self._handle_orphan_case_alerts_setting_value()
+        self._handle_opt_out_of_data_sharing_setting_value()
 
         if not EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             del self.fields['exports_use_elasticsearch']
@@ -643,6 +660,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 crispy.Div(*self.get_extra_fields()),
                 hqcrispy.CheckboxField('release_mode_visibility'),
                 hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+                hqcrispy.CheckboxField('opt_out_of_data_sharing'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -715,6 +733,9 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _handle_exports_use_elasticsearch_setting_value(self):
         self.fields['exports_use_elasticsearch'].initial = self.project.exports_use_elasticsearch
+
+    def _handle_opt_out_of_data_sharing_setting_value(self):
+        self.fields['opt_out_of_data_sharing'].initial = not self.project.internal.can_use_data
 
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
@@ -872,6 +893,9 @@ class DomainGlobalSettingsForm(forms.Form):
     def _save_orphan_case_alerts_setting(self, domain):
         domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
 
+    def _save_opt_out_of_data_sharing_setting(self, domain):
+        domain.update_internal(can_use_data=not self.cleaned_data.get("opt_out_of_data_sharing"))
+
     def _save_exports_use_elasticsearch(self, domain):
         domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", True)
 
@@ -896,6 +920,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
+        self._save_opt_out_of_data_sharing_setting(domain)
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             self._save_exports_use_elasticsearch(domain)
         domain.save()
@@ -1364,18 +1389,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         self.can_edit_eula = can_edit_eula
         additional_fields = []
         if self.can_edit_eula:
-            additional_fields = ['custom_eula', 'can_use_data']
+            additional_fields = ['custom_eula']
             self.fields['custom_eula'] = ChoiceField(
                 label="Custom Eula?",
                 choices=tf_choices(_('Yes'), _('No')),
                 required=False,
                 help_text='Set to "yes" if this project has a customized EULA as per their contract.'
-            )
-            self.fields['can_use_data'] = ChoiceField(
-                label="Can use project data?",
-                choices=tf_choices('Yes', 'No'),
-                required=False,
-                help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
             )
 
         self.helper = hqcrispy.HQFormHelper()
@@ -1547,7 +1566,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         } if self.cleaned_data["workshop_region"] else {}
         if self.can_edit_eula:
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
-            kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
         domain.update_deployment(
             countries=self.cleaned_data['countries'],
@@ -1605,6 +1623,61 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
+def send_password_reset_email(active_users, domain_override, subject_template_name,
+                              email_template_name, use_https, token_generator, request):
+    """
+    Generates a one-use only link for resetting password and sends to the
+    user.
+    """
+    if settings.IS_SAAS_ENVIRONMENT:
+        subject_template_name = 'registration/email/password_reset_subject_hq.txt'
+        email_template_name = 'registration/email/password_reset_email_hq.html'
+
+    # the code below is copied from default PasswordForm
+    for user in active_users:
+        # Make sure that no email is sent to a user that actually has
+        # a password marked as unusable
+        if not user.has_usable_password():
+            continue
+        if not domain_override:
+            current_site = get_current_site(request)
+            site_name = current_site.name
+            domain = current_site.domain
+        else:
+            site_name = domain = domain_override
+
+        couch_user = CouchUser.from_django_user(user)
+        if not couch_user:
+            continue
+
+        user_email = couch_user.get_email()
+        if not user_email:
+            continue
+
+        c = {
+            'email': user_email,
+            'domain': domain,
+            'site_name': site_name,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'user': user,
+            'token': token_generator.make_token(user),
+            'protocol': 'https' if use_https else 'http',
+        }
+        c.update(project_logo_emails_context(None, couch_user=couch_user))
+        subject = render_to_string(subject_template_name, c)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+
+        message_plaintext = render_to_string('registration/password_reset_email.html', c)
+        message_html = render_to_string(email_template_name, c)
+
+        send_html_email_async.delay(
+            subject, user_email, message_html,
+            text_content=message_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL
+        )
+
+
 class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     Only finds users and emails forms where the USERNAME is equal to the
@@ -1646,57 +1719,8 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
              html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
              from_email=None, request=None, **kwargs):
-        """
-        Generates a one-use only link for resetting password and sends to the
-        user.
-        """
-        if settings.IS_SAAS_ENVIRONMENT:
-            subject_template_name = 'registration/email/password_reset_subject_hq.txt'
-            email_template_name = 'registration/email/password_reset_email_hq.html'
-
-        # the code below is copied from default PasswordForm
-        for user in active_users:
-            # Make sure that no email is sent to a user that actually has
-            # a password marked as unusable
-            if not user.has_usable_password():
-                continue
-            if not domain_override:
-                current_site = get_current_site(request)
-                site_name = current_site.name
-                domain = current_site.domain
-            else:
-                site_name = domain = domain_override
-
-            couch_user = CouchUser.from_django_user(user)
-            if not couch_user:
-                continue
-
-            user_email = couch_user.get_email()
-            if not user_email:
-                continue
-
-            c = {
-                'email': user_email,
-                'domain': domain,
-                'site_name': site_name,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'user': user,
-                'token': token_generator.make_token(user),
-                'protocol': 'https' if use_https else 'http',
-            }
-            c.update(project_logo_emails_context(None, couch_user=couch_user))
-            subject = render_to_string(subject_template_name, c)
-            # Email subject *must not* contain newlines
-            subject = ''.join(subject.splitlines())
-
-            message_plaintext = render_to_string('registration/password_reset_email.html', c)
-            message_html = render_to_string(email_template_name, c)
-
-            send_html_email_async.delay(
-                subject, user_email, message_html,
-                text_content=message_plaintext,
-                email_from=settings.DEFAULT_FROM_EMAIL
-            )
+        send_password_reset_email(active_users, domain_override, subject_template_name,
+                                  email_template_name, use_https, token_generator, request)
 
 
 class UsernameAwareEmailField(forms.EmailField):
@@ -2229,84 +2253,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
             contact_emails=contact_emails, cc_emails=cc_emails
         )
         invoice_factory.create_subscription_credits_invoice(self.renewed_version, date_start, date_end)
-
-
-class ProBonoForm(forms.Form):
-    contact_email = MultiCharField(label=gettext_lazy("Email To"), widget=forms.Select(choices=[]))
-    organization = forms.CharField(label=gettext_lazy("Organization"))
-    project_overview = forms.CharField(
-        widget=forms.Textarea(attrs={"class": "vertical-resize"}), label="Project overview"
-    )
-    airtime_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on airtime:"))
-    device_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on devices:"))
-    pay_only_features_needed = forms.CharField(
-        widget=forms.Textarea(attrs={"class": "vertical-resize"}), label="Pay only features needed"
-    )
-    duration_of_project = forms.CharField(help_text=gettext_lazy(
-        "We grant pro-bono subscriptions to match the duration of your "
-        "project, up to a maximum of 12 months at a time (at which point "
-        "you need to reapply)."
-    ))
-    domain = forms.CharField(label=gettext_lazy("Project Space"))
-    dimagi_contact = forms.CharField(
-        help_text=gettext_lazy("If you have already been in touch with someone from "
-                    "Dimagi, please list their name."),
-        required=False)
-    num_expected_users = forms.CharField(label=gettext_lazy("Number of expected users"))
-
-    def __init__(self, use_domain_field, *args, **kwargs):
-        super(ProBonoForm, self).__init__(*args, **kwargs)
-        if not use_domain_field:
-            self.fields['domain'].required = False
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Pro-Bono Application'),
-                'contact_email',
-                'organization',
-                crispy.Div(
-                    'domain',
-                    style=('' if use_domain_field else 'display:none'),
-                ),
-                'project_overview',
-                'airtime_expense',
-                'device_expense',
-                'pay_only_features_needed',
-                'duration_of_project',
-                'num_expected_users',
-                'dimagi_contact',
-            ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit('submit_pro_bono', _('Submit Pro-Bono Application'))
-                )
-            ),
-        )
-
-    def clean_contact_email(self):
-        if 'contact_email' in self.cleaned_data:
-            copy = self.data.copy()
-            self.data = copy
-            copy.update({'contact_email': ", ".join(self.data.getlist('contact_email'))})
-            return self.data.get('contact_email')
-
-    def process_submission(self, domain=None):
-        try:
-            params = {
-                'pro_bono_form': self,
-                'domain': domain,
-            }
-            html_content = render_to_string("domain/email/pro_bono_application.html", params)
-            text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = settings.PROBONO_SUPPORT_EMAIL
-            subject = "[Pro-Bono Application]"
-            if domain is not None:
-                subject = "%s %s" % (subject, domain)
-            send_html_email_async.delay(subject, recipient, html_content, text_content=text_content,
-                            email_from=settings.DEFAULT_FROM_EMAIL)
-        except Exception:
-            logging.error("Couldn't send pro-bono application email. "
-                          "Contact: %s" % self.cleaned_data['contact_email'])
 
 
 class InternalSubscriptionManagementForm(forms.Form):
@@ -3093,3 +3039,201 @@ class DomainAlertForm(forms.Form):
                 )
             )
         )
+
+
+class ExtractAppInfoForm(forms.Form):
+
+    app_url = forms.URLField(
+        label=gettext_lazy("App URL"),
+        required=True,
+        help_text=gettext_lazy("Copy and paste the full URL of the application from the source server. "
+                               "You can find this URL in your browser's address bar when viewing the app."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.HTML(render_to_string('domain/partials/how_to_start_with_import_app_feature.html', {})),
+            crispy.Field('app_url', placeholder="https://[server]/a/[domain]/apps/view/[app_id]/..."),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Next'),
+                    type='submit',
+                    css_class='btn btn-primary',
+                ),
+            )
+        )
+
+    def clean_app_url(self):
+        app_url = self.cleaned_data['app_url']
+
+        if not app_url.startswith('https://'):
+            raise forms.ValidationError(_("The URL must start with https://"))
+
+        return app_url
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        app_url = cleaned_data.get('app_url')
+        if not app_url:
+            return cleaned_data
+
+        parsed_url = urllib.parse.urlparse(app_url)
+
+        source_server = self._get_source_server(parsed_url)
+        if source_server is None:
+            return cleaned_data
+        current_server = settings.SERVER_ENVIRONMENT
+        if source_server == current_server:
+            self.add_error('app_url', _(
+                "The source app url matches the current server. "
+                "To copy an app within the same server, please use the Copy Application feature."
+            ))
+
+        match = re.match(
+            r'^https://[^/]+/a/(?P<domain>[^/]+)/apps/view/(?P<app_id>[a-f0-9]{32})/?',
+            app_url
+        )
+        if not match:
+            self.add_error('app_url', _("Invalid app URL format."))
+        else:
+            cleaned_data['source_server'] = source_server
+            cleaned_data['source_domain'] = match.group('domain')
+            cleaned_data['app_id'] = match.group('app_id')
+
+        return cleaned_data
+
+    def _get_source_server(self, parsed_url):
+        server_mapping = {subdomain: server for server, subdomain
+                          in ServerLocation.SUBDOMAINS.items()}
+
+        netloc = parsed_url.netloc.split(".")
+
+        if len(netloc) == 3:
+            subdomain, domain, suffix = netloc
+            if subdomain in server_mapping.keys() and domain == 'commcarehq' and suffix == 'org':
+                return server_mapping[subdomain]
+
+        self.add_error('app_url', _("The URL must be from a valid CommCare server."))
+        return None
+
+
+class ImportAppForm(forms.Form):
+    app_name = forms.CharField(
+        label=gettext_lazy("Application Name"),
+        required=True,
+        help_text=gettext_lazy("Choose a name for the imported application on this server."),
+    )
+
+    app_file = forms.FileField(
+        label=gettext_lazy("Application Source File"),
+        required=True,
+    )
+
+    source_server = forms.CharField(widget=forms.HiddenInput)
+    source_domain = forms.CharField(widget=forms.HiddenInput)
+    app_id = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, container_id, cancel_url, validated_data=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_tag = False
+
+        # Set initial values of the hidden fields so they are available for future use
+        if validated_data:
+            self.fields['source_server'].initial = validated_data.get('source_server')
+            self.fields['source_domain'].initial = validated_data.get('source_domain')
+            self.fields['app_id'].initial = validated_data.get('app_id')
+
+        source_server = self.fields['source_server'].initial or self.data.get('source_server')
+        source_domain = self.fields['source_domain'].initial or self.data.get('source_domain')
+        app_id = self.fields['app_id'].initial or self.data.get('app_id')
+
+        download_url = self.construct_download_url(source_server, source_domain, app_id)
+
+        self.helper.layout = crispy.Layout(
+            crispy.HTML(render_to_string('domain/partials/how_to_download_app_json.html', {
+                'download_url': download_url,
+            })),
+            crispy.Field('app_name'),
+            crispy.Field('app_file'),
+            crispy.Field('source_server'),
+            crispy.Field('source_domain'),
+            crispy.Field('app_id'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Go Back'),
+                    type='button',
+                    css_class='btn btn-outline-primary',
+                    hx_get=cancel_url,
+                    hx_target=f'#{container_id}',
+                    hx_disabled_elt='this',
+                ),
+                twbscrispy.StrictButton(
+                    _('Import Application'),
+                    type='submit',
+                    css_class='btn btn-primary',
+                ),
+            )
+        )
+
+    def clean_app_file(self):
+        app_file = self.cleaned_data['app_file']
+        try:
+            source = json.load(app_file)
+        except (json.decoder.JSONDecodeError, UnicodeDecodeError):
+            source = None
+        if not source:
+            raise forms.ValidationError(_("The file uploaded is an invalid JSON file."))
+        return app_file
+
+    def construct_download_url(self, source_server, source_domain, app_id):
+        server_address = ServerLocation.SUBDOMAINS[source_server]
+        return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
+
+
+class DomainCredentialIssuingAppForm(forms.Form):
+    app_id = forms.CharField(
+        label=gettext_lazy("Enable credentials for application"),
+        required=False,
+        widget=forms.Select(choices=[]),
+        help_text=gettext_lazy("Select the application that will be used to issue credentials to workers."),
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        credential_app = CredentialApplication.objects.filter(domain=domain).first()
+        if credential_app:
+            initial = {
+                'app_id': credential_app.app_id,
+            }
+            kwargs.setdefault('initial', {}).update(initial)
+
+        super(DomainCredentialIssuingAppForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].widget.choices = self.get_domain_apps_choices(domain)
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                gettext_lazy("Credential Issuing Application"),
+                crispy.Field('app_id'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Save'),
+                    type='submit',
+                    css_class='btn-primary disable-on-submit'
+                )
+            )
+        )
+
+    def get_domain_apps_choices(self, domain):
+        choices = [('', gettext_lazy("No application"))]
+        choices.extend([
+            (app.id, app.name) for app in get_apps_in_domain(domain)
+        ])
+        return choices

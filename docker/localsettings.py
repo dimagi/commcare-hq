@@ -11,9 +11,6 @@ DATABASES = {
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
         'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
     },
 }
 
@@ -27,9 +24,6 @@ if USE_PARTITIONED_DATABASE:
             'PASSWORD': 'commcarehq',
             'HOST': 'postgres',
             'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
             'PLPROXY': {
                 'PROXY': True,
                 'PLPROXY_HOST': 'localhost'
@@ -42,9 +36,6 @@ if USE_PARTITIONED_DATABASE:
             'PASSWORD': 'commcarehq',
             'HOST': 'postgres',
             'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
             'PLPROXY': {
                 'SHARDS': [0, 1],
             }
@@ -56,9 +47,6 @@ if USE_PARTITIONED_DATABASE:
             'PASSWORD': 'commcarehq',
             'HOST': 'postgres',
             'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
             'PLPROXY': {
                 'SHARDS': [2, 3],
             }
@@ -83,7 +71,6 @@ redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
     # match production settings
-    'PARSER_CLASS': 'redis.connection.HiredisParser',
     'REDIS_CLIENT_KWARGS': {
         'health_check_interval': 15,
     },

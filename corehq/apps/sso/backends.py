@@ -119,13 +119,14 @@ class SsoBackend(ModelBackend):
 
         new_web_user = activate_new_user(
             username=username,
-            password=User.objects.make_random_password(),
+            password=None,  # disable password auth
             created_by=created_by,
             created_via=created_via,
             first_name=get_sso_user_first_name_from_session(request),
             last_name=get_sso_user_last_name_from_session(request),
             domain=domain,
             ip=get_ip(request),
+            language=getattr(request, 'LANGUAGE_CODE', None),
         )
         request.sso_new_user_messages['success'].append(
             _("User account for {} created.").format(new_web_user.username)

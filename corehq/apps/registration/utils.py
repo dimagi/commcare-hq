@@ -52,7 +52,7 @@ _soft_assert_registration_issues = soft_assert(
 
 
 def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=False, domain=None, ip=None,
-                                   commit=True):
+                                   language=None, commit=True):
     full_name = form.cleaned_data['full_name']
     new_user = activate_new_user(
         username=form.cleaned_data['email'],
@@ -65,16 +65,17 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
         domain=domain,
         ip=ip,
         atypical_user=form.cleaned_data.get('atypical_user', False),
+        language=language,
         commit=commit
     )
     return new_user
 
 
 def activate_new_user(
-    username, password, created_by, created_via, first_name=None, last_name=None,
-    is_domain_admin=False, domain=None, ip=None, atypical_user=False, commit=True
+    username, password, created_by, created_via, first_name=None, last_name=None, is_domain_admin=False,
+    domain=None, ip=None, atypical_user=False, language=None, commit=True
 ):
-    from corehq.apps.analytics.tasks import record_event
+    from corehq.apps.analytics.tasks import record_google_analytics_event
     now = datetime.utcnow()
 
     new_user = WebUser.create(
@@ -105,13 +106,14 @@ def activate_new_user(
     new_user.date_joined = now
     new_user.last_password_set = now
     new_user.atypical_user = atypical_user
+    new_user.language = language
     if commit:
         new_user.save()
 
     # Engagement time appears necessary for this event to show up within GA debug view
     # (when 'debug_mode': '1' is also supplied)
     # Leaving engagement time in as there doesn't seem a good reason to remove it
-    record_event('backend_new_user', new_user, {'engagement_time_msec': 1000})
+    record_google_analytics_event('backend_new_user', new_user, {'engagement_time_msec': 1000})
 
     return new_user
 

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
-from freezegun import freeze_time
+from time_machine import travel
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
@@ -361,13 +361,13 @@ class DataSourceConfigurationTests(TestCase):
 
     def test_all(self):
         results = list(DataSourceConfiguration.all())
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 3, results)
         self.assertEqual({r.table_id for r in results},
                          {'foo1', 'foo2', 'bar1'})
 
     def test_last_modified_date_updates_successfully(self):
         initial_date = datetime.datetime(2020, 1, 1)
-        with freeze_time(initial_date) as frozen_time:
+        with travel(initial_date, tick=False) as frozen_time:
             datasource = DataSourceConfiguration(
                 domain='mod-test', table_id='mod-test',
                 referenced_doc_type='XFormInstance')
@@ -375,7 +375,7 @@ class DataSourceConfigurationTests(TestCase):
             self.addCleanup(datasource.delete)
 
             previous_modified_date = datasource.last_modified
-            frozen_time.tick(delta=datetime.timedelta(hours=1))
+            frozen_time.shift(datetime.timedelta(hours=1))
             datasource.save()
 
         self.assertGreater(datasource.last_modified, previous_modified_date)

@@ -156,7 +156,6 @@ msgid "Billed Monthly"
 msgstr "Fatturato mensilmente"
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js
-#: corehq/apps/domain/static/domain/js/pro-bono.js
 msgid "Please enter a valid email."
 msgstr "Inserisci un'email valida."
 
@@ -737,7 +736,6 @@ msgid "You have unchanged user properties settings"
 msgstr "Hai impostazioni delle proprietà utente non modificate"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#, fuzzy
 #| msgid "Property uses unrecognized prefix <strong>"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La proprietà utilizza un prefisso non riconosciuto <strong>"
@@ -1103,16 +1101,14 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} non è un genitore dati valido"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
 #| msgid "Create"
 msgid "createXML"
-msgstr "Crea"
+msgstr "creaXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
 #| msgid "User Data"
 msgid "getData"
-msgstr "Dati utente"
+msgstr "ottieniDati"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "getMugByPath"
@@ -1677,10 +1673,14 @@ msgstr "Vero quando TUTTE le proprietà del caso corrispondono"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Out of range of filter. Will not appear on page refresh."
-msgstr ""
-"Fuori dall'intervallo del filtro. Non apparirà all'aggiornamento della "
-"pagina."
+msgid "Reassigned"
+msgstr "Riassegnato"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#| msgid "Copied!"
+msgid "Copied"
+msgstr "Copiato"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1689,13 +1689,20 @@ msgstr "aggiornato"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Case copied"
-msgstr "Caso copiato"
+msgid "Today"
+msgstr "Oggi"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-msgid "Cases copied"
-msgstr "Casi copiati"
+#| msgid "Download <%- count %> Locations"
+msgid "Reassigned <%- count %> cases"
+msgstr "Riassegnati <%- count %> casi"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
+#| msgid "Download <%- count %> Locations"
+msgid "Copied <%- count %> cases"
+msgstr "Copiati <%- count %> casi"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3609,9 +3616,13 @@ msgid "Error determining number of matching users"
 msgstr "Errore nel determinare il numero di utenti corrispondenti"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Email address is required when users confirm their own accounts."
-msgstr ""
-"L'indirizzo email è richiesto quando gli utenti confermano i propri account."
+msgid "Unavailable"
+msgstr "Non disponibile"
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+#| msgid "<%- days %> days remaining"
+msgid "<%- minutes %> minutes remaining"
+msgstr "<%- minutes %> minuti rimanenti"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
@@ -4251,6 +4262,21 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "L'indirizzo email è richiesto quando gli utenti confermano i propri account."
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr ""
+#~ "Fuori dall'intervallo del filtro. Non apparirà all'aggiornamento della "
+#~ "pagina."
+
+#~ msgid "Case copied"
+#~ msgstr "Caso copiato"
+
+#~ msgid "Cases copied"
+#~ msgstr "Casi copiati"
 
 #~ msgid "Select None"
 #~ msgstr "Nessuna selezione"
