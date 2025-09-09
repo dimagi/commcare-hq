@@ -509,7 +509,8 @@ class DeactivateScheduleTest(TransactionTestCase):
 class TestUsercaseSubscriptionChanges(TestCase):
     domain = 'test-usercase-subscription-changes'
 
-    def test_upgrade(self):
+    @patch('corehq.apps.app_manager.util.create_usercases')
+    def test_upgrade(self, mock_create_usercases):
         domain_obj = Domain(name=self.domain, is_active=True)
         domain_obj.save()
         self.addCleanup(domain_obj.delete)
@@ -519,9 +520,8 @@ class TestUsercaseSubscriptionChanges(TestCase):
             self.domain,
             DefaultProductPlan.get_default_plan_version(),
         )
-        self.assertEqual(domain_obj.usercase_enabled, False)
+        mock_create_usercases.delay.assert_not_called()
 
         subscription.change_plan(DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.PRO))
-        domain_obj = Domain.get(domain_obj._id)  # refresh from DB
-        self.assertEqual(domain_obj.usercase_enabled, True)
+        mock_create_usercases.delay.assert_called_once_with(self.domain)
