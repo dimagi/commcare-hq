@@ -9,9 +9,19 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.es import filters
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    case_property_query,
+)
+from corehq.apps.es.users import (
+    missing_or_empty_user_data_property,
+    query_user_data,
+)
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
+from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter
 from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import (
     KycConfig,
@@ -110,7 +120,29 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         }
 
     def get_queryset(self):
-        return self.kyc_config.get_kyc_users_query()
+        query = self.kyc_config.get_kyc_users_query()
+        return self._apply_filters(query)
+
+    def _apply_filters(self, query):
+        query_filters = []
+        if kyc_verification_status := self.request.GET.get(KycVerificationStatusFilter.slug):
+            self._apply_kyc_verification_status_filter(kyc_verification_status, query_filters)
+        if query_filters:
+            query = query.filter(filters.AND(*query_filters))
+        return query
+
+    def _apply_kyc_verification_status_filter(self, kyc_verification_status, query_filters):
+        field_name = 'kyc_verification_status'
+        if kyc_verification_status == 'pending':
+            if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+                query_filters.append(missing_or_empty_user_data_property(field_name))
+            else:
+                query_filters.append(case_property_missing(field_name))
+        else:
+            if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+                query_filters.append(query_user_data(field_name, kyc_verification_status))
+            else:
+                query_filters.append(case_property_query(field_name, kyc_verification_status))
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
