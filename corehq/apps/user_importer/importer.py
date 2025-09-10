@@ -332,34 +332,46 @@ def get_location_from_site_code(site_code, location_cache):
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id=None,
                                     assigned_location_ids=None, profile=None, tableau_role=None,
                                     tableau_group_ids=None, user_change_logger=None, send_email=True):
+    """
+    :param primary_location_id: use None for value to not be set or updated
+    :param assigned_location_ids: use None for value to not be set or updated
+    """
     from corehq.apps.users.views import InviteWebUserView
 
-    if assigned_location_ids is None:
-        assigned_location_ids = []
-    primary_location = SQLLocation.by_location_id(primary_location_id)
     invite_fields = {
         'invited_by': upload_user.user_id,
         'invited_on': datetime.utcnow(),
         'tableau_role': tableau_role,
         'tableau_group_ids': tableau_group_ids,
-        'primary_location': primary_location,
         'role': role_qualified_id,
         'profile': profile,
     }
+
+    # It's not clear why only these two were chosen to be recorded as changed values
+    changed_values = {
+        'role_name': role_qualified_id,
+        'profile': profile
+    }
+
+    if primary_location_id is not None:
+        primary_location = SQLLocation.by_location_id(primary_location_id)
+        invite_fields['primary_location'] = primary_location
+        changed_values['primary_location'] = primary_location
+
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
         is_accepted=False,
         defaults=invite_fields,
     )
-    assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
-                          for assigned_location_id in assigned_location_ids]
-    invite.assigned_locations.set(assigned_locations)
-    changes = InviteWebUserView.format_changes(domain,
-                                               {'role_name': role_qualified_id,
-                                                'profile': profile,
-                                                'assigned_locations': assigned_locations,
-                                                'primary_location': primary_location})
+
+    if assigned_location_ids is not None:
+        assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
+                              for assigned_location_id in assigned_location_ids]
+        invite.assigned_locations.set(assigned_locations)
+        changed_values['assigned_locations'] = assigned_locations
+
+    changes = InviteWebUserView.format_changes(domain, changed_values=changed_values)
     if invite_created:
         if send_email:
             invite.send_activation_email()
@@ -367,9 +379,12 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
             user_change_logger.add_info(UserChangeMessage.invited_to_domain(domain))
         action = InviteModelAction.CREATE
         invite_fields.update({'domain': domain, 'email': email})
-        invite_fields.pop('primary_location')
+
+        # pop already formatted fields before update
+        invite_fields.pop('primary_location', None)
         invite_fields.pop('role')
         invite_fields.pop('profile')
+
         changes.update(invite_fields)
     else:
         action = InviteModelAction.UPDATE
@@ -859,8 +874,8 @@ class WebUserRow(BaseUserRow):
                 self.check_invitation_status(self.domain, cv['username'])
 
             user_invite_loc_id = None
-            user_invite_locs_ids = []
-            if self.domain_info.can_assign_locations and cv['location_codes']:
+            user_invite_locs_ids = None
+            if self.domain_info.can_assign_locations and cv['location_codes'] is not None:
                 if len(cv['location_codes']) > 0:
                     user_invite_loc = get_location_from_site_code(
                         cv['location_codes'][0], self.domain_info.location_cache
@@ -870,6 +885,9 @@ class WebUserRow(BaseUserRow):
                         for loc in cv['location_codes']
                     ]
                     user_invite_loc_id = user_invite_loc.location_id
+                else:
+                    user_invite_loc_id = ''
+                    user_invite_locs_ids = []
             profile = None
             if cv["profile_name"]:
                 profile = self.domain_info.profiles_by_name[cv["profile_name"]]
