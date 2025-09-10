@@ -332,7 +332,7 @@ class KeywordForm(Form):
                         'sender_message',
                         data_bind="text: senderMessage",
                     ),
-                    data_bind="visible: isMessageSMS",
+                    data_bind="visible: showMessageInput",
                 ),
                 crispy.Div(
                     crispy.Field(
@@ -367,7 +367,7 @@ class KeywordForm(Form):
                             'other_recipient_message',
                             data_bind="value: otherRecipientMessage",
                         ),
-                        data_bind="visible: otherRecipientContentType() == 'sms'",
+                        data_bind="visible: showMessageInput",
                     ),
                     crispy.Div(
                         crispy.Field(
@@ -411,7 +411,7 @@ class KeywordForm(Form):
             choices.append(
                 (CONTENT_CONNECT_MESSAGE, gettext_noop("Connect Message"))
             )
-        return choices
+        return set(choices)
 
     @property
     @memoized
