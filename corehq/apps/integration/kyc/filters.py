@@ -8,4 +8,4 @@ class KycVerificationStatusFilter(BaseSingleOptionFilter):
     slug = 'kyc_status'
     label = _('KYC Status')
     default_text = _('Show all')
-    options = KycVerificationStatus.choices()
+    options = KycVerificationStatus.choices

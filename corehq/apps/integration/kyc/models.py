@@ -235,12 +235,7 @@ class KycUser:
         # because the case property/custom user field either does not exist or is empty.
         if value in (None, ''):
             return KycVerificationStatus.PENDING
-        if value not in (
-            KycVerificationStatus.PENDING,
-            KycVerificationStatus.PASSED,
-            KycVerificationStatus.FAILED,
-            KycVerificationStatus.ERROR,
-        ):
+        if value not in KycVerificationStatus.values:
             value = KycVerificationStatus.INVALID
         return value
 
@@ -282,23 +277,12 @@ class KycUser:
         self._user_data = None
 
 
-class KycVerificationStatus:
-    PASSED = 'passed'
-    # FAILED indicates a request was made to KYC Provider and the KYC failed
-    FAILED = 'failed'
-    PENDING = 'pending'
-    ERROR = 'error'
-    INVALID = 'invalid'   # indicates an invalid value was manually set by a user
-
-    @staticmethod
-    def choices():
-        return [
-            (KycVerificationStatus.PASSED, _('Passed')),
-            (KycVerificationStatus.FAILED, _('Failed')),
-            (KycVerificationStatus.PENDING, _('Pending')),
-            (KycVerificationStatus.ERROR, _('Error')),
-            (KycVerificationStatus.INVALID, _('Invalid')),
-        ]
+class KycVerificationStatus(models.TextChoices):
+    PASSED = 'passed', _('Passed')
+    FAILED = 'failed', _('Failed')
+    PENDING = 'pending', _('Pending')
+    ERROR = 'error', _('Error')
+    INVALID = 'invalid', _('Invalid')  # indicates an invalid value was manually set by a user
 
 
 class KycVerificationFailureCause(models.TextChoices):

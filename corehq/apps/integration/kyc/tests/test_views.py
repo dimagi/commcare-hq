@@ -439,7 +439,11 @@ class TestKycVerificationStatusFilter(BaseTestKycView):
             created_by=None,
             created_via=None,
             first_name='John',
-            user_data={'first_name': 'John', 'phone_number': '123', 'kyc_verification_status': 'passed'}
+            user_data={
+                'first_name': 'John',
+                'phone_number': '123',
+                'kyc_verification_status': KycVerificationStatus.PASSED
+            }
         )
         cls.user_pending = CommCareUser.create(
             cls.domain,
@@ -456,7 +460,11 @@ class TestKycVerificationStatusFilter(BaseTestKycView):
         cls.case_verified = _create_case(
             factory,
             name='case_verified',
-            data={'first_name': 'Alice', 'phone_number': '789', 'kyc_verification_status': 'passed'}
+            data={
+                'first_name': 'Alice',
+                'phone_number': '789',
+                'kyc_verification_status': KycVerificationStatus.PASSED
+            }
         )
         cls.case_pending = _create_case(
             factory,
@@ -468,7 +476,11 @@ class TestKycVerificationStatusFilter(BaseTestKycView):
             factory,
             name='usercase_verified',
             case_type=USERCASE_TYPE,
-            data={'first_name': 'Eva', 'phone_number': '111', 'kyc_verification_status': 'passed'}
+            data={
+                'first_name': 'Eva',
+                'phone_number': '111',
+                'kyc_verification_status': KycVerificationStatus.PASSED
+            }
         )
         cls.usercase_pending = _create_case(
             factory, name='usercase_pending',
@@ -502,7 +514,7 @@ class TestKycVerificationStatusFilter(BaseTestKycView):
         )
         self.addCleanup(kyc_config.delete)
 
-        response = self._make_request_with_filter('passed')
+        response = self._make_request_with_filter(KycVerificationStatus.PASSED)
 
         assert response.status_code == 200
         table_data = response.context['table'].data
@@ -537,7 +549,7 @@ class TestKycVerificationStatusFilter(BaseTestKycView):
         )
         self.addCleanup(kyc_config.delete)
 
-        response = self._make_request_with_filter('passed')
+        response = self._make_request_with_filter(KycVerificationStatus.PASSED)
         assert response.status_code == 200
 
         table_data = response.context['table'].data
