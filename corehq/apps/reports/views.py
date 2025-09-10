@@ -59,6 +59,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.es.users import iter_web_user_emails
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -90,13 +91,8 @@ from corehq.apps.saved_reports.tasks import (
 )
 from corehq.apps.userreports.util import \
     default_language as ucr_default_language
-from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import (
-    CommCareUser,
-    HqPermissions,
-    WebUser,
-)
+from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
@@ -771,20 +767,16 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         kwargs = {'initial': initial}
         if self.request.method == "POST":
             args = (self.request.POST, )
-            selected_emails = self.request.POST.getlist('recipient_emails', {})
+            selected_emails = self.request.POST.getlist('recipient_emails', [])
         else:
             args = ()
             selected_emails = kwargs.get('initial', {}).get('recipient_emails', [])
 
-        web_user_emails = [
-            WebUser.wrap(row['doc']).get_email()
-            for row in get_all_user_rows(self.domain, include_web_users=True,
-                                         include_inactive=False, include_mobile_users=False,
-                                         include_docs=True)
+        selected_emails_set = set(selected_emails)
+        web_user_emails = selected_emails + [
+            e for e in iter_web_user_emails(self.domain)
+            if e not in selected_emails_set
         ]
-        for email in selected_emails:
-            if email not in web_user_emails:
-                web_user_emails = [email] + web_user_emails
 
         from corehq.apps.reports.forms import ScheduledReportForm
         form = ScheduledReportForm(*args, **kwargs)

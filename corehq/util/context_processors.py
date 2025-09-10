@@ -3,13 +3,14 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
-from django.utils.translation import gettext_lazy, gettext as _
+from django.utils.translation import gettext as _
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege, get_privileges
 from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils import bootstrap
 
@@ -198,24 +199,16 @@ def commcare_hq_names(request=None):
 
 
 def server_location_display(request):
-    SERVER_LOCATION_DISPLAY = {
-        'production': {
-            'country_code': 'us',
-            'hr_name': gettext_lazy("US"),
-        },
-        'india': {
-            'country_code': 'in',
-            'hr_name': gettext_lazy("India"),
-        },
-        'eu': {
-            'country_code': 'eu',
-            'hr_name': gettext_lazy("EU"),
-        },
-    }
     context = {}
-    env = settings.SERVER_ENVIRONMENT
-    if env in SERVER_LOCATION_DISPLAY.keys():
-        context = {'server_display': SERVER_LOCATION_DISPLAY[env]}
+    current_env = settings.SERVER_ENVIRONMENT
+    if current_env in ServerLocation.ENVS:
+        server = ServerLocation.ENVS.get(current_env)
+        context = {
+            'server_display': {
+                'country_code': server['country_code'],
+                'hr_name': server['short_name'],
+            }
+        }
     return context
 
 
@@ -226,6 +219,7 @@ def emails(request=None):
     a page-specific context variable.
     """
     return {
+        'ACCOUNTS_EMAIL': settings.ACCOUNTS_EMAIL,
         'SALES_EMAIL': settings.SALES_EMAIL,
         'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
         'PRIVACY_EMAIL': settings.PRIVACY_EMAIL,

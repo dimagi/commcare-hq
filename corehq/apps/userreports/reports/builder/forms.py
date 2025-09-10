@@ -90,7 +90,6 @@ from corehq.apps.userreports.util import has_report_builder_access, get_ucr_data
 from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
-    SHOW_IDS_IN_REPORT_BUILDER,
     DATA_REGISTRY_UCR
 )
 from dimagi.utils.couch.undo import undo_delete
@@ -808,9 +807,7 @@ class CaseDataSourceHelper(ManagedReportBuilderDataSourceHelper):
             )
         properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = self._get_owner_name_pseudo_property()
         properties[COMPUTED_USER_NAME_PROPERTY_ID] = self._get_user_name_pseudo_property()
-
-        if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
-            properties['case_id'] = self._get_case_id_pseudo_property()
+        properties['case_id'] = self._get_case_id_pseudo_property()
 
         if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE.enabled(self.domain):
             properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()

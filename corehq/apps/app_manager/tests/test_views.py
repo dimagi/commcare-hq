@@ -35,7 +35,7 @@ from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.util.test_utils import flag_enabled, timelimit
+from corehq.util.test_utils import flag_enabled, has_permissions, timelimit
 
 from .app_factory import AppFactory
 from .test_form_versioning import INVALID_TEMPLATE
@@ -688,7 +688,7 @@ class TestViewGeneric(ViewsBase):
         'commcare_hq_names', 'langs', 'title_context_block', 'timezone', 'has_mobile_workers',
         'multimedia_state', 'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
         'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'form_submit_history_url', 'btn_style',
-        'chat_widget_config',
+        'chat_widget_config', 'ACCOUNTS_EMAIL',
     }
 
     expected_keys_module = {
@@ -717,7 +717,7 @@ class TestViewGeneric(ViewsBase):
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
         'formats_supporting_case_list_optimizations', 'module_type', 'icon_class', 'form_submit_history_url',
-        'btn_style', 'chat_widget_config',
+        'btn_style', 'chat_widget_config', 'ACCOUNTS_EMAIL',
     }
 
     expected_keys_form = {
@@ -747,7 +747,7 @@ class TestViewGeneric(ViewsBase):
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
         'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'case_property_warning',
-        'form_submit_history_url', 'btn_style', 'chat_widget_config',
+        'form_submit_history_url', 'btn_style', 'chat_widget_config', 'ACCOUNTS_EMAIL',
     }
 
 
@@ -758,12 +758,13 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
     def setUpClass(cls):
         # Set up a domain and an app.
         super().setUpClass()
-        cls.domain = Domain.get_by_name("test-domain")
-        if not cls.domain:
-            cls.domain = Domain(name="test-domain", is_active=True)
+        cls.domain = Domain(name="test-domain", is_active=True)
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+
         cls.app = Application.new_app("test-domain", "TestApp")
         cls.app.save()
+        cls.addClassCleanup(cls.app.delete)
 
         # Set up the cls.web_user: set password and give access to the cls.domain.
         old_web_user = WebUser.get_by_username("test_user")
@@ -772,6 +773,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         cls.web_user = WebUser.create(
             cls.domain.name, "test_user", "my_password", None, None, is_active=True
         )
+        cls.addClassCleanup(cls.web_user.delete, None, None)
 
         # Generate an API key for the cls.web_user.
         cls.web_user_api_key = HQApiKey.objects.get_or_create(
@@ -785,20 +787,13 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
             kwargs={"domain": cls.domain.name, "app_id": cls.app.get_id},
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.app.delete()
-        cls.web_user_api_key.delete()
-        cls.web_user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super().tearDownClass()
-
     def _encode_basic_credentials(self, username, password):
         """Base64-encode a username and password."""
         return base64.b64encode(
             "{}:{}".format(username, password).encode("utf-8")
         ).decode("utf-8")
 
+    @has_permissions(view_apps=True)
     def test_correct_api_key(self):
         """Sending a correct API key returns a response with the case summary file."""
         response = self.client.get(
@@ -809,6 +804,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'], "application/vnd.ms-excel")
 
+    @has_permissions(view_apps=True)
     def test_incorrect_api_key(self):
         """Sending an incorrect (or missing) API key returns a 401 response."""
         with self.subTest("Missing API key"):
@@ -834,6 +830,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
             )
             self.assertEqual(response.status_code, 401)
 
+    @has_permissions(view_apps=True)
     def test_already_authenticated_does_not_need_api_key(self):
         """If a user is already authenticated, then the user does not need to send an API key."""
         # Authenticate the user.
@@ -844,6 +841,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'], "application/vnd.ms-excel")
 
+    @has_permissions(view_apps=True)
     def test_unsupported_request_methods(self):
         """Test sending requests by unsupported HTTP methods to the view."""
         unsupported_methods = ["POST", "PUT", "PATCH", "DELETE"]
@@ -853,6 +851,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
                 response = request_method(self.url)
                 self.assertEqual(response.status_code, 405)
 
+    @has_permissions(view_apps=True)
     def test_correct_credentials(self):
         """Sending valid or invalid username & password does not succeed."""
         with self.subTest("Valid credentials"):
@@ -872,6 +871,15 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
                 self.url, HTTP_AUTHORIZATION=f"Basic {invalid_credentials}"
             )
             self.assertEqual(response.status_code, 401)
+
+    @has_permissions(view_apps=False)
+    def test_inadequate_permissions(self):
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.plaintext_key}",
+        )
+
+        self.assertEqual(response.status_code, 403)
 
 
 def test_doctests():
