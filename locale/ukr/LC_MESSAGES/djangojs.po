@@ -733,7 +733,6 @@ msgid "You have unchanged user properties settings"
 msgstr "У вас незмінені налаштування властивостей користувача"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#| msgid "Property uses unrecognized prefix <strong>"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "Властивість використовує невідомий префікс <strong>"
 
@@ -1098,12 +1097,10 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} не є дійсним батьківським елементом даних"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "Create"
 msgid "createXML"
 msgstr "createXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "User Data"
 msgid "getData"
 msgstr "getData"
 
@@ -1678,7 +1675,6 @@ msgstr "Перепризначено"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Copied!"
 msgid "Copied"
 msgstr "Скопійовано"
 
@@ -1694,13 +1690,11 @@ msgstr "Сьогодні"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
 msgstr "Перепризначено <%- count %> випадків"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
 msgstr "Скопійовано <%- count %> випадків"
 
@@ -3611,7 +3605,6 @@ msgid "Unavailable"
 msgstr "Недоступно"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
 msgstr "Залишилось <%- minutes %> хвилин"
 
