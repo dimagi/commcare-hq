@@ -1346,6 +1346,16 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
 )
 
 
+SUPER_SLOW_FORMS = StaticToggle(
+    'SUPER_SLOW_FORMS',
+    "Super Slow Forms: Turn on to make form processing take 16 minutes",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+    description="This is to mimic a timeout error to better understand user-facing impact.  "
+    "It will not be deployed to production",
+)
+
+
 def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
     domain_obj = Domain.get_by_name(domain_name, strict=True)
