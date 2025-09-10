@@ -1,9 +1,9 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
-from corehq import privileges
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.callcenter.sync_usercase import sync_usercases
@@ -20,7 +20,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
-from corehq.util.test_utils import privilege_enabled
 from custom.covid.rules.custom_actions import (
     close_cases_assigned_to_checkin,
     set_all_activity_complete_date_to_today,
@@ -30,12 +29,14 @@ from custom.covid.rules.custom_criteria import associated_usercase_closed
 
 @sharded
 @es_test(requires=[case_search_adapter])
-@privilege_enabled(privileges.USERCASE)
 class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
     def setUp(self):
         super().setUp()
         delete_all_users()
 
+        self._priv_patcher = patch('corehq.apps.callcenter.sync_usercase.domain_has_privilege', return_value=True)
+        self._priv_patcher.start()
+        self.addCleanup(self._priv_patcher.stop)
         self.domain_obj = create_domain(self.domain)
         enable_usercase(self.domain)
 
