@@ -17,7 +17,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import user_location_data
 from corehq.form_processor.models import CommCareCase
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 
 
 class _UserCaseHelper:
@@ -138,8 +137,15 @@ def _get_user_case_fields(user, case_type, owner_id, domain):
 
     if location_id := user.get_location_id(domain):
         fields['commcare_location_id'] = location_id
-        fields['commcare_location_ids'] = user_location_data(user.get_location_ids(domain))
         fields['commcare_primary_case_sharing_id'] = location_id
+    else:
+        fields['commcare_location_id'] = ''
+        fields['commcare_primary_case_sharing_id'] = ''
+
+    if location_ids := user.get_location_ids(domain):
+        fields['commcare_location_ids'] = user_location_data(location_ids)
+    else:
+        fields['commcare_location_ids'] = ''
 
     # language or phone_number can be null and will break
     # case submission
@@ -235,8 +241,7 @@ def _call_center_location_owner(user, ancestor_level):
 
 
 def _iter_sync_usercase_helpers(user, domain_obj):
-    if (domain_obj.usercase_enabled
-            and USH_USERCASES_FOR_WEB_USERS.enabled(domain_obj.name) or not user.is_web_user()):
+    if domain_obj.usercase_enabled:
         yield _get_sync_usercase_helper(
             user,
             domain_obj.name,
