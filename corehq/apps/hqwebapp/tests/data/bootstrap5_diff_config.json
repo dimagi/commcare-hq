@@ -274,6 +274,10 @@
         [
           "utils.less",
           "_utils.scss"
+        ],
+        [
+          "ocs_widget.less",
+          "_ocs_widget.scss"
         ]
       ]
     }
