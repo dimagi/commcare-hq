@@ -733,7 +733,6 @@ msgid "You have unchanged user properties settings"
 msgstr "Una mipangilio ya mali za mtumiaji ambayo haijabadilishwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "Mali inatumia kiambishi kisichotambulika <strong>"
 
@@ -1099,12 +1098,10 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} si mzazi halali wa data"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "Create"
 msgid "createXML"
 msgstr "undaXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "User Data"
 msgid "getData"
 msgstr "pataData"
 
@@ -1678,7 +1675,6 @@ msgstr "Imepangiwa upya"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Copied!"
 msgid "Copied"
 msgstr "Imenakiliwa"
 
@@ -1694,13 +1690,11 @@ msgstr "Leo"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
 msgstr "Kesi <%- count %> zimepangiwa upya"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
 msgstr "Kesi <%- count %> zimenakiliwa"
 
@@ -3613,7 +3607,6 @@ msgid "Unavailable"
 msgstr "Haipatikani"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
 msgstr "Dakika <%- minutes %> zimebaki"
 
