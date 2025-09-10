@@ -41,7 +41,7 @@ class TTLCache:
         adapters = self.adapters.get(domain)
         return self._load_adapters(domain) if adapters is None else adapters
 
-    def _load_adapters(self, domain):
+    def _load_adapters_(self, domain):
         now = datetime.now(UTC)
         for domain_, adapter in self.iter_adapters(domain):
             if adapter.is_active:
@@ -49,20 +49,20 @@ class TTLCache:
                 self.domain_last_seen[domain_] = now
         return self.adapters[domain]
 
-    @wraps(_load_adapters)
+    @wraps(_load_adapters_)
     def _load_adapters(self, domain):
         # locking decorator for _load_adapters defined above
         lock = self.adapters.locks[domain]
         while domain not in self.adapters:
             if lock.acquire(blocking=False):
                 try:
-                    return self._load_adapters.__wrapped__(self, domain)
+                    return self._load_adapters_(domain)
                 finally:
                     lock.release()
             lock.wait()  # wait for concurrent load to finish
         return self.adapters[domain]
 
-    def refresh(self):
+    def _refresh(self):
         """Reload changed adapters and prune stale entries from the cache"""
         now = datetime.now(UTC)
         last_refresh, self.last_refresh = self.last_refresh, now
@@ -87,13 +87,13 @@ class TTLCache:
             for domain in self.adapters.entries.keys() - updated_domains:
                 self.adapters.entries[domain].pop(config_id, None)
 
-    @wraps(refresh)
+    @wraps(_refresh)
     def refresh(self):
         # locking decorator for refresh defined above
         lock = self.adapters.refresh_lock
         if lock.acquire(blocking=False):
             try:
-                self.refresh.__wrapped__(self)
+                self._refresh()
             finally:
                 lock.release()
 
