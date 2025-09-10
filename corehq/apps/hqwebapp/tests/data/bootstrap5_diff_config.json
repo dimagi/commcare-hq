@@ -229,7 +229,7 @@
         ],
         [
           "panels.less",
-          "_panels.scss"
+          "_cards.scss"
         ],
         [
           "plan_notice.less",
@@ -274,6 +274,10 @@
         [
           "utils.less",
           "_utils.scss"
+        ],
+        [
+          "ocs_widget.less",
+          "_ocs_widget.scss"
         ]
       ]
     }
