@@ -4,12 +4,12 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.run_pillowtop import start_pillows, start_pillow
+from pillowtop.run_pillowtop import run_pillow_by_name, start_pillows
+
 from pillowtop.utils import (
     get_all_pillow_instances,
     get_all_pillow_configs,
     get_pillow_config_from_setting,
-    get_pillow_by_name
 )
 
 
@@ -70,6 +70,17 @@ class Command(BaseCommand):
                  "It's expected that there will only be one process for each number running at once",
         )
         parser.add_argument(
+            '--gevent-workers',
+            action='store',
+            dest='gevent_workers',
+            default=None,
+            type=int,
+            help="Number of gevent workers to run in this pillow process. Must "
+                 "be greater than 1. When using --dedicated-migration-process, "
+                 "process number 0 will be a migration process and will not "
+                 "run gevent workers.",
+        )
+        parser.add_argument(
             '--processor-chunk-size',
             action='store',
             dest='processor_chunk_size',
@@ -118,33 +129,18 @@ class Command(BaseCommand):
             pillows_to_run = [get_pillow_config_from_setting(pillow_key, config)
                               for config in settings.PILLOWTOPS[pillow_key]]
         elif not pillow_key and pillow_name:
-            run_pillow_by_name(pillow_name, options)
+            run_pillow_by_name(
+                pillow_name,
+                num_processes=options['num_processes'],
+                process_number=options['process_number'],
+                gevent_workers=options['gevent_workers'],
+                processor_chunk_size=options['processor_chunk_size'],
+                dedicated_migration_process=options['dedicated_migration_process'],
+                exclude_ucrs=options['exclude_ucrs'].split(),
+            )
             sys.exit()
         else:
             print("\nNo command set, please see --help for runtime instructions")
             sys.exit()
 
         start_pillows(pillows=[pillow_config.get_instance() for pillow_config in pillows_to_run])
-
-
-def run_pillow_by_name(pillow_name, options):
-    num_processes = options['num_processes']
-    process_number = options['process_number']
-    processor_chunk_size = options['processor_chunk_size']
-    dedicated_migration_process = options['dedicated_migration_process']
-    exclude_ucrs = options['exclude_ucrs']
-    assert 0 <= process_number < num_processes
-    assert processor_chunk_size
-
-    other_options = {}
-    if exclude_ucrs:
-        other_options = {'exclude_ucrs': exclude_ucrs.split(",")}
-    pillow = get_pillow_by_name(
-        pillow_name,
-        num_processes=num_processes,
-        process_num=process_number,
-        processor_chunk_size=processor_chunk_size,
-        dedicated_migration_process=dedicated_migration_process,
-        **other_options
-    )
-    start_pillow(pillow)
