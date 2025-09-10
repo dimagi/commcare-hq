@@ -44,7 +44,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
-    get_app_doc,
+    get_build_doc_by_build_id,
 )
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
@@ -108,13 +108,13 @@ class FormplayerMain(View):
     def get_web_apps_for_user(self, domain, user, app_id=None, build_id=None):
         if app_id and build_id:
             if can_user_access_web_app(domain, user, app_id):
-                build = get_app_doc(domain, build_id)
+                build = get_build_doc_by_build_id(build_id)
                 if build.get('cloudcare_enabled'):
                     return [_format_app_doc(build)]
             return []
 
         build_ids = get_web_app_ids_available_to_user(domain, user)
-        apps = [_format_app_doc(get_app_doc(domain, build_id))
+        apps = [_format_app_doc(get_app(domain, build_id))
                 for build_id in build_ids]
         return sorted(apps, key=lambda app: app['name'].lower())
 
