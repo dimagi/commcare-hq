@@ -43,7 +43,6 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_app_cached,
     get_build_doc_by_build_id,
 )
 from corehq.apps.cloudcare.const import (
@@ -61,7 +60,7 @@ from corehq.apps.cloudcare.utils import (
     can_user_access_web_app,
     get_latest_build_id_for_web_apps,
     get_mobile_ucr_count,
-    get_web_app_ids_available_to_user,
+    get_web_apps_available_to_user,
     should_restrict_web_apps_usage,
 )
 from corehq.apps.domain.decorators import (
@@ -113,9 +112,8 @@ class FormplayerMain(View):
                     return [_format_app_doc(build)]
             return []
 
-        build_ids = get_web_app_ids_available_to_user(domain, user)
-        apps = [_format_app_doc(get_app(domain, build_id))
-                for build_id in build_ids]
+        apps = get_web_apps_available_to_user(domain, user)
+        apps = [_format_app_doc(app) for app in apps]
         return sorted(apps, key=lambda app: app['name'].lower())
 
     @staticmethod
