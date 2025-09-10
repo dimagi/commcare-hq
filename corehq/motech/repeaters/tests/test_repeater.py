@@ -759,11 +759,11 @@ class RepeaterFailureTest(BaseRepeaterTest):
             self.repeater.register(case)
             rr = self.repeater.repeat_records.last()
         with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
-            state_or_none = rr.fire()
+            state = rr.fire()
 
-        assert state_or_none is None
+        assert state == State.ErrorGeneratingPayload
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        assert repeat_record.state == State.PayloadRejected
+        assert repeat_record.state == State.ErrorGeneratingPayload
         assert repeat_record.failure_reason == 'Boom!'
 
     def test_payload_exception_on_register(self):
@@ -773,7 +773,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        assert repeat_record.state == State.PayloadRejected
+        assert repeat_record.state == State.ErrorGeneratingPayload
         assert repeat_record.failure_reason == "Payload error"
 
     def test_failure(self):
@@ -1598,8 +1598,8 @@ class TestRepeatRecordsReady(TestCase):
                 repeater=self.repeater,
                 registered_at=now,
                 next_check=None,
-                state=State.InvalidPayload,
-                payload_id='invalid payload',
+                state=State.PayloadRejected,
+                payload_id='payload rejected',
             ),
         ))
         payload_ids = {rr.payload_id for rr in self.repeater.repeat_records_ready.all()}

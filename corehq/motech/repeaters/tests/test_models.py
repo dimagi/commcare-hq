@@ -490,7 +490,7 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
         )
         repeat_record = self.get_repeat_record()
         self.repeater.handle_response(resp, repeat_record)
-        assert repeat_record.state == State.InvalidPayload
+        assert repeat_record.state == State.PayloadRejected
 
     def test_handle_payload_errors(self):
         retry_codes = HTTP_STATUS_BACK_OFF + (HTTPStatus.TOO_MANY_REQUESTS,)
