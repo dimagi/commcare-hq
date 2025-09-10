@@ -43,6 +43,7 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_app_cached,
     get_app_doc,
 )
 from corehq.apps.cloudcare.const import (
