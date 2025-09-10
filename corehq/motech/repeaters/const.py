@@ -45,6 +45,12 @@ class State(IntegerChoices):
 
 
 RECORD_QUEUED_STATES = (State.Pending, State.Fail)
+RECORD_FAILED_STATES = (
+    State.Fail,
+    State.Cancelled,
+    State.PayloadRejected,
+    State.ErrorGeneratingPayload,
+)
 
 
 class UCRRestrictionFFStatus(IntegerChoices):

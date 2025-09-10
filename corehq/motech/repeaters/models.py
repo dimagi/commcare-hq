@@ -134,6 +134,7 @@ from .const import (
     MAX_RETRY_WAIT,
     MIN_REPEATER_RETRY_WAIT,
     MIN_RETRY_WAIT,
+    RECORD_FAILED_STATES,
     RECORD_QUEUED_STATES,
     State,
 )
@@ -1417,7 +1418,7 @@ class RepeatRecord(models.Model):
 
     @property
     def failure_reason(self):
-        if has_failed(self):
+        if self.state in RECORD_FAILED_STATES:
             return self.last_message
         else:
             return ''
@@ -1613,10 +1614,6 @@ def _get_retry_interval(last_checked, now):
     interval = max(MIN_RETRY_WAIT, interval)
     interval = min(MAX_RETRY_WAIT, interval)
     return interval
-
-
-def has_failed(record):
-    return record.state in (State.Fail, State.Cancelled, State.PayloadRejected)
 
 
 def format_response(response):
