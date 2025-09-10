@@ -13,7 +13,7 @@ from corehq.apps.hqwebapp.tables.elasticsearch.records import (
 )
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
-from corehq.apps.integration.kyc.models import KycUser
+from corehq.apps.integration.kyc.models import KycProperties, KycUser
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 
@@ -132,11 +132,11 @@ class KycVerifyTable(BaseHtmxTable, ElasticTable):
                 (field, columns.Column(verbose_name=name))
             )
         cols.extend([
-            ('kyc_verification_status', columns.TemplateColumn(
+            (KycProperties.KYC_VERIFICATION_STATUS, columns.TemplateColumn(
                 template_name='kyc/partials/kyc_verify_status.html',
                 verbose_name=_('KYC Status')
             )),
-            ('kyc_last_verified_at', DateTimeStringColumn(
+            (KycProperties.KYC_LAST_VERIFIED_AT, DateTimeStringColumn(
                 verbose_name=_('Last Verified')
             )),
             ('verify_btn', columns.TemplateColumn(

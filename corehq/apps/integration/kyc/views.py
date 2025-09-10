@@ -25,6 +25,7 @@ from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter
 from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import (
     KycConfig,
+    KycProperties,
     KycVerificationStatus,
     UserDataStore,
 )
@@ -132,7 +133,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return query
 
     def _apply_kyc_verification_status_filter(self, kyc_verification_status, query_filters):
-        field_name = 'kyc_verification_status'
+        field_name = KycProperties.KYC_VERIFICATION_STATUS
         if kyc_verification_status == KycVerificationStatus.PENDING:
             if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
                 query_filters.append(missing_or_empty_user_data_property(field_name))
