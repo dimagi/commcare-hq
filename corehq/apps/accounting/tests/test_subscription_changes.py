@@ -2,7 +2,7 @@ import uuid
 from datetime import date, time
 from unittest.mock import Mock, call, patch
 
-from django.test import SimpleTestCase, TransactionTestCase
+from django.test import SimpleTestCase, TransactionTestCase, TestCase
 
 from corehq.util.test_utils import flag_enabled
 from dimagi.utils.parsing import json_format_date
@@ -504,3 +504,24 @@ class DeactivateScheduleTest(TransactionTestCase):
         self.assertSchedulesInactive(self.domain_1_survey_schedules)
         self.assertSchedulesActive(self.domain_2_sms_schedules)
         self.assertSchedulesActive(self.domain_2_survey_schedules)
+
+
+class TestUsercaseSubscriptionChanges(TestCase):
+    domain = 'test-usercase-subscription-changes'
+
+    def test_upgrade(self):
+        domain_obj = Domain(name=self.domain, is_active=True)
+        domain_obj.save()
+        self.addCleanup(domain_obj.delete)
+
+        subscription = Subscription.new_domain_subscription(
+            BillingAccount.get_or_create_account_by_domain(self.domain, created_by='test')[0],
+            self.domain,
+            DefaultProductPlan.get_default_plan_version(),
+        )
+        self.assertEqual(domain_obj.usercase_enabled, False)
+
+        subscription.change_plan(DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.PRO))
+        domain_obj = Domain.get(domain_obj._id)  # refresh from DB
+        self.assertEqual(domain_obj.usercase_enabled, True)

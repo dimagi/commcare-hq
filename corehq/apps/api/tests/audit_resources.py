@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 from functools import partial
 
 from corehq.apps.api.resources import v0_5
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.auditcare.models import NavigationEventAudit
 from .utils import APIResourceTest
@@ -49,6 +50,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def setUpClass(cls):
         super().setUpClass()
 
+        cls.domain = Domain.get_by_name(cls.domain.name)
         cls.domain.default_timezone = 'America/Los_Angeles'
         cls.domain.save()
 
