@@ -231,16 +231,18 @@ class KycUser:
     @property
     def kyc_verification_status(self):
         value = self.user_data.get('kyc_verification_status')
-        # value can be '' when field is defined as a custom field in custom user data
+        # For records where KYC has not been initiated, the verification status is returned as None or ''
+        # because the case property/custom user field either does not exist or is empty.
+        if value in (None, ''):
+            return KycVerificationStatus.PENDING
         if value not in (
             KycVerificationStatus.PENDING,
             KycVerificationStatus.PASSED,
             KycVerificationStatus.FAILED,
             KycVerificationStatus.ERROR,
-            ''
         ):
             value = KycVerificationStatus.INVALID
-        return value or KycVerificationStatus.PENDING
+        return value
 
     @property
     def kyc_provider(self):
@@ -284,9 +286,7 @@ class KycVerificationStatus:
     PASSED = 'passed'
     # FAILED indicates a request was made to KYC Provider and the KYC failed
     FAILED = 'failed'
-    # PENDING indicates KYC is yet to be initiated and in that case, verification status is returned as None
-    # as case property/field does not exist or is empty.
-    PENDING = None
+    PENDING = 'pending'
     ERROR = 'error'
     INVALID = 'invalid'   # indicates an invalid value was manually set by a user
 
@@ -295,7 +295,7 @@ class KycVerificationStatus:
         return [
             (KycVerificationStatus.PASSED, _('Passed')),
             (KycVerificationStatus.FAILED, _('Failed')),
-            ('pending', _('Pending')),
+            (KycVerificationStatus.PENDING, _('Pending')),
             (KycVerificationStatus.ERROR, _('Error')),
             (KycVerificationStatus.INVALID, _('Invalid')),
         ]

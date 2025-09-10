@@ -12,7 +12,7 @@ from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycVerificationStatus
 from corehq.apps.integration.kyc.views import (
     KycConfigurationView,
     KycVerificationReportView,
@@ -268,7 +268,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -280,7 +280,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -315,7 +315,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -327,7 +327,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -393,7 +393,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'id': usercase_list[1].get_case_property('hq_user_id'),
                     'has_invalid_data': True,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -406,7 +406,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'id': usercase_list[0].get_case_property('hq_user_id'),
                     'has_invalid_data': False,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
