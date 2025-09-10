@@ -1035,6 +1035,7 @@ FileEntry.prototype.onClear = function () {
  * Represents an image upload.
  */
 function ImageEntry(question, options) {
+    var self = this;
     FileEntry.call(this, question, options);
     // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
     self.accept = "image/*";
@@ -1071,6 +1072,7 @@ AudioEntry.prototype.constructor = FileEntry;
  * Represents a video upload.
  */
 function VideoEntry(question, options) {
+    var self = this;
     FileEntry.call(this, question, options);
     // Must match a key in VALID_ATTACHMENT_FILE_EXTENSION_MAP corehq/ex-submodules/couchforms/const.py
     self.accept = "video/*";
