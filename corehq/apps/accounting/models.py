@@ -1223,6 +1223,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
     skip_auto_downgrade_reason = models.CharField(blank=True, max_length=256)
+    auto_renew = models.BooleanField(default=False)
 
     visible_objects = VisibleSubscriptionManager()
     visible_and_suppressed_objects = models.Manager()
