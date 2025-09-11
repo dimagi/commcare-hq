@@ -142,6 +142,31 @@ class TestGetUserObjectsUsers(BaseKycUsersSetup):
             'user_case_property': 'user_case_value',
         }
 
+    def test_other_case_type(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other_case_type',
+        )
+        kyc_users = list(config.get_all_kyc_users())
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
+            'other_case_property': 'other_case_value',
+        }
+
+    def test_other_case_type_by_ids(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other_case_type',
+        )
+        selected_ids = [self.other_case.case_id]
+        kyc_users = list(config.get_kyc_users_by_ids(selected_ids))
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
+            'other_case_property': 'other_case_value',
+        }
+
 
 @es_test(requires=[case_search_adapter])
 class TestGetUserObjectsCases(TestCase):
