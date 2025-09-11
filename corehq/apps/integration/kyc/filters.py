@@ -1,7 +1,7 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.integration.kyc.models import KycVerificationStatus
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseSimpleFilter
 
 
 class KycVerificationStatusFilter(BaseSingleOptionFilter):
@@ -9,3 +9,8 @@ class KycVerificationStatusFilter(BaseSingleOptionFilter):
     label = _('KYC Status')
     default_text = _('Show all')
     options = KycVerificationStatus.choices
+
+
+class PhoneNumberFilter(BaseSimpleFilter):
+    slug = 'phone_number'
+    label = gettext_lazy('Phone number')

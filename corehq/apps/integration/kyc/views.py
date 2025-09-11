@@ -235,15 +235,19 @@ class KycVerificationReportView(BaseDomainView, KYCFiltersMixin):
     @property
     def page_context(self):
         context = super().page_context
+        if self.kyc_config and self.kyc_config.phone_number_field:
+            self.fields.append(
+                'corehq.apps.integration.kyc.filters.PhoneNumberFilter'
+            )
         context.update({
-            'domain_has_config': self.domain_has_config,
+            'domain_has_config': self.kyc_config is not None,
             **self.filters_context(),
         })
         return context
 
-    @property
-    def domain_has_config(self):
-        return KycConfig.objects.filter(domain=self.domain).exists()
+    @cached_property
+    def kyc_config(self):
+        return KycConfig.objects.filter(domain=self.domain).first()
 
     @property
     def page_url(self):
@@ -258,10 +262,9 @@ class KycVerificationReportView(BaseDomainView, KYCFiltersMixin):
         return super().get(request, *args, **kwargs)
 
     def _report_users_count_metric(self):
-        if self.domain_has_config:
-            kyc_config = KycConfig.objects.get(domain=self.domain)
+        if self.kyc_config:
             metrics_gauge(
                 'commcare.integration.kyc.total_users.count',
-                kyc_config.get_kyc_users_count(),
+                self.kyc_config.get_kyc_users_count(),
                 tags={'domain': self.domain}
             )
