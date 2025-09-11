@@ -258,3 +258,11 @@ def sync_usercases(user, domain, sync_call_center=True):
             _iter_call_center_case_helpers(user) if sync_call_center else [],
         ))
         _UserCaseHelper.commit(helpers)
+
+
+# This is temporarily created to backfill usercases
+# and can be deleted after the backfill is done
+def sync_usercases_ignore_web_flag(user, domain):
+    with CriticalSection([f"sync_user_case_for_{user.user_id}_{domain}"]):
+        helper = _get_sync_usercase_helper(user, domain, USERCASE_TYPE, user.get_id, None)
+        _UserCaseHelper.commit([helper])
