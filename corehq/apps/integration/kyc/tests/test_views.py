@@ -386,7 +386,7 @@ class TestKycVerificationTableView(BaseTestKycView):
         for row in queryset.data:
             if row.serialized_data['has_invalid_data']:
                 assert row.serialized_data == {
-                    'id': usercase_list[1].case_id,
+                    'id': usercase_list[1].external_id,
                     'has_invalid_data': True,
                     'kyc_verification_status': {
                         'status': None,
@@ -399,7 +399,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                 }
             else:
                 assert row.serialized_data == {
-                    'id': usercase_list[0].case_id,
+                    'id': usercase_list[0].external_id,
                     'has_invalid_data': False,
                     'kyc_verification_status': {
                         'status': None,

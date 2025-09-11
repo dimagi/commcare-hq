@@ -135,7 +135,7 @@ class TestGetUserObjectsUsers(BaseKycUsersSetup):
             domain=DOMAIN,
             user_data_store=UserDataStore.USER_CASE,
         )
-        selected_ids = [self.user_case.case_id]
+        selected_ids = [self.user_case.external_id]
         kyc_users = list(config.get_kyc_users_by_ids(selected_ids))
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
@@ -227,7 +227,7 @@ class TestKycUser(BaseKycUsersSetup):
         kyc_user = KycUser(config, self.user_case)
 
         assert kyc_user.user_data == {'user_case_property': 'user_case_value'}
-        assert kyc_user.user_id == self.user_case.case_id
+        assert kyc_user.user_id == self.user_case.external_id
 
     def test_other_case_type(self):
         config = KycConfig(
