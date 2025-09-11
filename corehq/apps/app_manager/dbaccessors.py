@@ -151,11 +151,6 @@ def get_build_doc_by_version(domain, app_id, version):
     return get_build_by_version(domain, app_id, version, return_doc=True)
 
 
-def get_build_doc_by_build_id(build_id):
-    from .models import Application
-    return Application.get_db().get(build_id)
-
-
 def wrap_app(app_doc, wrap_cls=None):
     """Will raise DocTypeError if it can't figure out the correct class"""
     from corehq.apps.app_manager.util import get_correct_app_class
@@ -172,7 +167,7 @@ def get_current_app_version(domain, app_id):
     return result['value']['version']
 
 
-def get_current_app_doc(domain, app_id):
+def get_app_doc(domain, app_id):
     from .models import Application
     app = Application.get_db().get(app_id)
     if app.get('domain', None) != domain:
@@ -181,7 +176,7 @@ def get_current_app_doc(domain, app_id):
 
 
 def get_current_app(domain, app_id):
-    return wrap_app(get_current_app_doc(domain, app_id))
+    return wrap_app(get_app_doc(domain, app_id))
 
 
 def get_app_cached(domain, app_id):
@@ -216,7 +211,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
     Here are some common usages and the simpler dbaccessor alternatives:
         current_app = get_app(domain, app_id)
-                    = get_current_app_doc(domain, app_id)
+                    = get_app_doc(domain, app_id)
         latest_released_build = get_app(domain, app_id, latest=True)
                               = get_latest_released_app_doc(domain, app_id)
         latest_build = get_app(domain, app_id, latest=True, target='build')
@@ -245,7 +240,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             # If the app_id passed in was the working copy, just use that app.
             # If it's a build, get the working copy.
             if app.get('copy_of'):
-                app = get_current_app_doc(domain, app_id)
+                app = get_app_doc(domain, app_id)
         else:
             app = get_latest_released_app_doc(domain, app_id) or app
 
@@ -584,17 +579,17 @@ def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):
     return [a for a in apps if a.case_sharing and exclude_app_id != a.id]
 
 
-def get_latest_app_ids(domain, target="release"):
+def get_latest_app_meta(domain, target):
     """:param target: should be set to one of: 'save', 'build', 'release'"""
     from .models import Application
     prefix = {'save': 'SAVE', 'build': 'BUILD', 'release': 'RELEASE'}[target]
     # The key is [target, domain, origin_id, version]
     # reduce with group_level=3 yields the highest version for each
     # (target, domain, origin_id)
-    return [res['value']['_id'] for res in list(Application.get_db().view(
+    return [res['value'] for res in Application.get_db().view(
         'latest_apps/view',
         startkey=[prefix, domain],
         endkey=[prefix, domain, {}],
         group_level=3,
         reduce=True,
-    ))]
+    )]
