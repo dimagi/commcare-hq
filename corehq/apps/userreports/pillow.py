@@ -91,6 +91,7 @@ def _filter_by_hash(configs, ucr_division):
 
 def _filter_domains_to_skip(configs):
     """Return a list of configs whose domain exists on this environment"""
+    configs = list(configs)  # convert generator to list for multiple passes
     domain_names = list({config.domain for config in configs if config.is_static})
     existing_domains = list(get_domain_ids_by_names(domain_names))
     for config in configs:

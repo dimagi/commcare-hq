@@ -152,6 +152,22 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         adapters = table_manager.get_adapters(ds_1_domain)
         assert [a.config for a in adapters] == [data_source_1]
 
+    def test_table_adapters_for_migration_process(self):
+        # this test is for a regression in _filter_domains_to_skip
+        skip_domain_filter_patch.stop()  # unpatch _filter_domains_to_skip
+        self.addCleanup(skip_domain_filter_patch.start)
+        data_source_1 = get_sample_data_source()
+        ds_1_domain = data_source_1.domain
+        data_source_1.save()
+
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })], run_migrations=True, ucr_division='0f')
+        table_manager.configure_dedicated_migration_process()
+
+        adapters = table_manager.migration_cache.get_adapters()
+        assert [a.config for a in adapters] == [data_source_1]
+
     @patch("corehq.apps.userreports.pillow.rebuild_sql_tables")
     def test_complete_integration(self, mock_rebuild_sql_tables):
         data_source_1 = get_sample_data_source()
