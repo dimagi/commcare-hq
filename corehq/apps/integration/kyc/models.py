@@ -260,7 +260,7 @@ class KycUser:
         ]
         update = {
             KycProperties.KYC_PROVIDER: self.kyc_config.provider,
-            KycProperties.KYC_LAST_VERIFIED_AT: datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
+            KycProperties.KYC_LAST_VERIFIED_AT: datetime.utcnow().isoformat(),
             KycProperties.KYC_VERIFICATION_STATUS: verification_status,
             KycProperties.KYC_VERIFICATION_ERROR: error_message if error_message else '',
         }
