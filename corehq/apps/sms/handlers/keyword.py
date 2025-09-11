@@ -51,7 +51,7 @@ from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent
+from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent, ConnectMessageContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     ScheduleInstance,
 )
@@ -647,7 +647,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             continue
 
         # contact can be either a user, case, group, or location
-        if survey_keyword_action.action in (KeywordAction.ACTION_SMS, KeywordAction.ACTION_SMS_SURVEY):
+        if survey_keyword_action.action in (KeywordAction.ACTION_SMS, KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_CONNECT_MESSAGE):
             if isinstance(contact, Group):
                 recipients = list(ScheduleInstance.expand_group(contact))
             elif isinstance(contact, SQLLocation):
@@ -669,6 +669,10 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 content.set_context(
                     case=case,
                     critical_section_already_acquired=recipient_is_sender,
+                )
+            elif survey_keyword_action.action == KeywordAction.ACTION_CONNECT_MESSAGE:
+                content = ConnectMessageContent(
+                    message={'*': survey_keyword_action.message_content},
                 )
             else:
                 raise ValueError("Unexpected action %s" % survey_keyword_action.action)
