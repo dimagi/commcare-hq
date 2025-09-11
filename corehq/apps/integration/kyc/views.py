@@ -136,14 +136,21 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         field_name = KycProperties.KYC_VERIFICATION_STATUS
         if kyc_verification_status == KycVerificationStatus.PENDING:
             if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-                query_filters.append(missing_or_empty_user_data_property(field_name))
+                condition = filters.OR(
+                    missing_or_empty_user_data_property(field_name),
+                    query_user_data(field_name, kyc_verification_status)
+                )
             else:
-                query_filters.append(case_property_missing(field_name))
+                condition = filters.OR(
+                    case_property_missing(field_name),
+                    case_property_query(field_name, kyc_verification_status)
+                )
         else:
             if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-                query_filters.append(query_user_data(field_name, kyc_verification_status))
+                condition = query_user_data(field_name, kyc_verification_status)
             else:
-                query_filters.append(case_property_query(field_name, kyc_verification_status))
+                condition = case_property_query(field_name, kyc_verification_status)
+        query_filters.append(condition)
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
