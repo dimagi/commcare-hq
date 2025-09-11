@@ -84,7 +84,7 @@ class KycConfig(models.Model):
     def get_kyc_users_query(self):
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             return UserES().domain(self.domain).mobile_users()
-        elif self.user_data_store == UserDataStore.USER_CASE:
+        if self.user_data_store == UserDataStore.USER_CASE:
             case_type = USERCASE_TYPE
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
@@ -119,8 +119,7 @@ class KycConfig(models.Model):
                 wrapped_data = CouchUser.wrap_correctly(hit.get('_source', hit))
             else:
                 wrapped_data = wrap_case_search_hit(hit)
-            if wrapped_data:
-                yield KycUser(self, wrapped_data)
+            yield KycUser(self, wrapped_data)
 
     def get_kyc_users_count(self):
         return self.get_kyc_users_query().count()
