@@ -479,13 +479,14 @@ class TestKycVerificationStatusFilter(BaseTestKycView):
             data={
                 'first_name': 'Eva',
                 'phone_number': '111',
-                'kyc_verification_status': KycVerificationStatus.PASSED
-            }
+                'kyc_verification_status': KycVerificationStatus.PASSED,
+                'hq_user_id': uuid.uuid4().hex,
+            },
         )
         cls.usercase_pending = _create_case(
             factory, name='usercase_pending',
             case_type=USERCASE_TYPE,
-            data={'first_name': 'Tom', 'phone_number': '222'}
+            data={'first_name': 'Tom', 'phone_number': '222', 'hq_user_id': uuid.uuid4().hex},
         )
         case_search_adapter.bulk_index(
             [cls.case_verified, cls.case_pending, cls.usercase_verified, cls.usercase_pending],
@@ -555,7 +556,7 @@ class TestKycVerificationStatusFilter(BaseTestKycView):
         table_data = response.context['table'].data
         assert len(table_data) == 1
         row = table_data.data[0]
-        assert row.serialized_data['id'] == self.usercase_verified.case_id
+        assert row.serialized_data['id'] == self.usercase_verified.get_case_property('hq_user_id')
 
 
 def _create_case(factory, name, data, case_type='other-case'):
