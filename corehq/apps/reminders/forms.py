@@ -450,7 +450,7 @@ class KeywordForm(Form):
 
     def clean_sender_message(self):
         value = self.cleaned_data.get("sender_message")
-        if self.cleaned_data.get("sender_content_type") == METHOD_SMS:
+        if self.cleaned_data.get("sender_content_type") in [METHOD_SMS, CONTENT_CONNECT_MESSAGE]:
             if value is None or value == "":
                 raise ValidationError(_("This field is required."))
             return value
@@ -472,7 +472,7 @@ class KeywordForm(Form):
 
     def clean_other_recipient_message(self):
         value = self.cleaned_data.get("other_recipient_message")
-        if self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS:
+        if self.cleaned_data.get("other_recipient_content_type") in [METHOD_SMS, CONTENT_CONNECT_MESSAGE]:
             if value is None or value == "":
                 raise ValidationError(_("This field is required."))
             return value
