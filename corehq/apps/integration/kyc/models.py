@@ -101,11 +101,16 @@ class KycConfig(models.Model):
     def get_kyc_users_by_ids(self, obj_ids):
         """
         Yields kyc users for object ids in the domain based on the user data store.
+        param obj_ids: list of user_ids (for CUSTOM_USER_DATA, USER_CASE) or case_ids (for OTHER_CASE_TYPE)
         """
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-            hits = self.get_kyc_users_query().user_ids(obj_ids).run().hits
+            query = self.get_kyc_users_query().user_ids(obj_ids)
+        elif self.user_data_store == UserDataStore.USER_CASE:
+            # For User Case, HQ User ID is stored as external_id on the case
+            query = self.get_kyc_users_query().external_id(obj_ids)
         else:
-            hits = self.get_kyc_users_query().case_ids(obj_ids).run().hits
+            query = self.get_kyc_users_query().case_ids(obj_ids)
+        hits = query.run().hits
         return self._es_hits_to_kyc_users(hits)
 
     def _es_hits_to_kyc_users(self, hits):
@@ -113,7 +118,6 @@ class KycConfig(models.Model):
             if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
                 wrapped_data = CouchUser.wrap_correctly(hit.get('_source', hit))
             else:
-                # TODO Decide whether to use hq_user_id or case_id for storing User Case data.
                 wrapped_data = wrap_case_search_hit(hit)
             if wrapped_data:
                 yield KycUser(self, wrapped_data)
@@ -171,8 +175,10 @@ class KycUser:
         """
         self.kyc_config = kyc_config
         self._user_or_case_obj = user_or_case_obj
-        if isinstance(self._user_or_case_obj, CommCareUser):
+        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             self.user_id = self._user_or_case_obj.user_id
+        elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
+            self.user_id = self._user_or_case_obj.external_id
         else:
             self.user_id = self._user_or_case_obj.case_id
         self._user_data = None
