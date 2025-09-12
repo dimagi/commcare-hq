@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import patch
 
 from django.test import RequestFactory, TestCase
@@ -366,6 +367,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
+                    'hq_user_id': uuid.uuid4().hex,
                 }
             ),
             _create_case(
@@ -375,6 +377,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                 data={
                     'first_name': 'Jane',
                     'last_name': 'Doe',
+                    'hq_user_id': uuid.uuid4().hex,
                 }
             ),
         ]
@@ -386,7 +389,7 @@ class TestKycVerificationTableView(BaseTestKycView):
         for row in queryset.data:
             if row.serialized_data['has_invalid_data']:
                 assert row.serialized_data == {
-                    'id': usercase_list[1].external_id,
+                    'id': usercase_list[1].get_case_property('hq_user_id'),
                     'has_invalid_data': True,
                     'kyc_verification_status': {
                         'status': None,
@@ -399,7 +402,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                 }
             else:
                 assert row.serialized_data == {
-                    'id': usercase_list[0].external_id,
+                    'id': usercase_list[0].get_case_property('hq_user_id'),
                     'has_invalid_data': False,
                     'kyc_verification_status': {
                         'status': None,

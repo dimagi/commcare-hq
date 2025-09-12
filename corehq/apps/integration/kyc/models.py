@@ -106,8 +106,7 @@ class KycConfig(models.Model):
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             query = self.get_kyc_users_query().user_ids(obj_ids)
         elif self.user_data_store == UserDataStore.USER_CASE:
-            # For User Case, HQ User ID is stored as external_id on the case
-            query = self.get_kyc_users_query().external_id(obj_ids)
+            query = self.get_kyc_users_query().case_property_query('hq_user_id', obj_ids)
         else:
             query = self.get_kyc_users_query().case_ids(obj_ids)
         hits = query.run().hits
@@ -177,7 +176,7 @@ class KycUser:
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             self.user_id = self._user_or_case_obj.user_id
         elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
-            self.user_id = self._user_or_case_obj.external_id
+            self.user_id = self._user_or_case_obj.get_case_property('hq_user_id')
         else:
             self.user_id = self._user_or_case_obj.case_id
         self._user_data = None
