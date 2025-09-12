@@ -214,6 +214,9 @@ class privilege_enabled:
     """
     imports = (  # (Alphabetical to reduce conflicts)
         'corehq.apps.app_manager.app_strings.domain_has_privilege',
+        'corehq.apps.app_manager.util.domain_has_privilege',
+        'corehq.apps.callcenter.sync_usercase.domain_has_privilege',
+        'corehq.apps.callcenter.tasks.domain_has_privilege',
         'corehq.apps.data_cleaning.decorators.domain_has_privilege',
         'corehq.apps.data_cleaning.utils.cases.domain_has_privilege',
         'corehq.apps.domain.auth.domain_has_privilege',
