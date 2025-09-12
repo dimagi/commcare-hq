@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.test.testcases import TestCase
 from django.urls import reverse
@@ -44,6 +45,11 @@ class TestZapierCreateCaseAction(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         super(TestZapierCreateCaseAction, cls).tearDownClass()
 
+    def get_case_id(self, response):
+        match = re.match(r'Created case with id ([\d\w-]+)', response.content.decode('utf-8'))
+        assert match
+        return match.groups()[0]
+
     def test_create_case(self):
         response = self.client.post(reverse(ZapierCreateCase.urlname,
                                             kwargs={'domain': self.domain}) + self.query_string,
@@ -52,9 +58,8 @@ class TestZapierCreateCaseAction(TestCase):
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
-
-        created_case_id = response.content.decode().split()[-1]
-        case = CommCareCase.objects.get_case(created_case_id, self.domain)
+        case_id = self.get_case_id(response)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual('test1', case.get_case_property('name'))
         self.assertEqual('11', case.get_case_property('price'))
         self.assertEqual('watermelon', case.get_case_property('type'))
@@ -67,11 +72,11 @@ class TestZapierCreateCaseAction(TestCase):
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
-        created_case_id = response.content.decode().split()[-1]
-        case = CommCareCase.objects.get_case(created_case_id, self.domain)
+        case_id = self.get_case_id(response)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual('11', case.get_case_property('price'))
 
-        data = {'case_name': 'test1', 'price': '15', 'case_id': created_case_id}
+        data = {'case_name': 'test1', 'price': '15', 'case_id': case_id}
         response = self.client.post(reverse(ZapierUpdateCase.urlname,
                                             kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(data),
@@ -79,7 +84,7 @@ class TestZapierCreateCaseAction(TestCase):
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
-        case = CommCareCase.objects.get_case(created_case_id, self.domain)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual('15', case.get_case_property('price'))
 
     def test_update_case_does_not_exist(self):
@@ -100,9 +105,8 @@ class TestZapierCreateCaseAction(TestCase):
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
-        created_case_id = response.content.decode().split()[-1]
-
-        data = {'case_name': 'test1', 'price': '15', 'case_id': created_case_id}
+        case_id = self.get_case_id(response)
+        data = {'case_name': 'test1', 'price': '15', 'case_id': case_id}
         query_string = "?domain=me&case_type=watermelon&user_id=test_user&user=test"
         response = self.client.post(reverse(ZapierUpdateCase.urlname,
                                             kwargs={'domain': self.domain}) + query_string,
@@ -120,9 +124,8 @@ class TestZapierCreateCaseAction(TestCase):
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
-        created_case_id = response.content.decode().split()[-1]
-
-        data = {'case_name': 'test1', 'price': '15', 'case_id': created_case_id}
+        case_id = self.get_case_id(response)
+        data = {'case_name': 'test1', 'price': '15', 'case_id': case_id}
         query_string = "?domain=fruit&case_type=orange&user_id=test_user&user=test"
         response = self.client.post(reverse(ZapierUpdateCase.urlname,
                                             kwargs={'domain': self.domain}) + query_string,
