@@ -50,8 +50,8 @@
         <!-- /ko -->
         <span class="webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
       </div>
-      <span class="hint-text" data-bind="
-              text: ko.utils.unwrapObservable($data.hint),
+      <span class="hint-text webapp-markdown-output" data-bind="
+              html: ko.utils.unwrapObservable($data.hint),
               visible: !entry.useHintAsPlaceHolder()
           "></span>
       <!-- ko if: required() -->

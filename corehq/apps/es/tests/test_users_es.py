@@ -115,7 +115,7 @@ class TestIsActiveOnDomain(TestCase):
         cls.cc_user_active_other_domain = cls.make_cc_user('cc_user_active_other_domain', cls.other_domain)
         cls.cc_user_inactive_other_domain = cls.make_cc_user(
             'cc_user_inactive_other_domain', cls.other_domain, is_active=False)
-        cls.web_user_active = cls.make_web_user('web_user_active', active_domains=[cls.domain])
+        cls.web_user_active = cls.make_web_user('web_user_active@dimagi.com', active_domains=[cls.domain])
         cls.web_user_inactive = cls.make_web_user('web_user_inactive', inactive_domains=[cls.domain])
         cls.web_user_active_other_domain = cls.make_web_user(
             'web_user_active_other_domain', active_domains=[cls.other_domain])
@@ -159,7 +159,7 @@ class TestIsActiveOnDomain(TestCase):
             'cc_user_inactive',
             'cc_user_active_other_domain',
             'cc_user_inactive_other_domain',
-            'web_user_active',
+            'web_user_active@dimagi.com',
             'web_user_inactive',
             'web_user_active_other_domain',
             'web_user_inactive_other_domain',
@@ -174,7 +174,7 @@ class TestIsActiveOnDomain(TestCase):
             UserES().domain(self.domain).values_list('username', flat=True),
         ) == Counter([
             'cc_user_active',
-            'web_user_active',
+            'web_user_active@dimagi.com',
             'web_user_active_both_domains',
             'web_user_active_inactive_other',
         ])
@@ -199,7 +199,7 @@ class TestIsActiveOnDomain(TestCase):
         ) == Counter([
             'cc_user_active',
             'cc_user_inactive',
-            'web_user_active',
+            'web_user_active@dimagi.com',
             'web_user_inactive',
             'web_user_active_both_domains',
             'web_user_inactive_both_domains',
@@ -216,7 +216,7 @@ class TestIsActiveOnDomain(TestCase):
         ) == Counter([
             'cc_user_active',
             'cc_user_active_other_domain',
-            'web_user_active',
+            'web_user_active@dimagi.com',
             'web_user_active_other_domain',
             'web_user_active_both_domains',
             'web_user_active_inactive_other',
@@ -243,7 +243,19 @@ class TestIsActiveOnDomain(TestCase):
         web_user_emails = iter_web_user_emails(self.domain)
         assert isinstance(web_user_emails, types.GeneratorType)
         assert Counter(list(web_user_emails)) == Counter([
-            'web_user_active',
+            'web_user_active@dimagi.com',
+            'web_user_active_both_domains',
+            'web_user_active_inactive_other',
+        ])
+
+    def test_exclude_dimagi_users(self):
+        assert Counter(
+            UserES()
+            .domain([self.domain])
+            .web_users()
+            .exclude_dimagi_users()
+            .values_list('username', flat=True)
+        ) == Counter([
             'web_user_active_both_domains',
             'web_user_active_inactive_other',
         ])

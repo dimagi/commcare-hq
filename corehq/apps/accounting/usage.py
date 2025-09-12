@@ -60,4 +60,5 @@ def get_web_user_usage(domains):
     return (UserES()
             .domain(domains)
             .web_users()
+            .exclude_dimagi_users()
             .count())

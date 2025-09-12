@@ -494,21 +494,23 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
     repeater = Repeater.objects.get(id=repeater_id)
     try:
         if toggles.BACKOFF_REPEATERS.enabled(repeater.domain, namespace=toggles.NAMESPACE_DOMAIN):
-            if all(s in (State.Empty, None) for s in repeat_record_states):
-                # We can't tell anything about the remote endpoint.
-                return
-            success_or_invalid = (State.Success, State.InvalidPayload)
-            if any(s in success_or_invalid for s in repeat_record_states):
-                # The remote endpoint appears to be healthy.
-                repeater.reset_backoff()
+            remote_is_bad = False
+            for state in repeat_record_states:
+                if state in (State.Success, State.InvalidPayload):
+                    repeater.reset_backoff()
+                    break  # Skips the `else` clause below
+                if state in (State.Fail, State.Cancelled):
+                    remote_is_bad = True
             else:
-                # All the payloads that were sent failed. Try again later.
-                metrics_counter(
-                    'commcare.repeaters.process_repeaters.repeater_backoff',
-                    tags={'domain': repeater.domain},
-                )
-                more = False
-                repeater.set_backoff()
+                if remote_is_bad:
+                    # All the payloads that were sent failed with server or
+                    # connection errors. Try again later.
+                    metrics_counter(
+                        'commcare.repeaters.process_repeaters.repeater_backoff',
+                        tags={'domain': repeater.domain},
+                    )
+                    more = False
+                    repeater.set_backoff()
     finally:
         lock = RepeaterLock(repeater_id, lock_token)
         if more:

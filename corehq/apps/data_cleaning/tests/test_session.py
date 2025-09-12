@@ -13,7 +13,9 @@ from corehq.apps.data_cleaning.models import (
     DataType,
     FilterMatchType,
 )
+from corehq.apps.data_cleaning.models.change import BulkEditChange
 from corehq.apps.data_cleaning.models.column import BulkEditColumnManager
+from corehq.apps.data_cleaning.models.types import EditActionType
 from corehq.apps.data_cleaning.tests.mixins import CaseDataTestMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES, group_adapter, user_adapter
@@ -478,8 +480,224 @@ class BulkEditSessionSelectionCountTests(CaseDataTestMixin, BaseBulkEditSessionT
         assert not self.session.can_select_all(table_num_records=4)
 
 
-class BulkEditSessionChangesTests(BaseBulkEditSessionTest):
+class BulkEditSessionChangesTests(CaseDataTestMixin, BaseBulkEditSessionTest):
     domain_name = 'session-test-changes'
 
-    def _get_list_of_doc_ids(self, num):
-        return [str(uuid.uuid4()) for _ in range(num)]
+    def test_apply_change_to_selected_records(self):
+        cases = [
+            {'_id': 'c1', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+            {'_id': 'c2', 'case_type': self.case_type, 'soil_mix': 'sandy'},
+            {'_id': 'c3', 'case_type': self.case_type, 'soil_mix': 'fine'},
+            {'_id': 'c4', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+            {'_id': 'c5', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+        ]
+        self.bootstrap_cases_in_es_for_domain(self.domain_name, cases)
+        selected_ids = ['c1', 'c2', 'c3', 'c4']
+        self.session.select_multiple_records(selected_ids)
+        change = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change = self.session.apply_change_to_selected_records(change)
+        assert self.session.changes.count() == 1
+        assert change.prop_id == 'soil_mix'
+        assert change.action_type == EditActionType.REPLACE
+        assert change.replace_string == 'chonky'
+        assert change.records.count() == 4
+        for record in change.records.all():
+            assert record.doc_id in selected_ids
+
+    def test_apply_change_to_all_records_with_filter(self):
+        cases = [
+            {'_id': 'c1', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+            {'_id': 'c2', 'case_type': self.case_type, 'soil_mix': 'sandy'},
+            {'_id': 'c3', 'case_type': self.case_type, 'soil_mix': 'fine'},
+            {'_id': 'c4', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+            {'_id': 'c5', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+        ]
+        self.bootstrap_cases_in_es_for_domain(self.domain_name, cases)
+        self.session.select_multiple_records(['c1', 'c2', 'c3', 'c4'])
+        self.session.add_filter('soil_mix', DataType.TEXT, FilterMatchType.EXACT, 'chunky')
+        change = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change = self.session.apply_change_to_selected_records(change)
+        assert self.session.changes.count() == 1
+        assert change.prop_id == 'soil_mix'
+        assert change.records.count() == 2
+        for record in change.records.all():
+            assert record.doc_id in ['c1', 'c4']
+
+    def test_purge_records(self):
+        self.session.select_multiple_records(['c1', 'c2'])
+        change = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change = self.session.apply_change_to_selected_records(change)
+        # simulate a record that had its changes removed but is still recorded
+        BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id='c5',
+            calculated_change_id=uuid.uuid4(),
+            is_selected=False,
+        )
+        assert self.session.records.count() == 3
+        assert change.records.count() == 2
+        self.session.purge_records()
+        assert self.session.records.count() == 2
+        for record in self.session.records.all():
+            assert record.doc_id in ['c1', 'c2']
+
+    def test_undo_last_change(self):
+        self.session.select_multiple_records(['c1', 'c2'])
+        change1 = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change1 = self.session.apply_change_to_selected_records(change1)
+        self.session.select_multiple_records(['c1', 'c2', 'c3'])
+        change2 = BulkEditChange(
+            session=self.session,
+            prop_id='num_leaves',
+            action_type=EditActionType.REPLACE,
+            replace_string='5',
+        )
+        change2 = self.session.apply_change_to_selected_records(change2)
+        assert self.session.changes.count() == 2
+        assert change1.records.count() == 2
+        assert change2.records.count() == 3
+        self.session.deselect_multiple_records(['c1', 'c2', 'c3'])
+        self.session.undo_last_change()
+        assert self.session.changes.count() == 1
+        assert self.session.changes.first().change_id == change1.change_id
+        for record in self.session.records.all():
+            assert record.doc_id in ['c1', 'c2']
+
+    def test_clear_all_changes(self):
+        self.session.select_multiple_records(['c1', 'c2'])
+        change1 = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change1 = self.session.apply_change_to_selected_records(change1)
+        change2 = BulkEditChange(
+            session=self.session,
+            prop_id='num_leaves',
+            action_type=EditActionType.REPLACE,
+            replace_string='5',
+        )
+        self.session.select_multiple_records(['c1', 'c2', 'c3'])
+        change2 = self.session.apply_change_to_selected_records(change2)
+        self.session.deselect_multiple_records(['c3'])
+        assert self.session.changes.count() == 2
+        assert self.session.records.count() == 3
+        self.session.clear_all_changes()
+        assert self.session.changes.count() == 0
+        assert self.session.records.count() == 2
+        for record in self.session.records.all():
+            assert record.doc_id in ['c1', 'c2']
+
+    @mock.patch('corehq.apps.data_cleaning.models.session.MAX_SESSION_CHANGES', 3)
+    def test_are_bulk_edits_allowed_below_max_changes(self):
+        self.session.select_multiple_records(['c1', 'c2'])
+        change1 = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change1 = self.session.apply_change_to_selected_records(change1)
+        change2 = BulkEditChange(
+            session=self.session,
+            prop_id='num_leaves',
+            action_type=EditActionType.REPLACE,
+            replace_string='5',
+        )
+        self.session.select_multiple_records(['c1', 'c2', 'c3'])
+        change2 = self.session.apply_change_to_selected_records(change2)
+        assert self.session.are_bulk_edits_allowed()
+
+    @mock.patch('corehq.apps.data_cleaning.models.session.MAX_SESSION_CHANGES', 2)
+    def test_are_bulk_edits_not_allowed_above_max_changes(self):
+        self.session.select_multiple_records(['c1', 'c2'])
+        change1 = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change1 = self.session.apply_change_to_selected_records(change1)
+        change2 = BulkEditChange(
+            session=self.session,
+            prop_id='num_leaves',
+            action_type=EditActionType.REPLACE,
+            replace_string='5',
+        )
+        self.session.select_multiple_records(['c1', 'c2', 'c3'])
+        change2 = self.session.apply_change_to_selected_records(change2)
+        assert not self.session.are_bulk_edits_allowed()
+
+    def test_has_changes(self):
+        assert not self.session.has_changes()
+        self.session.select_multiple_records(['c1', 'c2'])
+        change1 = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change1 = self.session.apply_change_to_selected_records(change1)
+        assert self.session.has_changes()
+
+    def test_num_changed_records_before_commit(self):
+        # We raise here because num_changed_records should only be accessed
+        # after the session has been committed.
+        with pytest.raises(
+            RuntimeError,
+            match='Session must be committed before counting changed records.',
+        ):
+            _ = self.session.num_changed_records
+
+    def test_num_changed_records_after_commit(self):
+        self.session.committed_on = datetime.datetime.now()
+        self.session.save()
+        assert self.session.num_changed_records == 0
+        self.session.select_multiple_records(['c1', 'c2'])
+        change1 = BulkEditChange(
+            session=self.session,
+            prop_id='soil_mix',
+            action_type=EditActionType.REPLACE,
+            replace_string='chonky',
+        )
+        change1 = self.session.apply_change_to_selected_records(change1)
+        assert self.session.num_changed_records == 2
+        self.session.select_multiple_records(['c3'])
+        change2 = BulkEditChange(
+            session=self.session,
+            prop_id='num_leaves',
+            action_type=EditActionType.REPLACE,
+            replace_string='5',
+        )
+        change2 = self.session.apply_change_to_selected_records(change2)
+        assert self.session.num_changed_records == 3
+
+    def test_num_changed_records_after_task_completed(self):
+        self.session.committed_on = datetime.datetime.now()
+        self.session.completed_on = datetime.datetime.now()
+        self.session.result = {
+            'record_count': 5,
+        }
+        self.session.save()
+        assert self.session.num_changed_records == 5
