@@ -18,6 +18,7 @@ def main():
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
         GeventCommand('run_gunicorn'),
+        GeventCommand('run_ptop', with_option='--gevent-workers'),
         GeventCommand('run_sql'),
         GeventCommand('run_blob_migration'),
         GeventCommand('check_blob_logs'),
@@ -54,9 +55,15 @@ def main():
 @attr.s
 class GeventCommand(object):
     command = attr.ib()
-    contains = attr.ib(default=None)
+    with_option = attr.ib(default=None)
     env_exclude = attr.ib(default=None)
     http_adapter_pool_size = attr.ib(default=None)
+
+    def should_include(self, args):
+        option = self.with_option
+        if not option:
+            return True
+        return any(a == option or a.startswith(option + '=') for a in args)
 
 
 def _patch_gevent_if_required(args, gevent_commands):
@@ -64,15 +71,10 @@ def _patch_gevent_if_required(args, gevent_commands):
         return
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
-        contains = set(gevent_command.contains or [])
         env_exclude = gevent_command.env_exclude or []
-        arg_set = set(args)
 
-        should_include = contains.issubset(arg_set)
-        should_exclude = any(
-            [os.environ.get(env_var) == '1' for env_var in env_exclude]
-        )
-
+        should_include = gevent_command.should_include(args)
+        should_exclude = any(os.environ.get(v) == '1' for v in env_exclude)
         should_patch = should_patch and should_include and not should_exclude
 
         if should_patch:
