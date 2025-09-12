@@ -114,7 +114,17 @@ module.valueIsReservedWord = function (valueNoSpaces) {
     return valueNoSpaces === 'commcare-user' || valueNoSpaces === 'user-owner-mapping-case';
 };
 
-module.reservedWordErrorMsg = gettext("This is a reserved case type. Please choose another name.");
+module.getReservedWordErrorMsg = function (valueNoSpaces) {
+    const reservedWordErrorMsg = {
+        'commcare-user': gettext(
+            'This is a reserved case type. Refer to ' +
+            '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management" target="_blank" rel="noopener">doc</a> ' +
+            'before using.',
+        ),
+    };
+    const defaultReservedWordErrorMsg = gettext("This is a reserved case type. Please choose another name.");
+    return reservedWordErrorMsg[valueNoSpaces] || defaultReservedWordErrorMsg;
+};
 
 module.deprecatedCaseTypeErrorMsg = gettext("This case type has been deprecated in the Data Dictionary.");
 
@@ -606,7 +616,7 @@ var _initNewModuleOptionClicks = function () {
                 }
 
                 if (module.valueIsReservedWord(valueNoSpaces)) {
-                    displayError(module.reservedWordErrorMsg);
+                    displayError(module.getReservedWordErrorMsg(valueNoSpaces));
                     return;
                 }
 
