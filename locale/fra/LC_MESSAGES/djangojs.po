@@ -756,7 +756,6 @@ msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propriété utilise un préfixe non reconnu <strong>"
 
@@ -1131,12 +1130,10 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} n'est pas un parent de données valide"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "Create"
 msgid "createXML"
 msgstr "createXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "User Data"
 msgid "getData"
 msgstr "getData"
 
@@ -1724,7 +1721,6 @@ msgstr "Réaffecté"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Copied!"
 msgid "Copied"
 msgstr "Copié"
 
@@ -1740,13 +1736,11 @@ msgstr "Aujourd'hui"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
 msgstr "<%- count %> cas réaffectés"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
 msgstr "<%- count %> cas copiés"
 
@@ -3678,7 +3672,6 @@ msgid "Unavailable"
 msgstr "Indisponible"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
 msgstr "<%- minutes %> minutes restantes"
 

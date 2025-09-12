@@ -1202,32 +1202,6 @@ msgstr "Malipo ya Moja kwa Moja"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "  <p>\n"
-#| "    Hello %(old_user_name)s,\n"
-#| "  </p>\n"
-#| "  <p>\n"
-#| "    Your card is no longer being used for autopayment on the account %(billing_account_name)s.\n"
-#| "  </p>\n"
-#| "  <p>\n"
-#| "    A card belonging to <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> is being used instead. If this is expected, you do not have to take any further action, and this card will be used to pay monthly invoices and will be charged on the invoice due date. If this change is unexpected, you can view and alter the credit card information at any time by navigating to your <a href=\"%(billing_info_url)s\">Billing Information</a> page.\n"
-#| "  </p>\n"
-#| "  <p>\n"
-#| "    Thank you for using CommCare. If you have any questions, please don't hesitate to contact\n"
-#| "    <a href=\"mailto:%(invoicing_contact_email)s\">%(invoicing_contact_email)s</a>.\n"
-#| "  </p>\n"
-#| "  <p>\n"
-#| "    Best Regards,\n"
-#| "  </p>\n"
-#| "  <p>\n"
-#| "    The CommCare HQ Team<br/>\n"
-#| "    www.commcarehq.org\n"
-#| "  </p>\n"
-#| "  <p>\n"
-#| "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
-#| "  </p>\n"
-#| "\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -1362,12 +1336,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
-#| msgid ""
-#| "\n"
-#| "    Best Regards,<br />\n"
-#| "    The CommCare HQ Team<br />\n"
-#| "    <a href=\"http://www.commcarehq.org/\">www.commcarehq.org</a>\n"
-#| "  "
 msgid ""
 "\n"
 "    Best Regards,<br />\n"
@@ -1382,12 +1350,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
-#| msgid ""
-#| "\n"
-#| "    Email From:<br />\n"
-#| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
-#| "    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
@@ -1450,17 +1412,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
 #, python-format
-#| msgid ""
-#| "Thank you for using CommCare. If you have any questions, please don't\n"
-#| "hesitate to contact %(invoicing_contact_email)s.\n"
-#| "\n"
-#| "Best Regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
-#| "\n"
-#| "Email From:\n"
-#| "CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 msgid ""
 "Thank you for using CommCare. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
@@ -1498,12 +1449,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
-#| msgid ""
-#| "\n"
-#| "    Email From:<br />\n"
-#| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
-#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
@@ -1543,11 +1488,6 @@ msgstr ""
 "kuwasiliana na %(invoicing_contact_email)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
-#| msgid ""
-#| "\n"
-#| "Best Regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Best Regards,\n"
@@ -1560,11 +1500,6 @@ msgstr ""
 "www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
-#| msgid ""
-#| "\n"
-#| "Email From:\n"
-#| "CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Email From:\n"
@@ -1885,12 +1820,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
-#| msgid ""
-#| "\n"
-#| "    Best regards,<br />\n"
-#| "    The CommCare HQ Team<br />\n"
-#| "    www.commcarehq.org\n"
-#| "  "
 msgid ""
 "\n"
 "    Best regards,<br />\n"
@@ -1906,11 +1835,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#| msgid ""
-#| "\n"
-#| "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
-#| "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Statement From: CommCare and the corporation Dimagi, Inc. 585\n"
@@ -2087,18 +2011,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
-#| "\n"
-#| "\n"
-#| "Statement From:\n"
-#| "CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
@@ -2199,30 +2111,11 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
-#| msgid "The CommCare HQ Team"
 msgid "The CommCare Team"
 msgstr "Timu ya CommCare"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear %(account)s administrator,\n"
-#| "\n"
-#| "Your %(plan_name)s subscription ends soon! If you do not renew your\n"
-#| "subscription before then, your subscription will be paused on %(ending_on)s\n"
-#| "and you will lose access to all features until you re-subscribe to a new\n"
-#| "paid plan.\n"
-#| "\n"
-#| "To change or renew your subscription, please reach out to %(sales_email)s.\n"
-#| "\n"
-#| "If you have any questions, please don’t hesitate to contact %(invoicing_contact_email)s.\n"
-#| "Thank you for your use and support of CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "\n"
-#| "The CommCare HQ Team\n"
-#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(account)s administrator,\n"
@@ -2348,12 +2241,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
-#| msgid ""
-#| "\n"
-#| "    Best regards, <br />\n"
-#| "    The CommCare HQ Team <br />\n"
-#| "    www.commcarehq.org\n"
-#| "  "
 msgid ""
 "\n"
 "    Best regards, <br />\n"
@@ -2369,21 +2256,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear %(domain)s administrator,\n"
-#| "\n"
-#| "Your subscription has been paused for the CommCare project space %(domain)s. You can regain access to your data and project space by re-subscribing to a plan.\n"
-#| "\n"
-#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
-#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
-#| "After you have paid the unpaid invoices you can re-subscribe to your plan here: %(subscription_url)s\n"
-#| "\n"
-#| "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -2471,22 +2343,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear %(domain_or_account)s administrator,\n"
-#| "\n"
-#| "Your CommCare %(subscriptions_to_downgrade)s will be paused after tomorrow because your CommCare Billing Statements are more than %(days_overdue)s days overdue.\n"
-#| "If you do not make a payment before tomorrow, your subscription will automatically be paused and you will lose access to your project space and data until you re-subscribe to a paid plan.\n"
-#| "\n"
-#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
-#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
-#| "You can also pre-pay for several months at any time by following the steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
-#| "\n"
-#| "If you have any questions, please don’t hesitate to contact %(contact_email)s. Thank you for using CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain_or_account)s administrator,\n"
@@ -2536,12 +2392,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
-#| msgid ""
-#| "\n"
-#| "    Best Regards,<br />\n"
-#| "    The CommCare HQ Team<br />\n"
-#| "    www.commcarehq.org\n"
-#| "  "
 msgid ""
 "\n"
 "    Best Regards,<br />\n"
@@ -2584,18 +2434,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
-#| "\n"
-#| "Best Regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
-#| "\n"
-#| "\n"
-#| "Statement From:\n"
-#| "CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
@@ -2733,12 +2571,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
-#| msgid ""
-#| "\n"
-#| "    Statement From:\n"
-#| "    CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Statement From:\n"
@@ -2790,11 +2622,6 @@ msgstr ""
 "    kuwasiliana na %(invoicing_contact_email)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
-#| msgid ""
-#| "\n"
-#| "    Best Regards,\n"
-#| "    The CommCare HQ Team\n"
-#| "    www.commcarehq.org\n"
 msgid ""
 "\n"
 "    Best Regards,\n"
@@ -2807,11 +2634,6 @@ msgstr ""
 "    www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
-#| msgid ""
-#| "\n"
-#| "    Statement From:\n"
-#| "    CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "    Statement From:\n"
@@ -2896,18 +2718,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Thank you for using CommCare. If you have any questions, please don't\n"
-#| "hesitate to contact %(invoicing_contact_email)s.\n"
-#| "\n"
-#| "Best Regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
-#| "\n"
-#| "Email From:\n"
-#| "CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using CommCare. If you have any questions, please don't\n"
@@ -3099,14 +2909,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Thank you for using %(plan_name)s. If you have any questions, please don't\n"
-#| "hesitate to contact %(invoicing_contact_email)s.\n"
-#| "\n"
-#| "Best Regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't\n"
@@ -3194,12 +2996,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
-#| msgid ""
-#| "\n"
-#| "    Thanks, <br />\n"
-#| "    The CommCare HQ Team <br />\n"
-#| "    www.commcarehq.org\n"
-#| "  "
 msgid ""
 "\n"
 "    Thanks, <br />\n"
@@ -3215,25 +3011,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear %(domain_or_account)s administrator,\n"
-#| "\n"
-#| "Your billing account has unpaid CommCare Billing Statements which are more than %(days_overdue)s days overdue. The balance currently owed is: $%(total)s.\n"
-#| "\n"
-#| "To see the full list of unpaid invoices you can follow this link: %(statements_url)s\n"
-#| "As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\n"
-#| "You can also pre-pay for several months at any time by following the steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
-#| "\n"
-#| "Please make a payment as soon as possible for the amount due.\n"
-#| "If you are not able to make a payment, your subscription will be paused on %(date_to_pause)s.\n"
-#| "As of this date, you will lose access to your project space until you re-subscribe to a paid plan.\n"
-#| "\n"
-#| "If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don’t hesitate to contact %(contact_email)s.\n"
-#| "\n"
-#| "Thanks,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
 msgid ""
 "\n"
 "Dear %(domain_or_account)s administrator,\n"
@@ -3307,26 +3084,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear %(domain)s administrator,\n"
-#| "\n"
-#| "Your %(plan_name)s subscription for %(domain)s ends soon! If you do not\n"
-#| "renew your subscription before then, your subscription will be paused on\n"
-#| "%(ending_on)s and you will lose access to all features until you\n"
-#| "re-subscribe to a new paid plan.\n"
-#| "\n"
-#| "To change or renew your subscription, please log into your project on\n"
-#| "CommCare HQ and and navigate to the subscription page in your project\n"
-#| "settings: %(subscription_url)s\n"
-#| "\n"
-#| "If you have any questions, please don’t hesitate to contact %(invoicing_contact_email)s.\n"
-#| "Thank you for your use and support of CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "\n"
-#| "The CommCare HQ Team\n"
-#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -3423,28 +3180,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear %(domain)s administrator,\n"
-#| "\n"
-#| "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
-#| "change your subscription before then, your subscription will be paused on\n"
-#| "%(ending_on)s and you will lose access to all features until you\n"
-#| "re-subscribe to a new paid plan.\n"
-#| "\n"
-#| "To change your subscription, please log into your project on\n"
-#| "CommCare HQ and and navigate to the subscription page in your project\n"
-#| "settings: %(subscription_url)s\n"
-#| "\n"
-#| "If you have questions about our pricing plans, you can review them here:\n"
-#| "https://www.commcarehq.org/pricing/\n"
-#| "\n"
-#| "Thank you for your use and support of CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "\n"
-#| "The CommCare HQ Team\n"
-#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
@@ -3587,30 +3322,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
-#| "based on actual usage in the following month. If you prefer, you may also prepay for\n"
-#| "expected on-demand usage. Please contact us if you would like to explore this option.\n"
-#| "\n"
-#| "Instructions for Payment\n"
-#| "\n"
-#| "Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.\n"
-#| "If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:\n"
-#| "\n"
-#| "1. Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.\n"
-#| "\n"
-#| "2. Send an email to %(accounts_email)s after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.\n"
-#| "\n"
-#| "Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
-#| "\n"
-#| "Best Regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org\n"
-#| "\n"
-#| "Statement From:\n"
-#| "CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
@@ -3837,10 +3548,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    You have selected the <strong>%(p)s Edition</strong> subscription.\n"
-#| "  "
 msgid ""
 "\n"
 "      You have selected the <strong>%(p)s Edition</strong> subscription.\n"
@@ -3861,10 +3568,6 @@ msgid "Included each month"
 msgstr "Inajumuishwa kila mwezi"
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#| msgid ""
-#| "\n"
-#| "          Thank you for staying with your current subscription.\n"
-#| "        "
 msgid ""
 "\n"
 "        Thank you for staying with your current subscription.\n"
@@ -3875,7 +3578,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#| msgid "We're sorry to see you downgrade!"
 msgid ""
 "\n"
 "        We're sorry to see you downgrade!\n"
@@ -3886,7 +3588,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#| msgid "Note: Continuing will change your current subscription."
 msgid ""
 "\n"
 "        Note: Continuing will change your current subscription.\n"
@@ -3925,18 +3626,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#| msgid ""
-#| "\n"
-#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
-#| "                receive an invoice via email with bank information and\n"
-#| "                instructions for wire payment. Please include the Invoice # in\n"
-#| "                the wire payment memo or note field.\n"
-#| "                <a\n"
-#| "                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
-#| "                  target=\"_blank\"\n"
-#| "                  >More information...</a\n"
-#| "                >\n"
-#| "              "
 msgid ""
 "\n"
 "        In case you incur any on-demand fees for excess users or SMS, you\n"
@@ -3959,13 +3648,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "          CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.\n"
-#| "          You should expect your first invoice on %(invoice_date)s, or you can prepay for your\n"
-#| "          subscription by following the instructions\n"
-#| "          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\">here</a>.\n"
-#| "        "
 msgid ""
 "\n"
 "        CommCare is billed on a monthly basis, and all subscriptions require a\n"
@@ -4001,11 +3683,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#| msgid ""
-#| "\n"
-#| "          Once you subscribe to a paid plan, you will be able to pause your subscription after 30 days,\n"
-#| "          but you will no longer be able to downgrade to the CommCare Free edition.\n"
-#| "        "
 msgid ""
 "\n"
 "        Once you subscribe to a paid plan, you will be able to pause your\n"
@@ -4020,11 +3697,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "          Continuing will keep you on <strong>%(p)s Edition Software Plan</strong> and any\n"
-#| "          pending subscriptions will be cancelled.\n"
-#| "        "
 msgid ""
 "\n"
 "        Continuing will keep you on\n"
@@ -4039,13 +3711,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "          You’ll have access to the features on your\n"
-#| "          <strong>%(p)s Edition Software Plan </strong> through %(current_subscription_end_date)s.<br />\n"
-#| "          On %(start_date_after_minimum_subscription)s your current subscription will be downgraded\n"
-#| "          to the %(new_plan_edition)s Edition Software Plan.\n"
-#| "        "
 msgid ""
 "\n"
 "        You’ll have access to the features on your\n"
@@ -4065,11 +3730,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "          We're sorry to see you downgrade! You are currently subscribed to the\n"
-#| "          <strong>%(p)s Software Plan.</strong>\n"
-#| "        "
 msgid ""
 "\n"
 "        We're sorry to see you downgrade! You are currently subscribed to the\n"
@@ -4082,10 +3742,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-#| msgid ""
-#| "\n"
-#| "            <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\"> I understand and wish to continue.\n"
-#| "          "
 msgid ""
 "\n"
 "          <input type=\"checkbox\" data-bind=\"checked: oUserAgreementSigned\" /> I\n"
@@ -4837,21 +4493,14 @@ msgstr ""
 " barua pepe ya uthibitisho."
 
 #: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
-#| msgid "Recipient has no email address."
 msgid "This user does not have an email address set."
 msgstr "Mtumiaji huyu hana anwani ya barua pepe iliyowekwa."
 
 #: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
-#| msgid ""
-#| "The user account associated with this email address cannot reset the "
-#| "password."
 msgid "This user account cannot reset the password."
 msgstr "Akaunti hii ya mtumiaji haiwezi kuweka upya nenosiri."
 
 #: corehq/apps/api/resources/v0_5.py corehq/apps/users/views/mobile/users.py
-#| msgid ""
-#| "The user account associated with this email address cannot reset the "
-#| "password."
 msgid "This user is inactive and cannot reset their password."
 msgstr "Mtumiaji huyu hayuko hai na hawezi kuweka upya nenosiri lao."
 
@@ -6347,7 +5996,6 @@ msgid "Android app dependencies"
 msgstr "Mahitaji ya programu ya Android"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
 msgstr "Shughuli za Mfanyakazi"
 
@@ -6377,7 +6025,6 @@ msgid "Audio"
 msgstr "Sauti"
 
 #: corehq/apps/app_manager/static_strings.py
-#| msgid "Auto Capture Location"
 msgid "Auto-Capture Location Accuracy"
 msgstr "Uhakika wa Mahali wa Kukamata Moja kwa Moja"
 
@@ -8267,10 +7914,6 @@ msgid "Cannot make new version"
 msgstr "Haiwezekani kutengeneza toleo jipya"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                  If you don't know why this happened, please report an issue.\n"
-#| "                "
 msgid ""
 "\n"
 "                If you don't know why this happened, please report an issue.\n"
@@ -8281,10 +7924,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                Link to other form or menu is selected, but no links have been provided.\n"
-#| "              "
 msgid ""
 "\n"
 "              Link to other form or menu is selected, but no links have been\n"
@@ -8296,10 +7935,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                Link to other form or menu is selected, but we don't recognize the form or menu you provided.\n"
-#| "              "
 msgid ""
 "\n"
 "              Link to other form or menu is selected, but we don't recognize the\n"
@@ -8311,11 +7946,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                Please check that end of form navigation is correct. It appears to be pointing\n"
-#| "                to a parent menu form, but the menu doesn't have a parent.\n"
-#| "              "
 msgid ""
 "\n"
 "              Please check that end of form navigation is correct. It appears to\n"
@@ -8328,11 +7958,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                Please check that end of form navigation is correct. It appears to be pointing\n"
-#| "                to a menu using \"Display only forms,\" which makes that menu an invalid choice.\n"
-#| "              "
 msgid ""
 "\n"
 "              Please check that end of form navigation is correct. It appears to\n"
@@ -8345,11 +7970,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                Please check that end of form navigation is correct. It appears to involve both\n"
-#| "                a multi-select form and a single select-form, which is not supported.\n"
-#| "              "
 msgid ""
 "\n"
 "              Please check that end of form navigation is correct. It appears to\n"
@@ -8362,12 +7982,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                Please check that end of form navigation is correct.\n"
-#| "                Modules configured to \"make search input available after search\" do not support\n"
-#| "                the \"Previous Screen\" workflow.\n"
-#| "              "
 msgid ""
 "\n"
 "              Please check that end of form navigation is correct. Modules\n"
@@ -8381,12 +7995,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses \"Display only forms\" and also has a Session Endpoint ID.\n"
-#| "                Session endpoints cannot be used with \"Display only forms.\"\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8402,11 +8010,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses referrals but doesn't have detail screens configured for referrals.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8421,11 +8024,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses cases but doesn't have detail screens configured for cases.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8439,11 +8037,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses CommCare Supply products but doesn't have detail screens configured for products.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8458,12 +8051,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                has an incorrectly formatted ID key (%(error_key)s).\n"
-#| "                Make sure your key has only letters, numbers, space characters, underscores, and dashes.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8478,14 +8065,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                No menus are available. <br />\n"
-#| "                <i class=\"fa fa-arrow-left\"></i>\n"
-#| "                Please click\n"
-#| "                <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to create\n"
-#| "                some menus.\n"
-#| "              "
 msgid ""
 "\n"
 "              No menus are available. <br />\n"
@@ -8503,10 +8082,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                  This menu references a missing menu.\n"
-#| "                "
 msgid ""
 "\n"
 "                This menu references a missing menu.\n"
@@ -8518,10 +8093,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  <a href=\"%(module_url)s\">%(module_name)s</a> references a missing menu.\n"
-#| "                "
 msgid ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a> references a\n"
@@ -8538,11 +8109,6 @@ msgstr "Maelezo:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                has no forms or case list.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8556,11 +8122,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                cannot have a training module as a parent module.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8574,11 +8135,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                is a training module and therefore cannot have a parent module.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8592,11 +8148,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                has no reports.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8610,11 +8161,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses smart links but does not have a session endpoint id.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8628,12 +8174,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses both smart links and Parent Child Selection. These two\n"
-#| "                features are not compatible.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8648,12 +8188,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses both smart links and a multi-select case list. These two\n"
-#| "                features are not compatible.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8668,12 +8202,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                loads a case from a data registry and uses a multi-select case list.\n"
-#| "                These two features are not compatible.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8688,12 +8216,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses smart links and is configured to make search input available after search.\n"
-#| "                These two features are not compatible.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8708,10 +8230,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> can not use the same \"search input instance name\" as its Parent Menu.\n"
-#| "              "
 msgid ""
 "\n"
 "              The case list in\n"
@@ -8727,10 +8245,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> can not use the same \"search input instance name\" as its Parent Select Menu.\n"
-#| "              "
 msgid ""
 "\n"
 "              The case list in\n"
@@ -8746,11 +8260,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              The case list in <a href=\"%(module_url)s\">%(module_name)s</a> uses both multi-select auto select and \"Clearing search terms resets search results\".\n"
-#| "              These two features are not compatible.\n"
-#| "              "
 msgid ""
 "\n"
 "              The case list in\n"
@@ -8767,12 +8276,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses \"Display only forms\" and is also configured with\n"
-#| "                \"make search input available after search\". This workflow is unsupported.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8787,10 +8290,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The case hierarchy for <a href=\"%(module_url)s\">%(module_name)s</a> contains a circular reference.\n"
-#| "              "
 msgid ""
 "\n"
 "              The case hierarchy for\n"
@@ -8806,11 +8305,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses cases but doesn't have a case type defined.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -8824,13 +8318,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                You have selected the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
-#| "                as the case registration form for <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-#| "                This form is not a registration form. You need to select a form which opens a case and\n"
-#| "                does not update an existing case. Please select a different form.\n"
-#| "              "
 msgid ""
 "\n"
 "              You have selected the\n"
@@ -8850,12 +8337,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                You have selected the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
-#| "                as the case list form for <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-#| "                To select a followup form as case list form, the module must use the Select Parent First workflow and the form must follow up on the parent case type.\n"
-#| "              "
 msgid ""
 "\n"
 "              You have selected the\n"
@@ -8873,12 +8354,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The form you have selected as the case registration form for\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a> does not exist.\n"
-#| "                Please select another form.\n"
-#| "              "
 msgid ""
 "\n"
 "              The form you have selected as the case registration form for\n"
@@ -8894,12 +8369,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                There are references to reports that are deleted in\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-#| "                You may re-save <a href=\"%(module_url)s\">%(module_name)s</a> to delete them.\n"
-#| "              "
 msgid ""
 "\n"
 "              There are references to reports that are deleted in\n"
@@ -8915,12 +8384,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                There are multiple reports with the same report code in\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-#| "                These codes must be unique.\n"
-#| "              "
 msgid ""
 "\n"
 "              There are multiple reports with the same report code in\n"
@@ -8935,10 +8398,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The filter for <a href=\"%(module_url)s\">%(module_name)s</a> has errors.\n"
-#| "              "
 msgid ""
 "\n"
 "              The filter for\n"
@@ -8952,12 +8411,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Display Condition has syntax errors\n"
-#| "                in the <a href=\"%(form_url)s\">%(form_name)s</a> form\n"
-#| "                in <a href=\"%(module_url)s\">%(module_name)s</a>.\n"
-#| "              "
 msgid ""
 "\n"
 "              Display Condition has syntax errors in the\n"
@@ -8973,12 +8426,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                loads different case types from the other forms. All forms in a case list that has a case registration form\n"
-#| "                selected must load the same case types.\n"
-#| "              "
 msgid ""
 "\n"
 "              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
@@ -8996,11 +8443,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                must update a case. All forms in a case list that has a case registration form selected must update a case.\n"
-#| "              "
 msgid ""
 "\n"
 "              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
@@ -9016,7 +8458,7 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -9033,19 +8475,15 @@ msgid ""
 "            "
 msgstr ""
 "\n"
-"                Fomu ya <a href=\"%(form_url)s\">%(form_name)s</a> katika <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                inaweza tu kupakia au kuboresha kesi moja na wazazi wake. Fomu zote kwenye orodha ya kesi\n"
-"                ambayo imechaguliwa fomu ya usajili wa kesi zinaweza tu kuboresha kesi moja na wazazi wake.\n"
-"              "
+"              Fomu ya <a href=\"%(form_url)s\">%(form_name)s</a> katika\n"
+"              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              inaweza kupakia au kusasisha kesi moja tu na wazazi wake. Fomu zote\n"
+"              kwenye orodha ya kesi yenye fomu ya usajili wa kesi iliyochaguliwa zinaweza\n"
+"              kusasisha kesi moja tu na wazazi wake.\n"
+"            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form loads a different case type than\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>. All forms in a case list that has a case registration form\n"
-#| "                selected must load a case of the same type as the case list.\n"
-#| "              "
 msgid ""
 "\n"
 "              The <a href=\"%(form_url)s\">%(form_name)s</a> form loads a\n"
@@ -9062,13 +8500,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                loads a case with a different case tag to the other forms in the case list.\n"
-#| "                All forms in a case list that has a case registration form selected must use the same case tag.\n"
-#| "                Expected case tag: <strong>%(expected_tag)s</strong>\n"
-#| "              "
 msgid ""
 "\n"
 "              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
@@ -9087,12 +8518,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The <a href=\"%(form_url)s\">%(form_name)s</a> form in <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses a details screen from another case list. All forms in a case list that has a case\n"
-#| "                registration form selected must use the details screen from that case list.\n"
-#| "              "
 msgid ""
 "\n"
 "              The <a href=\"%(form_url)s\">%(form_name)s</a> form in\n"
@@ -9110,11 +8535,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Case List has invalid filter xpath <code>%(error_filter)s</code> in\n"
-#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                "
 msgid ""
 "\n"
 "                Case List has invalid filter xpath\n"
@@ -9130,11 +8550,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Case List has blank filter in\n"
-#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                "
 msgid ""
 "\n"
 "                Case List has blank filter in\n"
@@ -9148,11 +8563,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Case List has invalid sort field <code>%(error_field)s</code> in\n"
-#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                "
 msgid ""
 "\n"
 "                Case List has invalid sort field\n"
@@ -9168,11 +8578,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Case List has blank sort field in\n"
-#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                "
 msgid ""
 "\n"
 "                Case List has blank sort field in\n"
@@ -9186,12 +8591,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The case list in\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                has an invalid case tile configuration. Reason: %(error_reason)s\n"
-#| "              "
 msgid ""
 "\n"
 "              The case list in\n"
@@ -9207,12 +8606,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The case list in\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                has an address popup configuration that should be moved to case detail.\n"
-#| "              "
 msgid ""
 "\n"
 "              The case list in\n"
@@ -9230,12 +8623,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                The case list in\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                has an invalid clickable icon configuration. Reason: %(error_reason)s\n"
-#| "              "
 msgid ""
 "\n"
 "              The case list in\n"
@@ -9253,12 +8640,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Shadow module\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                doesn't have a source module specified.\n"
-#| "              "
 msgid ""
 "\n"
 "              Shadow module\n"
@@ -9274,11 +8655,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                uses parent case selection but doesn't have a parent case list specified.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
@@ -9293,10 +8669,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                The app's parent child case selection graph contains a cycle.\n"
-#| "              "
 msgid ""
 "\n"
 "              The app's parent child case selection graph contains a cycle.\n"
@@ -9307,10 +8679,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                The app's parent child graph contains a cycle.\n"
-#| "              "
 msgid ""
 "\n"
 "              The app's parent child graph contains a cycle.\n"
@@ -9321,10 +8689,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                A menu points to an unknown Parent Menu.\n"
-#| "              "
 msgid ""
 "\n"
 "              A menu points to an unknown Parent Menu.\n"
@@ -9336,12 +8700,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Case List has invalid location reference <code>%(property)s</code>.\n"
-#| "                Details: %(details)s\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "              "
 msgid ""
 "\n"
 "              Case List has invalid location reference\n"
@@ -9357,12 +8715,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Case List uses an instance that is only available for case search <code>%(property)s</code>.\n"
-#| "                Details: The %(details)s instance(s) are only available in case lists using case search.\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "              "
 msgid ""
 "\n"
 "              Case List uses an instance that is only available for case search\n"
@@ -9379,10 +8731,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                One or more forms are invalid: check all your forms for error messages.\n"
-#| "              "
 msgid ""
 "\n"
 "              One or more forms are invalid: check all your forms for error\n"
@@ -9395,10 +8743,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  You have two forms with the xmlns \"%(xmlns)s\"\n"
-#| "                "
 msgid ""
 "\n"
 "                You have two forms with the xmlns \"%(xmlns)s\"\n"
@@ -9410,10 +8754,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Multimedia case property \"%(path)s\" is not supported on apps on or before v2.5.\n"
-#| "              "
 msgid ""
 "\n"
 "              Multimedia case property \"%(path)s\" is not supported on apps on\n"
@@ -9427,10 +8767,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                One of your languages is empty. Check your <a href=\"%(app_url)s\">app settings</a>.\n"
-#| "              "
 msgid ""
 "\n"
 "              One of your languages is empty. Check your\n"
@@ -9444,13 +8780,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Your form display condition for form <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-#| "                  but cases are not available for this form. Please either remove the case reference or (1) make sure\n"
-#| "                  that the case list is set to display the case list first and then form, and (2) make sure that all forms in\n"
-#| "                  this case list update or close a case (which means registration forms must go in a different case list).\n"
-#| "                "
 msgid ""
 "\n"
 "                Your form display condition for form\n"
@@ -9472,13 +8801,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                  You have a display condition which refers to a case, but cases are not available. Please either remove\n"
-#| "                  the case reference or (1) make sure that the case list is set to display the case list first and then form,\n"
-#| "                  and (2) make sure that all forms in this case list update or close a case (which means registration forms\n"
-#| "                  must go in a different case list).\n"
-#| "                "
 msgid ""
 "\n"
 "                You have a display condition which refers to a case, but cases\n"
@@ -9499,10 +8821,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Error with Practice Mobile Worker in Application Profile %(profile.name)s.\n"
-#| "                "
 msgid ""
 "\n"
 "                Error with Practice Mobile Worker in Application Profile\n"
@@ -9515,10 +8833,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                  Error with Practice Mobile Worker in Application Settings.\n"
-#| "                "
 msgid ""
 "\n"
 "                Error with Practice Mobile Worker in Application Settings.\n"
@@ -9530,11 +8844,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Your form display condition for form <a href=\"%(form_url)s\">%(form_name)s</a> refers to a user property,\n"
-#| "                  but your project does not use user properties. Please remove the user property reference.\n"
-#| "                "
 msgid ""
 "\n"
 "                Your form display condition for form\n"
@@ -9550,11 +8859,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                  You have a display condition which refers to a user property, but your project does not use user properties.\n"
-#| "                  Please remove the user property reference.\n"
-#| "                "
 msgid ""
 "\n"
 "                You have a display condition which refers to a user property,\n"
@@ -9569,12 +8873,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Your application uses a feature that is not available in your current subscription. You\n"
-#| "                can <a href=\"%(domain_url)s\">change your subscription</a>, or\n"
-#| "                remove the feature as follows.\n"
-#| "              "
 msgid ""
 "\n"
 "              Your application uses a feature that is not available in your\n"
@@ -9592,11 +8890,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case search property\n"
-#| "                <code>%(property)s</code> that is not assigned to a group.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a> has a case search\n"
@@ -9611,11 +8904,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case search property\n"
-#| "                <code>%(property)s</code> that references an invalid instance.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a> has a case search\n"
@@ -9630,11 +8918,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case list property\n"
-#| "                that references a missing form endpoint: <code>%(column.header|trans:langs)s</code>.\n"
-#| "              "
 msgid ""
 "\n"
 "              <a href=\"%(module_url)s\">%(module_name)s</a> has a case list\n"
@@ -12963,13 +12246,6 @@ msgid "Transfer this file to your Android phone's file system"
 msgstr "Hamisha faili hii kwenye mfumo wa faili wa simu yako ya Android"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                                From CommCare ODK's install screen menu, bring up the\n"
-#| "                                application menu by hitting the three dots in the upper\n"
-#| "                                right or by hitting the menu button on your phone to\n"
-#| "                                select Offline Install\n"
-#| "                              "
 msgid ""
 "\n"
 "                                Login to the CommCare App, tap the three dots in\n"
@@ -13503,11 +12779,6 @@ msgid "Feature Discrepancy"
 msgstr "Tofauti ya Kipengele"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#| msgid ""
-#| "\n"
-#| "            The following features are not turned on in the domain to which you're copying.\n"
-#| "            Select any that you wish to copy along with this application.\n"
-#| "          "
 msgid ""
 "\n"
 "            The following features are not turned on in the domain to which\n"
@@ -13556,7 +12827,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/view_submissions_button.html
-#| msgid "View recent submissions"
 msgid "View Submissions"
 msgstr "Tazama Michango"
 
@@ -13678,12 +12948,10 @@ msgid "Not set"
 msgstr "Haijawekwa"
 
 #: corehq/apps/app_manager/views/apps.py
-#| msgid "U​I translation"
 msgid "U\\u200BI translation"
 msgstr "Tafsiri ya U\\u200BI"
 
 #: corehq/apps/app_manager/views/apps.py
-#| msgid "U​I translations"
 msgid "U\\u200BI translations"
 msgstr "Tafsiri za U\\u200BI"
 
@@ -14135,7 +13403,6 @@ msgid "Latest release now available for profile {}"
 msgstr "Toleo jipya sasa linapatikana kwa wasifu {}"
 
 #: corehq/apps/app_manager/views/releases.py
-#| msgid "Reverted to version {old_version}"
 msgid "Reverted to version {log.info['version']}"
 msgstr "Imerejeshwa kwenye toleo {log.info['version']}"
 
@@ -15542,7 +14809,6 @@ msgid "Fixture Inclusion in Restore Criteria"
 msgstr "Ujumuishaji wa Fixture kwenye Vigezo vya Rejesho"
 
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
-#| msgid "Add filter"
 msgid "Add Criteria"
 msgstr "Ongeza Vigezo"
 
@@ -15609,13 +14875,11 @@ msgstr "{value} si tarehe au muda uliowekwa kwa usahihi."
 
 #: corehq/apps/case_search/xpath_functions/comparison.py
 #, python-brace-format
-#| msgid "{} is not a valid date"
 msgid "{value} is an invalid date."
 msgstr "{value} si tarehe halali."
 
 #: corehq/apps/case_search/xpath_functions/comparison.py
 #, python-brace-format
-#| msgid "{} is not a valid datetime"
 msgid "{value} is an invalid datetime."
 msgstr "{value} si tarehe na muda halali."
 
@@ -15640,7 +14904,6 @@ msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 #, python-brace-format
-#| msgid "Please enter a valid date in the format YYYY-MM-DD"
 msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
 msgstr "'{value}' si tarehe halali. Inayotarajiwa 'YYYY-MM-DD"
 
@@ -15872,8 +15135,7 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/reports/filters/select.py
-#: corehq/apps/reports/standard/monitoring.py corehq/motech/fhir/const.py
+#: corehq/apps/reports/filters/select.py corehq/motech/fhir/const.py
 msgid "Group"
 msgstr "Kundi"
 
@@ -15967,7 +15229,6 @@ msgid "Hide Map"
 msgstr "Ficha Ramani"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/show_map_button.html
-#| msgid "Show all"
 msgid "Show Map"
 msgstr "Onyesha Ramani"
 
@@ -16987,14 +16248,10 @@ msgid "[All Data]"
 msgstr "[Data Yote]"
 
 #: corehq/apps/data_cleaning/forms/bulk_edit.py
-#| msgid "Select a property to clean"
 msgid "Select a property to edit"
 msgstr "Chagua kigezo cha kuhariri"
 
 #: corehq/apps/data_cleaning/forms/bulk_edit.py
-#| msgid ""
-#| "Choices are editable case properties that are currently visible in the "
-#| "table."
 msgid ""
 "You can only select editable case properties that are currently visible in "
 "the table as a column. System properties cannot be edited."
@@ -17003,7 +16260,6 @@ msgstr ""
 "sasa kwenye jedwali kama safu. Sifa za mfumo haziwezi kuhaririwa."
 
 #: corehq/apps/data_cleaning/forms/bulk_edit.py
-#| msgid "Edit Location"
 msgid "Edit action"
 msgstr "Hariri kitendo"
 
@@ -17040,12 +16296,10 @@ msgid "Select a case property..."
 msgstr "Chagua sifa ya kesi..."
 
 #: corehq/apps/data_cleaning/forms/bulk_edit.py
-#| msgid "Select a cleaning action..."
 msgid "Select an edit action..."
 msgstr "Chagua kitendo cha kuhariri..."
 
 #: corehq/apps/data_cleaning/forms/bulk_edit.py
-#| msgid "Preview data"
 msgid "Preview Edits"
 msgstr "Hakiki Mabadiliko"
 
@@ -17173,7 +16427,6 @@ msgstr ""
 "Tafadhali toa thamani au tumia aina za ulinganifu 'empty' au 'missing'."
 
 #: corehq/apps/data_cleaning/forms/filters.py
-#| msgid "Data type '{}' cannot have match type '{}'."
 msgid "The selected data type cannot have the selected match type."
 msgstr ""
 "Aina ya data iliyochaguliwa haiwezi kuwa na aina ya ulinganifu "
@@ -17225,12 +16478,10 @@ msgid "Start a new session and delete the existing session."
 msgstr "Anza kikao kipya na futa kikao kilichopo."
 
 #: corehq/apps/data_cleaning/forms/start_session.py
-#| msgid "Start Session"
 msgid "Start New Session"
 msgstr "Anza Kikao Kipya"
 
 #: corehq/apps/data_cleaning/forms/start_session.py
-#| msgid "Resume the session."
 msgid "Resume Session"
 msgstr "Endeleza Kikao"
 
@@ -17472,17 +16723,14 @@ msgid "Completed On"
 msgstr "Imekamilika Tarehe"
 
 #: corehq/apps/data_cleaning/tables.py
-#| msgid "# Cases Created"
 msgid "# Cases Edited"
 msgstr "# Kesi Zilizo Haririwa"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_main.html
-#| msgid "Start a Cleaning Session"
 msgid "Start a Bulk Edit Session"
 msgstr "Anza Kikao cha Uhariri wa Wingi"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_main.html
-#| msgid "Start a Cleaning Session"
 msgid "Recent Bulk Edit Sessions"
 msgstr "Vikao vya Hivi Karibuni vya Uhariri wa Wingi"
 
@@ -17499,7 +16747,6 @@ msgid "changed value"
 msgstr "thamani iliyobadilishwa"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
-#| msgid "Reset Grid"
 msgid "Reset Edits"
 msgstr "Weka Upya Mabadiliko"
 
@@ -17527,7 +16774,6 @@ msgid "This session is read-only."
 msgstr "Kipindi hiki ni cha kusoma tu."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
-#| msgid "Session"
 msgid "Open Session"
 msgstr "Fungua Kikao"
 
@@ -17546,7 +16792,6 @@ msgid "Pending"
 msgstr "Inasubiri"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
-#| msgid "Only dynamic case properties are allowed"
 msgid "Only one active session per case type allowed."
 msgstr "Kikao kimoja tu kinachoruhusiwa kwa kila aina ya kesi."
 
@@ -17578,10 +16823,6 @@ msgstr "TASA"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Select %(num_records)s Cases\n"
-#| "  "
 msgid ""
 "\n"
 "        Previewed edits on %(num_records)s cases.\n"
@@ -17596,11 +16837,6 @@ msgid "Edit history is too large..."
 msgstr "Historia ya mabadiliko ni kubwa sana..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
-#| msgid ""
-#| "\n"
-#| "            The edit history for this session is too large to support new bulk edits.\n"
-#| "            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-#| "          "
 msgid ""
 "\n"
 "            The edit history for this session is too large to support new bulk\n"
@@ -17619,18 +16855,6 @@ msgid "No editible case properties are visible"
 msgstr "Hakuna sifa za kesi zinazoweza kuhaririwa zinazoonekana"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
-#| msgid ""
-#| "\n"
-#| "        Please\n"
-#| "        <a\n"
-#| "          href=\"#\"\n"
-#| "          class=\"fw-bold\"\n"
-#| "          data-bs-dismiss=\"offcanvas\"\n"
-#| "          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
-#| "        >Configure Columns</a>\n"
-#| "        to include editible case properties in the column list in\n"
-#| "        order to clean the selected cases.\n"
-#| "      "
 msgid ""
 "\n"
 "        Please\n"
@@ -17657,11 +16881,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
-#| msgid ""
-#| "\n"
-#| "    An active data cleaning session already exists for this case type.\n"
-#| "    Please decide how you would like to proceed.\n"
-#| "  "
 msgid ""
 "\n"
 "      An active bulk edit session already exists for this case type.\n"
@@ -17672,11 +16891,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
-#| msgid ""
-#| "\n"
-#| "      Only one session can be active per case type.\n"
-#| "      Any previewed edits will be lost when starting a new session.\n"
-#| "    "
 msgid ""
 "\n"
 "      Only one session can be active per case type. Any previewed edits will be\n"
@@ -17689,7 +16903,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
-#| msgid "Please specify the value you would like to find."
 msgid ""
 "\n"
 "      Please decide how you would like to proceed...\n"
@@ -17716,10 +16929,6 @@ msgid "You have selected cases which have been filtered out."
 msgstr "Umechagua kesi ambazo zimeondolewa kwa kuchujwa."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
-#| msgid ""
-#| "\n"
-#| "        Please either apply your previewed edits, or add filters to select fewer cases.\n"
-#| "      "
 msgid ""
 "\n"
 "          \"Apply\" will apply all previewed edits in the session, regardless of\n"
@@ -17736,7 +16945,6 @@ msgid "Clear all edits?"
 msgstr "Futa mabadiliko yote?"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
-#| msgid "Clear all edits?"
 msgid "Clear All Edits"
 msgstr "Futa Uhariri Wote"
 
@@ -17795,10 +17003,6 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        Cannot select or actively edit more than %(max_recorded_limit)s cases in a session.\n"
-#| "      "
 msgid ""
 "\n"
 "        Cannot select or actively edit more than %(max_recorded_limit)s cases\n"
@@ -17811,10 +17015,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
-#| msgid ""
-#| "\n"
-#| "        Please either apply your previewed edits, or add filters to select fewer cases.\n"
-#| "      "
 msgid ""
 "\n"
 "        Please either apply your previewed edits, or add filters to select fewer\n"
@@ -17858,23 +17058,19 @@ msgstr "Sanidi Safu"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/button_bar.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
-#| msgid "Selected Cases"
 msgid "Edit Selected Cases"
 msgstr "Hariri Kesi Zilizochaguliwa"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/base_modal_body.html
-#| msgid "Extend session"
 msgid "Exit session"
 msgstr "Toka kwenye kikao"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/base_modal_body.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
-#| msgid "Connection Settings"
 msgid "Continue editing"
 msgstr "Endelea kuhariri"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
-#| msgid "Changes saved."
 msgid "Changes Applied"
 msgstr "Mabadiliko Yametumika"
 
@@ -17893,10 +17089,6 @@ msgstr[1] ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases with the same columns and filters?\n"
-#| "      "
 msgid ""
 "\n"
 "      Continue editing <strong class=\"fw-bold\">%(case_type)s</strong> cases\n"
@@ -17913,10 +17105,6 @@ msgid "Applying Changes..."
 msgstr "Inatekeleza Mabadiliko..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
-#| msgid ""
-#| "\n"
-#| "            Navigate there.\n"
-#| "          "
 msgid ""
 "\n"
 "        Applying changes, please wait...\n"
@@ -17927,10 +17115,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/in_progress.html
-#| msgid ""
-#| "\n"
-#| "            Navigate there.\n"
-#| "            "
 msgid ""
 "\n"
 "          Database is refreshing...almost there!\n"
@@ -17941,20 +17125,14 @@ msgstr ""
 "        "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/partial/task_progress_bar.html
-#| msgid "In Progress"
 msgid "Task progress"
 msgstr "Maendeleo ya kazi"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
-#| msgid "This is a deprecated property"
 msgid "This is a completed session"
 msgstr "Hiki ni kikao kilichokamilika"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
-#| msgid ""
-#| "\n"
-#| "        Resume this session with the same columns and filters?\n"
-#| "      "
 msgid ""
 "\n"
 "      Restart this session with the same columns and filters?\n"
@@ -17965,15 +17143,10 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
-#| msgid "Import"
 msgid "Important"
 msgstr "Muhimu"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
-#| msgid ""
-#| "\n"
-#| "        This will replace your existing active session with a new one. Any edits you made will be lost.\n"
-#| "      "
 msgid ""
 "\n"
 "      This will replace your existing active session with a new one.\n"
@@ -17984,10 +17157,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
-#| msgid ""
-#| "\n"
-#| "      The following edits will be applied...\n"
-#| "    "
 msgid ""
 "\n"
 "      Any edits you made will be lost.\n"
@@ -17998,7 +17167,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/previous_session.html
-#| msgid "Resume the session."
 msgid "Restart this session"
 msgstr "Anzisha upya kikao hiki"
 
@@ -18076,16 +17244,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
-#| msgid ""
-#| "\n"
-#| "      No cases were found that match the current filters. Please\n"
-#| "      <a\n"
-#| "        href=\"#\"\n"
-#| "        class=\"fw-bold\"\n"
-#| "        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
-#| "      >adjust your filters</a>\n"
-#| "      and try again.\n"
-#| "    "
 msgid ""
 "\n"
 "      No cases were found that match the current filters. Please\n"
@@ -18115,10 +17273,6 @@ msgstr "Mabadiliko"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              Filters Applied: %(num_records)s Matching Records\n"
-#| "            "
 msgid ""
 "\n"
 "              Filters Applied: %(num_records)s Matching Cases\n"
@@ -18133,10 +17287,6 @@ msgid "Clear Filters"
 msgstr "Futa Vichujio"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
-#| msgid ""
-#| "\n"
-#| "            Records Selected\n"
-#| "          "
 msgid ""
 "\n"
 "              Cases Selected\n"
@@ -18161,10 +17311,6 @@ msgid "Clear Selection"
 msgstr "Futa Uchaguzi"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/recent_sessions.html
-#| msgid ""
-#| "\n"
-#| "          No cases found.\n"
-#| "        "
 msgid ""
 "\n"
 "        No sessions exist.\n"
@@ -18175,10 +17321,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/recent_sessions.html
-#| msgid ""
-#| "\n"
-#| "        Please request a new password reset.\n"
-#| "      "
 msgid ""
 "\n"
 "      Please start a new bulk edit session above.\n"
@@ -18272,8 +17414,6 @@ msgid "Last Modified (UTC)"
 msgstr "Iliyobadilishwa Mwisho (UTC)"
 
 #: corehq/apps/data_cleaning/views/bulk_edit.py
-#| msgid ""
-#| "Cannot load clean selected records form, session was not found."
 msgid "Cannot load edit selected records form, session was not found."
 msgstr ""
 "Imeshindikana kupakia fomu ya kuhariri rekodi zilizochaguliwa, kikao "
@@ -18292,12 +17432,10 @@ msgid "Cannot retrieve filters, session was not found."
 msgstr "Imeshindwa kupata vichujio, kikao hakikupatikana."
 
 #: corehq/apps/data_cleaning/views/main.py
-#| msgid "Bulk Clear Data"
 msgid "Bulk Edit Case Data"
 msgstr "Hariri Data ya Kesi kwa Pamoja"
 
 #: corehq/apps/data_cleaning/views/main.py
-#| msgid "Default Case Type"
 msgid "Bulk Edit Case Type"
 msgstr "Hariri Aina ya Kesi kwa Pamoja"
 
@@ -18315,12 +17453,10 @@ msgid "That session does not exist. Please start a new session."
 msgstr "Kikao hicho hakipo. Tafadhali anza kikao kipya."
 
 #: corehq/apps/data_cleaning/views/start.py
-#| msgid "Start a Cleaning Session"
 msgid "Starting Bulk Edit Session..."
 msgstr "Kuanza Kikao cha Uhariri wa Pamoja..."
 
 #: corehq/apps/data_cleaning/views/status.py
-#| msgid "Start a Cleaning Session"
 msgid "Resuming Bulk Edit Session..."
 msgstr "Kurejesha Kikao cha Uhariri wa Pamoja..."
 
@@ -18329,8 +17465,6 @@ msgid "Cannot retrieve summary, session was not found."
 msgstr "Imeshindwa kupata muhtasari, kikao hakikupatikana."
 
 #: corehq/apps/data_cleaning/views/tables.py
-#| msgid ""
-#| "Error fetching multimedia from remote server. Please try again later."
 msgid ""
 "We are having trouble connecting to the server. Please try again in a few "
 "minutes."
@@ -18460,10 +17594,11 @@ msgid "Create Case Type"
 msgstr "Unda Aina ya Kesi"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#| msgid ""
-#| "\n"
-#| "        There was an error processing the request. Please try again.\n"
-#| "      "
+#| msgid "data dictionary"
+msgid "Loading data dictionary..."
+msgstr "Inapakia kamusi ya data..."
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
 "          There was an error processing the request. Please try again.\n"
@@ -18507,10 +17642,11 @@ msgid "FHIR Resource Property Path"
 msgstr "Njia ya Sifa ya Rasilimali ya FHIR"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#| msgid ""
-#| "\n"
-#| "            <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
-#| "            "
+#| msgid "Loading exports..."
+msgid "Loading properties..."
+msgstr "Inapakia sifa..."
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
 "                    <b data-bind=\"text: name()\"></b> group's properties will be moved to <b>No Group</b>\n"
@@ -18554,12 +17690,6 @@ msgid "Deprecate"
 msgstr "Sitisha Matumizi"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#| msgid ""
-#| "\n"
-#| "                        A case property with this name already exists.\n"
-#| "                        If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-#| "                        properties.\n"
-#| "                      "
 msgid ""
 "\n"
 "                            A case property with this name already exists.\n"
@@ -18586,12 +17716,6 @@ msgid "Add Case Property Group"
 msgstr "Ongeza Kundi la Sifa za Kesi"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#| msgid ""
-#| "\n"
-#| "                  A case property group with this name already exists.\n"
-#| "                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated\n"
-#| "                  groups.\n"
-#| "                "
 msgid ""
 "\n"
 "                    A case property group with this name already exists.\n"
@@ -18622,11 +17746,6 @@ msgid "Performance warning"
 msgstr "Onyo la utendaji"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/case_property_warning.html
-#| msgid ""
-#| "\n"
-#| "      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945812/CommCare+Messaging+Reports#Messaging-Dashboard\">Click here</a>\n"
-#| "      for more information about this dashboard.\n"
-#| "    "
 msgid ""
 "\n"
 "        See\n"
@@ -18649,224 +17768,348 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "              Deprecate\n"
+#| "              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+#| "              Case Type\n"
+#| "            "
 msgid ""
-"\n"
-"              Deprecate\n"
-"              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-"              Case Type\n"
-"            "
+" Deprecate '<span\n"
+"            data-bind=\"text: $root.activeCaseType()\"\n"
+"          ></span\n"
+"          >' Case Type "
 msgstr ""
-"\n"
-"              Sitisha Matumizi ya\n"
-"              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-"              Aina ya Kesi\n"
-"            "
+" Sitisha Aina ya Kesi ya '<span\n"
+"            data-bind=\"text: $root.activeCaseType()\"\n"
+"          ></span\n"
+"          >' "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "            <p>\n"
+#| "              There are a total of\n"
+#| "              <strong>\n"
+#| "                <span data-bind=\"text: activeCaseTypeModuleCount()\"></span> application module(s)\n"
+#| "              </strong>\n"
+#| "              that are currently using this case type.\n"
+#| "            </p>\n"
+#| "            <p>\n"
+#| "              Deprecating this case type will have the following effects:\n"
+#| "            </p>\n"
+#| "            <ul>\n"
+#| "              <li>This case type will not be available from the reports filtering menu.</li>\n"
+#| "              <li>All case properties/groups for this case type will be deprecated.</li>\n"
+#| "              <li>New exports cannot be created with this case type.</li>\n"
+#| "              <li>Case imports cannot be done for cases with this case type.</li>\n"
+#| "              <li>New automatic rules cannot be created with this case type.</li>\n"
+#| "            </ul>\n"
+#| "            <p>\n"
+#| "              For more information on deprecated case types, see the\n"
+#| "              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">following documentation</a>.\n"
+#| "            </p>\n"
+#| "          "
 msgid ""
 "\n"
-"            <p>\n"
-"              There are a total of\n"
-"              <strong>\n"
-"                <span data-bind=\"text: activeCaseTypeModuleCount()\"></span> application module(s)\n"
-"              </strong>\n"
-"              that are currently using this case type.\n"
-"            </p>\n"
-"            <p>\n"
-"              Deprecating this case type will have the following effects:\n"
-"            </p>\n"
-"            <ul>\n"
-"              <li>This case type will not be available from the reports filtering menu.</li>\n"
-"              <li>All case properties/groups for this case type will be deprecated.</li>\n"
-"              <li>New exports cannot be created with this case type.</li>\n"
-"              <li>Case imports cannot be done for cases with this case type.</li>\n"
-"              <li>New automatic rules cannot be created with this case type.</li>\n"
-"            </ul>\n"
-"            <p>\n"
-"              For more information on deprecated case types, see the\n"
-"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">following documentation</a>.\n"
-"            </p>\n"
-"          "
+"        <p>\n"
+"          There are a total of\n"
+"          <strong>\n"
+"            <span data-bind=\"text: activeCaseTypeModuleCount()\"></span>\n"
+"            application module(s)\n"
+"          </strong>\n"
+"          that are currently using this case type.\n"
+"        </p>\n"
+"        <p>Deprecating this case type will have the following effects:</p>\n"
+"        <ul>\n"
+"          <li>\n"
+"            This case type will not be available from the reports filtering\n"
+"            menu.\n"
+"          </li>\n"
+"          <li>\n"
+"            All case properties/groups for this case type will be deprecated.\n"
+"          </li>\n"
+"          <li>New exports cannot be created with this case type.</li>\n"
+"          <li>Case imports cannot be done for cases with this case type.</li>\n"
+"          <li>New automatic rules cannot be created with this case type.</li>\n"
+"        </ul>\n"
+"        <p>\n"
+"          For more information on deprecated case types, see the\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\"\n"
+"            >following documentation</a\n"
+"          >.\n"
+"        </p>\n"
+"        "
 msgstr ""
 "\n"
-"            <p>\n"
-"              Kuna jumla ya\n"
-"              <strong>\n"
-"                <span data-bind=\"text: activeCaseTypeModuleCount()\"></span> moduli ya programu\n"
-"              </strong>\n"
-"              zinazotumia aina hii ya kesi kwa sasa.\n"
-"            </p>\n"
-"            <p>\n"
-"              Kusitisha matumizi ya aina hii ya kesi kutakuwa na athari zifuatazo:\n"
-"            </p>\n"
-"            <ul>\n"
-"              <li>Aina hii ya kesi haitapatikana kwenye menyu ya kuchuja ripoti.</li>\n"
-"              <li>Sifa zote/makundi ya aina hii ya kesi zitafutwa matumizi.</li>\n"
-"              <li>Uhamishaji mpya hauwezi kuundwa kwa aina hii ya kesi.</li>\n"
-"              <li>Uingizaji wa kesi hauwezi kufanyika kwa kesi zenye aina hii ya kesi.</li>\n"
-"              <li>Kanuni mpya za kiotomatiki haziwezi kuundwa kwa aina hii ya kesi.</li>\n"
-"            </ul>\n"
-"            <p>\n"
-"              Kwa maelezo zaidi kuhusu aina za kesi zilizositishwa, angalia\n"
-"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">nyaraka hizi</a>.\n"
-"            </p>\n"
-"          "
+"        <p>\n"
+"          Kuna jumla ya\n"
+"          <strong>\n"
+"            <span data-bind=\"text: activeCaseTypeModuleCount()\"></span>\n"
+"            moduli ya programu\n"
+"          </strong>\n"
+"          ambazo kwa sasa zinatumia aina hii ya kesi.\n"
+"        </p>\n"
+"        <p>Kusitisha aina hii ya kesi kutakuwa na athari zifuatazo:</p>\n"
+"        <ul>\n"
+"          <li>\n"
+"            Aina hii ya kesi haitapatikana kwenye menyu ya kuchuja ripoti.\n"
+"          </li>\n"
+"          <li>\n"
+"            Sifa/kundi zote za kesi kwa aina hii ya kesi zitasitishwa.\n"
+"          </li>\n"
+"          <li>Uhamishaji mpya hauwezi kuundwa na aina hii ya kesi.</li>\n"
+"          <li>Uingizaji wa kesi hauwezi kufanywa kwa kesi zenye aina hii ya kesi.</li>\n"
+"          <li>Sheria mpya za kiotomatiki haziwezi kuundwa na aina hii ya kesi.</li>\n"
+"        </ul>\n"
+"        <p>\n"
+"          Kwa maelezo zaidi kuhusu aina za kesi zilizositishwa, angalia\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\"\n"
+"            >nyaraka hizi</a\n"
+"          >.\n"
+"        </p>\n"
+"        "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid "Deprecate GPS property"
 msgstr "Sitisha Matumizi ya Sifa ya GPS"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                    This GPS case property is currently being used to store the geolocation for cases.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    This GPS case property is currently being used to store the geolocation for cases.\n"
-"                    "
+"            This GPS case property is currently being used to store the\n"
+"            geolocation for cases.\n"
+"          "
 msgstr ""
 "\n"
-"                    Sifa hii ya GPS kwa sasa inatumika kuhifadhi eneo la kijiografia kwa kesi.\n"
-"                    "
+"            Sifa hii ya kesi ya GPS kwa sasa inatumika kuhifadhi\n"
+"            eneo la kijiografia kwa kesi.\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                    Deprecating this case property may result in unintended behaviour, and so\n"
+#| "                    it is advised to first change the selected custom case property in\n"
+#| "                    <a href=\"%(geospatial_settings_url)s\">\n"
+#| "                        geospatial settings\n"
+#| "                    </a>\n"
+#| "                    before deprecating this case property.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Deprecating this case property may result in unintended behaviour, and so\n"
-"                    it is advised to first change the selected custom case property in\n"
-"                    <a href=\"%(geospatial_settings_url)s\">\n"
-"                        geospatial settings\n"
-"                    </a>\n"
-"                    before deprecating this case property.\n"
-"                    "
+"            Deprecating this case property may result in unintended behaviour,\n"
+"            and so it is advised to first change the selected custom case\n"
+"            property in\n"
+"            <a href=\"%(geospatial_settings_url)s\"> geospatial settings </a>\n"
+"            before deprecating this case property.\n"
+"          "
 msgstr ""
 "\n"
-"                    Kusitisha matumizi ya sifa hii ya kesi kunaweza kusababisha tabia isiyotarajiwa, hivyo\n"
-"                    inapendekezwa kwanza kubadilisha sifa maalum ya kesi iliyochaguliwa katika\n"
-"                    <a href=\"%(geospatial_settings_url)s\">\n"
-"                        mipangilio ya kijiografia\n"
-"                    </a>\n"
-"                    kabla ya kusitisha matumizi ya sifa hii ya kesi.\n"
-"                    "
+"            Kusitisha sifa hii ya kesi kunaweza kusababisha tabia isiyotarajiwa,\n"
+"            hivyo inashauriwa kubadilisha kwanza sifa maalum ya kesi iliyochaguliwa katika\n"
+"            <a href=\"%(geospatial_settings_url)s\"> mipangilio ya kijiografia </a>\n"
+"            kabla ya kusitisha sifa hii ya kesi.\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                    Would you like to proceed with deprecating this case property?\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Would you like to proceed with deprecating this case property?\n"
-"                    "
+"            Would you like to proceed with deprecating this case property?\n"
+"          "
 msgstr ""
 "\n"
-"                    Je, ungependa kuendelea na kusitisha matumizi ya sifa hii ya kesi?\n"
-"                    "
+"            Je, ungependa kuendelea na kusitisha sifa hii ya kesi?\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                        Delete\n"
+#| "                        '<span id=\"delete-case-prop-name\"></span>'\n"
+#| "                        Case Property\n"
+#| "                    "
 msgid ""
 "\n"
-"                        Delete\n"
-"                        '<span id=\"delete-case-prop-name\"></span>'\n"
-"                        Case Property\n"
-"                    "
+"            Delete '<span id=\"delete-case-prop-name\"></span>' Case Property\n"
+"          "
 msgstr ""
 "\n"
-"                        Futa\n"
-"                        '<span id=\"delete-case-prop-name\"></span>'\n"
-"                        Sifa ya Kesi\n"
-"                    "
+"            Futa Sifa ya Kesi '<span id=\"delete-case-prop-name\"></span>'\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                        There are currently no cases that store data with this case property, so it is safe to delete.\n"
+#| "                    "
 msgid ""
 "\n"
-"                        There are currently no cases that store data with this case property, so it is safe to delete.\n"
-"                    "
+"            There are currently no cases that store data with this case\n"
+"            property, so it is safe to delete.\n"
+"          "
 msgstr ""
 "\n"
-"                        Kwa sasa hakuna kesi zinazohifadhi data kwa sifa hii ya kesi, hivyo ni salama kufuta.\n"
-"                    "
+"            Hakuna kesi zinazohifadhi data kwa sifa hii ya kesi kwa sasa,\n"
+"            hivyo ni salama kufuta.\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                    Please note that if a new form or case was updated to the server recently that makes this property\n"
+#| "                    unsafe to delete, this will only be reflected in the Data Dictionary after a short while. This is not\n"
+#| "                    a blocking action and the case property can be created again if needed in the future. Please refer to\n"
+#| "                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the documentation</a>\n"
+#| "                    for additional information about this action.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Please note that if a new form or case was updated to the server recently that makes this property\n"
-"                    unsafe to delete, this will only be reflected in the Data Dictionary after a short while. This is not\n"
-"                    a blocking action and the case property can be created again if needed in the future. Please refer to\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the documentation</a>\n"
-"                    for additional information about this action.\n"
-"                    "
+"            Please note that if a new form or case was updated to the server\n"
+"            recently that makes this property unsafe to delete, this will only\n"
+"            be reflected in the Data Dictionary after a short while. This is not\n"
+"            a blocking action and the case property can be created again if\n"
+"            needed in the future. Please refer to\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >the documentation</a\n"
+"            >\n"
+"            for additional information about this action.\n"
+"          "
 msgstr ""
 "\n"
-"                    Tafadhali kumbuka kuwa ikiwa fomu mpya au kesi imesasishwa kwenye seva hivi karibuni na kufanya sifa hii\n"
-"                    isiwe salama kufutwa, hili litaonekana kwenye Kamusi ya Data baada ya muda mfupi. Hili si\n"
-"                    tendo linalozuia na sifa ya kesi inaweza kuundwa tena ikiwa itahitajika baadaye. Tafadhali rejelea\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">nyaraka hizi</a>\n"
-"                    kwa maelezo zaidi kuhusu hatua hii.\n"
-"                    "
+"            Tafadhali kumbuka kuwa ikiwa fomu mpya au kesi imesasishwa kwenye seva\n"
+"            hivi karibuni na kufanya sifa hii ya kesi isiwe salama kufuta, hili litaonekana\n"
+"            kwenye Kamusi ya Data baada ya muda mfupi. Hili si tendo linalozuia na sifa ya kesi\n"
+"            inaweza kuundwa tena ikiwa itahitajika baadaye. Tafadhali rejea\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >nyaraka hizi</a\n"
+"            >\n"
+"            kwa maelezo zaidi kuhusu hatua hii.\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                        Would you like to mark this case property as deleted? Once confirmed the case\n"
+#| "                        property will be deleted upon clicking the \"Save\" button.\n"
+#| "                    "
 msgid ""
 "\n"
-"                        Would you like to mark this case property as deleted? Once confirmed the case\n"
-"                        property will be deleted upon clicking the \"Save\" button.\n"
-"                    "
+"            Would you like to remove this case property from the data\n"
+"            dictionary? Once confirmed, the case property will be deleted upon\n"
+"            clicking the \"Save\" button.\n"
+"          "
 msgstr ""
 "\n"
-"                        Je, ungependa kuweka alama kuwa sifa hii ya kesi imefutwa? Ukithibitisha, sifa ya kesi\n"
-"                        itafutwa baada ya kubonyeza kitufe cha \"Hifadhi\".\n"
-"                    "
+"            Je, ungependa kuondoa sifa hii ya kesi kutoka kwenye kamusi ya data?\n"
+"            Ukithibitisha, sifa ya kesi itafutwa baada ya kubofya kitufe cha \"Hifadhi\".\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "              Deprecate\n"
+#| "              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+#| "              Case Type\n"
+#| "            "
 msgid ""
 "\n"
-"                    Delete\n"
-"                    '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-"                    Case Type\n"
-"                    "
+"            Delete '<span data-bind=\"text: $root.activeCaseType()\"></span>' Case\n"
+"            Type\n"
+"          "
 msgstr ""
 "\n"
-"                    Futa\n"
-"                    '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-"                    Aina ya Kesi\n"
-"                    "
+"            Futa Aina ya Kesi '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                    There are no cases that use this case type or store data with any of its case properties.\n"
+#| "                    Therefore, it is safe to delete this case type.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    There are no cases that use this case type or store data with any of its case properties.\n"
-"                    Therefore, it is safe to delete this case type.\n"
-"                    "
+"            There are no cases that use this case type or store data with any of\n"
+"            its case properties. Therefore, it is safe to delete this case type.\n"
+"          "
 msgstr ""
 "\n"
-"                    Hakuna kesi zinazotumia aina hii ya kesi au kuhifadhi data na sifa zake zozote.\n"
-"                    Hivyo, ni salama kufuta aina hii ya kesi.\n"
-"                    "
+"            Hakuna kesi zinazotumia aina hii ya kesi au kuhifadhi data na sifa zake.\n"
+"            Kwa hivyo, ni salama kufuta aina hii ya kesi.\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                    Please note that all case properties for this case type will also be deleted.\n"
+#| "                    Furthermore, if a new form or case was updated to the server recently that makes this case type\n"
+#| "                    unsafe to delete, this will only be reflected in the Data Dictionary after a short while. This is not\n"
+#| "                    a blocking action and the case type can be created again if needed in the future. Please refer to\n"
+#| "                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the documentation</a>\n"
+#| "                    for additional information about this action.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Please note that all case properties for this case type will also be deleted.\n"
-"                    Furthermore, if a new form or case was updated to the server recently that makes this case type\n"
-"                    unsafe to delete, this will only be reflected in the Data Dictionary after a short while. This is not\n"
-"                    a blocking action and the case type can be created again if needed in the future. Please refer to\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the documentation</a>\n"
-"                    for additional information about this action.\n"
-"                    "
+"            Please note that all case properties for this case type will also be\n"
+"            deleted. Furthermore, if a new form or case was updated to the\n"
+"            server recently that makes this case type unsafe to delete, this\n"
+"            will only be reflected in the Data Dictionary after a short while.\n"
+"            This is not a blocking action and the case type can be created again\n"
+"            if needed in the future. Please refer to\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >the documentation</a\n"
+"            >\n"
+"            for additional information about this action.\n"
+"          "
 msgstr ""
 "\n"
-"                    Tafadhali kumbuka kuwa sifa zote za aina hii ya kesi pia zitafutwa.\n"
-"                    Aidha, ikiwa fomu mpya au kesi imesasishwa kwenye seva hivi karibuni na kufanya aina hii ya kesi\n"
-"                    isiwe salama kufutwa, hili litaonekana kwenye Kamusi ya Data baada ya muda mfupi. Hili si\n"
-"                    tendo linalozuia na aina ya kesi inaweza kuundwa tena ikiwa itahitajika baadaye. Tafadhali rejelea\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">nyaraka hizi</a>\n"
-"                    kwa maelezo zaidi kuhusu hatua hii.\n"
-"                    "
+"            Tafadhali kumbuka kuwa sifa zote za kesi kwa aina hii ya kesi pia zitafutwa.\n"
+"            Zaidi ya hayo, ikiwa fomu mpya au kesi imesasishwa kwenye seva hivi karibuni na kufanya\n"
+"            aina hii ya kesi isiwe salama kufuta, hili litaonekana kwenye Kamusi ya Data baada ya muda mfupi.\n"
+"            Hili si tendo linalozuia na aina ya kesi inaweza kuundwa tena ikiwa itahitajika baadaye.\n"
+"            Tafadhali rejea\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >nyaraka hizi</a\n"
+"            >\n"
+"            kwa maelezo zaidi kuhusu hatua hii.\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#| msgid ""
+#| "\n"
+#| "                    Would you like to proceed with deleting this case type?\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Would you like to proceed with deleting this case type?\n"
-"                    "
+"            Would you like to proceed with deleting this case type?\n"
+"          "
 msgstr ""
 "\n"
-"                    Je, ungependa kuendelea na kufuta aina hii ya kesi?\n"
-"                    "
+"            Je, ungependa kuendelea na kufuta aina hii ya kesi?\n"
+"          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
 msgid "Valid Values &amp; Formats"
@@ -20223,26 +19466,18 @@ msgid "Form Status"
 msgstr "Hali ya Fomu"
 
 #: corehq/apps/data_interfaces/views.py
-#| msgid "{action_text} Cases. This may take some time..."
 msgid "Copying cases. This may take some time."
 msgstr "Nakili kesi. Hii inaweza kuchukua muda."
 
 #: corehq/apps/data_interfaces/views.py
-#| msgid ""
-#| "Bulk Case {action_text} failed for some reason and we have noted this "
-#| "failure."
 msgid "Bulk case copying failed. We have logged this failure."
 msgstr "Nakala ya kesi kwa pamoja imeshindikana. Tumerekodi hitilafu hii."
 
 #: corehq/apps/data_interfaces/views.py
-#| msgid "{action_text} Cases. This may take some time..."
 msgid "Reassigning cases. This may take some time."
 msgstr "Kugawa upya kesi. Hii inaweza kuchukua muda."
 
 #: corehq/apps/data_interfaces/views.py
-#| msgid ""
-#| "Bulk Case {action_text} failed for some reason and we have noted this "
-#| "failure."
 msgid "Bulk case reassigning failed. We have logged this failure."
 msgstr "Ugawaji wa kesi kwa pamoja umeshindikana. Tumerekodi hitilafu hii."
 
@@ -20767,6 +20002,25 @@ msgid "Name of the channel created in connect messaging."
 msgstr "Jina la kituo kilichoundwa kwenye ujumbe wa connect."
 
 #: corehq/apps/domain/forms.py
+#| msgid "Data and Sharing"
+msgid "Data Sharing"
+msgstr "Ushirikiano wa Data"
+
+#: corehq/apps/domain/forms.py
+#| msgid ""
+#| "<i class=\"fa fa-info-circle\"></i> See <a "
+#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/Report+and+Export+Filters\"target=\"_blank\">"
+#| " Filter Definitions</a>."
+msgid ""
+"Opt Out of <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2386001966/Data+Sharing+Opt-"
+"Outs+-+CommCare\" target=\"_blank\"> Aggregate Data Usage</a>"
+msgstr ""
+"Jiondoe kwenye <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2386001966/Data+Sharing+Opt-"
+"Outs+-+CommCare\" target=\"_blank\"> Matumizi ya Data ya Jumla</a>"
+
+#: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Saa za eneo chaguo-msingi"
 
@@ -21025,7 +20279,6 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 #, python-brace-format
-#| msgid "Unknown error"
 msgid "Unknown expression {expr}"
 msgstr "Kielezi kisichojulikana {expr}"
 
@@ -21072,7 +20325,6 @@ msgstr ""
 "kuhakikisha uko kwenye URL ya mradi wako"
 
 #: corehq/apps/domain/forms.py
-#| msgid "Name or Username"
 msgid "Email or Username"
 msgstr "Barua pepe au Jina la Mtumiaji"
 
@@ -21298,7 +20550,6 @@ msgid "Using project's timezone: {}"
 msgstr "Inatumia eneo la saa la mradi: {}"
 
 #: corehq/apps/domain/forms.py
-#| msgid "Copy URL"
 msgid "App URL"
 msgstr "URL ya Programu"
 
@@ -21315,9 +20566,6 @@ msgid "The URL must start with https://"
 msgstr "URL lazima ianze na https://"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "The source app url is in the same server as current server. To copy app in "
-#| "the same server, please use Copy Application feature."
 msgid ""
 "The source app url matches the current server. To copy an app within the "
 "same server, please use the Copy Application feature."
@@ -21326,7 +20574,6 @@ msgstr ""
 "ndani ya seva hiyo hiyo, tafadhali tumia kipengele cha Nakili Programu."
 
 #: corehq/apps/domain/forms.py
-#| msgid "Invalid phone number format."
 msgid "Invalid app URL format."
 msgstr "Muundo wa URL ya programu si sahihi."
 
@@ -21335,12 +20582,10 @@ msgid "The URL must be from a valid CommCare server."
 msgstr "URL lazima iwe kutoka kwenye seva halali ya CommCare."
 
 #: corehq/apps/domain/forms.py
-#| msgid "Application"
 msgid "Application Name"
 msgstr "Jina la Programu"
 
 #: corehq/apps/domain/forms.py
-#| msgid "The name of the application from the user's last request."
 msgid "Choose a name for the imported application on this server."
 msgstr "Chagua jina la programu iliyoingizwa kwenye seva hii."
 
@@ -21353,29 +20598,23 @@ msgid "Import Application"
 msgstr "Ingiza Programu"
 
 #: corehq/apps/domain/forms.py
-#| msgid "The file uploaded is an invalid JSON file"
 msgid "The file uploaded is an invalid JSON file."
 msgstr "Faili iliyopakiwa si faili halali ya JSON."
 
 #: corehq/apps/domain/forms.py
-#| msgid "Enable Call Center Application"
 msgid "Enable credentials for application"
 msgstr "Washa hati za programu"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "Select the location you would like to see recommendations for."
 msgid ""
 "Select the application that will be used to issue credentials to workers."
 msgstr "Chagua programu itakayotumika kutoa hati kwa wafanyakazi."
 
 #: corehq/apps/domain/forms.py
-#| msgid "Select an Application"
 msgid "Credential Issuing Application"
 msgstr "Programu ya Kutoa Hati"
 
 #: corehq/apps/domain/forms.py
-#| msgid "To Application"
 msgid "No application"
 msgstr "Hakuna programu"
 
@@ -21727,16 +20966,10 @@ msgid "More information"
 msgstr "Maelezo zaidi"
 
 #: corehq/apps/domain/templates/domain/admin/flags_and_privileges.html
-#| msgid "No Permission."
 msgid "No Permission!"
 msgstr "Hakuna Ruhusa!"
 
 #: corehq/apps/domain/templates/domain/admin/flags_and_privileges.html
-#| msgid ""
-#| "\n"
-#| "                You do not have permission to sign in with Single Sign-On.\n"
-#| "                If this is in error, please contact your project's administrator.\n"
-#| "              "
 msgid ""
 "\n"
 "                      You do not have permission to modify this flag. Please\n"
@@ -21875,17 +21108,10 @@ msgid "Action Type"
 msgstr "Aina ya Kitendo"
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#| msgid "CommCare Version Compliance"
 msgid "CommCare Companion (Beta)"
 msgstr "CommCare Companion (Beta)"
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#| msgid ""
-#| "\n"
-#| "      By clicking this button, you agree to Dimagi's\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-#| "    "
 msgid ""
 "\n"
 "              This feature is made available as a <strong>Beta Service</strong> under\n"
@@ -21942,16 +21168,10 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#| msgid "Release Mode"
 msgid "Please note:"
 msgstr "Tafadhali kumbuka:"
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#| msgid ""
-#| "\n"
-#| "                    Will delete <strong>all</strong> of %(friendly_name)s's\n"
-#| "                    form submissions.\n"
-#| "                  "
 msgid ""
 "\n"
 "                This feature has <strong>not been technically audited</strong> and may not\n"
@@ -22286,10 +21506,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
-#| msgid ""
-#| "\n"
-#| "            Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.\n"
-#| "          "
 msgid ""
 "\n"
 "            Clicking the 'Confirm Plan' button below will bring you to a page\n"
@@ -22335,11 +21551,6 @@ msgstr "Unashusha kiwango?"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
-#| msgid ""
-#| "\n"
-#| "              We'd love to make CommCare work better for you.\n"
-#| "              Please help us by answering these simple questions.\n"
-#| "            "
 msgid ""
 "\n"
 "              We'd love to make CommCare work better for you. Please help us by\n"
@@ -22375,10 +21586,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
-#| msgid ""
-#| "\n"
-#| "                Do you think your project may start again?\n"
-#| "              "
 msgid ""
 "\n"
 "              Do you think your project may start again?\n"
@@ -22390,10 +21597,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
-#| msgid ""
-#| "\n"
-#| "                Could you indicate which new tool you’re using?\n"
-#| "              "
 msgid ""
 "\n"
 "              Could you indicate which new tool you’re using?\n"
@@ -22405,10 +21608,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
-#| msgid ""
-#| "\n"
-#| "                Why are you switching to a new tool?\n"
-#| "              "
 msgid ""
 "\n"
 "              Why are you switching to a new tool?\n"
@@ -22420,10 +21619,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
-#| msgid ""
-#| "\n"
-#| "                Please specify\n"
-#| "              "
 msgid ""
 "\n"
 "              Please specify\n"
@@ -22489,18 +21684,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
-#| msgid ""
-#| "\n"
-#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
-#| "                receive an invoice via email with bank information and\n"
-#| "                instructions for wire payment. Please include the Invoice # in\n"
-#| "                the wire payment memo or note field.\n"
-#| "                <a\n"
-#| "                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
-#| "                  target=\"_blank\"\n"
-#| "                  >More information...</a\n"
-#| "                >\n"
-#| "              "
 msgid ""
 "\n"
 "          <p>\n"
@@ -22602,19 +21785,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid "Got questions about your plan?"
 msgid "Questions about your plan?"
 msgstr "Maswali kuhusu mpango wako?"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid "Contacts"
 msgid "Contact us"
 msgstr "Wasiliana nasi"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid "Change Plan"
 msgid "Upgrade Plan"
 msgstr "Boresha Mpango"
 
@@ -22765,7 +21945,6 @@ msgstr "Matumizi ya Sasa"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
-#| msgid "Project Space Name"
 msgid "Project Space Unavailable"
 msgstr "Eneo la Mradi Halipatikani"
 
@@ -22785,19 +21964,11 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
 #: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    You've been added to %(domain)s.\n"
-#| "  "
 msgid "You have been deactivated from %(domain)s"
 msgstr "Umezimwa kutoka %(domain)s"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/deactivated_notice.html
 #: corehq/apps/domain/templates/domain/bootstrap5/deactivated_notice.html
-#| msgid ""
-#| "\n"
-#| "      If you believe this to be in error, please contact support.\n"
-#| "    "
 msgid ""
 "If you believe this is an error, please contact your project administrator "
 "or support."
@@ -22984,12 +22155,6 @@ msgstr "imepunguzwa"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#| msgid ""
-#| "\n"
-#| "              This plan will be downgrading to\n"
-#| "              <span data-bind=\"text: oNextPlan\"></span> on\n"
-#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
-#| "            "
 msgid ""
 "\n"
 "              This plan will be downgrading to\n"
@@ -23005,11 +22170,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#| msgid ""
-#| "\n"
-#| "              This plan will be pausing on<br />\n"
-#| "              <span data-bind=\"text: oNextDate\"></span>.\n"
-#| "            "
 msgid ""
 "\n"
 "              This plan will be pausing on<br />\n"
@@ -23119,12 +22279,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#| msgid ""
-#| "\n"
-#| "        Your subscription will be pausing on\n"
-#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
-#| "        unless you select a different plan above.\n"
-#| "      "
 msgid ""
 "\n"
 "        Your subscription will be pausing on\n"
@@ -23140,13 +22294,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#| msgid ""
-#| "\n"
-#| "        Your subscription will be downgrading to\n"
-#| "        <span data-bind=\"text: oNextSubscription\"></span> on\n"
-#| "        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span>\n"
-#| "        unless you select a different plan above.\n"
-#| "      "
 msgid ""
 "\n"
 "        Your subscription will be downgrading to\n"
@@ -23250,10 +22397,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ!\n"
-#| "  "
 msgid ""
 "\n"
 "    %(inviter)s has invited you to join the %(domain)s project on CommCare!\n"
@@ -23289,11 +22432,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    %(inviter)s has invited you to join the %(domain)s project on CommCare HQ.\n"
-#| "    This invitation expires in %(days)s day(s).\n"
-#| "  "
 msgid ""
 "\n"
 "    %(inviter)s has invited you to join the %(domain)s project on CommCare.\n"
@@ -23306,12 +22444,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
-#| msgid ""
-#| "\n"
-#| "    CommCare HQ is a data management tool used by over 500 organizations\n"
-#| "    to help frontline workers around the world.\n"
-#| "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.\n"
-#| "  "
 msgid ""
 "\n"
 "    CommCare is a data management tool used by over 500 organizations\n"
@@ -23340,12 +22472,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
-#| msgid ""
-#| "\n"
-#| "    CommCare HQ is a data management tool used by over 500 organizations\n"
-#| "    to help frontline workers around the world.\n"
-#| "    <a href=\"https://dimagi.com/commcare/\" style=\"color: #bcdeff;\">Learn more about CommCare</a>.  \n"
-#| "  "
 msgid ""
 "\n"
 "    CommCare is a data management tool used by over 500 organizations\n"
@@ -23366,11 +22492,6 @@ msgstr "Habari,"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    %(inviter)s has invited you to join the %(domain)s project on CommCare HQ.\n"
-#| "    This invitation expires in %(days)s day(s).\n"
-#| "  "
 msgid ""
 "\n"
 "    %(inviter)s has invited you to join the %(domain)s project on CommCare.\n"
@@ -23392,9 +22513,6 @@ msgstr ""
 "chako. %(url)s"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
-#| msgid ""
-#| "CommCare HQ is a data management tool used by over 500 organizations to help"
-#| " frontline workers around the world."
 msgid ""
 "CommCare is a data management tool used by over 500 organizations to help "
 "frontline workers around the world."
@@ -23403,10 +22521,6 @@ msgstr ""
 "kusaidia wafanyakazi wa mstari wa mbele duniani kote."
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
-#| msgid ""
-#| "\n"
-#| "    If you think you have received this by mistake, you can go ahead and ignore this email.\n"
-#| "    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
 "    If you think you have received this by mistake, you can go ahead and ignore this email.\n"
@@ -23423,16 +22537,11 @@ msgstr "Asante kwa kutumia tovuti yetu!"
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
-#| msgid "--The CommCare HQ Team"
 msgid "-The CommCare Team"
 msgstr "-Timu ya CommCare"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    %(inviter)s approved your request to join %(domain)s on CommCare HQ!\n"
-#| "  "
 msgid ""
 "\n"
 "    %(inviter)s approved your request to join %(domain)s on CommCare!\n"
@@ -23465,11 +22574,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    %(inviter)s has approved your request to join the \"%(domain)s\" project at CommCare HQ.\n"
-#| "    This approval expires in %(days)s day(s).\n"
-#| "  "
 msgid ""
 "\n"
 "    %(inviter)s has approved your request to join the \"%(domain)s\" project on CommCare.\n"
@@ -23482,10 +22586,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
-#| msgid ""
-#| "\n"
-#| "    CommCare HQ is a tool that helps manage frontline workers around the world.\n"
-#| "  "
 msgid ""
 "\n"
 "    CommCare is a tool that helps manage frontline workers around the world.\n"
@@ -23514,10 +22614,6 @@ msgstr "Habari!"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    %(inviter)s has approved your request to join the %(domain)s project space on CommCare HQ.\n"
-#| "    This approval expires in %(days)s day(s).\n"
 msgid ""
 "\n"
 "    %(inviter)s has approved your request to join the %(domain)s project space on CommCare.\n"
@@ -23528,8 +22624,6 @@ msgstr ""
 "    Uidhinishaji huu unaisha baada ya siku %(days)s.\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
-#| msgid ""
-#| "CommCare HQ is a tool that helps manage frontline workers around the world."
 msgid ""
 "CommCare is a tool that helps manage frontline workers around the world."
 msgstr ""
@@ -23542,10 +22636,6 @@ msgid "To confirm this approval go to: %(url)s"
 msgstr "Ili kuthibitisha uidhinishaji huu nenda: %(url)s"
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.txt
-#| msgid ""
-#| "\n"
-#| "    If you think this is a mistake, you can go ahead and ignore this email.\n"
-#| "    To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
 "    If you think this is a mistake, you can go ahead and ignore this email.\n"
@@ -23621,11 +22711,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    %(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept\n"
-#| "    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
-#| "  "
 msgid ""
 "\n"
 "    %(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept\n"
@@ -23658,10 +22743,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-#| msgid ""
-#| "\n"
-#| "    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
-#| "  "
 msgid ""
 "\n"
 "    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
@@ -23673,9 +22754,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "%(from_username)s has initiatied a transfer of ownership for a CommCare HQ project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
 msgid ""
 "\n"
 "%(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
@@ -23700,9 +22778,6 @@ msgstr ""
 "Mipangilio yote ya mradi, akaunti za watumiaji, na ruhusa zitaendelea kubaki kama zilivyo baada ya uhamisho wa umiliki. Ikiwa ungependa kubadilisha yoyote kati ya mipangilio hii, tafadhali fanya hivyo baada ya kukubali umiliki wa nafasi ya mradi kupitia menyu ya mipangilio ya nafasi ya mradi.\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-#| msgid ""
-#| "\n"
-#| "If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit http://www.commcarehq.org/.\n"
 msgid ""
 "\n"
 "If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit http://www.commcarehq.org/.\n"
@@ -23712,20 +22787,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "  <p>\n"
-#| "    Your request to join %(domain_name)s has been approved.\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    You may now visit %(url)s.\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    Thanks,<br />\n"
-#| "    CommCare HQ\n"
-#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -23747,7 +22808,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/import_app_from_another_server_main.html
 #: corehq/apps/domain/views/settings.py
-#| msgid "Import a new build from the build server"
 msgid "Import App from Another Server"
 msgstr "Ingiza Programu Kutoka kwa Seva Nyingine"
 
@@ -23926,17 +22986,11 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
-#| msgid "Application Source File"
 msgid "Download the Application Source File"
 msgstr "Pakua Faili ya Chanzo cha Programu"
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                has no reports.\n"
-#| "              "
 msgid ""
 "\n"
 "        Open\n"
@@ -23975,10 +23029,6 @@ msgid "Click Save."
 msgstr "Bofya Hifadhi."
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid ""
-#| "\n"
-#| "        Configuration saved successfully!\n"
-#| "      "
 msgid ""
 "\n"
 "        Your application has been successfully imported!\n"
@@ -24001,10 +23051,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid ""
-#| "\n"
-#| "          Download %(plural_noun)s\n"
-#| "        "
 msgid ""
 "\n"
 "        Step 1: Download Multimedia from Source App\n"
@@ -24015,11 +23061,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid ""
-#| "\n"
-#| "          Would you like to edit roles and add new,\n"
-#| "          custom roles?\n"
-#| "        "
 msgid ""
 "\n"
 "          Go to the source application's multimedia page and download the\n"
@@ -24042,10 +23083,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid ""
-#| "\n"
-#| "          No cases found.\n"
-#| "        "
 msgid ""
 "\n"
 "          Click \"Download ZIP\".\n"
@@ -24056,10 +23093,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid ""
-#| "\n"
-#| "          Upload Lookup Tables\n"
-#| "        "
 msgid ""
 "\n"
 "        Step 2: Upload Multimedia to New App\n"
@@ -24070,11 +23103,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid ""
-#| "\n"
-#| "          Would you like to edit roles and add new,\n"
-#| "          custom roles?\n"
-#| "        "
 msgid ""
 "\n"
 "          Go to your new application's multimedia page and upload the downloaded\n"
@@ -24087,10 +23115,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid ""
-#| "\n"
-#| "              Not Active\n"
-#| "            "
 msgid ""
 "\n"
 "          Go to New App Multimedia Upload Page\n"
@@ -24101,10 +23125,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid ""
-#| "\n"
-#| "          Upload Lookup Tables\n"
-#| "        "
 msgid ""
 "\n"
 "          Upload Multimedia Files under Step 3.\n"
@@ -24125,14 +23145,10 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_import_multimedia.html
-#| msgid "To Application"
 msgid "Go to Application"
 msgstr "Nenda kwenye Programu"
 
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
-#| msgid ""
-#| "This tool helps you import an app from another CommCare server to your "
-#| "current CommCare server."
 msgid ""
 "\n"
 "      This tool helps you import an app from another CommCare server to your\n"
@@ -24145,7 +23161,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
-#| msgid "To start, simply paste the URL of the app you want to import."
 msgid ""
 "\n"
 "      To start, simply paste the URL of the app you want to import.\n"
@@ -24156,7 +23171,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
-#| msgid "Import"
 msgid "Important to Note:"
 msgstr "Muhimu Kumbuka:"
 
@@ -24165,7 +23179,6 @@ msgid "This will not copy users and groups."
 msgstr "Hii haitanakili watumiaji na vikundi."
 
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
-#| msgid "Preparing organization structure download."
 msgid "This will not copy organization structure or levels."
 msgstr "Hii haitanakili muundo wa shirika au ngazi."
 
@@ -24215,11 +23228,6 @@ msgstr "Kubadilisha Nenosiri Hakukufanikiwa"
 
 #: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
 #: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#| msgid ""
-#| "\n"
-#| "        The password reset link was invalid, possibly because\n"
-#| "        it has already been used.\n"
-#| "      "
 msgid ""
 "\n"
 "        The password reset link was invalid, possibly because it has already\n"
@@ -24276,9 +23284,6 @@ msgstr "Jifunze zaidi"
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-#| msgid ""
-#| "about how CommCare HQ can be your mobile solution for your frontline "
-#| "workforce."
 msgid ""
 "about how CommCare can be your mobile solution for your frontline workforce."
 msgstr ""
@@ -24321,10 +23326,6 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Not %(username)s?\n"
-#| "                "
 msgid ""
 "\n"
 "          %(server_name)s\n"
@@ -24338,12 +23339,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
-#| msgid ""
-#| "\n"
-#| "                Learn more about exports on our <a\n"
-#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
-#| "                target=\"_blank\">Help Site</a>.\n"
-#| "            "
 msgid ""
 "\n"
 "      Learn more about our\n"
@@ -24432,7 +23427,6 @@ msgid "Thank you for using CommCare."
 msgstr "Asante kwa kutumia CommCare."
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_email.html
-#| msgid "--The CommCare HQ Team"
 msgid "--The CommCare Team"
 msgstr "--Timu ya CommCare"
 
@@ -24495,10 +23489,6 @@ msgstr "Tengeneza Tokeni"
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/login.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/login.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        %(server_location)s Server\n"
-#| "      "
 msgid ""
 "\n"
 "        %(server_location)s Cloud\n"
@@ -25112,7 +24102,6 @@ msgid "Back to my Subscription"
 msgstr "Rudi kwenye Usajili Wangu"
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid "Select Plan"
 msgid "Back to Select Plan"
 msgstr "Rudi Kuchagua Mpango"
 
@@ -25173,10 +24162,6 @@ msgstr "Mradi wako umefanikiwa kusajiliwa kwenye Mpango wa Toleo la %s."
 
 #: corehq/apps/domain/views/accounting.py
 #, python-format
-#| msgid ""
-#| "You have already scheduled a downgrade to the %(software_plan_name)s "
-#| "Software Plan on %(downgrade_date)s. If this is a mistake, please reach out "
-#| "to %(contact_email)."
 msgid ""
 "You have already scheduled a downgrade to the %(software_plan_name)s "
 "Software Plan on %(downgrade_date)s. If this is a mistake, please reach out "
@@ -25250,7 +24235,6 @@ msgstr "Chagua Mradi"
 
 #: corehq/apps/domain/views/base.py
 #, python-brace-format
-#| msgid "You have been added to the \"{}\" project space."
 msgid "You have been added to the \"{invitation.domain}\" project space."
 msgstr "Umeongezwa kwenye nafasi ya mradi ya \"{invitation.domain}\"."
 
@@ -25356,7 +24340,6 @@ msgid "Password for {} has successfully been reset. You can now login."
 msgstr "Nenosiri la {} limewekwa upya kwa mafanikio. Sasa unaweza kuingia."
 
 #: corehq/apps/domain/views/settings.py
-#| msgid "Successfully restored report \"{name}\""
 msgid "Successful password reset for {}"
 msgstr "Umefanikiwa kuweka upya nenosiri kwa {}"
 
@@ -25370,12 +24353,10 @@ msgid "Manage Mobile Workers"
 msgstr "Simamia Wafanyakazi wa Simu"
 
 #: corehq/apps/domain/views/settings.py
-#| msgid "Untitled Application"
 msgid "Credentials Application"
 msgstr "Programu ya Vitambulisho"
 
 #: corehq/apps/domain/views/settings.py
-#| msgid "Settings updated!"
 msgid "Settings saved!"
 msgstr "Mipangilio imehifadhiwa!"
 
@@ -25456,11 +24437,6 @@ msgstr ""
 
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_error.html
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_success.html
-#| msgid ""
-#| "\n"
-#| "    Thanks, <br />\n"
-#| "    CommCare HQ Team\n"
-#| "  "
 msgid ""
 "\n"
 "    Thanks, <br />\n"
@@ -25483,10 +24459,6 @@ msgstr ""
 
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_error.txt
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_success.txt
-#| msgid ""
-#| "\n"
-#| "Thanks,\n"
-#| "CommCare HQ Team\n"
 msgid ""
 "\n"
 "Thanks,\n"
@@ -25673,7 +24645,6 @@ msgid "Last Access Date [UTC]"
 msgstr "Tarehe ya Mwisho ya Kufikia [UTC]"
 
 #: corehq/apps/enterprise/enterprise.py
-#| msgid "Archive Product"
 msgid "Active in Project"
 msgstr "Akiwa Hai kwenye Mradi"
 
@@ -26339,7 +25310,6 @@ msgstr "Tafadhali chagua angalau Mchukua Mahudhurio mmoja"
 
 #: corehq/apps/events/forms.py
 #, python-brace-format
-#| msgid "Edit Attendance Tracking Event"
 msgid "{self.title_prefix} Attendance Tracking Event"
 msgstr "{self.title_prefix} Tukio la Ufuatiliaji wa Mahudhurio"
 
@@ -29584,6 +28554,18 @@ msgstr "Workbook haina karatasi inayoitwa types"
 msgid "type {lookup_table_name} is not defined as global"
 msgstr "aina {lookup_table_name} haijaainishwa kama ya kimataifa"
 
+#: corehq/apps/fixtures/upload/run_upload.py
+#, python-brace-format
+msgid ""
+"The table structure of '{tag}' cannot be changed while also modifying its "
+"data. If you need to do both, include all existing rows in the upload or "
+"perform the upload using the 'Replace existing tables' option."
+msgstr ""
+"Muundo wa jedwali la '{tag}' hauwezi kubadilishwa wakati wa kubadilisha data"
+" yake pia. Ikiwa unahitaji kufanya yote mawili, jumuisha safu zote zilizopo "
+"kwenye upakiaji au fanya upakiaji kwa kutumia chaguo la 'Badilisha majedwali"
+" yaliyopo'."
+
 #: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown user: '%(name)s'. But the row is successfully added"
@@ -31320,42 +30302,34 @@ msgid "UCR Domains Data Report"
 msgstr "Ripoti ya Data ya Domain za UCR"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Feature Previews"
 msgid "Feature Preview Status Report"
 msgstr "Ripoti ya Hali ya Hakikisho la Kipengele"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Enabled"
 msgid "Enabled By"
 msgstr "Imewezeshwa Na"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Enabled"
 msgid "Enabled At"
 msgstr "Imewezeshwa Wakati"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Not Checked"
 msgid "Not recorded"
 msgstr "Haijarekodiwa"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Feature Previews"
 msgid "Feature Preview Audit Report"
 msgstr "Ripoti ya Ukaguzi wa Hakikisho la Kipengele"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Shared By"
 msgid "Changed By"
 msgstr "Ilibadilishwa Na"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Changes to"
 msgid "Changed At"
 msgstr "Ilibadilishwa Wakati"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Update Information"
 msgid "Update Randomness"
 msgstr "Sasisha Nasibu"
 
@@ -31455,7 +30429,6 @@ msgid "Accounting Admin"
 msgstr "Msimamizi wa Uhasibu"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
-#| msgid "Contact"
 msgid "Is Contractor"
 msgstr "Ni Mkandarasi"
 
@@ -31507,7 +30480,6 @@ msgid "Can assign Superuser"
 msgstr "Anaweza kugawa Mtumiaji Mkuu"
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#| msgid "Feature Flags and Privileges"
 msgid "Feature Flag Edit Permissions"
 msgstr "Ruhusa ya Kuhariri Kipengele cha Bendera"
 
@@ -32384,12 +31356,18 @@ msgid "Please enter valid CAPTCHA"
 msgstr "Tafadhali weka CAPTCHA sahihi"
 
 #: corehq/apps/hqwebapp/models.py
-#| msgid "Indices"
+msgid "European Union"
+msgstr "Umoja wa Ulaya"
+
+#: corehq/apps/hqwebapp/models.py
+msgid "EU"
+msgstr "EU"
+
+#: corehq/apps/hqwebapp/models.py
 msgid "India"
 msgstr "India"
 
 #: corehq/apps/hqwebapp/models.py
-#| msgid "Invalid Date"
 msgid "United States"
 msgstr "Marekani"
 
@@ -32403,9 +31381,6 @@ msgstr ""
 "Muundo wa usafirishaji hauungwa mkono: {}. Miundo inayoungwa mkono ni: {}"
 
 #: corehq/apps/hqwebapp/tables/export.py
-#| msgid ""
-#| "A request is pending for this email. You will receive an email when the "
-#| "request is approved."
 msgid "Export is being generated. You will receive an email when it is ready."
 msgstr "Uhamishaji unatengenezwa. Utapokea barua pepe itakapokuwa tayari."
 
@@ -32540,7 +31515,6 @@ msgid "Submit Report"
 msgstr "Tuma Ripoti"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#| msgid "Can be disabled"
 msgid "Cookies are disabled!"
 msgstr "Vidakuzi vimezimwa!"
 
@@ -32549,10 +31523,6 @@ msgid "Someone ate the cookies."
 msgstr "Mtu amekula biskuti."
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#| msgid ""
-#| "\n"
-#| "          Upload Lookup Tables\n"
-#| "        "
 msgid ""
 "\n"
 "          Oops! Looks like Cookies are disabled!\n"
@@ -32563,10 +31533,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#| msgid ""
-#| "\n"
-#| "          If you would like to undelete it you can do so below.\n"
-#| "        "
 msgid ""
 "\n"
 "          No worries! Here's how you can fix it:\n"
@@ -32599,10 +31565,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#| msgid ""
-#| "\n"
-#| "        This is a <i class=\"fcc fcc-app-createform\"></i> Registration Form.\n"
-#| "      "
 msgid ""
 "\n"
 "            Click on the CommCare icon <i class=\"fcc fcc-flower\"></i> in the top left corner.\n"
@@ -32627,12 +31589,6 @@ msgid "Need help?"
 msgstr "Unahitaji msaada?"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#| msgid ""
-#| "\n"
-#| "                Learn more about exports on our <a\n"
-#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
-#| "                target=\"_blank\">Help Site</a>.\n"
-#| "            "
 msgid ""
 "\n"
 "            Check out our step-by-step\n"
@@ -32657,10 +31613,6 @@ msgid "Still having trouble?"
 msgstr "Bado unapata shida?"
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
-#| msgid ""
-#| "\n"
-#| "            What happens after you pause?\n"
-#| "          "
 msgid ""
 "\n"
 "            We are happy to assist!\n"
@@ -32672,15 +31624,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/csrf_failure.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              If this problem persists, we encourage you to\n"
-#| "              <a\n"
-#| "                href=\"#modalReportIssue\"\n"
-#| "                data-bs-target=\"#modalReportIssue\"\n"
-#| "                data-bs-toggle=\"modal\"\n"
-#| "              >Report an Issue</a>.\n"
-#| "            "
 msgid ""
 "\n"
 "            Email us at\n"
@@ -32959,7 +31902,6 @@ msgid "Errors"
 msgstr "Hitilafu"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-#| msgid "HTMX Request: Server Error Encountered"
 msgid "Server Error Encountered"
 msgstr "Hitilafu ya Seva Imepatikana"
 
@@ -33046,7 +31988,6 @@ msgstr "Toka"
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
 #: corehq/apps/registration/forms.py
 #: corehq/apps/registration/templates/registration/domain_request.html
-#| msgid "Child Locations"
 msgid "Cloud Location"
 msgstr "Eneo la Wingu"
 
@@ -33728,7 +32669,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/footer.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
-#| msgid "Learn more about CommCare HQ"
 msgid "Learn more about CommCare"
 msgstr "Jifunze zaidi kuhusu CommCare"
 
@@ -34131,7 +33071,6 @@ msgid "en"
 msgstr "sw"
 
 #: corehq/apps/hqwebapp/two_factor_methods.py
-#| msgid "Authentication Code"
 msgid "Authenticator App"
 msgstr "Programu ya Uthibitishaji"
 
@@ -34440,17 +33379,14 @@ msgid "KYC Report"
 msgstr "Ripoti ya KYC"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Last Verified"
 msgid "Not Verified"
 msgstr "Haijathibitishwa"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "View recent submissions"
 msgid "Pending Submission"
 msgstr "Inasubiri Kuwasilishwa"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Submitted [UTC]"
 msgid "Submitted"
 msgstr "Imewasilishwa"
 
@@ -34479,13 +33415,11 @@ msgstr "Kampeni"
 
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/integration/payments/tables.py
-#| msgid "Activities"
 msgid "Activity"
 msgstr "Shughuli"
 
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/integration/payments/tables.py
-#| msgid "underline"
 msgid "Funder"
 msgstr "Mfadhili"
 
@@ -34587,12 +33521,10 @@ msgid "Verified By"
 msgstr "Imethibitishwa Na"
 
 #: corehq/apps/integration/payments/tables.py
-#| msgid "Submitted [UTC]"
 msgid "Submitted At"
 msgstr "Imewasilishwa Saa"
 
 #: corehq/apps/integration/payments/tables.py
-#| msgid "Invalid Date"
 msgid "Invalid Status"
 msgstr "Hali Batili"
 
@@ -34610,7 +33542,6 @@ msgid "One or more case IDs are required for verification."
 msgstr "ID moja au zaidi za kesi zinahitajika kwa uthibitisho."
 
 #: corehq/apps/integration/payments/views.py
-#| msgid "You can only have 3 alerts activated at any one time"
 msgid "You can only verify for up to {} cases at a time."
 msgstr "Unaweza kuthibitisha hadi kesi {} kwa wakati mmoja pekee."
 
@@ -34855,17 +33786,11 @@ msgstr ""
 "iliyosasishwa itaonekana hivi karibuni."
 
 #: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
-#| msgid "Verification Pending"
 msgid "Revert Verification of Pending Payments"
 msgstr "Rudisha Uthibitisho wa Malipo Yanayosubiri"
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Successfully submitted %(success_count)s records for payments!\n"
-#| "      Verification status for these will be refreshed in a few seconds.\n"
-#| "    "
 msgid ""
 "\n"
 "      Successfully verified %(success_count)s records for payments! Updated\n"
@@ -34879,10 +33804,6 @@ msgstr ""
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Failed to submit %(failure_count)s records for payments!\n"
-#| "    "
 msgid ""
 "\n"
 "      Failed to verify %(failure_count)s records for payments!\n"
@@ -37146,7 +36067,6 @@ msgstr "Hariri Programu"
 
 #: corehq/apps/registration/forms.py
 #, python-brace-format
-#| msgid "Use location name"
 msgid "{location_name} Cloud"
 msgstr "{location_name} Wingu"
 
@@ -37268,12 +36188,10 @@ msgstr ""
 "ya kukusaidia."
 
 #: corehq/apps/registration/forms.py
-#| msgid "Name Your First Project"
 msgid "Name Your Project"
 msgstr "Taja Mradi Wako"
 
 #: corehq/apps/registration/forms.py
-#| msgid "My CommCare Project"
 msgid "e.g. — My CommCare Project"
 msgstr "mf. DD Mradi Wangu wa CommCare"
 
@@ -37410,11 +36328,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/registration/templates/registration/confirmation_sent.html
-#| msgid ""
-#| "\n"
-#| "      Please visit the link provided in the email to activate your account,\n"
-#| "      so you can start using your new CommCare HQ project!\n"
-#| "    "
 msgid ""
 "\n"
 "      Please visit the link provided in the email to activate your account,\n"
@@ -37432,11 +36345,6 @@ msgstr "Inasubiri Uthibitisho"
 
 #: corehq/apps/registration/templates/registration/confirmation_waiting.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Thank you for requesting a new CommCare HQ project:\n"
-#| "      <strong>%(requested_domain)s</strong>.\n"
-#| "    "
 msgid ""
 "\n"
 "      Thank you for requesting a new CommCare project:\n"
@@ -37460,10 +36368,6 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Welcome to CommCare HQ, %(first_name)s!\n"
-#| "          "
 msgid ""
 "\n"
 "            Welcome to CommCare HQ, %(name)s!\n"
@@ -37497,10 +36401,6 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Let's add a new project, %(first_name)s.\n"
-#| "          "
 msgid ""
 "\n"
 "            Let's add a new project, %(name)s!\n"
@@ -37531,17 +36431,10 @@ msgstr ""
 "              "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#| msgid "Create a New Project Space"
 msgid "Your New Project Space"
 msgstr "Nafasi Yako Mpya ya Mradi"
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#| msgid ""
-#| "\n"
-#| "                Learn more about exports on our <a\n"
-#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports\"\n"
-#| "                target=\"_blank\">Help Site</a>.\n"
-#| "            "
 msgid ""
 "\n"
 "            A\n"
@@ -37567,15 +36460,6 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Deprecating this case property may result in unintended behaviour, and so\n"
-#| "                    it is advised to first change the selected custom case property in\n"
-#| "                    <a href=\"%(geospatial_settings_url)s\">\n"
-#| "                        geospatial settings\n"
-#| "                    </a>\n"
-#| "                    before deprecating this case property.\n"
-#| "                    "
 msgid ""
 "\n"
 "                    All new projects start on CommCare's free edition. Once you\n"
@@ -37597,11 +36481,6 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Are you sure you want to permanently delete\n"
-#| "                  <strong>%(friendly_name)s</strong>?\n"
-#| "                "
 msgid ""
 "\n"
 "                      This project will be hosted on the\n"
@@ -37614,10 +36493,6 @@ msgstr ""
 "                    "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#| msgid ""
-#| "\n"
-#| "                    This subscription will be paused on %(next_date)s.\n"
-#| "                  "
 msgid ""
 "\n"
 "                      This project will be hosted on a private cloud.\n"
@@ -37630,37 +36505,36 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/domain_request.html
 #| msgid ""
 #| "\n"
-#| "                                  <p>Checking this will add a button to download a configuration file\n"
-#| "                                     for the <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
-#| "                                     CommCare Data Export Tool</a> for the export.</p>\n"
-#| "                                 "
+#| "                    To select a different\n"
+#| "                    <a\n"
+#| "                      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+#| "                      target=\"_blank\"\n"
+#| "                      ><b>cloud location</b></a\n"
+#| "                    >, log into that location's site before creating your\n"
+#| "                    project:\n"
+#| "                  "
 msgid ""
 "\n"
-"                    To select a different\n"
+"                    To create a project in a different\n"
 "                    <a\n"
 "                      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
 "                      target=\"_blank\"\n"
 "                      ><b>cloud location</b></a\n"
-"                    >, log into that location's site before creating your\n"
-"                    project:\n"
+"                    >, create an account for that cloud location first, then\n"
+"                    create a project.\n"
 "                  "
 msgstr ""
 "\n"
-"                    Ili kuchagua\n"
+"                    Ili kuunda mradi katika\n"
 "                    <a\n"
 "                      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
 "                      target=\"_blank\"\n"
-"                      ><b>eneo tofauti la wingu</b></a\n"
-"                    >, ingia kwenye tovuti ya eneo hilo kabla ya kuunda\n"
-"                    mradi wako:\n"
+"                      ><b>eneo la wingu</b></a\n"
+"                    > tofauti, unda akaunti kwa eneo hilo la wingu kwanza, kisha\n"
+"                    unda mradi.\n"
 "                  "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#| msgid ""
-#| "\n"
-#| "                    Will delete <strong>all</strong> of %(friendly_name)s's\n"
-#| "                    form submissions.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Please note: Projects <strong>cannot</strong> be transferred\n"
@@ -37686,10 +36560,6 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/confirm_account.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Almost there, %(full_name)s--please activate your CommCare HQ Account!\n"
-#| "  "
 msgid ""
 "\n"
 "    Almost there, %(full_name)s--please activate your CommCare Account!\n"
@@ -37793,10 +36663,6 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Dear %(full_name)s, please visit your CommCare HQ Account on a desktop!\n"
-#| "  "
 msgid ""
 "\n"
 "    Dear %(full_name)s, please visit your CommCare Account on a desktop!\n"
@@ -37817,10 +36683,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
-#| msgid ""
-#| "\n"
-#| "    Visit CommCare HQ\n"
-#| "  "
 msgid ""
 "\n"
 "    Visit CommCare\n"
@@ -37831,11 +36693,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_signup_reminder.html
-#| msgid ""
-#| "\n"
-#| "    This email has been sent as a reminder for you to visit your\n"
-#| "    CommCare HQ project space on a laptop or desktop computer.\n"
-#| "  "
 msgid ""
 "\n"
 "    This email has been sent as a reminder for you to visit your\n"
@@ -37962,10 +36819,6 @@ msgid "-The %(hq_name)s team"
 msgstr "-Timu ya %(hq_name)s"
 
 #: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
-#| msgid ""
-#| "\n"
-#| "    Reset your password on CommCare HQ!\n"
-#| "  "
 msgid ""
 "\n"
 "    Reset your password on CommCare!\n"
@@ -37996,10 +36849,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
-#| msgid ""
-#| "\n"
-#| "    Someone requested a password reset for your email on CommCare HQ.\n"
-#| "  "
 msgid ""
 "\n"
 "    Someone requested a password reset for your email on CommCare.\n"
@@ -38030,7 +36879,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
-#| msgid "Reset Password on CommCare HQ"
 msgid "Reset Password on CommCare"
 msgstr "Weka Upya Nenosiri kwenye CommCare"
 
@@ -38120,11 +36968,6 @@ msgid "Issue with registration"
 msgstr "Tatizo na usajili"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/submit_errors.html
-#| msgid ""
-#| "\n"
-#| "      Please check that you have JavaScript enabled to use this site!\n"
-#| "      We found the following issues:\n"
-#| "    "
 msgid ""
 "\n"
 "      Please check that you have JavaScript enabled to use this site! We found\n"
@@ -38193,11 +37036,6 @@ msgid "An email was just sent to"
 msgstr "Barua pepe imetumwa kwa"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/success.html
-#| msgid ""
-#| "\n"
-#| "        Please visit the link provided <strong>from your desktop computer</strong> to activate your account,\n"
-#| "        so you can start using your new CommCare HQ project!\n"
-#| "      "
 msgid ""
 "\n"
 "        Please visit the link provided <strong>from your desktop computer</strong> to activate your account,\n"
@@ -38210,11 +37048,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/success.html
-#| msgid ""
-#| "\n"
-#| "        <strong>Please visit the link provided in the email to activate your account,</strong>\n"
-#| "        so you can start using your new CommCare HQ project!\n"
-#| "      "
 msgid ""
 "\n"
 "        <strong>Please visit the link provided in the email to activate your account,</strong>\n"
@@ -38313,8 +37146,17 @@ msgid "Please try again."
 msgstr "Tafadhali jaribu tena."
 
 #: corehq/apps/registration/views.py
-msgid "There is already a user with this email."
-msgstr "Tayari kuna mtumiaji mwenye barua pepe hii."
+msgid "current"
+msgstr "ya sasa"
+
+#: corehq/apps/registration/views.py
+#, python-brace-format
+msgid ""
+"This email is already registered in the {location} cloud location. Please <a"
+" href=\"{login_link}\">sign in here</a>."
+msgstr ""
+"Barua pepe hii tayari imesajiliwa kwenye eneo la wingu la {location}. "
+"Tafadhali <a href=\"{login_link}\">ingia hapa</a>."
 
 #: corehq/apps/registration/views.py
 msgid "CommCareHQ account request"
@@ -38483,19 +37325,12 @@ msgstr "Unaweza kuona sajili ya data kupitia kiungo hiki: "
 #: corehq/apps/registry/templates/registry/email/access_granted.html
 #: corehq/apps/registry/templates/registry/email/invitation.html
 #: corehq/apps/registry/templates/registry/email/invitation_response.html
-#| msgid ""
-#| "Best regards, <br /> The CommCare HQ Team  <br /> www.commcarehq.org"
 msgid "Best regards, <br /> The CommCare Team  <br /> www.commcarehq.org"
 msgstr "Wako mwaminifu, <br /> Timu ya CommCare  <br /> www.commcarehq.org"
 
 #: corehq/apps/registry/templates/registry/email/access_granted.txt
 #: corehq/apps/registry/templates/registry/email/invitation.txt
 #: corehq/apps/registry/templates/registry/email/invitation_response.txt
-#| msgid ""
-#| "Thank you for using CommCare.\n"
-#| "Best regards,\n"
-#| "The CommCare HQ Team\n"
-#| "www.commcarehq.org"
 msgid ""
 "Thank you for using CommCare.\n"
 "Best regards,\n"
@@ -39640,10 +38475,6 @@ msgid "Click to select a group"
 msgstr "Bofya kuchagua kikundi"
 
 #: corehq/apps/reports/filters/select.py
-msgid "Click to select groups"
-msgstr "Bofya kuchagua vikundi"
-
-#: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap3/quarter_filter.html
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap5/quarter_filter.html
 msgid "Year"
@@ -39704,7 +38535,6 @@ msgid "Rebuild restriction feature flag status"
 msgstr "Hali ya bendera ya kipengele cha kizuizi cha kujenga upya"
 
 #: corehq/apps/reports/filters/select.py
-#| msgid "Select Status"
 msgid "Select Feature"
 msgstr "Chagua Kipengele"
 
@@ -39746,33 +38576,22 @@ msgid "%s & Others"
 msgstr "%s na Wengine"
 
 #: corehq/apps/reports/filters/users.py
-#| msgid "# Active Users"
 msgid "Active Web User"
 msgstr "Mtumiaji Hai wa Tovuti"
 
 #: corehq/apps/reports/filters/users.py
-#| msgid "Show Deactivated Mobile Workers"
 msgid "Deactivated Web User"
 msgstr "Mtumiaji wa Tovuti Aliyezimwa"
 
 #: corehq/apps/reports/filters/users.py
-#| msgid "Active Mobile Workers"
 msgid "Active Mobile Worker"
 msgstr "Mfanyakazi Hai wa Simu"
 
 #: corehq/apps/reports/filters/users.py
-#| msgid "Deactivated Mobile Workers"
 msgid "Deactivated Mobile Worker"
 msgstr "Mfanyakazi wa Simu Aliyezimwa"
 
 #: corehq/apps/reports/filters/users.py
-#| msgid ""
-#| "When searching by location, put your location name in quotes to show only "
-#| "exact matches. To more easily find a location, you may specify multiple "
-#| "levels by separating with a \"/\". For example, "
-#| "\"Massachusetts/Suffolk/Boston\". <a "
-#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management\"target=\"_blank\">Learn"
-#| " more</a>."
 msgid ""
 "When searching by location, put your location name in quotes to show only "
 "exact matches. To more easily find a location, you may specify multiple "
@@ -39793,10 +38612,6 @@ msgid "Add users and groups to filter this report."
 msgstr "Ongeza watumiaji na vikundi kuchuja ripoti hii."
 
 #: corehq/apps/reports/filters/users.py
-#| msgid ""
-#| "<i class=\"fa fa-info-circle\"></i> See <a "
-#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-"
-#| "for-Locations\" target=\"_blank\"> Filter Definitions</a>."
 msgid ""
 "<i class=\"fa fa-info-circle\"></i> See <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/Report+and+Export+Filters\"target=\"_blank\">"
@@ -39807,7 +38622,6 @@ msgstr ""
 " Ufafanuzi wa Vichujio</a>."
 
 #: corehq/apps/reports/filters/users.py
-#| msgid "Submitted [UTC]"
 msgid "Submitted By"
 msgstr "Imewasilishwa Na"
 
@@ -40020,12 +38834,10 @@ msgid "Deactivated Mobile Workers"
 msgstr "Wafanyakazi Waliotumia Simu Waliopunguzwa"
 
 #: corehq/apps/reports/models.py
-#| msgid "# Active Users"
 msgid "Active Web Users"
 msgstr "Watumiaji Hai wa Tovuti"
 
 #: corehq/apps/reports/models.py
-#| msgid "Show Deactivated Mobile Workers"
 msgid "Deactivated Web Users"
 msgstr "Watumiaji wa Tovuti Waliopozimwa"
 
@@ -40043,7 +38855,6 @@ msgstr ""
 "maalum zaidi."
 
 #: corehq/apps/reports/standard/cases/basic.py
-#| msgid "Make this an upstream project space"
 msgid "View all cases within your project space."
 msgstr "Tazama kesi zote ndani ya eneo lako la mradi."
 
@@ -40286,12 +39097,10 @@ msgid "Sensitive Date"
 msgstr "Tarehe Nyeti"
 
 #: corehq/apps/reports/standard/deployments.py
-#| msgid "Last Activity"
 msgid "User Last Activity Report"
 msgstr "Ripoti ya Shughuli ya Mwisho ya Mtumiaji"
 
 #: corehq/apps/reports/standard/deployments.py
-#| msgid "View recent submissions"
 msgid "View last sync and last submission by user."
 msgstr "Tazama usawazishaji wa mwisho na uwasilishaji wa mwisho wa mtumiaji."
 
@@ -40756,6 +39565,11 @@ msgid "same"
 msgstr "sawa"
 
 #: corehq/apps/reports/standard/monitoring.py
+#| msgid "Case Activity"
+msgid "User Activity"
+msgstr "Shughuli za Mtumiaji"
+
+#: corehq/apps/reports/standard/monitoring.py
 msgid "Summary of form and case activity by user or group."
 msgstr "Muhtasari wa shughuli za fomu na kesi kwa mtumiaji au kikundi."
 
@@ -40800,16 +39614,6 @@ msgstr ""
 "Tarehe ya uwasilishaji wa mwisho wa fomu katika kipindi cha muda. Safu ya "
 "jumla inaonyesha uwiano wa watumiaji waliowasilisha fomu katika kipindi cha "
 "tarehe"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "# Active Users"
-msgstr "# Watumiaji Hai"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Proportion of users in group who submitted forms in date range."
-msgstr ""
-"Uwiano wa watumiaji katika kikundi waliowasilisha fomu katika kipindi cha "
-"tarehe."
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "# Cases Created"
@@ -41100,7 +39904,6 @@ msgid "is active"
 msgstr "anatumika"
 
 #: corehq/apps/reports/standard/users/reports.py
-#| msgid "Active Domains"
 msgid "is active in domain"
 msgstr "anatumika katika domain"
 
@@ -42363,10 +41166,6 @@ msgstr "Jiondoe kwenye ripoti hii"
 
 #: corehq/apps/reports/templates/reports/report_email_content.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      This is a %(report_type)s from <a href=\"%(DNS_name)s\">CommCare HQ</a> for the project '%(domain)s'.\n"
-#| "    "
 msgid ""
 "\n"
 "      This is a %(report_type)s from <a href=\"%(DNS_name)s\">CommCare</a> for the project '%(domain)s'.\n"
@@ -42398,11 +41197,6 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/report_email_content.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      You are receiving this automated email from <a href=\"%(DNS_name)s\">CommCare HQ</a>\n"
-#| "      because the user %(owner_name)s added you as a recipient of their report.\n"
-#| "    "
 msgid ""
 "\n"
 "      You are receiving this automated email from <a href=\"%(DNS_name)s\">CommCare</a>\n"
@@ -42692,7 +41486,6 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 #, python-brace-format
-#| msgid "Could not delete profile '{}' because it has users assigned."
 msgid "Cannot delete form {instance_id} because it is not archived."
 msgstr ""
 "Haiwezi kufuta fomu {instance_id} kwa sababu haijahifadhiwa kwenye "
@@ -43040,17 +41833,6 @@ msgstr "Nambari za Simu"
 
 #: corehq/apps/settings/templates/settings/email/about_to_expire_api_key.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "  <p>\n"
-#| "    Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s. Go to %(url)s to generate\n"
-#| "    a new key if needed.\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    Thanks,<br />\n"
-#| "    CommCare HQ\n"
-#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -43076,13 +41858,6 @@ msgstr ""
 
 #: corehq/apps/settings/templates/settings/email/about_to_expire_api_key.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s.\n"
-#| "Go to %(url)s to generate a new key if needed.\n"
-#| "\n"
-#| "Thanks,\n"
-#| "CommCare HQ\n"
 msgid ""
 "\n"
 "Your api key \"%(key_name)s\" (last used: %(last_used)s) will expire on %(expiration_date)s.\n"
@@ -43283,7 +42058,6 @@ msgid "All IP Addresses"
 msgstr "Anwani Zote za IP"
 
 #: corehq/apps/settings/views.py
-#| msgid "A rule with name {name} already exists"
 msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
 msgstr ""
 "Ufunguo wa Api wenye jina \"{create_form.cleaned_data['name']}\" tayari upo."
@@ -44443,20 +43217,6 @@ msgstr "Omba Idhini ya Ujumbe"
 
 #: corehq/apps/sms/templates/sms/email/new_sms_user.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "  <p>\n"
-#| "    A new user %(username)s registered for project %(domain)s through SMS.\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    To modify, update or remove this user click <a href=\"%(url)s\">here</a>\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    Thanks,<br />\n"
-#| "    CommCare HQ\n"
-#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -44683,12 +43443,6 @@ msgstr "Omba Ufikiaji wa Vipengele vya Ujumbe"
 
 #: corehq/apps/sms/templates/sms/wall.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      To enable messaging features, please request access by sending an email\n"
-#| "      to <a href=\"mailto:%(SALES_EMAIL)s\">%(SALES_EMAIL)s</a> from your work\n"
-#| "      email address containing the following information:\n"
-#| "    "
 msgid ""
 "\n"
 "      To enable messaging features, please request access by sending an email to\n"
@@ -45969,20 +44723,6 @@ msgstr ""
 
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear enterprise administrator,\n"
-#| "\n"
-#| "The API Secret for your Identity Provider \"%(idp_name)s\" expires soon!\n"
-#| "If a new API Secret is not created, the Remote User Management functionality for your Identity Provider will stop working on: %(expires_on)s\n"
-#| "\n"
-#| "If you have any questions, please don’t hesitate to contact %(contact_email)s.\n"
-#| "Thank you for your use and support of CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "\n"
-#| "The CommCare HQ Team\n"
-#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -46029,21 +44769,6 @@ msgstr ""
 
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear enterprise administrator,\n"
-#| "\n"
-#| "The certificate for your Identity Provider %(idp_name)s expires soon!\n"
-#| "If the certificate is not renewed, any single sign-on authentication using this\n"
-#| "IdP will stop working %(expires_on)s\n"
-#| "\n"
-#| "If you have any questions, please don’t hesitate to contact %(contact_email)s.\n"
-#| "Thank you for your use and support of CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "\n"
-#| "The CommCare HQ Team\n"
-#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -46113,22 +44838,6 @@ msgstr ""
 
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear enterprise administrator,\n"
-#| "\n"
-#| "We have temporarily skipped automatic deactivation of SSO-managed Web Users for the following reason:\n"
-#| "%(failure_reason)s\n"
-#| "\n"
-#| "Please check the configuration for Remote User Management in your Identity Provider settings.\n"
-#| "\n"
-#| "If you have any questions, or if this issue persists, please don’t hesitate to contact %(contact_email)s.\n"
-#| "Thank you for your use and support of CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "\n"
-#| "The CommCare HQ Team\n"
-#| "%(base_url)s\n"
 msgid ""
 "\n"
 "Dear enterprise administrator,\n"
@@ -46341,16 +45050,10 @@ msgstr ""
 "    "
 
 #: corehq/apps/sso/templates/sso/sso_error.html
-#| msgid "Single Sign-On"
 msgid "Single Sign-On Error"
 msgstr "Hitilafu ya Kuingia Moja kwa Moja (Single Sign-On)"
 
 #: corehq/apps/sso/templates/sso/sso_error.html
-#| msgid ""
-#| "\n"
-#| "                  Invitation link has expired.\n"
-#| "                  Contact your project administrator to send new invite.\n"
-#| "                "
 msgid ""
 "\n"
 "                This error is likely due to a misconfiguration with your project's\n"
@@ -47034,10 +45737,6 @@ msgid "Please confirm with %(owner)s before using it."
 msgstr "Tafadhali thibitisha na %(owner)s kabla ya kuitumia."
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid ""
-#| "\n"
-#| "          <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.\n"
-#| "        "
 msgid ""
 "\n"
 "          <strong>Please Note:</strong> This feature flag is available on this\n"
@@ -47050,10 +45749,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid ""
-#| "\n"
-#| "          <strong>CAUTION:</strong> This feature flag is not available on the current server environment.\n"
-#| "        "
 msgid ""
 "\n"
 "          <strong>CAUTION:</strong> This feature flag is not available on the\n"
@@ -47066,10 +45761,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid ""
-#| "\n"
-#| "        This feature flag is <strong>always enabled</strong> for the following domains:\n"
-#| "      "
 msgid ""
 "\n"
 "        This feature flag is <strong>always enabled</strong> for the following\n"
@@ -47082,10 +45773,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid ""
-#| "\n"
-#| "        This feature flag is <strong>always disabled</strong> for the following domains:\n"
-#| "      "
 msgid ""
 "\n"
 "        This feature flag is <strong>always disabled</strong> for the following\n"
@@ -47098,10 +45785,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid ""
-#| "\n"
-#| "        This feature flag also requires the following flags to be enabled:\n"
-#| "      "
 msgid ""
 "\n"
 "          This feature flag also requires the following flags to be enabled:\n"
@@ -47112,10 +45795,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid ""
-#| "\n"
-#| "        Enabling this feature flag will automatically enable the flags listed above.\n"
-#| "      "
 msgid ""
 "\n"
 "          Enabling this feature flag will automatically enable the flags listed\n"
@@ -47134,16 +45813,10 @@ msgstr ""
 "Nasibu ni kati ya 0-1.<br/>0=imezimwa kwa wote<br/>1=imewashwa kwa wote"
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid "Why can't I see any data?"
 msgid "Why can't I edit?"
 msgstr "Kwa nini siwezi hariri?"
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid ""
-#| "\n"
-#| "                You do not have permission to sign in with Single Sign-On.\n"
-#| "                If this is in error, please contact your project's administrator.\n"
-#| "              "
 msgid ""
 "\n"
 "              You do not have permission to modify this flag. Please contact\n"
@@ -47843,8 +46516,6 @@ msgstr "Tafsiri zinazokosekana kwa {} kwenye karatasi iliyopakiwa"
 
 #: corehq/apps/translations/validator.py
 #, python-brace-format
-#| msgid ""
-#| "Could not find module with ID='{unique_id}' in app '{app_name}'."
 msgid ""
 "Could not find a module or form with ID '{module_or_form_id}' in app "
 "'{self.app.name}'"
@@ -48258,7 +46929,6 @@ msgstr "base_item_expression hairuhusiwi kwa domeni {self.domain}"
 
 #: corehq/apps/userreports/models.py
 #, python-brace-format
-#| msgid "XForm {form_id} does not belong to domain {domain}"
 msgid "{expr} is not allowed for domain {self.domain}"
 msgstr "{expr} hairuhusiwi kwa domain {self.domain}"
 
@@ -49318,10 +47988,6 @@ msgid "Your report is still being populated."
 msgstr "Ripoti yako bado inaendelea kujazwa."
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
-#| msgid ""
-#| "\n"
-#| "          What you are seeing now is just a preview, and contains some or none of your data.\n"
-#| "        "
 msgid ""
 "\n"
 "        What you are seeing now is just a preview, and contains some or none of\n"
@@ -49953,9 +48619,6 @@ msgstr ""
 "Chanzo hiki cha data kitajengwa / kujengwa upya kiotomatiki na CommCare HQ."
 
 #: corehq/apps/userreports/views.py
-#| msgid ""
-#| "CommCare HQ will not perform a data source rebuild for the changes made. "
-#| "Please initiate one manually if needed."
 msgid ""
 "The data source configuration will be updated but CommCare HQ will not "
 "perform a rebuild for the changes made. Please initiate one manually if "
@@ -50001,8 +48664,6 @@ msgid "Data source \"{name}\" not deleted."
 msgstr "Chanzo cha data \"{name}\" hakijafutwa."
 
 #: corehq/apps/userreports/views.py
-#| msgid ""
-#| "Table \"{}\" is now being rebuilt. Data should start showing up soon"
 msgid "Table \"{}\" will be rebuilt. Data should start showing up soon"
 msgstr ""
 "Jedwali \"{}\" litajengwa upya. Data inapaswa kuanza kuonekana hivi karibuni"
@@ -50093,7 +48754,6 @@ msgid "UCR Expressions"
 msgstr "Ufafanuzi wa UCR"
 
 #: corehq/apps/userreports/views.py
-#| msgid "A rule with name {name} already exists"
 msgid ""
 "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
 "exists."
@@ -50239,12 +48899,10 @@ msgid "Username contains invalid characters."
 msgstr "Jina la mtumiaji lina herufi zisizokubalika."
 
 #: corehq/apps/users/forms.py
-#| msgid "Password Reset"
 msgid "Password Reset Email"
 msgstr "Barua Pepe ya Kuanzisha Upya Nenosiri"
 
 #: corehq/apps/users/forms.py
-#| msgid "Password Reset"
 msgid "Send Password Reset Link"
 msgstr "Tuma Kiungo cha Kuanzisha Upya Nenosiri"
 
@@ -50253,9 +48911,6 @@ msgid "Require Account Confirmation?"
 msgstr "Hitaji Uthibitisho wa Akaunti?"
 
 #: corehq/apps/users/forms.py
-#| msgid ""
-#| "The user's account will not be active until they have confirmed their email "
-#| "and set a password."
 msgid ""
 "The user's account will not be active until they have confirmed their email "
 "and set a password. This requires that the mobile worker has access to an "
@@ -50507,32 +49162,26 @@ msgid "User count has reached 90% of the Plan limit for {}"
 msgstr ""
 
 #: corehq/apps/users/models.py
-#| msgid "Month"
 msgid "1 Month"
 msgstr "Mwezi 1"
 
 #: corehq/apps/users/models.py
-#| msgid "Month"
 msgid "2 Months"
 msgstr "Miezi 2"
 
 #: corehq/apps/users/models.py
-#| msgid "Month"
 msgid "3 Months"
 msgstr "Miezi 3"
 
 #: corehq/apps/users/models.py
-#| msgid "Month"
 msgid "6 Months"
 msgstr "Miezi 6"
 
 #: corehq/apps/users/models.py
-#| msgid "Month"
 msgid "9 Months"
 msgstr "Miezi 9"
 
 #: corehq/apps/users/models.py
-#| msgid "Month"
 msgid "12 Months"
 msgstr "Miezi 12"
 
@@ -50796,22 +49445,15 @@ msgstr ""
 "  "
 
 #: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
-#| msgid "Account Credit"
 msgid "Account Confirmed"
 msgstr "Akaunti Imethibitishwa"
 
 #: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
-#| msgid "You can now login"
 msgid "You can now log into the mobile app."
 msgstr "Sasa unaweza kuingia kwenye programu ya simu."
 
 #: corehq/apps/users/templates/users/commcare_user_account_confirmed.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Case List has blank filter in\n"
-#| "                  <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                "
 msgid ""
 "\n"
 "                To log into CommCare HQ on the web, click\n"
@@ -50833,10 +49475,6 @@ msgid "You are already signed in."
 msgstr "Umeingia tayari."
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
-#| msgid ""
-#| "\n"
-#| "                  To accept this invitation, you must first <a href=\"%(sign_out_url)s\">sign out</a>.\n"
-#| "                "
 msgid ""
 "\n"
 "                  To accept this invitation, you must first sign out.\n"
@@ -51330,20 +49968,6 @@ msgstr "Sasisha Mpangilio wa Tableau"
 
 #: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "  <p>\n"
-#| "    You have successfully confirmed the account %(new_mobile_worker)s for the\n"
-#| "    project space %(domain)s.\n"
-#| "  </p>\n"
-#| "  <p>\n"
-#| "    If you think you have received this by mistake, you can go ahead and ignore\n"
-#| "    this email.\n"
-#| "  </p>\n"
-#| "  <p>\n"
-#| "    Thank you,<br />\n"
-#| "    The CommCare HQ Team\n"
-#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -51375,20 +49999,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "  <p>\n"
-#| "    Your request to join %(domain_name)s has been approved.\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    You may now visit %(url)s.\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    Thanks,<br />\n"
-#| "    CommCare HQ\n"
-#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -51420,14 +50030,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/email/new_domain_request.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Your request to join %(domain_name)s has been approved.\n"
-#| "\n"
-#| "You may now visit %(url)s.\n"
-#| "\n"
-#| "Thanks,\n"
-#| "CommCare HQ\n"
 msgid ""
 "\n"
 "Your request to join %(domain_name)s has been approved.\n"
@@ -51447,20 +50049,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/email/request_domain_access.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "  <p>\n"
-#| "    %(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    To approve or delete this request, visit %(url)s.\n"
-#| "  </p>\n"
-#| "\n"
-#| "  <p>\n"
-#| "    Thanks,<br />\n"
-#| "    CommCare HQ\n"
-#| "  </p>\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -51492,14 +50080,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/email/request_domain_access.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "%(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
-#| "\n"
-#| "To approve or delete this request, visit %(url)s.\n"
-#| "\n"
-#| "Thanks,\n"
-#| "CommCare HQ\n"
 msgid ""
 "\n"
 "%(full_name)s (%(email)s) has requested to access %(domain_name)s as a web user.\n"
@@ -51518,11 +50098,6 @@ msgstr ""
 "CommCare\n"
 
 #: corehq/apps/users/templates/users/email/user_limit_notice.html
-#| msgid ""
-#| "\n"
-#| "      Please check that you have JavaScript enabled to use this site!\n"
-#| "      We found the following issues:\n"
-#| "    "
 msgid ""
 "\n"
 "      Please note that you have reached the user limit included in your plan.\n"
@@ -51547,13 +50122,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/email/user_limit_notice.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Please note that you have reached %(user_count)s mobile users, the maximum user limit included in your plan.\n"
-#| "      Your user limit represents all mobile users that are not currently deactivated\n"
-#| "      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number of mobile users\n"
-#| "      included in your plan, you will be charged as per the terms of plan.\n"
-#| "    "
 msgid ""
 "\n"
 "    Your project currently has %(user_count)s mobile users out of\n"
@@ -51601,10 +50169,6 @@ msgid "However, we ran into problems with the following users:"
 msgstr "Hata hivyo, tumekutana na matatizo na watumiaji wafuatao:"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "            Mobile Workers can log into applications in this project space and submit data.\n"
-#| "          "
 msgid ""
 "\n"
 "            Mobile Workers can log into applications in this project space and\n"
@@ -51618,13 +50182,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Their activity and form submissions can be monitored in the Reports section of this %(hq_name)s project space.\n"
-#| "            <br />\n"
-#| "            Read more about managing mobile workers on our\n"
-#| "            <a href=\"https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Help Site</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "            Their activity and form submissions can be monitored in the Reports\n"
@@ -51686,11 +50243,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                      You have reached the limit of <strong>%(u)s\n"
-#| "                      Mobile Workers</strong> included with your plan.\n"
-#| "                    "
 msgid ""
 "\n"
 "                      You have reached the limit of\n"
@@ -51705,11 +50257,6 @@ msgstr ""
 "                    "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                        Please subscribe to a paid plan in order to add\n"
-#| "                        more Mobile Workers.\n"
-#| "                      "
 msgid ""
 "\n"
 "                        Please subscribe to a paid plan in order to add more\n"
@@ -51722,11 +50269,6 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                        Please ask your billing administrator to subscribe\n"
-#| "                        to a paid plan in order to add more Mobile Workers.\n"
-#| "                      "
 msgid ""
 "\n"
 "                        Please ask your billing administrator to subscribe to a\n"
@@ -51761,11 +50303,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "              <strong>There are no mobile workers visible to you at this time.</strong>\n"
-#| "              Please contact your project's administrator if this is incorrect.\n"
-#| "            "
 msgid ""
 "\n"
 "              <strong\n"
@@ -51783,10 +50320,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                  <strong>There are currently no mobile workers in this project.</strong>\n"
-#| "              "
 msgid ""
 "\n"
 "                <strong\n"
@@ -51803,10 +50336,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                <strong>No mobile users are assigned to your user's location.</strong>\n"
-#| "              "
 msgid ""
 "\n"
 "                <strong\n"
@@ -51831,12 +50360,10 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid "Trial Status"
 msgid "PersonalID Status"
 msgstr "Hali ya PersonalID"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid "Linked"
 msgid "Not Linked"
 msgstr "Haijaunganishwa"
 
@@ -51858,10 +50385,6 @@ msgid "Reactivate Mobile Worker"
 msgstr "Rejesha Mfanyakazi wa Simu"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                            Are you sure you want to <strong>reactivate</strong> this mobile worker?\n"
-#| "                          "
 msgid ""
 "\n"
 "                              Are you sure you want to\n"
@@ -51874,14 +50397,6 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                            Deactivated mobile workers are not able to log into new devices.<br />\n"
-#| "                            Read more about\n"
-#| "                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly\"Archive\")andDeleteMobileWorkers' target=\"_blank\">\n"
-#| "                              deactivating mobile workers\n"
-#| "                            </a> on our Help Site.\n"
-#| "                          "
 msgid ""
 "\n"
 "                              Deactivated mobile workers are not able to log\n"
@@ -51914,10 +50429,6 @@ msgid "Deactivate Mobile Worker"
 msgstr "Katisha Mfanyakazi wa Simu"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                            Are you sure you want to <strong>deactivate</strong> this mobile worker?\n"
-#| "                          "
 msgid ""
 "\n"
 "                              Are you sure you want to\n"
@@ -51934,13 +50445,6 @@ msgid "Loading Workers..."
 msgstr "Inapakia Wafanyakazi..."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "            <strong>There was an issue contacting the server.</strong>\n"
-#| "            Please check your internet connection.\n"
-#| "            If this issue continues, please\n"
-#| "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
@@ -51957,15 +50461,10 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid "Pending Confirmation"
 msgid "Pending Account Confirmations"
 msgstr "Uthibitisho wa Akaunti Unasubiri"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "            No Mobile Workers were found that matched your query.\n"
-#| "          "
 msgid ""
 "\n"
 "            No pending account confirmations were found that matched your query.\n"
@@ -51976,11 +50475,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "              <strong>There are no mobile workers visible to you at this time.</strong>\n"
-#| "              Please contact your project's administrator if this is incorrect.\n"
-#| "            "
 msgid ""
 "\n"
 "              <strong\n"
@@ -51999,10 +50493,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                  <strong>There are currently no mobile workers in this project.</strong>\n"
-#| "              "
 msgid ""
 "\n"
 "                <strong\n"
@@ -52019,10 +50509,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                <strong>No mobile users are assigned to your user's location.</strong>\n"
-#| "              "
 msgid ""
 "\n"
 "                <strong\n"
@@ -52039,7 +50525,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid "ending balance"
 msgid "Pending Since"
 msgstr "Imesubiri Tangu"
 
@@ -52052,11 +50537,6 @@ msgid "Send Confirmation Email"
 msgstr "Tuma Barua Pepe ya Uthibitisho"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              SMS to this account?\n"
-#| "                            "
 msgid ""
 "\n"
 "                              Would you like to send the account confirmation\n"
@@ -52069,11 +50549,6 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              email to this account?\n"
-#| "                            "
 msgid ""
 "\n"
 "                              Would you like to send the account confirmation\n"
@@ -52086,11 +50561,6 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent a SMS with instructions to\n"
-#| "                              set a password and be able to login to this project.\n"
-#| "                            "
 msgid ""
 "\n"
 "                              The user will be sent a SMS with instructions to\n"
@@ -52105,11 +50575,6 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent a SMS with instructions to\n"
-#| "                              set a password and be able to login to this project.\n"
-#| "                            "
 msgid ""
 "\n"
 "                              The user will be sent an email with instructions\n"
@@ -52132,7 +50597,6 @@ msgid "Send Account Confirmaton Email"
 msgstr "Tuma Barua Pepe ya Uthibitisho wa Akaunti"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#| msgid "Send Account Confirmaton SMS"
 msgid "Loading Pending Account Confirmations..."
 msgstr "Inapakia Uthibitisho wa Akaunti Unasubiri..."
 
@@ -52243,10 +50707,6 @@ msgstr "Unganisha Akaunti ya PersonalID"
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
-#| msgid ""
-#| "\n"
-#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
-#| "                        "
 msgid ""
 "\n"
 "            Are you sure you want to <strong>link</strong> the PersonalID\n"
@@ -52278,10 +50738,6 @@ msgstr "Ondoa kiungo cha Akaunti ya PersonalID"
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
-#| msgid ""
-#| "\n"
-#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
-#| "                        "
 msgid ""
 "\n"
 "            Are you sure you want to <strong>unlink</strong> the PersonalID\n"
@@ -52308,7 +50764,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
-#| msgid "link"
 msgid "Unlink"
 msgstr "Katisha Uhusiano"
 
@@ -52882,12 +51337,10 @@ msgid "Current Users"
 msgstr "Watumiaji wa Sasa"
 
 #: corehq/apps/users/templates/users/web_users.html
-#| msgid "Show Deactivated Mobile Workers"
 msgid "Show Deactivated Web Users"
 msgstr "Onyesha Watumiaji wa Wavuti Waliozimwa"
 
 #: corehq/apps/users/templates/users/web_users.html
-#| msgid "# Active Users"
 msgid "Show Active Web Users"
 msgstr "Onyesha Watumiaji wa Wavuti Hai"
 
@@ -52916,15 +51369,10 @@ msgid "Membership"
 msgstr "Uanachama"
 
 #: corehq/apps/users/templates/users/web_users.html
-#| msgid "Distance from current location"
 msgid "Deactivate from the current project: "
 msgstr "Zima kutoka kwenye mradi huu: "
 
 #: corehq/apps/users/templates/users/web_users.html
-#| msgid ""
-#| "\n"
-#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
-#| "                        "
 msgid ""
 "\n"
 "                              Are you sure you want to <strong>deactivate</strong> this web user?\n"
@@ -52935,15 +51383,6 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/web_users.html
-#| msgid ""
-#| "\n"
-#| "                                Note: Offline install automatically installs all multimedia\n"
-#| "                                included in your form. All subsequent remote updates will also\n"
-#| "                                include multimedia which could require a lot of data. See the\n"
-#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
-#| "                                  Help Site\n"
-#| "                                </a> for more info.\n"
-#| "                              "
 msgid ""
 "\n"
 "                              Deactivated web users will not be able to log into the project space.<br />\n"
@@ -52962,15 +51401,10 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/web_users.html
-#| msgid "Activate your CommCare project"
 msgid "Reactivate in the current project: "
 msgstr "Washirikishe tena kwenye mradi huu: "
 
 #: corehq/apps/users/templates/users/web_users.html
-#| msgid ""
-#| "\n"
-#| "                          Are you sure you want to <strong>delete</strong> this rule?\n"
-#| "                        "
 msgid ""
 "\n"
 "                              Are you sure you want to <strong>reactivate</strong> this web user?\n"
@@ -52981,15 +51415,6 @@ msgstr ""
 "                            "
 
 #: corehq/apps/users/templates/users/web_users.html
-#| msgid ""
-#| "\n"
-#| "                                Note: Offline install automatically installs all multimedia\n"
-#| "                                included in your form. All subsequent remote updates will also\n"
-#| "                                include multimedia which could require a lot of data. See the\n"
-#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
-#| "                                  Help Site\n"
-#| "                                </a> for more info.\n"
-#| "                              "
 msgid ""
 "\n"
 "                              Deactivated web users are not able to log into the project space.<br />\n"
@@ -53548,8 +51973,6 @@ msgstr "ni_aktif"
 
 #: corehq/apps/users/views/mobile/users.py
 #, python-brace-format
-#| msgid ""
-#| "Password for {} has successfully been reset. You can now login."
 msgid ""
 "You have successfully confirmed the {user.raw_username} account. You can now"
 " login"
@@ -53558,17 +51981,14 @@ msgstr ""
 "kuingia"
 
 #: corehq/apps/users/views/mobile/users.py
-#| msgid "Send Account Confirmaton SMS"
 msgid "Successful account confirmation for {}"
 msgstr "Uthibitisho wa akaunti umefanikiwa kwa {}"
 
 #: corehq/apps/users/views/mobile/users.py
-#| msgid "Password Reset Complete"
 msgid "Password reset email failed to send - "
 msgstr "Imeshindikana kutuma barua pepe ya kuweka upya nenosiri - "
 
 #: corehq/apps/users/views/mobile/users.py
-#| msgid "Password Reset Complete"
 msgid "Password reset email sent to {}"
 msgstr "Barua pepe ya kuweka upya nenosiri imetumwa kwa {}"
 
@@ -56388,7 +54808,6 @@ msgstr ""
 
 #: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
 #, python-brace-format
-#| msgid "Add Connection Settings"
 msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
 msgstr "<a href=\"{url}\">Ongeza/Hariri Mipangilio ya Muunganisho</a>"
 
@@ -56397,11 +54816,6 @@ msgid "User Configurable Report"
 msgstr "Ripoti Inayoweza Kusanidiwa na Mtumiaji"
 
 #: corehq/motech/dhis2/forms.py
-#| msgid ""
-#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
-#| "href=\"https://github.com/dimagi/commcare-"
-#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
-#| " info</a>. "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
@@ -56887,7 +55301,6 @@ msgid "There is an error in your data API validations"
 msgstr "Kuna hitilafu kwenye uthibitishaji wa data ya API yako"
 
 #: corehq/motech/models.py
-#| msgid "Please select the applicable API auth settings for the "
 msgid ""
 "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
 "the applicable API auth settings for the "
@@ -56960,7 +55373,6 @@ msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Tukio "
 
 #: corehq/motech/openmrs/atom_feed.py
 #, python-brace-format
-#| msgid "matching unique OpenMRS UUID. case external_id: "
 msgid ""
 "{repeater.domain}: {repeater}: More than one case found matching unique "
 "OpenMRS UUID. case external_id: "
@@ -56970,7 +55382,6 @@ msgstr ""
 
 #: corehq/motech/openmrs/atom_feed.py
 #, python-brace-format
-#| msgid "The Organization Level whose mobile worker will own new cases"
 msgid "Unable to determine mobile worker to own new \"{case_type}\" "
 msgstr ""
 "Imeshindikana kubaini mfanyakazi wa simu wa kumiliki \"{case_type}\" mpya "
@@ -57344,7 +55755,6 @@ msgid "Forward Forms"
 msgstr "Sambaza Fomu"
 
 #: corehq/motech/repeaters/models.py
-#| msgid "Forward Cases To Another Commcare Project"
 msgid "Forward Form Metadata to Commcare Connect"
 msgstr "Sogeza Metadata ya Fomu kwa Commcare Connect"
 
@@ -57872,7 +56282,6 @@ msgid "Bulk User Management"
 msgstr "Usimamizi wa Watumiaji kwa Wingi"
 
 #: corehq/privileges.py
-#| msgid "Bulk Data Cleaning"
 msgid "Bulk Data Editing"
 msgstr "Uhariri wa Data kwa Wingi"
 
@@ -58050,7 +56459,6 @@ msgid "App Dependencies"
 msgstr "Mategemeo ya Programu"
 
 #: corehq/privileges.py
-#| msgid "Disable Mobile Worker Lockout"
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "Uundaji wa Akaunti ya Mfanyakazi wa Simu kwa Hatua Mbili"
 
@@ -58385,7 +56793,6 @@ msgid "Manage Attendance Tracking Events"
 msgstr "Simamia Matukio ya Ufuatiliaji wa Mahudhurio"
 
 #: corehq/util/auth.py
-#| msgid "Algorithms"
 msgid "algorithm"
 msgstr "algorithimu"
 
@@ -58398,7 +56805,6 @@ msgid "hash"
 msgstr "hashi"
 
 #: corehq/util/context_processors.py
-#| msgid "Need help?"
 msgid "Need Help?"
 msgstr "Unahitaji Msaada?"
 
@@ -58411,7 +56817,6 @@ msgstr ""
 "Naweza kukusaidia na nini leo?"
 
 #: corehq/util/context_processors.py
-#| msgid "How to Create and Deploy a CommCare Application."
 msgid "I need help with building my CommCare application."
 msgstr "Nahitaji msaada wa kujenga programu yangu ya CommCare."
 
@@ -59107,11 +57512,32 @@ msgstr "Safu zinazohitajika ni {column_names}"
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
 
-#~ msgid "European Union"
-#~ msgstr "Umoja wa Ulaya"
+#~ msgid ""
+#~ "\n"
+#~ "                    Delete\n"
+#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+#~ "                    Case Type\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Futa\n"
+#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+#~ "                    Aina ya Kesi\n"
+#~ "                    "
 
-#~ msgid "EU"
-#~ msgstr "EU"
+#~ msgid "There is already a user with this email."
+#~ msgstr "Tayari kuna mtumiaji mwenye barua pepe hii."
+
+#~ msgid "Click to select groups"
+#~ msgstr "Bofya kuchagua vikundi"
+
+#~ msgid "# Active Users"
+#~ msgstr "# Watumiaji Hai"
+
+#~ msgid "Proportion of users in group who submitted forms in date range."
+#~ msgstr ""
+#~ "Uwiano wa watumiaji katika kikundi waliowasilisha fomu katika kipindi cha "
+#~ "tarehe."
 
 #, python-format
 #~ msgid ""
@@ -59520,9 +57946,6 @@ msgstr "Weka JSON halali"
 
 #~ msgid "info"
 #~ msgstr "taarifa"
-
-#~ msgid "current"
-#~ msgstr "ya sasa"
 
 #, python-brace-format
 #~ msgid "{num} cases"
