@@ -31,7 +31,7 @@ from corehq.apps.domain.auth import (
 from corehq.apps.domain.decorators import (
     api_auth,
     check_domain_mobile_access,
-    login_or_basic_ex,
+    login_or_basic_or_api_key_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
     login_or_oauth2_ex,
@@ -381,7 +381,7 @@ def _secure_post_digest(request, domain, app_id=None):
 
 
 @handle_401_response
-@login_or_basic_ex(allow_cc_users=True)
+@login_or_basic_or_api_key_ex(allow_cc_users=True)
 @two_factor_exempt
 @set_request_duration_reporting_threshold(60)
 def _secure_post_basic(request, domain, app_id=None):
