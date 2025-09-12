@@ -41,7 +41,7 @@ def serialize_kyc_data_for_table(kyc_user, kyc_config):
         "has_invalid_data": False,
         "kyc_verification_status": {
             "status": kyc_user.kyc_verification_status,
-            "error_message": kyc_user.verification_error_message,
+            "error_message": kyc_user.kyc_verification_error_message,
         },
         "kyc_last_verified_at": kyc_user.kyc_last_verified_at,
     }
