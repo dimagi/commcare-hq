@@ -2,16 +2,15 @@
 
 {# requires sso/js/edit_identity_provider #}
 
-<div id="sso-test-user-manager"
-     class="ko-template">
+<div id="sso-test-user-manager" class="ko-template">
   <div class="card card-modern-gray card-form-only mb-3">
     <div class="card-body">
       <fieldset>
         <legend>{% trans "SSO Test Users" %}</legend>
         <p>
           {% blocktrans %}
-            When the Identity Provider is in "Test" mode for Login Enforcement, only
-            the users in this list will be directed to sign in with SSO.
+            When the Identity Provider is in "Test" mode for Login Enforcement,
+            only the users in this list will be directed to sign in with SSO.
           {% endblocktrans %}
         </p>
         <!-- ko if: showNoObjectsMessage -->
@@ -40,10 +39,12 @@
   <div class="card card-modern-gray card-form-only">
     <div class="card-body row align-items-center">
       <div class="col-2">
-        <input data-bind="textInput: newObject"
-                placeholder="jsmith@example.org"
-                type="email"
-                class="form-control" />
+        <input
+          data-bind="textInput: newObject"
+          placeholder="jsmith@example.org"
+          type="email"
+          class="form-control"
+        />
       </div>
       <button type="button"
               data-bind="click: addObject,

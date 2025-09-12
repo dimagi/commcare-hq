@@ -2,16 +2,15 @@
 
 {# requires sso/js/edit_identity_provider #}
 
-<div id="email-domain-manager"
-     class="ko-template">
+<div id="email-domain-manager" class="ko-template">
   <div class="card card-modern-gray card-form-only mb-3">
     <div class="card-body">
       <fieldset>
         <legend>{% trans "Authenticated Email Domains" %}</legend>
         <p>
           {% blocktrans %}
-            Users with email addresses ending in these domain names must
-            log in with SSO if the Identity Provider is active.
+            Users with email addresses ending in these domain names must log in
+            with SSO if the Identity Provider is active.
           {% endblocktrans %}
         </p>
         <p data-bind="if: showNoObjectsMessage">
@@ -40,9 +39,11 @@
       <div class="col-2">
         <div class="input-group">
           <div class="input-group-text">@</div>
-          <input data-bind="textInput: newObject"
-                 type="text"
-                 class="form-control" />
+          <input
+            data-bind="textInput: newObject"
+            type="text"
+            class="form-control"
+          />
         </div>
       </div>
       <button type="button"
