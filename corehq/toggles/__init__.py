@@ -1461,7 +1461,7 @@ SMS_LOG_CHANGES = StaticToggle(
 EXPORT_DATA_SOURCE_DATA = StaticToggle(
     'export_data_source_data',
     'Add Export Data Source Data page',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description="Add the Export Data Source Data page to the Data tab",
 )
