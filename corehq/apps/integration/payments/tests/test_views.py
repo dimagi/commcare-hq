@@ -179,12 +179,13 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     'phone_number': '0987654322',
                 }),
         ]
-        case_search_adapter.bulk_index(cls.case_list, refresh=True)
+        case_search_adapter.bulk_index(cls.case_list + [cls.case_linked_to_payment_case], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
         for case in cls.case_list:
             case.delete()
+        cls.case_linked_to_payment_case.delete()
         super().tearDownClass()
 
     def test_not_logged_in(self):

@@ -10,12 +10,17 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus, KycVerificationFailureCause
-from corehq.apps.integration.kyc.services import (
-    verify_users,
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycVerificationStatus,
+    UserDataStore,
 )
-from corehq.apps.integration.kyc.tables import KycVerifyTable
-from corehq.motech.const import PASSWORD_PLACEHOLDER
+from corehq.apps.integration.kyc.services import verify_users
+from corehq.apps.integration.kyc.tables import (
+    KycCaseElasticRecord,
+    KycUserElasticRecord,
+    KycVerifyTable,
+)
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
 
@@ -85,55 +90,30 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return KycConfig.objects.get(domain=self.request.domain)
 
     def get_table_kwargs(self):
+        orderable = True
+        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            record_class = KycUserElasticRecord
+            orderable = False
+        else:
+            record_class = KycCaseElasticRecord
+        self.table_class.record_class = record_class
+
         return {
             'extra_columns': KycVerifyTable.get_extra_columns(self.kyc_config),
+            'record_kwargs': {'kyc_config': self.kyc_config},
+            'orderable': orderable,
         }
 
     def get_queryset(self):
-        kyc_users = self.kyc_config.get_kyc_users()
-        return [self._parse_row(kyc_user) for kyc_user in kyc_users]
-
-    def _parse_row(self, kyc_user):
-        row_data = {
-            'id': kyc_user.user_id,
-            'has_invalid_data': False,
-            'kyc_verification_status': {
-                'status': kyc_user.kyc_verification_status,
-                'error_message': self._get_verification_error_message(kyc_user),
-            },
-            'kyc_last_verified_at': kyc_user.kyc_last_verified_at,
-        }
-        for provider_field, field in self.kyc_config.get_api_field_to_user_data_map_values().items():
-            value = kyc_user.get(field)
-            if not value:
-                row_data['has_invalid_data'] = True
-            else:
-                if self.kyc_config.is_sensitive_field(provider_field):
-                    value = PASSWORD_PLACEHOLDER
-                row_data[field] = value
-        return row_data
-
-    @staticmethod
-    def _get_verification_error_message(kyc_user):
-        verification_error = kyc_user.kyc_verification_error
-        if verification_error:
-            try:
-                return KycVerificationFailureCause(verification_error).label
-            except ValueError:
-                return _('Unknown error')
-        return None
-
-    @staticmethod
-    def _is_invalid_value(value):
-        return value in ['', None]
+        return self.kyc_config.get_kyc_users_query()
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
         if request.POST.get('verify_all') == 'true':
-            kyc_users = self.kyc_config.get_kyc_users()
+            kyc_users = list(self.kyc_config.get_all_kyc_users())
         else:
             selected_ids = request.POST.getlist('selected_ids')
-            kyc_users = self.kyc_config.get_kyc_users_by_ids(selected_ids)
+            kyc_users = list(self.kyc_config.get_kyc_users_by_ids(selected_ids))
         kyc_users = self._filter_valid_users(kyc_users)
 
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
@@ -208,9 +188,8 @@ class KycVerificationReportView(BaseDomainView):
     def _report_users_count_metric(self):
         if self.domain_has_config:
             kyc_config = KycConfig.objects.get(domain=self.domain)
-            total_users = len(kyc_config.get_kyc_users())
             metrics_gauge(
                 'commcare.integration.kyc.total_users.count',
-                total_users,
+                kyc_config.get_kyc_users_count(),
                 tags={'domain': self.domain}
             )
