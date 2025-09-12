@@ -1,6 +1,17 @@
+from couchdbkit import ResourceNotFound
 from django.db import DEFAULT_DB_ALIAS, models
+from memoized import memoized
 
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    Document,
+    DocumentSchema,
+    SchemaListProperty,
+    StringProperty,
+)
 
+from corehq.apps.app_manager.models import Application
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.groups.models import Group
 
 
