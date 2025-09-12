@@ -7,6 +7,7 @@ from corehq.toggles import USH_USERCASES_FOR_WEB_USERS, NAMESPACE_DOMAIN
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.callcenter.sync_usercase import sync_usercases_ignore_web_flag
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import CouchUser
 from corehq.util.log import with_progress_bar
@@ -37,7 +38,8 @@ class Command(BaseCommand):
         domains_only_web_created = 0
 
         for domain in with_progress_bar(all_domains, length=len(all_domains)):
-            if not domain_has_privilege(domain, privileges.USERCASE):
+            if (not domain_has_privilege(domain, privileges.USERCASE)
+                    or any_migrations_in_progress(domain)):
                 continue
 
             domain_obj = Domain.get_by_name(domain)
