@@ -251,7 +251,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 if self.existing_user.is_commcare_user():
                     self.existing_user.save(spawn_task=True)
                 else:
-                    self.existing_user.save()
+                    self.existing_user.save(domains_to_sync_usercase=[self.domain])
                 is_update_successful = True
             except KeyError:
                 pass
@@ -259,7 +259,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 user_new_role = self.existing_user.get_role(self.domain, checking_global_admin=False)
                 role_updated = self._role_updated(user_current_role, user_new_role)
         elif is_update_successful:
-            self.existing_user.save()
+            self.existing_user.save(domains_to_sync_usercase=[self.domain])
 
         if is_update_successful and (props_updated or role_updated or metadata_updated):
             change_messages = {}

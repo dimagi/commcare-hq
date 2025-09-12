@@ -80,10 +80,6 @@ from corehq.apps.app_manager.templatetags.xforms_extras import (
 from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
     USERCASE_XPATH_SUBSTRING_MATCHES,
-    actions_use_usercase,
-    advanced_actions_use_usercase,
-    enable_usercase,
-    is_usercase_in_use,
     module_loads_registry_case,
     module_uses_inline_search,
     save_xform,
@@ -211,8 +207,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         form.extra_actions = actions
     else:
         form.actions = actions
-    if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
-        enable_usercase(domain)
 
     datums_json = json.loads(request.POST.get('arbitrary_datums'))
     datums = [ArbitraryDatum.wrap(item) for item in datums_json]
@@ -240,9 +234,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         if isinstance(condition.answer, str):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
-    if actions_use_usercase(form.actions):
-        if not is_usercase_in_use(domain):
-            enable_usercase(domain)
 
     response_json = {}
     app.save(response_json)
@@ -797,7 +788,6 @@ def get_form_view_context(
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
         'allow_usercase': allow_usercase,
-        'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
         'is_training_module': module.is_training_module,
         'is_allowed_to_be_release_notes_form': form.is_allowed_to_be_release_notes_form,

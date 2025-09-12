@@ -41,7 +41,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     is_linked_app,
-    is_usercase_in_use,
+    domain_has_usercase_access,
     module_loads_registry_case,
 )
 from corehq.apps.app_manager.views.apps import get_apps_base_context
@@ -201,7 +201,7 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
 
     try:
         data.append(get_session_schema(form))
-        if form.requires_case() or is_usercase_in_use(domain):
+        if form.requires_case() or domain_has_usercase_access(domain):
             data.append(get_casedb_schema(form))
         if form.requires_case() and module_loads_registry_case(form.get_module()):
             data.append(get_registry_schema(form))
@@ -313,7 +313,7 @@ def _get_vellum_plugins(domain, form, module):
 
     form_uses_case = (
         (module and module.case_type and form.requires_case())
-        or is_usercase_in_use(domain)
+        or domain_has_usercase_access(domain)
     )
     form_is_basic = form.doc_type == 'Form'
     if form_uses_case and form_is_basic:

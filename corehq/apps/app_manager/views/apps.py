@@ -13,7 +13,7 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET
 
 import urllib3
 from django_prbac.utils import has_privilege
@@ -73,7 +73,6 @@ from corehq.apps.app_manager.util import (
     is_linked_app,
     is_remote_app,
 )
-from corehq.apps.app_manager.util import enable_usercase as enable_usercase_util
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     capture_user_errors,
@@ -160,13 +159,6 @@ def default_new_app(request, domain):
     clear_app_cache(request, domain)
     app.save()
     return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-
-
-@require_POST
-@require_can_edit_apps
-def enable_usercase(request, domain):
-    enable_usercase_util(domain)
-    return JsonResponse({"success": 1})
 
 
 def get_app_view_context(request, app):

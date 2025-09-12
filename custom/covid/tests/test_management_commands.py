@@ -10,6 +10,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from dimagi.utils.parsing import json_format_date
 
+from corehq import privileges
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
@@ -23,8 +24,10 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import privilege_enabled
 
 
+@privilege_enabled(privileges.USERCASE)
 class CaseCommandsTest(TestCase):
     domain = 'cases-domain'
 
