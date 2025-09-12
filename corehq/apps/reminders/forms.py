@@ -19,6 +19,7 @@ from memoized import memoized
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.fields import TrimmedCharField
 
+from corehq.toggles import COMMCARE_CONNECT
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -34,11 +35,12 @@ from .models import (
 
 NO_RESPONSE = "none"
 
-KEYWORD_CONTENT_CHOICES = (
+KEYWORD_CONTENT_CHOICES = [
     (METHOD_SMS, gettext_lazy("SMS")),
     (METHOD_SMS_SURVEY, gettext_lazy("SMS Survey")),
     (NO_RESPONSE, gettext_lazy("No Response")),
-)
+]
+CONTENT_CONNECT_MESSAGE = 'connect_message'
 
 KEYWORD_RECIPIENT_CHOICES = (
     (RECIPIENT_USER_GROUP, gettext_lazy("Mobile Worker Group")),
@@ -330,7 +332,7 @@ class KeywordForm(Form):
                         'sender_message',
                         data_bind="text: senderMessage",
                     ),
-                    data_bind="visible: isMessageSMS",
+                    data_bind="visible: showMessageInput",
                 ),
                 crispy.Div(
                     crispy.Field(
@@ -365,7 +367,7 @@ class KeywordForm(Form):
                             'other_recipient_message',
                             data_bind="value: otherRecipientMessage",
                         ),
-                        data_bind="visible: otherRecipientContentType() == 'sms'",
+                        data_bind="visible: showMessageInput",
                     ),
                     crispy.Div(
                         crispy.Field(
@@ -404,7 +406,12 @@ class KeywordForm(Form):
 
     @property
     def content_type_choices(self):
-        return KEYWORD_CONTENT_CHOICES
+        choices = KEYWORD_CONTENT_CHOICES
+        if COMMCARE_CONNECT.enabled(self.domain):
+            choices.append(
+                (CONTENT_CONNECT_MESSAGE, gettext_noop("Connect Message"))
+            )
+        return set(choices)
 
     @property
     @memoized
@@ -443,7 +450,7 @@ class KeywordForm(Form):
 
     def clean_sender_message(self):
         value = self.cleaned_data.get("sender_message")
-        if self.cleaned_data.get("sender_content_type") == METHOD_SMS:
+        if self.cleaned_data.get("sender_content_type") in [METHOD_SMS, CONTENT_CONNECT_MESSAGE]:
             if value is None or value == "":
                 raise ValidationError(_("This field is required."))
             return value
@@ -465,7 +472,7 @@ class KeywordForm(Form):
 
     def clean_other_recipient_message(self):
         value = self.cleaned_data.get("other_recipient_message")
-        if self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS:
+        if self.cleaned_data.get("other_recipient_content_type") in [METHOD_SMS, CONTENT_CONNECT_MESSAGE]:
             if value is None or value == "":
                 raise ValidationError(_("This field is required."))
             return value
