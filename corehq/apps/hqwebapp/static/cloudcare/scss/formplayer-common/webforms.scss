@@ -62,7 +62,7 @@ input:invalid {
   border-color: #b94a48;
 }
 
-.required .caption .webapp-markdown-output::after {
+.required .caption .caption-text::after {
   content: '*';
   font-weight: bold;
   color: $danger;
