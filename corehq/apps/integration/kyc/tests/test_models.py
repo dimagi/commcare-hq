@@ -277,7 +277,7 @@ class TestKycUser(BaseKycUsersSetup):
         assert kyc_user.kyc_verification_status == KycVerificationStatus.PENDING
         assert kyc_user.kyc_last_verified_at is None
         assert kyc_user.kyc_provider is None
-        assert kyc_user.kyc_verification_error is None
+        assert kyc_user.kyc_verification_error_message is None
 
     def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider):
         assert kyc_user.kyc_verification_status == expected_status

@@ -221,14 +221,10 @@ class KycUser:
         return self.user_data.get('kyc_last_verified_at')
 
     @property
-    def kyc_verification_error(self):
-        return self.user_data.get('kyc_verification_error')
-
-    @property
-    def verification_error_message(self):
-        if self.kyc_verification_error:
+    def kyc_verification_error_message(self):
+        if kyc_verification_error := self.user_data.get('kyc_verification_error'):
             try:
-                return KycVerificationFailureCause(self.kyc_verification_error).label
+                return KycVerificationFailureCause(kyc_verification_error).label
             except ValueError:
                 return _('Unknown error')
         return None
