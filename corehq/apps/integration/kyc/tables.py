@@ -76,10 +76,13 @@ class KycElasticRecordMixin:
     def __getitem__(self, item):
         if self.serialized_data and item in self.serialized_data:
             return self.serialized_data[item]
-        return None
+        raise KeyError(item)
 
     def get(self, item, default=None):
-        return self.__getitem__(item) or default
+        try:
+            return self.__getitem__(item)
+        except KeyError:
+            return default
 
 
 class KycUserElasticRecord(KycElasticRecordMixin, UserElasticRecord):
