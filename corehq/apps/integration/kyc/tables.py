@@ -48,7 +48,7 @@ def serialize_kyc_data_for_table(kyc_user, kyc_config):
 
     for provider_field, field in kyc_config.get_api_field_to_user_data_map_values().items():
         value = kyc_user.get(field)
-        if not value:
+        if value in (None, ''):
             serialized_data["has_invalid_data"] = True
         else:
             if kyc_config.is_sensitive_field(provider_field):
