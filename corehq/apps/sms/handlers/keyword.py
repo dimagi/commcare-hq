@@ -647,7 +647,8 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             continue
 
         # contact can be either a user, case, group, or location
-        if survey_keyword_action.action in (KeywordAction.ACTION_SMS, KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_CONNECT_MESSAGE):
+        kw_actions = (KeywordAction.ACTION_SMS, KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_CONNECT_MESSAGE)
+        if survey_keyword_action.action in kw_actions:
             if isinstance(contact, Group):
                 recipients = list(ScheduleInstance.expand_group(contact))
             elif isinstance(contact, SQLLocation):
