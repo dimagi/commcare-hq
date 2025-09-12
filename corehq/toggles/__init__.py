@@ -2050,6 +2050,16 @@ ACCOUNTING_TESTING_TOOLS = StaticToggle(
     [NAMESPACE_USER]
 )
 
+SHOW_AUTO_RENEWAL = StaticToggle(
+    'show_auto_renewal',
+    'Show Auto Renewal',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Show options to enable or disable Auto Renewal for a subscription while the feature is in development.
+    """
+)
+
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     'add_row_index_to_mobile_ucrs',
     'Add row index to mobile UCRs as the first column to retain original order of data',
