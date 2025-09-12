@@ -24,14 +24,24 @@ class Command(BaseCommand):
         processed_user_counter = 0
         RATE_LIMIT = 5000
         SLEEP_TIME = 60
+        errors = []
 
         def _sync_usercases_with_throttle(users, domain):
             nonlocal processed_user_counter
+            had_errors = False
             for user in users:
-                sync_usercases_ignore_web_flag(user, domain)
+                try:
+                    sync_usercases_ignore_web_flag(user, domain)
+                except Exception as e:
+                    user_id = getattr(user, 'user_id', None) or getattr(user, '_id', None)
+                    username = getattr(user, 'username', None)
+                    errors.append({'domain': domain, 'user_id': user_id, 'username': username, 'error': str(e)})
+                    had_errors = True
+                    continue
                 processed_user_counter += 1
                 if processed_user_counter % RATE_LIMIT == 0:
                     time.sleep(SLEEP_TIME)
+            return had_errors
 
         domains_both_created = 0
         domains_only_web_created = 0
@@ -57,8 +67,10 @@ class Command(BaseCommand):
                         include_docs=True,
                     )
                     users = (CouchUser.wrap_correctly(row['doc']) for row in rows)
-                    _sync_usercases_with_throttle(users, domain)
-                    USH_USERCASES_FOR_WEB_USERS.set(domain, True, NAMESPACE_DOMAIN)
+
+                    had_errors = _sync_usercases_with_throttle(users, domain)
+                    if not had_errors:
+                        USH_USERCASES_FOR_WEB_USERS.set(domain, True, NAMESPACE_DOMAIN)
                 domains_only_web_created += 1
             else:
                 if not dry_run:
@@ -68,11 +80,22 @@ class Command(BaseCommand):
                         include_docs=True,
                     )
                     users = (CouchUser.wrap_correctly(row['doc']) for row in rows)
-                    _sync_usercases_with_throttle(users, domain)
-                    USH_USERCASES_FOR_WEB_USERS.set(domain, True, NAMESPACE_DOMAIN)
-                    domain_obj.usercase_enabled = True
-                    domain_obj.save()
+                    had_errors = _sync_usercases_with_throttle(users, domain)
+                    if not had_errors:
+                        USH_USERCASES_FOR_WEB_USERS.set(domain, True, NAMESPACE_DOMAIN)
+                        domain_obj.usercase_enabled = True
+                        domain_obj.save()
                 domains_both_created += 1
 
         print(f"Domains with both CommCare and Web users usercases created/synced: {domains_both_created}")
         print(f"Domains with only Web users usercases created/synced: {domains_only_web_created}")
+
+        if errors:
+            print("Exceptions occurred during sync:")
+            for error in errors:
+                print(
+                    f"Domain: {error['domain']}, "
+                    f"User ID: {error['user_id']}, "
+                    f"Username: {error['username']}, "
+                    f"Error: {error['error']}"
+                )
