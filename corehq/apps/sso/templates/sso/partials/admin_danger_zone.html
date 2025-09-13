@@ -1,14 +1,12 @@
 {% load i18n %}
 
-<div class="panel panel-modern-gray panel-form-only">
-  <div class="panel-body">
+<div class="card card-modern-gray card-form-only">
+  <div class="card-body">
     <form action="" method="post">
       {% csrf_token %}
       <input type="hidden" name="delete_identity_provider" value="true" />
       <fieldset>
-        <legend>
-          {% trans "Delete Identity Provider" %}
-        </legend>
+        <legend>{% trans "Delete Identity Provider" %}</legend>
         {% if idp_is_active %}
           <div class="alert alert-info">
             <p class="lead">
@@ -28,18 +26,19 @@
           <div class="alert alert-danger">
             <p class="lead">
               {% blocktrans %}
-                <strong>WARNING:</strong> Deleting an Identity Provider is not reversible.
+                <strong>WARNING:</strong> Deleting an Identity Provider is not
+                reversible.
               {% endblocktrans %}
             </p>
             <p>
               {% blocktrans %}
                 Deletion will immediately affect any client's SSO setup. Please
-                exercise extreme caution. An active Identity Provider
-                will not be deleted.
+                exercise extreme caution. An active Identity Provider will not
+                be deleted.
               {% endblocktrans %}
             </p>
             <p>
-              <button type="submit" class="btn btn-danger">
+              <button type="submit" class="btn btn-outline-danger">
                 {% trans "Delete Identity Provider" %}
               </button>
             </p>
