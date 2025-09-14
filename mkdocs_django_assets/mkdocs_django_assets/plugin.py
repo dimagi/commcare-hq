@@ -1,6 +1,7 @@
 from mkdocs.plugins import BasePlugin
 from pathlib import Path
 import re
+import html
 
 
 class DjangoAssetsPlugin(BasePlugin):
@@ -48,17 +49,29 @@ class DjangoAssetsPlugin(BasePlugin):
         def make_iframe_html(component_html: str) -> str:
             """Compose a full HTML doc for the iframe using the existing webpack bundles."""
             doc = f"""<!DOCTYPE html>
-<html lang=\"en\">
-<head>
-    <meta charset=\"utf-8\">
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
-    {head_content}
-</head>
-<body>
-    {component_html}
-    {body_content}
-</body>
-</html>"""
+                    <html lang=\"en\">
+                    <head>
+                        <meta charset=\"utf-8\">
+                        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+                        {head_content}
+                      <script>
+                        function sendHeight() {{
+                        console.log("Sending iframe height:", document.body.scrollHeight);
+                          window.parent.postMessage(
+                            {{ iframeHeight: document.body.scrollHeight }},
+                            '*'
+                          );
+                        }}
+                        document.addEventListener("DOMContentLoaded", sendHeight);
+                        window.addEventListener("resize", sendHeight);
+                        new MutationObserver(sendHeight).observe(document.body, {{ childList: true, subtree: true }});
+                      </script>
+                    </head>
+                    <body>
+                        {component_html}
+                        {body_content}
+                    </body>
+                    </html>"""
             return doc
 
         def replace_with_iframe(match):
@@ -68,11 +81,13 @@ class DjangoAssetsPlugin(BasePlugin):
             if docs_path.exists():
                 component_html = docs_path.read_text(encoding="utf-8")
                 iframe_doc = make_iframe_html(component_html)
+                escaped = html.escape(iframe_doc, quote=True)
+
                 # Fixed height iframe (500px)
                 return (
                     f'<iframe '
-                    f'srcdoc="{iframe_doc.replace("\"", "&quot;")}" '
-                    f'style="width:100%; height:500px; border:1px solid #ccc; display:block;" '
+                    f'srcdoc="{escaped}" '
+                    f'style="width:100%; min-height:300px; border:1px solid #ccc; display:block;" '
                     f'loading="lazy"></iframe>'
                 )
             print("Missing component for iframe!")
@@ -80,6 +95,27 @@ class DjangoAssetsPlugin(BasePlugin):
 
         # Replace all component placeholders with iframes
         new_output = component_re.sub(replace_with_iframe, output_content)
+
+        # --- Inject parent resize script into every page (before </body>) ---
+        resize_script = """
+        <script>
+          window.addEventListener("message", function(event) {
+            if (event.data?.iframeHeight) {
+              const iframes = document.querySelectorAll("iframe");
+              for (const iframe of iframes) {
+                if (iframe.contentWindow === event.source) {
+                  console.log("Parent resizing iframe to", event.data.iframeHeight);
+                  iframe.style.height = event.data.iframeHeight + "px";
+                }
+              }
+            }
+          });
+        </script>
+        """
+        if "</body>" in new_output:
+            new_output = new_output.replace("</body>", resize_script + "\n</body>")
+        else:
+            new_output += resize_script
 
         return new_output
 
