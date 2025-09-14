@@ -117,7 +117,7 @@ from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
-    get_all_case_types_for_domain,
+    get_non_system_case_types_for_domain,
     get_case_types_for_domain_es
 )
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
@@ -1728,7 +1728,7 @@ class AllCaseTypesView(LoginAndDomainMixin, View):
     urlname = 'all_case_types'
 
     def get(self, request, domain):
-        existing_case_types = list(get_all_case_types_for_domain(domain))
+        existing_case_types = list(get_non_system_case_types_for_domain(domain))
         existing_case_types.sort(key=str.lower)  # Sort case-insensitively
         return JsonResponse({
             'existing_case_types': existing_case_types,

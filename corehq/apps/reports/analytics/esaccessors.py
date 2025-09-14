@@ -662,9 +662,10 @@ def get_case_types_for_domain(domain, include_deprecated=False):
     return all_case_types
 
 
-def get_all_case_types_for_domain(domain):
+def get_non_system_case_types_for_domain(domain):
     """
-    Returns case types pulled from app configuration and any defined in the data dictionary,
+    Returns case types defined in the data dictionary, which includes those referenced in an app
+    and those added manually.
     Excludes system case types.
     """
     all_case_types = get_data_dict_case_types(domain)
