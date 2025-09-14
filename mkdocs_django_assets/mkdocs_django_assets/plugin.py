@@ -10,28 +10,8 @@ class DjangoAssetsPlugin(BasePlugin):
         re.MULTILINE
     )
 
-    def on_page_markdown(self, markdown, page, **kwargs):
-        """Replace django-component lines before Markdown -> HTML conversion."""
-
-        print("Running DjangoAssetsPlugin on_page_markdown...")
-        print("Page name / src path:", page.file.src_path)
-        print("Page title:", page.title)
-
-        def replace_component(match):
-            rel_path = Path(match.group(1).strip())
-            docs_path = Path("docs") / rel_path
-            print("Looking for component:", docs_path)
-            if docs_path.exists():
-                print("Found!")
-                return docs_path.read_text(encoding="utf-8")
-            print("Missing!")
-            return f"<!-- Missing component: {rel_path} -->"
-
-        new_markdown = self.COMPONENT_RE.sub(replace_component, markdown)
-        return new_markdown
-
     def on_post_page(self, output_content, **kwargs):
-        """Inject head/body assets and replace django-component placeholders with rendered HTML."""
+        """Inject head/body assets and replace django-component placeholders with rendered HTML inside an iframe."""
 
         print("Running DjangoAssetsPlugin on_post_page...")
         page = kwargs.get("page")  # mkdocs.nav.Page object
@@ -53,20 +33,55 @@ class DjangoAssetsPlugin(BasePlugin):
             head_html = page_path.read_text(encoding="utf-8")
             # Extract head content from the base template
             head_match = re.search(r"<head>(.*?)</head>", head_html, re.DOTALL | re.IGNORECASE)
-            if head_match and "</head>" in output_content:
-                head_content = head_match.group(1)
-                output_content = output_content.replace("</head>", head_content + "\n</head>", 1)
-                print(f"Injected head content for {page_name}")
+            head_content = head_match.group(1) if head_match else ""
             # Extract body content from the base template
             body_match = re.search(r"<body>(.*?)</body>", head_html, re.DOTALL | re.IGNORECASE)
-            if body_match and "</body>" in output_content:
-                body_content = body_match.group(1)
-                output_content = output_content.replace("</body>", body_content + "\n</body>", 1)
-                print(f"Injected body content for {page_name}")
+            body_content = body_match.group(1) if body_match else ""
         else:
             print(f"Base template not found: {page_path}")
+            head_content = ""
+            body_content = ""
 
-        return output_content
+        # Find all component placeholders in the output_content
+        component_re = re.compile(r":::\s*django-example-component\s+([^\s]+)\s*:::", re.MULTILINE)
+
+        def make_iframe_html(component_html: str) -> str:
+            """Compose a full HTML doc for the iframe using the existing webpack bundles."""
+            doc = f"""<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"utf-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+    {head_content}
+</head>
+<body>
+    {component_html}
+    {body_content}
+</body>
+</html>"""
+            return doc
+
+        def replace_with_iframe(match):
+            rel_path = Path(match.group(1).strip())
+            docs_path = Path("docs") / rel_path
+            print("Looking for component for iframe:", docs_path)
+            if docs_path.exists():
+                component_html = docs_path.read_text(encoding="utf-8")
+                iframe_doc = make_iframe_html(component_html)
+                # Fixed height iframe (500px)
+                return (
+                    f'<iframe '
+                    f'srcdoc="{iframe_doc.replace("\"", "&quot;")}" '
+                    f'style="width:100%; height:500px; border:1px solid #ccc; display:block;" '
+                    f'loading="lazy"></iframe>'
+                )
+            print("Missing component for iframe!")
+            return match.group(0)
+
+        # Replace all component placeholders with iframes
+        new_output = component_re.sub(replace_with_iframe, output_content)
+
+        return new_output
 
 
 #
@@ -197,4 +212,3 @@ class DjangoAssetsPlugin(BasePlugin):
 #             }
 #         </style>
 #         """
-#

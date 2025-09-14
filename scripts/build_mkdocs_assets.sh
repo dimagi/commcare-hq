@@ -11,7 +11,7 @@ uv run python manage.py resource_static
 
 echo "[3/9] Collecting static files..."
 rm -rf staticfiles/
-uv run python manage.py collectstatic --noinput -v 0
+uv run python manage.py collectstatic_mkdocs --noinput -v 0
 uv run python manage.py fix_less_imports_collectstatic
 uv run python manage.py compilejsi18n
 

@@ -97959,7 +97959,7 @@
 - name: styleguide/js/mkdocs_main.js
   version: 053f2bf
 - name: styleguide/js/main.js
-  version: bc00894
+  version: 5822da1
 - name: styleguide/js/dates_times.js
   version: eafe8ec
 - name: styleguide/js/selections.js
@@ -97979,9 +97979,9 @@
 - name: styleguide/js/examples/open_modal_ko.js
   version: 836c9f7
 - name: styleguide/js/examples/search_box.js
-  version: d0980a0
+  version: 083a7c8
 - name: styleguide/js/examples/time_only.js
-  version: d946fe2
+  version: 39c87f6
 - name: styleguide/js/examples/open_remote_modal_ko.js
   version: 6270cb7
 - name: styleguide/js/examples/crispy_forms_knockout_validation.js
@@ -97989,45 +97989,45 @@
 - name: styleguide/js/examples/crispy_forms_knockout.js
   version: a0c016b
 - name: styleguide/js/examples/select2_ko_dynamic.js
-  version: f022b6e
+  version: 88b25a2
 - name: styleguide/js/examples/date_range.js
   version: 733cba6
 - name: styleguide/js/examples/select2_manual_allow_clear.js
   version: 6de3634
 - name: styleguide/js/examples/select2_static_ko_crispy.js
-  version: c2dbffe
+  version: c71fdab
 - name: styleguide/js/examples/multiselect_crispy.js
   version: f0573fd
 - name: styleguide/js/examples/multiselect.js
   version: fab5b75
 - name: styleguide/js/examples/select2_dynamic_ko_crispy.js
-  version: 1c63a2c
+  version: ae0d857
 - name: styleguide/js/examples/pagination.js
   version: 03eb22c
 - name: styleguide/js/examples/inline_edit.js
-  version: 484e32e
+  version: da46ad7
 - name: styleguide/js/examples/select2_manual_crispy.js
   version: 3e95cdd
 - name: styleguide/js/examples/date_only.js
   version: 8aee48a
 - name: styleguide/js/examples/inline_edit_lang.js
-  version: 84a5f56
+  version: e5a0d55
 - name: styleguide/js/examples/feedback.js
   version: '5209104'
 - name: styleguide/js/examples/select2_autocomplete_ko_crispy.js
-  version: 65701fb
+  version: 06599c3
 - name: styleguide/js/examples/modal_ko.js
   version: 81fcf35
 - name: styleguide/js/examples/tempus_dominus.js
   version: 7e2fbe3
 - name: styleguide/js/examples/select2_ko_autocomplete.js
-  version: 9acb211
+  version: 56fcaf5
 - name: styleguide/js/examples/datatables.js
   version: 20162a4
 - name: styleguide/js/examples/select2_ko_static.js
-  version: 127333e
+  version: 8de4a42
 - name: styleguide/js/examples/time_only_24.js
-  version: 3963eea
+  version: 439e408
 - name: styleguide/js/examples/paginated_table.js
   version: e12f7b5
 - name: styleguide/js/examples/select2_manual.js
