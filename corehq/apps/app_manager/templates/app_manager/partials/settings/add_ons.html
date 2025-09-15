@@ -34,6 +34,7 @@
       </ul>
     </div>
 
+    {% if request|request_has_privilege:"ENABLE_ALL_ADD_ONS" %}
     <button
       type="button"
       class="btn btn-default pull-right"
@@ -41,6 +42,7 @@
     >
       {% trans "Enable All Add-Ons" %}
     </button>
+    {% endif %}
 
     <p class="lead">
       {% blocktrans %}
