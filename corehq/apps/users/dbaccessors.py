@@ -66,6 +66,12 @@ def get_all_web_users_by_domain(domain):
     return map(WebUser.wrap, iter_docs(WebUser.get_db(), ids))
 
 
+def get_all_users_by_domain(domain, include_inactive=True):
+    from corehq.apps.users.models import CouchUser
+    ids = get_all_user_ids_by_domain(domain, include_inactive=include_inactive)
+    return map(CouchUser.wrap_correctly, iter_docs(CouchUser.get_db(), ids))
+
+
 def get_mobile_usernames_by_filters(domain, user_filters):
     query = _get_es_query(domain, MOBILE_USER_TYPE, user_filters)
     return query.values_list('base_username', flat=True)
@@ -207,12 +213,13 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
     return invitations
 
 
-def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):
+def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True, include_inactive=True):
     """Return generator of user IDs"""
     return (row['id'] for row in get_all_user_rows(
         domain,
         include_web_users=include_web_users,
-        include_mobile_users=include_mobile_users
+        include_mobile_users=include_mobile_users,
+        include_inactive=include_inactive,
     ))
 
 

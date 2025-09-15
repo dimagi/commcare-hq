@@ -55,14 +55,15 @@ class ProjectReport(GenericReportView):
         if self.rendered_as == 'view':
             # Add the email form to the context if it will be rendered
             email_form = EmailReportForm()
-            # Fetch enough to tell whether there are too many.
-            emails = list(islice(
-                iter_web_user_emails(self.domain),
-                MAX_WEB_USER_EMAILS + 1
-            ))
-            if len(emails) <= MAX_WEB_USER_EMAILS:
-                choices = [(e, e) for e in emails]
-                email_form.fields['recipient_emails'].choices = choices
+            if self.domain:
+                # Fetch enough to tell whether there are too many.
+                emails = list(islice(
+                    iter_web_user_emails(self.domain),
+                    MAX_WEB_USER_EMAILS + 1
+                ))
+                if len(emails) <= MAX_WEB_USER_EMAILS:
+                    choices = [(e, e) for e in emails]
+                    email_form.fields['recipient_emails'].choices = choices
             context['email_form'] = email_form
         return context
 

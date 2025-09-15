@@ -2,11 +2,9 @@ from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
-    get_app_ids_in_domain,
     get_apps_in_domain,
-    get_latest_build_doc,
+    get_latest_app_meta,
     get_latest_build_id,
-    get_latest_released_app_doc,
     get_latest_released_build_id,
 )
 from corehq.util.quickcache import quickcache
@@ -32,13 +30,6 @@ def can_user_access_web_app(domain, user, app_id):
     return has_access_via_permission and has_access_via_group
 
 
-def _get_latest_build_for_web_apps(domain, username, app_id):
-    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-        return get_latest_build_doc(domain, app_id)
-    else:
-        return get_latest_released_app_doc(domain, app_id)
-
-
 def get_latest_build_id_for_web_apps(domain, username, app_id):
     if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
         return get_latest_build_id(domain, app_id)
@@ -46,22 +37,16 @@ def get_latest_build_id_for_web_apps(domain, username, app_id):
         return get_latest_released_build_id(domain, app_id)
 
 
-def get_web_apps_available_to_user(domain, user):
-    """
-    The fetch_app_fn is a function to fetch app docs, and should accept a domain, username and app_id if overridden
-    """
-    def is_web_app(app):
-        return app.get('cloudcare_enabled')
-
-    apps = []
-    app_ids = get_app_ids_in_domain(domain)
-    for app_id in app_ids:
-        if can_user_access_web_app(domain, user, app_id):
-            app = _get_latest_build_for_web_apps(domain, user.username, app_id)
-            if app and is_web_app(app):
-                apps.append(app)
-
-    return apps
+def get_web_app_ids_available_to_user(domain, user):
+    target = 'build' if (
+        toggles.CLOUDCARE_LATEST_BUILD.enabled(domain)
+        or toggles.CLOUDCARE_LATEST_BUILD.enabled(user.username)
+    ) else 'release'
+    return [
+        app_meta['_id'] for app_meta in get_latest_app_meta(domain, target)
+        if app_meta['cloudcare_enabled']
+        and can_user_access_web_app(domain, user, app_meta['origin_id'])
+    ]
 
 
 def should_show_preview_app(request, app, username):
