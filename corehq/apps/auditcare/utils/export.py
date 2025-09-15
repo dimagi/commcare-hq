@@ -15,7 +15,7 @@ from corehq.util.models import ForeignValue
 from ..models import AccessAudit, NavigationEventAudit
 
 
-def filters_for_navigation_event_query(user, domain=None, start_date=None, end_date=None):
+def filters_for_audit_event_query(user, domain=None, start_date=None, end_date=None):
     where = get_date_range_where(start_date, end_date)
     if user:
         where['user'] = user
@@ -24,9 +24,22 @@ def filters_for_navigation_event_query(user, domain=None, start_date=None, end_d
     return where
 
 
+def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None):
+    return chain(
+        navigation_events_by_user(user, domain, start_date, end_date),
+        access_events_by_user(user, domain, start_date, end_date),
+    )
+
+
 def navigation_events_by_user(user, domain=None, start_date=None, end_date=None):
-    where = filters_for_navigation_event_query(user, domain, start_date, end_date)
+    where = filters_for_audit_event_query(user, domain, start_date, end_date)
     query = NavigationEventAudit.objects.filter(**where)
+    return AuditWindowQuery(query)
+
+
+def access_events_by_user(user, domain=None, start_date=None, end_date=None):
+    where = filters_for_audit_event_query(user, domain, start_date, end_date)
+    query = AccessAudit.objects.filter(**where)
     return AuditWindowQuery(query)
 
 

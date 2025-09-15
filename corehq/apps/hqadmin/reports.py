@@ -16,8 +16,8 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.auditcare.utils.export import (
-    filters_for_navigation_event_query,
-    navigation_events_by_user,
+    filters_for_audit_event_query,
+    all_audit_events_by_user,
     get_generic_log_event_row,
 )
 from corehq.apps.es.aggregations import TermsAggregation
@@ -154,17 +154,19 @@ class UserAuditReport(AdminReport, DatespanMixin):
             return []
 
         rows = []
-        events = navigation_events_by_user(
+        events = all_audit_events_by_user(
             self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate
         )
         for event in events:
             row = get_generic_log_event_row(event)
             rows.append(row)
 
+        # sort by date asc
+        return sorted(rows, key=lambda x: x[0])
 
     @memoized
     def _is_limit_exceeded(self):
-        where = filters_for_navigation_event_query(
+        where = filters_for_audit_event_query(
             user=self.selected_user,
             domain=self.selected_domain,
             start_date=self.datespan.startdate,
