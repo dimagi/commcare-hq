@@ -27,13 +27,15 @@ class CreateUsercasesCommandCombinationsTests(SimpleTestCase):
     @patch('corehq.apps.users.management.commands.create_usercases.domain_has_privilege')
     @patch('corehq.apps.users.management.commands.create_usercases.Domain.get_by_name')
     @patch('corehq.apps.users.management.commands.create_usercases.Domain.get_all_names')
+    @patch('corehq.apps.users.management.commands.create_usercases.any_migrations_in_progress')
     def test_domain_combinations_sync_counts(
         self, domain, has_priv, usercase_enabled, toggle_enabled, expected_sync_calls,
-        mock_all_names, mock_get_by_name, mock_has_priv,
-        mock_get_all_user_rows, _mock_wrap, mock_toggle, mock_sync,
+        mock_any_migrations, mock_all_names, mock_get_by_name, mock_has_priv,
+        mock_get_all_user_rows, _mock_wrap, mock_toggle, mock_sync
     ):
         mock_all_names.return_value = [domain]
 
+        mock_any_migrations.return_value = False
         mock_get_by_name.return_value = SimpleNamespace(
             usercase_enabled=usercase_enabled, save=lambda: None
         )
