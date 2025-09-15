@@ -693,9 +693,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            raise AppMisconfigurationError('"{}" is a reserved case type'.format(USERCASE_TYPE))
-        elif case_type and not is_valid_case_type(case_type, module):
+        if case_type and not is_valid_case_type(case_type):
             raise AppMisconfigurationError("case type is improperly formatted")
         else:
             old_case_type = module["case_type"]
