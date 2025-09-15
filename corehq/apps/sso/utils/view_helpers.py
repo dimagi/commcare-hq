@@ -46,7 +46,6 @@ def render_sso_error(request, error):
     })
 
 
-@use_bootstrap5
 def render_sso_user_login_failed(request):
     return render(request, 'sso/sso_request_denied.html', {})
 
