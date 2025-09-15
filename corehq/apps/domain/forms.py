@@ -750,9 +750,9 @@ class DomainGlobalSettingsForm(forms.Form):
             domain=self.domain).is_visible
 
     def _handle_enable_all_add_ons(self):
-        # if not domain_has_privilege(self.domain, privileges.ENABLE_ALL_ADD_ONS):
-        #     del self.fields['enable_all_add_ons']
-        #     return
+        if not domain_has_privilege(self.domain, privileges.SHOW_ENABLE_ALL_ADD_ONS):
+            del self.fields['enable_all_add_ons']
+            return
         self.fields['enable_all_add_ons'].initial = (
             EnableAllAddOnsSetting.enabled_for_domain(self.domain)
         )
