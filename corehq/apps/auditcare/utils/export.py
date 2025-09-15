@@ -110,6 +110,11 @@ def get_domain_first_access_times(domains, start_date=None, end_date=None):
 
 
 def write_generic_log_event(writer, event):
+    row = get_generic_log_event_row(event)
+    writer.writerow(row)
+
+
+def get_action_and_resource(event):
     action = ''
     resource = ''
     if event.doc_type == 'NavigationEventAudit':
@@ -120,16 +125,21 @@ def write_generic_log_event(writer, event):
         action = event.access_type
         resource = event.path
 
-    writer.writerow([
+    return action, resource
+
+
+def get_generic_log_event_row(event):
+    action, resource = get_action_and_resource(event)
+    return [
         event.event_date,
         event.doc_type,
         event.user,
-        event.domain,
+        event.domain or '',
         event.ip_address,
         action,
         resource,
         event.description,
-    ])
+    ]
 
 
 def write_export_from_all_log_events(file_obj, start, end):
