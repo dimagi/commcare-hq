@@ -29,6 +29,8 @@ from corehq.apps.sms.models import Keyword
 from .models import (
     METHOD_SMS,
     METHOD_SMS_SURVEY,
+    METHOD_CONNECT_MESSAGE,
+    METHOD_CONNECT_SURVEY,
     RECIPIENT_OWNER,
     RECIPIENT_USER_GROUP,
 )
@@ -40,7 +42,10 @@ KEYWORD_CONTENT_CHOICES = [
     (METHOD_SMS_SURVEY, gettext_lazy("SMS Survey")),
     (NO_RESPONSE, gettext_lazy("No Response")),
 ]
-CONTENT_CONNECT_MESSAGE = 'connect_message'
+CONNECT_KEYWORD_CONTENT_CHOICES = [
+    (METHOD_CONNECT_MESSAGE, gettext_lazy("Connect Message")),
+    (METHOD_CONNECT_SURVEY, gettext_lazy("Connect Survey")),
+]
 
 KEYWORD_RECIPIENT_CHOICES = (
     (RECIPIENT_USER_GROUP, gettext_lazy("Mobile Worker Group")),
@@ -408,9 +413,7 @@ class KeywordForm(Form):
     def content_type_choices(self):
         choices = KEYWORD_CONTENT_CHOICES
         if COMMCARE_CONNECT.enabled(self.domain):
-            choices.append(
-                (CONTENT_CONNECT_MESSAGE, gettext_noop("Connect Message"))
-            )
+            choices += CONNECT_KEYWORD_CONTENT_CHOICES
         return set(choices)
 
     @property
@@ -450,7 +453,7 @@ class KeywordForm(Form):
 
     def clean_sender_message(self):
         value = self.cleaned_data.get("sender_message")
-        if self.cleaned_data.get("sender_content_type") in [METHOD_SMS, CONTENT_CONNECT_MESSAGE]:
+        if self.cleaned_data.get("sender_content_type") in [METHOD_SMS, METHOD_CONNECT_MESSAGE]:
             if value is None or value == "":
                 raise ValidationError(_("This field is required."))
             return value
@@ -472,7 +475,7 @@ class KeywordForm(Form):
 
     def clean_other_recipient_message(self):
         value = self.cleaned_data.get("other_recipient_message")
-        if self.cleaned_data.get("other_recipient_content_type") in [METHOD_SMS, CONTENT_CONNECT_MESSAGE]:
+        if self.cleaned_data.get("other_recipient_content_type") in [METHOD_SMS, METHOD_CONNECT_MESSAGE]:
             if value is None or value == "":
                 raise ValidationError(_("This field is required."))
             return value
