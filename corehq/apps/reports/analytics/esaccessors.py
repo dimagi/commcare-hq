@@ -664,14 +664,11 @@ def get_case_types_for_domain(domain, include_deprecated=False):
 
 def get_non_system_case_types_for_domain(domain):
     """
-    Returns case types defined in the data dictionary, which includes those referenced in an app
+    Returns non-deprecated case types defined in the data dictionary, which includes those referenced in an app
     and those added manually.
     Excludes system case types.
     """
-    all_case_types = get_data_dict_case_types(domain)
-
-    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
-    all_case_types -= deprecated_case_types
+    all_case_types = get_data_dict_case_types(domain, is_deprecated=False)
 
     # Exclude system case types
     all_case_types -= {USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE}
