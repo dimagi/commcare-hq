@@ -1,18 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% if request|toggle_enabled:"ENABLE_ALL_ADD_ONS" %}
-
-  <div class="alert alert-info">
-    {% blocktrans %}
-      <p>
-        All add-ons are enabled for this app.
-      </p>
-    {% endblocktrans %}
-  </div>
-
-{% else %}
-
   <form>
 
     <div data-bind="saveButton: saveButton"></div>
@@ -104,5 +92,3 @@
     </div>
 
   </form>
-
-{% endif %}
