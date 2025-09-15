@@ -2614,6 +2614,9 @@ class KeywordAction(models.Model):
     # Send a Connect Message
     ACTION_CONNECT_MESSAGE = "connect_message"
 
+    # Start a Connect Survey
+    ACTION_CONNECT_SURVEY = "connect_survey"
+
     # Process the text as structured SMS. The expected format of the structured
     # SMS is described using the fields on this object.
     ACTION_STRUCTURED_SMS = "structured_sms"
@@ -2678,7 +2681,7 @@ class KeywordAction(models.Model):
         if self.action in [self.ACTION_SMS, self.ACTION_CONNECT_MESSAGE] and not self.message_content:
             raise self.InvalidModelStateException("Expected a value for message_content")
 
-        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS]:
+        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS, self.ACTION_CONNECT_SURVEY]:
             if not self.app_id:
                 raise self.InvalidModelStateException("Expected a value for app_id")
             if not self.form_unique_id:

@@ -462,7 +462,7 @@ class KeywordForm(Form):
 
     def clean_sender_app_and_form_unique_id(self):
         value = self.cleaned_data.get("sender_app_and_form_unique_id")
-        if self.cleaned_data.get("sender_content_type") == METHOD_SMS_SURVEY:
+        if self.cleaned_data.get("sender_content_type") in [METHOD_SMS_SURVEY, METHOD_CONNECT_SURVEY]:
             if value is None:
                 raise ValidationError(_(
                     "Please create a form first, and then add a keyword "
@@ -484,7 +484,7 @@ class KeywordForm(Form):
 
     def clean_other_recipient_app_and_form_unique_id(self):
         value = self.cleaned_data.get("other_recipient_app_and_form_unique_id")
-        if self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS_SURVEY:
+        if self.cleaned_data.get("other_recipient_content_type") in [METHOD_SMS_SURVEY, METHOD_CONNECT_SURVEY]:
             if value is None:
                 raise ValidationError(_(
                     "Please create a form first, and then "
