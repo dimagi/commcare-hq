@@ -47,7 +47,7 @@ def render_sso_error(request, error):
 
 
 def render_sso_user_login_failed(request):
-    return render(request, 'sso/sso_request_denied.html', {})
+    return render(request, 'sso/bootstrap3/sso_request_denied.html', {})
 
 
 def render_saml_acs_error(request, saml_error_reason=None, idp_service_name=None, login_error=None):
