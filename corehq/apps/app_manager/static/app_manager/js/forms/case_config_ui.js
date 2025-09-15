@@ -385,7 +385,8 @@ $(function () {
         self.goToPage(1);
 
         self.suggestedSaveProperties = ko.computed(function () {
-            return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
+            const properties = caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
+            return _.sortBy(properties);
         }, self);
 
         self.addProperty = function () {

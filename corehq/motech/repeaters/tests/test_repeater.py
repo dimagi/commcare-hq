@@ -32,6 +32,7 @@ from corehq.apps.userreports.pillow import (
     ConfigurableReportTableManager,
 )
 from corehq.apps.userreports.tests.utils import (
+    bootstrap_pillow,
     get_sample_data_source,
     get_sample_doc_and_indicators,
 )
@@ -253,7 +254,7 @@ class RepeaterTest(BaseRepeaterTest):
         )
         assert len(repeat_records) == 2
 
-    def test_bad_payload_invalid(self):
+    def test_bad_payload_rejected(self):
         with patch(
             'corehq.motech.repeaters.models.simple_request',
             return_value=MockResponse(status_code=401, reason='Unauthorized')
@@ -262,7 +263,19 @@ class RepeaterTest(BaseRepeaterTest):
                 repeat_record.fire()
 
         for repeat_record in self.enqueued_repeat_records():
-            assert repeat_record.state == State.InvalidPayload
+            assert repeat_record.state == State.PayloadRejected
+
+    def test_error_generating_payload(self):
+        for repeat_record in RepeatRecord.objects.all():
+            with patch.object(
+                repeat_record.repeater.generator,
+                'get_payload',
+                side_effect=ValueError()
+            ):
+                repeat_record.fire()
+
+        for repeat_record in RepeatRecord.objects.all():
+            self.assertEqual(repeat_record.state, State.ErrorGeneratingPayload)
 
     def test_bad_request_fail(self):
         with patch(
@@ -746,11 +759,11 @@ class RepeaterFailureTest(BaseRepeaterTest):
             self.repeater.register(case)
             rr = self.repeater.repeat_records.last()
         with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
-            state_or_none = rr.fire()
+            state = rr.fire()
 
-        assert state_or_none is None
+        assert state == State.ErrorGeneratingPayload
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        assert repeat_record.state == State.InvalidPayload
+        assert repeat_record.state == State.ErrorGeneratingPayload
         assert repeat_record.failure_reason == 'Boom!'
 
     def test_payload_exception_on_register(self):
@@ -760,7 +773,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        assert repeat_record.state == State.InvalidPayload
+        assert repeat_record.state == State.ErrorGeneratingPayload
         assert repeat_record.failure_reason == "Payload error"
 
     def test_failure(self):
@@ -1585,8 +1598,8 @@ class TestRepeatRecordsReady(TestCase):
                 repeater=self.repeater,
                 registered_at=now,
                 next_check=None,
-                state=State.InvalidPayload,
-                payload_id='invalid payload',
+                state=State.PayloadRejected,
+                payload_id='payload rejected',
             ),
         ))
         payload_ids = {rr.payload_id for rr in self.repeater.repeat_records_ready.all()}
@@ -1684,9 +1697,7 @@ def _get_pillow(configs, processor_chunk_size=0):
     pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
     # overwrite processors since we're only concerned with UCR here
     table_manager = ConfigurableReportTableManager(data_source_providers=[])
-    ucr_processor = ConfigurableReportPillowProcessor(
-        table_manager
-    )
-    table_manager.bootstrap(configs)
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     pillow.processors = [ucr_processor]
+    bootstrap_pillow(pillow, *configs)
     return pillow

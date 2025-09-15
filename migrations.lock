@@ -127,6 +127,7 @@ accounting
  0105_alter_billingcontactinfo_city_and_more
  0106_alter_billingcontactinfo_company_name
  0107_two_stage_mobile_worker_creation_priv
+ 0108_subscription_auto_renew_and_more
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -858,6 +859,7 @@ preindex
  0002_initial
  0003_initial
  0004_initial
+ 0005_initial
 products
  0001_initial
 project_limits
@@ -905,6 +907,7 @@ repeaters
  0018_datasourceupdate
  0019_connectformrepeater
  0020_repeater_extra_backoff_codes
+ 0021_alter_repeatrecord_state_and_more
 reports
  0001_initial
  0002_auto_20171121_1803

@@ -1061,6 +1061,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -6759,7 +6760,6 @@ msgid "Android app dependencies"
 msgstr "Залежності додатка Android"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
 msgstr "Активність працівників"
 
@@ -6977,6 +6977,7 @@ msgstr "Увімкнути налаштування відображення м�
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/forms.py
@@ -16887,8 +16888,7 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/reports/filters/select.py
-#: corehq/apps/reports/standard/monitoring.py corehq/motech/fhir/const.py
+#: corehq/apps/reports/filters/select.py corehq/motech/fhir/const.py
 msgid "Group"
 msgstr "Група"
 
@@ -19565,6 +19565,12 @@ msgstr "Створити тип кейсу"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #, fuzzy
+#| msgid "data dictionary"
+msgid "Loading data dictionary..."
+msgstr "словник даних"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
 #| msgid ""
 #| "\n"
 #| "        There was an error processing the request. Please try again.\n"
@@ -19611,6 +19617,12 @@ msgstr "Сховати застарілі"
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "FHIR Resource Property Path"
 msgstr "Шлях властивості ресурсу FHIR"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "Loading exports..."
+msgid "Loading properties..."
+msgstr "Завантаження експортів..."
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #, fuzzy
@@ -19767,12 +19779,18 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              Deprecate\n"
+#| "              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+#| "              Case Type\n"
+#| "            "
 msgid ""
-"\n"
-"              Deprecate\n"
-"              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-"              Case Type\n"
-"            "
+" Deprecate '<span\n"
+"            data-bind=\"text: $root.activeCaseType()\"\n"
+"          ></span\n"
+"          >' Case Type "
 msgstr ""
 "\n"
 "              Застаріти\n"
@@ -19781,38 +19799,78 @@ msgstr ""
 "            "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            <p>\n"
+#| "              There are a total of\n"
+#| "              <strong>\n"
+#| "                <span data-bind=\"text: activeCaseTypeModuleCount()\"></"
+#| "span> application module(s)\n"
+#| "              </strong>\n"
+#| "              that are currently using this case type.\n"
+#| "            </p>\n"
+#| "            <p>\n"
+#| "              Deprecating this case type will have the following "
+#| "effects:\n"
+#| "            </p>\n"
+#| "            <ul>\n"
+#| "              <li>This case type will not be available from the reports "
+#| "filtering menu.</li>\n"
+#| "              <li>All case properties/groups for this case type will be "
+#| "deprecated.</li>\n"
+#| "              <li>New exports cannot be created with this case type.</"
+#| "li>\n"
+#| "              <li>Case imports cannot be done for cases with this case "
+#| "type.</li>\n"
+#| "              <li>New automatic rules cannot be created with this case "
+#| "type.</li>\n"
+#| "            </ul>\n"
+#| "            <p>\n"
+#| "              For more information on deprecated case types, see the\n"
+#| "              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/"
+#| "wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-"
+#| "%%26-Delete-Case-Types-and-Case-Properties\">following documentation</"
+#| "a>.\n"
+#| "            </p>\n"
+#| "          "
 msgid ""
 "\n"
-"            <p>\n"
-"              There are a total of\n"
-"              <strong>\n"
-"                <span data-bind=\"text: activeCaseTypeModuleCount()\"></"
-"span> application module(s)\n"
-"              </strong>\n"
-"              that are currently using this case type.\n"
-"            </p>\n"
-"            <p>\n"
-"              Deprecating this case type will have the following effects:\n"
-"            </p>\n"
-"            <ul>\n"
-"              <li>This case type will not be available from the reports "
-"filtering menu.</li>\n"
-"              <li>All case properties/groups for this case type will be "
-"deprecated.</li>\n"
-"              <li>New exports cannot be created with this case type.</li>\n"
-"              <li>Case imports cannot be done for cases with this case type."
-"</li>\n"
-"              <li>New automatic rules cannot be created with this case type."
-"</li>\n"
-"            </ul>\n"
-"            <p>\n"
-"              For more information on deprecated case types, see the\n"
-"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/"
-"spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-"
-"Delete-Case-Types-and-Case-Properties\">following documentation</a>.\n"
-"            </p>\n"
-"          "
+"        <p>\n"
+"          There are a total of\n"
+"          <strong>\n"
+"            <span data-bind=\"text: activeCaseTypeModuleCount()\"></span>\n"
+"            application module(s)\n"
+"          </strong>\n"
+"          that are currently using this case type.\n"
+"        </p>\n"
+"        <p>Deprecating this case type will have the following effects:</p>\n"
+"        <ul>\n"
+"          <li>\n"
+"            This case type will not be available from the reports filtering\n"
+"            menu.\n"
+"          </li>\n"
+"          <li>\n"
+"            All case properties/groups for this case type will be "
+"deprecated.\n"
+"          </li>\n"
+"          <li>New exports cannot be created with this case type.</li>\n"
+"          <li>Case imports cannot be done for cases with this case type.</"
+"li>\n"
+"          <li>New automatic rules cannot be created with this case type.</"
+"li>\n"
+"        </ul>\n"
+"        <p>\n"
+"          For more information on deprecated case types, see the\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-"
+"Properties\"\n"
+"            >following documentation</a\n"
+"          >.\n"
+"        </p>\n"
+"        "
 msgstr ""
 "\n"
 "            <p>\n"
@@ -19851,11 +19909,17 @@ msgid "Deprecate GPS property"
 msgstr "Застаріти GPS-властивість"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    This GPS case property is currently being used to "
+#| "store the geolocation for cases.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    This GPS case property is currently being used to store "
-"the geolocation for cases.\n"
-"                    "
+"            This GPS case property is currently being used to store the\n"
+"            geolocation for cases.\n"
+"          "
 msgstr ""
 "\n"
 "                    Ця GPS-властивість кейсу наразі використовується для "
@@ -19863,18 +19927,28 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    Deprecating this case property may result in "
+#| "unintended behaviour, and so\n"
+#| "                    it is advised to first change the selected custom "
+#| "case property in\n"
+#| "                    <a href=\"%(geospatial_settings_url)s\">\n"
+#| "                        geospatial settings\n"
+#| "                    </a>\n"
+#| "                    before deprecating this case property.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Deprecating this case property may result in unintended "
-"behaviour, and so\n"
-"                    it is advised to first change the selected custom case "
-"property in\n"
-"                    <a href=\"%(geospatial_settings_url)s\">\n"
-"                        geospatial settings\n"
-"                    </a>\n"
-"                    before deprecating this case property.\n"
-"                    "
+"            Deprecating this case property may result in unintended "
+"behaviour,\n"
+"            and so it is advised to first change the selected custom case\n"
+"            property in\n"
+"            <a href=\"%(geospatial_settings_url)s\"> geospatial settings </"
+"a>\n"
+"            before deprecating this case property.\n"
+"          "
 msgstr ""
 "\n"
 "                    Застарівання цієї властивості кейсу може призвести до "
@@ -19888,23 +19962,34 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Would you like to proceed with deprecating this case "
+#| "property?\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Would you like to proceed with deprecating this case "
-"property?\n"
-"                    "
+"            Would you like to proceed with deprecating this case property?\n"
+"          "
 msgstr ""
 "\n"
 "                    Бажаєте продовжити застарівання цієї властивості кейсу?\n"
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Delete\n"
+#| "                        '<span id=\"delete-case-prop-name\"></span>'\n"
+#| "                        Case Property\n"
+#| "                    "
 msgid ""
 "\n"
-"                        Delete\n"
-"                        '<span id=\"delete-case-prop-name\"></span>'\n"
-"                        Case Property\n"
-"                    "
+"            Delete '<span id=\"delete-case-prop-name\"></span>' Case "
+"Property\n"
+"          "
 msgstr ""
 "\n"
 "                        Видалити\n"
@@ -19913,11 +19998,17 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        There are currently no cases that store data with "
+#| "this case property, so it is safe to delete.\n"
+#| "                    "
 msgid ""
 "\n"
-"                        There are currently no cases that store data with "
-"this case property, so it is safe to delete.\n"
-"                    "
+"            There are currently no cases that store data with this case\n"
+"            property, so it is safe to delete.\n"
+"          "
 msgstr ""
 "\n"
 "                        Наразі немає кейсів, які зберігають дані з цією "
@@ -19925,19 +20016,38 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Please note that if a new form or case was updated to "
+#| "the server recently that makes this property\n"
+#| "                    unsafe to delete, this will only be reflected in the "
+#| "Data Dictionary after a short while. This is not\n"
+#| "                    a blocking action and the case property can be "
+#| "created again if needed in the future. Please refer to\n"
+#| "                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
+#| "documentation</a>\n"
+#| "                    for additional information about this action.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Please note that if a new form or case was updated to "
-"the server recently that makes this property\n"
-"                    unsafe to delete, this will only be reflected in the "
-"Data Dictionary after a short while. This is not\n"
-"                    a blocking action and the case property can be created "
-"again if needed in the future. Please refer to\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
-"commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
-"documentation</a>\n"
-"                    for additional information about this action.\n"
-"                    "
+"            Please note that if a new form or case was updated to the "
+"server\n"
+"            recently that makes this property unsafe to delete, this will "
+"only\n"
+"            be reflected in the Data Dictionary after a short while. This is "
+"not\n"
+"            a blocking action and the case property can be created again if\n"
+"            needed in the future. Please refer to\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >the documentation</a\n"
+"            >\n"
+"            for additional information about this action.\n"
+"          "
 msgstr ""
 "\n"
 "                    Зверніть увагу, що якщо нещодавно на сервер було "
@@ -19953,13 +20063,21 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Would you like to mark this case property as "
+#| "deleted? Once confirmed the case\n"
+#| "                        property will be deleted upon clicking the "
+#| "\"Save\" button.\n"
+#| "                    "
 msgid ""
 "\n"
-"                        Would you like to mark this case property as "
-"deleted? Once confirmed the case\n"
-"                        property will be deleted upon clicking the \"Save\" "
-"button.\n"
-"                    "
+"            Would you like to remove this case property from the data\n"
+"            dictionary? Once confirmed, the case property will be deleted "
+"upon\n"
+"            clicking the \"Save\" button.\n"
+"          "
 msgstr ""
 "\n"
 "                        Бажаєте позначити цю властивість кейсу як видалену? "
@@ -19968,28 +20086,41 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              Deprecate\n"
+#| "              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+#| "              Case Type\n"
+#| "            "
 msgid ""
 "\n"
-"                    Delete\n"
-"                    '<span data-bind=\"text: $root.activeCaseType()\"></"
-"span>'\n"
-"                    Case Type\n"
-"                    "
+"            Delete '<span data-bind=\"text: $root.activeCaseType()\"></"
+"span>' Case\n"
+"            Type\n"
+"          "
 msgstr ""
 "\n"
-"                    Видалити\n"
-"                    '<span data-bind=\"text: $root.activeCaseType()\"></"
-"span>'\n"
-"                    тип кейсу\n"
-"                    "
+"              Застаріти\n"
+"              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+"              тип кейсу\n"
+"            "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    There are no cases that use this case type or store "
+#| "data with any of its case properties.\n"
+#| "                    Therefore, it is safe to delete this case type.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    There are no cases that use this case type or store data "
-"with any of its case properties.\n"
-"                    Therefore, it is safe to delete this case type.\n"
-"                    "
+"            There are no cases that use this case type or store data with "
+"any of\n"
+"            its case properties. Therefore, it is safe to delete this case "
+"type.\n"
+"          "
 msgstr ""
 "\n"
 "                    Немає кейсів, які використовують цей тип кейсу або "
@@ -19998,21 +20129,42 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Please note that all case properties for this case "
+#| "type will also be deleted.\n"
+#| "                    Furthermore, if a new form or case was updated to the "
+#| "server recently that makes this case type\n"
+#| "                    unsafe to delete, this will only be reflected in the "
+#| "Data Dictionary after a short while. This is not\n"
+#| "                    a blocking action and the case type can be created "
+#| "again if needed in the future. Please refer to\n"
+#| "                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
+#| "documentation</a>\n"
+#| "                    for additional information about this action.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Please note that all case properties for this case type "
-"will also be deleted.\n"
-"                    Furthermore, if a new form or case was updated to the "
-"server recently that makes this case type\n"
-"                    unsafe to delete, this will only be reflected in the "
-"Data Dictionary after a short while. This is not\n"
-"                    a blocking action and the case type can be created again "
-"if needed in the future. Please refer to\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
-"commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
-"documentation</a>\n"
-"                    for additional information about this action.\n"
-"                    "
+"            Please note that all case properties for this case type will "
+"also be\n"
+"            deleted. Furthermore, if a new form or case was updated to the\n"
+"            server recently that makes this case type unsafe to delete, "
+"this\n"
+"            will only be reflected in the Data Dictionary after a short "
+"while.\n"
+"            This is not a blocking action and the case type can be created "
+"again\n"
+"            if needed in the future. Please refer to\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >the documentation</a\n"
+"            >\n"
+"            for additional information about this action.\n"
+"          "
 msgstr ""
 "\n"
 "                    Зверніть увагу, що всі властивості цього типу кейсу "
@@ -20030,10 +20182,16 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Would you like to proceed with deleting this case "
+#| "type?\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Would you like to proceed with deleting this case type?\n"
-"                    "
+"            Would you like to proceed with deleting this case type?\n"
+"          "
 msgstr ""
 "\n"
 "                    Бажаєте продовжити видалення цього типу кейсу?\n"
@@ -22025,6 +22183,29 @@ msgid "Name of the channel created in connect messaging."
 msgstr "Назва каналу, створеного у Connect Messaging."
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Data and Sharing"
+msgid "Data Sharing"
+msgstr "Дані та спільний доступ"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://dimagi."
+#| "atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
+#| "Organization+Data+Management#Search-for-Locations\" target=\"_blank\"> "
+#| "Filter Definitions</a>."
+msgid ""
+"Opt Out of <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2386001966/Data+Sharing+Opt-Outs+-+CommCare\" target=\"_blank\"> "
+"Aggregate Data Usage</a>"
+msgstr ""
+"<i class=\"fa fa-info-circle\"></i> Дивіться <a href=\"https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
+"Organization+Data+Management#Search-for-Locations\" target=\"_blank\"> "
+"Визначення фільтрів</a>."
+
+#: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Часовий пояс за замовчуванням"
 
@@ -23215,6 +23396,151 @@ msgstr "Ключове слово SMS"
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 msgid "Action Type"
 msgstr "Тип дії"
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid "CommCare Version Compliance"
+msgid "CommCare Companion (Beta)"
+msgstr "Відповідність версії CommCare"
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      By clicking this button, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+#| "target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+#| "target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"\n"
+"              This feature is made available as a <strong>Beta Service</"
+"strong> under\n"
+"              <a href=\"https://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\"\n"
+"                >Dimagi's Terms of Service</a\n"
+"              >\n"
+"              and\n"
+"              <a href=\"https://dimagi.com/terms/latest/ba\" "
+"target=\"_blank\"\n"
+"                >Business Agreement</a\n"
+"              >.\n"
+"            "
+msgstr ""
+"\n"
+"      Натискаючи цю кнопку, ви погоджуєтеся з\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\">Умовами надання послуг</a> та\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Політикою конфіденційності</a> Dimagi.\n"
+"    "
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              <strong>Beta Services</strong> are services or features that "
+"may not be\n"
+"              supported, fully reliable, or subject to service level\n"
+"              commitments.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              <strong>As per Dimagi's Business Agreement</strong>, despite "
+"anything to the\n"
+"              contrary in this Agreement: (a) Customer may choose to use "
+"Beta\n"
+"              Services in its sole discretion; (b) Beta Services may not be\n"
+"              supported by Dimagi and may be changed at any time without "
+"notice;\n"
+"              (c) Beta Services may not be as reliable or available as the\n"
+"              Services; (d) Beta Services have not been subjected to the "
+"same\n"
+"              security measures and auditing to which the Services have "
+"been\n"
+"              subjected; and (e) DIMAGI WILL HAVE NO LIABILITY ARISING OUT "
+"OF OR\n"
+"              IN CONNECTION WITH CUSTOMER'S USE OF BETA SERVICES – ANY SUCH "
+"USE\n"
+"              WILL BE AT CUSTOMER'S OWN RISK.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid "Release Mode"
+msgid "Please note:"
+msgstr "Режим випуску"
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Will delete <strong>all</strong> of "
+#| "%(friendly_name)s's\n"
+#| "                    form submissions.\n"
+#| "                  "
+msgid ""
+"\n"
+"                This feature has <strong>not been technically audited</"
+"strong> and may not\n"
+"                perform consistently.\n"
+"              "
+msgstr ""
+"\n"
+"                    Буде видалено <strong>усі</strong> надіслані форми "
+"%(friendly_name)s.\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"                You should\n"
+"                <strong\n"
+"                  >not upload or enter any personally identifiable "
+"information\n"
+"                  (PII) or protected health information (PHI)</strong\n"
+"                >\n"
+"                into the chatbot. If you choose to do so, you do so\n"
+"                <strong>at your own risk.</strong>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                              The user will be sent an email with "
+#| "instructions to\n"
+#| "                              set a password and be able to login to this "
+#| "project.\n"
+#| "                            "
+msgid ""
+"\n"
+"                By enabling this feature, you confirm that you are an\n"
+"                <strong\n"
+"                  >admin authorized to accept these risks on behalf of all\n"
+"                  current and future users in this project space.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+"\n"
+"                              Користувач отримає лист з інструкціями щодо\n"
+"                              встановлення пароля та зможе увійти до цього "
+"проєкту.\n"
+"                            "
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              I confirm that I have read and I accept the terms outlined "
+"above,\n"
+"              including the risks associated with Beta Services.\n"
+"            "
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 msgid "Measure"
@@ -25706,6 +26032,59 @@ msgstr ""
 "                Ми надішлемо вам інструкції для скидання пароля на "
 "електронну пошту.\n"
 "              "
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+msgid ""
+"\n"
+"      Looking to sign into a different cloud environment?\n"
+"    "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Not %(username)s?\n"
+#| "                "
+msgid ""
+"\n"
+"          %(server_name)s\n"
+"          Cloud\n"
+"        "
+msgstr ""
+"\n"
+"                  Не %(username)s?\n"
+"                "
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"      Learn more about our\n"
+"      <a\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+"        target=\"_blank\"\n"
+"        >cloud environments</a\n"
+"      >.\n"
+"    "
+msgstr ""
+"\n"
+"                Дізнайтеся більше про експорти на нашому <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">Довідковому сайті</a>.\n"
+"            "
 
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
 #: corehq/apps/domain/urls.py
@@ -31164,6 +31543,14 @@ msgstr "Робоча книга не містить листа з назвою t
 msgid "type {lookup_table_name} is not defined as global"
 msgstr "Тип {lookup_table_name} не визначено як глобальний"
 
+#: corehq/apps/fixtures/upload/run_upload.py
+#, python-brace-format
+msgid ""
+"The table structure of '{tag}' cannot be changed while also modifying its "
+"data. If you need to do both, include all existing rows in the upload or "
+"perform the upload using the 'Replace existing tables' option."
+msgstr ""
+
 #: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown user: '%(name)s'. But the row is successfully added"
@@ -34091,19 +34478,27 @@ msgid "Please enter valid CAPTCHA"
 msgstr "Будь ласка, введіть правильний CAPTCHA"
 
 #: corehq/apps/hqwebapp/models.py
-#, fuzzy
-#| msgid "Invalid Date"
-msgid "United States"
-msgstr "Недійсна дата"
+msgid "European Union"
+msgstr ""
 
-#: corehq/apps/hqwebapp/models.py corehq/util/context_processors.py
+#: corehq/apps/hqwebapp/models.py
+msgid "EU"
+msgstr ""
+
+#: corehq/apps/hqwebapp/models.py
 #, fuzzy
 #| msgid "Indices"
 msgid "India"
 msgstr "Індекси"
 
 #: corehq/apps/hqwebapp/models.py
-msgid "European Union"
+#, fuzzy
+#| msgid "Invalid Date"
+msgid "United States"
+msgstr "Недійсна дата"
+
+#: corehq/apps/hqwebapp/models.py
+msgid "US"
 msgstr ""
 
 #: corehq/apps/hqwebapp/tables/export.py
@@ -34774,6 +35169,7 @@ msgstr "Вийти"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/registration/forms.py
 #: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid "Child Locations"
@@ -36298,8 +36694,8 @@ msgid "Request failed"
 msgstr "Запит не виконано"
 
 #: corehq/apps/integration/payments/filters.py
-msgid "Batch number"
-msgstr "Номер партії"
+msgid "Payment status"
+msgstr "Статус платежу"
 
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
@@ -36308,8 +36704,34 @@ msgid "Show all"
 msgstr "Показати всі"
 
 #: corehq/apps/integration/payments/filters.py
-msgid "Payment status"
-msgstr "Статус платежу"
+msgid "Batch number"
+msgstr "Номер партії"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py corehq/tabs/tabclasses.py
+msgid "Campaign"
+msgstr "Кампанія"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "Activities"
+msgid "Activity"
+msgstr "Діяльності"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+#, fuzzy
+#| msgid "underline"
+msgid "Funder"
+msgstr "підкреслення"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/users/forms.py
+msgid "Phone number"
+msgstr "Номер телефону"
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
@@ -39134,6 +39556,20 @@ msgid "Edit Program"
 msgstr "Редагувати програму"
 
 #: corehq/apps/registration/forms.py
+#, fuzzy, python-brace-format
+#| msgid "Use location name"
+msgid "{location_name} Cloud"
+msgstr "Використовувати назву місця"
+
+#: corehq/apps/registration/forms.py
+#, python-brace-format
+msgid ""
+"*You're creating an account and project space in the chosen cloud location."
+"<br/>These cannot be transferred between cloud locations. <a "
+"href='{help_link}' target='_blank'>Learn more</a>."
+msgstr ""
+
+#: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout.py
@@ -39628,14 +40064,15 @@ msgstr ""
 #| "                                 "
 msgid ""
 "\n"
-"                    To select a different\n"
+"                    To create a project in a different\n"
 "                    <a\n"
 "                      href=\"https://dimagi.atlassian.net/wiki/spaces/"
 "commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
 "                      target=\"_blank\"\n"
 "                      ><b>cloud location</b></a\n"
-"                    >, log into that location's site before creating your\n"
-"                    project:\n"
+"                    >, create an account for that cloud location first, "
+"then\n"
+"                    create a project.\n"
 "                  "
 msgstr ""
 "\n"
@@ -40352,8 +40789,15 @@ msgid "Please try again."
 msgstr "Будь ласка, спробуйте ще раз."
 
 #: corehq/apps/registration/views.py
-msgid "There is already a user with this email."
-msgstr "Користувач із цією електронною адресою вже існує."
+msgid "current"
+msgstr "поточний"
+
+#: corehq/apps/registration/views.py
+#, python-brace-format
+msgid ""
+"This email is already registered in the {location} cloud location. Please <a "
+"href=\"{login_link}\">sign in here</a>."
+msgstr ""
 
 #: corehq/apps/registration/views.py
 msgid "CommCareHQ account request"
@@ -41689,10 +42133,6 @@ msgid "Click to select a group"
 msgstr "Натисніть, щоб вибрати групу"
 
 #: corehq/apps/reports/filters/select.py
-msgid "Click to select groups"
-msgstr "Натисніть, щоб вибрати групи"
-
-#: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap3/quarter_filter.html
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap5/quarter_filter.html
 msgid "Year"
@@ -42810,6 +43250,12 @@ msgid "same"
 msgstr "однаково"
 
 #: corehq/apps/reports/standard/monitoring.py
+#, fuzzy
+#| msgid "Case Activity"
+msgid "User Activity"
+msgstr "Активність кейсів"
+
+#: corehq/apps/reports/standard/monitoring.py
 msgid "Summary of form and case activity by user or group."
 msgstr "Зведення активності за формами та кейсами за користувачем або групою."
 
@@ -42851,15 +43297,6 @@ msgid ""
 msgstr ""
 "Дата останнього подання форми у вибраному періоді. У підсумковому рядку "
 "відображається частка користувачів, які подали форми у цьому діапазоні дат"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "# Active Users"
-msgstr "# Активних користувачів"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Proportion of users in group who submitted forms in date range."
-msgstr ""
-"Частка користувачів у групі, які подали форми у вибраному діапазоні дат."
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "# Cases Created"
@@ -44389,12 +44826,6 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
 #: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/users/forms.py
-msgid "Phone number"
-msgstr "Номер телефону"
-
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
 msgid "Edit User Information"
 msgstr "Редагувати інформацію користувача"
 
@@ -45503,6 +45934,10 @@ msgid "Other SMS"
 msgstr "Інші SMS"
 
 #: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+msgid "Connect Message Survey"
+msgstr "Опитування через Connect Message"
+
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
 #: corehq/apps/smsforms/models.py
 msgid "In Progress"
 msgstr "В процесі"
@@ -46452,10 +46887,6 @@ msgid "FCM Push Notification"
 msgstr "Push-сповіщення FCM"
 
 #: corehq/apps/sms/models.py
-msgid "Connect Message Survey"
-msgstr "Опитування через Connect Message"
-
-#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr "Група користувачів"
 
@@ -46887,14 +47318,22 @@ msgid "Request Access to Messaging Features"
 msgstr "Запит на доступ до функцій обміну повідомленнями"
 
 #: corehq/apps/sms/templates/sms/wall.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      To enable messaging features, please request access by sending an "
+#| "email\n"
+#| "      to <a href=\"mailto:%(SALES_EMAIL)s\">%(SALES_EMAIL)s</a> from your "
+#| "work\n"
+#| "      email address containing the following information:\n"
+#| "    "
 msgid ""
 "\n"
 "      To enable messaging features, please request access by sending an "
-"email\n"
-"      to <a href=\"mailto:%(SALES_EMAIL)s\">%(SALES_EMAIL)s</a> from your "
-"work\n"
-"      email address containing the following information:\n"
+"email to\n"
+"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from "
+"your\n"
+"      work email address containing the following information:\n"
 "    "
 msgstr ""
 "\n"
@@ -56562,6 +57001,15 @@ msgstr ""
 "замість повного шляху до місця."
 
 #: corehq/feature_previews.py
+msgid "CommCare Companion AI Support Bot"
+msgstr ""
+
+#: corehq/feature_previews.py
+msgid ""
+"This setting allows users to chat with a chatbot to get help with CommCare."
+msgstr ""
+
+#: corehq/feature_previews.py
 msgid "Call Center"
 msgstr "Кол-центр"
 
@@ -60854,10 +61302,6 @@ msgstr "Статистика домену"
 msgid "Microplanning"
 msgstr "Мікропланування"
 
-#: corehq/tabs/tabclasses.py
-msgid "Campaign"
-msgstr "Кампанія"
-
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"
 msgstr "Переглянути все"
@@ -61181,11 +61625,35 @@ msgid "hash"
 msgstr ""
 
 #: corehq/util/context_processors.py
-msgid "US"
+msgid "Need Help?"
 msgstr ""
 
 #: corehq/util/context_processors.py
-msgid "EU"
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+
+#: corehq/util/context_processors.py
+#, fuzzy
+#| msgid "How to Create and Deploy a CommCare Application."
+msgid "I need help with building my CommCare application."
+msgstr "Як створити та розгорнути застосунок CommCare."
+
+#: corehq/util/context_processors.py
+msgid "I need help troubleshooting my mobile application."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "I need help with exporting or understanding my data."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "Finding the best answer"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
 msgstr ""
 
 #: corehq/util/jsonattrs.py
@@ -61862,6 +62330,34 @@ msgstr "Обов'язкові колонки: {column_names}"
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
 
+#~ msgid ""
+#~ "\n"
+#~ "                    Delete\n"
+#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></"
+#~ "span>'\n"
+#~ "                    Case Type\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Видалити\n"
+#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></"
+#~ "span>'\n"
+#~ "                    тип кейсу\n"
+#~ "                    "
+
+#~ msgid "There is already a user with this email."
+#~ msgstr "Користувач із цією електронною адресою вже існує."
+
+#~ msgid "Click to select groups"
+#~ msgstr "Натисніть, щоб вибрати групи"
+
+#~ msgid "# Active Users"
+#~ msgstr "# Активних користувачів"
+
+#~ msgid "Proportion of users in group who submitted forms in date range."
+#~ msgstr ""
+#~ "Частка користувачів у групі, які подали форми у вибраному діапазоні дат."
+
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -62058,29 +62554,6 @@ msgstr "Введіть коректний JSON"
 #~ "<a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
 #~ "    </p>\n"
 #~ "  "
-
-#, fuzzy
-#~| msgid ""
-#~| "\n"
-#~| "                              The user will be sent an email with "
-#~| "instructions to\n"
-#~| "                              set a password and be able to login to "
-#~| "this project.\n"
-#~| "                            "
-#~ msgid ""
-#~ "\n"
-#~ "                                  The user will be sent an email with\n"
-#~ "                                  instructions to set a password and be "
-#~ "able to\n"
-#~ "                                  login to this project.\n"
-#~ "                                "
-#~ msgstr ""
-#~ "\n"
-#~ "                              Користувач отримає лист з інструкціями "
-#~ "щодо\n"
-#~ "                              встановлення пароля та зможе увійти до "
-#~ "цього проєкту.\n"
-#~ "                            "
 
 #~ msgid "Explore Case Data (Preview)"
 #~ msgstr "Дослідження даних справ (Попередній перегляд)"
@@ -62347,9 +62820,6 @@ msgstr "Введіть коректний JSON"
 
 #~ msgid "info"
 #~ msgstr "інформація"
-
-#~ msgid "current"
-#~ msgstr "поточний"
 
 #, python-brace-format
 #~ msgid "{num} cases"

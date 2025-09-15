@@ -1461,7 +1461,7 @@ SMS_LOG_CHANGES = StaticToggle(
 EXPORT_DATA_SOURCE_DATA = StaticToggle(
     'export_data_source_data',
     'Add Export Data Source Data page',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description="Add the Export Data Source Data page to the Data tab",
 )
@@ -1553,13 +1553,6 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'Allow unlimited reports created in report builder',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
-)
-
-SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
-    'show_ids_in_report_builder',
-    'Allow adding Case IDs to report builder reports.',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
 )
 
 
@@ -1656,18 +1649,6 @@ OPEN_SUBMISSION_ENDPOINT = StaticToggle(
     'Leave submission endpoint open to let old APIs keep working',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
-)
-
-EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
-    'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users or Locations filter',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    description=(
-        "This flag allows you filter the users to display in the same way as the "
-        "other reports - by individual user, group, or location.  Note that this "
-        "will also force the report to always display by user."
-    ),
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -2067,6 +2048,16 @@ ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'Enable Accounting Testing Tools',
     TAG_INTERNAL,
     [NAMESPACE_USER]
+)
+
+SHOW_AUTO_RENEWAL = StaticToggle(
+    'show_auto_renewal',
+    'Show Auto Renewal',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Show options to enable or disable Auto Renewal for a subscription while the feature is in development.
+    """
 )
 
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
@@ -2586,14 +2577,6 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
                 'such as schedule creation and deletion.'
 )
 
-WEB_USERS_IN_REPORTS = StaticToggle(
-    'web_users_in_reports',
-    'Adds web users to to the body of the Worker Activity and Project Health reports',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Adds web users to the body of the Worker Activity and Project Health reports'
-)
-
 CUSTOM_EMAIL_GATEWAY = StaticToggle(
     'custom_email_gateway',
     'Allows user to define custom email gateway that can be used to send emails from HQ',
@@ -2942,12 +2925,4 @@ CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
     label='Convert the group separator to a symbol XML can support',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-CHATBOT = StaticToggle(
-    slug='show_ocs_chatbot',
-    label='Show OCS Chatbot',
-    tag=TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    description='Show OCS Chatbot',
 )

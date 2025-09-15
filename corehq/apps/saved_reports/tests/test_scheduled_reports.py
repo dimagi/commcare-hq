@@ -7,6 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.reports.views import get_scheduled_report_response
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
@@ -239,7 +240,7 @@ class ScheduledReportTest(TestCase):
 
 @patch('corehq.apps.reports.standard.monitoring.util.get_simplified_users',
        new=lambda q: [])
-@es_test(requires=[case_adapter, form_adapter], setup_class=True)
+@es_test(requires=[case_adapter, form_adapter, user_adapter], setup_class=True)
 class ScheduledReportSendingTest(TestCase):
 
     domain = 'test-scheduled-reports'

@@ -37,8 +37,22 @@ $.fn.createDateRangePicker = function (
     };
     var hasStartAndEndDate = !_.isEmpty(startdate) && !_.isEmpty(enddate);
     if (hasStartAndEndDate) {
-        config.startDate = new Date(startdate);
-        config.endDate = new Date(enddate);
+        // Parse dates as local dates to avoid timezone conversion
+        // This operates specifically on a "YYYY-MM-DD" date.
+        var startParts = startdate.split('-');
+        var endParts = enddate.split('-');
+
+        config.startDate = new Date(
+            parseInt(startParts[0]),
+            parseInt(startParts[1]) - 1,
+            parseInt(startParts[2]),
+        );
+
+        config.endDate = new Date(
+            parseInt(endParts[0]),
+            parseInt(endParts[1]) - 1,
+            parseInt(endParts[2]),
+        );
     }
 
     $(this).daterangepicker(config);
