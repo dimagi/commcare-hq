@@ -36,7 +36,7 @@ def render_untrusted_identity_provider_for_domain_view(request, domain):
 
 
 def render_sso_error(request, error):
-    return render(request, 'sso/config_errors.html', {
+    return render(request, 'sso/bootstrap3/config_errors.html', {
         'idp_is_active': request.idp.is_active,
         'idp_name': request.idp.name,
         'error': error,
