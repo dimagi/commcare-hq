@@ -1308,8 +1308,16 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
         for action in keyword.keywordaction_set.all():
             if action.recipient == KeywordAction.RECIPIENT_SENDER:
-                if action.action in (KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS):
-                    content_type = cls.CONTENT_SMS_SURVEY
+                if action.action in (
+                    KeywordAction.ACTION_SMS_SURVEY,
+                    KeywordAction.ACTION_STRUCTURED_SMS,
+                    KeywordAction.ACTION_CONNECT_SURVEY,
+                ):
+                    content_type = (
+                        cls.CONTENT_CONNECT_SURVEY
+                        if action.action == KeywordAction.ACTION_CONNECT_SURVEY
+                        else cls.CONTENT_SMS_SURVEY
+                    )
                     app_id = action.app_id
                     form_unique_id = action.form_unique_id
                     form_name = cls.get_form_name_or_none(keyword.domain, action.app_id, action.form_unique_id)

@@ -51,7 +51,12 @@ from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent, ConnectMessageContent
+from corehq.messaging.scheduling.models import (
+    SMSContent,
+    SMSSurveyContent,
+    ConnectMessageContent,
+    ConnectMessageSurveyContent,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     ScheduleInstance,
 )
@@ -651,6 +656,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             KeywordAction.ACTION_SMS,
             KeywordAction.ACTION_SMS_SURVEY,
             KeywordAction.ACTION_CONNECT_MESSAGE,
+            KeywordAction.ACTION_CONNECT_SURVEY,
         )
         if survey_keyword_action.action in kw_actions:
             if isinstance(contact, Group):
@@ -678,6 +684,16 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             elif survey_keyword_action.action == KeywordAction.ACTION_CONNECT_MESSAGE:
                 content = ConnectMessageContent(
                     message={'*': survey_keyword_action.message_content},
+                )
+            elif survey_keyword_action.action == KeywordAction.ACTION_CONNECT_SURVEY:
+                content = ConnectMessageSurveyContent(
+                    app_id=survey_keyword_action.app_id,
+                    form_unique_id=survey_keyword_action.form_unique_id,
+                    expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
+                )
+                content.set_context(
+                    case=case,
+                    critical_section_already_acquired=recipient_is_sender,
                 )
             else:
                 raise ValueError("Unexpected action %s" % survey_keyword_action.action)
