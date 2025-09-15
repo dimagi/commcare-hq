@@ -177,6 +177,9 @@
     ],
     "is_complete": true
   },
+  "sso": {
+    "in_progress": true
+  },
   "user_importer": {
     "is_complete": true
   },
