@@ -345,7 +345,7 @@ class KeywordForm(Form):
                         data_bind="value: senderAppAndFormUniqueId",
                         css_class="hqwebapp-select2",
                     ),
-                    data_bind="visible: isMessageSurvey",
+                    data_bind="visible: showSurveyInput",
                 ),
                 crispy.Field(
                     'other_recipient_content_type',
