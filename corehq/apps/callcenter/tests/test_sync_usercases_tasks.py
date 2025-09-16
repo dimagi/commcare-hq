@@ -65,7 +65,6 @@ class TestWebUserSyncUsercase(TestCase):
         open_usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, self.user_id, USERCASE_TYPE)
         self.assertFalse(open_usercase.closed)
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_location_data(self):
         self.user.set_location(self.domain_name, self.location)
         self.user.add_to_assigned_locations(self.domain_name, self.another_location)
