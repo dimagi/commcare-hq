@@ -73,8 +73,8 @@ class BlobMeta(PartitionedModel, Model):
             # https://stackoverflow.com/a/50926644/10840
             ("key",),
         ]
-        index_together = [("parent_id", "type_code", "name")]
         indexes = [
+            Index(fields=["parent_id", "type_code", "name"]),
             Index(
                 fields=['expires_on'],
                 name="blobs_blobmeta_expires_ed7e3d",

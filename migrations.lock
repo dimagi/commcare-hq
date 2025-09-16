@@ -219,6 +219,7 @@ blobs
  0012_rename_indexes
  0013_drop_icds_cas_index
  0014_alter_deletedblobmeta_id
+ 0015_rename_blobmeta_parent_id_type_code_name_blobs_blobm_parent__73d7c2_idx
 campaign
  0001_initial
  0002_dashboardmap_dashboardreport
@@ -238,6 +239,7 @@ case_importer
  0011_update_blob_paths
  0012_auto_20190405_1747
  0013_make_duplicates_errors
+ 0014_rename_caseuploadrecord_domain_created_case_import_domain_21a470_idx
 case_search
  0001_initial
  0002_auto_20161114_1901
@@ -393,6 +395,7 @@ data_interfaces
  0036_backfill_dedupe_match_values
  0037_add_dedupe_update_toggle
  0038_alter_caseduplicate_potential_duplicates
+ 0039_rename_caserulesubmission_domain_created_on_data_interf_domain_718740_idx_and_more
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -438,6 +441,7 @@ domain
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
  0014_appreleasemodesetting
  0015_delete_projectlimit
+ 0016_rename_superuserprojectentryrecord_domain_username_domain_supe_domain_c3d32e_idx
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -625,6 +629,7 @@ form_processor
  0095_remove_xforminstance_deleted_state
  0096_add_partial_index_cases
  0097_case_domain_type_id_index
+ 0098_rename_caseattachment_case_name_form_proces_case_id_2fd259_idx_and_more
 formplayer_api
  0001_drop_old_tables
 generic_inbound
@@ -801,6 +806,7 @@ ota
  0010_alter_devicelogrequest
  0011_remove_devicelogrequest_deviceid
  0012_integritysamplepercentage
+ 0013_alter_serialidbucket_index_together
 otp_static
  0001_initial
  0002_throttling
@@ -832,6 +838,7 @@ phonelog
  0013_delete_olddevicereportentry
  0014_auto_20170718_2039
  0015_devicereportentry_android_version_and_more
+ 0016_rename_devicereportentry_domain_device_id_phonelog_da_domain_e98c65_idx_and_more
 phonenumber
  0001_squashed_0001_initial (10 squashed migrations)
 pillow_retry
@@ -972,6 +979,7 @@ scheduling_partitioned
  0006_unique_indexes
  0007_index_cleanup
  0008_track_attempts
+ 0009_rename_alertscheduleinstance_active_next_event_due_scheduling__active_c8422f_idx_and_more
 sessions
  0001_initial
 sites
@@ -1038,6 +1046,7 @@ sms
  0058_email_html_body
  0059_remove_unicel_backend
  0060_alter_messagingevent_content_type_and_more
+ 0061_rename_expectedcallback_domain_date_sms_expecte_domain_d5863a_idx_and_more
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1065,6 +1074,7 @@ smsforms
  0001_initial
  0002_add_state_tracking_fields
  0003_make_fields_not_null
+ 0004_rename_sqlxformssession_session_is_open_connection_id_smsforms_sq_session_5286fb_idx_and_more
 sql_accessors
  0001_initial
  0002_add_sync_functions

@@ -744,9 +744,9 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     class Meta(object):
         db_table = "form_processor_xforminstancesql"
         app_label = "form_processor"
-        index_together = [
-            ('domain', 'state'),
-            ('domain', 'user_id'),
+        indexes = [
+            models.Index(fields=['domain', 'state']),
+            models.Index(fields=['domain', 'user_id']),
         ]
         indexes = [
             models.Index(fields=['xmlns']),
@@ -777,8 +777,8 @@ class DeprecatedXFormAttachmentSQL(models.Model):
     class Meta(object):
         db_table = "form_processor_xformattachmentsql"
         app_label = "form_processor"
-        index_together = [
-            ("form_id", "name"),
+        indexes = [
+            models.Index(fields=["form_id", "name"]),
         ]
 
 
