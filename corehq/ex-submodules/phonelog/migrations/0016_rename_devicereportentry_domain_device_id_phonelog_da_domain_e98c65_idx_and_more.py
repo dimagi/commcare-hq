@@ -10,10 +10,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameIndex(
-            model_name='devicereportentry',
-            new_name='phonelog_da_domain_e98c65_idx',
-            old_fields=('domain', 'device_id'),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    'ALTER INDEX "phonelog_daily_partition_domain_device_id_0f8f03f5_idx" RENAME TO "phonelog_da_domain_e98c65_idx"',
+                    'ALTER INDEX "phonelog_da_domain_e98c65_idx" RENAME TO "phonelog_daily_partition_domain_device_id_0f8f03f5_idx"',
+                ),
+            ],
+            state_operations=[
+                migrations.RenameIndex(
+                    model_name='devicereportentry',
+                    new_name='phonelog_da_domain_e98c65_idx',
+                    old_fields=('domain', 'device_id'),
+                ),
+            ],
         ),
         migrations.RenameIndex(
             model_name='devicereportentry',
