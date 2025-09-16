@@ -1,8 +1,8 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import PropertyMock, patch
 
-from django.contrib.messages import get_messages
+from django.contrib.messages import get_messages, ERROR
 from django.test import RequestFactory, TestCase
 from django.test.client import Client
 from django.urls import reverse
@@ -13,6 +13,7 @@ from corehq import privileges
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
+    SubscriptionAdjustmentMethod,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -544,6 +545,90 @@ class TestSubscriptionRenewalViews(TestCase):
         self.assertEqual(response.context['subscription'], subscription)
         self.assertEqual(response.context['plan'], subscription.plan_version.user_facing_description)
         self.assertEqual(response.context['next_plan'], expected_next_plan.user_facing_description)
+
+
+class TestSetSubscriptionAutoRenew(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.domain = generator.arbitrary_domain()
+        self.addCleanup(self.domain.delete)
+
+        self.user = generator.arbitrary_user(self.domain.name, is_webuser=True, is_admin=True)
+        self.account = generator.billing_account(self.user, self.user.name)
+        self.client = Client()
+        self.client.force_login(user=self.user.get_django_user())
+
+    def tearDown(self):
+        clear_plan_version_cache()
+        super().tearDown()
+
+    def _generate_subscription(self, auto_renew, date_start=datetime.today(), date_end=None):
+        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
+        return generator.generate_domain_subscription(
+            self.account, self.domain, date_start, date_end,
+            plan_version=plan_version, is_active=True, auto_renew=auto_renew
+        )
+
+    def test_enable_auto_renew(self):
+        subscription = self._generate_subscription(auto_renew=False)
+        self.client.post(reverse('enable_auto_renew', args=[self.domain.name]))
+        subscription.refresh_from_db()
+        assert subscription.auto_renew
+
+    def test_disable_auto_renew(self):
+        subscription = self._generate_subscription(auto_renew=True)
+        self.client.post(reverse('disable_auto_renew', args=[self.domain.name]))
+        subscription.refresh_from_db()
+        assert not subscription.auto_renew
+
+    def test_enable_shows_error_if_next_subscription(self):
+        subscription = self._generate_subscription(
+            auto_renew=False, date_end=datetime.today() + timedelta(days=1),
+        )
+        subscription.renew_subscription()
+        assert subscription.next_subscription is not None
+
+        response = self.client.post(reverse('enable_auto_renew', args=[self.domain.name]))
+        subscription.refresh_from_db()
+
+        assert not subscription.auto_renew
+        messages = list(get_messages(response.wsgi_request))
+        assert messages[0].message == 'Auto renewal cannot be enabled for the current subscription.'
+        assert messages[0].level == ERROR
+
+    def test_disable_cancels_auto_renewed_next_subscription(self):
+        subscription = self._generate_subscription(
+            auto_renew=True, date_end=datetime.today() + timedelta(days=1),
+        )
+        next_subscription = subscription.renew_subscription(
+            adjustment_method=SubscriptionAdjustmentMethod.AUTO_RENEWAL
+        )
+        assert subscription.next_subscription.pk == next_subscription.pk
+
+        self.client.post(reverse('disable_auto_renew', args=[self.domain.name]))
+        subscription.refresh_from_db()
+        next_subscription.refresh_from_db()
+
+        assert not subscription.auto_renew
+        assert subscription.next_subscription is None
+        assert next_subscription.is_hidden_to_ops
+
+    def test_disable_leaves_non_auto_renewed_next_subscription(self):
+        subscription = self._generate_subscription(
+            auto_renew=True, date_end=datetime.today() + timedelta(days=1),
+        )
+        next_subscription = subscription.renew_subscription(
+            adjustment_method=SubscriptionAdjustmentMethod.USER
+        )
+        assert subscription.next_subscription.pk == next_subscription.pk
+
+        self.client.post(reverse('disable_auto_renew', args=[self.domain.name]))
+        subscription.refresh_from_db()
+        next_subscription.refresh_from_db()
+
+        assert not subscription.auto_renew
+        assert subscription.next_subscription.pk == next_subscription.pk
+        assert not next_subscription.is_hidden_to_ops
 
 
 class TestCredentialsApplicationSettingsView(TestCase):

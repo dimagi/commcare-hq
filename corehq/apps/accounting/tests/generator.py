@@ -153,7 +153,7 @@ def custom_plan_version(name='Custom software plan', edition=SoftwarePlanEdition
 @unit_testing_only
 def generate_domain_subscription(account, domain, date_start, date_end,
                                  plan_version=None, service_type=SubscriptionType.NOT_SET,
-                                 is_active=False, do_not_invoice=False):
+                                 is_active=False, do_not_invoice=False, **kwargs):
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
         account=account,
@@ -163,7 +163,8 @@ def generate_domain_subscription(account, domain, date_start, date_end,
         date_end=date_end,
         service_type=service_type,
         is_active=is_active,
-        do_not_invoice=do_not_invoice
+        do_not_invoice=do_not_invoice,
+        **kwargs
     )
     subscription.save()
     return subscription
