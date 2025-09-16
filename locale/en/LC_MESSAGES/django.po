@@ -994,6 +994,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -5169,7 +5170,6 @@ msgid "Android app dependencies"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
 msgstr ""
 
@@ -5369,6 +5369,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/forms.py
@@ -13136,8 +13137,7 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/reports/filters/select.py
-#: corehq/apps/reports/standard/monitoring.py corehq/motech/fhir/const.py
+#: corehq/apps/reports/filters/select.py corehq/motech/fhir/const.py
 msgid "Group"
 msgstr ""
 
@@ -15364,6 +15364,10 @@ msgid "Create Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "Loading data dictionary..."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
 "          There was an error processing the request. Please try again.\n"
@@ -15401,6 +15405,10 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "FHIR Resource Property Path"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "Loading properties..."
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15501,46 +15509,51 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
-"\n"
-"              Deprecate\n"
-"              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-"              Case Type\n"
-"            "
+" Deprecate '<span\n"
+"            data-bind=\"text: $root.activeCaseType()\"\n"
+"          ></span\n"
+"          >' Case Type "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #, python-format
 msgid ""
 "\n"
-"            <p>\n"
-"              There are a total of\n"
-"              <strong>\n"
-"                <span data-bind=\"text: activeCaseTypeModuleCount()\"></"
-"span> application module(s)\n"
-"              </strong>\n"
-"              that are currently using this case type.\n"
-"            </p>\n"
-"            <p>\n"
-"              Deprecating this case type will have the following effects:\n"
-"            </p>\n"
-"            <ul>\n"
-"              <li>This case type will not be available from the reports "
-"filtering menu.</li>\n"
-"              <li>All case properties/groups for this case type will be "
-"deprecated.</li>\n"
-"              <li>New exports cannot be created with this case type.</li>\n"
-"              <li>Case imports cannot be done for cases with this case type."
-"</li>\n"
-"              <li>New automatic rules cannot be created with this case type."
-"</li>\n"
-"            </ul>\n"
-"            <p>\n"
-"              For more information on deprecated case types, see the\n"
-"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/"
-"spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-"
-"Delete-Case-Types-and-Case-Properties\">following documentation</a>.\n"
-"            </p>\n"
-"          "
+"        <p>\n"
+"          There are a total of\n"
+"          <strong>\n"
+"            <span data-bind=\"text: activeCaseTypeModuleCount()\"></span>\n"
+"            application module(s)\n"
+"          </strong>\n"
+"          that are currently using this case type.\n"
+"        </p>\n"
+"        <p>Deprecating this case type will have the following effects:</p>\n"
+"        <ul>\n"
+"          <li>\n"
+"            This case type will not be available from the reports filtering\n"
+"            menu.\n"
+"          </li>\n"
+"          <li>\n"
+"            All case properties/groups for this case type will be "
+"deprecated.\n"
+"          </li>\n"
+"          <li>New exports cannot be created with this case type.</li>\n"
+"          <li>Case imports cannot be done for cases with this case type.</"
+"li>\n"
+"          <li>New automatic rules cannot be created with this case type.</"
+"li>\n"
+"        </ul>\n"
+"        <p>\n"
+"          For more information on deprecated case types, see the\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-"
+"Properties\"\n"
+"            >following documentation</a\n"
+"          >.\n"
+"        </p>\n"
+"        "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
@@ -15550,119 +15563,126 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                    This GPS case property is currently being used to store "
-"the geolocation for cases.\n"
-"                    "
+"            This GPS case property is currently being used to store the\n"
+"            geolocation for cases.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #, python-format
 msgid ""
 "\n"
-"                    Deprecating this case property may result in unintended "
-"behaviour, and so\n"
-"                    it is advised to first change the selected custom case "
-"property in\n"
-"                    <a href=\"%(geospatial_settings_url)s\">\n"
-"                        geospatial settings\n"
-"                    </a>\n"
-"                    before deprecating this case property.\n"
-"                    "
+"            Deprecating this case property may result in unintended "
+"behaviour,\n"
+"            and so it is advised to first change the selected custom case\n"
+"            property in\n"
+"            <a href=\"%(geospatial_settings_url)s\"> geospatial settings </"
+"a>\n"
+"            before deprecating this case property.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                    Would you like to proceed with deprecating this case "
-"property?\n"
-"                    "
+"            Would you like to proceed with deprecating this case property?\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                        Delete\n"
-"                        '<span id=\"delete-case-prop-name\"></span>'\n"
-"                        Case Property\n"
-"                    "
+"            Delete '<span id=\"delete-case-prop-name\"></span>' Case "
+"Property\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                        There are currently no cases that store data with "
-"this case property, so it is safe to delete.\n"
-"                    "
+"            There are currently no cases that store data with this case\n"
+"            property, so it is safe to delete.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                    Please note that if a new form or case was updated to "
-"the server recently that makes this property\n"
-"                    unsafe to delete, this will only be reflected in the "
-"Data Dictionary after a short while. This is not\n"
-"                    a blocking action and the case property can be created "
-"again if needed in the future. Please refer to\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
-"commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
-"documentation</a>\n"
-"                    for additional information about this action.\n"
-"                    "
+"            Please note that if a new form or case was updated to the "
+"server\n"
+"            recently that makes this property unsafe to delete, this will "
+"only\n"
+"            be reflected in the Data Dictionary after a short while. This is "
+"not\n"
+"            a blocking action and the case property can be created again if\n"
+"            needed in the future. Please refer to\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >the documentation</a\n"
+"            >\n"
+"            for additional information about this action.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                        Would you like to mark this case property as "
-"deleted? Once confirmed the case\n"
-"                        property will be deleted upon clicking the \"Save\" "
-"button.\n"
-"                    "
+"            Would you like to remove this case property from the data\n"
+"            dictionary? Once confirmed, the case property will be deleted "
+"upon\n"
+"            clicking the \"Save\" button.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                    Delete\n"
-"                    '<span data-bind=\"text: $root.activeCaseType()\"></"
-"span>'\n"
-"                    Case Type\n"
-"                    "
+"            Delete '<span data-bind=\"text: $root.activeCaseType()\"></"
+"span>' Case\n"
+"            Type\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                    There are no cases that use this case type or store data "
-"with any of its case properties.\n"
-"                    Therefore, it is safe to delete this case type.\n"
-"                    "
+"            There are no cases that use this case type or store data with "
+"any of\n"
+"            its case properties. Therefore, it is safe to delete this case "
+"type.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                    Please note that all case properties for this case type "
-"will also be deleted.\n"
-"                    Furthermore, if a new form or case was updated to the "
-"server recently that makes this case type\n"
-"                    unsafe to delete, this will only be reflected in the "
-"Data Dictionary after a short while. This is not\n"
-"                    a blocking action and the case type can be created again "
-"if needed in the future. Please refer to\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
-"commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
-"documentation</a>\n"
-"                    for additional information about this action.\n"
-"                    "
+"            Please note that all case properties for this case type will "
+"also be\n"
+"            deleted. Furthermore, if a new form or case was updated to the\n"
+"            server recently that makes this case type unsafe to delete, "
+"this\n"
+"            will only be reflected in the Data Dictionary after a short "
+"while.\n"
+"            This is not a blocking action and the case type can be created "
+"again\n"
+"            if needed in the future. Please refer to\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >the documentation</a\n"
+"            >\n"
+"            for additional information about this action.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                    Would you like to proceed with deleting this case type?\n"
-"                    "
+"            Would you like to proceed with deleting this case type?\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
@@ -17408,6 +17428,17 @@ msgid "Name of the channel created in connect messaging."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Data Sharing"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Opt Out of <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2386001966/Data+Sharing+Opt-Outs+-+CommCare\" target=\"_blank\"> "
+"Aggregate Data Usage</a>"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr ""
 
@@ -18345,6 +18376,107 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 msgid "Action Type"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid "CommCare Companion (Beta)"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              This feature is made available as a <strong>Beta Service</"
+"strong> under\n"
+"              <a href=\"https://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\"\n"
+"                >Dimagi's Terms of Service</a\n"
+"              >\n"
+"              and\n"
+"              <a href=\"https://dimagi.com/terms/latest/ba\" "
+"target=\"_blank\"\n"
+"                >Business Agreement</a\n"
+"              >.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              <strong>Beta Services</strong> are services or features that "
+"may not be\n"
+"              supported, fully reliable, or subject to service level\n"
+"              commitments.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              <strong>As per Dimagi's Business Agreement</strong>, despite "
+"anything to the\n"
+"              contrary in this Agreement: (a) Customer may choose to use "
+"Beta\n"
+"              Services in its sole discretion; (b) Beta Services may not be\n"
+"              supported by Dimagi and may be changed at any time without "
+"notice;\n"
+"              (c) Beta Services may not be as reliable or available as the\n"
+"              Services; (d) Beta Services have not been subjected to the "
+"same\n"
+"              security measures and auditing to which the Services have "
+"been\n"
+"              subjected; and (e) DIMAGI WILL HAVE NO LIABILITY ARISING OUT "
+"OF OR\n"
+"              IN CONNECTION WITH CUSTOMER'S USE OF BETA SERVICES – ANY SUCH "
+"USE\n"
+"              WILL BE AT CUSTOMER'S OWN RISK.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid "Please note:"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"                This feature has <strong>not been technically audited</"
+"strong> and may not\n"
+"                perform consistently.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"                You should\n"
+"                <strong\n"
+"                  >not upload or enter any personally identifiable "
+"information\n"
+"                  (PII) or protected health information (PHI)</strong\n"
+"                >\n"
+"                into the chatbot. If you choose to do so, you do so\n"
+"                <strong>at your own risk.</strong>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"                By enabling this feature, you confirm that you are an\n"
+"                <strong\n"
+"                  >admin authorized to accept these risks on behalf of all\n"
+"                  current and future users in this project space.</strong\n"
+"                >\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+msgid ""
+"\n"
+"              I confirm that I have read and I accept the terms outlined "
+"above,\n"
+"              including the risks associated with Beta Services.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
@@ -20062,6 +20194,38 @@ msgid ""
 "                We will email instructions to you for resetting your "
 "password.\n"
 "              "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+msgid ""
+"\n"
+"      Looking to sign into a different cloud environment?\n"
+"    "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#, python-format
+msgid ""
+"\n"
+"          %(server_name)s\n"
+"          Cloud\n"
+"        "
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+msgid ""
+"\n"
+"      Learn more about our\n"
+"      <a\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+"        target=\"_blank\"\n"
+"        >cloud environments</a\n"
+"      >.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
@@ -24680,6 +24844,14 @@ msgstr ""
 msgid "type {lookup_table_name} is not defined as global"
 msgstr ""
 
+#: corehq/apps/fixtures/upload/run_upload.py
+#, python-brace-format
+msgid ""
+"The table structure of '{tag}' cannot be changed while also modifying its "
+"data. If you need to do both, include all existing rows in the upload or "
+"perform the upload using the 'Replace existing tables' option."
+msgstr ""
+
 #: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown user: '%(name)s'. But the row is successfully added"
@@ -27146,15 +27318,23 @@ msgid "Please enter valid CAPTCHA"
 msgstr ""
 
 #: corehq/apps/hqwebapp/models.py
-msgid "United States"
+msgid "European Union"
 msgstr ""
 
-#: corehq/apps/hqwebapp/models.py corehq/util/context_processors.py
+#: corehq/apps/hqwebapp/models.py
+msgid "EU"
+msgstr ""
+
+#: corehq/apps/hqwebapp/models.py
 msgid "India"
 msgstr ""
 
 #: corehq/apps/hqwebapp/models.py
-msgid "European Union"
+msgid "United States"
+msgstr ""
+
+#: corehq/apps/hqwebapp/models.py
+msgid "US"
 msgstr ""
 
 #: corehq/apps/hqwebapp/tables/export.py
@@ -27663,6 +27843,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/registration/forms.py
 #: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Cloud Location"
 msgstr ""
@@ -28887,7 +29068,7 @@ msgid "Request failed"
 msgstr ""
 
 #: corehq/apps/integration/payments/filters.py
-msgid "Batch number"
+msgid "Payment status"
 msgstr ""
 
 #: corehq/apps/integration/payments/filters.py
@@ -28897,7 +29078,29 @@ msgid "Show all"
 msgstr ""
 
 #: corehq/apps/integration/payments/filters.py
-msgid "Payment status"
+msgid "Batch number"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py corehq/tabs/tabclasses.py
+msgid "Campaign"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+msgid "Activity"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+msgid "Funder"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/users/forms.py
+msgid "Phone number"
 msgstr ""
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
@@ -31265,6 +31468,19 @@ msgid "Edit Program"
 msgstr ""
 
 #: corehq/apps/registration/forms.py
+#, python-brace-format
+msgid "{location_name} Cloud"
+msgstr ""
+
+#: corehq/apps/registration/forms.py
+#, python-brace-format
+msgid ""
+"*You're creating an account and project space in the chosen cloud location."
+"<br/>These cannot be transferred between cloud locations. <a "
+"href='{help_link}' target='_blank'>Learn more</a>."
+msgstr ""
+
+#: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout.py
@@ -31606,14 +31822,15 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
-"                    To select a different\n"
+"                    To create a project in a different\n"
 "                    <a\n"
 "                      href=\"https://dimagi.atlassian.net/wiki/spaces/"
 "commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
 "                      target=\"_blank\"\n"
 "                      ><b>cloud location</b></a\n"
-"                    >, log into that location's site before creating your\n"
-"                    project:\n"
+"                    >, create an account for that cloud location first, "
+"then\n"
+"                    create a project.\n"
 "                  "
 msgstr ""
 
@@ -32084,7 +32301,14 @@ msgid "Please try again."
 msgstr ""
 
 #: corehq/apps/registration/views.py
-msgid "There is already a user with this email."
+msgid "current"
+msgstr ""
+
+#: corehq/apps/registration/views.py
+#, python-brace-format
+msgid ""
+"This email is already registered in the {location} cloud location. Please <a "
+"href=\"{login_link}\">sign in here</a>."
 msgstr ""
 
 #: corehq/apps/registration/views.py
@@ -33307,10 +33531,6 @@ msgid "Click to select a group"
 msgstr ""
 
 #: corehq/apps/reports/filters/select.py
-msgid "Click to select groups"
-msgstr ""
-
-#: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap3/quarter_filter.html
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap5/quarter_filter.html
 msgid "Year"
@@ -34327,6 +34547,10 @@ msgid "same"
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
+msgid "User Activity"
+msgstr ""
+
+#: corehq/apps/reports/standard/monitoring.py
 msgid "Summary of form and case activity by user or group."
 msgstr ""
 
@@ -34363,14 +34587,6 @@ msgstr ""
 msgid ""
 "Date of last form submission in time period.  Total row displays proportion "
 "of users submitting forms in date range"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "# Active Users"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Proportion of users in group who submitted forms in date range."
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
@@ -35709,12 +35925,6 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
 #: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/users/forms.py
-msgid "Phone number"
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
 msgid "Edit User Information"
 msgstr ""
 
@@ -36660,6 +36870,10 @@ msgid "Other SMS"
 msgstr ""
 
 #: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+msgid "Connect Message Survey"
+msgstr ""
+
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
 #: corehq/apps/smsforms/models.py
 msgid "In Progress"
 msgstr ""
@@ -37494,10 +37708,6 @@ msgid "FCM Push Notification"
 msgstr ""
 
 #: corehq/apps/sms/models.py
-msgid "Connect Message Survey"
-msgstr ""
-
-#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr ""
 
@@ -37869,10 +38079,10 @@ msgstr ""
 msgid ""
 "\n"
 "      To enable messaging features, please request access by sending an "
-"email\n"
-"      to <a href=\"mailto:%(SALES_EMAIL)s\">%(SALES_EMAIL)s</a> from your "
-"work\n"
-"      email address containing the following information:\n"
+"email to\n"
+"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from "
+"your\n"
+"      work email address containing the following information:\n"
 "    "
 msgstr ""
 
@@ -45536,6 +45746,15 @@ msgid ""
 msgstr ""
 
 #: corehq/feature_previews.py
+msgid "CommCare Companion AI Support Bot"
+msgstr ""
+
+#: corehq/feature_previews.py
+msgid ""
+"This setting allows users to chat with a chatbot to get help with CommCare."
+msgstr ""
+
+#: corehq/feature_previews.py
 msgid "Call Center"
 msgstr ""
 
@@ -49264,10 +49483,6 @@ msgstr ""
 msgid "Microplanning"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py
-msgid "Campaign"
-msgstr ""
-
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"
 msgstr ""
@@ -49584,11 +49799,33 @@ msgid "hash"
 msgstr ""
 
 #: corehq/util/context_processors.py
-msgid "US"
+msgid "Need Help?"
 msgstr ""
 
 #: corehq/util/context_processors.py
-msgid "EU"
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "I need help with building my CommCare application."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "I need help troubleshooting my mobile application."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "I need help with exporting or understanding my data."
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "Finding the best answer"
+msgstr ""
+
+#: corehq/util/context_processors.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
 msgstr ""
 
 #: corehq/util/jsonattrs.py

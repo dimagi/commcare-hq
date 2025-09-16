@@ -198,6 +198,13 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.assertEqual(['Ensure this value is less than or equal to 1000.'],
                          form.errors.get("operator_call_limit"))
 
+    def test_opt_out_of_data_sharing_will_save_can_use_data_as_false(self):
+        form = self.create_form(domain=self.domain_obj, opt_out_of_data_sharing=True)
+        form.full_clean()
+        form.save(Mock(), self.domain_obj)
+        self.assertTrue('opt_out_of_data_sharing' in form.fields)
+        self.assertEqual(self.domain_obj.internal.can_use_data, False)
+
     def create_form(self, domain=None, **kwargs):
         data = {
             "hr_name": "foo",
@@ -599,14 +606,13 @@ class TestExtractAppInfoForm(SimpleTestCase):
         self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
         self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
 
-    # TODO: Enable this test case when EU server launched
-    # def test_clean_app_url_with_valid_eu_server(self):
-    #     url = 'https://eu.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
-    #     form = forms.ExtractAppInfoForm(data={'app_url': url})
-    #     self.assertTrue(form.is_valid())
-    #     self.assertEqual(form.cleaned_data['source_server'], 'eu')
-    #     self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
-    #     self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
+    def test_clean_app_url_with_valid_eu_server(self):
+        url = 'https://eu.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['source_server'], 'eu')
+        self.assertEqual(form.cleaned_data['source_domain'], 'test-domain')
+        self.assertEqual(form.cleaned_data['app_id'], '62891a383516c656850cc9c7e7b8d459')
 
     def test_clean_app_url_without_trailing_slash(self):
         url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459'

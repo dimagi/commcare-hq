@@ -17,7 +17,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import user_location_data
 from corehq.form_processor.models import CommCareCase
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 
 
 class _UserCaseHelper:
@@ -235,8 +234,7 @@ def _call_center_location_owner(user, ancestor_level):
 
 
 def _iter_sync_usercase_helpers(user, domain_obj):
-    if (domain_obj.usercase_enabled
-            and USH_USERCASES_FOR_WEB_USERS.enabled(domain_obj.name) or not user.is_web_user()):
+    if domain_obj.usercase_enabled:
         yield _get_sync_usercase_helper(
             user,
             domain_obj.name,
@@ -260,3 +258,11 @@ def sync_usercases(user, domain, sync_call_center=True):
             _iter_call_center_case_helpers(user) if sync_call_center else [],
         ))
         _UserCaseHelper.commit(helpers)
+
+
+# This is temporarily created to backfill usercases
+# and can be deleted after the backfill is done
+def sync_usercases_ignore_web_flag(user, domain):
+    with CriticalSection([f"sync_user_case_for_{user.user_id}_{domain}"]):
+        helper = _get_sync_usercase_helper(user, domain, USERCASE_TYPE, user.get_id, None)
+        _UserCaseHelper.commit([helper])

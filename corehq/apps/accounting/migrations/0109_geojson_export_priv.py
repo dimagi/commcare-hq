@@ -44,7 +44,7 @@ def _revoke_geojson_export_priv(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0107_two_stage_mobile_worker_creation_priv'),
+        ('accounting', '0108_subscription_auto_renew_and_more'),
     ]
 
     operations = [

@@ -4,6 +4,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
+from testil import Regex
 
 import openpyxl
 
@@ -537,6 +538,64 @@ class TestFixtureUpload(TestCase):
         ]
         self.upload(self.get_workbook_from_data(headers, data))
         self.assertEqual(self.get_rows(part), ['branch'])
+
+    def test_replace_table_with_removed_index(self):
+        self.upload([(None, 'N', 'apple'), (None, 'N', 'banana')])
+        ids = {row_name(r): r.id.hex for r in self.get_rows(None)}
+        headers = (
+            (
+                'types',
+                ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1')
+            ),
+            self.headers[1],
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'name')]),
+            ('things', [(ids['apple'], 'N', 'apple')]),
+            ('things', [(None, 'N', 'orange')]),
+        ]
+
+        self.upload(self.get_workbook_from_data(headers, data), replace=True)
+        self.assertEqual(self.get_rows(), ['apple', 'orange'])
+
+    def test_update_table_with_removed_index(self):
+        self.upload([(None, 'N', 'apple')])
+        ids = {row_name(r): r.id.hex for r in self.get_rows(None)}
+        headers = (
+            (
+                'types',
+                ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1')
+            ),
+            self.headers[1],
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'name')]),
+            ('things', [(ids['apple'], 'N', 'apple')]),
+            ('things', [(None, 'N', 'orange')]),
+        ]
+
+        self.upload(self.get_workbook_from_data(headers, data))
+        self.assertEqual(self.get_rows(), ['apple', 'orange'])
+
+    def test_partial_update_table_with_removed_index(self):
+        self.upload([(None, 'N', 'apple')])
+        headers = (
+            (
+                'types',
+                ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1')
+            ),
+            self.headers[1],
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'name')]),
+            ('things', [(None, 'N', 'orange')]),
+        ]
+
+        result = self.upload(self.get_workbook_from_data(headers, data))
+        self.assertEqual(result.errors, [
+            Regex(r"^The table structure of 'things' cannot be changed")
+        ])
+        self.assertEqual(self.get_rows(), ['apple'])
 
     def test_upload_sheet_with_missing_UID_column(self):
         self.upload([(None, 'N', 'apple')])

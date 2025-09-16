@@ -216,7 +216,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         message = None
         restricted_by_domain = None
         if is_existing:
-            message = _("There is already a user with this email.")
+            current_env_data = ServerLocation.ENVS.get(settings.SERVER_ENVIRONMENT)
+            current_location = current_env_data['short_name'] if current_env_data else _("current")
+            message = _(
+                'This email is already registered in the {location} cloud location. '
+                'Please <a href="{login_link}">sign in here</a>.'
+            ).format(location=current_location, login_link=reverse('login'))
         else:
             domain = email[email.find("@") + 1:]
             for account in BillingAccount.get_enterprise_restricted_signup_accounts():

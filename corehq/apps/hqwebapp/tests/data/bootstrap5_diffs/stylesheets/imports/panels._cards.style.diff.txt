@@ -1,0 +1,78 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-.panel-modern-gray {
++.card-modern-gray {
+   border: none;
+-  background-color: lighten(@cc-bg, 3);
++  background-color: lighten($cc-bg, 3);
+ 
+-  .panel-heading {
++  .card-header {
+     padding: 0;
+     a:hover, a:link, a:focus {
+       text-decoration: none;
+@@ -10,9 +10,9 @@
+     a {
+       display: block;
+       padding: 15px 15px;
+-      .transition(background-color 1s);
++      transition: background-color 1s;
+       &:hover {
+-        background-color: @cc-bg;
++        background-color: $cc-bg;
+       }
+     }
+     .hq-help {
+@@ -29,9 +29,9 @@
+     }
+   }
+ 
+-  .panel-title-nolink {
++  .card-title-nolink {
+     padding: 15px 15px;
+-    border-bottom: 1px solid @cc-bg;
++    border-bottom: 1px solid $cc-bg;
+   }
+ 
+   .collapsing {
+@@ -40,10 +40,10 @@
+ 
+   legend {
+     padding: 15px 15px;
+-    border-bottom: 1px solid @cc-bg;
++    border-bottom: 1px solid $cc-bg;
+     font-size: 14px;
+     font-weight: 500;
+-    border-bottom: 1px solid @cc-bg;
++    border-bottom: 1px solid $cc-bg;
+     margin-bottom: 20px;
+   }
+ 
+@@ -57,7 +57,7 @@
+ }
+ 
+ 
+-.panel-form-only {
++.card-form-only {
+   legend {
+     padding-left: 10px;
+     padding-right: 10px;
+@@ -74,13 +74,12 @@
+   }
+ }
+ 
+-.form-horizontal .panel-body .form-group,
+-.panel-body .form-horizontal .form-group {
++.row .card-body,
++.card-body .row {
+   margin-right: 0;
+   margin-left: 0;
+ }
+ 
+-.panel-group .panel-modern-gray {
+-  .border-top-radius(0);
+-  .border-bottom-radius(0);
++.card-group .card-modern-gray {
++  border-radius: 0;
+ }
