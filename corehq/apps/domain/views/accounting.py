@@ -60,6 +60,9 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod,
+    SubscriptionAdjustmentReason,
     SubscriptionType,
     WireInvoice,
 )
@@ -1947,3 +1950,74 @@ def pause_subscription(request, domain):
     return HttpResponseRedirect(
         reverse(DomainSubscriptionView.urlname, args=[domain])
     )
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(HqPermissions.edit_billing)
+def enable_subscription_auto_renew(request, domain):
+    current_subscription = Subscription.get_active_subscription_by_domain(domain)
+    if not current_subscription.user_can_change_subscription(request.user):
+        messages.error(
+            request, _(
+                "You do not have permission to modify the subscription for this customer-level account. "
+                "Please reach out to the %s enterprise admin for help."
+            ) % current_subscription.account.name
+        )
+        return HttpResponseRedirect(
+            reverse(DomainSubscriptionView.urlname, args=[domain])
+        )
+
+    next_subscription = current_subscription.next_subscription
+    if next_subscription is not None:
+        # can't enable auto renewal because we don't know what to do with the next subscription
+        # this is blocked via UI but validate here as well
+        messages.error(
+            request, _("Auto renewal cannot be enabled for the current subscription.")
+        )
+        return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[domain]))
+
+    current_subscription.auto_renew = True
+    current_subscription.save()
+    messages.success(
+        request, _("Auto renewal successfully enabled for the current subscription.")
+    )
+    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[domain]))
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(HqPermissions.edit_billing)
+def disable_subscription_auto_renew(request, domain):
+    current_subscription = Subscription.get_active_subscription_by_domain(domain)
+    if not current_subscription.user_can_change_subscription(request.user):
+        messages.error(
+            request, _(
+                "You do not have permission to modify the subscription for this customer-level account. "
+                "Please reach out to the %s enterprise admin for help."
+            ) % current_subscription.account.name
+        )
+        return HttpResponseRedirect(
+            reverse(DomainSubscriptionView.urlname, args=[domain])
+        )
+
+    with transaction.atomic():
+        next_subscription = current_subscription.next_subscription
+        if next_subscription is not None:
+            # if next subscription was created by auto renewal, cancel that subscription
+            next_created_by_auto_renew = SubscriptionAdjustment.objects.filter(
+                subscription=next_subscription,
+                method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+                reason=SubscriptionAdjustmentReason.CREATE
+            ).exists()
+            if next_created_by_auto_renew:
+                next_subscription.is_hidden_to_ops = True
+                next_subscription.save()
+
+        current_subscription.auto_renew = False
+        current_subscription.save()
+
+    messages.success(
+        request, _("Auto renewal successfully disabled for the current subscription.")
+    )
+    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[domain]))
