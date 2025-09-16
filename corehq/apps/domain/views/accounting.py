@@ -1521,13 +1521,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
         if self.is_form_post and self.billing_account_info_form.is_valid():
             if not self.current_subscription.user_can_change_subscription(self.request.user):
-                messages.error(
-                    request, _(
-                        "You do not have permission to change the subscription for this customer-level account. "
-                        "Please reach out to the %s enterprise admin for help."
-                    ) % self.account.name
-                )
-                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+                return _cannot_modify_subscription_response(request, self.domain, self.account.name)
             if self.selected_plan_version.plan.edition not in SoftwarePlanEdition.SELF_SERVICE_ORDER:
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
@@ -1891,15 +1885,7 @@ def _get_downgrade_or_pause_note(request, is_pause=False):
 def pause_subscription(request, domain):
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     if not current_subscription.user_can_change_subscription(request.user):
-        messages.error(
-            request, _(
-                "You do not have permission to pause the subscription for this customer-level account. "
-                "Please reach out to the %s enterprise admin for help."
-            ) % current_subscription.account.name
-        )
-        return HttpResponseRedirect(
-            reverse(DomainSubscriptionView.urlname, args=[domain])
-        )
+        return _cannot_modify_subscription_response(request, domain, current_subscription.account.name)
 
     try:
         with transaction.atomic():
@@ -1958,15 +1944,7 @@ def pause_subscription(request, domain):
 def enable_subscription_auto_renew(request, domain):
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     if not current_subscription.user_can_change_subscription(request.user):
-        messages.error(
-            request, _(
-                "You do not have permission to modify the subscription for this customer-level account. "
-                "Please reach out to the %s enterprise admin for help."
-            ) % current_subscription.account.name
-        )
-        return HttpResponseRedirect(
-            reverse(DomainSubscriptionView.urlname, args=[domain])
-        )
+        return _cannot_modify_subscription_response(request, domain, current_subscription.account.name)
 
     next_subscription = current_subscription.next_subscription
     if next_subscription is not None:
@@ -1991,15 +1969,7 @@ def enable_subscription_auto_renew(request, domain):
 def disable_subscription_auto_renew(request, domain):
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     if not current_subscription.user_can_change_subscription(request.user):
-        messages.error(
-            request, _(
-                "You do not have permission to modify the subscription for this customer-level account. "
-                "Please reach out to the %s enterprise admin for help."
-            ) % current_subscription.account.name
-        )
-        return HttpResponseRedirect(
-            reverse(DomainSubscriptionView.urlname, args=[domain])
-        )
+        return _cannot_modify_subscription_response(request, domain, current_subscription.account.name)
 
     with transaction.atomic():
         next_subscription = current_subscription.next_subscription
@@ -2021,3 +1991,15 @@ def disable_subscription_auto_renew(request, domain):
         request, _("Auto renewal successfully disabled for the current subscription.")
     )
     return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[domain]))
+
+
+def _cannot_modify_subscription_response(request, domain, account_name):
+    messages.error(
+        request, _(
+            "You do not have permission to modify the subscription for this customer-level account. "
+            "Please reach out to the {account_name} enterprise admin for help."
+        ).format(account_name=account_name)
+    )
+    return HttpResponseRedirect(
+        reverse(DomainSubscriptionView.urlname, args=[domain])
+    )
