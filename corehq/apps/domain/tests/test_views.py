@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import PropertyMock, patch
 
-from django.contrib.messages import get_messages, ERROR
+from django.contrib.messages import ERROR, get_messages
 from django.test import RequestFactory, TestCase
 from django.test.client import Client
 from django.urls import reverse
@@ -18,17 +18,22 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.app_manager.models import ActivityLevel, Application, CredentialApplication
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import (
+    ActivityLevel,
+    Application,
+    CredentialApplication,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.views import FlagsAndPrivilegesView
 from corehq.apps.domain.views.settings import (
     MAX_ACTIVE_ALERTS,
+    CredentialsApplicationSettingsView,
     EditDomainAlertView,
     FeaturePreviewsView,
     ManageDomainAlertsView,
-    CredentialsApplicationSettingsView,
 )
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.toggle_ui.models import ToggleAudit
@@ -38,7 +43,6 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater
 from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, Tag
 from corehq.util.test_utils import privilege_enabled
-from corehq.apps.app_manager.dbaccessors import get_app
 
 
 class TestDomainViews(TestCase, DomainSubscriptionMixin):

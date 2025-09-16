@@ -3,12 +3,12 @@ import datetime
 import random
 import uuid
 from decimal import Decimal
+from unittest import mock
 
 from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
 
-from unittest import mock
 from nose.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
@@ -24,11 +24,11 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     Feature,
     FeatureType,
+    Role,
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     SoftwareProductRate,
-    Role,
     Subscriber,
     Subscription,
     SubscriptionType,

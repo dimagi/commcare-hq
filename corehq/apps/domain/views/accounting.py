@@ -13,8 +13,8 @@ from django.db.models import Sum
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseRedirect,
     HttpResponseForbidden,
+    HttpResponseRedirect,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -29,12 +29,11 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.accounting.utils.unpaid_invoice import can_domain_unpause
 from dimagi.utils.web import json_response
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -83,17 +82,18 @@ from corehq.apps.accounting.user_text import (
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
+    get_paused_plan_context,
     is_downgrade,
     log_accounting_error,
-    quantize_accounting_decimal,
-    get_paused_plan_context,
     pause_current_subscription,
+    quantize_accounting_decimal,
 )
 from corehq.apps.accounting.utils.stripe import get_customer_cards
+from corehq.apps.accounting.utils.unpaid_invoice import can_domain_unpause
 from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
     login_and_domain_required,
     require_superuser,
-    LoginAndDomainMixin,
 )
 from corehq.apps.domain.forms import (
     INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS,

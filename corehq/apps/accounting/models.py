@@ -1,6 +1,5 @@
 import datetime
 import itertools
-from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -18,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 import stripe
+from dateutil.relativedelta import relativedelta
 from django_prbac.models import Role
 from memoized import memoized
 
