@@ -63,8 +63,6 @@ def get_latest_build_id_for_web_apps(domain, username, app_id):
 
 
 def get_web_app_ids_available_to_user(domain, user):
-    # TODO: once WEB_APPS_PERMISSIONS_VIA_GROUPS is removed, just use
-    # role.permissions.web_apps_list if applicable
     accessible_app_ids = [
         app_id for app_id in get_app_ids_in_domain(domain)
         if can_user_access_web_app(domain, user, app_id)
