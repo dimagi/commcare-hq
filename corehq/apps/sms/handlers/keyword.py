@@ -503,7 +503,11 @@ def is_form_complete(current_question):
 
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.keywordaction_set.all():
-        if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
+        if action.action in [
+            KeywordAction.ACTION_SMS_SURVEY,
+            KeywordAction.ACTION_STRUCTURED_SMS,
+            KeywordAction.ACTION_CONNECT_SURVEY,
+        ]:
             if toggles.SMS_USE_LATEST_DEV_APP.enabled(survey_keyword.domain, toggles.NAMESPACE_DOMAIN):
                 app = get_app(survey_keyword.domain, action.app_id)
             else:
