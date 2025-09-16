@@ -133,7 +133,9 @@ class BulkEditSessionTest(TestCase):
         assert resumed_session.identifier == session.identifier
         assert resumed_session.session_type == session.session_type
         assert resumed_session.filters.count() == 1
+        # defaults for pinned filters, make sure it doesn't increase:
         assert resumed_session.pinned_filters.count() == 2
+        # defaults for columns + 1 added above:
         assert resumed_session.columns.count() == 7
         copied_case_owners_filter = resumed_session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
         assert copied_case_owners_filter.value == ['t__1', 't__2', 'g_555555']
