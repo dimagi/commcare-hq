@@ -1630,7 +1630,11 @@ class Subscription(models.Model):
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(
             self, method=adjustment_method, note=note, web_user=web_user,
-            reason=SubscriptionAdjustmentReason.RENEW,
+            reason=SubscriptionAdjustmentReason.RENEW, related_subscription=renewed_subscription
+        )
+        SubscriptionAdjustment.record_adjustment(
+            renewed_subscription, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.CREATE
         )
 
         send_subscription_renewal_alert(self.subscriber.domain, renewed_subscription, self)
