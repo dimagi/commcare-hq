@@ -7,7 +7,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.util.test_utils import flag_enabled
 from corehq.form_processor.models import CommCareCase
 
 
@@ -45,14 +44,12 @@ class TestWebUserSyncUsercase(TestCase):
             self.domain_name, user_id, USERCASE_TYPE
         ).case_json
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_sync_usercases(self):
         sync_usercases(self.user, self.domain_name)
         usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, self.user_id, USERCASE_TYPE)
         self.assertIsNotNone(usercase)
         self.assertEqual(usercase.name, self.username)
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_close_deactivated_web_users_usercase(self):
         sync_usercases(self.user, self.domain_name)
         init_usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, self.user_id, USERCASE_TYPE)

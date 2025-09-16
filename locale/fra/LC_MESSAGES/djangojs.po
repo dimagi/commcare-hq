@@ -756,10 +756,8 @@ msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#, fuzzy
-#| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
-msgstr "La propriété utilise un préfixe non reconnu"
+msgstr "La propriété utilise un préfixe non reconnu <strong>"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -1132,16 +1130,12 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} n'est pas un parent de données valide"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
-#| msgid "Create"
 msgid "createXML"
-msgstr "Créer"
+msgstr "createXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
-#| msgid "User Data"
 msgid "getData"
-msgstr "Données d'utilisateur"
+msgstr "getData"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "getMugByPath"
@@ -1727,10 +1721,8 @@ msgstr "Réaffecté"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
-#| msgid "Copied!"
 msgid "Copied"
-msgstr "Copié!"
+msgstr "Copié"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1744,17 +1736,13 @@ msgstr "Aujourd'hui"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
-#| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
-msgstr "Télécharger <%- count %> emplacements"
+msgstr "<%- count %> cas réaffectés"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
-#| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
-msgstr "Télécharger <%- count %> emplacements"
+msgstr "<%- count %> cas copiés"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3684,10 +3672,8 @@ msgid "Unavailable"
 msgstr "Indisponible"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#, fuzzy
-#| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
-msgstr "Il reste <%- days %> jours"
+msgstr "<%- minutes %> minutes restantes"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."

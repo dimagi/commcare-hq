@@ -34,7 +34,8 @@ class State(IntegerChoices):
     Success = 4, _('Succeeded')
     Cancelled = 8, _('Cancelled')
     Empty = 16, _('Empty')  # There was nothing to send. Implies Success.
-    InvalidPayload = 32, _('Invalid Payload')  # Implies Cancelled.
+    PayloadRejected = 32, _('Payload Rejected')  # Implies Cancelled.
+    ErrorGeneratingPayload = 64, _('Error Generating Payload')  # Unsent like Empty, but implies Cancelled
 
     @staticmethod
     def state_for_key(key):
@@ -44,6 +45,12 @@ class State(IntegerChoices):
 
 
 RECORD_QUEUED_STATES = (State.Pending, State.Fail)
+RECORD_FAILED_STATES = (
+    State.Fail,
+    State.Cancelled,
+    State.PayloadRejected,
+    State.ErrorGeneratingPayload,
+)
 
 
 class UCRRestrictionFFStatus(IntegerChoices):

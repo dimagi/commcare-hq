@@ -733,10 +733,8 @@ msgid "You have unchanged user properties settings"
 msgstr "Una mipangilio ya mali za mtumiaji ambayo haijabadilishwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#, fuzzy
-#| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
-msgstr "Mali inatumia kiambishi kisichotambulika"
+msgstr "Mali inatumia kiambishi kisichotambulika <strong>"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -1100,16 +1098,12 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} si mzazi halali wa data"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
-#| msgid "Create"
 msgid "createXML"
-msgstr "Unda"
+msgstr "undaXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#, fuzzy
-#| msgid "User Data"
 msgid "getData"
-msgstr "Data ya Mtumiaji"
+msgstr "pataData"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
 msgid "getMugByPath"
@@ -1681,10 +1675,8 @@ msgstr "Imepangiwa upya"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
-#| msgid "Copied!"
 msgid "Copied"
-msgstr "Imenakiliwa!"
+msgstr "Imenakiliwa"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -1698,17 +1690,13 @@ msgstr "Leo"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
-#| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
-msgstr "Pakua Maeneo <%- count %>"
+msgstr "Kesi <%- count %> zimepangiwa upya"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#, fuzzy
-#| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
-msgstr "Pakua Maeneo <%- count %>"
+msgstr "Kesi <%- count %> zimenakiliwa"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
@@ -3619,10 +3607,8 @@ msgid "Unavailable"
 msgstr "Haipatikani"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#, fuzzy
-#| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
-msgstr "Siku <%- days %> zimebaki"
+msgstr "Dakika <%- minutes %> zimebaki"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."

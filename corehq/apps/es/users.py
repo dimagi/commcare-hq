@@ -48,6 +48,7 @@ class UserES(HQESQuery):
             created,
             mobile_users,
             web_users,
+            exclude_dimagi_users,
             user_ids,
             location,
             login_as_user,
@@ -224,6 +225,11 @@ def demo_users():
     return filters.term("is_demo_user", True)
 
 
+def exclude_dimagi_users():
+    """Exclude users whose username ends with @dimagi.com"""
+    return filters.NOT(filters.wildcard("username.exact", "*@dimagi.com"))
+
+
 def created(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('created_on', gt, gte, lt, lte)
 
@@ -320,4 +326,17 @@ def missing_or_empty_user_data_property(property_name):
     return filters.OR(
         _missing_user_data_property(property_name),
         _empty_user_data_property(property_name),
+    )
+
+
+def iter_web_user_emails(domain_name):
+    return (
+        hit['email'] or hit['username']
+        for hit in (
+            UserES()
+            .domain(domain_name)
+            .web_users()
+            .fields(('email', 'username'))
+            .scroll()
+        )
     )
