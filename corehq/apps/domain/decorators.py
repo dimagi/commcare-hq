@@ -47,9 +47,6 @@ from corehq.apps.sso.utils.request_helpers import (
     is_request_blocked_from_viewing_domain_due_to_sso,
     is_request_using_sso,
 )
-from corehq.apps.sso.utils.view_helpers import (
-    render_untrusted_identity_provider_for_domain_view,
-)
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
@@ -119,6 +116,9 @@ def login_and_domain_required(view_func):
             elif is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj):
                 # Important! Make sure this is always the final check prior
                 # to returning call_view() below
+                from corehq.apps.sso.utils.view_helpers import (
+                    render_untrusted_identity_provider_for_domain_view,
+                )
                 return render_untrusted_identity_provider_for_domain_view(req, domain_obj)
             else:
                 return call_view()
