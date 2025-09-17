@@ -13,8 +13,14 @@ class Migration(migrations.Migration):
         migrations.SeparateDatabaseAndState(
             database_operations=[
                 migrations.RunSQL(
-                    'ALTER INDEX "phonelog_daily_partition_domain_device_id_0f8f03f5_idx" RENAME TO "phonelog_da_domain_e98c65_idx"',
-                    'ALTER INDEX "phonelog_da_domain_e98c65_idx" RENAME TO "phonelog_daily_partition_domain_device_id_0f8f03f5_idx"',
+                    # Bring index names in test dbs in line with production dbs.
+                    # It is unclear how they got out of sync.
+                    'ALTER INDEX IF EXISTS phonelog_daily_partition_domain_device_id_0f8f03f5_idx RENAME TO phonelog_daily_partitioned_devicereportentr_domain_0f8f03f5_idx',
+                    'ALTER INDEX IF EXISTS phonelog_daily_partitioned_devicereportentr_domain_0f8f03f5_idx RENAME TO phonelog_daily_partition_domain_device_id_0f8f03f5_idx',
+                ),
+                migrations.RunSQL(
+                    'ALTER INDEX "phonelog_daily_partitioned_devicereportentr_domain_0f8f03f5_idx" RENAME TO "phonelog_da_domain_e98c65_idx"',
+                    'ALTER INDEX "phonelog_da_domain_e98c65_idx" RENAME TO "phonelog_daily_partitioned_devicereportentr_domain_0f8f03f5_idx"',
                 ),
             ],
             state_operations=[
