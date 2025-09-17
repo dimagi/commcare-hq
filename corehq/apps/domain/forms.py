@@ -1623,8 +1623,7 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
-def send_password_reset_email(active_users, domain_override, subject_template_name,
-                              email_template_name, use_https, token_generator, request):
+def send_password_reset_email(active_users, domain_override, request):
     """
     Generates a one-use only link for resetting password and sends to the
     user.
@@ -1632,6 +1631,9 @@ def send_password_reset_email(active_users, domain_override, subject_template_na
     if settings.IS_SAAS_ENVIRONMENT:
         subject_template_name = 'registration/email/password_reset_subject_hq.txt'
         email_template_name = 'registration/email/password_reset_email_hq.html'
+    else:
+        subject_template_name = 'registration/password_reset_subject.txt',
+        email_template_name = 'registration/password_reset_email.html',
 
     # the code below is copied from default PasswordForm
     for user in active_users:
@@ -1660,8 +1662,8 @@ def send_password_reset_email(active_users, domain_override, subject_template_na
             'site_name': site_name,
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'user': user,
-            'token': token_generator.make_token(user),
-            'protocol': 'https' if use_https else 'http',
+            'token': default_token_generator.make_token(user),
+            'protocol': 'https' if request.is_secure() else 'http',
         }
         c.update(project_logo_emails_context(None, couch_user=couch_user))
         subject = render_to_string(subject_template_name, c)
@@ -1719,8 +1721,7 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
              html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
              from_email=None, request=None, **kwargs):
-        send_password_reset_email(active_users, domain_override, subject_template_name,
-                                  email_template_name, use_https, token_generator, request)
+        send_password_reset_email(active_users, domain_override, request)
 
 
 class UsernameAwareEmailField(forms.EmailField):

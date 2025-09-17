@@ -10,7 +10,6 @@ from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
@@ -441,10 +440,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         send_password_reset_email(
             [dj_user],
             domain_override=None,
-            subject_template_name='registration/password_reset_subject.txt',
-            email_template_name='registration/password_reset_email.html',
-            use_https=request.is_secure(),
-            token_generator=default_token_generator,
             request=request,
         )
 
