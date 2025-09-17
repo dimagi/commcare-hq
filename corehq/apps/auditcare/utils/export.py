@@ -10,7 +10,7 @@ from django.db.models import ForeignKey, Min
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.util.models import ForeignValue
 
-from ..models import AccessAudit, NavigationEventAudit
+from ..models import ACCESS_CHOICES, AccessAudit, NavigationEventAudit
 
 
 def filters_for_audit_event_query(user, domain=None, start_date=None, end_date=None):
@@ -140,7 +140,7 @@ def get_action_and_resource(event):
         resource = event.request_path
     else:
         assert event.doc_type == 'AccessAudit'
-        action = event.access_type
+        action = ACCESS_CHOICES[event.access_type]
         resource = event.path
 
     return action, resource
