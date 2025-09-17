@@ -1623,7 +1623,7 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
-def send_password_reset_email(active_users, domain_override, request):
+def send_password_reset_email(active_users, request):
     """
     Generates a one-use only link for resetting password and sends to the
     user.
@@ -1635,19 +1635,12 @@ def send_password_reset_email(active_users, domain_override, request):
         subject_template_name = 'registration/password_reset_subject.txt',
         email_template_name = 'registration/password_reset_email.html',
 
-    # the code below is copied from default PasswordForm
     for user in active_users:
         # Make sure that no email is sent to a user that actually has
         # a password marked as unusable
         if not user.has_usable_password():
             continue
-        if not domain_override:
-            current_site = get_current_site(request)
-            site_name = current_site.name
-            domain = current_site.domain
-        else:
-            site_name = domain = domain_override
-
+        current_site = get_current_site(request)
         couch_user = CouchUser.from_django_user(user)
         if not couch_user:
             continue
@@ -1658,8 +1651,8 @@ def send_password_reset_email(active_users, domain_override, request):
 
         c = {
             'email': user_email,
-            'domain': domain,
-            'site_name': site_name,
+            'domain': current_site.domain,
+            'site_name': current_site.name,
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'user': user,
             'token': default_token_generator.make_token(user),
@@ -1721,7 +1714,7 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
              html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
              from_email=None, request=None, **kwargs):
-        send_password_reset_email(active_users, domain_override, request)
+        send_password_reset_email(active_users, request)
 
 
 class UsernameAwareEmailField(forms.EmailField):

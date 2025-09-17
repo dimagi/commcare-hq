@@ -437,12 +437,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if not dj_user.is_active:
             raise BadRequest(_("This user is inactive and cannot reset their password."))
 
-        send_password_reset_email(
-            [dj_user],
-            domain_override=None,
-            request=request,
-        )
-
+        send_password_reset_email([dj_user], request=request)
         self.log_throttled_access(request)
         return self.create_response(request, {}, response_class=http.HttpAccepted)
 
