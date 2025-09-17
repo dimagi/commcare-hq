@@ -137,8 +137,15 @@ def _get_user_case_fields(user, case_type, owner_id, domain):
 
     if location_id := user.get_location_id(domain):
         fields['commcare_location_id'] = location_id
-        fields['commcare_location_ids'] = user_location_data(user.get_location_ids(domain))
         fields['commcare_primary_case_sharing_id'] = location_id
+    else:
+        fields['commcare_location_id'] = ''
+        fields['commcare_primary_case_sharing_id'] = ''
+
+    if location_ids := user.get_location_ids(domain):
+        fields['commcare_location_ids'] = user_location_data(location_ids)
+    else:
+        fields['commcare_location_ids'] = user_location_data([])
 
     # language or phone_number can be null and will break
     # case submission
