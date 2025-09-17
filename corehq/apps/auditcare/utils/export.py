@@ -22,21 +22,28 @@ def filters_for_audit_event_query(user, domain=None, start_date=None, end_date=N
     return where
 
 
-def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None):
+def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
     return chain(
-        navigation_events_by_user(user, domain, start_date, end_date),
-        access_events_by_user(user, domain, start_date, end_date),
+        navigation_events_by_user(user, domain, start_date, end_date, action),
+        access_events_by_user(user, domain, start_date, end_date, action),
     )
 
 
-def navigation_events_by_user(user, domain=None, start_date=None, end_date=None):
+def navigation_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
     where = filters_for_audit_event_query(user, domain, start_date, end_date)
     query = NavigationEventAudit.objects.filter(**where)
+    if action:
+        query = query.extra(
+            where=["headers::jsonb->>'REQUEST_METHOD' = %s"],
+            params=[action]
+        )
     return AuditWindowQuery(query)
 
 
-def access_events_by_user(user, domain=None, start_date=None, end_date=None):
+def access_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
     where = filters_for_audit_event_query(user, domain, start_date, end_date)
+    if action:
+        where['access_type'] = action
     query = AccessAudit.objects.filter(**where)
     return AuditWindowQuery(query)
 
