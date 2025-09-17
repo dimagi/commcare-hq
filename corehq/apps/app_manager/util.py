@@ -26,7 +26,6 @@ from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
     USERCASE_PREFIX,
-    USERCASE_TYPE,
     MOBILE_UCR_V1_FIXTURE_IDENTIFIER,
     MOBILE_UCR_V1_ALL_REFERENCES,
     MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN,
@@ -206,11 +205,10 @@ CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
 
-def is_valid_case_type(case_type, module):
+def is_valid_case_type(case_type):
     """
     Returns ``True`` if ``case_type`` is valid for ``module``
 
-    >>> from corehq.apps.app_manager.const import USERCASE_TYPE
     >>> from corehq.apps.app_manager.models import Module, AdvancedModule
     >>> is_valid_case_type('foo', Module())
     True
@@ -222,15 +220,9 @@ def is_valid_case_type(case_type, module):
     False
     >>> is_valid_case_type(None, Module())
     False
-    >>> is_valid_case_type(USERCASE_TYPE, Module())
-    False
-    >>> is_valid_case_type(USERCASE_TYPE, AdvancedModule())
-    True
     """
-    from corehq.apps.app_manager.models import AdvancedModule
     matches_regex = bool(_case_type_regex.match(case_type or ''))
-    prevent_usercase_type = (case_type != USERCASE_TYPE or isinstance(module, AdvancedModule))
-    return matches_regex and prevent_usercase_type
+    return matches_regex
 
 
 def module_case_hierarchy_has_circular_reference(module):
