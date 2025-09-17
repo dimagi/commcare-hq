@@ -125,6 +125,7 @@ class ServerLocation:
     EU = 'eu'
     INDIA = 'india'
     PRODUCTION = 'production'
+    STAGING = 'staging'
 
     ENVS = {
         EU: {
@@ -144,6 +145,12 @@ class ServerLocation:
             'long_name': _("United States"),
             'short_name': _("US"),
             'subdomain': 'www',
+        },
+        STAGING: {
+            'country_code': 'un',
+            'long_name': _("[Test] Staging"),
+            'short_name': _("Staging"),
+            'subdomain': 'staging',
         },
     }
 
