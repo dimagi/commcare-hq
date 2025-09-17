@@ -942,5 +942,16 @@
       "label": "javascript/geospatial/js",
       "compare_all_files": true
     }
+  ],
+  "apps/sso/templates/sso": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "sso",
+      "compare_all_files": true
+    }
   ]
 }
