@@ -36,7 +36,6 @@ from corehq.apps.app_manager.models import (
     CustomIcon,
     ShadowFormEndpoint,
     ShadowModule,
-    enable_usercase_if_necessary,
 )
 from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
 from corehq.apps.es import FormES
@@ -204,7 +203,6 @@ def overwrite_app(app, master_build, report_map=None):
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
     wrapped_app.set_media_versions()
 
-    enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
 
 
