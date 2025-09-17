@@ -121,6 +121,8 @@ def patch_pillow_starter(exclude_ucrs=None):
 
     started = []
     with (
+        # bypass run_gevent_worker because it loops forever
+        patch('pillowtop.run_pillowtop.run_gevent_worker', run_pillow_by_name),
         patch('pillowtop.run_pillowtop.get_pillow_by_name', _get_pillow),
         patch('pillowtop.run_pillowtop.start_pillow', _start_pillow),
     ):
