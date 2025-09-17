@@ -130,6 +130,7 @@ pro_v1 = standard_v2 + [
     privileges.EXPORT_OWNERSHIP,
     privileges.CASE_LIST_EXPLORER,
     privileges.CASE_DEDUPE,
+    privileges.ENABLE_ALL_ADD_ONS,
     privileges.USERCASE,
     privileges.ZAPIER_INTEGRATION,
 ]
