@@ -626,13 +626,9 @@ class SendCommCareUserPasswordResetEmailForm(forms.Form):
         )
         super(SendCommCareUserPasswordResetEmailForm, self).__init__(*args, **kwargs)
 
-    def save(self, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             use_https=False, token_generator=default_token_generator, request=None):
+    def save(self, request=None, **kwargs):
         user_id = self.data.get('user_id')
         django_user = CommCareUser.get(user_id).get_django_user()
-
         send_password_reset_email([django_user], request)
 
 

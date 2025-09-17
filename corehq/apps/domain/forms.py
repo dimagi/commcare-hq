@@ -1707,13 +1707,7 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
 
-    def save(self, active_users, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             # WARNING: Django 1.7 passes this in automatically. do not remove
-             html_email_template_name=None,
-             use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None, **kwargs):
+    def save(self, active_users, request=None, **kwargs):
         send_password_reset_email(active_users, request)
 
 
@@ -1736,13 +1730,7 @@ class UsernameAwareEmailField(forms.EmailField):
 class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
     email = UsernameAwareEmailField(label=gettext_lazy("Email"), max_length=254)
 
-    def save(self, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             # WARNING: Django 1.7 passes this in automatically. do not remove
-             html_email_template_name=None,
-             use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None, **kwargs):
+    def save(self, request=None, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -1755,9 +1743,7 @@ class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form
         # get a password reset email.
         active_users = get_active_users_by_email(email)
 
-        super().save(active_users, domain_override, subject_template_name,
-                     email_template_name, html_email_template_name, use_https,
-                     token_generator, from_email, request, **kwargs)
+        super().save(active_users, request=request, **kwargs)
 
 
 class UsernameOrEmailField(forms.CharField):
@@ -1790,13 +1776,7 @@ class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.
         self.cleaned_data["email"] = mobile_username_email
         return super().clean_email()
 
-    def save(self, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             # WARNING: Django 1.7 passes this in automatically. do not remove
-             html_email_template_name=None,
-             use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None, **kwargs):
+    def save(self, request=None, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -1809,9 +1789,7 @@ class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.
         # get a password reset email.
         active_users = get_active_users_by_email(email, self.domain)
 
-        super().save(active_users, domain_override, subject_template_name,
-                     email_template_name, html_email_template_name, use_https,
-                     token_generator, from_email, request, **kwargs)
+        super().save(active_users, request=request, **kwargs)
 
 
 class ConfidentialDomainPasswordResetForm(DomainPasswordResetForm):
